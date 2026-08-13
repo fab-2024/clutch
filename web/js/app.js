@@ -18,6 +18,7 @@ import { vueClassement } from './views/classement.js';
 import { vueProfil } from './views/profil.js';
 import { vueAdmin } from './views/admin.js';
 import { vueConnexion } from './views/connexion.js';
+import { vueDiagnostic } from './views/diagnostic.js';
 
 const ROUTES = [
   { motif: /^\/matchs$/, vue: vueMatchs, nav: 'matchs' },
@@ -28,6 +29,7 @@ const ROUTES = [
   { motif: /^\/profil$/, vue: vueProfil, nav: 'profil' },
   { motif: /^\/admin$/, vue: vueAdmin, nav: 'admin' },
   { motif: /^\/connexion$/, vue: vueConnexion, nav: null },
+  { motif: /^\/diagnostic$/, vue: vueDiagnostic, nav: null },
 ];
 
 const LIENS = [
@@ -58,7 +60,9 @@ async function rafraichirEntete(navActive) {
     .join('');
 
   const droite = document.getElementById('entete-droite');
-  const selecteur = `
+  const selecteur = !contexte.saisons.length
+    ? ''
+    : `
     <select class="selecteur-saison" id="selecteur-saison" aria-label="Choisir la saison">
       ${contexte.saisons
         .map(
@@ -79,7 +83,7 @@ async function rafraichirEntete(navActive) {
          </div>`
       : `<a class="btn btn--petit" href="#/connexion">Jouer</a>`);
 
-  document.getElementById('selecteur-saison').addEventListener('change', async (e) => {
+  document.getElementById('selecteur-saison')?.addEventListener('change', async (e) => {
     await api.choisirSaison(e.target.value);
     router();
   });
@@ -107,17 +111,45 @@ async function router() {
   }
 
   contenu.innerHTML = '<div class="chargement"><span class="spinner"></span></div>';
-  await rafraichirEntete(route.nav);
+
+  // Tout ce qui suit peut échouer si Supabase ne répond pas. Sans ce filet,
+  // l'utilisateur reste devant un rond qui tourne sans jamais savoir pourquoi.
+  try {
+    await rafraichirEntete(route.nav);
+  } catch (e) {
+    console.error('[Clutch] échec du chargement initial', e);
+    // Le diagnostic doit rester accessible même quand la base est injoignable :
+    // c'est précisément là qu'on en a besoin.
+    if (route.vue !== vueDiagnostic) {
+      contenu.innerHTML = ecranPanne(e);
+      return;
+    }
+  }
 
   const params = (p.match(route.motif) || []).slice(1).map(decodeURIComponent);
   try {
     await route.vue(contenu, ...params);
   } catch (e) {
-    console.error(e);
-    contenu.innerHTML = `<div class="vide"><h3>Oups</h3><p>${e.message}</p></div>`;
+    console.error('[Clutch] échec du rendu de la vue', e);
+    contenu.innerHTML = ecranPanne(e);
   }
   document.getElementById('nav')?.classList.remove('ouvert');
   window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+/** Écran affiché quand l'application ne peut pas se charger. */
+function ecranPanne(erreur) {
+  return `
+    <div class="carte" style="max-width:640px;margin:40px auto;border-color:var(--danger)">
+      <h2>Le site n'arrive pas à joindre sa base de données</h2>
+      <p style="color:var(--texte-doux)">Message renvoyé par Supabase :</p>
+      <div class="encart encart--alerte" style="margin-bottom:18px">${erreur.message}</div>
+      <p style="color:var(--texte-doux);font-size:0.9rem">
+        La page <a href="#/diagnostic">diagnostic</a> teste chaque étape une par une
+        et te dit précisément laquelle bloque.
+      </p>
+      <a class="btn" href="#/diagnostic">Lancer le diagnostic</a>
+    </div>`;
 }
 
 /** Redemande à l'ossature de se mettre à jour (après un pari, une prime...). */
