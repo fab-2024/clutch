@@ -123,8 +123,17 @@ function explication(statut, detail = '') {
   if (/email logins are disabled|email_provider_disabled/i.test(detail)) {
     return "La connexion par e-mail est désactivée : active le fournisseur Email dans Authentication → Sign In / Providers";
   }
-  if (/only request this after|rate limit|too many/i.test(detail)) {
-    return 'Trop de demandes envoyées : Supabase limite les e-mails à quelques-uns par heure. Attends un moment.';
+  if (statut === 429 || /only request this after|rate limit|too many/i.test(detail)) {
+    return "Trop de demandes : Supabase ne laisse partir que quelques e-mails par heure. Crée plutôt ton compte avec un mot de passe, ça n'envoie aucun e-mail.";
+  }
+  if (/invalid login credentials/i.test(detail)) {
+    return 'Adresse ou mot de passe incorrect.';
+  }
+  if (/user already registered/i.test(detail)) {
+    return 'Un compte existe déjà avec cette adresse : connecte-toi plutôt.';
+  }
+  if (/password should be at least/i.test(detail)) {
+    return 'Mot de passe trop court : 6 caractères minimum.';
   }
   if (/redirect|not allowed/i.test(detail) && statut === 400) {
     return "Adresse de retour non autorisée : ajoute l'adresse de ton site dans Authentication → URL Configuration";
@@ -228,6 +237,48 @@ export async function utilisateurCourant() {
     poserSession(null);
     return null;
   }
+}
+
+/** Ouvre une session à partir d'une réponse d'authentification Supabase. */
+function ouvrirSession(r) {
+  if (!r?.access_token) return false;
+  poserSession({
+    access_token: r.access_token,
+    refresh_token: r.refresh_token,
+    expires_at: Math.floor(Date.now() / 1000) + (r.expires_in || 3600),
+  });
+  return true;
+}
+
+/**
+ * Création de compte par mot de passe.
+ *
+ * C'est la voie principale, et non le lien par e-mail : le service d'envoi
+ * intégré de Supabase est plafonné à quelques messages par heure, ce qui rend
+ * impossible l'inscription d'un groupe d'amis le même soir. Avec « Confirm
+ * email » désactivé côté Supabase, l'inscription ouvre la session
+ * immédiatement, sans le moindre e-mail.
+ */
+export async function inscription({ email, motDePasse, pseudo }) {
+  if (MODE_DEMO) return demo.connexion(pseudo || email);
+  const retour = encodeURIComponent(`${location.origin}${location.pathname}`);
+  const r = await sb(`/auth/v1/signup?redirect_to=${retour}`, {
+    methode: 'POST',
+    corps: { email: email.trim(), password: motDePasse, data: { pseudo: pseudo?.trim() || undefined } },
+  });
+  if (ouvrirSession(r)) return { ok: true };
+  return { enAttenteEmail: true }; // la confirmation par e-mail est activée
+}
+
+/** Connexion par mot de passe. */
+export async function connexionMotDePasse({ email, motDePasse }) {
+  if (MODE_DEMO) return demo.connexion(email);
+  const r = await sb('/auth/v1/token?grant_type=password', {
+    methode: 'POST',
+    corps: { email: email.trim(), password: motDePasse },
+  });
+  if (!ouvrirSession(r)) throw new Error('Réponse inattendue de Supabase.');
+  return { ok: true };
 }
 
 /** En production : envoi d'un lien magique par e-mail. En démo : pseudo direct. */

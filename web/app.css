@@ -263,7 +263,7 @@ a:hover { text-decoration: underline; }
 
 .champ { display: block; margin-bottom: 14px; }
 .champ__libelle { display: block; font-size: 0.82rem; color: var(--texte-doux); margin-bottom: 6px; }
-input[type="text"], input[type="email"], input[type="number"], select {
+input[type="text"], input[type="email"], input[type="password"], input[type="number"], select {
   width: 100%; background: var(--fond-2); border: 1px solid var(--bordure);
   color: var(--texte); border-radius: var(--rayon-s); padding: 11px 13px; font: inherit;
   transition: var(--transition);
