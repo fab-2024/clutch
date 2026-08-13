@@ -178,6 +178,23 @@ les autres. Le résultat n'est pas un tableau de plus mais des constats rédigé
 — et jamais sur un groupe de moins de cinq paris, parce qu'en dessous un écart
 de rentabilité raconte le hasard, pas le jugement du joueur.
 
+## Créer une compétition
+
+La console d'administration ne se contente plus de saisir des scores : elle crée
+les **tournois**, les **équipes** et les **matchs**. C'était le dernier obstacle
+entre le produit et une vraie partie — jusque-là, tout tournait sur un calendrier
+de démonstration, et jouer un vrai tournoi supposait d'écrire des `insert` à la
+main.
+
+Deux garde-fous : un match ne peut pas être créé dans le passé (il serait fermé
+aux mises d'emblée, sans que personne comprenne pourquoi), et les deux équipes
+doivent jouer au même jeu que le tournoi.
+
+Elle apporte aussi l'**annulation avec remboursement**, identifiée comme risque
+dans le cadrage initial (« matchs reportés, forfaits ») et restée sans réponse
+jusqu'ici. Un match annulé rend toutes les mises à l'unité près, et ne touche ni
+aux notes ni aux Elo : un match qui n'a pas eu lieu n'apprend rien sur personne.
+
 ## Les couleurs
 
 La palette s'appelle **Clutch Volt** : noir bleuté, blanc froid, et un jaune
@@ -205,6 +222,7 @@ supabase/            Base de données : schéma, fonctions SQL, sécurité, donn
                      06 = prono par défaut, défi de ligue, profil d'analyste
                      07 = correctif de récursion dans les règles de sécurité
                      08 = note à vie, classements enrichis, récap des badges
+                     09 = création de tournois, équipes, matchs, et annulation
 extension/           Extension Chrome MV3 (overlay Twitch / YouTube)
 tests/               Tests, sans dépendance : node --test tests/*.mjs
 ```
@@ -225,7 +243,7 @@ Deux principes structurent le tout :
 node --test tests/*.mjs
 ```
 
-145 tests couvrent le moteur de cotes (distributions, marge, Elo), les règles
+151 tests couvrent le moteur de cotes (distributions, marge, Elo), les règles
 du palier 1 (paliers de prime, plafonds, cotes de tournoi, tirage du rival,
 choix du pari automatique, agrégations et prudence statistique) et le parcours
 complet de bout en bout : inscription, mise, règlement, classement, call de la

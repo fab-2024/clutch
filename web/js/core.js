@@ -910,3 +910,59 @@ export function texteCarte(pari, pseudo) {
     }),
   };
 }
+
+/* ------------------------------------------------------------------ */
+/* Création de compétition (console d'administration)                  */
+/* ------------------------------------------------------------------ */
+
+export const FORMATS = [1, 3, 5];
+
+/** Elo de départ d'une équipe qu'on vient de créer, et bornes acceptées. */
+export const ELO_MIN = 1000;
+export const ELO_MAX = 2200;
+
+/** Transforme un nom libre en identifiant stable, lisible et sans accent. */
+export function identifiant(prefixe, nom) {
+  const base = String(nom || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+  return `${prefixe}-${base || Math.random().toString(36).slice(2, 8)}`;
+}
+
+/**
+ * Valide un match avant création. Retourne un tableau de messages : vide si
+ * tout va bien.
+ *
+ * On refuse une date passée : un match créé après son coup d'envoi serait
+ * immédiatement fermé aux mises, et personne ne comprendrait pourquoi.
+ */
+export function validerMatch({ eventId, equipeAId, equipeBId, format, debut }, maintenant = Date.now()) {
+  const erreurs = [];
+  if (!eventId) erreurs.push('Choisis un tournoi.');
+  if (!equipeAId || !equipeBId) erreurs.push('Choisis les deux équipes.');
+  if (equipeAId && equipeAId === equipeBId) erreurs.push('Une équipe ne joue pas contre elle-même.');
+  if (!FORMATS.includes(Number(format))) erreurs.push('Format attendu : BO1, BO3 ou BO5.');
+  const t = new Date(debut).getTime();
+  if (!Number.isFinite(t)) erreurs.push('Date de début invalide.');
+  else if (t <= maintenant) erreurs.push('La date doit être dans le futur, sinon les mises sont fermées d’emblée.');
+  return erreurs;
+}
+
+/** Valide une équipe avant création. */
+export function validerEquipe({ nom, tag, jeu, elo }) {
+  const erreurs = [];
+  if (!String(nom || '').trim()) erreurs.push('Donne un nom à l’équipe.');
+  if (!/^[A-Za-z0-9.]{2,6}$/.test(String(tag || '').trim())) {
+    erreurs.push('Le tag fait 2 à 6 caractères, sans espace.');
+  }
+  if (!JEUX[jeu]) erreurs.push('Jeu inconnu.');
+  const e = Number(elo);
+  if (!Number.isFinite(e) || e < ELO_MIN || e > ELO_MAX) {
+    erreurs.push(`L’Elo de départ doit être entre ${ELO_MIN} et ${ELO_MAX}.`);
+  }
+  return erreurs;
+}

@@ -134,10 +134,30 @@ export function bandeauSaison() {
   return `<div class="encart encart--alerte" style="margin-bottom:20px">${texte}</div>`;
 }
 
+/**
+ * Rend un conteneur NEUF à chaque vue.
+ *
+ * Les vues attachent leurs écouteurs sur le conteneur, pas sur les éléments
+ * qu'elles créent — c'est ce que fait surClic(), et c'est la bonne pratique
+ * pour du HTML régénéré. Mais remplacer innerHTML ne détruit pas les écouteurs
+ * du conteneur lui-même : à la deuxième visite d'un écran, ils s'empilaient, et
+ * un seul clic déclenchait le gestionnaire deux fois.
+ *
+ * Conséquence concrète, trouvée par le test de bout en bout : le bouton
+ * « Annuler ce match » sautait sa confirmation et annulait au premier clic.
+ * Cloner le nœud emporte tous ses écouteurs avec lui.
+ */
+function conteneurNeuf() {
+  const ancien = document.getElementById('contenu');
+  const neuf = ancien.cloneNode(false);
+  ancien.replaceWith(neuf);
+  return neuf;
+}
+
 async function router() {
   const p = chemin();
   const route = ROUTES.find((r) => r.motif.test(p));
-  const contenu = document.getElementById('contenu');
+  const contenu = conteneurNeuf();
 
   if (!route) {
     contenu.innerHTML = `<div class="vide"><h3>Page introuvable</h3><p><a href="#/matchs">Retour aux matchs</a></p></div>`;

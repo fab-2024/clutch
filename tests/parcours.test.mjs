@@ -912,3 +912,120 @@ test('cartes : rien à raconter sans victoire', async () => {
   await store.reglerMatch(m.id, 0, 2);
   assert.deepEqual(await store.mesCartes(), []);
 });
+
+/* ------------------------------------------------------------------ */
+/* Création de compétition et annulation                               */
+/* ------------------------------------------------------------------ */
+
+const DEMAIN = () => new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+
+test('admin : créer un tournoi, deux équipes, un match', async () => {
+  await store.reinitialiser();
+  await store.connexion('Organisateur');
+
+  const ev = await store.creerEvenement({ nom: 'LFL Été 2027 — Spécial', jeu: 'lol' });
+  assert.equal(ev.id, 'ev-lfl-ete-2027-special', 'identifiant lisible et sans accent');
+
+  const a = await store.creerEquipe({ nom: 'Solary', tag: 'sly', jeu: 'lol', elo: 1520 });
+  const b = await store.creerEquipe({ nom: 'Gentle Mates', tag: 'M8', jeu: 'lol', elo: 1480 });
+  assert.equal(a.tag, 'SLY', 'le tag est normalisé en majuscules');
+
+  const m = await store.creerMatch({
+    eventId: ev.id, equipeAId: a.id, equipeBId: b.id, format: 3, debut: DEMAIN(),
+  });
+  assert.equal(m.statut, 'a_venir');
+  assert.equal(m.equipe_a, 'Solary');
+  assert.equal(m.elo_a, 1520, 'les cotes partiront du bon Elo');
+
+  // Le match est immédiatement jouable.
+  const marches = await store.cotesDuMatch(m.id);
+  assert.equal(marches.length, 3);
+  const pari = await store.placerPari({ matchId: m.id, marche: 'vainqueur', choix: 'a', mise: 100 });
+  assert.ok(pari.cote > 1);
+});
+
+test('admin : les créations invalides sont refusées', async () => {
+  await store.reinitialiser();
+  await store.connexion('Organisateur');
+  const ev = await store.creerEvenement({ nom: 'Test Cup', jeu: 'lol' });
+  const a = await store.creerEquipe({ nom: 'Alpha Team', tag: 'ALP', jeu: 'lol' });
+  const cs = await store.creerEquipe({ nom: 'Bravo Squad', tag: 'BRV', jeu: 'cs2' });
+
+  await assert.rejects(() => store.creerEvenement({ nom: 'Test Cup', jeu: 'lol' }), /porte déjà ce nom/);
+  await assert.rejects(() => store.creerEvenement({ nom: '  ', jeu: 'lol' }), /Donne un nom/);
+  await assert.rejects(() => store.creerEquipe({ nom: 'X', tag: 'BEAUCOUPTROPLONG', jeu: 'lol' }), /tag/);
+  await assert.rejects(() => store.creerEquipe({ nom: 'X', tag: 'XX', jeu: 'lol', elo: 50 }), /Elo/);
+  await assert.rejects(
+    () => store.creerMatch({ eventId: ev.id, equipeAId: a.id, equipeBId: a.id, format: 3, debut: DEMAIN() }),
+    /contre elle-même/
+  );
+  await assert.rejects(
+    () => store.creerMatch({ eventId: ev.id, equipeAId: a.id, equipeBId: cs.id, format: 3, debut: DEMAIN() }),
+    /même jeu|doivent jouer/
+  );
+  await assert.rejects(
+    () => store.creerMatch({
+      eventId: ev.id, equipeAId: a.id, equipeBId: cs.id, format: 3,
+      debut: new Date(Date.now() - 3600 * 1000).toISOString(),
+    }),
+    /futur/
+  );
+});
+
+test('annulation : les mises sont rendues à l’unité près', async () => {
+  await store.reinitialiser();
+  await store.connexion('Lésé');
+  const m = (await store.listerMatchs({ statut: 'a_venir' })).find((x) => x.format === 3);
+  await store.placerPari({ matchId: m.id, marche: 'vainqueur', choix: 'a', mise: 300 });
+  await store.placerPari({ matchId: m.id, marche: 'score_exact', choix: '2-0', mise: 200 });
+  assert.equal((await store.utilisateurCourant()).solde, core.SOLDE_INITIAL - 500);
+
+  const r = await store.annulerMatch(m.id, { motif: 'Forfait' });
+  assert.equal(r.rembourses, 2);
+  assert.equal(r.total, 500);
+  assert.equal((await store.utilisateurCourant()).solde, core.SOLDE_INITIAL, 'solde intégralement rendu');
+
+  for (const p of await store.mesParis()) assert.equal(p.statut, 'rembourse');
+});
+
+test('annulation : elle ne touche ni à la note ni aux Elo', async () => {
+  await store.reinitialiser();
+  await store.connexion('Neutre');
+  const m = (await store.listerMatchs({ statut: 'a_venir' })).find((x) => x.format === 3);
+  const eloAvant = m.elo_a;
+  await store.placerPari({ matchId: m.id, marche: 'vainqueur', choix: 'a', mise: 100 });
+
+  await store.annulerMatch(m.id);
+  const u = await store.utilisateurCourant();
+  assert.equal(u.note, core.NOTE_INITIALE, 'un match qui n’a pas eu lieu n’apprend rien');
+  assert.equal(u.note_paris, 0);
+
+  const apres = await store.lireMatch(m.id);
+  assert.equal(apres.statut, 'annule');
+  assert.equal(apres.elo_a, eloAvant, 'les Elo ne bougent pas');
+});
+
+test('annulation : impossible sur un match réglé, et jamais deux fois', async () => {
+  await store.reinitialiser();
+  await store.connexion('Admin');
+  const matchs = (await store.listerMatchs({ statut: 'a_venir' })).filter((x) => x.format === 3);
+  await store.reglerMatch(matchs[0].id, 2, 0);
+  await assert.rejects(() => store.annulerMatch(matchs[0].id), /déjà réglé/);
+
+  await store.annulerMatch(matchs[1].id);
+  await assert.rejects(() => store.annulerMatch(matchs[1].id), /déjà annulé/);
+});
+
+test('annulation : un match annulé sort du calendrier et n’accepte plus de mise', async () => {
+  await store.reinitialiser();
+  await store.connexion('Joueur');
+  const m = (await store.listerMatchs({ statut: 'a_venir' })).find((x) => x.format === 3);
+  await store.annulerMatch(m.id);
+
+  const aVenir = await store.listerMatchs({ statut: 'a_venir' });
+  assert.ok(!aVenir.some((x) => x.id === m.id), 'il ne doit plus apparaître aux matchs à venir');
+  await assert.rejects(
+    () => store.placerPari({ matchId: m.id, marche: 'vainqueur', choix: 'a', mise: 50 }),
+    /déjà commencé|annulé/
+  );
+});

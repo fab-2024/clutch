@@ -723,3 +723,44 @@ export async function mesCartes() {
   );
   return (gagnes || []).filter(carteMeritee);
 }
+
+/* ------------------------------------------------------------------ */
+/* Création de compétition (console d'administration)                  */
+/* ------------------------------------------------------------------ */
+
+export async function listerEvenements(filtres) {
+  if (MODE_DEMO) return demo.listerEvenements(filtres);
+  let q = '/evenements?select=*&order=nom.asc';
+  if (filtres?.jeu) q += `&jeu=eq.${filtres.jeu}`;
+  return rest(q);
+}
+
+export async function creerEvenement(args) {
+  if (MODE_DEMO) return demo.creerEvenement(args);
+  return rpc('creer_evenement', { p_nom: args.nom, p_jeu: args.jeu, p_tier: args.tier ?? 'A' });
+}
+
+export async function creerEquipe(args) {
+  if (MODE_DEMO) return demo.creerEquipe(args);
+  return rpc('creer_equipe', {
+    p_nom: args.nom, p_tag: args.tag, p_jeu: args.jeu, p_elo: Math.round(Number(args.elo)),
+  });
+}
+
+export async function creerMatch(args) {
+  if (MODE_DEMO) return demo.creerMatch(args);
+  const saison = args.saison ?? (await saisonCourante())?.id;
+  return rpc('creer_match', {
+    p_event_id: args.eventId,
+    p_equipe_a: args.equipeAId,
+    p_equipe_b: args.equipeBId,
+    p_format: Number(args.format),
+    p_debut: new Date(args.debut).toISOString(),
+    p_saison_id: saison,
+  });
+}
+
+export async function annulerMatch(matchId, options) {
+  if (MODE_DEMO) return demo.annulerMatch(matchId, options);
+  return rpc('annuler_match', { p_match_id: matchId, p_motif: options?.motif ?? '' });
+}

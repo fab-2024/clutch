@@ -234,7 +234,10 @@ export async function listerMatchs({ jeu = null, statut = 'a_venir', saison = nu
     .filter((m) => (statut ? m.statut === statut : true))
     .filter((m) => (jeu ? m.jeu === jeu : true))
     .filter((m) => (equipeId ? m.equipe_a_id === equipeId || m.equipe_b_id === equipeId : true))
-    .map(enrichir);
+    .map(enrichir)
+    // Trié par date, comme le fait la requête Supabase : un match créé après
+    // coup doit se ranger à sa date, pas à la fin de la liste.
+    .sort((x, y) => new Date(x.debut) - new Date(y.debut));
 }
 
 export async function lireMatch(id) {
@@ -1106,4 +1109,112 @@ export async function mesCartes() {
     .map((p) => ({ ...p, match: enrichir(d.matchs.find((m) => m.id === p.match_id)) }))
     .filter(core.carteMeritee)
     .sort((a, b) => b.gain - a.gain);
+}
+
+/* ------------------------------------------------------------------ */
+/* Création de compétition (console d'administration)                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Tous les tournois existants, y compris ceux qui n'ont encore aucun match.
+ *
+ * listerEvenementsSaison() les déduit des matchs : un tournoi neuf n'y figure
+ * donc pas, et on ne pourrait jamais lui créer son premier match. C'est
+ * exactement le genre de trou qu'un test de bout en bout révèle.
+ */
+export async function listerEvenements({ jeu = null } = {}) {
+  return charger()
+    .evenements.filter((e) => (jeu ? e.jeu === jeu : true))
+    .map((e) => ({ ...e }))
+    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+}
+
+export async function creerEvenement({ nom, jeu, tier = 'A' }) {
+  const d = charger();
+  if (!String(nom || '').trim()) throw new Error('Donne un nom au tournoi.');
+  if (!core.JEUX[jeu]) throw new Error('Jeu inconnu.');
+  const ev = { id: core.identifiant('ev', nom), nom: nom.trim().slice(0, 60), jeu, tier };
+  if (d.evenements.some((x) => x.id === ev.id)) throw new Error('Un tournoi porte déjà ce nom.');
+  d.evenements.push(ev);
+  sauver();
+  return ev;
+}
+
+export async function creerEquipe({ nom, tag, jeu, elo = core.ELO_DEFAUT }) {
+  const d = charger();
+  const erreurs = core.validerEquipe({ nom, tag, jeu, elo });
+  if (erreurs.length) throw new Error(erreurs.join(' '));
+  const e = {
+    id: core.identifiant('eq', nom),
+    jeu,
+    nom: nom.trim().slice(0, 40),
+    tag: tag.trim().toUpperCase(),
+    elo: Math.round(Number(elo)),
+  };
+  if (d.equipes.some((x) => x.id === e.id)) throw new Error('Une équipe porte déjà ce nom.');
+  d.equipes.push(e);
+  sauver();
+  return e;
+}
+
+export async function creerMatch({ eventId, equipeAId, equipeBId, format, debut, saison = null }) {
+  const d = charger();
+  const erreurs = core.validerMatch({ eventId, equipeAId, equipeBId, format, debut });
+  if (erreurs.length) throw new Error(erreurs.join(' '));
+
+  const ev = d.evenements.find((x) => x.id === eventId);
+  if (!ev) throw new Error('Tournoi inconnu.');
+  const a = equipe(equipeAId);
+  const b = equipe(equipeBId);
+  if (!a || !b) throw new Error('Équipe inconnue.');
+  if (a.jeu !== ev.jeu || b.jeu !== ev.jeu) {
+    throw new Error(`Les deux équipes doivent jouer à ${core.JEUX[ev.jeu].nom}.`);
+  }
+
+  const saisonId = saison ?? (await saisonCourante()).id;
+  const m = {
+    id: uid('m'),
+    event_id: eventId,
+    jeu: ev.jeu,
+    saison_id: saisonId,
+    equipe_a_id: equipeAId,
+    equipe_b_id: equipeBId,
+    format: Number(format),
+    debut: new Date(debut).toISOString(),
+    statut: 'a_venir',
+    score_a: null,
+    score_b: null,
+  };
+  d.matchs.push(m);
+  sauver();
+  return enrichir(m);
+}
+
+/**
+ * Annule un match et rembourse les paris.
+ *
+ * C'est le filet du cadrage : un match reporté ou forfait ne doit pas priver
+ * les joueurs de leur mise. On rembourse à l'euro près, on ne touche PAS aux
+ * notes ni aux Elo — un match qui n'a pas eu lieu n'apprend rien sur personne.
+ */
+export async function annulerMatch(matchId, { motif = '' } = {}) {
+  const d = charger();
+  const m = d.matchs.find((x) => x.id === matchId);
+  if (!m) throw new Error('Match introuvable.');
+  if (m.statut === 'termine') throw new Error('Un match déjà réglé ne peut plus être annulé.');
+  if (m.statut === 'annule') throw new Error('Match déjà annulé.');
+
+  let rembourses = 0;
+  let total = 0;
+  for (const p of d.paris.filter((x) => x.match_id === matchId && x.statut === 'en_cours')) {
+    p.statut = 'rembourse';
+    p.gain = p.mise;
+    participation(p.user_id, p.saison_id).solde += p.mise;
+    rembourses++;
+    total += p.mise;
+  }
+  m.statut = 'annule';
+  m.motif_annulation = String(motif).slice(0, 120) || null;
+  sauver();
+  return { rembourses, total };
 }

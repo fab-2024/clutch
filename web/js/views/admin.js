@@ -1,6 +1,7 @@
 import * as api from '../api.js';
 import { contexte } from '../app.js';
-import { esc, dateLisible, nomJeu, toast, vide } from '../ui.js';
+import { esc, dateLisible, nomJeu, toast, vide, surClic } from '../ui.js';
+import { JEUX, FORMATS, ELO_DEFAUT, ELO_MIN, ELO_MAX } from '../core.js';
 
 /**
  * Console d'administration : c'est ici qu'on saisit les scores et qu'on
@@ -13,11 +14,15 @@ export async function vueAdmin(racine) {
     return;
   }
 
-  const [aVenir, termines, evenements] = await Promise.all([
+  const [aVenir, termines, evenements, equipes] = await Promise.all([
     api.listerMatchs({ statut: 'a_venir' }),
     api.listerMatchs({ statut: 'termine' }),
     api.listerEvenementsSaison(),
+    api.listerEquipes(),
   ]);
+  // Pour créer un match il faut TOUS les tournois — y compris ceux qui n'en ont
+  // encore aucun, sinon un tournoi neuf reste inutilisable à jamais.
+  const tousLesTournois = await api.listerEvenements();
 
   // Les équipes engagées, tournoi par tournoi : il faut la liste pour proposer
   // un vainqueur. Un tournoi déjà réglé n'a plus besoin de rien.
@@ -46,6 +51,93 @@ export async function vueAdmin(racine) {
       Le score doit respecter le format : un BO3 se termine forcément à 2 maps gagnées,
       un BO5 à 3. Un score incohérent est refusé.
     </div>
+
+    <h2>Créer la compétition</h2>
+    <p style="color:var(--texte-doux);margin-top:-6px">
+      Dans l'ordre : le tournoi, les équipes qui y jouent, puis les matchs.
+      Tout est rattaché à ${esc(contexte.saison?.nom ?? 'la saison en cours')}.
+    </p>
+
+    <div class="grille grille--2" style="margin-bottom:16px">
+      <form class="carte" id="form-tournoi">
+        <h3>Nouveau tournoi</h3>
+        <label class="champ">
+          <span class="champ__libelle">Nom</span>
+          <input type="text" name="nom" placeholder="Ex : LEC Winter 2027" maxlength="60" required />
+        </label>
+        <label class="champ">
+          <span class="champ__libelle">Jeu</span>
+          <select name="jeu">
+            ${Object.values(JEUX).map((j) => `<option value="${j.id}">${esc(j.nom)}</option>`).join('')}
+          </select>
+        </label>
+        <button class="btn btn--large">Créer le tournoi</button>
+      </form>
+
+      <form class="carte" id="form-equipe">
+        <h3>Nouvelle équipe</h3>
+        <div style="display:flex;gap:10px">
+          <label class="champ" style="flex:2">
+            <span class="champ__libelle">Nom</span>
+            <input type="text" name="nom" placeholder="Ex : Solary" maxlength="40" required />
+          </label>
+          <label class="champ" style="flex:1">
+            <span class="champ__libelle">Tag</span>
+            <input type="text" name="tag" placeholder="SLY" maxlength="6" required />
+          </label>
+        </div>
+        <div style="display:flex;gap:10px">
+          <label class="champ" style="flex:2">
+            <span class="champ__libelle">Jeu</span>
+            <select name="jeu">
+              ${Object.values(JEUX).map((j) => `<option value="${j.id}">${esc(j.nom)}</option>`).join('')}
+            </select>
+          </label>
+          <label class="champ" style="flex:1">
+            <span class="champ__libelle">Elo de départ</span>
+            <input type="number" name="elo" value="${ELO_DEFAUT}" min="${ELO_MIN}" max="${ELO_MAX}" />
+          </label>
+        </div>
+        <button class="btn btn--large">Créer l'équipe</button>
+      </form>
+    </div>
+
+    <form class="carte" id="form-match" style="margin-bottom:30px">
+      <h3>Nouveau match</h3>
+      <p style="color:var(--texte-faible);font-size:0.84rem;margin-top:-4px">
+        L'Elo des deux équipes fixe les cotes. Une équipe inconnue démarre à ${ELO_DEFAUT}
+        et se calera d'elle-même au fil des résultats.
+      </p>
+      <div class="grille grille--3">
+        <label class="champ">
+          <span class="champ__libelle">Tournoi</span>
+          <select name="event">
+            ${tousLesTournois
+              .map((e) => `<option value="${esc(e.id)}">${esc(e.nom)} · ${esc(nomJeu(e.jeu))}</option>`)
+              .join('')}
+          </select>
+        </label>
+        <label class="champ">
+          <span class="champ__libelle">Équipe A</span>
+          <select name="a">${optionsEquipes(equipes)}</select>
+        </label>
+        <label class="champ">
+          <span class="champ__libelle">Équipe B</span>
+          <select name="b">${optionsEquipes(equipes)}</select>
+        </label>
+        <label class="champ">
+          <span class="champ__libelle">Format</span>
+          <select name="format">
+            ${FORMATS.map((f) => `<option value="${f}"${f === 3 ? ' selected' : ''}>BO${f}</option>`).join('')}
+          </select>
+        </label>
+        <label class="champ" style="grid-column:span 2">
+          <span class="champ__libelle">Coup d'envoi</span>
+          <input type="datetime-local" name="debut" required />
+        </label>
+      </div>
+      <button class="btn btn--large">Créer le match</button>
+    </form>
 
     <h2>Matchs commencés, en attente de résultat (${aRegler.length})</h2>
     <div class="grille grille--2" style="margin-bottom:30px">
@@ -90,6 +182,10 @@ export async function vueAdmin(racine) {
                 <td>${esc(nomJeu(m.jeu))}</td>
                 <td>${esc(m.equipe_a)} vs ${esc(m.equipe_b)} <span class="badge">BO${m.format}</span></td>
                 <td class="num">${esc(dateLisible(m.debut))}</td>
+                <td class="num">
+                  <button class="btn btn--danger btn--petit" data-annuler="${esc(m.id)}"
+                          title="Annule le match et rembourse toutes les mises">Annuler</button>
+                </td>
               </tr>`
             )
             .join('')}
@@ -115,6 +211,58 @@ export async function vueAdmin(racine) {
         </tbody>
       </table>
     </div>`;
+
+  const soumettre = (selecteur, action) => {
+    racine.querySelector(selecteur)?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const bouton = e.target.querySelector('button');
+      bouton.disabled = true;
+      try {
+        await action(Object.fromEntries(new FormData(e.target)));
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+      } catch (err) {
+        toast(err.message, 'erreur');
+        bouton.disabled = false;
+      }
+    });
+  };
+
+  soumettre('#form-tournoi', async (v) => {
+    const ev = await api.creerEvenement({ nom: v.nom, jeu: v.jeu });
+    toast(`Tournoi « ${ev.nom} » créé.`, 'succes');
+  });
+
+  soumettre('#form-equipe', async (v) => {
+    const eq = await api.creerEquipe({ nom: v.nom, tag: v.tag, jeu: v.jeu, elo: v.elo });
+    toast(`${eq.nom} (${eq.tag}) ajoutée.`, 'succes');
+  });
+
+  soumettre('#form-match', async (v) => {
+    await api.creerMatch({
+      eventId: v.event, equipeAId: v.a, equipeBId: v.b,
+      format: Number(v.format), debut: new Date(v.debut),
+    });
+    toast('Match créé, il est ouvert aux mises.', 'succes');
+  });
+
+  surClic(racine, '[data-annuler]', async (bouton) => {
+    // Pas de confirm() natif : il fige l'onglet et bloque tout le reste.
+    if (bouton.dataset.confirme !== '1') {
+      bouton.dataset.confirme = '1';
+      bouton.textContent = 'Confirmer ?';
+      setTimeout(() => {
+        if (bouton.isConnected) { bouton.dataset.confirme = '0'; bouton.textContent = 'Annuler'; }
+      }, 4000);
+      return;
+    }
+    try {
+      const r = await api.annulerMatch(bouton.dataset.annuler, { motif: 'Annulé depuis l’administration' });
+      toast(`Match annulé. ${r.rembourses} pari(s) remboursé(s), ${r.total} Frags rendus.`, 'succes');
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    } catch (err) {
+      toast(err.message, 'erreur');
+    }
+  });
 
   racine.querySelectorAll('[data-evenement]').forEach((form) => {
     form.addEventListener('submit', async (e) => {
@@ -209,4 +357,17 @@ function carteReglement(m) {
       </div>
       <button class="btn btn--large" style="margin-top:14px">Régler ce match</button>
     </form>`;
+}
+
+/** Les équipes groupées par jeu : sans ça, la liste devient illisible. */
+function optionsEquipes(equipes) {
+  return Object.values(JEUX)
+    .map((j) => {
+      const siennes = equipes.filter((e) => e.jeu === j.id);
+      if (!siennes.length) return '';
+      return `<optgroup label="${esc(j.nom)}">
+        ${siennes.map((e) => `<option value="${esc(e.id)}">${esc(e.nom)} · ${esc(e.tag)} (${e.elo})</option>`).join('')}
+      </optgroup>`;
+    })
+    .join('');
 }
