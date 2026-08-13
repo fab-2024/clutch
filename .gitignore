@@ -5,3 +5,7 @@ node_modules/
 .env.local
 .vercel/
 captures/*.tmp
+
+# Dossiers de transfert temporaires
+_a_supprimer/
+_to_delete/

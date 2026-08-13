@@ -129,8 +129,10 @@ export async function vueConnexion(racine) {
             : await api.connexionMotDePasse({ email, motDePasse });
 
         if (r?.enAttenteEmail) {
-          toast('Compte créé : confirme-le via le lien reçu par e-mail.', 'succes');
-          bouton.disabled = false;
+          // Le compte est créé mais Supabase attend une confirmation par e-mail.
+          // Un toast qui disparaît en trois secondes laisse le joueur bloqué sans
+          // savoir quoi faire : on affiche la marche à suivre, et elle reste à l'écran.
+          ecranConfirmationAttendue(racine, email);
           return;
         }
         toast(`Bienvenue ${pseudo || email} !`, 'succes');
@@ -213,4 +215,51 @@ async function vueDemo(racine) {
   };
   racine.querySelector('#ok').addEventListener('click', valider);
   champ.addEventListener('keydown', (e) => e.key === 'Enter' && valider());
+}
+
+/**
+ * Écran affiché quand Supabase exige une confirmation par e-mail.
+ *
+ * C'est presque toujours un réglage oublié, pas un incident : le service d'envoi
+ * intégré de Supabase n'écrit qu'aux adresses de l'équipe du projet et n'envoie
+ * que quelques messages par heure. Autant le dire franchement plutôt que de
+ * laisser quelqu'un rafraîchir sa boîte mail pendant dix minutes.
+ */
+function ecranConfirmationAttendue(racine, email) {
+  racine.innerHTML = `
+    <div style="max-width:560px;margin:40px auto">
+      <h1>Ton compte est créé</h1>
+      <p style="color:var(--texte-doux)">
+        Mais Supabase attend une confirmation par e-mail avant de te laisser entrer,
+        et ce message n'arrivera probablement jamais.
+      </p>
+
+      <div class="encart encart--alerte" style="margin-bottom:18px">
+        Le service d'envoi intégré de Supabase n'écrit <strong>qu'aux adresses de l'équipe
+        du projet</strong>, et seulement quelques messages par heure. Sur un projet gratuit,
+        c'est la cause numéro un des inscriptions bloquées.
+      </div>
+
+      <div class="carte">
+        <h3>La correction, côté Supabase</h3>
+        <ol style="color:var(--texte-doux);padding-left:20px;margin:12px 0">
+          <li>Ouvre ton projet sur <strong>supabase.com</strong></li>
+          <li><strong>Authentication</strong> → <strong>Sign In / Providers</strong> → <strong>Email</strong></li>
+          <li>Désactive <strong>« Confirm email »</strong>, puis enregistre</li>
+          <li><strong>Authentication</strong> → <strong>Users</strong> → sur la ligne
+              <code>${esc(email)}</code>, menu <strong>…</strong> →
+              <strong>Confirm email</strong> (les comptes déjà créés restent non confirmés
+              même après avoir désactivé le réglage)</li>
+        </ol>
+        <p style="color:var(--texte-faible);font-size:0.84rem;margin:0">
+          Une fois ces deux points faits, l'inscription ouvre la session immédiatement,
+          sans le moindre e-mail.
+        </p>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <a class="btn btn--fantome" href="#/connexion" onclick="location.reload()">Réessayer</a>
+        <a class="btn btn--fantome" href="#/diagnostic">Lancer le diagnostic</a>
+      </div>
+    </div>`;
 }

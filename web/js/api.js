@@ -129,6 +129,13 @@ function explication(statut, detail = '') {
   if (/invalid login credentials/i.test(detail)) {
     return 'Adresse ou mot de passe incorrect.';
   }
+  if (/email not confirmed|email_not_confirmed/i.test(detail)) {
+    return (
+      "Ce compte existe mais n'est pas confirmé. La confirmation par e-mail est encore " +
+      'activée dans Supabase : désactive « Confirm email » dans Authentication → ' +
+      'Sign In / Providers → Email, puis confirme ce compte à la main dans Authentication → Users.'
+    );
+  }
   if (/user already registered/i.test(detail)) {
     return 'Un compte existe déjà avec cette adresse : connecte-toi plutôt.';
   }
