@@ -71,8 +71,23 @@ function poserSession(s) {
   else localStorage.removeItem(CLE_SESSION);
 }
 
+/**
+ * Les chemins qui ne doivent JAMAIS déclencher un rafraîchissement de session :
+ * ce sont ceux qui servent précisément à en obtenir une. Sans cette liste, le
+ * rafraîchissement s'appellerait lui-même à l'infini.
+ */
+const SANS_RAFRAICHISSEMENT = /^\/auth\/v1\/(token|signup|otp)/;
+
 async function sb(chemin, { methode = 'GET', corps = null, entetes = {} } = {}) {
-  const s = session();
+  // Un jeton d'accès Supabase vit une heure. On le rafraîchit ici, avant
+  // CHAQUE requête, et pas seulement dans utilisateurCourant().
+  //
+  // C'était le bug : passé une heure, toutes les autres requêtes partaient
+  // encore avec le jeton périmé, Supabase répondait 401 « JWT expired », et
+  // l'application accusait la clé publique — qui n'y était pour rien. Le
+  // symptôme était d'autant plus déroutant que « Ma session » restait au vert :
+  // elle, elle passait bien par le rafraîchissement.
+  const s = SANS_RAFRAICHISSEMENT.test(chemin) ? session() : await sessionValide();
   let reponse;
   try {
     reponse = await fetchLimite(`${BASE}${chemin}`, {
@@ -148,6 +163,9 @@ function explication(statut, detail = '') {
   }
   if (/error sending|smtp/i.test(detail)) {
     return "Supabase n'a pas pu envoyer l'e-mail. Le service gratuit n'écrit qu'aux adresses de l'équipe du projet : utilise l'adresse de ton compte Supabase, ou configure un SMTP.";
+  }
+  if (/jwt expired|token is expired/i.test(detail)) {
+    return 'Ta session a expiré. Recharge la page : elle se renouvellera toute seule. Si le message revient, déconnecte-toi puis reconnecte-toi.';
   }
   if (statut === 401) return 'Clé Supabase refusée : vérifie SUPABASE_ANON_KEY dans config.js';
   if (statut === 403) return 'Accès refusé par les règles de sécurité : 03_securite.sql a-t-il été exécuté ?';
@@ -571,12 +589,14 @@ export function etapesDiagnostic() {
       libelle: 'Connexion à Supabase',
       aide: 'Ouvre ton projet sur supabase.com : un projet gratuit se met en pause après une semaine sans activité.',
       executer: async () => {
+        // On interroge une vraie table PUBLIQUE, avec la clé publique et rien
+        // d'autre — surtout pas la session du joueur. Ce test doit dire une
+        // seule chose : « le projet répond et la clé est bonne ». L'ancienne
+        // version tapait la racine /rest/v1/, qui répond 401 même en bonne
+        // santé : le diagnostic accusait la clé à chaque fois.
         let r;
         try {
-          // Les deux en-têtes sont nécessaires : avec la seule clé « apikey »,
-          // Supabase répond 401 même quand tout va bien, et le diagnostic
-          // accusait la clé alors que le problème était ailleurs.
-          r = await fetchLimite(`${BASE}/rest/v1/`, {
+          r = await fetchLimite(`${BASE}/rest/v1/equipes?select=id&limit=1`, {
             headers: {
               apikey: SUPABASE_ANON_KEY,
               Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
@@ -586,8 +606,11 @@ export function etapesDiagnostic() {
           if (/n'a pas répondu/.test(e.message)) throw e;
           throw new Error(`Aucune réponse de ${BASE} : adresse erronée, ou projet en pause.`);
         }
-        if (!r.ok && r.status !== 404) throw new Error(explication(r.status));
-        return `réponse ${r.status}`;
+        if (!r.ok) {
+          const detail = (await r.text()).slice(0, 200);
+          throw new Error(explication(r.status, detail));
+        }
+        return 'le projet répond et la clé publique est acceptée';
       },
     },
     {
