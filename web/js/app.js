@@ -162,6 +162,13 @@ export async function majSolde() {
 function init() {
   document.title = `${NOM_APP} — le prono esport entre potes`;
 
+  // Un clic sur le lien reçu par e-mail nous ramène ici avec les jetons dans
+  // l'adresse. On les récupère AVANT le premier rendu, sinon l'utilisateur
+  // atterrit sur une page « introuvable » alors qu'il vient de se connecter.
+  const retour = api.capterRetourAuth?.();
+  if (retour?.ok) toast('Connexion réussie, bienvenue !', 'succes');
+  if (retour?.erreur) toast(retour.erreur, 'erreur');
+
   if (MODE_DEMO) {
     const bandeau = document.getElementById('bandeau-demo');
     bandeau.hidden = false;

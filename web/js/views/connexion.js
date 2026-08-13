@@ -47,7 +47,14 @@ export async function vueConnexion(racine) {
     try {
       const r = await api.connexion(valeur);
       if (r?.enAttenteEmail) {
-        toast('Lien envoyé, regarde ta boîte mail.', 'succes');
+        toast('Lien envoyé, regarde ta boîte mail (et les indésirables).', 'succes');
+        racine.querySelector('.carte').insertAdjacentHTML(
+          'beforeend',
+          `<div class="encart" style="margin-top:16px">
+             Un lien vient de partir vers <strong>${valeur.replace(/[<>&]/g, '')}</strong>.
+             Clique dessus depuis <strong>ce navigateur</strong> : il te ramènera ici, connecté.
+           </div>`
+        );
         return;
       }
       toast(`Bienvenue ${valeur} !`, 'succes');

@@ -17,6 +17,18 @@ import * as demo from './store.js';
 /* Client Supabase minimal (aucune dépendance, ~80 lignes)             */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Adresse de base, normalisée. Le tableau de bord Supabase affiche deux
+ * adresses très proches — la « Project URL » (https://xxx.supabase.co) et le
+ * « RESTful endpoint » (https://xxx.supabase.co/rest/v1/) — et coller la
+ * seconde produisait une URL en double, illisible à déboguer. On rattrape
+ * donc le cas plutôt que de le sanctionner.
+ */
+export const BASE = SUPABASE_URL.trim()
+  .replace(/\/+$/, '')
+  .replace(/\/rest\/v1$/, '')
+  .replace(/\/auth\/v1$/, '');
+
 const CLE_SESSION = 'clutch.session';
 
 /** Au-delà, on considère que Supabase ne répondra pas. */
@@ -62,7 +74,7 @@ async function sb(chemin, { methode = 'GET', corps = null, entetes = {} } = {}) 
   const s = session();
   let reponse;
   try {
-    reponse = await fetchLimite(`${SUPABASE_URL}${chemin}`, {
+    reponse = await fetchLimite(`${BASE}${chemin}`, {
       method: methode,
       headers: {
         apikey: SUPABASE_ANON_KEY,
@@ -78,7 +90,7 @@ async function sb(chemin, { methode = 'GET', corps = null, entetes = {} } = {}) 
     // ("Failed to fetch") ne dit rien à personne.
     if (/n'a pas répondu/.test(e.message)) throw e; // délai dépassé, message déjà clair
     throw new Error(
-      `Impossible de joindre Supabase à l'adresse ${SUPABASE_URL} — ` +
+      `Impossible de joindre Supabase à l'adresse ${BASE} — ` +
         'vérifie SUPABASE_URL dans config.js, et que le projet ne soit pas en pause sur supabase.com'
     );
   }
@@ -105,6 +117,21 @@ async function sb(chemin, { methode = 'GET', corps = null, entetes = {} } = {}) 
  * ne dit rien à quelqu'un qui n'a pas écrit le code.
  */
 function explication(statut, detail = '') {
+  if (/signups? not allowed|signup_disabled/i.test(detail)) {
+    return 'Les inscriptions sont désactivées : active-les dans Authentication → Sign In / Providers';
+  }
+  if (/email logins are disabled|email_provider_disabled/i.test(detail)) {
+    return "La connexion par e-mail est désactivée : active le fournisseur Email dans Authentication → Sign In / Providers";
+  }
+  if (/only request this after|rate limit|too many/i.test(detail)) {
+    return 'Trop de demandes envoyées : Supabase limite les e-mails à quelques-uns par heure. Attends un moment.';
+  }
+  if (/redirect|not allowed/i.test(detail) && statut === 400) {
+    return "Adresse de retour non autorisée : ajoute l'adresse de ton site dans Authentication → URL Configuration";
+  }
+  if (/error sending|smtp/i.test(detail)) {
+    return "Supabase n'a pas pu envoyer l'e-mail. Le service gratuit n'écrit qu'aux adresses de l'équipe du projet : utilise l'adresse de ton compte Supabase, ou configure un SMTP.";
+  }
   if (statut === 401) return 'Clé Supabase refusée : vérifie SUPABASE_ANON_KEY dans config.js';
   if (statut === 403) return 'Accès refusé par les règles de sécurité : 03_securite.sql a-t-il été exécuté ?';
   if (statut === 404) return "Table ou fonction absente : les fichiers SQL n'ont pas tous été exécutés";
@@ -113,6 +140,72 @@ function explication(statut, detail = '') {
   }
   if (statut >= 500) return 'Supabase ne répond pas correctement (projet en pause ?)';
   return `Erreur ${statut}`;
+}
+
+/**
+ * Session valide, rafraîchie si le jeton d'accès arrive à expiration.
+ * Un jeton Supabase vit une heure : sans ce rafraîchissement, l'utilisateur
+ * se retrouve déconnecté au bout d'une heure, sans comprendre pourquoi.
+ */
+async function sessionValide() {
+  const s = session();
+  if (!s) return null;
+  const marge = 60; // secondes
+  if (s.expires_at && s.expires_at > Date.now() / 1000 + marge) return s;
+  if (!s.refresh_token) {
+    poserSession(null);
+    return null;
+  }
+  try {
+    const r = await sb('/auth/v1/token?grant_type=refresh_token', {
+      methode: 'POST',
+      corps: { refresh_token: s.refresh_token },
+    });
+    poserSession({
+      access_token: r.access_token,
+      refresh_token: r.refresh_token,
+      expires_at: Math.floor(Date.now() / 1000) + (r.expires_in || 3600),
+    });
+    return session();
+  } catch {
+    poserSession(null);
+    return null;
+  }
+}
+
+/**
+ * Après un clic sur le lien reçu par e-mail, Supabase renvoie vers le site
+ * avec les jetons dans l'adresse (#access_token=...). Sans cette fonction,
+ * l'application les ignore : on clique sur le lien, et il ne se passe rien.
+ *
+ * Retourne { ok: true }, { erreur: '...' } ou null s'il n'y a rien à traiter.
+ */
+export function capterRetourAuth() {
+  const brut = location.hash.replace(/^#\/?/, '');
+  if (!/access_token=|error_description=|error=/.test(brut)) return null;
+
+  const params = new URLSearchParams(brut);
+  const nettoyer = () =>
+    history.replaceState(null, '', `${location.pathname}${location.search}#/matchs`);
+
+  const erreur = params.get('error_description') || params.get('error');
+  if (erreur) {
+    nettoyer();
+    return { erreur: decodeURIComponent(erreur.replace(/\+/g, ' ')) };
+  }
+
+  const access_token = params.get('access_token');
+  if (!access_token) return null;
+
+  poserSession({
+    access_token,
+    refresh_token: params.get('refresh_token'),
+    expires_at:
+      Number(params.get('expires_at')) ||
+      Math.floor(Date.now() / 1000) + Number(params.get('expires_in') || 3600),
+  });
+  nettoyer();
+  return { ok: true };
 }
 
 const rest = (chemin, options) => sb(`/rest/v1${chemin}`, options);
@@ -126,7 +219,7 @@ export const estDemo = MODE_DEMO;
 
 export async function utilisateurCourant() {
   if (MODE_DEMO) return demo.utilisateurCourant();
-  const s = session();
+  const s = await sessionValide();
   if (!s) return null;
   try {
     const profils = await rest('/profils?select=*&limit=1');
@@ -140,9 +233,12 @@ export async function utilisateurCourant() {
 /** En production : envoi d'un lien magique par e-mail. En démo : pseudo direct. */
 export async function connexion(identifiant) {
   if (MODE_DEMO) return demo.connexion(identifiant);
-  await sb('/auth/v1/otp', {
+  // redirect_to indique à Supabase l'adresse de retour du lien. Sans ça, il
+  // utilise la « Site URL » du projet, souvent restée sur localhost.
+  const retour = encodeURIComponent(`${location.origin}${location.pathname}`);
+  await sb(`/auth/v1/otp?redirect_to=${retour}`, {
     methode: 'POST',
-    corps: { email: identifiant, create_user: true },
+    corps: { email: identifiant.trim(), create_user: true },
   });
   return { enAttenteEmail: true };
 }
@@ -307,13 +403,14 @@ export function etapesDiagnostic() {
       aide: 'Colle tes deux clés dans web/js/config.js, puis redéploie.',
       executer: async () => {
         if (MODE_DEMO) throw new Error('Aucune clé Supabase : le site tourne en mode démo.');
-        if (!/^https:\/\/.+\.supabase\.co/.test(SUPABASE_URL)) {
+        if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(BASE)) {
           throw new Error(
             `SUPABASE_URL a une forme inattendue : ${SUPABASE_URL}. ` +
-              "Elle doit ressembler à https://abcdefgh.supabase.co (et non à l'adresse du tableau de bord)."
+              'Elle doit être la « Project URL », de la forme https://abcdefgh.supabase.co — ' +
+              "sans /rest/v1/ à la fin, et sans l'adresse du tableau de bord."
           );
         }
-        return SUPABASE_URL;
+        return SUPABASE_URL === BASE ? BASE : `${BASE} (corrigée depuis « ${SUPABASE_URL} »)`;
       },
     },
   ];
@@ -327,10 +424,10 @@ export function etapesDiagnostic() {
       executer: async () => {
         let r;
         try {
-          r = await fetchLimite(`${SUPABASE_URL}/rest/v1/`, { headers: { apikey: SUPABASE_ANON_KEY } });
+          r = await fetchLimite(`${BASE}/rest/v1/`, { headers: { apikey: SUPABASE_ANON_KEY } });
         } catch (e) {
           if (/n'a pas répondu/.test(e.message)) throw e;
-          throw new Error(`Aucune réponse de ${SUPABASE_URL} : adresse erronée, ou projet en pause.`);
+          throw new Error(`Aucune réponse de ${BASE} : adresse erronée, ou projet en pause.`);
         }
         if (!r.ok && r.status !== 404) throw new Error(explication(r.status));
         return `réponse ${r.status}`;
