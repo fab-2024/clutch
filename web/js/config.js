@@ -22,7 +22,7 @@ export const NOM_APP = 'Clutch';
 export const MONNAIE = 'Frags';
 
 /** Adresses e-mail autorisées à accéder à la page d'administration. */
-export const ADMINS = ['pierrelouis.blutel2@gmail.com'];
+export const ADMINS = ['pierre-louis.blutel@student-cs.fr'];
 
 export const MODE_DEMO = !SUPABASE_URL || !SUPABASE_ANON_KEY;
 
