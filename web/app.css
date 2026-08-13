@@ -568,6 +568,18 @@ input::placeholder { color: var(--texte-faible); }
   padding: 16px 18px; border-radius: var(--rayon-s); text-align: center; color: var(--accent);
 }
 
+/* Un bloc de code qu'on doit recopier tel quel : il ne se replie pas au
+   milieu d'une instruction SQL, il défile. */
+.code-bloc {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.84rem; line-height: 1.5;
+  background: var(--fond-2); border: 1px solid var(--bordure);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--rayon-s) var(--rayon-s) 0;
+  padding: 13px 16px; margin: 0 0 14px;
+  overflow-x: auto; white-space: pre; color: var(--texte);
+}
+
 .barre-proba { height: 5px; background: var(--surface-2); border-radius: 3px; overflow: hidden; display: flex; margin-top: 10px; }
 .barre-proba__part { height: 100%; }
 

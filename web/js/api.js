@@ -10,7 +10,7 @@
  * basculer en production en collant deux clés dans config.js.
  */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY, MODE_DEMO, ADMINS } from './config.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, MODE_DEMO } from './config.js';
 import * as demo from './store.js';
 import { evaluerBadges, carteMeritee, SOLDE_INITIAL } from './core.js';
 
@@ -396,11 +396,19 @@ export async function reinitialiser() {
   throw new Error('Indisponible en production.');
 }
 
+/**
+ * Suis-je administrateur ?
+ *
+ * La réponse vient de `profils.est_admin`, en base — pas d'une liste d'adresses
+ * écrite dans le code. C'est ce que vérifient TOUTES les fonctions serveur
+ * (`regler_match`, `creer_match`, `annuler_match`…) : si les deux ne lisent pas
+ * la même chose, on obtient exactement le pire des cas — l'onglet Admin
+ * s'affiche, et chaque bouton renvoie « Réservé aux administrateurs. ».
+ */
 export async function estAdmin() {
-  const u = await utilisateurCourant();
-  if (!u) return false;
   if (MODE_DEMO) return true; // en démo, tout le monde peut voir l'admin
-  return ADMINS.includes(u.email);
+  const u = await utilisateurCourant();
+  return u?.est_admin === true;
 }
 
 /* --- Saisons --- */
@@ -716,6 +724,26 @@ export function etapesDiagnostic() {
         const u = await utilisateurCourant();
         if (!u) throw new Error('Pas connecté.');
         return `connecté en tant que ${u.pseudo || u.email}`;
+      },
+    },
+    {
+      // Cette étape ne devrait échouer qu'une fois dans la vie d'un projet :
+      // juste après l'installation, tant que personne n'a été nommé admin.
+      libelle: 'Droits d’administration',
+      aide:
+        'Dans le SQL Editor de Supabase : ' +
+        "update profils set est_admin = true where email = 'TON-ADRESSE';  " +
+        'Vérifie d’abord ton adresse exacte avec : select id, pseudo, email, est_admin from profils;',
+      executer: async () => {
+        const u = await utilisateurCourant();
+        if (!u) throw new Error('Pas connecté.');
+        if (u.est_admin !== true) {
+          throw new Error(
+            `Le compte ${u.email ?? u.pseudo} n’est pas administrateur en base ` +
+              '(profils.est_admin vaut faux). Régler un match sera refusé.'
+          );
+        }
+        return `${u.pseudo || u.email} est administrateur`;
       },
     }
   );

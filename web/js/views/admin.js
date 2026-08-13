@@ -10,7 +10,34 @@ import { JEUX, FORMATS, ELO_DEFAUT, ELO_MIN, ELO_MAX } from '../core.js';
  */
 export async function vueAdmin(racine) {
   if (!contexte.admin) {
-    racine.innerHTML = vide('Accès réservé', 'Cette page est réservée aux administrateurs.');
+    // On donne la marche à suivre exacte plutôt qu'un simple « accès refusé ».
+    // C'est l'écran que voit forcément la première personne qui installe le
+    // projet, avant que quiconque n'ait été nommé administrateur.
+    racine.innerHTML = `
+      <div class="entete-page">
+        <h1>Accès réservé</h1>
+        <p>Ce compte n’est pas administrateur.</p>
+      </div>
+      <div class="bloc bloc--info">
+        <div class="bloc__titre"><span>Comment se nommer administrateur</span></div>
+        <div class="bloc__corps">
+          <p style="color:var(--texte-doux)">
+            Le droit d’administration vit dans la base, pas dans le code du site.
+            Dans le <strong>SQL Editor</strong> de Supabase, retrouve d’abord ton
+            adresse exacte :
+          </p>
+          <pre class="code-bloc">select id, pseudo, email, est_admin from profils;</pre>
+          <p style="color:var(--texte-doux)">Puis nomme-toi, avec l’adresse lue ci-dessus :</p>
+          <pre class="code-bloc">update profils
+   set est_admin = true
+ where email = 'ton-adresse@exemple.fr';</pre>
+          <p style="color:var(--texte-faible);font-size:0.85rem;margin-bottom:0">
+            Supabase doit répondre <em>UPDATE 1</em>. S’il répond <em>UPDATE 0</em>,
+            l’adresse ne correspond à aucun profil : reprends celle de la première
+            requête, au caractère près. Recharge ensuite la page.
+          </p>
+        </div>
+      </div>`;
     return;
   }
 
