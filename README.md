@@ -139,6 +139,40 @@ tiré de façon déterministe à partir de la semaine ISO : il ne bouge pas d'un
 page à l'autre et change tout seul le lundi. Aucune table, aucune donnée
 nouvelle — c'est du classement existant relu autrement.
 
+**Le prono par défaut.** Si le joueur n'a rien saisi à l'heure du coup d'envoi,
+Clutch mise pour lui sur le favori. Ce n'est pas une stratégie — le favori perd
+lentement à cause de la marge — c'est un filet : rater une soirée ne doit pas
+sortir quelqu'un du classement. Réglable par joueur (jamais / mes matchs /
+tous), avec une mise plafonnée, et posé à deux moments : à l'ouverture de
+l'application pour les matchs commencés, et au règlement pour ceux qui n'ont
+pas ouvert l'application du tout.
+
+**Le défi de ligue.** Un tournoi tiré au sort par ligue et par saison, avec un
+classement parallèle où seuls les paris posés sur ce tournoi comptent, au
+bénéfice net. Volontairement à côté du classement principal : deux classements
+concurrents dilueraient l'enjeu, un classement et un défi donnent une seconde
+chance.
+
+**Le profil d'analyste.** Rentabilité par format, par jeu, par marché, par
+niveau de cote, et comparaison entre les matchs de son équipe préférée et tous
+les autres. Le résultat n'est pas un tableau de plus mais des constats rédigés
+— et jamais sur un groupe de moins de cinq paris, parce qu'en dessous un écart
+de rentabilité raconte le hasard, pas le jugement du joueur.
+
+## Les couleurs
+
+La palette s'appelle **Clutch Volt** : noir bleuté, blanc froid, et un jaune
+volt `#E8FF3D`. Une seule règle de répartition, et tout en découle —
+**80 % noir et graphite, 15 % blanc et gris, 5 % Volt**.
+
+Le Volt ne sort que pour ce qui engage : le logo, le bouton principal, le choix
+sélectionné, et les moments qui comptent (le call, la rivalité, le rang 1). Le
+vert et le rouge sont **réservés aux résultats** — si tout l'écran était vert,
+une victoire ne se verrait plus. Le bleu ne sert qu'au direct et à
+l'information neutre. Sur un aplat Volt, on écrit en noir, jamais en blanc.
+
+Tout tient dans les variables en haut de `web/app.css`.
+
 ## Architecture
 
 ```
@@ -148,7 +182,8 @@ web/                 Application (HTML + CSS + JavaScript natif, aucun build)
   js/store.js        Backend de démonstration (localStorage)
   js/views/          Une vue par écran
 supabase/            Base de données : schéma, fonctions SQL, sécurité, données
-                     01 à 04 = socle, 05 = prime en série, équipe, call, rivalité
+                     01 à 04 = socle, 05 = prime, équipe, call, rivalité
+                     06 = prono par défaut, défi de ligue, profil d'analyste
 extension/           Extension Chrome MV3 (overlay Twitch / YouTube)
 tests/               Tests, sans dépendance : node --test tests/*.mjs
 ```
@@ -169,11 +204,13 @@ Deux principes structurent le tout :
 node --test tests/*.mjs
 ```
 
-85 tests couvrent le moteur de cotes (distributions, marge, Elo), les règles du
-palier 1 (paliers de prime, plafonds, cotes de tournoi, tirage du rival) et le
-parcours complet de bout en bout : inscription, mise, règlement, classement,
-call de la saison, ainsi que les cas d'erreur (solde insuffisant, score
-incohérent, double pari, match déjà réglé, call déjà posé, tournoi fermé).
+114 tests couvrent le moteur de cotes (distributions, marge, Elo), les règles
+du palier 1 (paliers de prime, plafonds, cotes de tournoi, tirage du rival,
+choix du pari automatique, agrégations et prudence statistique) et le parcours
+complet de bout en bout : inscription, mise, règlement, classement, call de la
+saison, prono par défaut, défi de ligue, profil d'analyste — ainsi que les cas
+d'erreur (solde insuffisant, score incohérent, double pari, match déjà réglé,
+call déjà posé, tournoi fermé, défi déjà tiré, tirage par un non-créateur).
 
 ## Extension Chrome
 

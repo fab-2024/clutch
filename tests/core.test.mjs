@@ -341,3 +341,143 @@ test('bilanPeriode : ne compte que les paris réglés de la période', () => {
   assert.equal(b.gains, 250);
   assert.equal(b.net, -50);
 });
+
+/* ------------------------------------------------------------------ */
+/* Prono par défaut                                                    */
+/* ------------------------------------------------------------------ */
+
+const MARCHES = [
+  {
+    cle: 'vainqueur',
+    choix: [
+      { cle: 'a', libelle: 'Fort', cote: 1.4 },
+      { cle: 'b', libelle: 'Faible', cote: 2.9 },
+    ],
+  },
+  { cle: 'score_exact', choix: [{ cle: '2-0', libelle: '2 – 0', cote: 1.1 }] },
+];
+
+test('choixAutomatique : toujours le favori du marché vainqueur', () => {
+  assert.equal(core.choixAutomatique(MARCHES).cle, 'a');
+  // Même réponse si l'ordre des choix change : c'est la cote qui décide.
+  const inverse = [{ cle: 'vainqueur', choix: [...MARCHES[0].choix].reverse() }];
+  assert.equal(core.choixAutomatique(inverse).cle, 'a');
+});
+
+test('choixAutomatique : ne prend jamais un autre marché', () => {
+  assert.equal(core.choixAutomatique([MARCHES[1]]), null);
+  assert.equal(core.choixAutomatique([]), null);
+});
+
+test('eligibleAuPariAuto : le mode off ne déclenche jamais rien', () => {
+  const match = { equipe_a_id: 'x', equipe_b_id: 'y' };
+  assert.equal(core.eligibleAuPariAuto({ mode: 'off', equipeFavoriteId: 'x', match }), false);
+  assert.equal(core.eligibleAuPariAuto({ mode: 'inconnu', equipeFavoriteId: 'x', match }), false);
+});
+
+test('eligibleAuPariAuto : le mode favori ne couvre que les matchs de son équipe', () => {
+  const sien = { equipe_a_id: 'x', equipe_b_id: 'y' };
+  const autre = { equipe_a_id: 'z', equipe_b_id: 'y' };
+  assert.equal(core.eligibleAuPariAuto({ mode: 'favori', equipeFavoriteId: 'x', match: sien }), true);
+  assert.equal(core.eligibleAuPariAuto({ mode: 'favori', equipeFavoriteId: 'x', match: autre }), false);
+  assert.equal(core.eligibleAuPariAuto({ mode: 'favori', equipeFavoriteId: null, match: sien }), false);
+});
+
+test('eligibleAuPariAuto : le mode tous couvre tout', () => {
+  const match = { equipe_a_id: 'z', equipe_b_id: 'y' };
+  assert.equal(core.eligibleAuPariAuto({ mode: 'tous', equipeFavoriteId: null, match }), true);
+});
+
+/* ------------------------------------------------------------------ */
+/* Profil d'analyste                                                   */
+/* ------------------------------------------------------------------ */
+
+test('trancheCote : trois tranches, bornes comprises', () => {
+  assert.equal(core.trancheCote(1.2), 'favori');
+  assert.equal(core.trancheCote(1.79), 'favori');
+  assert.equal(core.trancheCote(1.8), 'equilibre');
+  assert.equal(core.trancheCote(2.99), 'equilibre');
+  assert.equal(core.trancheCote(3), 'outsider');
+  assert.equal(core.trancheCote(40), 'outsider');
+});
+
+test('agreger : regroupe, somme et calcule le retour sur mise', () => {
+  const paris = [
+    { format: 3, statut: 'gagne', mise: 100, gain: 250 },
+    { format: 3, statut: 'perdu', mise: 100, gain: 0 },
+    { format: 1, statut: 'perdu', mise: 200, gain: 0 },
+  ];
+  const g = core.agreger(paris, 'format');
+  const bo3 = g.find((x) => x.cle === 3);
+  const bo1 = g.find((x) => x.cle === 1);
+  assert.equal(bo3.paris, 2);
+  assert.equal(bo3.gagnes, 1);
+  assert.equal(bo3.mises, 200);
+  assert.equal(bo3.gains, 250);
+  assert.equal(bo3.net, 50);
+  proche(bo3.roi, 25);
+  assert.equal(bo1.roi, -100);
+  assert.equal(g[0].cle, 3, 'trié par nombre de paris');
+});
+
+test('agreger : accepte une clé calculée et ignore les valeurs nulles', () => {
+  const paris = [
+    { cote: 1.5, statut: 'gagne', mise: 10, gain: 15 },
+    { cote: 4, statut: 'perdu', mise: 10, gain: 0 },
+    { cote: null, statut: 'perdu', mise: 10, gain: 0 },
+  ];
+  const g = core.agreger(paris, (p) => (p.cote === null ? null : core.trancheCote(p.cote)));
+  assert.equal(g.length, 2);
+  assert.deepEqual(g.map((x) => x.cle).sort(), ['favori', 'outsider']);
+});
+
+const detailType = (roiBo3, roiBo1, paris = 10) => ({
+  par_format: [
+    { cle: 3, paris, roi: roiBo3 },
+    { cle: 1, paris, roi: roiBo1 },
+  ],
+  par_jeu: [],
+  par_marche: [],
+  par_cote: [],
+  equipe_favorite: null,
+});
+
+test('constatsAnalyste : commente un écart net entre deux formats', () => {
+  const c = core.constatsAnalyste(detailType(30, -25));
+  assert.equal(c.length, 1);
+  assert.match(c[0].texte, /BO3/);
+  assert.match(c[0].texte, /BO1/);
+});
+
+test('constatsAnalyste : ne commente jamais un échantillon trop petit', () => {
+  const c = core.constatsAnalyste(detailType(200, -90, 3));
+  assert.equal(c[0].cle, 'vide', 'trois paris ne prouvent rien');
+});
+
+test('constatsAnalyste : reste muet quand l’écart est faible', () => {
+  const c = core.constatsAnalyste(detailType(6, 1));
+  assert.equal(c[0].cle, 'vide');
+});
+
+test('constatsAnalyste : détecte le biais du supporter dans les deux sens', () => {
+  const base = detailType(2, 1);
+  const biais = core.constatsAnalyste({
+    ...base,
+    equipe_favorite: { nom: 'Karmine Corp', avec: { paris: 12, roi: -40 }, sans: { paris: 20, roi: 5 } },
+  });
+  assert.ok(biais.some((c) => c.cle === 'equipe_favorite' && /biais du supporter/.test(c.texte)));
+
+  const avantage = core.constatsAnalyste({
+    ...base,
+    equipe_favorite: { nom: 'Karmine Corp', avec: { paris: 12, roi: 40 }, sans: { paris: 20, roi: 5 } },
+  });
+  assert.ok(avantage.some((c) => c.cle === 'equipe_favorite' && /avantage réel/.test(c.texte)));
+});
+
+test('constatsAnalyste : pas de constat d’équipe sans les deux échantillons', () => {
+  const c = core.constatsAnalyste({
+    ...detailType(2, 1),
+    equipe_favorite: { nom: 'KC', avec: { paris: 2, roi: -80 }, sans: { paris: 30, roi: 4 } },
+  });
+  assert.ok(!c.some((x) => x.cle === 'equipe_favorite'));
+});

@@ -3,27 +3,51 @@
    Sans framework, sans build. Variables CSS en haut : change-les et tout suit.
    ========================================================================= */
 
+/* -------------------------------------------------------------------------
+   Palette « Clutch Volt ».
+
+   Une règle de répartition, et tout en découle :
+     80 % noir et graphite · 15 % blanc et gris · 5 % Jaune Volt.
+
+   Le Volt ne sort que pour ce qui engage : le logo, le bouton principal, le
+   choix sélectionné, et les moments qui comptent (call, rivalité, rang 1).
+   Le vert et le rouge sont réservés aux RÉSULTATS — si tout l'écran était
+   vert, une victoire ne se verrait plus. Le bleu ne sert qu'au direct et à
+   l'information neutre.
+   ------------------------------------------------------------------------- */
+
 :root {
   /* Fond et surfaces */
-  --fond: #0c0e14;
-  --fond-2: #12151f;
-  --surface: #171b28;
-  --surface-2: #1e2333;
-  --bordure: #262c3d;
-  --bordure-vive: #38405a;
+  --fond: #080b10;
+  --fond-2: #0d131b;
+  --surface: #121821;
+  --surface-2: #1a2330;
+  --bordure: #212b3a;
+  --bordure-vive: #334054;
 
   /* Texte */
-  --texte: #eef1f8;
-  --texte-doux: #9aa3ba;
-  --texte-faible: #6b7490;
+  --texte: #f5f7fa;
+  --texte-doux: #98a2b3;
+  --texte-faible: #6b7688;
 
-  /* Accents */
-  --accent: #00e5a0;
-  --accent-sombre: #00b37d;
-  --accent-fantome: rgba(0, 229, 160, 0.12);
-  --danger: #ff5c72;
-  --alerte: #ffb648;
-  --or: #ffd166;
+  /* La couleur Clutch : action, sélection, moment décisif. Rien d'autre. */
+  --accent: #e8ff3d;
+  --accent-sombre: #d3ea28;
+  --accent-fantome: rgba(232, 255, 61, 0.1);
+  --accent-bordure: rgba(232, 255, 61, 0.32);
+  /* Sur un aplat Volt, on écrit en noir. Jamais en blanc : illisible. */
+  --sur-accent: #080b10;
+
+  /* Résultats, et rien que les résultats */
+  --succes: #2ed47a;
+  --danger: #ff5c68;
+
+  /* Direct et information neutre */
+  --info: #42a5ff;
+
+  /* Alias conservés pour ne rien casser ailleurs */
+  --alerte: #42a5ff;
+  --or: #e8ff3d;
 
   /* Jeux */
   --lol: #c8963e;
@@ -44,8 +68,8 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background:
-    radial-gradient(1100px 500px at 15% -10%, rgba(0, 229, 160, 0.07), transparent 60%),
-    radial-gradient(900px 450px at 100% 0%, rgba(255, 70, 85, 0.06), transparent 55%),
+    radial-gradient(1100px 500px at 15% -10%, rgba(232, 255, 61, 0.05), transparent 60%),
+    radial-gradient(900px 450px at 100% 0%, rgba(66, 165, 255, 0.05), transparent 55%),
     var(--fond);
   color: var(--texte);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -62,14 +86,20 @@ h1 { font-size: clamp(1.6rem, 4vw, 2.1rem); }
 h2 { font-size: 1.25rem; }
 h3 { font-size: 1rem; }
 p { margin: 0 0 1em; }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
+/* Les liens ne sont pas Volt : ils sont partout, le Volt doit rester rare.
+   L'affordance passe par un soulignement discret qui s'allume au survol. */
+a {
+  color: var(--texte); text-decoration: underline;
+  text-decoration-color: var(--bordure-vive); text-underline-offset: 3px;
+  transition: var(--transition);
+}
+a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 
 .conteneur { width: 100%; max-width: var(--largeur); margin: 0 auto; padding: 0 20px; }
 
 .saut-contenu {
   position: absolute; left: -9999px; top: 0; z-index: 100;
-  background: var(--accent); color: #04160f; padding: 10px 16px; border-radius: 0 0 8px 0;
+  background: var(--accent); color: var(--sur-accent); padding: 10px 16px; border-radius: 0 0 8px 0;
 }
 .saut-contenu:focus { left: 0; }
 
@@ -77,7 +107,7 @@ a:hover { text-decoration: underline; }
 
 .entete {
   position: sticky; top: 0; z-index: 40;
-  background: rgba(12, 14, 20, 0.85);
+  background: rgba(8, 11, 16, 0.86);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--bordure);
 }
@@ -94,8 +124,11 @@ a:hover { text-decoration: underline; }
 .nav a {
   color: var(--texte-doux); padding: 7px 13px; border-radius: 999px;
   font-weight: 500; font-size: 0.9rem; transition: var(--transition);
+  text-decoration: none;
 }
 .nav a:hover { color: var(--texte); background: var(--surface); text-decoration: none; }
+.btn, .match, .carte-call { text-decoration: none; }
+.btn:hover, .match:hover { text-decoration: none; }
 .nav a.actif { color: var(--accent); background: var(--accent-fantome); }
 
 .entete__droite { display: flex; align-items: center; gap: 12px; }
@@ -105,7 +138,7 @@ a:hover { text-decoration: underline; }
   background: var(--surface); border: 1px solid var(--bordure);
   padding: 6px 14px; border-radius: 999px; font-variant-numeric: tabular-nums;
 }
-.solde__valeur { font-weight: 700; color: var(--accent); }
+.solde__valeur { font-weight: 700; color: var(--texte); }
 .solde__unite { color: var(--texte-faible); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; }
 
 .selecteur-saison {
@@ -128,8 +161,8 @@ a:hover { text-decoration: underline; }
 /* -------------------------------------------------------------- Bandeau */
 
 .bandeau-demo {
-  background: linear-gradient(90deg, rgba(0, 229, 160, 0.14), rgba(0, 229, 160, 0.04));
-  border-bottom: 1px solid rgba(0, 229, 160, 0.22);
+  background: linear-gradient(90deg, rgba(232, 255, 61, 0.1), rgba(232, 255, 61, 0.02));
+  border-bottom: 1px solid var(--accent-bordure);
   font-size: 0.84rem; color: var(--texte-doux); padding: 9px 0;
 }
 .bandeau-demo strong { color: var(--accent); }
@@ -177,7 +210,10 @@ a:hover { text-decoration: underline; }
   transition: var(--transition);
 }
 .puce:hover { border-color: var(--bordure-vive); color: var(--texte); }
-.puce.actif { background: var(--texte); color: var(--fond); border-color: var(--texte); font-weight: 600; }
+/* Sélection = contour Volt, pas aplat. L'aplat plein est réservé au bouton
+   principal et au pari verrouillé, sinon deux filtres actifs suffisent à faire
+   sauter le budget de 5 %. */
+.puce.actif { background: var(--accent-fantome); color: var(--accent); border-color: var(--accent); font-weight: 600; }
 
 /* ---------------------------------------------------------- Carte match */
 
@@ -186,7 +222,10 @@ a:hover { text-decoration: underline; }
   border-radius: var(--rayon); overflow: hidden; transition: var(--transition);
   color: inherit;
 }
-.match:hover { border-color: var(--bordure-vive); transform: translateY(-2px); box-shadow: var(--ombre); text-decoration: none; }
+/* La carte entière est un lien : sans ce rappel, le survol repeindrait tout
+   son contenu en Volt. */
+.match:hover { border-color: var(--bordure-vive); transform: translateY(-2px); box-shadow: var(--ombre); text-decoration: none; color: inherit; }
+.match:hover .equipe__nom { color: var(--texte); }
 
 .match__haut {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -223,8 +262,13 @@ a:hover { text-decoration: underline; }
 .cote:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-fantome); }
 .cote:disabled { opacity: 0.45; cursor: not-allowed; }
 .cote.selectionne { border-color: var(--accent); background: var(--accent-fantome); }
+.cote.selectionne .cote__valeur { color: var(--accent); }
+/* Pari verrouillé : aplat Volt, texte noir. */
+.cote.verrouille { background: var(--accent); border-color: var(--accent); }
+.cote.verrouille .cote__libelle,
+.cote.verrouille .cote__valeur { color: var(--sur-accent); }
 .cote__libelle { font-size: 0.86rem; color: var(--texte-doux); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cote__valeur { font-weight: 750; font-variant-numeric: tabular-nums; color: var(--accent); flex-shrink: 0; }
+.cote__valeur { font-weight: 750; font-variant-numeric: tabular-nums; color: var(--texte); flex-shrink: 0; }
 
 /* -------------------------------------------------------------- Badges */
 
@@ -234,19 +278,19 @@ a:hover { text-decoration: underline; }
   background: var(--surface-2); color: var(--texte-doux); border: 1px solid var(--bordure);
   white-space: nowrap;
 }
-.badge--direct { background: rgba(255, 92, 114, 0.14); color: var(--danger); border-color: rgba(255, 92, 114, 0.3); }
-.badge--gagne { background: rgba(0, 229, 160, 0.14); color: var(--accent); border-color: rgba(0, 229, 160, 0.3); }
-.badge--perdu { background: rgba(255, 92, 114, 0.1); color: var(--danger); border-color: rgba(255, 92, 114, 0.22); }
-.badge--attente { background: rgba(255, 182, 72, 0.12); color: var(--alerte); border-color: rgba(255, 182, 72, 0.28); }
+.badge--direct { background: rgba(66, 165, 255, 0.14); color: var(--info); border-color: rgba(66, 165, 255, 0.3); }
+.badge--gagne { background: rgba(46, 212, 122, 0.14); color: var(--succes); border-color: rgba(46, 212, 122, 0.3); }
+.badge--perdu { background: rgba(255, 92, 104, 0.1); color: var(--danger); border-color: rgba(255, 92, 104, 0.22); }
+.badge--attente { background: var(--surface-2); color: var(--texte-doux); border-color: var(--bordure-vive); }
 
-.point-direct { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); animation: pulse 1.6s infinite; }
+.point-direct { width: 6px; height: 6px; border-radius: 50%; background: var(--info); animation: pulse 1.6s infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
 /* ------------------------------------------------------------- Boutons */
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  background: var(--accent); color: #04160f; border: 0; border-radius: var(--rayon-s);
+  background: var(--accent); color: var(--sur-accent); border: 0; border-radius: var(--rayon-s);
   padding: 11px 20px; font: inherit; font-weight: 650; cursor: pointer;
   transition: var(--transition);
 }
@@ -255,8 +299,8 @@ a:hover { text-decoration: underline; }
 .btn--large { width: 100%; }
 .btn--fantome { background: transparent; color: var(--texte); border: 1px solid var(--bordure-vive); }
 .btn--fantome:hover:not(:disabled) { background: var(--surface-2); border-color: var(--texte-faible); }
-.btn--danger { background: transparent; color: var(--danger); border: 1px solid rgba(255, 92, 114, 0.35); }
-.btn--danger:hover:not(:disabled) { background: rgba(255, 92, 114, 0.1); }
+.btn--danger { background: transparent; color: var(--danger); border: 1px solid rgba(255, 92, 104, 0.35); }
+.btn--danger:hover:not(:disabled) { background: rgba(255, 92, 104, 0.1); }
 .btn--petit { padding: 7px 14px; font-size: 0.85rem; }
 
 /* -------------------------------------------------------------- Formulaires */
@@ -282,15 +326,15 @@ input::placeholder { color: var(--texte-faible); }
 }
 .tableau td { padding: 12px; border-bottom: 1px solid var(--bordure); }
 .tableau tr:last-child td { border-bottom: 0; }
-.tableau tr.moi { background: var(--accent-fantome); }
+.tableau tr.moi { background: rgba(232, 255, 61, 0.06); box-shadow: inset 3px 0 0 var(--accent); }
 .tableau tr.moi td { color: var(--texte); font-weight: 600; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .rang { width: 46px; color: var(--texte-faible); font-weight: 700; font-variant-numeric: tabular-nums; }
-.rang--1 { color: var(--or); }
-.rang--2 { color: #cfd6e6; }
-.rang--3 { color: #cd8a52; }
+.rang--1 { color: var(--accent); }
+.rang--2 { color: #cbd3e0; }
+.rang--3 { color: #b98457; }
 
-.positif { color: var(--accent); }
+.positif { color: var(--succes); }
 .negatif { color: var(--danger); }
 
 /* --------------------------------------------------------------- Stats */
@@ -319,7 +363,7 @@ input::placeholder { color: var(--texte-faible); }
   border-radius: 0 var(--rayon-s) var(--rayon-s) 0; padding: 14px 16px;
   font-size: 0.88rem; color: var(--texte-doux);
 }
-.encart--alerte { border-left-color: var(--alerte); }
+.encart--alerte { border-left-color: var(--info); }
 
 .pied {
   border-top: 1px solid var(--bordure); padding: 26px 0; margin-top: auto;
@@ -337,7 +381,7 @@ input::placeholder { color: var(--texte-faible); }
   font-size: 0.9rem; animation: monte 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
   max-width: min(92vw, 460px);
 }
-.toast--succes { border-color: var(--accent); }
+.toast--succes { border-color: var(--succes); }
 .toast--erreur { border-color: var(--danger); }
 @keyframes monte { from { opacity: 0; transform: translateY(12px); } }
 
@@ -369,21 +413,19 @@ input::placeholder { color: var(--texte-faible); }
 /* ------------------------------------------- Équipe préférée */
 
 .badge--equipe {
-  background: var(--accent-fantome); color: var(--accent);
-  border: 1px solid rgba(0, 229, 160, 0.28);
+  background: rgba(66, 165, 255, 0.12); color: var(--info);
+  border: 1px solid rgba(66, 165, 255, 0.28);
 }
 
-.equipe__favori { color: var(--or); font-size: 0.9em; }
+.equipe__favori { color: var(--accent); font-size: 0.9em; }
 
-.puce--favori { border-color: rgba(255, 209, 102, 0.4); color: var(--or); }
-.puce--favori.actif { background: var(--or); color: #2a1f00; border-color: var(--or); }
-
-.match--favori { border-color: rgba(255, 209, 102, 0.35); }
-.match--favori .match__haut { border-bottom-color: rgba(255, 209, 102, 0.2); }
+/* Le filtre « mon équipe » suit la règle commune : Volt une fois actif. */
+.match--favori { border-color: var(--accent-bordure); }
+.match--favori .match__haut { border-bottom-color: rgba(232, 255, 61, 0.16); }
 
 /* ------------------------------------------- Prime en série */
 
-.carte--prime { border-color: rgba(0, 229, 160, 0.22); }
+.carte--prime { border-color: var(--bordure); }
 
 .serie { display: flex; gap: 6px; margin-top: 4px; }
 
@@ -395,7 +437,7 @@ input::placeholder { color: var(--texte-faible); }
   transition: var(--transition);
 }
 .serie__point--acquis {
-  background: var(--accent-fantome); border-color: rgba(0, 229, 160, 0.35); color: var(--accent);
+  background: var(--accent-fantome); border-color: var(--accent-bordure); color: var(--accent);
 }
 .serie__point--vise {
   border-color: var(--accent); color: var(--accent);
@@ -404,7 +446,7 @@ input::placeholder { color: var(--texte-faible); }
 
 /* ------------------------------------------- Le call de la saison */
 
-.carte--appel { border-color: rgba(255, 209, 102, 0.25); }
+.carte--appel { border-color: var(--accent-bordure); }
 
 .carte-call-pose__haut {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -414,7 +456,7 @@ input::placeholder { color: var(--texte-faible); }
 .carte-call-pose__phrase {
   font-size: 1.05rem; line-height: 1.4; margin: 6px 0 14px; color: var(--texte);
 }
-.carte-call-pose__phrase strong { color: var(--or); }
+.carte-call-pose__phrase strong { color: var(--accent); }
 
 .carte-call-pose__chiffres {
   display: flex; flex-wrap: wrap; gap: 6px 18px;
@@ -430,14 +472,15 @@ input::placeholder { color: var(--texte-faible); }
 }
 .carte-call:hover { border-color: var(--bordure-vive); transform: translateY(-2px); }
 .carte-call--actif { border-color: var(--accent); background: var(--accent-fantome); }
+.carte-call--actif .carte-call__cote { color: var(--accent); }
 
 .carte-call__nom { font-weight: 600; }
-.carte-call__cote { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+.carte-call__cote { font-size: 1.3rem; font-weight: 700; color: var(--texte); }
 .carte-call__proba { font-size: 0.76rem; color: var(--texte-faible); }
 
 /* ------------------------------------------- Rivalité de la semaine */
 
-.carte--rivalite { margin-bottom: 22px; border-color: rgba(255, 92, 114, 0.22); }
+.carte--rivalite { margin-bottom: 22px; border-color: var(--accent-bordure); }
 
 .duel { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
 
@@ -459,4 +502,19 @@ input::placeholder { color: var(--texte-faible); }
   .serie__point { height: 26px; font-size: 0.7rem; }
   .duel { gap: 8px; }
   .duel__nom { font-size: 0.92rem; }
+}
+
+/* =========================================================================
+   Palier 1 bis — prono par défaut, défi de ligue, profil d'analyste
+   ========================================================================= */
+
+.carte--analyste { border-color: var(--bordure-vive); }
+.carte--defi { border-color: var(--accent-bordure); }
+
+/* Un constat se lit comme une phrase, pas comme une cellule de tableau. */
+.constat {
+  background: var(--surface); border: 1px solid var(--bordure);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--rayon-s) var(--rayon-s) 0;
+  padding: 14px 18px; font-size: 0.95rem; line-height: 1.5;
 }

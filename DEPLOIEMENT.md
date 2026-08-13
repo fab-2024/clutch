@@ -40,7 +40,7 @@ Tu n'as **rien à installer**. Il te faut seulement :
 
 Dans le menu de gauche : **SQL Editor** → **New query**.
 
-Tu vas exécuter cinq fichiers, **dans cet ordre**. Pour chacun : ouvre le
+Tu vas exécuter six fichiers, **dans cet ordre**. Pour chacun : ouvre le
 fichier, copie tout son contenu, colle-le dans l'éditeur, clique sur **Run**.
 Attends le message vert avant de passer au suivant.
 
@@ -51,10 +51,11 @@ Attends le message vert avant de passer au suivant.
 | 3 | `supabase/03_securite.sql` | Verrouille tout : personne ne peut se créditer des Frags |
 | 4 | `supabase/04_donnees.sql` | Remplit les équipes et un calendrier de départ |
 | 5 | `supabase/05_xs.sql` | Ajoute la prime en série, l'équipe préférée, le call de la saison et la rivalité |
+| 6 | `supabase/06_analyse.sql` | Ajoute le prono par défaut, le défi de ligue et le profil d'analyste |
 
-> `05_xs.sql` est **rejouable** : si tu le relances, il ne casse rien. C'est le
-> fichier à réexécuter après chaque mise à jour du dépôt qui touche à ces
-> quatre mécaniques.
+> `05_xs.sql` et `06_analyse.sql` sont **rejouables** : les relancer ne casse
+> rien. Ce sont les fichiers à réexécuter après chaque mise à jour du dépôt qui
+> touche à ces mécaniques.
 
 > Si une erreur rouge apparaît, ne passe pas au fichier suivant. Copie le message
 > d'erreur et cherche à quelle ligne il correspond — le plus souvent, c'est qu'un

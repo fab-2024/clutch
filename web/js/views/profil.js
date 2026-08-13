@@ -3,7 +3,7 @@ import { contexte, majSolde, bandeauSaison } from '../app.js';
 import { esc, frags, dateLisible, toast, vide } from '../ui.js';
 import { badgePari } from './match.js';
 import { carteCallPose } from './call.js';
-import { PRIME_SERIE_MAX } from '../core.js';
+import { PRIME_SERIE_MAX, PARI_AUTO_MISE_MIN, PARI_AUTO_MISE_MAX } from '../core.js';
 
 export async function vueProfil(racine) {
   if (!contexte.utilisateur) {
@@ -26,6 +26,7 @@ export async function vueProfil(racine) {
   const regles = paris.filter((p) => p.statut !== 'en_cours');
   const benefice = stats.gains - stats.mises;
   const favorite = contexte.utilisateur.equipe_favorite;
+  const modeAuto = contexte.utilisateur.pari_auto_mode ?? 'off';
 
   racine.innerHTML = `
     <div class="entete-page">
@@ -85,6 +86,50 @@ export async function vueProfil(racine) {
       </div>
     </div>
 
+    <h2>Le prono par défaut</h2>
+    <div class="carte" style="margin-bottom:26px">
+      <p style="color:var(--texte-doux);margin-bottom:12px">
+        Si tu n'as rien saisi à l'heure du coup d'envoi, Clutch mise pour toi sur le favori.
+        Ce n'est pas une stratégie — le favori perd lentement à cause de la marge —
+        c'est un filet : rater une soirée ne doit pas te sortir du classement.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <label class="champ" style="flex:2;min-width:240px;margin:0">
+          <span class="champ__libelle">Quand ?</span>
+          <select id="auto-mode">
+            <option value="off"${modeAuto === 'off' ? ' selected' : ''}>Jamais — je gère mes paris</option>
+            <option value="favori"${modeAuto === 'favori' ? ' selected' : ''}>Sur les matchs de mon équipe seulement</option>
+            <option value="tous"${modeAuto === 'tous' ? ' selected' : ''}>Sur tous les matchs de la saison</option>
+          </select>
+        </label>
+        <label class="champ" style="flex:1;min-width:140px;margin:0">
+          <span class="champ__libelle">Mise (Frags)</span>
+          <input type="number" id="auto-mise" min="${PARI_AUTO_MISE_MIN}" max="${PARI_AUTO_MISE_MAX}" step="10"
+                 value="${contexte.utilisateur.pari_auto_mise ?? 100}" />
+        </label>
+        <button class="btn btn--fantome" id="enregistrer-auto">Enregistrer</button>
+      </div>
+      ${
+        modeAuto === 'favori' && !favorite
+          ? `<div class="encart encart--alerte" style="margin-top:12px">
+               Ce mode ne fera rien tant que tu n'auras pas choisi d'équipe préférée ci-dessus.
+             </div>`
+          : ''
+      }
+    </div>
+
+    <div class="carte carte--analyste" style="margin-bottom:26px">
+      <div class="carte-call-pose__haut">
+        <strong>Mon profil d'analyste</strong>
+        <span class="badge">${stats.paris} pari${stats.paris > 1 ? 's' : ''} réglé${stats.paris > 1 ? 's' : ''}</span>
+      </div>
+      <p style="color:var(--texte-doux);margin:10px 0">
+        Sur quels formats, quels jeux et quels marchés tu gagnes vraiment — et de combien
+        tu surestimes ton équipe.
+      </p>
+      <a class="btn btn--fantome btn--large" href="#/analyste">Voir mon profil d'analyste</a>
+    </div>
+
     <h2>Paris en cours (${enCours.length})</h2>
     <p style="color:var(--texte-faible);font-size:0.82rem;margin-top:-8px">
       Seuls les paris de ${esc(contexte.saison?.nom ?? 'la saison')} sont affichés ici.
@@ -117,6 +162,22 @@ export async function vueProfil(racine) {
     try {
       await api.definirEquipeFavorite(racine.querySelector('#equipe-favorite').value || null);
       toast('Équipe enregistrée.', 'succes');
+      await majSolde();
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    } catch (err) {
+      toast(err.message, 'erreur');
+      e.currentTarget.disabled = false;
+    }
+  });
+
+  racine.querySelector('#enregistrer-auto').addEventListener('click', async (e) => {
+    e.currentTarget.disabled = true;
+    try {
+      await api.definirPariAuto({
+        mode: racine.querySelector('#auto-mode').value,
+        mise: Number(racine.querySelector('#auto-mise').value),
+      });
+      toast('Prono par défaut enregistré.', 'succes');
       await majSolde();
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     } catch (err) {

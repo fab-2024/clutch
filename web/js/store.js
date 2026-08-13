@@ -12,13 +12,13 @@
 import * as core from './core.js';
 import { EQUIPES, EVENEMENTS, RIVAUX, construireMatchs, construireSaisons } from './seed.js';
 
-const CLE = 'clutch.demo.v3';
+const CLE = 'clutch.demo.v4';
 
 let db = null;
 
 function etatInitial() {
   return {
-    version: 3,
+    version: 4,
     cree_le: new Date().toISOString(),
     utilisateur: null,
     saisons: construireSaisons(),
@@ -33,6 +33,7 @@ function etatInitial() {
     primes: [],
     calls: [],
     resultats_evenement: [],
+    defis: [],
     rivaux: structuredClone(RIVAUX),
   };
 }
@@ -188,6 +189,8 @@ export async function utilisateurCourant() {
     derniere_prime: p.derniere_prime,
     serie_prime: p.serie_prime ?? 0,
     equipe_favorite: fav ? { id: fav.id, nom: fav.nom, tag: fav.tag, jeu: fav.jeu } : null,
+    pari_auto_mode: d.utilisateur.pari_auto_mode ?? 'off',
+    pari_auto_mise: d.utilisateur.pari_auto_mise ?? core.PARI_AUTO_MISE_DEFAUT,
   };
 }
 
@@ -197,6 +200,8 @@ export async function connexion(pseudo, { equipeFavoriteId = null } = {}) {
     id: uid('u'),
     pseudo: pseudo.trim().slice(0, 20) || 'Joueur',
     equipe_favorite_id: equipeFavoriteId,
+    pari_auto_mode: 'off',
+    pari_auto_mise: core.PARI_AUTO_MISE_DEFAUT,
     cree_le: new Date().toISOString(),
   };
   sauver();
@@ -315,6 +320,10 @@ export async function reglerMatch(matchId, scoreA, scoreB) {
   if (Math.max(scoreA, scoreB) !== attendu || scoreA === scoreB) {
     throw new Error(`Score impossible pour un BO${m.format} : le vainqueur doit avoir ${attendu} maps.`);
   }
+
+  // Filet anti-décrochage : on pose les paris automatiques manquants AVANT de
+  // toucher aux Elo, pour que la cote servie soit bien celle d'avant-match.
+  poserParisAutoMatch(matchId);
 
   m.score_a = scoreA;
   m.score_b = scoreB;
@@ -801,4 +810,235 @@ export async function palmares() {
     resultat.push({ saison: s, vainqueur: classement[0] ?? null });
   }
   return resultat.reverse();
+}
+
+/* ------------------------------------------------------------------ */
+/* Prono par défaut (anti-décrochage)                                  */
+/* ------------------------------------------------------------------ */
+
+export async function definirPariAuto({ mode, mise }) {
+  const d = charger();
+  if (!d.utilisateur) throw new Error('Connecte-toi.');
+  if (!core.PARI_AUTO_MODES.includes(mode)) throw new Error('Mode inconnu.');
+  mise = Math.round(Number(mise));
+  if (!Number.isFinite(mise) || mise < core.PARI_AUTO_MISE_MIN || mise > core.PARI_AUTO_MISE_MAX) {
+    throw new Error(
+      `Mise automatique entre ${core.PARI_AUTO_MISE_MIN} et ${core.PARI_AUTO_MISE_MAX} Frags.`
+    );
+  }
+  d.utilisateur.pari_auto_mode = mode;
+  d.utilisateur.pari_auto_mise = mise;
+  sauver();
+  return utilisateurCourant();
+}
+
+/**
+ * Pose le pari automatique d'un joueur sur un match donné, si toutes les
+ * conditions sont réunies. Retourne le pari créé, ou null.
+ *
+ * Volontairement silencieux : aucune de ces situations n'est une erreur, elles
+ * signifient juste « pas de pari automatique ici ».
+ */
+function poserPariAutoJoueur(userId, m) {
+  const d = charger();
+  const profil = d.utilisateur && d.utilisateur.id === userId ? d.utilisateur : null;
+  if (!profil) return null;
+
+  const mode = profil.pari_auto_mode ?? 'off';
+  if (!core.eligibleAuPariAuto({ mode, equipeFavoriteId: profil.equipe_favorite_id, match: m })) {
+    return null;
+  }
+  if (d.paris.some((p) => p.user_id === userId && p.match_id === m.id)) return null;
+
+  const saison = d.saisons.find((s) => s.id === m.saison_id);
+  if (!saison || statutSaison(saison) !== 'en_cours') return null;
+
+  const mise = Math.min(profil.pari_auto_mise ?? core.PARI_AUTO_MISE_DEFAUT, core.MISE_MAX);
+  const p = participation(userId, m.saison_id);
+  if (p.solde < mise) return null;
+
+  const choix = core.choixAutomatique(core.marchesDuMatch(enrichir(m)));
+  if (!choix) return null;
+
+  p.solde -= mise;
+  const pari = {
+    id: uid('p'),
+    user_id: userId,
+    match_id: m.id,
+    saison_id: m.saison_id,
+    marche: 'vainqueur',
+    choix: choix.cle,
+    libelle_marche: 'Vainqueur du match',
+    libelle_choix: choix.libelle,
+    mise,
+    cote: choix.cote,
+    statut: 'en_cours',
+    gain: 0,
+    auto: true,
+    cree_le: new Date().toISOString(),
+  };
+  d.paris.push(pari);
+  sauver();
+  return pari;
+}
+
+/** Tous les paris automatiques manquants sur un match. */
+function poserParisAutoMatch(matchId) {
+  const d = charger();
+  const m = d.matchs.find((x) => x.id === matchId);
+  if (!m || m.statut === 'termine') return 0;
+  return d.utilisateur && poserPariAutoJoueur(d.utilisateur.id, m) ? 1 : 0;
+}
+
+/**
+ * Rattrapage : appelé à l'ouverture de l'application, il pose les paris
+ * automatiques des matchs qui ont commencé sans que le joueur ait misé.
+ * C'est ce qui rend le pari par défaut visible avant le résultat, et pas
+ * seulement dans l'historique.
+ */
+export async function rattraperParisAuto({ saison = null, maintenant = Date.now() } = {}) {
+  const d = charger();
+  if (!d.utilisateur) return { poses: 0 };
+  if ((d.utilisateur.pari_auto_mode ?? 'off') === 'off') return { poses: 0 };
+
+  const saisonId = saison ?? (await saisonCourante()).id;
+  let poses = 0;
+  for (const m of d.matchs.filter(
+    (x) => x.saison_id === saisonId && x.statut === 'a_venir' && new Date(x.debut).getTime() <= maintenant
+  )) {
+    if (poserPariAutoJoueur(d.utilisateur.id, m)) poses++;
+  }
+  return { poses };
+}
+
+/* ------------------------------------------------------------------ */
+/* Défi de ligue : la compétition tirée au hasard                       */
+/* ------------------------------------------------------------------ */
+
+export async function defiLigue(ligueId, { saison = null } = {}) {
+  const d = charger();
+  const saisonId = saison ?? (await saisonCourante()).id;
+  const defi = (d.defis ?? []).find((x) => x.ligue_id === ligueId && x.saison_id === saisonId);
+  if (!defi) return null;
+  const ev = d.evenements.find((e) => e.id === defi.event_id);
+  return { ...defi, nom: ev?.nom ?? defi.event_id, jeu: ev?.jeu ?? null };
+}
+
+/**
+ * Tire un tournoi au sort pour une ligue. Un seul par saison, tiré par le
+ * créateur, et uniquement parmi les tournois qui ont encore des matchs à
+ * jouer — tirer un tournoi déjà fini n'aurait aucun intérêt.
+ */
+export async function tirerDefi(ligueId, { saison = null } = {}) {
+  const d = charger();
+  if (!d.utilisateur) throw new Error('Connecte-toi.');
+  const ligue = d.ligues.find((l) => l.id === ligueId);
+  if (!ligue) throw new Error('Ligue introuvable.');
+  if (ligue.createur_id !== d.utilisateur.id) {
+    throw new Error("Seul le créateur de la ligue peut tirer le défi.");
+  }
+  const saisonId = saison ?? (await saisonCourante()).id;
+  d.defis = d.defis ?? [];
+  if (d.defis.some((x) => x.ligue_id === ligueId && x.saison_id === saisonId)) {
+    throw new Error('Le défi de cette saison est déjà tiré.');
+  }
+
+  const maintenant = Date.now();
+  const candidats = [
+    ...new Set(
+      d.matchs
+        .filter(
+          (m) => m.saison_id === saisonId && m.statut === 'a_venir' && new Date(m.debut).getTime() > maintenant
+        )
+        .map((m) => m.event_id)
+    ),
+  ];
+  if (!candidats.length) throw new Error('Aucun tournoi n’a encore de match à jouer.');
+
+  const defi = {
+    ligue_id: ligueId,
+    saison_id: saisonId,
+    event_id: candidats[Math.floor(Math.random() * candidats.length)],
+    tire_par: d.utilisateur.id,
+    tire_le: new Date().toISOString(),
+  };
+  d.defis.push(defi);
+  sauver();
+  return defiLigue(ligueId, { saison: saisonId });
+}
+
+/**
+ * Classement du défi : seuls les paris posés sur les matchs du tournoi tiré
+ * comptent, et on classe au bénéfice net — pas au solde, qui mélangerait tout
+ * le reste de la saison.
+ */
+export async function classementDefi(ligueId, { saison = null } = {}) {
+  const d = charger();
+  const saisonId = saison ?? (await saisonCourante()).id;
+  const defi = await defiLigue(ligueId, { saison: saisonId });
+  if (!defi) return [];
+
+  const matchs = new Set(
+    d.matchs.filter((m) => m.event_id === defi.event_id && m.saison_id === saisonId).map((m) => m.id)
+  );
+  const ids = d.membres.filter((m) => m.league_id === ligueId).map((m) => m.user_id);
+
+  return ids
+    .map((id) => {
+      const paris = d.paris.filter(
+        (p) => p.user_id === id && matchs.has(p.match_id) && p.statut !== 'en_cours'
+      );
+      const mises = paris.reduce((t, p) => t + p.mise, 0);
+      const gains = paris.reduce((t, p) => t + (p.gain || 0), 0);
+      const r = d.rivaux.find((x) => x.id === id);
+      return {
+        id,
+        pseudo: d.utilisateur?.id === id ? d.utilisateur.pseudo : (r?.pseudo ?? 'Joueur'),
+        moi: d.utilisateur?.id === id,
+        paris: paris.length,
+        gagnes: paris.filter((p) => p.statut === 'gagne').length,
+        mises,
+        gains,
+        net: gains - mises,
+      };
+    })
+    .sort((a, b) => b.net - a.net || b.paris - a.paris);
+}
+
+/* ------------------------------------------------------------------ */
+/* Profil d'analyste                                                   */
+/* ------------------------------------------------------------------ */
+
+export async function statistiquesDetaillees({ saison = null } = {}) {
+  const d = charger();
+  if (!d.utilisateur) return null;
+  const saisonId = saison ?? (await saisonCourante()).id;
+
+  const paris = d.paris
+    .filter((p) => p.user_id === d.utilisateur.id && p.saison_id === saisonId && p.statut !== 'en_cours')
+    .map((p) => {
+      const m = d.matchs.find((x) => x.id === p.match_id);
+      return { ...p, format: m?.format ?? null, jeu: m?.jeu ?? null, match: m };
+    });
+
+  const favId = d.utilisateur.equipe_favorite_id;
+  const fav = favId ? equipe(favId) : null;
+  const concerne = (p) =>
+    fav && p.match && (p.match.equipe_a_id === fav.id || p.match.equipe_b_id === fav.id);
+
+  const bloc = (liste) =>
+    core.agreger(liste, () => 'tout')[0] ?? {
+      cle: 'tout', paris: 0, gagnes: 0, mises: 0, gains: 0, net: 0, roi: 0,
+    };
+
+  return {
+    total: bloc(paris),
+    par_format: core.agreger(paris, 'format'),
+    par_jeu: core.agreger(paris, 'jeu'),
+    par_marche: core.agreger(paris, 'marche'),
+    par_cote: core.agreger(paris, (p) => core.trancheCote(p.cote)),
+    equipe_favorite: fav
+      ? { nom: fav.nom, tag: fav.tag, avec: bloc(paris.filter(concerne)), sans: bloc(paris.filter((p) => !concerne(p))) }
+      : null,
+  };
 }

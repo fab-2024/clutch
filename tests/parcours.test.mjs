@@ -545,3 +545,241 @@ test('rivalité : elle fonctionne aussi au sein d’une ligue', async () => {
   const r = await store.rivaliteSemaine({ ligue: ligue.id });
   assert.ok(membres.includes(r.rival.id), 'le rival doit être un membre de la ligue');
 });
+
+/* ------------------------------------------------------------------ */
+/* Prono par défaut                                                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Se placer juste après le coup d'envoi d'un match, sans attendre.
+ * `maintenant` n'existe que pour les tests, comme pour la prime.
+ */
+const apres = (match) => new Date(match.debut).getTime() + 60 * 1000;
+
+test('pari auto : désactivé par défaut, rien ne se passe', async () => {
+  await store.reinitialiser();
+  await store.connexion('Prudent');
+  assert.equal((await store.utilisateurCourant()).pari_auto_mode, 'off');
+  const m = (await store.listerMatchs({ statut: 'a_venir' }))[0];
+  assert.deepEqual(await store.rattraperParisAuto({ maintenant: apres(m) }), { poses: 0 });
+  assert.equal((await store.mesParis()).length, 0);
+});
+
+test('pari auto : le rattrapage mise sur le favori au coup d’envoi', async () => {
+  await store.reinitialiser();
+  await store.connexion('Distrait');
+  await store.definirPariAuto({ mode: 'tous', mise: 100 });
+
+  const m = (await store.listerMatchs({ statut: 'a_venir' }))[0];
+  const favori = core.choixAutomatique(await store.cotesDuMatch(m.id));
+
+  assert.deepEqual(await store.rattraperParisAuto({ maintenant: apres(m) }), { poses: 1 });
+  const [pari] = await store.mesParis();
+  assert.equal(pari.auto, true);
+  assert.equal(pari.marche, 'vainqueur');
+  assert.equal(pari.choix, favori.cle);
+  assert.equal(pari.cote, favori.cote);
+  assert.equal(pari.mise, 100);
+  assert.equal((await store.utilisateurCourant()).solde, core.SOLDE_INITIAL - 100);
+
+  // Deuxième passage : rien de plus, on ne mise pas deux fois.
+  assert.deepEqual(await store.rattraperParisAuto({ maintenant: apres(m) }), { poses: 0 });
+});
+
+test('pari auto : un pari déjà saisi n’est jamais écrasé', async () => {
+  await store.reinitialiser();
+  await store.connexion('Décidé');
+  await store.definirPariAuto({ mode: 'tous', mise: 100 });
+  const m = (await store.listerMatchs({ statut: 'a_venir' }))[0];
+  await store.placerPari({ matchId: m.id, marche: 'vainqueur', choix: 'b', mise: 300 });
+
+  assert.deepEqual(await store.rattraperParisAuto({ maintenant: apres(m) }), { poses: 0 });
+  const paris = await store.mesParis();
+  assert.equal(paris.length, 1);
+  assert.equal(paris[0].choix, 'b');
+});
+
+test('pari auto : le mode favori ne touche que les matchs de mon équipe', async () => {
+  await store.reinitialiser();
+  await store.connexion('Supporter');
+  await store.definirEquipeFavorite('lol-g2');
+  await store.definirPariAuto({ mode: 'favori', mise: 50 });
+
+  const tous = await store.listerMatchs({ statut: 'a_venir' });
+  const finDuCalendrier = Math.max(...tous.map((m) => new Date(m.debut).getTime())) + 1000;
+
+  const { poses } = await store.rattraperParisAuto({ maintenant: finDuCalendrier });
+  const siens = tous.filter((m) => m.equipe_a_id === 'lol-g2' || m.equipe_b_id === 'lol-g2');
+  assert.equal(poses, siens.length);
+  for (const p of await store.mesParis()) {
+    const m = tous.find((x) => x.id === p.match_id);
+    assert.ok(m.equipe_a_id === 'lol-g2' || m.equipe_b_id === 'lol-g2');
+  }
+});
+
+test('pari auto : le règlement pose le pari manquant avant de calculer', async () => {
+  await store.reinitialiser();
+  await store.connexion('Absent');
+  await store.definirPariAuto({ mode: 'tous', mise: 100 });
+  const m = (await store.listerMatchs({ statut: 'a_venir' })).find((x) => x.format === 3);
+  const favori = core.choixAutomatique(await store.cotesDuMatch(m.id));
+
+  // L'équipe A est favorite sur ce match : elle gagne, le pari auto est gagnant.
+  const r = await store.reglerMatch(m.id, favori.cle === 'a' ? 2 : 0, favori.cle === 'a' ? 0 : 2);
+  assert.equal(r.regles, 1, 'le pari automatique doit être réglé avec le match');
+
+  const [pari] = await store.mesParis();
+  assert.equal(pari.auto, true);
+  assert.equal(pari.statut, 'gagne');
+  assert.equal(pari.cote, favori.cote, 'la cote doit être celle d’avant-match');
+});
+
+test('pari auto : rien ne se pose sans solde suffisant', async () => {
+  await store.reinitialiser();
+  await store.connexion('Ruiné');
+  await store.definirPariAuto({ mode: 'tous', mise: 500 });
+  const matchs = await store.listerMatchs({ statut: 'a_venir' });
+  await store.placerPari({ matchId: matchs[0].id, marche: 'vainqueur', choix: 'a', mise: 900 });
+
+  assert.deepEqual(await store.rattraperParisAuto({ maintenant: apres(matchs[1]) }), { poses: 0 });
+});
+
+test('pari auto : mise hors bornes refusée', async () => {
+  await store.reinitialiser();
+  await store.connexion('Excessif');
+  await assert.rejects(() => store.definirPariAuto({ mode: 'tous', mise: 5 }), /Mise automatique/);
+  await assert.rejects(() => store.definirPariAuto({ mode: 'tous', mise: 9999 }), /Mise automatique/);
+  await assert.rejects(() => store.definirPariAuto({ mode: 'nimporte', mise: 100 }), /Mode inconnu/);
+});
+
+/* ------------------------------------------------------------------ */
+/* Défi de ligue                                                       */
+/* ------------------------------------------------------------------ */
+
+test('défi : le créateur tire un tournoi, une seule fois par saison', async () => {
+  await store.reinitialiser();
+  await store.connexion('Chef');
+  const ligue = await store.creerLigue('Les potes');
+  assert.equal(await store.defiLigue(ligue.id), null);
+
+  const defi = await store.tirerDefi(ligue.id);
+  assert.ok(defi.event_id);
+  assert.ok(defi.nom);
+  assert.equal((await store.defiLigue(ligue.id)).event_id, defi.event_id);
+
+  await assert.rejects(() => store.tirerDefi(ligue.id), /déjà tiré/);
+});
+
+test('défi : seul le créateur peut tirer', async () => {
+  await store.reinitialiser();
+  await store.connexion('Chef');
+  const ligue = await store.creerLigue('Les potes');
+  await store.connexion('Intrus'); // nouveau joueur, même navigateur de démo
+  await assert.rejects(() => store.tirerDefi(ligue.id), /créateur de la ligue/);
+});
+
+test('défi : le tournoi tiré a toujours des matchs à jouer', async () => {
+  await store.reinitialiser();
+  await store.connexion('Chef');
+  const ligue = await store.creerLigue('Les potes');
+  const defi = await store.tirerDefi(ligue.id);
+  const matchs = await store.listerMatchs({ statut: 'a_venir' });
+  assert.ok(matchs.some((m) => m.event_id === defi.event_id));
+});
+
+test('défi : le classement ne compte que les paris du tournoi tiré', async () => {
+  await store.reinitialiser();
+  await store.connexion('Chef');
+  const ligue = await store.creerLigue('Les potes');
+  const defi = await store.tirerDefi(ligue.id);
+
+  const matchs = await store.listerMatchs({ statut: 'a_venir' });
+  const dedans = matchs.find((m) => m.event_id === defi.event_id && m.format === 3);
+  const dehors = matchs.find((m) => m.event_id !== defi.event_id && m.format === 3);
+
+  await store.placerPari({ matchId: dedans.id, marche: 'vainqueur', choix: 'a', mise: 100 });
+  await store.placerPari({ matchId: dehors.id, marche: 'vainqueur', choix: 'a', mise: 400 });
+  await store.reglerMatch(dedans.id, 0, 2); // perdu
+  await store.reglerMatch(dehors.id, 2, 0); // gagné, mais hors défi
+
+  const moi = (await store.classementDefi(ligue.id)).find((l) => l.moi);
+  assert.equal(moi.paris, 1, 'seul le pari du tournoi tiré compte');
+  assert.equal(moi.mises, 100);
+  assert.equal(moi.net, -100);
+});
+
+test('défi : pas de défi, pas de classement', async () => {
+  await store.reinitialiser();
+  await store.connexion('Chef');
+  const ligue = await store.creerLigue('Les potes');
+  assert.deepEqual(await store.classementDefi(ligue.id), []);
+});
+
+/* ------------------------------------------------------------------ */
+/* Profil d'analyste                                                   */
+/* ------------------------------------------------------------------ */
+
+test('analyste : les agrégations recoupent les statistiques globales', async () => {
+  await store.reinitialiser();
+  await store.connexion('Analyste');
+  const matchs = (await store.listerMatchs({ statut: 'a_venir' })).filter((x) => x.format === 3);
+  await store.placerPari({ matchId: matchs[0].id, marche: 'vainqueur', choix: 'a', mise: 100 });
+  await store.placerPari({ matchId: matchs[1].id, marche: 'score_exact', choix: '2-0', mise: 200 });
+  await store.reglerMatch(matchs[0].id, 2, 0); // gagné
+  await store.reglerMatch(matchs[1].id, 0, 2); // perdu
+
+  const d = await store.statistiquesDetaillees();
+  const s = await store.statistiques();
+  assert.equal(d.total.paris, s.paris);
+  assert.equal(d.total.mises, s.mises);
+  assert.equal(d.total.gains, s.gains);
+
+  const parMarche = Object.fromEntries(d.par_marche.map((g) => [g.cle, g]));
+  assert.equal(parMarche.vainqueur.paris, 1);
+  assert.equal(parMarche.score_exact.paris, 1);
+  assert.equal(parMarche.score_exact.roi, -100);
+
+  // La somme des groupes doit toujours retomber sur le total.
+  for (const liste of [d.par_format, d.par_jeu, d.par_marche, d.par_cote]) {
+    assert.equal(liste.reduce((t, g) => t + g.paris, 0), d.total.paris);
+    assert.equal(liste.reduce((t, g) => t + g.mises, 0), d.total.mises);
+  }
+});
+
+test('analyste : les paris en cours sont exclus', async () => {
+  await store.reinitialiser();
+  await store.connexion('Analyste');
+  const m = (await store.listerMatchs({ statut: 'a_venir' }))[0];
+  await store.placerPari({ matchId: m.id, marche: 'vainqueur', choix: 'a', mise: 100 });
+  const d = await store.statistiquesDetaillees();
+  assert.equal(d.total.paris, 0);
+  assert.deepEqual(d.par_format, []);
+});
+
+test('analyste : le biais du supporter sépare bien les deux périmètres', async () => {
+  await store.reinitialiser();
+  await store.connexion('Supporter');
+  await store.definirEquipeFavorite('lol-g2');
+
+  const matchs = (await store.listerMatchs({ statut: 'a_venir' })).filter((x) => x.format === 3);
+  const sien = matchs.find((m) => m.equipe_a_id === 'lol-g2' || m.equipe_b_id === 'lol-g2');
+  const autre = matchs.find((m) => m.equipe_a_id !== 'lol-g2' && m.equipe_b_id !== 'lol-g2');
+
+  await store.placerPari({ matchId: sien.id, marche: 'vainqueur', choix: 'a', mise: 100 });
+  await store.placerPari({ matchId: autre.id, marche: 'vainqueur', choix: 'a', mise: 100 });
+  await store.reglerMatch(sien.id, 0, 2);
+  await store.reglerMatch(autre.id, 2, 0);
+
+  const d = await store.statistiquesDetaillees();
+  assert.equal(d.equipe_favorite.nom, 'G2 Esports');
+  assert.equal(d.equipe_favorite.avec.paris, 1);
+  assert.equal(d.equipe_favorite.avec.roi, -100);
+  assert.equal(d.equipe_favorite.sans.paris, 1);
+  assert.ok(d.equipe_favorite.sans.roi > 0);
+});
+
+test('analyste : sans équipe préférée, pas de bloc de comparaison', async () => {
+  await store.reinitialiser();
+  await store.connexion('Neutre');
+  assert.equal((await store.statistiquesDetaillees()).equipe_favorite, null);
+});

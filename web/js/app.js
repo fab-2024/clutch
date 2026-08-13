@@ -17,6 +17,7 @@ import { vueLigue } from './views/ligue.js';
 import { vueClassement } from './views/classement.js';
 import { vueProfil } from './views/profil.js';
 import { vueCall } from './views/call.js';
+import { vueAnalyste } from './views/analyste.js';
 import { vueAdmin } from './views/admin.js';
 import { vueConnexion } from './views/connexion.js';
 import { vueDiagnostic } from './views/diagnostic.js';
@@ -29,6 +30,7 @@ const ROUTES = [
   { motif: /^\/classement$/, vue: vueClassement, nav: 'classement' },
   { motif: /^\/profil$/, vue: vueProfil, nav: 'profil' },
   { motif: /^\/call$/, vue: vueCall, nav: 'call' },
+  { motif: /^\/analyste$/, vue: vueAnalyste, nav: 'profil' },
   { motif: /^\/admin$/, vue: vueAdmin, nav: 'admin' },
   { motif: /^\/connexion$/, vue: vueConnexion, nav: null },
   { motif: /^\/diagnostic$/, vue: vueDiagnostic, nav: null },
@@ -54,6 +56,7 @@ async function rafraichirEntete(navActive) {
   contexte.saison = await api.saisonCourante();
   contexte.utilisateur = await api.utilisateurCourant();
   contexte.admin = await api.estAdmin();
+  await rattraperUneFois();
 
   const nav = document.getElementById('nav');
   const liens = [...LIENS];
@@ -90,6 +93,30 @@ async function rafraichirEntete(navActive) {
     await api.choisirSaison(e.target.value);
     router();
   });
+}
+
+/**
+ * Rattrapage des paris automatiques, une seule fois par chargement de page.
+ *
+ * Sans ça, un joueur qui a activé le prono par défaut ne verrait sa mise
+ * qu'après le règlement du match. Un échec ici ne doit jamais empêcher
+ * l'application de s'afficher : c'est un confort, pas une dépendance.
+ */
+let rattrapageFait = false;
+async function rattraperUneFois() {
+  if (rattrapageFait || !contexte.utilisateur) return;
+  if ((contexte.utilisateur.pari_auto_mode ?? 'off') === 'off') return;
+  rattrapageFait = true;
+  try {
+    const r = await api.rattraperParisAuto();
+    const poses = r?.poses ?? 0;
+    if (poses) {
+      toast(`${poses} pari(s) posé(s) automatiquement sur les matchs commencés.`, 'succes');
+      contexte.utilisateur = await api.utilisateurCourant();
+    }
+  } catch (e) {
+    console.warn('[Clutch] rattrapage des paris automatiques impossible', e);
+  }
 }
 
 /** Bandeau affiché quand on consulte une saison qui n'est pas en cours. */

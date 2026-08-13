@@ -618,3 +618,54 @@ export function etapesDiagnostic() {
 
   return etapes;
 }
+
+/* ------------------------------------------------------------------ */
+/* Palier 1 bis — prono par défaut, défi de ligue, profil d'analyste    */
+/* ------------------------------------------------------------------ */
+
+/* --- Prono par défaut --- */
+
+export async function definirPariAuto({ mode, mise }) {
+  if (MODE_DEMO) return demo.definirPariAuto({ mode, mise });
+  const u = await utilisateurCourant();
+  if (!u) throw new Error('Connecte-toi.');
+  await rest(`/profils?id=eq.${u.id}`, {
+    methode: 'PATCH',
+    corps: { pari_auto_mode: mode, pari_auto_mise: mise },
+    entetes: { Prefer: 'return=minimal' },
+  });
+  return utilisateurCourant();
+}
+
+export async function rattraperParisAuto(options) {
+  if (MODE_DEMO) return demo.rattraperParisAuto(options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return rpc('rattraper_paris_auto', { p_saison_id: saison });
+}
+
+/* --- Défi de ligue --- */
+
+export async function defiLigue(ligueId, options) {
+  if (MODE_DEMO) return demo.defiLigue(ligueId, options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return rpc('defi_ligue', { p_ligue_id: ligueId, p_saison_id: saison });
+}
+
+export async function tirerDefi(ligueId, options) {
+  if (MODE_DEMO) return demo.tirerDefi(ligueId, options);
+  return rpc('tirer_defi', { p_ligue_id: ligueId });
+}
+
+export async function classementDefi(ligueId, options) {
+  if (MODE_DEMO) return demo.classementDefi(ligueId, options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return rpc('classement_defi', { p_ligue_id: ligueId, p_saison_id: saison });
+}
+
+/* --- Profil d'analyste --- */
+
+export async function statistiquesDetaillees(options) {
+  if (MODE_DEMO) return demo.statistiquesDetaillees(options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return rpc('mes_statistiques_detaillees', { p_saison_id: saison });
+}

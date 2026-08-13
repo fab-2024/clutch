@@ -464,3 +464,147 @@ export function bilanPeriode(paris, depuis) {
     net: gains - mises,
   };
 }
+
+/* ------------------------------------------------------------------ */
+/* Prono par défaut (anti-décrochage)                                  */
+/* ------------------------------------------------------------------ */
+
+/** Modes du pari automatique, du plus prudent au plus large. */
+export const PARI_AUTO_MODES = ['off', 'favori', 'tous'];
+
+/** Mise automatique : volontairement basse, c'est un filet, pas une stratégie. */
+export const PARI_AUTO_MISE_DEFAUT = 100;
+export const PARI_AUTO_MISE_MIN = 10;
+export const PARI_AUTO_MISE_MAX = 500;
+
+/**
+ * Le choix que prend le pari automatique : le favori du marché « vainqueur »,
+ * c'est-à-dire la cote la plus basse.
+ *
+ * On ne cherche pas la valeur, on cherche à ne pas laisser un joueur sortir du
+ * classement parce qu'il a oublié de miser. Le favori est le choix le moins
+ * pénalisant, et il perd lentement à cause de la marge — ce qui est exactement
+ * le comportement attendu d'un pari qu'on n'a pas voulu.
+ */
+export function choixAutomatique(marches) {
+  const vainqueur = (marches || []).find((m) => m.cle === 'vainqueur');
+  if (!vainqueur?.choix?.length) return null;
+  return vainqueur.choix.reduce((meilleur, c) => (c.cote < meilleur.cote ? c : meilleur));
+}
+
+/** Un match est-il éligible au pari automatique pour ce joueur ? */
+export function eligibleAuPariAuto({ mode, equipeFavoriteId, match }) {
+  if (!PARI_AUTO_MODES.includes(mode) || mode === 'off') return false;
+  if (mode === 'tous') return true;
+  if (!equipeFavoriteId) return false;
+  return match.equipe_a_id === equipeFavoriteId || match.equipe_b_id === equipeFavoriteId;
+}
+
+/* ------------------------------------------------------------------ */
+/* Profil d'analyste                                                   */
+/* ------------------------------------------------------------------ */
+
+/** Tranches de cote, pour distinguer le joueur prudent du chasseur d'upset. */
+export const TRANCHES_COTE = [
+  { cle: 'favori', libelle: 'Favoris (cote < 1,80)', min: 0, max: 1.8 },
+  { cle: 'equilibre', libelle: 'Équilibrés (1,80 à 3,00)', min: 1.8, max: 3 },
+  { cle: 'outsider', libelle: 'Outsiders (cote > 3,00)', min: 3, max: Infinity },
+];
+
+export function trancheCote(cote) {
+  return TRANCHES_COTE.find((t) => cote >= t.min && cote < t.max)?.cle ?? 'outsider';
+}
+
+/** Agrège un lot de paris réglés selon une clé, et calcule le retour sur mise. */
+export function agreger(paris, cle) {
+  const groupes = new Map();
+  for (const p of paris) {
+    const k = typeof cle === 'function' ? cle(p) : p[cle];
+    if (k === null || k === undefined) continue;
+    const g = groupes.get(k) ?? { cle: k, paris: 0, gagnes: 0, mises: 0, gains: 0 };
+    g.paris++;
+    if (p.statut === 'gagne') g.gagnes++;
+    g.mises += p.mise;
+    g.gains += p.gain || 0;
+    groupes.set(k, g);
+  }
+  return [...groupes.values()]
+    .map((g) => ({ ...g, net: g.gains - g.mises, roi: roi(g.mises, g.gains) }))
+    .sort((a, b) => b.paris - a.paris);
+}
+
+/** Nombre de paris en dessous duquel un écart de ROI ne veut rien dire. */
+export const SEUIL_SIGNIFICATIF = 5;
+
+/**
+ * Les constats du profil d'analyste.
+ *
+ * Règle de prudence : on ne commente jamais un groupe de moins de cinq paris.
+ * Sur trois paris, un ROI de +180 % ne dit rien du joueur, il dit qu'il a eu de
+ * la chance — et lui faire croire l'inverse serait le pire service à lui rendre.
+ */
+export function constatsAnalyste(detail, { seuil = SEUIL_SIGNIFICATIF } = {}) {
+  const constats = [];
+  const retenus = (liste) => (liste || []).filter((g) => g.paris >= seuil);
+
+  const extremes = (liste, nom) => {
+    const l = retenus(liste);
+    if (l.length < 2) return null;
+    const trie = [...l].sort((a, b) => b.roi - a.roi);
+    const haut = trie[0];
+    const bas = trie[trie.length - 1];
+    if (haut.roi - bas.roi < 20) return null;
+    return { nom, haut, bas };
+  };
+
+  for (const [liste, nom, formate] of [
+    [detail.par_format, 'format', (c) => `BO${c}`],
+    [detail.par_jeu, 'jeu', (c) => ({ lol: 'LoL', cs2: 'CS2', valorant: 'Valorant' })[c] ?? c],
+    [detail.par_marche, 'marché', (c) => c.replace('_', ' ')],
+    [detail.par_cote, 'niveau de cote', (c) => TRANCHES_COTE.find((t) => t.cle === c)?.libelle ?? c],
+  ]) {
+    const e = extremes(liste, nom);
+    if (!e) continue;
+    constats.push({
+      cle: nom,
+      texte:
+        `Tu es à ${signe(e.haut.roi)} % de retour sur les ${formate(e.haut.cle)} ` +
+        `et à ${signe(e.bas.roi)} % sur les ${formate(e.bas.cle)}. ` +
+        (e.haut.roi > 0 && e.bas.roi < 0
+          ? `C'est là que se joue ton résultat : ${formate(e.bas.cle)} te coûte ce que ${formate(e.haut.cle)} te rapporte.`
+          : `L'écart est net, même si les deux vont dans le même sens.`),
+    });
+  }
+
+  // Le biais du supporter : il est le plus fréquent, et le plus coûteux.
+  const fav = detail.equipe_favorite;
+  if (fav?.avec?.paris >= seuil && fav?.sans?.paris >= seuil) {
+    const ecart = fav.avec.roi - fav.sans.roi;
+    if (Math.abs(ecart) >= 15) {
+      constats.push({
+        cle: 'equipe_favorite',
+        texte:
+          ecart < 0
+            ? `Tu perds ${Math.abs(Math.round(ecart))} points de retour sur les matchs de ${fav.nom} ` +
+              `par rapport au reste. C'est le biais du supporter, et il se corrige en misant moins, pas mieux.`
+            : `Tu es meilleur sur ${fav.nom} que sur le reste (${Math.round(ecart)} points d'écart). ` +
+              `Tu connais cette équipe : c'est un avantage réel, exploite-le.`,
+      });
+    }
+  }
+
+  if (!constats.length) {
+    constats.push({
+      cle: 'vide',
+      texte:
+        `Pas encore assez de paris réglés pour dire quoi que ce soit d'honnête. ` +
+        `Il en faut au moins ${seuil} dans une même catégorie avant qu'un écart signifie autre chose que du hasard.`,
+    });
+  }
+  return constats;
+}
+
+function signe(n) {
+  const v = Math.round(n);
+  return v >= 0 ? `+${v}` : `${v}`;
+}
