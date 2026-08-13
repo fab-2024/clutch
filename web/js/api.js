@@ -154,6 +154,12 @@ function explication(statut, detail = '') {
   if (statut === 400 && /does not exist|schema cache/i.test(detail)) {
     return 'La base ne correspond pas au code : réexécute les fichiers SQL 01 à 04 dans l\'ordre';
   }
+  if (/infinite recursion detected in policy/i.test(detail)) {
+    return (
+      'Règles de sécurité en boucle dans la base : exécute supabase/07_correctif_rls.sql ' +
+      "dans le SQL Editor. Tant qu'elles bouclent, aucune table n'est lisible."
+    );
+  }
   if (statut >= 500) return 'Supabase ne répond pas correctement (projet en pause ?)';
   return `Erreur ${statut}`;
 }
@@ -566,7 +572,15 @@ export function etapesDiagnostic() {
       executer: async () => {
         let r;
         try {
-          r = await fetchLimite(`${BASE}/rest/v1/`, { headers: { apikey: SUPABASE_ANON_KEY } });
+          // Les deux en-têtes sont nécessaires : avec la seule clé « apikey »,
+          // Supabase répond 401 même quand tout va bien, et le diagnostic
+          // accusait la clé alors que le problème était ailleurs.
+          r = await fetchLimite(`${BASE}/rest/v1/`, {
+            headers: {
+              apikey: SUPABASE_ANON_KEY,
+              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+          });
         } catch (e) {
           if (/n'a pas répondu/.test(e.message)) throw e;
           throw new Error(`Aucune réponse de ${BASE} : adresse erronée, ou projet en pause.`);

@@ -184,6 +184,7 @@ web/                 Application (HTML + CSS + JavaScript natif, aucun build)
 supabase/            Base de données : schéma, fonctions SQL, sécurité, données
                      01 à 04 = socle, 05 = prime, équipe, call, rivalité
                      06 = prono par défaut, défi de ligue, profil d'analyste
+                     07 = correctif de récursion dans les règles de sécurité
 extension/           Extension Chrome MV3 (overlay Twitch / YouTube)
 tests/               Tests, sans dépendance : node --test tests/*.mjs
 ```
