@@ -18,14 +18,17 @@ export async function vueMatchs(racine) {
   const favorite = contexte.utilisateur?.equipe_favorite ?? null;
   if (!favorite) favoriSeul = false;
 
+  // Le call n'a plus d'onglet : il s'invite ici tant qu'il est posable, c'est-à-dire
+  // au moment et à l'endroit où le joueur pense déjà à pronostiquer.
+  const rappelCall = await rappelDuCall();
+
   racine.innerHTML = `
     <div class="entete-page">
-      <div>
-        <h1>Matchs à venir</h1>
-        <p>${esc(contexte.saison?.nom ?? '')} — choisis une cote, mise tes Frags, attends le résultat.</p>
-      </div>
+      <h1>Matchs à venir</h1>
+      <p>${esc(contexte.saison?.nom ?? '')} — choisis une cote, mise tes Frags, attends le résultat.</p>
     </div>
     ${bandeauSaison()}
+    ${rappelCall}
     <div class="filtres" id="filtres-jeu"></div>
     <div class="filtres" id="filtres-statut"></div>
     <div class="grille grille--2" id="liste"></div>
@@ -141,4 +144,37 @@ async function carteMatch(m, favorite = null) {
       </div>
       ${bas}
     </a>`;
+}
+
+/**
+ * Le rappel du call, affiché uniquement s'il est encore posable.
+ *
+ * Trois conditions : être connecté, ne pas l'avoir déjà posé, et qu'il reste au
+ * moins un tournoi qui n'a pas commencé. Sinon on n'affiche rien du tout —
+ * un encart permanent qui dit « indisponible » est pire que pas d'encart.
+ */
+async function rappelDuCall() {
+  if (!contexte.utilisateur) return '';
+  try {
+    const [call, evenements] = await Promise.all([api.monCall(), api.listerEvenementsSaison()]);
+    if (call) return '';
+    const ouverts = evenements.filter((e) => e.statut === 'ouvert');
+    if (!ouverts.length) return '';
+    return `
+      <div class="bloc bloc--volt">
+        <div class="bloc__titre">
+          <span>Le call de la saison</span>
+          <span>${ouverts.length} tournoi${ouverts.length > 1 ? 'x' : ''} encore ouvert${ouverts.length > 1 ? 's' : ''}</span>
+        </div>
+        <div class="bloc__corps">
+          <p style="color:var(--texte-doux);margin-bottom:14px">
+            Un seul pronostic pour toute la saison : qui gagne le tournoi ? Il se pose
+            avant le premier match, et il ne se reprend pas.
+          </p>
+          <a class="btn btn--large" href="#/call">Poser mon call</a>
+        </div>
+      </div>`;
+  } catch {
+    return ''; // un rappel qui échoue ne doit jamais empêcher le calendrier de s'afficher
+  }
 }

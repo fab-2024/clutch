@@ -40,12 +40,22 @@ const ROUTES = [
   { motif: /^\/diagnostic$/, vue: vueDiagnostic, nav: null },
 ];
 
+/**
+ * Quatre entrées, pas sept.
+ *
+ * « Mon call » a quitté le menu : il ne se pose qu'avant le début d'un tournoi,
+ * donc lui donner la place la plus chère de l'écran revenait à l'offrir à
+ * quelque chose d'indisponible neuf fois sur dix. Il vit désormais en haut du
+ * calendrier tant qu'il est posable, et sur le profil une fois posé.
+ *
+ * Badges, cartes et profil d'analyste étaient des culs-de-sac que personne
+ * n'aurait découverts : ils sont regroupés sous « Moi ».
+ */
 const LIENS = [
-  { href: '#/matchs', libelle: 'Matchs', cle: 'matchs' },
-  { href: '#/ligues', libelle: 'Mes ligues', cle: 'ligues' },
-  { href: '#/classement', libelle: 'Classement', cle: 'classement' },
-  { href: '#/call', libelle: 'Mon call', cle: 'call' },
-  { href: '#/profil', libelle: 'Mes paris', cle: 'profil' },
+  { href: '#/matchs', libelle: 'Matchs', cle: 'matchs', icone: '◇' },
+  { href: '#/ligues', libelle: 'Ligues', cle: 'ligues', icone: '◈' },
+  { href: '#/classement', libelle: 'Classement', cle: 'classement', icone: '▲' },
+  { href: '#/profil', libelle: 'Moi', cle: 'profil', icone: '●' },
 ];
 
 export const contexte = { utilisateur: null, admin: false, saison: null, saisons: [] };
@@ -62,11 +72,16 @@ async function rafraichirEntete(navActive) {
   contexte.admin = await api.estAdmin();
   await rattraperUneFois();
 
-  const nav = document.getElementById('nav');
   const liens = [...LIENS];
-  if (contexte.admin) liens.push({ href: '#/admin', libelle: 'Admin', cle: 'admin' });
-  nav.innerHTML = liens
-    .map((l) => `<a href="${l.href}"${l.cle === navActive ? ' class="actif"' : ''}>${l.libelle}</a>`)
+  if (contexte.admin) liens.push({ href: '#/admin', libelle: 'Admin', cle: 'admin', icone: '⚙' });
+
+  document.getElementById('onglets').innerHTML = liens
+    .map(
+      (l) => `<a href="${l.href}"${l.cle === navActive ? ' class="actif"' : ''}>
+        <span class="onglets__pastille" aria-hidden="true"></span>
+        <span>${l.libelle}</span>
+      </a>`
+    )
     .join('');
 
   const droite = document.getElementById('entete-droite');
@@ -187,7 +202,6 @@ async function router() {
     console.error('[Clutch] échec du rendu de la vue', e);
     contenu.innerHTML = ecranPanne(e);
   }
-  document.getElementById('nav')?.classList.remove('ouvert');
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
@@ -233,12 +247,6 @@ function init() {
       router();
     });
   }
-
-  document.getElementById('burger').addEventListener('click', (e) => {
-    const nav = document.getElementById('nav');
-    const ouvert = nav.classList.toggle('ouvert');
-    e.currentTarget.setAttribute('aria-expanded', String(ouvert));
-  });
 
   window.addEventListener('hashchange', router);
   router();

@@ -195,6 +195,28 @@ dans le cadrage initial (« matchs reportés, forfaits ») et restée sans répo
 jusqu'ici. Un match annulé rend toutes les mises à l'unité près, et ne touche ni
 aux notes ni aux Elo : un match qui n'a pas eu lieu n'apprend rien sur personne.
 
+## L'interface
+
+**Une seule colonne, étroite.** 720 px, quel que soit l'écran. C'est le choix qui
+change le plus : une application se lit en descendant, un tableau de bord
+s'éparpille. Les cartes de match passent pleine largeur et deviennent lisibles.
+
+**Quatre onglets, en bas.** Matchs · Ligues · Classement · Moi, plus Admin quand
+on l'est. Sur grand écran, la barre devient un dock flottant centré. Le call a
+quitté le menu : il ne se pose qu'avant le début d'un tournoi, donc il s'affiche
+en haut du calendrier tant qu'il est posable, et nulle part le reste du temps.
+
+**Des blocs à bandeau.** Chaque section porte un titre en petites capitales
+espacées sur une bande colorée. Quand toutes les cartes ont la même surface, le
+même rayon et le même remplissage, l'œil n'a aucun point d'accroche — c'est ce
+qui fait qu'une interface paraît générée.
+
+**Deux polices, deux rôles.** Outfit porte la personnalité ; Inter dessine des
+chiffres à chasse fixe, sans lesquels les colonnes de soldes tremblent d'une
+ligne à l'autre. Les fichiers ne sont pas dans le dépôt : voir
+`web/assets/fonts/LIRE-MOI.md`. Sans eux, l'application retombe sur la police
+arrondie du système — correct sur Apple, plus banal ailleurs.
+
 ## Les couleurs
 
 La palette s'appelle **Clutch Volt** : noir bleuté, blanc froid, et un jaune

@@ -118,33 +118,23 @@ export async function vueProfil(racine) {
       }
     </div>
 
-    <div class="carte carte--analyste" style="margin-bottom:26px">
-      <div class="carte-call-pose__haut">
-        <strong>Mon profil d'analyste</strong>
-        <span class="badge">${stats.paris} pari${stats.paris > 1 ? 's' : ''} réglé${stats.paris > 1 ? 's' : ''}</span>
-      </div>
-      <p style="color:var(--texte-doux);margin:10px 0">
-        Sur quels formats, quels jeux et quels marchés tu gagnes vraiment — et de combien
-        tu surestimes ton équipe.
-      </p>
-      <a class="btn btn--fantome btn--large" href="#/analyste">Voir mon profil d'analyste</a>
-    </div>
-
-    <div class="grille grille--2" style="margin-bottom:26px">
-      <div class="carte">
-        <div class="carte-call-pose__haut"><strong>Mes badges</strong></div>
-        <p style="color:var(--texte-doux);margin:10px 0">
-          Vingt et une récompenses pour l'audace qui paie, la précision et la régularité.
-          Aucune pour le volume.
-        </p>
-        <a class="btn btn--fantome btn--large" href="#/badges">Voir mes badges</a>
-      </div>
-      <div class="carte">
-        <div class="carte-call-pose__haut"><strong>Je l'avais dit</strong></div>
-        <p style="color:var(--texte-doux);margin:10px 0">
-          Tes paris marquants, transformés en image à envoyer sur le Discord.
-        </p>
-        <a class="btn btn--fantome btn--large" href="#/cartes">Voir mes cartes</a>
+    <div class="bloc">
+      <div class="bloc__titre"><span>Mon dossier</span></div>
+      <div class="bloc__corps">
+        <div class="grille grille--3">
+          <a class="tuile" href="#/analyste">
+            <span class="tuile__titre">Profil d'analyste</span>
+            <span class="tuile__aide">Où tu gagnes vraiment</span>
+          </a>
+          <a class="tuile" href="#/badges">
+            <span class="tuile__titre">Badges</span>
+            <span class="tuile__aide">21 à décrocher</span>
+          </a>
+          <a class="tuile" href="#/cartes">
+            <span class="tuile__titre">Je l'avais dit</span>
+            <span class="tuile__aide">Tes paris à partager</span>
+          </a>
+        </div>
       </div>
     </div>
 
