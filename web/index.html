@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Clutch — le prono esport entre potes</title>
+    <meta
+      name="description"
+      content="Pronostique les matchs LoL, CS2 et Valorant avec tes potes. Monnaie virtuelle, zéro argent réel."
+    />
+    <meta name="theme-color" content="#0c0e14" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <a class="saut-contenu" href="#contenu">Aller au contenu</a>
+
+    <header class="entete">
+      <div class="conteneur entete__interieur">
+        <a class="logo" href="#/matchs" aria-label="Clutch, accueil">
+          <span class="logo__marque">CLUTCH</span>
+          <span class="logo__point" aria-hidden="true"></span>
+        </a>
+
+        <nav class="nav" id="nav" aria-label="Navigation principale"></nav>
+
+        <div class="entete__droite" id="entete-droite"></div>
+
+        <button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </header>
+
+    <div class="bandeau-demo" id="bandeau-demo" hidden>
+      <div class="conteneur">
+        <strong>Mode démo</strong> — tout est stocké dans ton navigateur, aucun compte n'est créé.
+        Les Frags sont une monnaie fictive, sans aucune valeur.
+        <button class="lien-bandeau" id="reset-demo">Réinitialiser la démo</button>
+      </div>
+    </div>
+
+    <main id="contenu" class="conteneur principal" tabindex="-1">
+      <div class="chargement"><span class="spinner"></span></div>
+    </main>
+
+    <footer class="pied">
+      <div class="conteneur pied__interieur">
+        <p>
+          <strong>Clutch</strong> — jeu de pronostics gratuit. Aucune mise réelle, aucun gain en
+          argent, aucun achat possible. Les « Frags » sont une monnaie fictive sans valeur
+          marchande et non convertible.
+        </p>
+        <p class="pied__legal">
+          Ce service n'est pas un opérateur de jeux d'argent et de hasard au sens de l'article
+          L320-1 du Code de la sécurité intérieure. Réservé aux personnes de 16 ans et plus.
+        </p>
+      </div>
+    </footer>
+
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

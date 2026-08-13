@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Clutch</title>
+    <style>
+      body {
+        width: 300px; margin: 0; padding: 16px;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: #0c0e14; color: #eef1f8; font-size: 14px;
+      }
+      h1 { font-size: 0.95rem; letter-spacing: 0.14em; margin: 0 0 4px; }
+      p  { color: #9aa3ba; font-size: 0.8rem; margin: 0 0 14px; line-height: 1.45; }
+      label { display: block; font-size: 0.76rem; color: #9aa3ba; margin-bottom: 6px; }
+      input[type="url"] {
+        width: 100%; box-sizing: border-box; background: #12151f; border: 1px solid #262c3d;
+        color: #eef1f8; border-radius: 8px; padding: 9px 10px; font: inherit; font-size: 0.82rem;
+      }
+      input:focus { outline: none; border-color: #00e5a0; }
+      .ligne { display: flex; align-items: center; gap: 8px; margin: 14px 0; font-size: 0.82rem; }
+      button {
+        width: 100%; background: #00e5a0; color: #04160f; border: 0; border-radius: 8px;
+        padding: 10px; font: inherit; font-weight: 650; cursor: pointer;
+      }
+      .ok { color: #00e5a0; font-size: 0.76rem; min-height: 16px; margin-top: 8px; }
+      .aide { font-size: 0.72rem; color: #6b7490; margin-top: 12px; line-height: 1.5; }
+    </style>
+  </head>
+  <body>
+    <h1>CLUTCH</h1>
+    <p>L'overlay s'affiche sur Twitch et YouTube. Raccourci : <strong>Alt + C</strong>.</p>
+
+    <label for="url">Adresse de ton Clutch</label>
+    <input type="url" id="url" placeholder="https://mon-clutch.vercel.app/index.html" />
+
+    <div class="ligne">
+      <input type="checkbox" id="actif" />
+      <label for="actif" style="margin: 0">Activer l'overlay</label>
+    </div>
+
+    <button id="enregistrer">Enregistrer</button>
+    <div class="ok" id="message"></div>
+
+    <p class="aide">
+      Recharge l'onglet Twitch ou YouTube après un changement pour que l'overlay
+      reprenne les nouveaux réglages.
+    </p>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
