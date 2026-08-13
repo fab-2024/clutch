@@ -704,3 +704,14 @@ test('texteCarte : reprend le pari sans le déformer', () => {
   assert.equal(t.affiche, 'G2 Esports — Karmine Corp');
   assert.match(t.date, /2026/);
 });
+
+test('formaterFrags : une donnée manquante n’affiche jamais NaN', () => {
+  // L'entête affichait « NaN Frags » quand le solde n'était pas renseigné :
+  // ça ressemble à une panne, alors que c'est un champ absent.
+  assert.equal(core.formaterFrags(undefined), '—');
+  assert.equal(core.formaterFrags(null), '—');
+  assert.equal(core.formaterFrags('abc'), '—');
+  // Un vrai zéro reste un zéro : ce n'est pas la même information.
+  assert.equal(core.formaterFrags(0), '0');
+  assert.equal(core.formaterFrags(1000), '1 000');
+});

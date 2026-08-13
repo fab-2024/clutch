@@ -12,7 +12,7 @@
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY, MODE_DEMO, ADMINS } from './config.js';
 import * as demo from './store.js';
-import { evaluerBadges, carteMeritee } from './core.js';
+import { evaluerBadges, carteMeritee, SOLDE_INITIAL } from './core.js';
 
 /* ------------------------------------------------------------------ */
 /* Client Supabase minimal (aucune dépendance, ~80 lignes)             */
@@ -258,17 +258,66 @@ const rpc = (nom, args = {}) => sb(`/rest/v1/rpc/${nom}`, { methode: 'POST', cor
 
 export const estDemo = MODE_DEMO;
 
+/**
+ * Le joueur courant, tel que l'interface l'attend.
+ *
+ * La table `profils` ne contient PAS le solde : il vit dans `participations`,
+ * parce qu'il appartient à une saison et pas à un compte. Le backend de
+ * démonstration, lui, renvoyait les deux ensemble — d'où un écart invisible en
+ * démo et bien réel en production : l'entête affichait « NaN Frags », puisque
+ * `Math.round(undefined)` ne vaut rien.
+ *
+ * Même histoire pour l'équipe préférée : la table ne stocke qu'un identifiant,
+ * alors que l'interface attend un objet complet. Sans lui, l'étoile du
+ * calendrier et le tag du profil ne s'affichaient jamais.
+ *
+ * Les deux compléments sont tolérants à la panne : s'ils échouent, on renvoie
+ * quand même le profil. Mieux vaut un solde approché qu'une session perdue.
+ */
 export async function utilisateurCourant() {
   if (MODE_DEMO) return demo.utilisateurCourant();
   const s = await sessionValide();
   if (!s) return null;
+
+  let profil;
   try {
     const profils = await rest('/profils?select=*&limit=1');
-    return profils?.[0] ?? null;
+    profil = profils?.[0];
   } catch {
     poserSession(null);
     return null;
   }
+  if (!profil) return null;
+
+  const saison = await saisonCourante().catch(() => null);
+  let participation = null;
+  if (saison?.id) {
+    participation = await rest(
+      `/participations?select=solde,derniere_prime,serie_prime&saison_id=eq.${encodeURIComponent(saison.id)}&limit=1`
+    )
+      .then((r) => r?.[0] ?? null)
+      .catch(() => null);
+  }
+
+  let equipeFavorite = null;
+  if (profil.equipe_favorite_id) {
+    equipeFavorite = await rest(
+      `/equipes?select=id,nom,tag,jeu&id=eq.${encodeURIComponent(profil.equipe_favorite_id)}&limit=1`
+    )
+      .then((r) => r?.[0] ?? null)
+      .catch(() => null);
+  }
+
+  return {
+    ...profil,
+    saison_id: saison?.id ?? null,
+    // Pas encore de participation : le joueur n'a rien misé cette saison, son
+    // solde est donc celui de départ. La ligne sera créée à son premier pari.
+    solde: participation?.solde ?? saison?.solde_initial ?? SOLDE_INITIAL,
+    derniere_prime: participation?.derniere_prime ?? null,
+    serie_prime: participation?.serie_prime ?? 0,
+    equipe_favorite: equipeFavorite,
+  };
 }
 
 /** Ouvre une session à partir d'une réponse d'authentification Supabase. */

@@ -309,9 +309,21 @@ export function genererCodeLigue() {
   return code;
 }
 
-/** Formate un montant de Frags avec séparateur d'espace insécable. */
+/**
+ * Formate un montant de Frags avec séparateur d'espace insécable.
+ *
+ * Le garde-fou sur les valeurs non numériques n'est pas de la coquetterie : une
+ * donnée manquante affichait « NaN Frags » dans l'entête, ce qui ressemble à une
+ * panne alors que c'est un champ absent. Un tiret dit la même chose sans
+ * inquiéter — et sans masquer le problème pour autant.
+ */
 export function formaterFrags(n) {
-  return Math.round(n).toLocaleString('fr-FR').replace(/ | /g, ' ');
+  // `Number(null)` vaut 0 : sans ce test, un solde inconnu s'afficherait comme
+  // un solde nul, ce qui n'est pas la même information.
+  if (n === null || n === undefined || n === '') return '—';
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '—';
+  return Math.round(v).toLocaleString('fr-FR').replace(/[\u202f\u00a0]/g, ' ');
 }
 
 /** Retour sur investissement d'un joueur, en pourcentage. */
