@@ -1,4 +1,5 @@
 import * as api from '../api.js';
+import { contexte, bandeauSaison } from '../app.js';
 import { esc, frags, toast } from '../ui.js';
 import { tableauClassement } from './classement.js';
 
@@ -15,9 +16,10 @@ export async function vueLigue(racine, id) {
     <div class="entete-page">
       <div>
         <h1>${esc(ligue.nom)}</h1>
-        <p>${classement.length} membre${classement.length > 1 ? 's' : ''}</p>
+        <p>${classement.length} membre${classement.length > 1 ? 's' : ''} · ${esc(contexte.saison?.nom ?? '')}</p>
       </div>
     </div>
+    ${bandeauSaison()}
 
     <div class="grille grille--2" style="margin-bottom:22px">
       <div class="carte">
@@ -31,8 +33,9 @@ export async function vueLigue(racine, id) {
       <div class="carte">
         <h3 style="margin-bottom:10px">Comment on gagne</h3>
         <p style="color:var(--texte-doux);font-size:0.86rem;margin:0">
-          Le classement se fait au solde de Frags. Tes paris comptent dans toutes tes ligues
-          à la fois : tu mises une fois, tu apparais partout.
+          Le classement se fait au solde de Frags, <strong>saison par saison</strong> : à
+          chaque nouvelle saison, tout le monde repart au même niveau. La ligue, elle, reste.
+          Un pari saisi une fois compte dans toutes tes ligues.
         </p>
       </div>
     </div>

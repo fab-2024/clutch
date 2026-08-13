@@ -10,7 +10,12 @@ export async function vueMatch(racine, id) {
     return;
   }
 
-  const ouvert = m.statut === 'a_venir' && new Date(m.debut) > new Date();
+  // C'est la saison DU MATCH qui décide si les mises sont ouvertes, pas celle
+  // qu'on a sélectionnée dans l'entête : on peut consulter un match d'une autre
+  // saison sans que le message affiché devienne faux.
+  const saisonMatch = contexte.saisons.find((s) => s.id === m.saison_id) ?? contexte.saison;
+  const saisonOuverte = saisonMatch?.statut === 'en_cours';
+  const ouvert = saisonOuverte && m.statut === 'a_venir' && new Date(m.debut) > new Date();
   const marches = m.statut === 'termine' ? [] : await api.cotesDuMatch(m.id);
   const mesParis = (await api.mesParis()).filter((p) => p.match_id === m.id);
 
@@ -57,9 +62,14 @@ export async function vueMatch(racine, id) {
     ${
       m.statut === 'termine'
         ? `<div class="encart">Ce match est terminé, les paris ont été réglés.</div>`
-        : !ouvert
-          ? `<div class="encart encart--alerte">Les mises sont fermées : le match a commencé.</div>`
-          : marches.map(blocMarche).join('')
+        : !saisonOuverte
+          ? `<div class="encart encart--alerte">
+               Ce match appartient à <strong>${esc(saisonMatch?.nom ?? 'une autre saison')}</strong>,
+               qui n'est pas ouverte aux mises.
+             </div>`
+          : !ouvert
+            ? `<div class="encart encart--alerte">Les mises sont fermées : le match a commencé.</div>`
+            : marches.map(blocMarche).join('')
     }
 
     <div id="bulletin"></div>

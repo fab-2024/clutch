@@ -44,6 +44,32 @@ export const EQUIPES = [
   { id: 'val-edg', jeu: 'valorant', nom: 'EDward Gaming', tag: 'EDG', elo: 1607 },
 ];
 
+/**
+ * Les saisons découpent le jeu en périodes. À chaque nouvelle saison, tous les
+ * joueurs repartent avec le même solde : c'est ce qui permet à quelqu'un qui
+ * arrive en retard de jouer sa chance, au lieu de courir derrière un écart
+ * impossible à combler.
+ */
+export function construireSaisons(maintenant = Date.now()) {
+  const jour = 24 * 3600 * 1000;
+  return [
+    {
+      id: 'saison-ete-2026',
+      nom: 'Saison 1 — Été 2026',
+      debut: new Date(maintenant - 30 * jour).toISOString(),
+      fin: new Date(maintenant + 45 * jour).toISOString(),
+      solde_initial: 1000,
+    },
+    {
+      id: 'saison-automne-2026',
+      nom: 'Saison 2 — Automne 2026',
+      debut: new Date(maintenant + 46 * jour).toISOString(),
+      fin: new Date(maintenant + 140 * jour).toISOString(),
+      solde_initial: 1000,
+    },
+  ];
+}
+
 export const EVENEMENTS = [
   { id: 'lec-summer', jeu: 'lol', nom: 'LEC Summer Split', tier: 'S' },
   { id: 'lfl-summer', jeu: 'lol', nom: 'LFL Summer Split', tier: 'A' },
@@ -105,6 +131,7 @@ export function construireMatchs(maintenant = Date.now()) {
       id: `m-fini-${i}`,
       event_id: ev,
       jeu: EVENEMENTS.find((e) => e.id === ev).jeu,
+      saison_id: 'saison-ete-2026',
       equipe_a_id: a,
       equipe_b_id: b,
       format,
@@ -121,6 +148,7 @@ export function construireMatchs(maintenant = Date.now()) {
       id: `m-${i}`,
       event_id: ev,
       jeu: EVENEMENTS.find((e) => e.id === ev).jeu,
+      saison_id: 'saison-ete-2026',
       equipe_a_id: a,
       equipe_b_id: b,
       format,
@@ -134,12 +162,16 @@ export function construireMatchs(maintenant = Date.now()) {
   return matchs.sort((x, y) => new Date(x.debut) - new Date(y.debut));
 }
 
-/** Joueurs fictifs, pour que le classement ne soit pas vide en démo. */
+/**
+ * Joueurs fictifs, pour que le classement ne soit pas vide en démo.
+ * Leur solde est donné par saison : en saison 2, tout le monde repart à 1 000,
+ * ce qui rend visible l'intérêt du système dès la démo.
+ */
 export const RIVAUX = [
-  { id: 'u-nova', pseudo: 'NovaKill', solde: 2340, paris: 24, gagnes: 11 },
-  { id: 'u-shiro', pseudo: 'Shirooo', solde: 1875, paris: 31, gagnes: 13 },
-  { id: 'u-mika', pseudo: 'MikaFPS', solde: 1620, paris: 18, gagnes: 7 },
-  { id: 'u-drex', pseudo: 'Drexx', solde: 1105, paris: 27, gagnes: 9 },
-  { id: 'u-lena', pseudo: 'Lena.exe', solde: 940, paris: 22, gagnes: 8 },
-  { id: 'u-tibo', pseudo: 'TiboOTP', solde: 610, paris: 35, gagnes: 11 },
+  { id: 'u-nova', pseudo: 'NovaKill', soldes: { 'saison-ete-2026': 2340, 'saison-automne-2026': 1000 }, paris: 24, gagnes: 11 },
+  { id: 'u-shiro', pseudo: 'Shirooo', soldes: { 'saison-ete-2026': 1875, 'saison-automne-2026': 1000 }, paris: 31, gagnes: 13 },
+  { id: 'u-mika', pseudo: 'MikaFPS', soldes: { 'saison-ete-2026': 1620, 'saison-automne-2026': 1000 }, paris: 18, gagnes: 7 },
+  { id: 'u-drex', pseudo: 'Drexx', soldes: { 'saison-ete-2026': 1105, 'saison-automne-2026': 1000 }, paris: 27, gagnes: 9 },
+  { id: 'u-lena', pseudo: 'Lena.exe', soldes: { 'saison-ete-2026': 940, 'saison-automne-2026': 1000 }, paris: 22, gagnes: 8 },
+  { id: 'u-tibo', pseudo: 'TiboOTP', soldes: { 'saison-ete-2026': 610, 'saison-automne-2026': 1000 }, paris: 35, gagnes: 11 },
 ];

@@ -101,12 +101,42 @@ export async function estAdmin() {
   return ADMINS.includes(u.email);
 }
 
+/* --- Saisons --- */
+
+const CLE_SAISON = 'clutch.saison';
+
+export async function listerSaisons() {
+  if (MODE_DEMO) return demo.listerSaisons();
+  return rest('/v_saisons?select=*&order=debut.asc');
+}
+
+/** Saison choisie, sinon celle en cours, sinon la plus récente. */
+export async function saisonCourante() {
+  if (MODE_DEMO) return demo.saisonCourante();
+  const toutes = await listerSaisons();
+  const choisie = toutes.find((s) => s.id === localStorage.getItem(CLE_SAISON));
+  return choisie ?? toutes.find((s) => s.statut === 'en_cours') ?? toutes[toutes.length - 1];
+}
+
+export async function choisirSaison(id) {
+  if (MODE_DEMO) return demo.choisirSaison(id);
+  localStorage.setItem(CLE_SAISON, id);
+  return saisonCourante();
+}
+
+export async function palmares() {
+  if (MODE_DEMO) return demo.palmares();
+  return rpc('palmares');
+}
+
 /* --- Matchs --- */
 
 export async function listerMatchs(filtres) {
   if (MODE_DEMO) return demo.listerMatchs(filtres);
   const { jeu, statut = 'a_venir' } = filtres || {};
+  const saison = filtres?.saison ?? (await saisonCourante())?.id;
   let q = `/v_matchs?select=*&order=debut.asc`;
+  if (saison) q += `&saison_id=eq.${saison}`;
   if (statut) q += `&statut=eq.${statut}`;
   if (jeu) q += `&jeu=eq.${jeu}`;
   return rest(q);
@@ -135,9 +165,10 @@ export async function placerPari(args) {
   });
 }
 
-export async function mesParis() {
-  if (MODE_DEMO) return demo.mesParis();
-  return rest('/v_mes_paris?select=*&order=cree_le.desc');
+export async function mesParis(options) {
+  if (MODE_DEMO) return demo.mesParis(options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return rest(`/v_mes_paris?select=*&saison_id=eq.${saison}&order=cree_le.desc`);
 }
 
 /* --- Règlement --- */
@@ -151,7 +182,7 @@ export async function reglerMatch(matchId, scoreA, scoreB) {
 
 export async function reclamerPrime() {
   if (MODE_DEMO) return demo.reclamerPrime();
-  return rpc('reclamer_prime');
+  return rpc('reclamer_prime', { p_saison_id: (await saisonCourante())?.id });
 }
 
 /* --- Ligues --- */
@@ -177,17 +208,20 @@ export async function lireLigue(id) {
   return r?.[0] ?? null;
 }
 
-export async function classementLigue(id) {
-  if (MODE_DEMO) return demo.classementLigue(id);
-  return rpc('classement_ligue', { p_ligue_id: id });
+export async function classementLigue(id, options) {
+  if (MODE_DEMO) return demo.classementLigue(id, options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return rpc('classement_ligue', { p_ligue_id: id, p_saison_id: saison });
 }
 
-export async function classementGlobal() {
-  if (MODE_DEMO) return demo.classementGlobal();
-  return rpc('classement_global');
+export async function classementGlobal(options) {
+  if (MODE_DEMO) return demo.classementGlobal(options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return rpc('classement_global', { p_saison_id: saison });
 }
 
-export async function statistiques() {
-  if (MODE_DEMO) return demo.statistiques();
-  return rpc('mes_statistiques');
+export async function statistiques(options) {
+  if (MODE_DEMO) return demo.statistiques(options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return rpc('mes_statistiques', { p_saison_id: saison });
 }

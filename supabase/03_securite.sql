@@ -8,6 +8,8 @@
 -- =====================================================================
 
 alter table profils        enable row level security;
+alter table saisons        enable row level security;
+alter table participations enable row level security;
 alter table equipes        enable row level security;
 alter table evenements     enable row level security;
 alter table matchs         enable row level security;
@@ -33,8 +35,9 @@ create policy "profils des colistiers lisibles"
     )
   );
 
--- Le joueur peut changer son pseudo, rien d'autre : le solde et le statut
--- admin sont verrouillés par le trigger ci-dessous.
+-- Le joueur peut changer son pseudo, rien d'autre : le statut admin est
+-- verrouillé par le trigger ci-dessous, et le solde ne vit plus ici — il est
+-- dans participations, table sur laquelle aucune écriture directe n'est permise.
 drop policy if exists "modification de son propre pseudo" on profils;
 create policy "modification de son propre pseudo"
   on profils for update using (auth.uid() = id) with check (auth.uid() = id);
@@ -45,9 +48,7 @@ begin
   -- Les fonctions SECURITY DEFINER passent en tant que propriétaire du schéma :
   -- seul un appel utilisateur direct est bloqué ici.
   if current_setting('role', true) = 'authenticated' then
-    new.solde          := old.solde;
-    new.est_admin      := old.est_admin;
-    new.derniere_prime := old.derniere_prime;
+    new.est_admin := old.est_admin;
   end if;
   return new;
 end;
@@ -57,6 +58,33 @@ drop trigger if exists profils_verrou on profils;
 create trigger profils_verrou
   before update on profils
   for each row execute function public.verrouiller_champs_sensibles();
+
+-- --------------------------------------------------------------- Saisons
+-- Calendrier des saisons : public en lecture, modifiable par les admins seuls.
+drop policy if exists "saisons publiques" on saisons;
+create policy "saisons publiques" on saisons for select using (true);
+
+drop policy if exists "saisons modifiables par les admins" on saisons;
+create policy "saisons modifiables par les admins"
+  on saisons for all
+  using (exists (select 1 from profils where id = auth.uid() and est_admin))
+  with check (exists (select 1 from profils where id = auth.uid() and est_admin));
+
+-- Les soldes : je lis le mien, et celui des membres de mes ligues (classement).
+-- Aucune écriture directe : seules les fonctions de 02 touchent aux soldes.
+drop policy if exists "ma participation" on participations;
+create policy "ma participation" on participations for select using (auth.uid() = user_id);
+
+drop policy if exists "participations des colistiers" on participations;
+create policy "participations des colistiers"
+  on participations for select using (
+    exists (
+      select 1
+      from membres_ligue moi
+      join membres_ligue autre on autre.ligue_id = moi.ligue_id
+      where moi.user_id = auth.uid() and autre.user_id = participations.user_id
+    )
+  );
 
 -- ------------------------------------------------- Données de compétition
 -- Publiques en lecture : n'importe qui peut consulter le calendrier et les cotes.
@@ -116,19 +144,30 @@ create policy "quitter une ligue" on membres_ligue for delete using (auth.uid() 
 -- ------------------------------------------------------- Droits d'exécution
 revoke all on function placer_pari(text, text, text, integer) from public;
 revoke all on function regler_match(text, integer, integer) from public;
-revoke all on function reclamer_prime() from public;
+revoke all on function reclamer_prime(text) from public;
 revoke all on function creer_ligue(text) from public;
 revoke all on function rejoindre_ligue(text) from public;
 
 grant execute on function placer_pari(text, text, text, integer)   to authenticated;
 grant execute on function regler_match(text, integer, integer)     to authenticated;
-grant execute on function reclamer_prime()                         to authenticated;
+grant execute on function reclamer_prime(text)                     to authenticated;
 grant execute on function creer_ligue(text)                        to authenticated;
 grant execute on function rejoindre_ligue(text)                    to authenticated;
 grant execute on function cotes_du_match(text)                     to anon, authenticated;
-grant execute on function classement_ligue(uuid)                   to authenticated;
-grant execute on function classement_global()                      to anon, authenticated;
-grant execute on function mes_statistiques()                       to authenticated;
+grant execute on function classement_ligue(uuid, text)              to authenticated;
+grant execute on function classement_global(text)                  to anon, authenticated;
+grant execute on function mes_statistiques(text)                    to authenticated;
+grant execute on function palmares()                               to anon, authenticated;
+
+-- ------------------------------------------------------- Ouvrir une saison
+-- Créer la saison suivante remet tout le monde à égalité. À faire au début de
+-- chaque grand tournoi :
+--
+--   insert into saisons (id, nom, debut, fin, solde_initial)
+--   values ('saison-hiver-2027', 'Saison 3 — Hiver 2027',
+--           '2027-01-05 00:00+01', '2027-03-30 23:59+02', 1000);
+--
+-- Les matchs de cette période devront porter saison_id = 'saison-hiver-2027'.
 
 -- ----------------------------------------------------------- Se nommer admin
 -- Après ta première connexion, exécute cette ligne avec TON e-mail :

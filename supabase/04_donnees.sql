@@ -1,8 +1,13 @@
 -- =====================================================================
---  Clutch — données de départ : équipes, compétitions et calendrier.
+--  Clutch — données de départ : saisons, équipes, compétitions, calendrier.
 --  Les dates sont relatives à l exécution du script (now() + N heures),
 --  ce qui donne un calendrier crédible dès la première ouverture.
 -- =====================================================================
+
+insert into saisons (id, nom, debut, fin, solde_initial) values
+  ('saison-ete-2026', 'Saison 1 — Été 2026', now() + interval '-30.0 days', now() + interval '45.0 days', 1000),
+  ('saison-automne-2026', 'Saison 2 — Automne 2026', now() + interval '46.0 days', now() + interval '140.0 days', 1000)
+on conflict (id) do nothing;
 
 insert into evenements (id, jeu, nom, tier) values
   ('lec-summer', 'lol', 'LEC Summer Split', 'S'),
@@ -46,32 +51,34 @@ insert into equipes (id, jeu, nom, tag, elo) values
   ('val-edg', 'valorant', 'EDward Gaming', 'EDG', 1607)
 on conflict (id) do nothing;
 
-insert into matchs (id, event_id, jeu, equipe_a_id, equipe_b_id, format, debut, statut, score_a, score_b) values
-  ('m-fini-5', 'vct-emea', 'valorant', 'val-kc', 'val-g2', 3, now() + interval '-74.00 hours', 'termine', 1, 2),
-  ('m-fini-4', 'esl-pro', 'cs2', 'cs-faze', 'cs-astralis', 3, now() + interval '-70.00 hours', 'termine', 2, 0),
-  ('m-fini-3', 'lec-summer', 'lol', 'lol-vit', 'lol-sk', 3, now() + interval '-48.00 hours', 'termine', 2, 1),
-  ('m-fini-2', 'vct-masters', 'valorant', 'val-prx', 'val-sen', 3, now() + interval '-44.00 hours', 'termine', 2, 1),
-  ('m-fini-1', 'blast-bounty', 'cs2', 'cs-navi', 'cs-g2', 3, now() + interval '-26.00 hours', 'termine', 2, 1),
-  ('m-fini-0', 'lec-summer', 'lol', 'lol-kc', 'lol-bds', 3, now() + interval '-20.00 hours', 'termine', 2, 0),
-  ('m-2', 'blast-bounty', 'cs2', 'cs-vit', 'cs-navi', 3, now() + interval '2.00 hours', 'a_venir', null, null),
-  ('m-0', 'lec-summer', 'lol', 'lol-g2', 'lol-kc', 3, now() + interval '3.20 hours', 'a_venir', null, null),
-  ('m-1', 'lec-summer', 'lol', 'lol-fnc', 'lol-vit', 3, now() + interval '5.48 hours', 'a_venir', null, null),
-  ('m-3', 'vct-masters', 'valorant', 'val-fnc', 'val-prx', 3, now() + interval '7.02 hours', 'a_venir', null, null),
-  ('m-5', 'esl-pro', 'cs2', 'cs-spirit', 'cs-faze', 3, now() + interval '24.17 hours', 'a_venir', null, null),
-  ('m-4', 'lec-summer', 'lol', 'lol-mkoi', 'lol-bds', 3, now() + interval '26.20 hours', 'a_venir', null, null),
-  ('m-6', 'vct-emea', 'valorant', 'val-kc', 'val-tl', 3, now() + interval '28.28 hours', 'a_venir', null, null),
-  ('m-7', 'lfl-summer', 'lol', 'lol-th', 'lol-sk', 1, now() + interval '29.90 hours', 'a_venir', null, null),
-  ('m-8', 'blast-bounty', 'cs2', 'cs-mouz', 'cs-g2', 3, now() + interval '49.30 hours', 'a_venir', null, null),
-  ('m-9', 'vct-masters', 'valorant', 'val-drx', 'val-sen', 3, now() + interval '51.15 hours', 'a_venir', null, null),
-  ('m-10', 'lec-summer', 'lol', 'lol-rge', 'lol-gx', 3, now() + interval '52.15 hours', 'a_venir', null, null),
-  ('m-11', 'esl-pro', 'cs2', 'cs-falcons', 'cs-astralis', 3, now() + interval '72.10 hours', 'a_venir', null, null),
-  ('m-12', 'vct-emea', 'valorant', 'val-g2', 'val-t1', 3, now() + interval '73.92 hours', 'a_venir', null, null),
-  ('m-13', 'lec-summer', 'lol', 'lol-g2', 'lol-fnc', 5, now() + interval '96.23 hours', 'a_venir', null, null),
-  ('m-14', 'blast-bounty', 'cs2', 'cs-vit', 'cs-spirit', 5, now() + interval '99.88 hours', 'a_venir', null, null),
-  ('m-15', 'vct-masters', 'valorant', 'val-edg', 'val-nvg', 3, now() + interval '119.73 hours', 'a_venir', null, null),
-  ('m-16', 'lfl-summer', 'lol', 'lol-kc', 'lol-vit', 3, now() + interval '121.80 hours', 'a_venir', null, null),
-  ('m-17', 'esl-pro', 'cs2', 'cs-vp', 'cs-heroic', 3, now() + interval '144.08 hours', 'a_venir', null, null)
+insert into matchs (id, event_id, saison_id, jeu, equipe_a_id, equipe_b_id, format, debut, statut, score_a, score_b) values
+  ('m-fini-5', 'vct-emea', 'saison-ete-2026', 'valorant', 'val-kc', 'val-g2', 3, now() + interval '-74.00 hours', 'termine', 1, 2),
+  ('m-fini-4', 'esl-pro', 'saison-ete-2026', 'cs2', 'cs-faze', 'cs-astralis', 3, now() + interval '-70.00 hours', 'termine', 2, 0),
+  ('m-fini-3', 'lec-summer', 'saison-ete-2026', 'lol', 'lol-vit', 'lol-sk', 3, now() + interval '-48.00 hours', 'termine', 2, 1),
+  ('m-fini-2', 'vct-masters', 'saison-ete-2026', 'valorant', 'val-prx', 'val-sen', 3, now() + interval '-44.00 hours', 'termine', 2, 1),
+  ('m-fini-1', 'blast-bounty', 'saison-ete-2026', 'cs2', 'cs-navi', 'cs-g2', 3, now() + interval '-26.00 hours', 'termine', 2, 1),
+  ('m-fini-0', 'lec-summer', 'saison-ete-2026', 'lol', 'lol-kc', 'lol-bds', 3, now() + interval '-20.00 hours', 'termine', 2, 0),
+  ('m-2', 'blast-bounty', 'saison-ete-2026', 'cs2', 'cs-vit', 'cs-navi', 3, now() + interval '2.00 hours', 'a_venir', null, null),
+  ('m-0', 'lec-summer', 'saison-ete-2026', 'lol', 'lol-g2', 'lol-kc', 3, now() + interval '3.20 hours', 'a_venir', null, null),
+  ('m-1', 'lec-summer', 'saison-ete-2026', 'lol', 'lol-fnc', 'lol-vit', 3, now() + interval '5.48 hours', 'a_venir', null, null),
+  ('m-3', 'vct-masters', 'saison-ete-2026', 'valorant', 'val-fnc', 'val-prx', 3, now() + interval '7.02 hours', 'a_venir', null, null),
+  ('m-5', 'esl-pro', 'saison-ete-2026', 'cs2', 'cs-spirit', 'cs-faze', 3, now() + interval '24.17 hours', 'a_venir', null, null),
+  ('m-4', 'lec-summer', 'saison-ete-2026', 'lol', 'lol-mkoi', 'lol-bds', 3, now() + interval '26.20 hours', 'a_venir', null, null),
+  ('m-6', 'vct-emea', 'saison-ete-2026', 'valorant', 'val-kc', 'val-tl', 3, now() + interval '28.28 hours', 'a_venir', null, null),
+  ('m-7', 'lfl-summer', 'saison-ete-2026', 'lol', 'lol-th', 'lol-sk', 1, now() + interval '29.90 hours', 'a_venir', null, null),
+  ('m-8', 'blast-bounty', 'saison-ete-2026', 'cs2', 'cs-mouz', 'cs-g2', 3, now() + interval '49.30 hours', 'a_venir', null, null),
+  ('m-9', 'vct-masters', 'saison-ete-2026', 'valorant', 'val-drx', 'val-sen', 3, now() + interval '51.15 hours', 'a_venir', null, null),
+  ('m-10', 'lec-summer', 'saison-ete-2026', 'lol', 'lol-rge', 'lol-gx', 3, now() + interval '52.15 hours', 'a_venir', null, null),
+  ('m-11', 'esl-pro', 'saison-ete-2026', 'cs2', 'cs-falcons', 'cs-astralis', 3, now() + interval '72.10 hours', 'a_venir', null, null),
+  ('m-12', 'vct-emea', 'saison-ete-2026', 'valorant', 'val-g2', 'val-t1', 3, now() + interval '73.92 hours', 'a_venir', null, null),
+  ('m-13', 'lec-summer', 'saison-ete-2026', 'lol', 'lol-g2', 'lol-fnc', 5, now() + interval '96.23 hours', 'a_venir', null, null),
+  ('m-14', 'blast-bounty', 'saison-ete-2026', 'cs2', 'cs-vit', 'cs-spirit', 5, now() + interval '99.88 hours', 'a_venir', null, null),
+  ('m-15', 'vct-masters', 'saison-ete-2026', 'valorant', 'val-edg', 'val-nvg', 3, now() + interval '119.73 hours', 'a_venir', null, null),
+  ('m-16', 'lfl-summer', 'saison-ete-2026', 'lol', 'lol-kc', 'lol-vit', 3, now() + interval '121.80 hours', 'a_venir', null, null),
+  ('m-17', 'esl-pro', 'saison-ete-2026', 'cs2', 'cs-vp', 'cs-heroic', 3, now() + interval '144.08 hours', 'a_venir', null, null)
 on conflict (id) do nothing;
 
 -- Les matchs déjà marqués "termine" ci-dessus ne repassent pas par regler_match(),
 -- ils servent uniquement à remplir l onglet Résultats au premier lancement.
+--
+-- Pour ouvrir une nouvelle saison plus tard, voir la fin de 03_securite.sql.

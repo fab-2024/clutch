@@ -1,4 +1,5 @@
 import * as api from '../api.js';
+import { contexte, bandeauSaison } from '../app.js';
 import { esc, quand, dateLisible, nomJeu, vide, surClic } from '../ui.js';
 import { JEUX } from '../core.js';
 
@@ -17,9 +18,10 @@ export async function vueMatchs(racine) {
     <div class="entete-page">
       <div>
         <h1>Matchs à venir</h1>
-        <p>Choisis une cote, mise tes Frags, attends le résultat.</p>
+        <p>${esc(contexte.saison?.nom ?? '')} — choisis une cote, mise tes Frags, attends le résultat.</p>
       </div>
     </div>
+    ${bandeauSaison()}
     <div class="filtres" id="filtres-jeu"></div>
     <div class="filtres" id="filtres-statut"></div>
     <div class="grille grille--2" id="liste"></div>

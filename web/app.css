@@ -108,6 +108,20 @@ a:hover { text-decoration: underline; }
 .solde__valeur { font-weight: 700; color: var(--accent); }
 .solde__unite { color: var(--texte-faible); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; }
 
+.selecteur-saison {
+  width: auto;
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  color: var(--texte-doux);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  max-width: 200px;
+}
+.selecteur-saison:hover { color: var(--texte); border-color: var(--bordure-vive); }
+.selecteur-saison:focus { box-shadow: none; border-color: var(--accent); }
+
 .burger { display: none; background: none; border: 0; cursor: pointer; padding: 8px; }
 .burger span { display: block; width: 20px; height: 2px; background: var(--texte); margin: 4px 0; border-radius: 2px; }
 
@@ -331,6 +345,7 @@ input::placeholder { color: var(--texte-faible); }
 
 @media (max-width: 780px) {
   .burger { display: block; }
+  .selecteur-saison { max-width: 120px; font-size: 0.74rem; padding: 5px 8px; }
   .nav {
     position: absolute; top: 62px; left: 0; right: 0; flex-direction: column;
     background: var(--fond-2); border-bottom: 1px solid var(--bordure); padding: 10px;

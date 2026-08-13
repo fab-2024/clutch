@@ -37,7 +37,7 @@ const LIENS = [
   { href: '#/profil', libelle: 'Mes paris', cle: 'profil' },
 ];
 
-export const contexte = { utilisateur: null, admin: false };
+export const contexte = { utilisateur: null, admin: false, saison: null, saisons: [] };
 
 function chemin() {
   const h = location.hash.replace(/^#/, '');
@@ -45,6 +45,8 @@ function chemin() {
 }
 
 async function rafraichirEntete(navActive) {
+  contexte.saisons = await api.listerSaisons();
+  contexte.saison = await api.saisonCourante();
   contexte.utilisateur = await api.utilisateurCourant();
   contexte.admin = await api.estAdmin();
 
@@ -56,15 +58,42 @@ async function rafraichirEntete(navActive) {
     .join('');
 
   const droite = document.getElementById('entete-droite');
-  if (contexte.utilisateur) {
-    droite.innerHTML = `
-      <div class="solde" title="Monnaie fictive, sans valeur">
-        <span class="solde__valeur">${frags(contexte.utilisateur.solde).split(' ').slice(0, -1).join(' ')}</span>
-        <span class="solde__unite">Frags</span>
-      </div>`;
-  } else {
-    droite.innerHTML = `<a class="btn btn--petit" href="#/connexion">Jouer</a>`;
-  }
+  const selecteur = `
+    <select class="selecteur-saison" id="selecteur-saison" aria-label="Choisir la saison">
+      ${contexte.saisons
+        .map(
+          (s) =>
+            `<option value="${s.id}"${s.id === contexte.saison?.id ? ' selected' : ''}>${s.nom}${
+              s.statut === 'terminee' ? ' (terminée)' : s.statut === 'a_venir' ? ' (à venir)' : ''
+            }</option>`
+        )
+        .join('')}
+    </select>`;
+
+  droite.innerHTML =
+    selecteur +
+    (contexte.utilisateur
+      ? `<div class="solde" title="Solde de la saison en cours. Monnaie fictive, sans valeur.">
+           <span class="solde__valeur">${frags(contexte.utilisateur.solde).split(' ').slice(0, -1).join(' ')}</span>
+           <span class="solde__unite">Frags</span>
+         </div>`
+      : `<a class="btn btn--petit" href="#/connexion">Jouer</a>`);
+
+  document.getElementById('selecteur-saison').addEventListener('change', async (e) => {
+    await api.choisirSaison(e.target.value);
+    router();
+  });
+}
+
+/** Bandeau affiché quand on consulte une saison qui n'est pas en cours. */
+export function bandeauSaison() {
+  const s = contexte.saison;
+  if (!s || s.statut === 'en_cours') return '';
+  const texte =
+    s.statut === 'terminee'
+      ? `<strong>${s.nom} est terminée.</strong> Tu consultes des résultats figés : plus aucune mise n'est possible.`
+      : `<strong>${s.nom} n'a pas encore commencé.</strong> Les soldes repartiront à zéro à son ouverture.`;
+  return `<div class="encart encart--alerte" style="margin-bottom:20px">${texte}</div>`;
 }
 
 async function router() {

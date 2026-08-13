@@ -182,3 +182,88 @@ test('les statistiques reflètent les paris réglés', async () => {
   assert.equal(s.mises, 200);
   assert.ok(s.gains > 0);
 });
+
+/* ------------------------------------------------------------------ */
+/* Saisons                                                             */
+/* ------------------------------------------------------------------ */
+
+test('saisons : il y en a une en cours et une à venir', async () => {
+  await store.reinitialiser();
+  const saisons = await store.listerSaisons();
+  assert.equal(saisons.length, 2);
+  assert.equal(saisons.filter((s) => s.statut === 'en_cours').length, 1);
+  assert.equal(saisons.filter((s) => s.statut === 'a_venir').length, 1);
+
+  const courante = await store.saisonCourante();
+  assert.equal(courante.statut, 'en_cours', 'par défaut, on est dans la saison en cours');
+});
+
+test('saisons : changer de saison remet le solde à neuf', async () => {
+  await store.reinitialiser();
+  await store.connexion('Nomade');
+
+  // Je perds 400 Frags dans la saison en cours.
+  const m = (await store.listerMatchs({ statut: 'a_venir' }))[0];
+  await store.placerPari({ matchId: m.id, marche: 'vainqueur', choix: 'a', mise: 400 });
+  assert.equal((await store.utilisateurCourant()).solde, core.SOLDE_INITIAL - 400);
+
+  // Je bascule sur la saison suivante : solde intact, c'est un nouveau départ.
+  const saisons = await store.listerSaisons();
+  const suivante = saisons.find((s) => s.statut === 'a_venir');
+  await store.choisirSaison(suivante.id);
+  assert.equal((await store.utilisateurCourant()).solde, suivante.solde_initial);
+
+  // Et en revenant, je retrouve bien mon solde entamé.
+  const encours = saisons.find((s) => s.statut === 'en_cours');
+  await store.choisirSaison(encours.id);
+  assert.equal((await store.utilisateurCourant()).solde, core.SOLDE_INITIAL - 400);
+});
+
+test('saisons : les paris et statistiques sont cloisonnés', async () => {
+  await store.reinitialiser();
+  await store.connexion('Cloison');
+  const m = (await store.listerMatchs({ statut: 'a_venir' }))[0];
+  await store.placerPari({ matchId: m.id, marche: 'vainqueur', choix: 'a', mise: 100 });
+
+  const suivante = (await store.listerSaisons()).find((s) => s.statut === 'a_venir');
+  await store.choisirSaison(suivante.id);
+
+  assert.equal((await store.mesParis()).length, 0, 'aucun pari dans la nouvelle saison');
+  assert.equal((await store.statistiques()).paris, 0);
+  assert.equal((await store.listerMatchs({ statut: 'a_venir' })).length, 0,
+    'le calendrier de démo appartient à la saison 1');
+});
+
+test('saisons : le classement de la saison 2 est remis à plat', async () => {
+  await store.reinitialiser();
+  await store.connexion('Retardataire');
+
+  const saison1 = await store.classementGlobal();
+  const ecart1 = saison1[0].solde - saison1[saison1.length - 1].solde;
+  assert.ok(ecart1 > 0, 'la saison 1 a des écarts installés');
+
+  const suivante = (await store.listerSaisons()).find((s) => s.statut === 'a_venir');
+  await store.choisirSaison(suivante.id);
+  const saison2 = await store.classementGlobal();
+  const soldes = new Set(saison2.map((l) => l.solde));
+  assert.equal(soldes.size, 1, 'en saison 2, tout le monde démarre au même solde');
+  assert.equal([...soldes][0], suivante.solde_initial);
+});
+
+test('saisons : la prime est propre à chaque saison', async () => {
+  await store.reinitialiser();
+  await store.connexion('Primé');
+  await store.reclamerPrime();
+  await assert.rejects(() => store.reclamerPrime(), /déjà réclamée/);
+
+  // Sur une saison qui n'a pas encore ouvert, la prime est refusée : sinon on
+  // pourrait se constituer un magot avant même le premier match.
+  const suivante = (await store.listerSaisons()).find((s) => s.statut === 'a_venir');
+  await store.choisirSaison(suivante.id);
+  await assert.rejects(() => store.reclamerPrime(), /pas encore commencé/);
+});
+
+test('saisons : une saison inconnue est refusée', async () => {
+  await store.reinitialiser();
+  await assert.rejects(() => store.choisirSaison('saison-fantome'), /Saison inconnue/);
+});

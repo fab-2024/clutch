@@ -1,16 +1,44 @@
 import * as api from '../api.js';
-import { esc, frags, vide } from '../ui.js';
+import { contexte, bandeauSaison } from '../app.js';
+import { esc, frags, dateLisible, vide } from '../ui.js';
 
 export async function vueClassement(racine) {
-  const lignes = await api.classementGlobal();
+  const [lignes, palmares] = await Promise.all([api.classementGlobal(), api.palmares()]);
+
   racine.innerHTML = `
     <div class="entete-page">
       <div>
-        <h1>Classement général</h1>
-        <p>Tous les joueurs, classés au solde de Frags.</p>
+        <h1>Classement</h1>
+        <p>${esc(contexte.saison?.nom ?? '')} — chaque saison repart de zéro pour tout le monde.</p>
       </div>
     </div>
-    <div class="carte">${lignes.length ? tableauClassement(lignes) : vide('Personne encore', 'Sois le premier.')}</div>`;
+    ${bandeauSaison()}
+    <div class="carte">${lignes.length ? tableauClassement(lignes) : vide('Personne encore', 'Sois le premier.')}</div>
+
+    ${
+      palmares.length
+        ? `<h2 style="margin-top:30px">Palmarès</h2>
+           <div class="carte">
+             <table class="tableau">
+               <tbody>
+                 ${palmares
+                   .map(
+                     (p) => `<tr>
+                       <td>${esc(p.saison.nom)}
+                         <div style="font-size:0.75rem;color:var(--texte-faible)">
+                           close le ${esc(dateLisible(p.saison.fin))}
+                         </div>
+                       </td>
+                       <td><strong>${esc(p.vainqueur?.pseudo ?? '—')}</strong></td>
+                       <td class="num">${p.vainqueur ? esc(frags(p.vainqueur.solde)) : ''}</td>
+                     </tr>`
+                   )
+                   .join('')}
+               </tbody>
+             </table>
+           </div>`
+        : ''
+    }`;
 }
 
 /** Rendu partagé entre le classement global et celui d'une ligue. */

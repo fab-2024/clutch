@@ -175,13 +175,29 @@ Onglet **Admin** → saisis le score → **Régler ce match**. En un clic :
 - les Elo des deux équipes sont recalculés
 - les cotes des prochains matchs s'ajustent automatiquement
 
+### Ouvrir une nouvelle saison
+
+C'est ce qui remet tout le monde à égalité — à faire au début de chaque grand
+tournoi. Supabase → **SQL Editor** :
+
+```sql
+insert into saisons (id, nom, debut, fin, solde_initial)
+values ('saison-hiver-2027', 'Saison 3 — Hiver 2027',
+        '2027-01-05 00:00+01', '2027-03-30 23:59+02', 1000);
+```
+
+Les matchs de cette période devront porter `saison_id = 'saison-hiver-2027'`.
+Le statut de la saison (à venir / en cours / terminée) se déduit tout seul des
+dates : tu n'as rien d'autre à faire, et le classement de la saison précédente
+bascule automatiquement dans le palmarès.
+
 ### Ajouter des matchs
 
 Pour l'instant, par SQL. Supabase → **SQL Editor** :
 
 ```sql
-insert into matchs (event_id, jeu, equipe_a_id, equipe_b_id, format, debut)
-values ('lec-summer', 'lol', 'lol-g2', 'lol-kc', 3, '2026-09-14 18:00+02');
+insert into matchs (event_id, saison_id, jeu, equipe_a_id, equipe_b_id, format, debut)
+values ('lec-summer', 'saison-ete-2026', 'lol', 'lol-g2', 'lol-kc', 3, '2026-09-14 18:00+02');
 ```
 
 Les identifiants d'équipes et d'événements sont ceux du fichier
@@ -214,7 +230,8 @@ inutile de s'y attaquer avant d'avoir des joueurs.
 | Le lien de connexion renvoie vers localhost | Étape 2.6 non faite |
 | L'onglet Admin n'apparaît pas | Étape 2.5 non faite, ou e-mail absent de `ADMINS` dans `config.js` |
 | « Réservé aux administrateurs » au règlement | `est_admin` n'est pas à `true` sur ton profil |
-| Le calendrier est vide | `04_donnees.sql` n'a pas été exécuté |
+| Le calendrier est vide | `04_donnees.sql` n'a pas été exécuté, ou la saison sélectionnée en haut à droite n'est pas la bonne |
+| « Cette saison n'est pas ouverte aux mises » | Tu consultes une saison passée ou future : change-la dans le sélecteur de l'entête |
 
 ---
 

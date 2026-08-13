@@ -10,23 +10,26 @@
  */
 
 import * as core from './core.js';
-import { EQUIPES, EVENEMENTS, RIVAUX, construireMatchs } from './seed.js';
+import { EQUIPES, EVENEMENTS, RIVAUX, construireMatchs, construireSaisons } from './seed.js';
 
-const CLE = 'clutch.demo.v1';
+const CLE = 'clutch.demo.v2';
 
 let db = null;
 
 function etatInitial() {
   return {
-    version: 1,
+    version: 2,
     cree_le: new Date().toISOString(),
     utilisateur: null,
+    saisons: construireSaisons(),
+    saison_choisie: null,
     equipes: structuredClone(EQUIPES),
     evenements: structuredClone(EVENEMENTS),
     matchs: construireMatchs(),
     paris: [],
     ligues: [],
     membres: [],
+    participations: [],
     rivaux: structuredClone(RIVAUX),
   };
 }
@@ -80,6 +83,7 @@ function equipe(id) {
 
 /** Enrichit un match brut avec les noms d'équipes, les Elo et l'événement. */
 function enrichir(m) {
+  if (!m) return null;
   const a = equipe(m.equipe_a_id);
   const b = equipe(m.equipe_b_id);
   const ev = charger().evenements.find((e) => e.id === m.event_id);
@@ -96,11 +100,83 @@ function enrichir(m) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Saisons                                                             */
+/* ------------------------------------------------------------------ */
+
+/** Statut d'une saison au regard de la date du jour. */
+function statutSaison(s) {
+  const maintenant = Date.now();
+  if (maintenant < new Date(s.debut)) return 'a_venir';
+  if (maintenant > new Date(s.fin)) return 'terminee';
+  return 'en_cours';
+}
+
+export async function listerSaisons() {
+  return charger()
+    .saisons.map((s) => ({ ...s, statut: statutSaison(s) }))
+    .sort((a, b) => new Date(a.debut) - new Date(b.debut));
+}
+
+/**
+ * Saison active : celle choisie explicitement, sinon celle qui est en cours,
+ * sinon la plus récente. Il y a toujours une saison courante.
+ */
+export async function saisonCourante() {
+  const d = charger();
+  const toutes = await listerSaisons();
+  const choisie = toutes.find((s) => s.id === d.saison_choisie);
+  if (choisie) return choisie;
+  return toutes.find((s) => s.statut === 'en_cours') ?? toutes[toutes.length - 1];
+}
+
+export async function choisirSaison(id) {
+  const d = charger();
+  if (!d.saisons.some((s) => s.id === id)) throw new Error('Saison inconnue.');
+  d.saison_choisie = id;
+  sauver();
+  return saisonCourante();
+}
+
+/**
+ * Participation d'un joueur à une saison, créée à la volée au premier accès.
+ * C'est ce qui donne à chacun un solde neuf à chaque nouvelle saison.
+ */
+function participation(userId, saisonId) {
+  const d = charger();
+  let p = d.participations.find((x) => x.user_id === userId && x.saison_id === saisonId);
+  if (!p) {
+    const saison = d.saisons.find((s) => s.id === saisonId);
+    p = {
+      saison_id: saisonId,
+      user_id: userId,
+      solde: saison?.solde_initial ?? core.SOLDE_INITIAL,
+      derniere_prime: null,
+      rejoint_le: new Date().toISOString(),
+    };
+    d.participations.push(p);
+    sauver();
+  }
+  return p;
+}
+
+/** Solde d'un rival pour une saison donnée (données de démo). */
+function soldeRival(rival, saisonId) {
+  const d = charger();
+  const p = d.participations.find((x) => x.user_id === rival.id && x.saison_id === saisonId);
+  if (p) return p.solde;
+  return rival.soldes?.[saisonId] ?? d.saisons.find((s) => s.id === saisonId)?.solde_initial ?? core.SOLDE_INITIAL;
+}
+
+/* ------------------------------------------------------------------ */
 /* Authentification simulée                                            */
 /* ------------------------------------------------------------------ */
 
 export async function utilisateurCourant() {
-  return charger().utilisateur;
+  const d = charger();
+  if (!d.utilisateur) return null;
+  const saison = await saisonCourante();
+  const p = participation(d.utilisateur.id, saison.id);
+  return { ...d.utilisateur, solde: p.solde, saison_id: saison.id, derniere_prime: p.derniere_prime };
 }
 
 export async function connexion(pseudo) {
@@ -108,12 +184,10 @@ export async function connexion(pseudo) {
   d.utilisateur = {
     id: uid('u'),
     pseudo: pseudo.trim().slice(0, 20) || 'Joueur',
-    solde: core.SOLDE_INITIAL,
-    derniere_prime: null,
     cree_le: new Date().toISOString(),
   };
   sauver();
-  return d.utilisateur;
+  return utilisateurCourant();
 }
 
 export async function deconnexion() {
@@ -131,16 +205,17 @@ export async function reinitialiser() {
 /* Matchs                                                              */
 /* ------------------------------------------------------------------ */
 
-export async function listerMatchs({ jeu = null, statut = 'a_venir' } = {}) {
+export async function listerMatchs({ jeu = null, statut = 'a_venir', saison = null } = {}) {
+  const saisonId = saison ?? (await saisonCourante()).id;
   return charger()
-    .matchs.filter((m) => (statut ? m.statut === statut : true))
+    .matchs.filter((m) => m.saison_id === saisonId)
+    .filter((m) => (statut ? m.statut === statut : true))
     .filter((m) => (jeu ? m.jeu === jeu : true))
     .map(enrichir);
 }
 
 export async function lireMatch(id) {
-  const m = charger().matchs.find((x) => x.id === id);
-  return m ? enrichir(m) : null;
+  return enrichir(charger().matchs.find((x) => x.id === id));
 }
 
 export async function cotesDuMatch(id) {
@@ -149,7 +224,7 @@ export async function cotesDuMatch(id) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Paris                                                               */
+/* Paris                                                              */
 /* ------------------------------------------------------------------ */
 
 export async function placerPari({ matchId, marche, choix, mise }) {
@@ -162,12 +237,14 @@ export async function placerPari({ matchId, marche, choix, mise }) {
   if (m.statut !== 'a_venir') throw new Error('Ce match a déjà commencé.');
   if (new Date(m.debut) <= new Date()) throw new Error('Les mises sont fermées sur ce match.');
 
+  const p = participation(u.id, m.saison_id);
+
   mise = Math.round(Number(mise));
   if (!Number.isFinite(mise) || mise < core.MISE_MIN) {
     throw new Error(`Mise minimale : ${core.MISE_MIN} Frags.`);
   }
   if (mise > core.MISE_MAX) throw new Error(`Mise maximale : ${core.MISE_MAX} Frags.`);
-  if (mise > u.solde) throw new Error('Solde insuffisant.');
+  if (mise > p.solde) throw new Error('Solde insuffisant.');
 
   // La cote est recalculée ici, côté "serveur" : on ne fait jamais confiance
   // à la cote envoyée par l'interface.
@@ -175,15 +252,16 @@ export async function placerPari({ matchId, marche, choix, mise }) {
   if (!trouve) throw new Error('Pari invalide.');
 
   const dejaMise = d.paris.find(
-    (p) => p.user_id === u.id && p.match_id === matchId && p.marche === marche && p.choix === choix
+    (x) => x.user_id === u.id && x.match_id === matchId && x.marche === marche && x.choix === choix
   );
   if (dejaMise) throw new Error('Tu as déjà un pari en cours sur ce choix.');
 
-  u.solde -= mise;
+  p.solde -= mise;
   const pari = {
     id: uid('p'),
     user_id: u.id,
     match_id: matchId,
+    saison_id: m.saison_id,
     marche,
     choix,
     libelle_marche: trouve.marche.libelle,
@@ -199,11 +277,12 @@ export async function placerPari({ matchId, marche, choix, mise }) {
   return pari;
 }
 
-export async function mesParis() {
+export async function mesParis({ saison = null } = {}) {
   const d = charger();
   if (!d.utilisateur) return [];
+  const saisonId = saison ?? (await saisonCourante()).id;
   return d.paris
-    .filter((p) => p.user_id === d.utilisateur.id)
+    .filter((p) => p.user_id === d.utilisateur.id && p.saison_id === saisonId)
     .map((p) => ({ ...p, match: enrichir(d.matchs.find((m) => m.id === p.match_id)) }))
     .sort((a, b) => new Date(b.cree_le) - new Date(a.cree_le));
 }
@@ -232,9 +311,7 @@ export async function reglerMatch(matchId, scoreA, scoreB) {
     const gagnant = core.pariGagnant(p.marche, p.choix, scoreA, scoreB);
     p.statut = gagnant ? 'gagne' : 'perdu';
     p.gain = core.gainPari(p.mise, p.cote, gagnant);
-    if (p.gain && d.utilisateur && d.utilisateur.id === p.user_id) {
-      d.utilisateur.solde += p.gain;
-    }
+    if (p.gain) participation(p.user_id, p.saison_id).solde += p.gain;
     regles++;
   }
 
@@ -254,16 +331,20 @@ export async function reglerMatch(matchId, scoreA, scoreB) {
 
 export async function reclamerPrime() {
   const d = charger();
-  const u = d.utilisateur;
-  if (!u) throw new Error('Connecte-toi.');
-  const derniere = u.derniere_prime ? new Date(u.derniere_prime) : null;
+  if (!d.utilisateur) throw new Error('Connecte-toi.');
+  const saison = await saisonCourante();
+  if (saison.statut === 'terminee') throw new Error('Cette saison est terminée.');
+  if (saison.statut === 'a_venir') throw new Error("Cette saison n'a pas encore commencé.");
+
+  const p = participation(d.utilisateur.id, saison.id);
+  const derniere = p.derniere_prime ? new Date(p.derniere_prime) : null;
   if (derniere && Date.now() - derniere.getTime() < 24 * 3600 * 1000) {
     const reste = 24 * 3600 * 1000 - (Date.now() - derniere.getTime());
     throw new Error(`Prime déjà réclamée. Reviens dans ${Math.ceil(reste / 3600000)} h.`);
   }
-  const montant = u.solde < core.SEUIL_FAILLITE ? core.BONUS_QUOTIDIEN * 2 : core.BONUS_QUOTIDIEN;
-  u.solde += montant;
-  u.derniere_prime = new Date().toISOString();
+  const montant = p.solde < core.SEUIL_FAILLITE ? core.BONUS_QUOTIDIEN * 2 : core.BONUS_QUOTIDIEN;
+  p.solde += montant;
+  p.derniere_prime = new Date().toISOString();
   sauver();
   return montant;
 }
@@ -309,15 +390,22 @@ export async function mesLigues() {
   if (!d.utilisateur) return [];
   return d.ligues
     .filter((l) => d.membres.some((m) => m.league_id === l.id && m.user_id === d.utilisateur.id))
-    .map((l) => ({
-      ...l,
-      nb_membres: d.membres.filter((m) => m.league_id === l.id).length,
-    }));
+    .map((l) => ({ ...l, nb_membres: d.membres.filter((m) => m.league_id === l.id).length }));
 }
 
-function statsJoueur(userId) {
+export async function lireLigue(id) {
+  return charger().ligues.find((l) => l.id === id) ?? null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Classements et statistiques                                         */
+/* ------------------------------------------------------------------ */
+
+function statsJoueur(userId, saisonId) {
   const d = charger();
-  const paris = d.paris.filter((p) => p.user_id === userId && p.statut !== 'en_cours');
+  const paris = d.paris.filter(
+    (p) => p.user_id === userId && p.saison_id === saisonId && p.statut !== 'en_cours'
+  );
   const mises = paris.reduce((t, p) => t + p.mise, 0);
   const gains = paris.reduce((t, p) => t + p.gain, 0);
   return {
@@ -329,57 +417,65 @@ function statsJoueur(userId) {
   };
 }
 
-export async function classementLigue(ligueId) {
+async function ligne(userId, saisonId) {
   const d = charger();
-  const ids = d.membres.filter((m) => m.league_id === ligueId).map((m) => m.user_id);
-  const lignes = ids.map((id) => {
-    if (d.utilisateur && id === d.utilisateur.id) {
-      return { id, pseudo: d.utilisateur.pseudo, solde: d.utilisateur.solde, moi: true, ...statsJoueur(id) };
-    }
-    const r = d.rivaux.find((x) => x.id === id);
+  if (d.utilisateur && userId === d.utilisateur.id) {
     return {
-      id,
-      pseudo: r?.pseudo ?? 'Joueur',
-      solde: r?.solde ?? core.SOLDE_INITIAL,
-      moi: false,
-      paris: r?.paris ?? 0,
-      gagnes: r?.gagnes ?? 0,
-      mises: 0,
-      gains: 0,
-      roi: 0,
-    };
-  });
-  return lignes.sort((a, b) => b.solde - a.solde);
-}
-
-export async function classementGlobal() {
-  const d = charger();
-  const lignes = d.rivaux.map((r) => ({
-    id: r.id,
-    pseudo: r.pseudo,
-    solde: r.solde,
-    paris: r.paris,
-    gagnes: r.gagnes,
-    moi: false,
-  }));
-  if (d.utilisateur) {
-    lignes.push({
-      id: d.utilisateur.id,
+      id: userId,
       pseudo: d.utilisateur.pseudo,
-      solde: d.utilisateur.solde,
+      solde: participation(userId, saisonId).solde,
       moi: true,
-      ...statsJoueur(d.utilisateur.id),
-    });
+      ...statsJoueur(userId, saisonId),
+    };
   }
+  const r = d.rivaux.find((x) => x.id === userId);
+  return {
+    id: userId,
+    pseudo: r?.pseudo ?? 'Joueur',
+    solde: soldeRival(r ?? { id: userId }, saisonId),
+    moi: false,
+    paris: r?.paris ?? 0,
+    gagnes: r?.gagnes ?? 0,
+    mises: 0,
+    gains: 0,
+    roi: 0,
+  };
+}
+
+export async function classementLigue(ligueId, { saison = null } = {}) {
+  const d = charger();
+  const saisonId = saison ?? (await saisonCourante()).id;
+  const ids = d.membres.filter((m) => m.league_id === ligueId).map((m) => m.user_id);
+  const lignes = await Promise.all(ids.map((id) => ligne(id, saisonId)));
   return lignes.sort((a, b) => b.solde - a.solde);
 }
 
-export async function lireLigue(id) {
-  return charger().ligues.find((l) => l.id === id) ?? null;
+export async function classementGlobal({ saison = null } = {}) {
+  const d = charger();
+  const saisonId = saison ?? (await saisonCourante()).id;
+  const ids = d.rivaux.map((r) => r.id);
+  if (d.utilisateur) ids.push(d.utilisateur.id);
+  const lignes = await Promise.all(ids.map((id) => ligne(id, saisonId)));
+  return lignes.sort((a, b) => b.solde - a.solde);
 }
 
-export async function statistiques() {
+export async function statistiques({ saison = null } = {}) {
   const d = charger();
   if (!d.utilisateur) return null;
-  return { ...statsJoueur(d.utilisateur.id), solde: d.utilisateur.solde };
+  const saisonId = saison ?? (await saisonCourante()).id;
+  return {
+    ...statsJoueur(d.utilisateur.id, saisonId),
+    solde: participation(d.utilisateur.id, saisonId).solde,
+  };
+}
+
+/** Palmarès : le vainqueur de chaque saison déjà terminée. */
+export async function palmares() {
+  const saisons = (await listerSaisons()).filter((s) => statutSaison(s) === 'terminee');
+  const resultat = [];
+  for (const s of saisons) {
+    const classement = await classementGlobal({ saison: s.id });
+    resultat.push({ saison: s, vainqueur: classement[0] ?? null });
+  }
+  return resultat.reverse();
 }

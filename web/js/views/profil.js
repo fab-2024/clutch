@@ -1,5 +1,5 @@
 import * as api from '../api.js';
-import { contexte, majSolde } from '../app.js';
+import { contexte, majSolde, bandeauSaison } from '../app.js';
 import { esc, frags, dateLisible, toast, vide } from '../ui.js';
 import { badgePari } from './match.js';
 import { BONUS_QUOTIDIEN } from '../core.js';
@@ -23,13 +23,15 @@ export async function vueProfil(racine) {
     <div class="entete-page">
       <div>
         <h1>${esc(contexte.utilisateur.pseudo || contexte.utilisateur.email || 'Mon profil')}</h1>
-        <p>Membre depuis le ${esc(new Date(contexte.utilisateur.cree_le).toLocaleDateString('fr-FR'))}</p>
+        <p>${esc(contexte.saison?.nom ?? '')} — membre depuis le ${esc(new Date(contexte.utilisateur.cree_le).toLocaleDateString('fr-FR'))}</p>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn--fantome btn--petit" id="prime">Prime quotidienne (+${BONUS_QUOTIDIEN})</button>
         <button class="btn btn--danger btn--petit" id="quitter">Se déconnecter</button>
       </div>
     </div>
+
+    ${bandeauSaison()}
 
     <div class="grille grille--stats" style="margin-bottom:26px">
       <div class="stat"><div class="stat__valeur">${esc(frags(stats.solde))}</div><div class="stat__libelle">Solde</div></div>
@@ -46,6 +48,9 @@ export async function vueProfil(racine) {
     </div>
 
     <h2>Paris en cours (${enCours.length})</h2>
+    <p style="color:var(--texte-faible);font-size:0.82rem;margin-top:-8px">
+      Seuls les paris de ${esc(contexte.saison?.nom ?? 'la saison')} sont affichés ici.
+    </p>
     <div class="carte" style="margin-bottom:26px">${enCours.length ? tableauParis(enCours) : vide('Rien en cours', 'Va miser sur un match.')}</div>
 
     <h2>Historique (${regles.length})</h2>

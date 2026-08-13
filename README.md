@@ -29,7 +29,9 @@ Voir [la section juridique](#cadre-juridique).
 | Cotes calculées par un modèle Elo maison | ✅ |
 | Trois marchés : vainqueur, score exact, nombre de maps | ✅ |
 | Mise avec cote figée à la validation | ✅ |
+| Saisons : soldes remis à zéro à chaque nouvelle période | ✅ |
 | Ligues privées avec code d'invitation | ✅ |
+| Palmarès des saisons passées | ✅ |
 | Classement de ligue et classement général | ✅ |
 | Prime quotidienne et filet anti-faillite | ✅ |
 | Console d'administration pour saisir les résultats | ✅ |
@@ -93,6 +95,23 @@ gagner 2-0 déplace plus le classement que gagner 2-1.
 
 Tout est dans [`web/js/core.js`](web/js/core.js), commenté, et couvert par les
 tests.
+
+## Les saisons, et pourquoi elles existent
+
+Le solde d'un joueur n'est pas global : il appartient à une **saison**. À
+l'ouverture d'une nouvelle saison, tout le monde repart au même niveau.
+
+C'est le point de conception le plus important du jeu. Sans saisons, un pote qui
+rejoint trois semaines après les autres a un écart mathématiquement
+irrattrapable — il joue une partie qu'il ne peut pas gagner, et il décroche. Avec
+elles, chaque grand tournoi est un nouveau départ, et le palmarès garde la trace
+des vainqueurs précédents.
+
+Les ligues, elles, **survivent aux saisons** : « Les potes du Discord » reste la
+même ligue d'une saison à l'autre, seul son classement est remis à plat. Le statut
+d'une saison (à venir, en cours, terminée) se déduit des dates, il n'y a rien à
+maintenir à la main. Une saison qui n'est pas en cours est consultable mais
+verrouillée : ni mise, ni prime quotidienne.
 
 ## Architecture
 

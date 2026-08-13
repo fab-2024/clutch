@@ -131,6 +131,28 @@ begin
 end;
 $$;
 
+-- ------------------------------------------- Participation à une saison
+-- Renvoie le solde du joueur pour une saison, en créant la ligne au premier
+-- appel. C'est le seul endroit où un solde apparaît de nulle part.
+create or replace function clutch_participation(p_user uuid, p_saison text)
+returns participations language plpgsql security definer set search_path = public as $$
+declare v_part participations%rowtype; v_initial integer;
+begin
+  select * into v_part from participations where user_id = p_user and saison_id = p_saison for update;
+  if found then return v_part; end if;
+
+  select solde_initial into v_initial from saisons where id = p_saison;
+  if v_initial is null then raise exception 'Saison inconnue.'; end if;
+
+  insert into participations (saison_id, user_id, solde)
+  values (p_saison, p_user, v_initial)
+  on conflict (saison_id, user_id) do nothing;
+
+  select * into v_part from participations where user_id = p_user and saison_id = p_saison;
+  return v_part;
+end;
+$$;
+
 -- --------------------------------------------------------- Placer un pari
 create or replace function placer_pari(
   p_match_id text, p_marche text, p_choix text, p_mise integer
@@ -154,8 +176,13 @@ begin
   if p_mise < clutch_mise_min() then raise exception 'Mise minimale : % Frags.', clutch_mise_min(); end if;
   if p_mise > clutch_mise_max() then raise exception 'Mise maximale : % Frags.', clutch_mise_max(); end if;
 
-  -- Verrou sur le profil : évite qu'un double clic ne dépense deux fois le solde.
-  select solde into v_solde from profils where id = v_user for update;
+  -- La saison doit être ouverte : on ne mise ni dans le passé ni dans le futur.
+  if (select statut from v_saisons where id = m.saison_id) <> 'en_cours' then
+    raise exception 'Cette saison n''est pas ouverte aux mises.';
+  end if;
+
+  -- Verrou sur la participation : évite qu'un double clic ne dépense deux fois.
+  v_solde := (clutch_participation(v_user, m.saison_id)).solde;
   if v_solde < p_mise then raise exception 'Solde insuffisant.'; end if;
 
   -- La cote est recalculée ici, jamais reprise du navigateur.
@@ -169,10 +196,11 @@ begin
   where value ->> 'cle' = p_choix;
   if choix is null then raise exception 'Sélection inconnue.'; end if;
 
-  update profils set solde = solde - p_mise where id = v_user;
+  update participations set solde = solde - p_mise
+   where user_id = v_user and saison_id = m.saison_id;
 
-  insert into paris (user_id, match_id, marche, choix, libelle_marche, libelle_choix, mise, cote)
-  values (v_user, p_match_id, p_marche, p_choix,
+  insert into paris (user_id, match_id, saison_id, marche, choix, libelle_marche, libelle_choix, mise, cote)
+  values (v_user, p_match_id, m.saison_id, p_marche, p_choix,
           marche ->> 'libelle', choix ->> 'libelle', p_mise, (choix ->> 'cote')::numeric)
   returning * into v_pari;
 
@@ -236,7 +264,9 @@ begin
      where id = pari.id;
 
     if gagnant then
-      update profils set solde = solde + round(pari.mise * pari.cote) where id = pari.user_id;
+      update participations
+         set solde = solde + round(pari.mise * pari.cote)
+       where user_id = pari.user_id and saison_id = pari.saison_id;
     end if;
 
     v_regles := v_regles + 1;
@@ -259,19 +289,26 @@ end;
 $$;
 
 -- ----------------------------------------------------- Prime quotidienne
-create or replace function reclamer_prime()
+create or replace function reclamer_prime(p_saison_id text)
 returns integer language plpgsql security definer set search_path = public as $$
-declare pr profils%rowtype; montant integer;
+declare v_part participations%rowtype; v_statut text; montant integer;
 begin
-  select * into pr from profils where id = auth.uid() for update;
-  if not found then raise exception 'Connecte-toi.'; end if;
-  if pr.derniere_prime is not null and pr.derniere_prime > now() - interval '24 hours' then
+  if auth.uid() is null then raise exception 'Connecte-toi.'; end if;
+
+  select statut into v_statut from v_saisons where id = p_saison_id;
+  if v_statut is null then raise exception 'Saison inconnue.'; end if;
+  if v_statut = 'terminee' then raise exception 'Cette saison est terminée.'; end if;
+  if v_statut = 'a_venir' then raise exception 'Cette saison n''a pas encore commencé.'; end if;
+
+  v_part := clutch_participation(auth.uid(), p_saison_id);
+  if v_part.derniere_prime is not null and v_part.derniere_prime > now() - interval '24 hours' then
     raise exception 'Prime déjà réclamée. Reviens dans % h.',
-      ceil(extract(epoch from (pr.derniere_prime + interval '24 hours' - now())) / 3600);
+      ceil(extract(epoch from (v_part.derniere_prime + interval '24 hours' - now())) / 3600);
   end if;
 
-  montant := case when pr.solde < clutch_seuil_faillite() then clutch_bonus() * 2 else clutch_bonus() end;
-  update profils set solde = solde + montant, derniere_prime = now() where id = pr.id;
+  montant := case when v_part.solde < clutch_seuil_faillite() then clutch_bonus() * 2 else clutch_bonus() end;
+  update participations set solde = solde + montant, derniere_prime = now()
+   where user_id = auth.uid() and saison_id = p_saison_id;
   return montant;
 end;
 $$;
@@ -323,41 +360,71 @@ end;
 $$;
 
 -- ----------------------------------------------------------- Classements
-create or replace function clutch_classement(p_ids uuid[])
+-- Un classement est TOUJOURS relatif à une saison : c'est le solde de la
+-- participation qui est classé, jamais un solde global.
+create or replace function clutch_classement(p_ids uuid[], p_saison_id text)
 returns table (id uuid, pseudo text, solde integer, paris bigint, gagnes bigint, moi boolean)
 language sql stable as $$
   select
     pr.id,
     pr.pseudo,
-    pr.solde,
+    coalesce(pt.solde, (select solde_initial from saisons where id = p_saison_id)) as solde,
     count(pa.id) filter (where pa.statut in ('gagne', 'perdu')) as paris,
     count(pa.id) filter (where pa.statut = 'gagne')             as gagnes,
     pr.id = auth.uid()                                          as moi
   from profils pr
-  left join paris pa on pa.user_id = pr.id
+  left join participations pt on pt.user_id = pr.id and pt.saison_id = p_saison_id
+  left join paris pa on pa.user_id = pr.id and pa.saison_id = p_saison_id
   where pr.id = any (p_ids)
-  group by pr.id, pr.pseudo, pr.solde
-  order by pr.solde desc, gagnes desc;
+  group by pr.id, pr.pseudo, pt.solde
+  order by solde desc, gagnes desc;
 $$;
 
-create or replace function classement_ligue(p_ligue_id uuid)
+create or replace function classement_ligue(p_ligue_id uuid, p_saison_id text)
 returns table (id uuid, pseudo text, solde integer, paris bigint, gagnes bigint, moi boolean)
 language sql stable as $$
   select * from clutch_classement(
-    array(select user_id from membres_ligue where ligue_id = p_ligue_id)
+    array(select user_id from membres_ligue where ligue_id = p_ligue_id), p_saison_id
   );
 $$;
 
-create or replace function classement_global()
+create or replace function classement_global(p_saison_id text)
 returns table (id uuid, pseudo text, solde integer, paris bigint, gagnes bigint, moi boolean)
 language sql stable as $$
-  select * from clutch_classement(array(select id from profils order by solde desc limit 100));
+  select * from clutch_classement(
+    array(
+      select user_id from participations
+      where saison_id = p_saison_id order by solde desc limit 100
+    ),
+    p_saison_id
+  );
 $$;
 
-create or replace function mes_statistiques()
+-- Vainqueur de chaque saison déjà close.
+create or replace function palmares()
+returns jsonb language sql stable as $$
+  select coalesce(jsonb_agg(x order by x -> 'saison' ->> 'fin' desc), '[]'::jsonb)
+  from (
+    select jsonb_build_object(
+      'saison', to_jsonb(s),
+      'vainqueur', (
+        select to_jsonb(c) from clutch_classement(
+          array(select user_id from participations where saison_id = s.id), s.id
+        ) c limit 1
+      )
+    ) as x
+    from v_saisons s
+    where s.statut = 'terminee'
+  ) t;
+$$;
+
+create or replace function mes_statistiques(p_saison_id text)
 returns jsonb language sql stable as $$
   select jsonb_build_object(
-    'solde',  (select solde from profils where id = auth.uid()),
+    'solde', coalesce(
+      (select solde from participations where user_id = auth.uid() and saison_id = p_saison_id),
+      (select solde_initial from saisons where id = p_saison_id)
+    ),
     'paris',  count(*) filter (where statut in ('gagne', 'perdu')),
     'gagnes', count(*) filter (where statut = 'gagne'),
     'mises',  coalesce(sum(mise) filter (where statut in ('gagne', 'perdu')), 0),
@@ -369,5 +436,5 @@ returns jsonb language sql stable as $$
                / sum(mise) filter (where statut in ('gagne', 'perdu')) * 100, 1)
            end
   )
-  from paris where user_id = auth.uid();
+  from paris where user_id = auth.uid() and saison_id = p_saison_id;
 $$;
