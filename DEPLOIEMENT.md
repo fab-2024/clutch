@@ -40,7 +40,7 @@ Tu n'as **rien à installer**. Il te faut seulement :
 
 Dans le menu de gauche : **SQL Editor** → **New query**.
 
-Tu vas exécuter sept fichiers, **dans cet ordre**. Pour chacun : ouvre le
+Tu vas exécuter huit fichiers, **dans cet ordre**. Pour chacun : ouvre le
 fichier, copie tout son contenu, colle-le dans l'éditeur, clique sur **Run**.
 Attends le message vert avant de passer au suivant.
 
@@ -53,6 +53,7 @@ Attends le message vert avant de passer au suivant.
 | 5 | `supabase/05_xs.sql` | Ajoute la prime en série, l'équipe préférée, le call de la saison et la rivalité |
 | 6 | `supabase/06_analyse.sql` | Ajoute le prono par défaut, le défi de ligue et le profil d'analyste |
 | 7 | `supabase/07_correctif_rls.sql` | **Indispensable** : corrige une récursion dans les règles de sécurité qui rendait toute la base illisible |
+| 8 | `supabase/08_palier2.sql` | Ajoute la note à vie, les classements enrichis et le récapitulatif des badges |
 
 > `05_xs.sql` et `06_analyse.sql` sont **rejouables** : les relancer ne casse
 > rien. Ce sont les fichiers à réexécuter après chaque mise à jour du dépôt qui

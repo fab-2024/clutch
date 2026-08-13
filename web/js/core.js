@@ -608,3 +608,305 @@ function signe(n) {
   const v = Math.round(n);
   return v >= 0 ? `+${v}` : `${v}`;
 }
+
+/* ------------------------------------------------------------------ */
+/* La note à vie                                                       */
+/* ------------------------------------------------------------------ */
+
+/** Note de départ, et sensibilité de la mise à jour. */
+export const NOTE_INITIALE = 1000;
+export const NOTE_K = 16;
+
+/** En dessous, la note n'est pas affichée : elle ne veut encore rien dire. */
+export const NOTE_MIN_PARIS = 10;
+
+/**
+ * Probabilité réelle derrière une cote, marge retirée.
+ *
+ * La cote servie intègre 6 % de marge : sa probabilité implicite est donc
+ * surestimée. Si on notait les joueurs dessus, tout le monde dériverait vers le
+ * bas, y compris un joueur parfait — la note mesurerait la marge, pas le
+ * jugement. On la retire.
+ */
+export function probaSansMarge(cote, marge = MARGE) {
+  return Math.min(1, Math.max(0, 1 / (cote * (1 + marge))));
+}
+
+/**
+ * Nouvelle note après un pari réglé.
+ *
+ * C'est un Elo joué contre le marché : on gagne des points en ayant raison
+ * quand le marché te donnait peu de chances, on en perd en ayant tort sur un
+ * favori. La mise n'entre PAS dans le calcul — la note mesure la justesse du
+ * jugement, pas le courage ni le volume. Sans ça, elle récompenserait celui
+ * qui mise gros, ce que le classement au solde fait déjà.
+ */
+export function majNote(note, cote, gagnant) {
+  const attendu = probaSansMarge(cote);
+  const reel = gagnant ? 1 : 0;
+  return Math.round((note ?? NOTE_INITIALE) + NOTE_K * (reel - attendu));
+}
+
+/** Note recalculée depuis zéro sur un historique complet. */
+export function noteDepuisParis(paris, depart = NOTE_INITIALE) {
+  return (paris || [])
+    .filter((p) => p.statut === 'gagne' || p.statut === 'perdu')
+    .reduce((note, p) => majNote(note, p.cote, p.statut === 'gagne'), depart);
+}
+
+/* ------------------------------------------------------------------ */
+/* Les trois classements                                               */
+/* ------------------------------------------------------------------ */
+
+/** Minimum de paris réglés pour figurer au classement du retour sur mise. */
+export const CLASSEMENT_MIN_PARIS = 10;
+
+export const MODES_CLASSEMENT = [
+  {
+    cle: 'solde',
+    libelle: 'Solde',
+    aide: 'Le classement de la saison. Il repart de zéro à chaque nouvelle saison.',
+  },
+  {
+    cle: 'roi',
+    libelle: 'Retour sur mise',
+    aide: `Qui parie le mieux, indépendamment du volume. À partir de ${CLASSEMENT_MIN_PARIS} paris réglés.`,
+  },
+  {
+    cle: 'note',
+    libelle: 'Note à vie',
+    aide: 'Une note qui traverse les saisons. Avoir raison contre le marché la fait monter.',
+  },
+];
+
+/**
+ * Trie un classement selon le mode demandé, et écarte ceux dont l'échantillon
+ * est trop maigre. Un joueur avec un seul pari gagné à 40 afficherait
+ * +3 900 % de retour : le laisser en tête ruinerait la crédibilité du tableau.
+ */
+export function trierClassement(lignes, mode = 'solde', { minParis = CLASSEMENT_MIN_PARIS } = {}) {
+  const l = [...(lignes || [])];
+  if (mode === 'roi') {
+    return l
+      .filter((x) => (x.paris ?? 0) >= minParis)
+      .sort((a, b) => (b.roi ?? 0) - (a.roi ?? 0) || (b.paris ?? 0) - (a.paris ?? 0));
+  }
+  if (mode === 'note') {
+    return l
+      .filter((x) => (x.note_paris ?? 0) >= NOTE_MIN_PARIS)
+      .sort((a, b) => (b.note ?? 0) - (a.note ?? 0) || (b.note_paris ?? 0) - (a.note_paris ?? 0));
+  }
+  return l.sort((a, b) => (b.solde ?? 0) - (a.solde ?? 0) || (b.gagnes ?? 0) - (a.gagnes ?? 0));
+}
+
+/* ------------------------------------------------------------------ */
+/* Badges                                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Le catalogue.
+ *
+ * Trois principes, tenus sans exception :
+ *
+ *  1. AUCUN badge ne récompense le volume. « 100 paris posés » flatterait
+ *     celui qui clique, pas celui qui voit juste — et pousserait exactement
+ *     au comportement qu'on ne veut pas.
+ *  2. Tout se CALCULE, rien ne se stocke. Un badge est une lecture des paris
+ *     déjà réglés : impossible de désynchroniser, rien à migrer, et un badge
+ *     retiré disparaît proprement.
+ *  3. Chaque règle est une fonction pure d'un même récapitulatif, donc
+ *     testable une par une.
+ *
+ * `test` reçoit le récapitulatif produit par `recapPourBadges()`.
+ */
+export const BADGES = [
+  // --- L'audace, quand elle paie ---
+  { cle: 'outsider', nom: 'Outsider', famille: 'Audace',
+    description: 'Gagner un pari à une cote de 3,00 ou plus.',
+    test: (s) => s.cote_max_gagnee >= 3 },
+  { cle: 'contre_pied', nom: 'Contre-pied', famille: 'Audace',
+    description: 'Gagner un pari à une cote de 5,00 ou plus.',
+    test: (s) => s.cote_max_gagnee >= 5 },
+  { cle: 'braquage', nom: 'Braquage', famille: 'Audace',
+    description: 'Gagner un pari à une cote de 10,00 ou plus.',
+    test: (s) => s.cote_max_gagnee >= 10 },
+  { cle: 'tapis', nom: 'Tapis', famille: 'Audace',
+    description: `Gagner un pari d'au moins ${SOLDE_INITIAL / 2} Frags de mise.`,
+    test: (s) => s.mise_max_gagnee >= SOLDE_INITIAL / 2 },
+
+  // --- La précision ---
+  { cle: 'horloger', nom: 'Horloger', famille: 'Précision',
+    description: 'Trouver un score exact en maps.',
+    test: (s) => s.scores_exacts >= 1 },
+  { cle: 'chirurgien', nom: 'Chirurgien', famille: 'Précision',
+    description: 'Trouver cinq scores exacts.',
+    test: (s) => s.scores_exacts >= 5 },
+  { cle: 'lecteur', nom: 'Lecteur de série', famille: 'Précision',
+    description: 'Gagner trois paris sur le nombre de maps.',
+    test: (s) => s.total_maps_gagnes >= 3 },
+  { cle: 'sans_faute', nom: 'Sans faute', famille: 'Précision',
+    description: 'Enchaîner cinq paris gagnants.',
+    test: (s) => s.plus_longue_serie >= 5 },
+
+  // --- La rentabilité, seul juge de paix ---
+  { cle: 'dans_le_vert', nom: 'Dans le vert', famille: 'Rentabilité',
+    description: 'Retour sur mise positif sur au moins 20 paris réglés.',
+    test: (s) => s.paris >= 20 && s.roi > 0 },
+  { cle: 'analyste', nom: 'Analyste', famille: 'Rentabilité',
+    description: 'Retour sur mise d’au moins 20 % sur 20 paris réglés.',
+    test: (s) => s.paris >= 20 && s.roi >= 20 },
+  { cle: 'requin', nom: 'Requin', famille: 'Rentabilité',
+    description: 'Retour sur mise d’au moins 50 % sur 30 paris réglés.',
+    test: (s) => s.paris >= 30 && s.roi >= 50 },
+  { cle: 'banquier', nom: 'Banquier', famille: 'Rentabilité',
+    description: 'Cumuler 2 000 Frags de bénéfice net.',
+    test: (s) => s.net >= 2000 },
+
+  // --- La régularité, mais pas l'acharnement ---
+  { cle: 'assidu', nom: 'Assidu', famille: 'Régularité',
+    description: 'Boucler une série de sept jours de connexion.',
+    test: (s) => s.serie_prime_max >= PRIME_SERIE_MAX },
+  { cle: 'habitue', nom: 'Habitué', famille: 'Régularité',
+    description: 'Avoir misé sur deux saisons différentes.',
+    test: (s) => s.saisons_jouees >= 2 },
+  { cle: 'marathonien', nom: 'Marathonien', famille: 'Régularité',
+    description: 'Avoir misé sur vingt journées différentes.',
+    test: (s) => s.jours_actifs >= 20 },
+
+  // --- La connaissance du terrain ---
+  { cle: 'polyglotte', nom: 'Polyglotte', famille: 'Connaissance',
+    description: 'Miser sur les trois jeux.',
+    test: (s) => s.jeux_joues >= 3 },
+  { cle: 'specialiste', nom: 'Spécialiste', famille: 'Connaissance',
+    description: 'Vingt paris réglés sur un même jeu.',
+    test: (s) => s.paris_jeu_max >= 20 },
+  { cle: 'visionnaire', nom: 'Visionnaire', famille: 'Connaissance',
+    description: 'Réussir son call de la saison.',
+    test: (s) => s.calls_gagnes >= 1 },
+  { cle: 'selectionneur', nom: 'Sélectionneur', famille: 'Connaissance',
+    description: 'Choisir son équipe préférée.',
+    test: (s) => s.a_equipe_favorite },
+
+  // --- Le social ---
+  { cle: 'fondateur', nom: 'Fondateur', famille: 'Social',
+    description: 'Créer une ligue.',
+    test: (s) => s.ligues_creees >= 1 },
+  { cle: 'recruteur', nom: 'Recruteur', famille: 'Social',
+    description: 'Réunir cinq joueurs dans une de ses ligues.',
+    test: (s) => s.plus_grande_ligue >= 5 },
+];
+
+export const FAMILLES_BADGES = [...new Set(BADGES.map((b) => b.famille))];
+
+/**
+ * Récapitulatif d'un joueur, seule entrée des règles de badges.
+ *
+ * Le calcul se fait sur les paris RÉGLÉS. On le construit une fois, et les
+ * vingt et une règles le relisent : ajouter un badge ne coûte alors qu'une
+ * ligne, et jamais une requête de plus.
+ */
+export function recapPourBadges({
+  paris = [],
+  calls = [],
+  serie_prime_max = 0,
+  ligues = [],
+  ligues_creees = 0,
+  a_equipe_favorite = false,
+} = {}) {
+  const regles = paris.filter((p) => p.statut === 'gagne' || p.statut === 'perdu');
+  const gagnes = regles.filter((p) => p.statut === 'gagne');
+  const mises = regles.reduce((t, p) => t + p.mise, 0);
+  const gains = regles.reduce((t, p) => t + (p.gain || 0), 0);
+
+  // Ordre chronologique, pour la plus longue série de paris gagnants.
+  const chronologie = [...regles].sort((a, b) => new Date(a.cree_le) - new Date(b.cree_le));
+  let serie = 0;
+  let plusLongueSerie = 0;
+  for (const p of chronologie) {
+    serie = p.statut === 'gagne' ? serie + 1 : 0;
+    if (serie > plusLongueSerie) plusLongueSerie = serie;
+  }
+
+  const parJeu = new Map();
+  for (const p of regles) {
+    if (!p.jeu) continue;
+    parJeu.set(p.jeu, (parJeu.get(p.jeu) ?? 0) + 1);
+  }
+
+  return {
+    paris: regles.length,
+    gagnes: gagnes.length,
+    mises,
+    gains,
+    net: gains - mises,
+    roi: roi(mises, gains),
+    cote_max_gagnee: gagnes.reduce((m, p) => Math.max(m, p.cote), 0),
+    mise_max_gagnee: gagnes.reduce((m, p) => Math.max(m, p.mise), 0),
+    scores_exacts: gagnes.filter((p) => p.marche === 'score_exact').length,
+    total_maps_gagnes: gagnes.filter((p) => p.marche === 'total_maps').length,
+    plus_longue_serie: plusLongueSerie,
+    jours_actifs: new Set(regles.map((p) => String(p.cree_le).slice(0, 10))).size,
+    saisons_jouees: new Set(regles.map((p) => p.saison_id)).size,
+    jeux_joues: parJeu.size,
+    paris_jeu_max: Math.max(0, ...parJeu.values()),
+    calls_gagnes: (calls || []).filter((c) => c.statut === 'gagne').length,
+    serie_prime_max,
+    ligues_creees,
+    plus_grande_ligue: Math.max(0, ...(ligues || []).map((l) => l.nb_membres ?? 0)),
+    a_equipe_favorite: Boolean(a_equipe_favorite),
+  };
+}
+
+/** Évalue le catalogue et retourne chaque badge avec son état. */
+export function evaluerBadges(recap) {
+  return BADGES.map((b) => {
+    let obtenu = false;
+    try {
+      obtenu = Boolean(b.test(recap));
+    } catch {
+      obtenu = false; // une règle qui casse ne doit jamais casser la page
+    }
+    return { cle: b.cle, nom: b.nom, famille: b.famille, description: b.description, obtenu };
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Cartes « je l'avais dit »                                           */
+/* ------------------------------------------------------------------ */
+
+/** Seuils au-delà desquels un pari gagné mérite sa carte. */
+export const CARTE_COTE_MIN = 2.5;
+export const CARTE_GAIN_MIN = 1000;
+
+/**
+ * Un pari gagné mérite-t-il d'être affiché ?
+ *
+ * Deux portes d'entrée : la cote (tu avais raison contre tout le monde) ou le
+ * gain (tu y es allé). Un favori gagné à 1,20 pour 50 Frags n'intéresse
+ * personne, et une carte qu'on peut produire pour n'importe quoi ne vaut plus
+ * rien — la rareté est le seul ingrédient qui fasse partager.
+ */
+export function carteMeritee(pari) {
+  if (!pari || pari.statut !== 'gagne') return false;
+  return pari.cote >= CARTE_COTE_MIN || (pari.gain ?? 0) >= CARTE_GAIN_MIN;
+}
+
+/** Le texte d'une carte, séparé de son dessin pour rester testable. */
+export function texteCarte(pari, pseudo) {
+  const affiche = pari.match
+    ? `${pari.match.equipe_a} — ${pari.match.equipe_b}`
+    : [pari.equipe_a, pari.equipe_b].filter(Boolean).join(' — ');
+  return {
+    accroche: 'JE L’AVAIS DIT',
+    pseudo: pseudo || 'Un joueur',
+    affiche,
+    pari: pari.libelle_choix,
+    marche: pari.libelle_marche,
+    cote: Number(pari.cote).toFixed(2),
+    mise: Math.round(pari.mise),
+    gain: Math.round(pari.gain ?? pari.mise * pari.cote),
+    date: new Date(pari.cree_le).toLocaleDateString('fr-FR', {
+      day: 'numeric', month: 'long', year: 'numeric',
+    }),
+  };
+}

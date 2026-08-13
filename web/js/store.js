@@ -191,6 +191,8 @@ export async function utilisateurCourant() {
     equipe_favorite: fav ? { id: fav.id, nom: fav.nom, tag: fav.tag, jeu: fav.jeu } : null,
     pari_auto_mode: d.utilisateur.pari_auto_mode ?? 'off',
     pari_auto_mise: d.utilisateur.pari_auto_mise ?? core.PARI_AUTO_MISE_DEFAUT,
+    note: d.utilisateur.note ?? core.NOTE_INITIALE,
+    note_paris: d.utilisateur.note_paris ?? 0,
   };
 }
 
@@ -202,6 +204,8 @@ export async function connexion(pseudo, { equipeFavoriteId = null } = {}) {
     equipe_favorite_id: equipeFavoriteId,
     pari_auto_mode: 'off',
     pari_auto_mise: core.PARI_AUTO_MISE_DEFAUT,
+    note: core.NOTE_INITIALE,
+    note_paris: 0,
     cree_le: new Date().toISOString(),
   };
   sauver();
@@ -335,6 +339,12 @@ export async function reglerMatch(matchId, scoreA, scoreB) {
     p.statut = gagnant ? 'gagne' : 'perdu';
     p.gain = core.gainPari(p.mise, p.cote, gagnant);
     if (p.gain) participation(p.user_id, p.saison_id).solde += p.gain;
+
+    // La note à vie suit chaque pari réglé, quelle que soit la saison.
+    if (d.utilisateur && p.user_id === d.utilisateur.id) {
+      d.utilisateur.note = core.majNote(d.utilisateur.note, p.cote, gagnant);
+      d.utilisateur.note_paris = (d.utilisateur.note_paris ?? 0) + 1;
+    }
     regles++;
   }
 
@@ -754,6 +764,8 @@ async function ligne(userId, saisonId) {
       moi: true,
       tag_favori: fav?.tag ?? null,
       equipe_favorite: fav?.nom ?? null,
+      note: d.utilisateur.note ?? core.NOTE_INITIALE,
+      note_paris: d.utilisateur.note_paris ?? 0,
       ...statsJoueur(userId, saisonId),
     };
   }
@@ -766,11 +778,15 @@ async function ligne(userId, saisonId) {
     moi: false,
     tag_favori: favRival?.tag ?? null,
     equipe_favorite: favRival?.nom ?? null,
+    note: r?.note ?? core.NOTE_INITIALE,
+    note_paris: r?.note_paris ?? 0,
     paris: r?.paris ?? 0,
     gagnes: r?.gagnes ?? 0,
-    mises: 0,
-    gains: 0,
-    roi: 0,
+    // Les rivaux de démonstration n'ont pas de paris réels : leur retour sur
+    // mise est dérivé de leur taux de réussite, pour que le tableau vive.
+    mises: (r?.paris ?? 0) * 100,
+    gains: Math.round((r?.gagnes ?? 0) * 100 * 2.1),
+    roi: r?.paris ? core.roi(r.paris * 100, r.gagnes * 100 * 2.1) : 0,
   };
 }
 
@@ -1041,4 +1057,53 @@ export async function statistiquesDetaillees({ saison = null } = {}) {
       ? { nom: fav.nom, tag: fav.tag, avec: bloc(paris.filter(concerne)), sans: bloc(paris.filter((p) => !concerne(p))) }
       : null,
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Badges                                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Les badges se calculent sur TOUTE la carrière, pas sur la saison courante :
+ * un badge qui disparaîtrait au changement de saison n'aurait aucun sens.
+ */
+export async function mesBadges() {
+  const d = charger();
+  if (!d.utilisateur) return null;
+  const moi = d.utilisateur.id;
+
+  const paris = d.paris
+    .filter((p) => p.user_id === moi)
+    .map((p) => ({ ...p, jeu: d.matchs.find((m) => m.id === p.match_id)?.jeu ?? null }));
+
+  const ligues = d.ligues
+    .filter((l) => d.membres.some((m) => m.league_id === l.id && m.user_id === moi))
+    .map((l) => ({ ...l, nb_membres: d.membres.filter((m) => m.league_id === l.id).length }));
+
+  const recap = core.recapPourBadges({
+    paris,
+    calls: d.calls.filter((c) => c.user_id === moi),
+    serie_prime_max: d.primes
+      .filter((x) => x.user_id === moi)
+      .reduce((m, x) => Math.max(m, x.serie), 0),
+    ligues,
+    ligues_creees: d.ligues.filter((l) => l.createur_id === moi).length,
+    a_equipe_favorite: Boolean(d.utilisateur.equipe_favorite_id),
+  });
+
+  return { recap, badges: core.evaluerBadges(recap) };
+}
+
+/* ------------------------------------------------------------------ */
+/* Cartes « je l'avais dit »                                           */
+/* ------------------------------------------------------------------ */
+
+export async function mesCartes() {
+  const d = charger();
+  if (!d.utilisateur) return [];
+  return d.paris
+    .filter((p) => p.user_id === d.utilisateur.id)
+    .map((p) => ({ ...p, match: enrichir(d.matchs.find((m) => m.id === p.match_id)) }))
+    .filter(core.carteMeritee)
+    .sort((a, b) => b.gain - a.gain);
 }

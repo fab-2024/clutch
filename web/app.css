@@ -518,3 +518,42 @@ input::placeholder { color: var(--texte-faible); }
   border-radius: 0 var(--rayon-s) var(--rayon-s) 0;
   padding: 14px 18px; font-size: 0.95rem; line-height: 1.5;
 }
+
+/* =========================================================================
+   Palier 2 — badges et cartes partageables
+   ========================================================================= */
+
+.jauge {
+  height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden;
+}
+.jauge__remplie { height: 100%; background: var(--accent); transition: width 400ms ease; }
+
+.badge-carte {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--surface); border: 1px solid var(--bordure);
+  border-radius: var(--rayon); padding: 14px 16px;
+  opacity: 0.5; transition: var(--transition);
+}
+/* Les badges non obtenus restent visibles mais en retrait : ce qu'on ne voit
+   pas ne donne envie de rien, ce qui brille trop dévalue l'obtenu. */
+.badge-carte--obtenu { opacity: 1; border-color: var(--accent-bordure); }
+
+.badge-carte__sceau {
+  flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 1rem;
+  background: var(--surface-2); color: var(--texte-faible);
+  border: 1px solid var(--bordure);
+}
+.badge-carte--obtenu .badge-carte__sceau {
+  background: var(--accent-fantome); color: var(--accent); border-color: var(--accent);
+}
+
+.badge-carte__nom { font-weight: 650; margin-bottom: 2px; }
+.badge-carte__desc { font-size: 0.8rem; color: var(--texte-doux); line-height: 1.4; }
+
+.carte-part {
+  background: var(--surface); border: 1px solid var(--bordure);
+  border-radius: var(--rayon); padding: 14px; overflow: hidden;
+}
+.carte-part svg { display: block; border-radius: var(--rayon-s); }
+.carte-part__actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }

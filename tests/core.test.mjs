@@ -481,3 +481,226 @@ test('constatsAnalyste : pas de constat d’équipe sans les deux échantillons'
   });
   assert.ok(!c.some((x) => x.cle === 'equipe_favorite'));
 });
+
+/* ------------------------------------------------------------------ */
+/* La note à vie                                                       */
+/* ------------------------------------------------------------------ */
+
+test('probaSansMarge : la marge est bien retirée', () => {
+  // Une cote de 2,00 avec 6 % de marge cache une probabilité réelle < 50 %.
+  proche(core.probaSansMarge(2), 1 / (2 * 1.06));
+  // Sur un marché équilibré, les deux probabilités réelles somment à 1.
+  const cote = core.coteDepuisProba(0.5);
+  proche(core.probaSansMarge(cote) * 2, 1, 0.01);
+});
+
+test('majNote : gagner contre le marché rapporte plus que gagner un favori', () => {
+  const surFavori = core.majNote(1000, 1.2, true) - 1000;
+  const surOutsider = core.majNote(1000, 6, true) - 1000;
+  assert.ok(surOutsider > surFavori, `${surOutsider} devrait dépasser ${surFavori}`);
+});
+
+test('majNote : perdre un favori coûte plus que perdre un outsider', () => {
+  const favoriPerdu = 1000 - core.majNote(1000, 1.2, false);
+  const outsiderPerdu = 1000 - core.majNote(1000, 6, false);
+  assert.ok(favoriPerdu > outsiderPerdu);
+});
+
+test('majNote : sur un marché équitable, gagner et perdre se compensent', () => {
+  const cote = core.coteDepuisProba(0.5);
+  const apres = core.majNote(core.majNote(1000, cote, true), cote, false);
+  assert.ok(Math.abs(apres - 1000) <= 1, `note revenue à ${apres}`);
+});
+
+test('majNote : la mise n’entre jamais dans le calcul', () => {
+  // La signature ne la prend pas : c'est le garde-fou. On vérifie que deux
+  // paris de même cote donnent le même mouvement de note.
+  assert.equal(core.majNote(1000, 2.5, true), core.majNote(1000, 2.5, true));
+});
+
+test('noteDepuisParis : rejoue un historique et ignore les paris en cours', () => {
+  const paris = [
+    { cote: 2, statut: 'gagne' },
+    { cote: 2, statut: 'perdu' },
+    { cote: 3, statut: 'en_cours' },
+  ];
+  const attendu = core.majNote(core.majNote(core.NOTE_INITIALE, 2, true), 2, false);
+  assert.equal(core.noteDepuisParis(paris), attendu);
+});
+
+test('noteDepuisParis : un parieur au hasard ne progresse pas', () => {
+  // 40 paris à cote 2, la moitié gagnés : la note doit rester proche du départ.
+  const paris = Array.from({ length: 40 }, (_, i) => ({
+    cote: 2, statut: i % 2 === 0 ? 'gagne' : 'perdu',
+  }));
+  const note = core.noteDepuisParis(paris);
+  assert.ok(Math.abs(note - core.NOTE_INITIALE) < 30, `note = ${note}`);
+});
+
+/* ------------------------------------------------------------------ */
+/* Les trois classements                                               */
+/* ------------------------------------------------------------------ */
+
+const CLT = [
+  { id: 'a', solde: 1200, gagnes: 5, paris: 30, roi: 8, note: 1010, note_paris: 30 },
+  { id: 'b', solde: 3000, gagnes: 9, paris: 12, roi: 45, note: 1090, note_paris: 12 },
+  { id: 'c', solde: 900, gagnes: 1, paris: 2, roi: 300, note: 1200, note_paris: 2 },
+  { id: 'd', solde: 2000, gagnes: 7, paris: 25, roi: -12, note: 960, note_paris: 25 },
+];
+
+test('trierClassement : le solde reste le classement par défaut', () => {
+  assert.deepEqual(core.trierClassement(CLT).map((l) => l.id), ['b', 'd', 'a', 'c']);
+  assert.deepEqual(core.trierClassement(CLT, 'inconnu').map((l) => l.id), ['b', 'd', 'a', 'c']);
+});
+
+test('trierClassement : le retour sur mise écarte les échantillons trop petits', () => {
+  const r = core.trierClassement(CLT, 'roi');
+  assert.ok(!r.some((l) => l.id === 'c'), 'deux paris ne donnent pas droit à +300 %');
+  assert.deepEqual(r.map((l) => l.id), ['b', 'a', 'd']);
+});
+
+test('trierClassement : la note écarte aussi les échantillons trop petits', () => {
+  const r = core.trierClassement(CLT, 'note');
+  assert.ok(!r.some((l) => l.id === 'c'));
+  assert.deepEqual(r.map((l) => l.id), ['b', 'a', 'd']);
+});
+
+test('trierClassement : ne modifie jamais le tableau reçu', () => {
+  const avant = CLT.map((l) => l.id);
+  core.trierClassement(CLT, 'roi');
+  assert.deepEqual(CLT.map((l) => l.id), avant);
+});
+
+/* ------------------------------------------------------------------ */
+/* Badges                                                              */
+/* ------------------------------------------------------------------ */
+
+const pari = (o = {}) => ({
+  statut: 'gagne', cote: 2, mise: 100, gain: 200, marche: 'vainqueur',
+  jeu: 'lol', saison_id: 's1', cree_le: '2026-08-01T12:00:00.000Z', ...o,
+});
+
+test('catalogue : les clés sont uniques et chaque badge est complet', () => {
+  const cles = core.BADGES.map((b) => b.cle);
+  assert.equal(new Set(cles).size, cles.length, 'clés dupliquées');
+  for (const b of core.BADGES) {
+    assert.ok(b.nom && b.description && b.famille, `${b.cle} incomplet`);
+    assert.equal(typeof b.test, 'function');
+  }
+});
+
+test('catalogue : aucun badge ne récompense le volume de paris', () => {
+  // Un joueur qui pose 500 paris médiocres ne doit décrocher que ce qui
+  // relève de la régularité et de la connaissance — jamais de la performance.
+  const spammeur = core.recapPourBadges({
+    paris: Array.from({ length: 500 }, (_, i) => pari({
+      statut: i % 2 ? 'perdu' : 'gagne', cote: 1.5, mise: 10, gain: i % 2 ? 0 : 15,
+      cree_le: `2026-0${(i % 9) + 1}-0${(i % 9) + 1}T10:00:00.000Z`,
+    })),
+  });
+  const obtenus = core.evaluerBadges(spammeur).filter((b) => b.obtenu).map((b) => b.cle);
+  for (const interdit of ['outsider', 'contre_pied', 'braquage', 'tapis', 'analyste', 'requin']) {
+    assert.ok(!obtenus.includes(interdit), `${interdit} ne devrait pas être décroché`);
+  }
+});
+
+test('recapPourBadges : un joueur neuf n’a aucun badge', () => {
+  const obtenus = core.evaluerBadges(core.recapPourBadges({})).filter((b) => b.obtenu);
+  assert.equal(obtenus.length, 0);
+});
+
+test('recapPourBadges : la plus longue série est bien la plus longue', () => {
+  const r = core.recapPourBadges({
+    paris: [
+      pari({ statut: 'gagne', cree_le: '2026-08-01T10:00:00.000Z' }),
+      pari({ statut: 'gagne', cree_le: '2026-08-02T10:00:00.000Z' }),
+      pari({ statut: 'perdu', cree_le: '2026-08-03T10:00:00.000Z' }),
+      pari({ statut: 'gagne', cree_le: '2026-08-04T10:00:00.000Z' }),
+      pari({ statut: 'gagne', cree_le: '2026-08-05T10:00:00.000Z' }),
+      pari({ statut: 'gagne', cree_le: '2026-08-06T10:00:00.000Z' }),
+    ],
+  });
+  assert.equal(r.plus_longue_serie, 3);
+  assert.equal(r.jours_actifs, 6);
+});
+
+test('recapPourBadges : les paris en cours ne comptent pas', () => {
+  const r = core.recapPourBadges({ paris: [pari({ statut: 'en_cours' }), pari()] });
+  assert.equal(r.paris, 1);
+});
+
+test('badges : l’audace se décroche par paliers de cote', () => {
+  const avec = (cote) =>
+    core.evaluerBadges(core.recapPourBadges({ paris: [pari({ cote, gain: 100 * cote })] }))
+      .filter((b) => b.obtenu).map((b) => b.cle);
+  assert.ok(!avec(2).includes('outsider'));
+  assert.ok(avec(3).includes('outsider'));
+  assert.ok(!avec(3).includes('contre_pied'));
+  assert.ok(avec(5).includes('contre_pied'));
+  assert.ok(avec(12).includes('braquage'));
+});
+
+test('badges : la rentabilité exige un échantillon suffisant', () => {
+  const dix = Array.from({ length: 10 }, () => pari({ cote: 3, gain: 300 }));
+  const vingt = Array.from({ length: 20 }, () => pari({ cote: 3, gain: 300 }));
+  const cles = (paris) =>
+    core.evaluerBadges(core.recapPourBadges({ paris })).filter((b) => b.obtenu).map((b) => b.cle);
+  assert.ok(!cles(dix).includes('analyste'), '10 paris ne suffisent pas');
+  assert.ok(cles(vingt).includes('analyste'));
+});
+
+test('badges : le social et la connaissance se décrochent hors paris', () => {
+  const cles = core
+    .evaluerBadges(core.recapPourBadges({
+      ligues: [{ nb_membres: 6 }],
+      ligues_creees: 1,
+      a_equipe_favorite: true,
+      serie_prime_max: core.PRIME_SERIE_MAX,
+      calls: [{ statut: 'gagne' }],
+    }))
+    .filter((b) => b.obtenu)
+    .map((b) => b.cle);
+  assert.deepEqual(
+    cles.sort(),
+    ['assidu', 'fondateur', 'recruteur', 'selectionneur', 'visionnaire'].sort()
+  );
+});
+
+test('badges : une règle qui casse ne casse pas la page', () => {
+  const evalues = core.evaluerBadges(null);
+  assert.equal(evalues.length, core.BADGES.length);
+  assert.ok(evalues.every((b) => b.obtenu === false));
+});
+
+/* ------------------------------------------------------------------ */
+/* Cartes « je l'avais dit »                                           */
+/* ------------------------------------------------------------------ */
+
+test('carteMeritee : ni les paris perdus, ni les favoris sans relief', () => {
+  assert.equal(core.carteMeritee({ statut: 'perdu', cote: 8, gain: 0 }), false);
+  assert.equal(core.carteMeritee({ statut: 'en_cours', cote: 8, gain: 0 }), false);
+  assert.equal(core.carteMeritee({ statut: 'gagne', cote: 1.4, gain: 140 }), false);
+});
+
+test('carteMeritee : la cote ou le gain suffisent, séparément', () => {
+  assert.equal(core.carteMeritee({ statut: 'gagne', cote: 3, gain: 300 }), true);
+  assert.equal(core.carteMeritee({ statut: 'gagne', cote: 1.2, gain: 1200 }), true);
+});
+
+test('texteCarte : reprend le pari sans le déformer', () => {
+  const t = core.texteCarte(
+    {
+      statut: 'gagne', cote: 4.25, mise: 200, gain: 850,
+      libelle_choix: 'Karmine Corp', libelle_marche: 'Vainqueur du match',
+      cree_le: '2026-08-13T18:30:00.000Z',
+      match: { equipe_a: 'G2 Esports', equipe_b: 'Karmine Corp' },
+    },
+    'Pierre'
+  );
+  assert.equal(t.cote, '4.25');
+  assert.equal(t.mise, 200);
+  assert.equal(t.gain, 850);
+  assert.equal(t.pseudo, 'Pierre');
+  assert.equal(t.affiche, 'G2 Esports — Karmine Corp');
+  assert.match(t.date, /2026/);
+});

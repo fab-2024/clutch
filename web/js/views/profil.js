@@ -130,6 +130,24 @@ export async function vueProfil(racine) {
       <a class="btn btn--fantome btn--large" href="#/analyste">Voir mon profil d'analyste</a>
     </div>
 
+    <div class="grille grille--2" style="margin-bottom:26px">
+      <div class="carte">
+        <div class="carte-call-pose__haut"><strong>Mes badges</strong></div>
+        <p style="color:var(--texte-doux);margin:10px 0">
+          Vingt et une récompenses pour l'audace qui paie, la précision et la régularité.
+          Aucune pour le volume.
+        </p>
+        <a class="btn btn--fantome btn--large" href="#/badges">Voir mes badges</a>
+      </div>
+      <div class="carte">
+        <div class="carte-call-pose__haut"><strong>Je l'avais dit</strong></div>
+        <p style="color:var(--texte-doux);margin:10px 0">
+          Tes paris marquants, transformés en image à envoyer sur le Discord.
+        </p>
+        <a class="btn btn--fantome btn--large" href="#/cartes">Voir mes cartes</a>
+      </div>
+    </div>
+
     <h2>Paris en cours (${enCours.length})</h2>
     <p style="color:var(--texte-faible);font-size:0.82rem;margin-top:-8px">
       Seuls les paris de ${esc(contexte.saison?.nom ?? 'la saison')} sont affichés ici.

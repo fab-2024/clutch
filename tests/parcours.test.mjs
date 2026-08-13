@@ -783,3 +783,132 @@ test('analyste : sans équipe préférée, pas de bloc de comparaison', async ()
   await store.connexion('Neutre');
   assert.equal((await store.statistiquesDetaillees()).equipe_favorite, null);
 });
+
+/* ------------------------------------------------------------------ */
+/* Note à vie, badges et cartes                                        */
+/* ------------------------------------------------------------------ */
+
+test('note : elle démarre à 1000 et bouge à chaque pari réglé', async () => {
+  await store.reinitialiser();
+  await store.connexion('Noté');
+  assert.equal((await store.utilisateurCourant()).note, core.NOTE_INITIALE);
+  assert.equal((await store.utilisateurCourant()).note_paris, 0);
+
+  const m = (await store.listerMatchs({ statut: 'a_venir' })).find((x) => x.format === 3);
+  const pari = await store.placerPari({ matchId: m.id, marche: 'vainqueur', choix: 'a', mise: 100 });
+  assert.equal((await store.utilisateurCourant()).note, core.NOTE_INITIALE, 'un pari en cours ne note rien');
+
+  await store.reglerMatch(m.id, 2, 0);
+  const apres = await store.utilisateurCourant();
+  assert.equal(apres.note, core.majNote(core.NOTE_INITIALE, pari.cote, true));
+  assert.equal(apres.note_paris, 1);
+});
+
+test('note : elle traverse les saisons, contrairement au solde', async () => {
+  await store.reinitialiser();
+  await store.connexion('Durable');
+  const m = (await store.listerMatchs({ statut: 'a_venir' })).find((x) => x.format === 3);
+  await store.placerPari({ matchId: m.id, marche: 'vainqueur', choix: 'a', mise: 100 });
+  await store.reglerMatch(m.id, 2, 0);
+  const note = (await store.utilisateurCourant()).note;
+
+  const suivante = (await store.listerSaisons()).find((s) => s.statut === 'a_venir');
+  await store.choisirSaison(suivante.id);
+  const enSaison2 = await store.utilisateurCourant();
+  assert.equal(enSaison2.solde, suivante.solde_initial, 'le solde repart à neuf');
+  assert.equal(enSaison2.note, note, 'la note, elle, reste');
+});
+
+test('classement : les trois modes portent chacun leur mesure', async () => {
+  await store.reinitialiser();
+  await store.connexion('Compétiteur');
+  const lignes = await store.classementGlobal();
+  for (const l of lignes) {
+    assert.equal(typeof l.solde, 'number');
+    assert.equal(typeof l.roi, 'number');
+    assert.equal(typeof l.note, 'number');
+    assert.equal(typeof l.note_paris, 'number');
+  }
+  // Le tri par note doit changer l'ordre par rapport au solde.
+  const parSolde = core.trierClassement(lignes, 'solde').map((l) => l.id);
+  const parNote = core.trierClassement(lignes, 'note').map((l) => l.id);
+  assert.notDeepEqual(parSolde, parNote);
+});
+
+test('badges : le parcours en décroche plusieurs, et jamais par le volume', async () => {
+  await store.reinitialiser();
+  await store.connexion('Chasseur');
+  await store.definirEquipeFavorite('lol-g2');
+  await store.creerLigue('Les potes');
+
+  const { badges } = await store.mesBadges();
+  const obtenus = badges.filter((b) => b.obtenu).map((b) => b.cle);
+  assert.ok(obtenus.includes('selectionneur'));
+  assert.ok(obtenus.includes('fondateur'));
+  assert.ok(obtenus.includes('recruteur'), 'la ligue de démo compte 5 membres');
+  assert.ok(!obtenus.includes('outsider'), 'aucun pari gagné pour le moment');
+});
+
+test('badges : gagner un gros outsider décroche les bons badges', async () => {
+  await store.reinitialiser();
+  await store.connexion('Audacieux');
+  const m = (await store.listerMatchs({ statut: 'a_venir' })).find((x) => x.format === 3);
+  const marches = await store.cotesDuMatch(m.id);
+  const scoreExact = marches.find((x) => x.cle === 'score_exact');
+  const rare = scoreExact.choix.reduce((max, c) => (c.cote > max.cote ? c : max));
+
+  await store.placerPari({ matchId: m.id, marche: 'score_exact', choix: rare.cle, mise: 100 });
+  const [a, b] = rare.cle.split('-').map(Number);
+  await store.reglerMatch(m.id, a, b);
+
+  const { badges, recap } = await store.mesBadges();
+  const obtenus = badges.filter((x) => x.obtenu).map((x) => x.cle);
+  assert.equal(recap.scores_exacts, 1);
+  assert.ok(obtenus.includes('horloger'), 'un score exact trouvé');
+  assert.ok(obtenus.includes('outsider'), `cote de ${rare.cote}`);
+});
+
+test('badges : ils survivent au changement de saison', async () => {
+  await store.reinitialiser();
+  await store.connexion('Vétéran');
+  await store.definirEquipeFavorite('lol-g2');
+  const avant = (await store.mesBadges()).badges.filter((b) => b.obtenu).length;
+
+  const suivante = (await store.listerSaisons()).find((s) => s.statut === 'a_venir');
+  await store.choisirSaison(suivante.id);
+  const apres = (await store.mesBadges()).badges.filter((b) => b.obtenu).length;
+  assert.equal(apres, avant, 'un badge ne se perd pas en changeant de saison');
+});
+
+test('cartes : seuls les paris marquants y entrent', async () => {
+  await store.reinitialiser();
+  await store.connexion('Conteur');
+  const matchs = (await store.listerMatchs({ statut: 'a_venir' })).filter((x) => x.format === 3);
+
+  // Un favori gagné à petite cote : ne mérite pas de carte.
+  const petit = matchs[0];
+  await store.placerPari({ matchId: petit.id, marche: 'vainqueur', choix: 'a', mise: 50 });
+  await store.reglerMatch(petit.id, 2, 0);
+
+  // Un score exact rare : la mérite.
+  const gros = matchs[1];
+  const scoreExact = (await store.cotesDuMatch(gros.id)).find((x) => x.cle === 'score_exact');
+  const rare = scoreExact.choix.reduce((max, c) => (c.cote > max.cote ? c : max));
+  await store.placerPari({ matchId: gros.id, marche: 'score_exact', choix: rare.cle, mise: 100 });
+  const [a, b] = rare.cle.split('-').map(Number);
+  await store.reglerMatch(gros.id, a, b);
+
+  const cartes = await store.mesCartes();
+  assert.equal(cartes.length, 1, 'un seul pari mérite sa carte');
+  assert.equal(cartes[0].match_id, gros.id);
+  assert.ok(cartes[0].match, 'la carte doit connaître son affiche');
+});
+
+test('cartes : rien à raconter sans victoire', async () => {
+  await store.reinitialiser();
+  await store.connexion('Muet');
+  const m = (await store.listerMatchs({ statut: 'a_venir' }))[0];
+  await store.placerPari({ matchId: m.id, marche: 'vainqueur', choix: 'a', mise: 500 });
+  await store.reglerMatch(m.id, 0, 2);
+  assert.deepEqual(await store.mesCartes(), []);
+});

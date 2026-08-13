@@ -12,6 +12,7 @@
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY, MODE_DEMO, ADMINS } from './config.js';
 import * as demo from './store.js';
+import { evaluerBadges, carteMeritee } from './core.js';
 
 /* ------------------------------------------------------------------ */
 /* Client Supabase minimal (aucune dépendance, ~80 lignes)             */
@@ -689,4 +690,36 @@ export async function statistiquesDetaillees(options) {
   if (MODE_DEMO) return demo.statistiquesDetaillees(options);
   const saison = options?.saison ?? (await saisonCourante())?.id;
   return rpc('mes_statistiques_detaillees', { p_saison_id: saison });
+}
+
+/* ------------------------------------------------------------------ */
+/* Palier 2 — badges et cartes partageables                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Les règles de badges vivent UNIQUEMENT dans core.js.
+ *
+ * Le serveur ne renvoie que le récapitulatif chiffré ; c'est le navigateur qui
+ * applique le catalogue. Réécrire vingt et une règles en PL/pgSQL aurait créé
+ * deux vérités qui auraient divergé dès le premier badge ajouté — et un badge
+ * n'est ni de l'argent ni un droit : rien n'oblige à le calculer côté serveur.
+ */
+export async function mesBadges() {
+  if (MODE_DEMO) return demo.mesBadges();
+  const recap = await rpc('recap_badges');
+  if (!recap) return null;
+  return { recap, badges: evaluerBadges(recap) };
+}
+
+/**
+ * Même principe pour les cartes : on demande les paris gagnés, et le seuil de
+ * « ça mérite une carte » est appliqué par core.js. Aucune requête nouvelle.
+ */
+export async function mesCartes() {
+  if (MODE_DEMO) return demo.mesCartes();
+  const saison = (await saisonCourante())?.id;
+  const gagnes = await rest(
+    `/v_mes_paris?select=*&statut=eq.gagne&saison_id=eq.${encodeURIComponent(saison)}&order=gain.desc`
+  );
+  return (gagnes || []).filter(carteMeritee);
 }

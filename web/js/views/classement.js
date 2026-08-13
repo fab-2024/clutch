@@ -1,6 +1,9 @@
 import * as api from '../api.js';
 import { contexte, bandeauSaison } from '../app.js';
-import { esc, frags, dateLisible, vide } from '../ui.js';
+import { esc, frags, dateLisible, vide, surClic } from '../ui.js';
+import { MODES_CLASSEMENT, trierClassement, CLASSEMENT_MIN_PARIS, NOTE_MIN_PARIS } from '../core.js';
+
+let modeActif = 'solde';
 
 export async function vueClassement(racine) {
   const [lignes, palmares, rivalite] = await Promise.all([
@@ -18,7 +21,9 @@ export async function vueClassement(racine) {
     </div>
     ${bandeauSaison()}
     ${carteRivalite(rivalite)}
-    <div class="carte">${lignes.length ? tableauClassement(lignes) : vide('Personne encore', 'Sois le premier.')}</div>
+    <div class="filtres" id="filtres-mode"></div>
+    <p id="aide-mode" style="color:var(--texte-faible);font-size:0.85rem;margin-top:-8px"></p>
+    <div class="carte" id="zone-classement"></div>
 
     ${
       palmares.length
@@ -44,6 +49,32 @@ export async function vueClassement(racine) {
            </div>`
         : ''
     }`;
+
+  const dessiner = () => {
+    racine.querySelector('#filtres-mode').innerHTML = MODES_CLASSEMENT.map(
+      (m) => `<button class="puce${m.cle === modeActif ? ' actif' : ''}" data-mode="${m.cle}">${m.libelle}</button>`
+    ).join('');
+    racine.querySelector('#aide-mode').textContent =
+      MODES_CLASSEMENT.find((m) => m.cle === modeActif)?.aide ?? '';
+
+    const triees = trierClassement(lignes, modeActif);
+    racine.querySelector('#zone-classement').innerHTML = triees.length
+      ? tableauClassement(triees, modeActif)
+      : vide(
+          'Personne à afficher',
+          modeActif === 'roi'
+            ? `Il faut au moins ${CLASSEMENT_MIN_PARIS} paris réglés pour figurer dans ce classement.`
+            : modeActif === 'note'
+              ? `Il faut au moins ${NOTE_MIN_PARIS} paris réglés pour qu'une note veuille dire quelque chose.`
+              : 'Sois le premier.'
+        );
+  };
+
+  dessiner();
+  surClic(racine, '[data-mode]', (btn) => {
+    modeActif = btn.dataset.mode;
+    dessiner();
+  });
 }
 
 /**
@@ -96,8 +127,15 @@ export function carteRivalite(r) {
     </div>`;
 }
 
-/** Rendu partagé entre le classement global et celui d'une ligue. */
-export function tableauClassement(lignes) {
+/**
+ * Rendu partagé entre le classement global et celui d'une ligue.
+ *
+ * La colonne de droite change avec le mode : c'est elle qui porte le tri, et
+ * afficher les trois mesures en même temps rendrait le tableau illisible sur
+ * un téléphone.
+ */
+export function tableauClassement(lignes, mode = 'solde') {
+  const colonne = { solde: 'Solde', roi: 'Retour', note: 'Note' }[mode] ?? 'Solde';
   return `
     <table class="tableau">
       <thead>
@@ -106,7 +144,7 @@ export function tableauClassement(lignes) {
           <th>Joueur</th>
           <th class="num">Paris</th>
           <th class="num">Réussite</th>
-          <th class="num">Solde</th>
+          <th class="num">${colonne}</th>
         </tr>
       </thead>
       <tbody>
@@ -119,12 +157,22 @@ export function tableauClassement(lignes) {
                 ${esc(l.pseudo)}${l.moi ? ' <span class="badge">toi</span>' : ''}
                 ${l.tag_favori ? ` <span class="badge badge--equipe" title="${esc(l.equipe_favorite ?? '')}">${esc(l.tag_favori)}</span>` : ''}
               </td>
-              <td class="num">${l.paris ?? 0}</td>
+              <td class="num">${mode === 'note' ? (l.note_paris ?? 0) : (l.paris ?? 0)}</td>
               <td class="num">${reussite === null ? '—' : reussite + ' %'}</td>
-              <td class="num"><strong>${esc(frags(l.solde))}</strong></td>
+              <td class="num">${valeurMode(l, mode)}</td>
             </tr>`;
           })
           .join('')}
       </tbody>
     </table>`;
+}
+
+/** La valeur mise en avant, selon le classement consulté. */
+function valeurMode(l, mode) {
+  if (mode === 'roi') {
+    const r = Number(l.roi ?? 0);
+    return `<strong class="${r >= 0 ? 'positif' : 'negatif'}">${r >= 0 ? '+' : ''}${r.toFixed(1)} %</strong>`;
+  }
+  if (mode === 'note') return `<strong>${Math.round(l.note ?? 0)}</strong>`;
+  return `<strong>${esc(frags(l.solde))}</strong>`;
 }

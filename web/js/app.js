@@ -18,6 +18,8 @@ import { vueClassement } from './views/classement.js';
 import { vueProfil } from './views/profil.js';
 import { vueCall } from './views/call.js';
 import { vueAnalyste } from './views/analyste.js';
+import { vueBadges } from './views/badges.js';
+import { vueCartes } from './views/cartes.js';
 import { vueAdmin } from './views/admin.js';
 import { vueConnexion } from './views/connexion.js';
 import { vueDiagnostic } from './views/diagnostic.js';
@@ -31,6 +33,8 @@ const ROUTES = [
   { motif: /^\/profil$/, vue: vueProfil, nav: 'profil' },
   { motif: /^\/call$/, vue: vueCall, nav: 'call' },
   { motif: /^\/analyste$/, vue: vueAnalyste, nav: 'profil' },
+  { motif: /^\/badges$/, vue: vueBadges, nav: 'profil' },
+  { motif: /^\/cartes$/, vue: vueCartes, nav: 'profil' },
   { motif: /^\/admin$/, vue: vueAdmin, nav: 'admin' },
   { motif: /^\/connexion$/, vue: vueConnexion, nav: null },
   { motif: /^\/diagnostic$/, vue: vueDiagnostic, nav: null },

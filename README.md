@@ -153,6 +153,25 @@ bénéfice net. Volontairement à côté du classement principal : deux classeme
 concurrents dilueraient l'enjeu, un classement et un défi donnent une seconde
 chance.
 
+**Le classement à trois entrées.** Le solde, remis à zéro chaque saison, dit
+qui mène *maintenant*. Le retour sur mise, à partir de dix paris réglés, dit
+qui parie le mieux indépendamment du volume. La note à vie, elle, traverse les
+saisons : c'est un Elo joué contre le marché — avoir raison quand la cote te
+donnait tort la fait monter, se tromper sur un favori la fait chuter. La mise
+n'entre pas dans son calcul, volontairement : elle mesure la justesse du
+jugement, pas le courage. Le solde s'occupe déjà de ça.
+
+**Les badges.** Vingt et une récompenses, en six familles. Aucune ne récompense
+le volume : poser cent paris ne prouve rien, et un badge « 100 paris » pousserait
+exactement au comportement qu'on ne veut pas. Ils se calculent à la volée depuis
+les paris réglés — aucune table, rien à migrer, impossible à désynchroniser — et
+les règles vivent dans `core.js` uniquement, jamais dupliquées en SQL.
+
+**Les cartes « je l'avais dit ».** Un pari gagné à 2,50 ou plus, ou qui rapporte
+1 000 Frags, devient une image partageable au format 1200 × 630 — celui des
+aperçus Discord et Twitter. Dessinée en SVG puis rastérisée dans un canvas :
+aucune dépendance, aucun service d'image à héberger.
+
 **Le profil d'analyste.** Rentabilité par format, par jeu, par marché, par
 niveau de cote, et comparaison entre les matchs de son équipe préférée et tous
 les autres. Le résultat n'est pas un tableau de plus mais des constats rédigés
@@ -185,6 +204,7 @@ supabase/            Base de données : schéma, fonctions SQL, sécurité, donn
                      01 à 04 = socle, 05 = prime, équipe, call, rivalité
                      06 = prono par défaut, défi de ligue, profil d'analyste
                      07 = correctif de récursion dans les règles de sécurité
+                     08 = note à vie, classements enrichis, récap des badges
 extension/           Extension Chrome MV3 (overlay Twitch / YouTube)
 tests/               Tests, sans dépendance : node --test tests/*.mjs
 ```
@@ -205,13 +225,19 @@ Deux principes structurent le tout :
 node --test tests/*.mjs
 ```
 
-114 tests couvrent le moteur de cotes (distributions, marge, Elo), les règles
+145 tests couvrent le moteur de cotes (distributions, marge, Elo), les règles
 du palier 1 (paliers de prime, plafonds, cotes de tournoi, tirage du rival,
 choix du pari automatique, agrégations et prudence statistique) et le parcours
 complet de bout en bout : inscription, mise, règlement, classement, call de la
 saison, prono par défaut, défi de ligue, profil d'analyste — ainsi que les cas
 d'erreur (solde insuffisant, score incohérent, double pari, match déjà réglé,
 call déjà posé, tournoi fermé, défi déjà tiré, tirage par un non-créateur).
+
+Trois d'entre eux méritent d'être signalés, parce qu'ils protègent une décision
+de conception plutôt qu'une ligne de code : un parieur au hasard ne doit pas
+voir sa note progresser ; un joueur qui pose 500 paris médiocres ne doit
+décrocher aucun badge de performance ; et un joueur à deux paris ne doit jamais
+apparaître en tête du classement au retour sur mise.
 
 ## Extension Chrome
 
