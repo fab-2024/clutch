@@ -12,13 +12,13 @@
 import * as core from './core.js';
 import { EQUIPES, EVENEMENTS, RIVAUX, construireMatchs, construireSaisons } from './seed.js';
 
-const CLE = 'clutch.demo.v2';
+const CLE = 'clutch.demo.v3';
 
 let db = null;
 
 function etatInitial() {
   return {
-    version: 2,
+    version: 3,
     cree_le: new Date().toISOString(),
     utilisateur: null,
     saisons: construireSaisons(),
@@ -30,6 +30,9 @@ function etatInitial() {
     ligues: [],
     membres: [],
     participations: [],
+    primes: [],
+    calls: [],
+    resultats_evenement: [],
     rivaux: structuredClone(RIVAUX),
   };
 }
@@ -151,6 +154,7 @@ function participation(userId, saisonId) {
       user_id: userId,
       solde: saison?.solde_initial ?? core.SOLDE_INITIAL,
       derniere_prime: null,
+      serie_prime: 0,
       rejoint_le: new Date().toISOString(),
     };
     d.participations.push(p);
@@ -176,14 +180,23 @@ export async function utilisateurCourant() {
   if (!d.utilisateur) return null;
   const saison = await saisonCourante();
   const p = participation(d.utilisateur.id, saison.id);
-  return { ...d.utilisateur, solde: p.solde, saison_id: saison.id, derniere_prime: p.derniere_prime };
+  const fav = d.utilisateur.equipe_favorite_id ? equipe(d.utilisateur.equipe_favorite_id) : null;
+  return {
+    ...d.utilisateur,
+    solde: p.solde,
+    saison_id: saison.id,
+    derniere_prime: p.derniere_prime,
+    serie_prime: p.serie_prime ?? 0,
+    equipe_favorite: fav ? { id: fav.id, nom: fav.nom, tag: fav.tag, jeu: fav.jeu } : null,
+  };
 }
 
-export async function connexion(pseudo) {
+export async function connexion(pseudo, { equipeFavoriteId = null } = {}) {
   const d = charger();
   d.utilisateur = {
     id: uid('u'),
     pseudo: pseudo.trim().slice(0, 20) || 'Joueur',
+    equipe_favorite_id: equipeFavoriteId,
     cree_le: new Date().toISOString(),
   };
   sauver();
@@ -205,12 +218,13 @@ export async function reinitialiser() {
 /* Matchs                                                              */
 /* ------------------------------------------------------------------ */
 
-export async function listerMatchs({ jeu = null, statut = 'a_venir', saison = null } = {}) {
+export async function listerMatchs({ jeu = null, statut = 'a_venir', saison = null, equipe: equipeId = null } = {}) {
   const saisonId = saison ?? (await saisonCourante()).id;
   return charger()
     .matchs.filter((m) => m.saison_id === saisonId)
     .filter((m) => (statut ? m.statut === statut : true))
     .filter((m) => (jeu ? m.jeu === jeu : true))
+    .filter((m) => (equipeId ? m.equipe_a_id === equipeId || m.equipe_b_id === equipeId : true))
     .map(enrichir);
 }
 
@@ -326,10 +340,53 @@ export async function reglerMatch(matchId, scoreA, scoreB) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Prime quotidienne                                                   */
+/* Prime de connexion en série                                         */
 /* ------------------------------------------------------------------ */
 
-export async function reclamerPrime() {
+/** Nombre de paris posés par un joueur dans la fenêtre qui ouvre la bonification. */
+function misesRecentes(userId, saisonId, maintenant = Date.now()) {
+  return charger().paris.filter(
+    (p) =>
+      p.user_id === userId &&
+      p.saison_id === saisonId &&
+      maintenant - new Date(p.cree_le).getTime() <= core.PRIME_FENETRE_MISE_MS
+  ).length;
+}
+
+/**
+ * Ce que le joueur verrait sur son écran : où en est sa série, combien vaut la
+ * prochaine prime, et si elle est réclamable tout de suite.
+ */
+export async function etatPrime({ maintenant = Date.now() } = {}) {
+  const d = charger();
+  if (!d.utilisateur) return null;
+  const saison = await saisonCourante();
+  const p = participation(d.utilisateur.id, saison.id);
+  const serie = core.serieApres(p.serie_prime, p.derniere_prime, maintenant);
+  const attente = core.attentePrime(p.derniere_prime, maintenant);
+  return {
+    serie_actuelle: p.serie_prime ?? 0,
+    serie_prochaine: serie,
+    montant: core.montantPrime({
+      serie,
+      solde: p.solde,
+      misesRecentes: misesRecentes(d.utilisateur.id, saison.id, maintenant),
+    }),
+    disponible: attente === 0 && saison.statut === 'en_cours',
+    attente_ms: attente,
+    paliers: core.PRIME_PALIERS,
+    total_encaisse: d.primes
+      .filter((x) => x.user_id === d.utilisateur.id && x.saison_id === saison.id)
+      .reduce((t, x) => t + x.montant, 0),
+  };
+}
+
+/**
+ * `maintenant` n'existe que pour les tests : il permet de rejouer une semaine
+ * de connexions sans attendre sept jours. En production, c'est Postgres qui
+ * donne l'heure et ce paramètre n'existe pas.
+ */
+export async function reclamerPrime({ maintenant = Date.now() } = {}) {
   const d = charger();
   if (!d.utilisateur) throw new Error('Connecte-toi.');
   const saison = await saisonCourante();
@@ -337,16 +394,276 @@ export async function reclamerPrime() {
   if (saison.statut === 'a_venir') throw new Error("Cette saison n'a pas encore commencé.");
 
   const p = participation(d.utilisateur.id, saison.id);
-  const derniere = p.derniere_prime ? new Date(p.derniere_prime) : null;
-  if (derniere && Date.now() - derniere.getTime() < 24 * 3600 * 1000) {
-    const reste = 24 * 3600 * 1000 - (Date.now() - derniere.getTime());
-    throw new Error(`Prime déjà réclamée. Reviens dans ${Math.ceil(reste / 3600000)} h.`);
+  const attente = core.attentePrime(p.derniere_prime, maintenant);
+  if (attente > 0) {
+    throw new Error(`Prime déjà réclamée. Reviens dans ${Math.ceil(attente / 3600000)} h.`);
   }
-  const montant = p.solde < core.SEUIL_FAILLITE ? core.BONUS_QUOTIDIEN * 2 : core.BONUS_QUOTIDIEN;
+
+  const serie = core.serieApres(p.serie_prime, p.derniere_prime, maintenant);
+  const montant = core.montantPrime({
+    serie,
+    solde: p.solde,
+    misesRecentes: misesRecentes(d.utilisateur.id, saison.id, maintenant),
+  });
+
   p.solde += montant;
-  p.derniere_prime = new Date().toISOString();
+  p.derniere_prime = new Date(maintenant).toISOString();
+  p.serie_prime = serie;
+  d.primes.push({
+    id: uid('pr'),
+    user_id: d.utilisateur.id,
+    saison_id: saison.id,
+    montant,
+    serie,
+    cree_le: p.derniere_prime,
+  });
   sauver();
-  return montant;
+  return { montant, serie };
+}
+
+/* ------------------------------------------------------------------ */
+/* Équipe préférée                                                     */
+/* ------------------------------------------------------------------ */
+
+export async function listerEquipes({ jeu = null } = {}) {
+  return charger()
+    .equipes.filter((e) => (jeu ? e.jeu === jeu : true))
+    .map((e) => ({ id: e.id, jeu: e.jeu, nom: e.nom, tag: e.tag, elo: e.elo }))
+    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+}
+
+export async function definirEquipeFavorite(equipeId) {
+  const d = charger();
+  if (!d.utilisateur) throw new Error('Connecte-toi.');
+  if (equipeId && !equipe(equipeId)) throw new Error('Équipe inconnue.');
+  d.utilisateur.equipe_favorite_id = equipeId || null;
+  sauver();
+  return utilisateurCourant();
+}
+
+/* ------------------------------------------------------------------ */
+/* Le call de la saison                                                */
+/* ------------------------------------------------------------------ */
+
+/** Équipes engagées dans un événement, sur une saison donnée. */
+function equipesEvenement(eventId, saisonId) {
+  const d = charger();
+  const ids = new Set();
+  d.matchs
+    .filter((m) => m.event_id === eventId && m.saison_id === saisonId)
+    .forEach((m) => {
+      ids.add(m.equipe_a_id);
+      ids.add(m.equipe_b_id);
+    });
+  return [...ids].map((id) => equipe(id)).filter(Boolean);
+}
+
+/**
+ * Événements jouables d'une saison, avec leur statut vis-à-vis du call.
+ * Un call se pose tant que l'événement n'a pas commencé : une fois le premier
+ * match lancé, le pronostic n'a plus de mérite.
+ */
+export async function listerEvenementsSaison({ saison = null } = {}) {
+  const d = charger();
+  const saisonId = saison ?? (await saisonCourante()).id;
+  const parEvenement = new Map();
+  for (const m of d.matchs.filter((x) => x.saison_id === saisonId)) {
+    const liste = parEvenement.get(m.event_id) ?? [];
+    liste.push(m);
+    parEvenement.set(m.event_id, liste);
+  }
+
+  return [...parEvenement.entries()]
+    .map(([id, matchs]) => {
+      const ev = d.evenements.find((e) => e.id === id);
+      const debut = Math.min(...matchs.map((m) => new Date(m.debut).getTime()));
+      const resultat = d.resultats_evenement.find(
+        (r) => r.event_id === id && r.saison_id === saisonId
+      );
+      const gagnant = resultat ? equipe(resultat.equipe_id) : null;
+      return {
+        id,
+        nom: ev?.nom ?? id,
+        jeu: ev?.jeu ?? matchs[0].jeu,
+        tier: ev?.tier ?? 'A',
+        saison_id: saisonId,
+        debut: new Date(debut).toISOString(),
+        nb_matchs: matchs.length,
+        nb_equipes: equipesEvenement(id, saisonId).length,
+        statut: resultat ? 'regle' : debut > Date.now() ? 'ouvert' : 'verrouille',
+        vainqueur_id: resultat?.equipe_id ?? null,
+        vainqueur: gagnant?.nom ?? null,
+      };
+    })
+    .sort((a, b) => new Date(a.debut) - new Date(b.debut));
+}
+
+export async function cotesEvenement(eventId, { saison = null } = {}) {
+  const saisonId = saison ?? (await saisonCourante()).id;
+  const equipes = equipesEvenement(eventId, saisonId);
+  if (!equipes.length) throw new Error('Aucune équipe engagée dans cet événement.');
+  return core.cotesEvenement(
+    equipes.map((e) => ({ id: e.id, nom: e.nom, tag: e.tag, jeu: e.jeu, elo: e.elo }))
+  );
+}
+
+function enrichirCall(c) {
+  if (!c) return null;
+  const d = charger();
+  const eq = equipe(c.equipe_id);
+  const ev = d.evenements.find((e) => e.id === c.event_id);
+  return {
+    ...c,
+    equipe: eq?.nom ?? '?',
+    tag: eq?.tag ?? '?',
+    jeu: eq?.jeu ?? null,
+    evenement: ev?.nom ?? c.event_id,
+    gain_potentiel: Math.round(c.mise * c.cote),
+  };
+}
+
+export async function monCall({ saison = null } = {}) {
+  const d = charger();
+  if (!d.utilisateur) return null;
+  const saisonId = saison ?? (await saisonCourante()).id;
+  return enrichirCall(
+    d.calls.find((c) => c.user_id === d.utilisateur.id && c.saison_id === saisonId)
+  );
+}
+
+export async function placerCall({ eventId, equipeId, mise }) {
+  const d = charger();
+  if (!d.utilisateur) throw new Error('Connecte-toi pour poser ton call.');
+  const saison = await saisonCourante();
+  if (saison.statut !== 'en_cours') throw new Error("Cette saison n'est pas ouverte.");
+
+  if (d.calls.some((c) => c.user_id === d.utilisateur.id && c.saison_id === saison.id)) {
+    throw new Error('Tu as déjà posé ton call pour cette saison.');
+  }
+
+  const evenements = await listerEvenementsSaison({ saison: saison.id });
+  const ev = evenements.find((e) => e.id === eventId);
+  if (!ev) throw new Error('Événement inconnu pour cette saison.');
+  if (ev.statut !== 'ouvert') throw new Error('Cet événement a déjà commencé : le call est fermé.');
+
+  mise = Math.round(Number(mise));
+  if (!Number.isFinite(mise) || mise < core.CALL_MISE_MIN) {
+    throw new Error(`Mise minimale du call : ${core.CALL_MISE_MIN} Frags.`);
+  }
+  if (mise > core.CALL_MISE_MAX) {
+    throw new Error(`Mise maximale du call : ${core.CALL_MISE_MAX} Frags.`);
+  }
+
+  const cotes = await cotesEvenement(eventId, { saison: saison.id });
+  const choisi = cotes.find((c) => c.id === equipeId);
+  if (!choisi) throw new Error("Cette équipe ne participe pas à l'événement.");
+
+  const p = participation(d.utilisateur.id, saison.id);
+  if (mise > p.solde) throw new Error('Solde insuffisant.');
+  p.solde -= mise;
+
+  const call = {
+    id: uid('c'),
+    user_id: d.utilisateur.id,
+    saison_id: saison.id,
+    event_id: eventId,
+    equipe_id: equipeId,
+    mise,
+    cote: choisi.cote,
+    statut: 'en_cours',
+    gain: 0,
+    cree_le: new Date().toISOString(),
+  };
+  d.calls.push(call);
+  sauver();
+  return enrichirCall(call);
+}
+
+/** Côté admin : désigner le vainqueur d'un événement et régler les calls. */
+export async function reglerEvenement(eventId, equipeId, { saison = null } = {}) {
+  const d = charger();
+  const saisonId = saison ?? (await saisonCourante()).id;
+  if (d.resultats_evenement.some((r) => r.event_id === eventId && r.saison_id === saisonId)) {
+    throw new Error('Événement déjà réglé.');
+  }
+  if (!equipesEvenement(eventId, saisonId).some((e) => e.id === equipeId)) {
+    throw new Error("Cette équipe ne participe pas à l'événement.");
+  }
+
+  d.resultats_evenement.push({
+    saison_id: saisonId,
+    event_id: eventId,
+    equipe_id: equipeId,
+    regle_le: new Date().toISOString(),
+  });
+
+  let regles = 0;
+  for (const c of d.calls.filter(
+    (x) => x.event_id === eventId && x.saison_id === saisonId && x.statut === 'en_cours'
+  )) {
+    const gagnant = c.equipe_id === equipeId;
+    c.statut = gagnant ? 'gagne' : 'perdu';
+    c.gain = gagnant ? Math.round(c.mise * c.cote) : 0;
+    if (c.gain) participation(c.user_id, c.saison_id).solde += c.gain;
+    regles++;
+  }
+  sauver();
+  return { regles };
+}
+
+/* ------------------------------------------------------------------ */
+/* Rivalité de la semaine                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * En démo, les rivaux n'ont pas de paris réels : leur bilan hebdomadaire est
+ * dérivé de leur identifiant et de la semaine, donc stable et crédible.
+ * En production, ce chiffre vient des paris réellement réglés.
+ */
+function bilanSemaineJoueur(userId, saisonId, depuis) {
+  const d = charger();
+  if (d.utilisateur && userId === d.utilisateur.id) {
+    return core.bilanPeriode(
+      d.paris.filter((p) => p.user_id === userId && p.saison_id === saisonId),
+      depuis
+    );
+  }
+  const graine = core.empreinte(`${userId}|${core.semaineIso()}`);
+  const paris = 2 + (graine % 6);
+  return {
+    paris,
+    gagnes: graine % (paris + 1),
+    mises: 100 * paris,
+    gains: 0,
+    net: ((graine >>> 3) % 1200) - 500,
+    simule: true,
+  };
+}
+
+export async function rivaliteSemaine({ saison = null, ligue = null } = {}) {
+  const d = charger();
+  if (!d.utilisateur) return null;
+  const saisonId = saison ?? (await saisonCourante()).id;
+  const classement = ligue
+    ? await classementLigue(ligue, { saison: saisonId })
+    : await classementGlobal({ saison: saisonId });
+
+  const rival = core.choisirRival(d.utilisateur.id, classement);
+  if (!rival) return null;
+
+  const moi = classement.find((l) => l.id === d.utilisateur.id);
+  const depuis = core.debutSemaine();
+  return {
+    semaine: core.semaineIso(),
+    depuis: depuis.toISOString(),
+    moi: { ...moi, rang: classement.indexOf(moi) + 1, bilan: bilanSemaineJoueur(moi.id, saisonId, depuis) },
+    rival: {
+      ...rival,
+      rang: classement.indexOf(rival) + 1,
+      bilan: bilanSemaineJoueur(rival.id, saisonId, depuis),
+    },
+    ecart: moi.solde - rival.solde,
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -420,20 +737,26 @@ function statsJoueur(userId, saisonId) {
 async function ligne(userId, saisonId) {
   const d = charger();
   if (d.utilisateur && userId === d.utilisateur.id) {
+    const fav = d.utilisateur.equipe_favorite_id ? equipe(d.utilisateur.equipe_favorite_id) : null;
     return {
       id: userId,
       pseudo: d.utilisateur.pseudo,
       solde: participation(userId, saisonId).solde,
       moi: true,
+      tag_favori: fav?.tag ?? null,
+      equipe_favorite: fav?.nom ?? null,
       ...statsJoueur(userId, saisonId),
     };
   }
   const r = d.rivaux.find((x) => x.id === userId);
+  const favRival = r?.equipe_favorite_id ? equipe(r.equipe_favorite_id) : null;
   return {
     id: userId,
     pseudo: r?.pseudo ?? 'Joueur',
     solde: soldeRival(r ?? { id: userId }, saisonId),
     moi: false,
+    tag_favori: favRival?.tag ?? null,
+    equipe_favorite: favRival?.nom ?? null,
     paris: r?.paris ?? 0,
     gagnes: r?.gagnes ?? 0,
     mises: 0,

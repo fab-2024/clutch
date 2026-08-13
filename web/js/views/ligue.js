@@ -1,7 +1,7 @@
 import * as api from '../api.js';
 import { contexte, bandeauSaison } from '../app.js';
 import { esc, frags, toast } from '../ui.js';
-import { tableauClassement } from './classement.js';
+import { tableauClassement, carteRivalite } from './classement.js';
 
 export async function vueLigue(racine, id) {
   const ligue = await api.lireLigue(id);
@@ -9,7 +9,10 @@ export async function vueLigue(racine, id) {
     racine.innerHTML = `<div class="vide"><h3>Ligue introuvable</h3><p><a href="#/ligues">Retour</a></p></div>`;
     return;
   }
-  const classement = await api.classementLigue(id);
+  const [classement, rivalite] = await Promise.all([
+    api.classementLigue(id),
+    contexte.utilisateur ? api.rivaliteSemaine({ ligue: id }).catch(() => null) : null,
+  ]);
 
   racine.innerHTML = `
     <p><a href="#/ligues">← Mes ligues</a></p>
@@ -39,6 +42,8 @@ export async function vueLigue(racine, id) {
         </p>
       </div>
     </div>
+
+    ${carteRivalite(rivalite)}
 
     <div class="carte">
       ${tableauClassement(classement)}

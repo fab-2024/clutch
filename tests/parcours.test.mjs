@@ -131,9 +131,10 @@ test('le règlement met à jour les Elo des deux équipes', async () => {
 test('la prime quotidienne ne peut pas être réclamée deux fois', async () => {
   await store.reinitialiser();
   await store.connexion('Assidu');
-  const montant = await store.reclamerPrime();
-  assert.equal(montant, core.BONUS_QUOTIDIEN);
-  assert.equal((await store.utilisateurCourant()).solde, core.SOLDE_INITIAL + core.BONUS_QUOTIDIEN);
+  const { montant, serie } = await store.reclamerPrime();
+  assert.equal(montant, core.PRIME_PALIERS[0]);
+  assert.equal(serie, 1);
+  assert.equal((await store.utilisateurCourant()).solde, core.SOLDE_INITIAL + montant);
   await assert.rejects(() => store.reclamerPrime(), /déjà réclamée/);
 });
 
@@ -266,4 +267,281 @@ test('saisons : la prime est propre à chaque saison', async () => {
 test('saisons : une saison inconnue est refusée', async () => {
   await store.reinitialiser();
   await assert.rejects(() => store.choisirSaison('saison-fantome'), /Saison inconnue/);
+});
+
+/* ------------------------------------------------------------------ */
+/* Prime de connexion en série                                         */
+/* ------------------------------------------------------------------ */
+
+const JOUR = 24 * 3600 * 1000;
+
+test('prime : sept jours d’affilée déroulent toute la série', async () => {
+  await store.reinitialiser();
+  await store.connexion('Régulier');
+
+  // Une mise, pour débloquer la bonification à partir du jour 3.
+  const m = (await store.listerMatchs({ statut: 'a_venir' }))[0];
+  await store.placerPari({ matchId: m.id, marche: 'vainqueur', choix: 'a', mise: 10 });
+
+  const encaisse = [];
+  for (let jour = 0; jour < core.PRIME_SERIE_MAX; jour++) {
+    const r = await store.reclamerPrime({ maintenant: Date.now() + jour * JOUR });
+    encaisse.push(r.montant);
+    assert.equal(r.serie, jour + 1);
+  }
+  assert.deepEqual(encaisse, core.PRIME_PALIERS);
+
+  // Le huitième jour, la semaine est bouclée : on repart au jour 1.
+  const huitieme = await store.reclamerPrime({ maintenant: Date.now() + 7 * JOUR });
+  assert.equal(huitieme.serie, 1);
+});
+
+test('prime : manquer un jour remet la série à zéro', async () => {
+  await store.reinitialiser();
+  await store.connexion('Distrait');
+  const m = (await store.listerMatchs({ statut: 'a_venir' }))[0];
+  await store.placerPari({ matchId: m.id, marche: 'vainqueur', choix: 'a', mise: 10 });
+
+  await store.reclamerPrime({ maintenant: Date.now() });
+  const j2 = await store.reclamerPrime({ maintenant: Date.now() + JOUR });
+  assert.equal(j2.serie, 2);
+
+  // Trois jours plus tard : la série est cassée.
+  const retour = await store.reclamerPrime({ maintenant: Date.now() + 4 * JOUR });
+  assert.equal(retour.serie, 1);
+  assert.equal(retour.montant, core.PRIME_PALIERS[0]);
+});
+
+test('prime : sans mise, la bonification ne dépasse jamais le plancher', async () => {
+  await store.reinitialiser();
+  await store.connexion('Passif');
+  for (let jour = 0; jour < 5; jour++) {
+    const r = await store.reclamerPrime({ maintenant: Date.now() + jour * JOUR });
+    if (r.serie >= core.PRIME_JOUR_MISE) assert.equal(r.montant, core.PRIME_BASE);
+  }
+});
+
+test('prime : etatPrime décrit la série et le total encaissé', async () => {
+  await store.reinitialiser();
+  await store.connexion('Curieux');
+
+  const avant = await store.etatPrime();
+  assert.equal(avant.disponible, true);
+  assert.equal(avant.serie_prochaine, 1);
+  assert.equal(avant.total_encaisse, 0);
+
+  const { montant } = await store.reclamerPrime();
+  const apres = await store.etatPrime();
+  assert.equal(apres.disponible, false);
+  assert.equal(apres.serie_actuelle, 1);
+  assert.equal(apres.total_encaisse, montant);
+  assert.ok(apres.attente_ms > 0);
+});
+
+/* ------------------------------------------------------------------ */
+/* Équipe préférée                                                     */
+/* ------------------------------------------------------------------ */
+
+test('équipe préférée : elle se pose, se change et se retire', async () => {
+  await store.reinitialiser();
+  await store.connexion('Supporter');
+  assert.equal((await store.utilisateurCourant()).equipe_favorite, null);
+
+  await store.definirEquipeFavorite('lol-kc');
+  assert.equal((await store.utilisateurCourant()).equipe_favorite.tag, 'KC');
+
+  await store.definirEquipeFavorite('cs-vit');
+  assert.equal((await store.utilisateurCourant()).equipe_favorite.tag, 'VIT');
+
+  await store.definirEquipeFavorite(null);
+  assert.equal((await store.utilisateurCourant()).equipe_favorite, null);
+
+  await assert.rejects(() => store.definirEquipeFavorite('equipe-fantome'), /Équipe inconnue/);
+});
+
+test('équipe préférée : elle filtre le calendrier', async () => {
+  await store.reinitialiser();
+  await store.connexion('Supporter');
+  const tous = await store.listerMatchs({ statut: 'a_venir' });
+  const siens = await store.listerMatchs({ statut: 'a_venir', equipe: 'lol-g2' });
+  assert.ok(siens.length > 0, 'G2 doit avoir des matchs au calendrier');
+  assert.ok(siens.length < tous.length);
+  for (const m of siens) {
+    assert.ok(m.equipe_a_id === 'lol-g2' || m.equipe_b_id === 'lol-g2');
+  }
+});
+
+test('équipe préférée : elle apparaît au classement', async () => {
+  await store.reinitialiser();
+  await store.connexion('Supporter');
+  await store.definirEquipeFavorite('val-fnc');
+  const moi = (await store.classementGlobal()).find((l) => l.moi);
+  assert.equal(moi.tag_favori, 'FNC');
+});
+
+test('équipe préférée : elle ne change aucune cote', async () => {
+  await store.reinitialiser();
+  await store.connexion('Supporter');
+  const m = (await store.listerMatchs({ statut: 'a_venir' })).find((x) => x.equipe_a_id === 'lol-g2');
+  const avant = await store.cotesDuMatch(m.id);
+  await store.definirEquipeFavorite('lol-g2');
+  const apres = await store.cotesDuMatch(m.id);
+  assert.deepEqual(apres, avant);
+});
+
+/* ------------------------------------------------------------------ */
+/* Le call de la saison                                                */
+/* ------------------------------------------------------------------ */
+
+/** Le premier tournoi encore ouvert de la saison en cours. */
+async function tournoiOuvert() {
+  return (await store.listerEvenementsSaison()).find((e) => e.statut === 'ouvert');
+}
+
+test('call : les tournois déjà commencés sont fermés', async () => {
+  await store.reinitialiser();
+  const evenements = await store.listerEvenementsSaison();
+  assert.ok(evenements.length > 1);
+  assert.ok(evenements.some((e) => e.statut === 'ouvert'), 'au moins un tournoi ouvert');
+  assert.ok(evenements.some((e) => e.statut === 'verrouille'), 'au moins un tournoi commencé');
+});
+
+test('call : cotes du tournoi cohérentes avec les Elo', async () => {
+  await store.reinitialiser();
+  const ev = await tournoiOuvert();
+  const cotes = await store.cotesEvenement(ev.id);
+  assert.ok(cotes.length >= 2);
+  for (let i = 1; i < cotes.length; i++) {
+    assert.ok(cotes[i - 1].elo >= cotes[i].elo, 'le favori doit être le mieux classé');
+    assert.ok(cotes[i - 1].cote <= cotes[i].cote);
+  }
+});
+
+test('call : je le pose, il débite ma mise, et je n’en pose qu’un', async () => {
+  await store.reinitialiser();
+  await store.connexion('Devin');
+  const ev = await tournoiOuvert();
+  const cotes = await store.cotesEvenement(ev.id);
+
+  const call = await store.placerCall({ eventId: ev.id, equipeId: cotes[0].id, mise: 300 });
+  assert.equal(call.mise, 300);
+  assert.equal(call.cote, cotes[0].cote);
+  assert.equal(call.gain_potentiel, Math.round(300 * cotes[0].cote));
+  assert.equal((await store.utilisateurCourant()).solde, core.SOLDE_INITIAL - 300);
+
+  await assert.rejects(
+    () => store.placerCall({ eventId: ev.id, equipeId: cotes[1].id, mise: 100 }),
+    /déjà posé ton call/
+  );
+});
+
+test('call : les mises hors bornes et les équipes étrangères sont refusées', async () => {
+  await store.reinitialiser();
+  await store.connexion('Maladroit');
+  const ev = await tournoiOuvert();
+  const cotes = await store.cotesEvenement(ev.id);
+
+  await assert.rejects(
+    () => store.placerCall({ eventId: ev.id, equipeId: cotes[0].id, mise: 10 }),
+    /Mise minimale/
+  );
+  await assert.rejects(
+    () => store.placerCall({ eventId: ev.id, equipeId: cotes[0].id, mise: 99999 }),
+    /Mise maximale/
+  );
+  await assert.rejects(
+    () => store.placerCall({ eventId: ev.id, equipeId: 'cs-astralis', mise: 100 }),
+    /ne participe pas/
+  );
+});
+
+test('call : un tournoi déjà commencé refuse le call', async () => {
+  await store.reinitialiser();
+  await store.connexion('Retardataire');
+  const ferme = (await store.listerEvenementsSaison()).find((e) => e.statut === 'verrouille');
+  await assert.rejects(
+    () => store.placerCall({ eventId: ferme.id, equipeId: 'lol-g2', mise: 100 }),
+    /déjà commencé/
+  );
+});
+
+test('call réussi : la mise revient multipliée par la cote', async () => {
+  await store.reinitialiser();
+  await store.connexion('Visionnaire');
+  const ev = await tournoiOuvert();
+  const cotes = await store.cotesEvenement(ev.id);
+  const call = await store.placerCall({ eventId: ev.id, equipeId: cotes[0].id, mise: 200 });
+
+  const r = await store.reglerEvenement(ev.id, cotes[0].id);
+  assert.equal(r.regles, 1);
+
+  const apres = await store.monCall();
+  assert.equal(apres.statut, 'gagne');
+  assert.equal(apres.gain, Math.round(200 * call.cote));
+  assert.equal(
+    (await store.utilisateurCourant()).solde,
+    core.SOLDE_INITIAL - 200 + Math.round(200 * call.cote)
+  );
+});
+
+test('call manqué : la mise est perdue et le tournoi ne se règle qu’une fois', async () => {
+  await store.reinitialiser();
+  await store.connexion('Malchanceux');
+  const ev = await tournoiOuvert();
+  const cotes = await store.cotesEvenement(ev.id);
+  await store.placerCall({ eventId: ev.id, equipeId: cotes[0].id, mise: 250 });
+
+  await store.reglerEvenement(ev.id, cotes[1].id);
+  assert.equal((await store.monCall()).statut, 'perdu');
+  assert.equal((await store.utilisateurCourant()).solde, core.SOLDE_INITIAL - 250);
+
+  await assert.rejects(() => store.reglerEvenement(ev.id, cotes[0].id), /déjà réglé/);
+});
+
+test('call : il est propre à chaque saison', async () => {
+  await store.reinitialiser();
+  await store.connexion('Nomade');
+  const ev = await tournoiOuvert();
+  const cotes = await store.cotesEvenement(ev.id);
+  await store.placerCall({ eventId: ev.id, equipeId: cotes[0].id, mise: 100 });
+
+  const suivante = (await store.listerSaisons()).find((s) => s.statut === 'a_venir');
+  await store.choisirSaison(suivante.id);
+  assert.equal(await store.monCall(), null);
+});
+
+/* ------------------------------------------------------------------ */
+/* Rivalité de la semaine                                              */
+/* ------------------------------------------------------------------ */
+
+test('rivalité : un rival proche au classement, jamais soi-même', async () => {
+  await store.reinitialiser();
+  await store.connexion('Compétiteur');
+  const r = await store.rivaliteSemaine();
+  assert.ok(r, 'une rivalité doit être proposée');
+  assert.notEqual(r.rival.id, r.moi.id);
+  assert.equal(r.ecart, r.moi.solde - r.rival.solde);
+  assert.ok(Math.abs(r.moi.rang - r.rival.rang) <= 3, 'le rival doit être un voisin');
+});
+
+test('rivalité : mon bilan de la semaine suit mes paris réglés', async () => {
+  await store.reinitialiser();
+  await store.connexion('Actif');
+  const m = (await store.listerMatchs({ statut: 'a_venir' })).find((x) => x.format === 3);
+  await store.placerPari({ matchId: m.id, marche: 'vainqueur', choix: 'a', mise: 100 });
+  await store.reglerMatch(m.id, 0, 2); // perdu
+
+  const r = await store.rivaliteSemaine();
+  assert.equal(r.moi.bilan.paris, 1);
+  assert.equal(r.moi.bilan.gagnes, 0);
+  assert.equal(r.moi.bilan.net, -100);
+});
+
+test('rivalité : elle fonctionne aussi au sein d’une ligue', async () => {
+  await store.reinitialiser();
+  await store.connexion('Chef de ligue');
+  const ligue = await store.creerLigue('Le Discord');
+  const membres = (await store.classementLigue(ligue.id)).map((l) => l.id);
+  const r = await store.rivaliteSemaine({ ligue: ligue.id });
+  assert.ok(membres.includes(r.rival.id), 'le rival doit être un membre de la ligue');
 });

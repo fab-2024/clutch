@@ -156,3 +156,188 @@ test('espérance du joueur : la marge rend le jeu perdant à long terme', () => 
     `rendement ${rendement} devrait avoisiner ${1 / (1 + core.MARGE)}`
   );
 });
+
+/* ------------------------------------------------------------------ */
+/* Prime de connexion en série                                         */
+/* ------------------------------------------------------------------ */
+
+const H = 3600 * 1000;
+
+test('serieApres : une première prime ouvre le jour 1', () => {
+  assert.equal(core.serieApres(0, null), 1);
+});
+
+test('serieApres : revenir dans les 48 h fait avancer la série', () => {
+  const maintenant = Date.now();
+  const hier = new Date(maintenant - 25 * H).toISOString();
+  assert.equal(core.serieApres(1, hier, maintenant), 2);
+  assert.equal(core.serieApres(4, hier, maintenant), 5);
+});
+
+test('serieApres : un jour manqué remet la série à 1', () => {
+  const maintenant = Date.now();
+  const avantHier = new Date(maintenant - 50 * H).toISOString();
+  assert.equal(core.serieApres(6, avantHier, maintenant), 1);
+});
+
+test('serieApres : la semaine bouclée repart au jour 1', () => {
+  const maintenant = Date.now();
+  const hier = new Date(maintenant - 25 * H).toISOString();
+  assert.equal(core.serieApres(core.PRIME_SERIE_MAX, hier, maintenant), 1);
+});
+
+test('montantPrime : le palier suit la série', () => {
+  for (let jour = 1; jour <= core.PRIME_SERIE_MAX; jour++) {
+    assert.equal(
+      core.montantPrime({ serie: jour, solde: 1000, misesRecentes: 3 }),
+      core.PRIME_PALIERS[jour - 1]
+    );
+  }
+});
+
+test('montantPrime : la série est strictement croissante', () => {
+  for (let i = 1; i < core.PRIME_PALIERS.length; i++) {
+    assert.ok(core.PRIME_PALIERS[i] > core.PRIME_PALIERS[i - 1]);
+  }
+});
+
+test('montantPrime : au-dessus du plafond, retour au plancher', () => {
+  assert.equal(
+    core.montantPrime({ serie: 7, solde: core.PRIME_PLAFOND_SOLDE, misesRecentes: 5 }),
+    core.PRIME_BASE
+  );
+});
+
+test('montantPrime : sans mise récente, la bonification saute dès le jour 3', () => {
+  assert.equal(core.montantPrime({ serie: 2, solde: 1000, misesRecentes: 0 }), core.PRIME_PALIERS[1]);
+  assert.equal(core.montantPrime({ serie: 3, solde: 1000, misesRecentes: 0 }), core.PRIME_BASE);
+  assert.equal(core.montantPrime({ serie: 7, solde: 1000, misesRecentes: 0 }), core.PRIME_BASE);
+});
+
+test('montantPrime : le filet de faillite double la prime, plafond compris', () => {
+  assert.equal(core.montantPrime({ serie: 1, solde: 0, misesRecentes: 0 }), core.PRIME_BASE * 2);
+});
+
+test('montantPrime : sept jours pleins restent sous le solde de départ', () => {
+  // Garde-fou d'économie : une semaine de primes ne doit pas valoir plus qu'un
+  // nouveau départ, sinon se connecter devient plus rentable que miser.
+  const semaine = core.PRIME_PALIERS.reduce((t, p) => t + p, 0);
+  assert.ok(semaine < core.SOLDE_INITIAL * 2, `une semaine vaut ${semaine} Frags`);
+});
+
+test('attentePrime : 24 h de délai, à la milliseconde près', () => {
+  const maintenant = Date.now();
+  assert.equal(core.attentePrime(null, maintenant), 0);
+  assert.equal(core.attentePrime(new Date(maintenant - 24 * H).toISOString(), maintenant), 0);
+  assert.equal(core.attentePrime(new Date(maintenant - 20 * H).toISOString(), maintenant), 4 * H);
+});
+
+/* ------------------------------------------------------------------ */
+/* Cotes du call de la saison                                          */
+/* ------------------------------------------------------------------ */
+
+const PLATEAU = [
+  { id: 'a', nom: 'A', elo: 1700 },
+  { id: 'b', nom: 'B', elo: 1600 },
+  { id: 'c', nom: 'C', elo: 1500 },
+  { id: 'd', nom: 'D', elo: 1400 },
+];
+
+test('cotesEvenement : les probabilités somment à 1', () => {
+  const total = core.cotesEvenement(PLATEAU).reduce((t, e) => t + e.proba, 0);
+  proche(total, 1, 1e-12);
+});
+
+test('cotesEvenement : classées du favori à l’outsider', () => {
+  const cotes = core.cotesEvenement(PLATEAU);
+  assert.deepEqual(cotes.map((c) => c.id), ['a', 'b', 'c', 'd']);
+  for (let i = 1; i < cotes.length; i++) assert.ok(cotes[i].cote > cotes[i - 1].cote);
+});
+
+test('cotesEvenement : la marge est la même que sur un match', () => {
+  const somme = core
+    .cotesEvenement(PLATEAU)
+    .reduce((t, e) => t + core.probaImplicite(e.cote), 0);
+  assert.ok(Math.abs(somme - (1 + core.MARGE)) < 0.02, `overround = ${somme}`);
+});
+
+test('cotesEvenement : un plateau vide ne casse rien', () => {
+  assert.deepEqual(core.cotesEvenement([]), []);
+});
+
+/* ------------------------------------------------------------------ */
+/* Rivalité de la semaine                                              */
+/* ------------------------------------------------------------------ */
+
+const CLASSEMENT = [
+  { id: 'u1', solde: 3000 },
+  { id: 'u2', solde: 2500 },
+  { id: 'u3', solde: 2000 },
+  { id: 'moi', solde: 1500 },
+  { id: 'u5', solde: 1000 },
+  { id: 'u6', solde: 900 },
+  { id: 'u7', solde: 100 },
+];
+
+test('semaineIso : format stable et lundi/dimanche dans la même semaine', () => {
+  assert.match(core.semaineIso(new Date('2026-08-13T12:00:00')), /^\d{4}-S\d{2}$/);
+  assert.equal(
+    core.semaineIso(new Date('2026-08-10T00:00:00Z')),
+    core.semaineIso(new Date('2026-08-16T23:00:00Z'))
+  );
+  assert.notEqual(
+    core.semaineIso(new Date('2026-08-16T12:00:00Z')),
+    core.semaineIso(new Date('2026-08-17T12:00:00Z'))
+  );
+});
+
+test('debutSemaine : toujours un lundi à minuit', () => {
+  for (const jour of ['2026-08-10', '2026-08-13', '2026-08-16']) {
+    const d = core.debutSemaine(new Date(`${jour}T15:30:00`));
+    assert.equal(d.getDay(), 1);
+    assert.equal(d.getHours(), 0);
+  }
+});
+
+test('choisirRival : jamais soi-même, toujours un voisin proche', () => {
+  for (const semaine of ['2026-S30', '2026-S31', '2026-S32', '2026-S33']) {
+    const r = core.choisirRival('moi', CLASSEMENT, semaine);
+    assert.ok(r, 'un rival doit être trouvé');
+    assert.notEqual(r.id, 'moi');
+    assert.ok(['u1', 'u2', 'u3', 'u5', 'u6'].includes(r.id), `rival inattendu : ${r.id}`);
+  }
+});
+
+test('choisirRival : stable pendant la semaine', () => {
+  const a = core.choisirRival('moi', CLASSEMENT, '2026-S33');
+  const b = core.choisirRival('moi', CLASSEMENT, '2026-S33');
+  assert.equal(a.id, b.id);
+});
+
+test('choisirRival : deux joueurs ne tombent pas systématiquement sur le même', () => {
+  const tires = new Set(
+    ['moi', 'u2', 'u3', 'u5', 'u6'].map((id) => core.choisirRival(id, CLASSEMENT, '2026-S33')?.id)
+  );
+  assert.ok(tires.size > 1, 'le tirage doit dépendre du joueur');
+});
+
+test('choisirRival : seul au classement, pas de rivalité', () => {
+  assert.equal(core.choisirRival('moi', [{ id: 'moi', solde: 10 }]), null);
+  assert.equal(core.choisirRival('inconnu', CLASSEMENT), null);
+});
+
+test('bilanPeriode : ne compte que les paris réglés de la période', () => {
+  const maintenant = Date.now();
+  const paris = [
+    { cree_le: new Date(maintenant - 2 * H).toISOString(), statut: 'gagne', mise: 100, gain: 250 },
+    { cree_le: new Date(maintenant - 3 * H).toISOString(), statut: 'perdu', mise: 200, gain: 0 },
+    { cree_le: new Date(maintenant - 4 * H).toISOString(), statut: 'en_cours', mise: 500, gain: 0 },
+    { cree_le: new Date(maintenant - 400 * H).toISOString(), statut: 'gagne', mise: 900, gain: 9000 },
+  ];
+  const b = core.bilanPeriode(paris, new Date(maintenant - 24 * H));
+  assert.equal(b.paris, 2);
+  assert.equal(b.gagnes, 1);
+  assert.equal(b.mises, 300);
+  assert.equal(b.gains, 250);
+  assert.equal(b.net, -50);
+});

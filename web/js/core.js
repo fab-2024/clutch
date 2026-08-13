@@ -26,11 +26,46 @@ export const COTE_MAX = 50;
 /** Solde de départ offert à l'inscription. */
 export const SOLDE_INITIAL = 1000;
 
-/** Bonus quotidien réclamable une fois toutes les 24 h. */
-export const BONUS_QUOTIDIEN = 200;
+/**
+ * Prime de connexion, en série de sept jours.
+ *
+ * Le montant grimpe tant que la série tient, et retombe au premier jour manqué.
+ * L'idée n'est pas de distribuer des Frags mais de créer un rendez-vous : le
+ * septième jour vaut trois fois et demie le premier, ce qui donne une raison
+ * concrète de revenir un mardi où il n'y a aucun match intéressant.
+ */
+export const PRIME_PALIERS = [120, 150, 180, 210, 240, 280, 420];
 
-/** Filet de sécurité : en dessous de ce solde, le bonus est doublé. */
+/** Montant plancher : c'est aussi ce qu'on touche quand une condition manque. */
+export const PRIME_BASE = PRIME_PALIERS[0];
+
+/** Longueur de la série avant remise à zéro. */
+export const PRIME_SERIE_MAX = PRIME_PALIERS.length;
+
+/** Rétrocompatibilité : l'ancien nom du bonus fixe. */
+export const BONUS_QUOTIDIEN = PRIME_BASE;
+
+/** Filet de sécurité : en dessous de ce solde, la prime est doublée. */
 export const SEUIL_FAILLITE = 100;
+
+/**
+ * Plafond de richesse. Au-dessus, la prime retombe au plancher.
+ * Sans ça, le leader du classement encaisse chaque jour de quoi creuser
+ * l'écart sans jamais prendre le moindre risque.
+ */
+export const PRIME_PLAFOND_SOLDE = 3000;
+
+/**
+ * À partir de ce jour de série, la bonification se mérite : il faut avoir misé
+ * au moins une fois dans la fenêtre ci-dessous. C'est le garde-fou demandé —
+ * se connecter ne doit pas être une stratégie de classement.
+ */
+export const PRIME_JOUR_MISE = 3;
+export const PRIME_FENETRE_MISE_MS = 7 * 24 * 3600 * 1000;
+
+/** Délai minimal entre deux primes, et délai au-delà duquel la série casse. */
+export const PRIME_DELAI_MS = 24 * 3600 * 1000;
+export const PRIME_FENETRE_SERIE_MS = 48 * 3600 * 1000;
 
 /** Mise minimale et maximale par pari. */
 export const MISE_MIN = 10;
@@ -283,4 +318,149 @@ export function formaterFrags(n) {
 export function roi(misesTotales, gainsTotaux) {
   if (!misesTotales) return 0;
   return ((gainsTotaux - misesTotales) / misesTotales) * 100;
+}
+
+/* ------------------------------------------------------------------ */
+/* Prime de connexion en série                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Série obtenue si le joueur réclame sa prime maintenant.
+ *
+ * Trois cas seulement : jamais réclamée (jour 1), réclamée il y a moins de
+ * 48 h (jour suivant), réclamée il y a plus longtemps (retour au jour 1).
+ * Une série complète repart aussi à 1 : la semaine est bouclée, on recommence.
+ *
+ * Cette fonction ne vérifie PAS le délai de 24 h — c'est au backend de le
+ * faire, parce que lui seul connaît l'heure qui fait foi.
+ */
+export function serieApres(serieActuelle, dernierePrimeIso, maintenant = Date.now()) {
+  if (!dernierePrimeIso) return 1;
+  const ecart = maintenant - new Date(dernierePrimeIso).getTime();
+  if (ecart >= PRIME_FENETRE_SERIE_MS) return 1;
+  if ((serieActuelle || 0) >= PRIME_SERIE_MAX) return 1;
+  return (serieActuelle || 0) + 1;
+}
+
+/**
+ * Montant de la prime, une fois la série connue.
+ *
+ * L'ordre des règles compte : on part du palier de la série, on le rabote si
+ * le joueur est déjà riche ou s'il ne mise pas, et le filet de faillite
+ * s'applique en dernier — un joueur ruiné doit toujours pouvoir rejouer.
+ */
+export function montantPrime({ serie, solde, misesRecentes = 0 }) {
+  const rang = Math.min(Math.max(serie || 1, 1), PRIME_SERIE_MAX);
+  let montant = PRIME_PALIERS[rang - 1];
+  if (solde >= PRIME_PLAFOND_SOLDE) montant = PRIME_BASE;
+  if (rang >= PRIME_JOUR_MISE && !misesRecentes) montant = PRIME_BASE;
+  if (solde < SEUIL_FAILLITE) montant *= 2;
+  return Math.round(montant);
+}
+
+/** Millisecondes restantes avant la prochaine prime. 0 si elle est disponible. */
+export function attentePrime(dernierePrimeIso, maintenant = Date.now()) {
+  if (!dernierePrimeIso) return 0;
+  const reste = PRIME_DELAI_MS - (maintenant - new Date(dernierePrimeIso).getTime());
+  return reste > 0 ? reste : 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Le call de la saison                                                */
+/* ------------------------------------------------------------------ */
+
+/** Mise autorisée sur le call. Plus haute que le minimum d'un pari : c'est un engagement. */
+export const CALL_MISE_MIN = 50;
+export const CALL_MISE_MAX = 2000;
+
+/**
+ * Cotes du vainqueur d'un événement, dérivées des Elo des équipes engagées.
+ *
+ * Le poids d'une équipe vaut 10^(Elo/400) : c'est la même échelle que la
+ * formule Elo, transposée à un champ de plus de deux concurrents. La somme des
+ * probabilités vaut 1, donc appliquer la marge habituelle donne le même
+ * overround que sur un match.
+ */
+export function cotesEvenement(equipes) {
+  if (!equipes?.length) return [];
+  const poids = equipes.map((e) => Math.pow(10, (e.elo ?? ELO_DEFAUT) / 400));
+  const total = poids.reduce((t, p) => t + p, 0);
+  return equipes
+    .map((e, i) => {
+      const proba = poids[i] / total;
+      return { ...e, proba, cote: coteDepuisProba(proba) };
+    })
+    .sort((a, b) => b.proba - a.proba);
+}
+
+/* ------------------------------------------------------------------ */
+/* Rivalité de la semaine                                              */
+/* ------------------------------------------------------------------ */
+
+/** Empreinte entière stable d'une chaîne (FNV-1a 32 bits). */
+export function empreinte(texte) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < texte.length; i++) {
+    h ^= texte.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+/** Identifiant de la semaine ISO courante, du type "2026-S33". */
+export function semaineIso(date = new Date()) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  // Jeudi de la semaine courante : c'est lui qui porte l'année ISO.
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const debutAnnee = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const semaine = Math.ceil(((d - debutAnnee) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-S${String(semaine).padStart(2, '0')}`;
+}
+
+/** Lundi 00:00 (heure locale) de la semaine d'une date. */
+export function debutSemaine(date = new Date()) {
+  const d = new Date(date);
+  const jour = (d.getDay() + 6) % 7; // lundi = 0
+  d.setDate(d.getDate() - jour);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+/**
+ * Le rival de la semaine : un joueur pris parmi les trois plus proches au
+ * classement, choisi de façon déterministe à partir de l'identifiant et de la
+ * semaine. Conséquences : le duel ne change pas d'une page à l'autre, il change
+ * tout seul chaque lundi, et il ne demande aucune table.
+ *
+ * On regarde d'abord au-dessus : chasser est plus motivant que défendre.
+ */
+export function choisirRival(monId, classement, semaine = semaineIso()) {
+  if (!Array.isArray(classement) || classement.length < 2) return null;
+  const moi = classement.findIndex((l) => l.id === monId);
+  if (moi < 0) return null;
+
+  const voisins = [];
+  for (let d = 1; d <= 3 && voisins.length < 3; d++) {
+    if (moi - d >= 0) voisins.push(classement[moi - d]);
+    if (voisins.length < 3 && moi + d < classement.length) voisins.push(classement[moi + d]);
+  }
+  if (!voisins.length) return null;
+  return voisins[empreinte(`${monId}|${semaine}`) % voisins.length];
+}
+
+/** Bilan d'un lot de paris sur une période : mises, gains, bénéfice net. */
+export function bilanPeriode(paris, depuis) {
+  const seuil = depuis instanceof Date ? depuis.getTime() : new Date(depuis).getTime();
+  const retenus = (paris || []).filter(
+    (p) => new Date(p.cree_le).getTime() >= seuil && p.statut !== 'en_cours'
+  );
+  const mises = retenus.reduce((t, p) => t + p.mise, 0);
+  const gains = retenus.reduce((t, p) => t + (p.gain || 0), 0);
+  return {
+    paris: retenus.length,
+    gagnes: retenus.filter((p) => p.statut === 'gagne').length,
+    mises,
+    gains,
+    net: gains - mises,
+  };
 }

@@ -12,8 +12,12 @@ const FILTRES = [
 
 let jeuActif = '';
 let statutActif = 'a_venir';
+let favoriSeul = false;
 
 export async function vueMatchs(racine) {
+  const favorite = contexte.utilisateur?.equipe_favorite ?? null;
+  if (!favorite) favoriSeul = false;
+
   racine.innerHTML = `
     <div class="entete-page">
       <div>
@@ -31,23 +35,36 @@ export async function vueMatchs(racine) {
     racine.querySelector('#filtres-jeu').innerHTML = FILTRES.map(
       (f) => `<button class="puce${f.cle === jeuActif ? ' actif' : ''}" data-jeu="${f.cle}">${f.libelle}</button>`
     ).join('');
-    racine.querySelector('#filtres-statut').innerHTML = [
-      { cle: 'a_venir', libelle: 'À venir' },
-      { cle: 'termine', libelle: 'Résultats' },
-    ]
-      .map((f) => `<button class="puce${f.cle === statutActif ? ' actif' : ''}" data-statut="${f.cle}">${f.libelle}</button>`)
-      .join('');
+    racine.querySelector('#filtres-statut').innerHTML =
+      [
+        { cle: 'a_venir', libelle: 'À venir' },
+        { cle: 'termine', libelle: 'Résultats' },
+      ]
+        .map((f) => `<button class="puce${f.cle === statutActif ? ' actif' : ''}" data-statut="${f.cle}">${f.libelle}</button>`)
+        .join('') +
+      (favorite
+        ? `<button class="puce puce--favori${favoriSeul ? ' actif' : ''}" data-favori="1">★ ${esc(favorite.tag)}</button>`
+        : '');
   };
 
   const rendreListe = async () => {
     const liste = racine.querySelector('#liste');
     liste.innerHTML = '<div class="chargement"><span class="spinner"></span></div>';
-    const matchs = await api.listerMatchs({ jeu: jeuActif || null, statut: statutActif });
+    const matchs = await api.listerMatchs({
+      jeu: jeuActif || null,
+      statut: statutActif,
+      equipe: favoriSeul ? favorite.id : null,
+    });
     if (!matchs.length) {
-      liste.innerHTML = vide('Aucun match', 'Rien de prévu ici pour le moment.');
+      liste.innerHTML = vide(
+        'Aucun match',
+        favoriSeul
+          ? `Rien de prévu pour ${favorite.nom} ici. Retire le filtre pour voir le reste.`
+          : 'Rien de prévu ici pour le moment.'
+      );
       return;
     }
-    const cartes = await Promise.all(matchs.map((m) => carteMatch(m)));
+    const cartes = await Promise.all(matchs.map((m) => carteMatch(m, favorite)));
     liste.innerHTML = cartes.join('');
   };
 
@@ -64,10 +81,17 @@ export async function vueMatchs(racine) {
     rendreFiltres();
     await rendreListe();
   });
+  surClic(racine, '[data-favori]', async () => {
+    favoriSeul = !favoriSeul;
+    rendreFiltres();
+    await rendreListe();
+  });
 }
 
-async function carteMatch(m) {
+async function carteMatch(m, favorite = null) {
   const termine = m.statut === 'termine';
+  const monMatch =
+    favorite && (m.equipe_a_id === favorite.id || m.equipe_b_id === favorite.id);
   const imminent = !termine && new Date(m.debut) - Date.now() < 3600 * 1000;
 
   let bas = '';
@@ -88,8 +112,11 @@ async function carteMatch(m) {
     ? `<div><span class="score${m.score_a > m.score_b ? '' : ' score--perdant'}">${m.score_a}</span><span class="versus"> – </span><span class="score${m.score_b > m.score_a ? '' : ' score--perdant'}">${m.score_b}</span></div>`
     : `<span class="versus">BO${m.format}</span>`;
 
+  const etoile = (id) =>
+    favorite && id === favorite.id ? '<span class="equipe__favori" title="Ton équipe">★</span>' : '';
+
   return `
-    <a class="match" href="#/matchs/${encodeURIComponent(m.id)}">
+    <a class="match${monMatch ? ' match--favori' : ''}" href="#/matchs/${encodeURIComponent(m.id)}">
       <div class="match__haut">
         <span class="match__event">
           <span class="pastille-jeu" data-jeu="${esc(m.jeu)}"></span>
@@ -103,12 +130,12 @@ async function carteMatch(m) {
       </div>
       <div class="match__corps">
         <div class="equipe">
-          <span class="equipe__nom">${esc(m.equipe_a)}</span>
+          <span class="equipe__nom">${etoile(m.equipe_a_id)} ${esc(m.equipe_a)}</span>
           <span class="equipe__elo">Elo ${m.elo_a}</span>
         </div>
         ${centre}
         <div class="equipe equipe--droite">
-          <span class="equipe__nom">${esc(m.equipe_b)}</span>
+          <span class="equipe__nom">${esc(m.equipe_b)} ${etoile(m.equipe_b_id)}</span>
           <span class="equipe__elo">Elo ${m.elo_b}</span>
         </div>
       </div>

@@ -168,10 +168,10 @@ export function construireMatchs(maintenant = Date.now()) {
  * ce qui rend visible l'intérêt du système dès la démo.
  */
 export const RIVAUX = [
-  { id: 'u-nova', pseudo: 'NovaKill', soldes: { 'saison-ete-2026': 2340, 'saison-automne-2026': 1000 }, paris: 24, gagnes: 11 },
-  { id: 'u-shiro', pseudo: 'Shirooo', soldes: { 'saison-ete-2026': 1875, 'saison-automne-2026': 1000 }, paris: 31, gagnes: 13 },
-  { id: 'u-mika', pseudo: 'MikaFPS', soldes: { 'saison-ete-2026': 1620, 'saison-automne-2026': 1000 }, paris: 18, gagnes: 7 },
-  { id: 'u-drex', pseudo: 'Drexx', soldes: { 'saison-ete-2026': 1105, 'saison-automne-2026': 1000 }, paris: 27, gagnes: 9 },
-  { id: 'u-lena', pseudo: 'Lena.exe', soldes: { 'saison-ete-2026': 940, 'saison-automne-2026': 1000 }, paris: 22, gagnes: 8 },
-  { id: 'u-tibo', pseudo: 'TiboOTP', soldes: { 'saison-ete-2026': 610, 'saison-automne-2026': 1000 }, paris: 35, gagnes: 11 },
+  { id: 'u-nova', pseudo: 'NovaKill', equipe_favorite_id: 'lol-kc', soldes: { 'saison-ete-2026': 2340, 'saison-automne-2026': 1000 }, paris: 24, gagnes: 11 },
+  { id: 'u-shiro', pseudo: 'Shirooo', equipe_favorite_id: 'cs-vit', soldes: { 'saison-ete-2026': 1875, 'saison-automne-2026': 1000 }, paris: 31, gagnes: 13 },
+  { id: 'u-mika', pseudo: 'MikaFPS', equipe_favorite_id: 'val-kc', soldes: { 'saison-ete-2026': 1620, 'saison-automne-2026': 1000 }, paris: 18, gagnes: 7 },
+  { id: 'u-drex', pseudo: 'Drexx', equipe_favorite_id: 'lol-g2', soldes: { 'saison-ete-2026': 1105, 'saison-automne-2026': 1000 }, paris: 27, gagnes: 9 },
+  { id: 'u-lena', pseudo: 'Lena.exe', equipe_favorite_id: 'val-fnc', soldes: { 'saison-ete-2026': 940, 'saison-automne-2026': 1000 }, paris: 22, gagnes: 8 },
+  { id: 'u-tibo', pseudo: 'TiboOTP', equipe_favorite_id: 'cs-navi', soldes: { 'saison-ete-2026': 610, 'saison-automne-2026': 1000 }, paris: 35, gagnes: 11 },
 ];

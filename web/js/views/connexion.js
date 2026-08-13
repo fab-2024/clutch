@@ -21,6 +21,10 @@ export async function vueConnexion(racine) {
 
   let mode = 'inscription'; // ou 'connexion'
 
+  // Le choix de l'équipe se fait ici parce que c'est le seul moment où on a
+  // l'attention du joueur. Il reste facultatif, et se change depuis le profil.
+  const equipes = await api.listerEquipes().catch(() => []);
+
   const dessiner = () => {
     racine.innerHTML = `
       <div style="max-width:440px;margin:40px auto">
@@ -52,6 +56,23 @@ export async function vueConnexion(racine) {
             <input type="password" id="motdepasse" placeholder="••••••••"
                    autocomplete="${mode === 'inscription' ? 'new-password' : 'current-password'}" />
           </label>
+
+          ${
+            mode === 'inscription' && equipes.length
+              ? `<label class="champ">
+                   <span class="champ__libelle">Ton équipe (facultatif)</span>
+                   <select id="equipe-favorite">
+                     <option value="">Je n'en ai pas</option>
+                     ${equipes
+                       .map((e) => `<option value="${esc(e.id)}">${esc(e.nom)} · ${esc(e.tag)}</option>`)
+                       .join('')}
+                   </select>
+                   <span style="font-size:0.76rem;color:var(--texte-faible);margin-top:6px;display:block">
+                     Elle met tes matchs en avant dans le calendrier. Aucune incidence sur les cotes.
+                   </span>
+                 </label>`
+              : ''
+          }
 
           <button class="btn btn--large" id="valider">
             ${mode === 'inscription' ? 'Créer mon compte et jouer' : 'Me connecter'}
@@ -93,6 +114,7 @@ export async function vueConnexion(racine) {
       const email = racine.querySelector('#email').value.trim();
       const motDePasse = racine.querySelector('#motdepasse').value;
       const pseudo = racine.querySelector('#pseudo')?.value.trim();
+      const equipeFavoriteId = racine.querySelector('#equipe-favorite')?.value || null;
 
       if (!email || !motDePasse) return toast('Remplis les deux champs.', 'erreur');
       if (mode === 'inscription' && motDePasse.length < 6) {
@@ -103,7 +125,7 @@ export async function vueConnexion(racine) {
       try {
         const r =
           mode === 'inscription'
-            ? await api.inscription({ email, motDePasse, pseudo })
+            ? await api.inscription({ email, motDePasse, pseudo, equipeFavoriteId })
             : await api.connexionMotDePasse({ email, motDePasse });
 
         if (r?.enAttenteEmail) {
@@ -146,7 +168,8 @@ export async function vueConnexion(racine) {
 }
 
 /** En mode démo, aucun compte n'existe : un pseudo suffit. */
-function vueDemo(racine) {
+async function vueDemo(racine) {
+  const equipes = await api.listerEquipes().catch(() => []);
   racine.innerHTML = `
     <div style="max-width:440px;margin:40px auto">
       <h1>Rejoindre la partie</h1>
@@ -158,6 +181,13 @@ function vueDemo(racine) {
         <label class="champ">
           <span class="champ__libelle">Ton pseudo</span>
           <input type="text" id="identifiant" placeholder="Ex : NovaKill" autocomplete="nickname" />
+        </label>
+        <label class="champ">
+          <span class="champ__libelle">Ton équipe (facultatif)</span>
+          <select id="equipe-favorite">
+            <option value="">Je n'en ai pas</option>
+            ${equipes.map((e) => `<option value="${esc(e.id)}">${esc(e.nom)} · ${esc(e.tag)}</option>`).join('')}
+          </select>
         </label>
         <button class="btn btn--large" id="ok">Commencer à jouer</button>
         <p style="font-size:0.78rem;color:var(--texte-faible);margin:14px 0 0">
@@ -171,7 +201,12 @@ function vueDemo(racine) {
   const valider = async () => {
     const valeur = champ.value.trim();
     if (!valeur) return toast('Choisis un pseudo.', 'erreur');
-    await api.connexion(valeur);
+    await api.inscription({
+      email: valeur,
+      motDePasse: '',
+      pseudo: valeur,
+      equipeFavoriteId: racine.querySelector('#equipe-favorite')?.value || null,
+    });
     toast(`Bienvenue ${valeur} !`, 'succes');
     location.hash = '#/matchs';
     window.dispatchEvent(new HashChangeEvent('hashchange'));

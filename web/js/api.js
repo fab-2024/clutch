@@ -259,15 +259,26 @@ function ouvrirSession(r) {
  * email » désactivé côté Supabase, l'inscription ouvre la session
  * immédiatement, sans le moindre e-mail.
  */
-export async function inscription({ email, motDePasse, pseudo }) {
-  if (MODE_DEMO) return demo.connexion(pseudo || email);
+export async function inscription({ email, motDePasse, pseudo, equipeFavoriteId = null }) {
+  if (MODE_DEMO) return demo.connexion(pseudo || email, { equipeFavoriteId });
   const retour = encodeURIComponent(`${location.origin}${location.pathname}`);
   const r = await sb(`/auth/v1/signup?redirect_to=${retour}`, {
     methode: 'POST',
     corps: { email: email.trim(), password: motDePasse, data: { pseudo: pseudo?.trim() || undefined } },
   });
-  if (ouvrirSession(r)) return { ok: true };
-  return { enAttenteEmail: true }; // la confirmation par e-mail est activée
+  if (!ouvrirSession(r)) return { enAttenteEmail: true }; // la confirmation par e-mail est activée
+
+  // Le profil est créé par un trigger côté base : on ne peut renseigner
+  // l'équipe préférée qu'ensuite. Un échec ici ne doit pas bloquer
+  // l'inscription — le joueur pourra toujours la choisir sur son profil.
+  if (equipeFavoriteId) {
+    try {
+      await definirEquipeFavorite(equipeFavoriteId);
+    } catch (e) {
+      console.warn('[Clutch] équipe préférée non enregistrée à l’inscription', e);
+    }
+  }
+  return { ok: true };
 }
 
 /** Connexion par mot de passe. */
@@ -344,12 +355,16 @@ export async function palmares() {
 
 export async function listerMatchs(filtres) {
   if (MODE_DEMO) return demo.listerMatchs(filtres);
-  const { jeu, statut = 'a_venir' } = filtres || {};
+  const { jeu, statut = 'a_venir', equipe } = filtres || {};
   const saison = filtres?.saison ?? (await saisonCourante())?.id;
   let q = `/v_matchs?select=*&order=debut.asc`;
   if (saison) q += `&saison_id=eq.${encodeURIComponent(saison)}`;
   if (statut) q += `&statut=eq.${statut}`;
   if (jeu) q += `&jeu=eq.${jeu}`;
+  if (equipe) {
+    const e = encodeURIComponent(equipe);
+    q += `&or=(equipe_a_id.eq.${e},equipe_b_id.eq.${e})`;
+  }
   return rest(q);
 }
 
@@ -389,11 +404,80 @@ export async function reglerMatch(matchId, scoreA, scoreB) {
   return rpc('regler_match', { p_match_id: matchId, p_score_a: scoreA, p_score_b: scoreB });
 }
 
-/* --- Prime --- */
+/* --- Prime de connexion --- */
 
 export async function reclamerPrime() {
   if (MODE_DEMO) return demo.reclamerPrime();
   return rpc('reclamer_prime', { p_saison_id: (await saisonCourante())?.id });
+}
+
+export async function etatPrime() {
+  if (MODE_DEMO) return demo.etatPrime();
+  return rpc('etat_prime', { p_saison_id: (await saisonCourante())?.id });
+}
+
+/* --- Équipe préférée --- */
+
+export async function listerEquipes(filtres) {
+  if (MODE_DEMO) return demo.listerEquipes(filtres);
+  let q = '/equipes?select=id,jeu,nom,tag,elo&order=nom.asc';
+  if (filtres?.jeu) q += `&jeu=eq.${filtres.jeu}`;
+  return rest(q);
+}
+
+export async function definirEquipeFavorite(equipeId) {
+  if (MODE_DEMO) return demo.definirEquipeFavorite(equipeId);
+  const u = await utilisateurCourant();
+  if (!u) throw new Error('Connecte-toi.');
+  await rest(`/profils?id=eq.${u.id}`, {
+    methode: 'PATCH',
+    corps: { equipe_favorite_id: equipeId || null },
+    entetes: { Prefer: 'return=minimal' },
+  });
+  return utilisateurCourant();
+}
+
+/* --- Le call de la saison --- */
+
+export async function listerEvenementsSaison(options) {
+  if (MODE_DEMO) return demo.listerEvenementsSaison(options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return rest(`/v_evenements_saison?select=*&saison_id=eq.${encodeURIComponent(saison)}&order=debut.asc`);
+}
+
+export async function cotesEvenement(eventId, options) {
+  if (MODE_DEMO) return demo.cotesEvenement(eventId, options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return rpc('cotes_evenement', { p_event_id: eventId, p_saison_id: saison });
+}
+
+export async function monCall(options) {
+  if (MODE_DEMO) return demo.monCall(options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return rpc('mon_call', { p_saison_id: saison });
+}
+
+export async function placerCall({ eventId, equipeId, mise }) {
+  if (MODE_DEMO) return demo.placerCall({ eventId, equipeId, mise });
+  return rpc('placer_call', { p_event_id: eventId, p_equipe_id: equipeId, p_mise: mise });
+}
+
+export async function reglerEvenement(eventId, equipeId, options) {
+  if (MODE_DEMO) return demo.reglerEvenement(eventId, equipeId, options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return rpc('regler_evenement', {
+    p_event_id: eventId,
+    p_equipe_id: equipeId,
+    p_saison_id: saison,
+  });
+}
+
+/* --- Rivalité de la semaine --- */
+
+export async function rivaliteSemaine(options) {
+  if (MODE_DEMO) return demo.rivaliteSemaine(options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return rpc('rivalite_semaine', { p_saison_id: saison, p_ligue_id: options?.ligue ?? null });
 }
 
 /* --- Ligues --- */

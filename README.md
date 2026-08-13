@@ -111,7 +111,33 @@ Les ligues, elles, **survivent aux saisons** : « Les potes du Discord » reste 
 même ligue d'une saison à l'autre, seul son classement est remis à plat. Le statut
 d'une saison (à venir, en cours, terminée) se déduit des dates, il n'y a rien à
 maintenir à la main. Une saison qui n'est pas en cours est consultable mais
-verrouillée : ni mise, ni prime quotidienne.
+verrouillée : ni mise, ni prime de connexion.
+
+## Ce qui se joue en plus des matchs
+
+Quatre mécaniques se greffent sur les paris, sans toucher au moteur de cotes.
+
+**La prime de connexion, en série de sept jours.** Le montant grimpe de 120 à
+420 Frags tant que la série tient, et retombe au premier jour manqué. Deux
+garde-fous : au-dessus de 3 000 Frags de solde la prime revient au plancher, et
+à partir du troisième jour la bonification demande d'avoir misé dans la
+semaine. Se connecter ne doit jamais être une stratégie de classement.
+
+**L'équipe préférée.** Choisie à l'inscription, modifiable depuis le profil.
+Elle met les matchs concernés en avant dans le calendrier, ajoute un filtre
+dédié et affiche les couleurs du joueur au classement. Elle ne touche à aucune
+cote — personne ne fait de cadeau à son équipe.
+
+**Le call de la saison.** Un seul pronostic par saison : qui gagne tel tournoi.
+Il se pose avant le premier match du tournoi visé, la mise est bloquée jusqu'au
+sacre, et la cote se déduit des Elo des équipes engagées avec la même marge que
+sur un match. Il reste affiché sur le profil jusqu'à la finale. C'est ce qui
+garde en vie un joueur mal parti — et la phrase qu'il ressortira en avril.
+
+**La rivalité de la semaine.** Un duel avec un joueur proche au classement,
+tiré de façon déterministe à partir de la semaine ISO : il ne bouge pas d'une
+page à l'autre et change tout seul le lundi. Aucune table, aucune donnée
+nouvelle — c'est du classement existant relu autrement.
 
 ## Architecture
 
@@ -122,6 +148,7 @@ web/                 Application (HTML + CSS + JavaScript natif, aucun build)
   js/store.js        Backend de démonstration (localStorage)
   js/views/          Une vue par écran
 supabase/            Base de données : schéma, fonctions SQL, sécurité, données
+                     01 à 04 = socle, 05 = prime en série, équipe, call, rivalité
 extension/           Extension Chrome MV3 (overlay Twitch / YouTube)
 tests/               Tests, sans dépendance : node --test tests/*.mjs
 ```
@@ -142,10 +169,11 @@ Deux principes structurent le tout :
 node --test tests/*.mjs
 ```
 
-38 tests couvrent le moteur de cotes (distributions, marge, Elo) et le parcours
-complet de bout en bout : inscription, mise, règlement, classement, ainsi que
-les cas d'erreur (solde insuffisant, score incohérent, double pari, match déjà
-réglé).
+85 tests couvrent le moteur de cotes (distributions, marge, Elo), les règles du
+palier 1 (paliers de prime, plafonds, cotes de tournoi, tirage du rival) et le
+parcours complet de bout en bout : inscription, mise, règlement, classement,
+call de la saison, ainsi que les cas d'erreur (solde insuffisant, score
+incohérent, double pari, match déjà réglé, call déjà posé, tournoi fermé).
 
 ## Extension Chrome
 

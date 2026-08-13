@@ -13,10 +13,22 @@ export async function vueAdmin(racine) {
     return;
   }
 
-  const [aVenir, termines] = await Promise.all([
+  const [aVenir, termines, evenements] = await Promise.all([
     api.listerMatchs({ statut: 'a_venir' }),
     api.listerMatchs({ statut: 'termine' }),
+    api.listerEvenementsSaison(),
   ]);
+
+  // Les équipes engagées, tournoi par tournoi : il faut la liste pour proposer
+  // un vainqueur. Un tournoi déjà réglé n'a plus besoin de rien.
+  const equipesParEvenement = new Map(
+    await Promise.all(
+      evenements.map(async (ev) => [
+        ev.id,
+        ev.statut === 'regle' ? [] : await api.cotesEvenement(ev.id).catch(() => []),
+      ])
+    )
+  );
 
   const maintenant = Date.now();
   const aRegler = aVenir.filter((m) => new Date(m.debut).getTime() < maintenant);
@@ -53,6 +65,19 @@ export async function vueAdmin(racine) {
            </div>`
         : ''
     }
+
+    <h2>Vainqueurs de tournoi (calls de la saison)</h2>
+    <div class="encart" style="margin-bottom:14px">
+      Désigner le vainqueur d'un tournoi règle d'un coup tous les calls de la saison
+      qui le visaient. C'est irréversible : à faire une fois la finale jouée.
+    </div>
+    <div class="grille grille--2" style="margin-bottom:30px" id="zone-evenements">
+      ${
+        evenements.length
+          ? evenements.map((ev) => carteEvenement(ev, equipesParEvenement.get(ev.id) ?? [])).join('')
+          : vide('Aucun tournoi', 'Cette saison ne contient encore aucun match.')
+      }
+    </div>
 
     <h2>Prochains matchs (${prochains.length})</h2>
     <div class="carte" style="margin-bottom:30px">
@@ -91,6 +116,21 @@ export async function vueAdmin(racine) {
       </table>
     </div>`;
 
+  racine.querySelectorAll('[data-evenement]').forEach((form) => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const equipeId = form.querySelector('[name=equipe]').value;
+      if (!equipeId) return toast('Choisis une équipe.', 'erreur');
+      try {
+        const r = await api.reglerEvenement(form.dataset.evenement, equipeId);
+        toast(`${r.regles} call(s) réglé(s).`, 'succes');
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+      } catch (err) {
+        toast(err.message, 'erreur');
+      }
+    });
+  });
+
   racine.querySelectorAll('[data-regler]').forEach((form) => {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -106,6 +146,47 @@ export async function vueAdmin(racine) {
       }
     });
   });
+}
+
+/** Désignation du vainqueur d'un tournoi : c'est ce qui règle les calls. */
+function carteEvenement(ev, equipes) {
+  const etat =
+    ev.statut === 'regle'
+      ? `<span class="badge badge--gagne">${esc(ev.vainqueur ?? 'réglé')}</span>`
+      : ev.statut === 'ouvert'
+        ? '<span class="badge badge--attente">calls ouverts</span>'
+        : '<span class="badge">en cours</span>';
+
+  return `
+    <form class="carte" data-evenement="${esc(ev.id)}">
+      <div class="match__haut" style="border:0;padding:0 0 10px">
+        <span class="match__event">
+          <span class="pastille-jeu" data-jeu="${esc(ev.jeu)}"></span>
+          <span>${esc(ev.nom)}</span>
+        </span>
+        ${etat}
+      </div>
+      <p style="color:var(--texte-faible);font-size:0.8rem;margin:0 0 12px">
+        ${ev.nb_matchs} match${ev.nb_matchs > 1 ? 's' : ''} ·
+        premier le ${esc(dateLisible(ev.debut))}
+      </p>
+      ${
+        ev.statut === 'regle'
+          ? `<p style="margin:0;color:var(--texte-doux);font-size:0.86rem">
+               Vainqueur enregistré : <strong>${esc(ev.vainqueur ?? '—')}</strong>.
+             </p>`
+          : `<label class="champ" style="margin-bottom:12px">
+               <span class="champ__libelle">Vainqueur du tournoi</span>
+               <select name="equipe">
+                 <option value="">À désigner…</option>
+                 ${equipes
+                   .map((e) => `<option value="${esc(e.id)}">${esc(e.nom)}</option>`)
+                   .join('')}
+               </select>
+             </label>
+             <button class="btn btn--large">Désigner et régler les calls</button>`
+      }
+    </form>`;
 }
 
 function carteReglement(m) {

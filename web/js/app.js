@@ -16,6 +16,7 @@ import { vueLigues } from './views/ligues.js';
 import { vueLigue } from './views/ligue.js';
 import { vueClassement } from './views/classement.js';
 import { vueProfil } from './views/profil.js';
+import { vueCall } from './views/call.js';
 import { vueAdmin } from './views/admin.js';
 import { vueConnexion } from './views/connexion.js';
 import { vueDiagnostic } from './views/diagnostic.js';
@@ -27,6 +28,7 @@ const ROUTES = [
   { motif: /^\/ligues\/(.+)$/, vue: vueLigue, nav: 'ligues' },
   { motif: /^\/classement$/, vue: vueClassement, nav: 'classement' },
   { motif: /^\/profil$/, vue: vueProfil, nav: 'profil' },
+  { motif: /^\/call$/, vue: vueCall, nav: 'call' },
   { motif: /^\/admin$/, vue: vueAdmin, nav: 'admin' },
   { motif: /^\/connexion$/, vue: vueConnexion, nav: null },
   { motif: /^\/diagnostic$/, vue: vueDiagnostic, nav: null },
@@ -36,6 +38,7 @@ const LIENS = [
   { href: '#/matchs', libelle: 'Matchs', cle: 'matchs' },
   { href: '#/ligues', libelle: 'Mes ligues', cle: 'ligues' },
   { href: '#/classement', libelle: 'Classement', cle: 'classement' },
+  { href: '#/call', libelle: 'Mon call', cle: 'call' },
   { href: '#/profil', libelle: 'Mes paris', cle: 'profil' },
 ];
 
