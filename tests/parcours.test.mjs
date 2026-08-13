@@ -1029,3 +1029,48 @@ test('annulation : un match annulé sort du calendrier et n’accepte plus de mi
     /déjà commencé|annulé/
   );
 });
+
+/* ------------------------------------------------------------------ */
+/* Communautés                                                          */
+/* ------------------------------------------------------------------ */
+
+test('communautés : choisir une équipe préférée fait monter sa jauge', async () => {
+  await store.reinitialiser();
+  await store.connexion('Pierre');
+
+  const avant = await store.classementCommunautes();
+  const kcAvant = avant.find((c) => c.equipe_id === 'lol-kc');
+  assert.ok(kcAvant, 'Karmine Corp doit déjà exister par ses rivaux');
+  assert.equal(kcAvant.moi, false);
+
+  await store.definirEquipeFavorite('lol-kc');
+  const apres = await store.classementCommunautes();
+  const kcApres = apres.find((c) => c.equipe_id === 'lol-kc');
+  assert.equal(kcApres.membres, kcAvant.membres + 1);
+  assert.equal(kcApres.moi, true);
+});
+
+test('communautés : on n’appartient qu’à une seule à la fois', async () => {
+  await store.reinitialiser();
+  await store.connexion('Pierre');
+  await store.definirEquipeFavorite('lol-kc');
+  await store.definirEquipeFavorite('lol-g2');
+
+  const lignes = await store.classementCommunautes();
+  assert.equal(lignes.filter((c) => c.moi).length, 1);
+  assert.equal(lignes.find((c) => c.moi).equipe_id, 'lol-g2');
+});
+
+test('communautés : classées par taille, et une équipe sans membre n’apparaît pas', async () => {
+  await store.reinitialiser();
+  await store.connexion('Pierre');
+  await store.definirEquipeFavorite('lol-kc');
+
+  const lignes = await store.classementCommunautes();
+  for (let i = 1; i < lignes.length; i++) {
+    assert.ok(lignes[i - 1].membres >= lignes[i].membres, 'tri décroissant rompu');
+  }
+  assert.ok(lignes.every((c) => c.membres > 0));
+  // « Heroic » n'est le favori de personne dans le jeu de départ.
+  assert.equal(lignes.some((c) => c.equipe_id === 'cs-heroic'), false);
+});

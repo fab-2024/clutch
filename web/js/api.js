@@ -602,6 +602,16 @@ export async function statistiques(options) {
   return rpc('mes_statistiques', { p_saison_id: saison });
 }
 
+/**
+ * Classement des communautés — les équipes, triées par nombre de joueurs
+ * qui les ont choisies en favorite. Ne dépend d'aucune saison : une
+ * communauté ne repart pas de zéro tous les trois mois.
+ */
+export async function classementCommunautes() {
+  if (MODE_DEMO) return demo.classementCommunautes();
+  return (await rpc('classement_communautes')) ?? [];
+}
+
 
 /* ------------------------------------------------------------------ */
 /* Diagnostic                                                          */

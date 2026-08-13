@@ -3,7 +3,7 @@ import { contexte, majSolde, bandeauSaison } from '../app.js';
 import { esc, frags, dateLisible, toast, vide } from '../ui.js';
 import { badgePari } from './match.js';
 import { carteCallPose } from './call.js';
-import { PRIME_SERIE_MAX, PARI_AUTO_MISE_MIN, PARI_AUTO_MISE_MAX } from '../core.js';
+import { PRIME_SERIE_MAX } from '../core.js';
 
 export async function vueProfil(racine) {
   if (!contexte.utilisateur) {
@@ -15,107 +15,55 @@ export async function vueProfil(racine) {
     return;
   }
 
-  const [paris, stats, prime, call, equipes] = await Promise.all([
+  const [paris, stats, prime, call, badges] = await Promise.all([
     api.mesParis(),
     api.statistiques(),
     api.etatPrime(),
     api.monCall(),
-    api.listerEquipes(),
+    api.mesBadges().catch(() => null),
   ]);
   const enCours = paris.filter((p) => p.statut === 'en_cours');
   const regles = paris.filter((p) => p.statut !== 'en_cours');
   const benefice = stats.gains - stats.mises;
   const favorite = contexte.utilisateur.equipe_favorite;
-  const modeAuto = contexte.utilisateur.pari_auto_mode ?? 'off';
+  const obtenus = badges?.badges?.filter((b) => b.obtenu)?.length ?? 0;
+  const total = badges?.badges?.length ?? 0;
 
   racine.innerHTML = `
-    <div class="entete-page">
-      <div>
-        <h1>${esc(contexte.utilisateur.pseudo || contexte.utilisateur.email || 'Mon profil')}</h1>
-        <p>
-          ${favorite ? `<span class="badge badge--equipe">${esc(favorite.tag)}</span> ` : ''}
-          ${esc(contexte.saison?.nom ?? '')} — membre depuis le ${esc(new Date(contexte.utilisateur.cree_le).toLocaleDateString('fr-FR'))}
-        </p>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn--danger btn--petit" id="quitter">Se déconnecter</button>
-      </div>
-    </div>
-
     ${bandeauSaison()}
 
-    <div class="grille grille--2" style="margin-bottom:26px">
+    <!-- La carte d'identité, en premier : qui je suis, mon titre, mon équipe. -->
+    <div class="bloc bloc--volt">
+      <div class="bloc__titre">
+        <span>Mon profil</span>
+        <span>${esc(contexte.saison?.nom ?? '')}</span>
+      </div>
+      <div class="bloc__corps">
+        <h1 style="margin-bottom:8px">${esc(contexte.utilisateur.pseudo || contexte.utilisateur.email || 'Mon profil')}</h1>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+          ${favorite ? `<span class="badge badge--equipe">★ ${esc(favorite.tag)} · ${esc(favorite.nom)}</span>` : ''}
+          ${total ? `<span class="badge">${obtenus} / ${total} badges</span>` : ''}
+          <span class="badge">membre depuis le ${esc(new Date(contexte.utilisateur.cree_le).toLocaleDateString('fr-FR'))}</span>
+        </div>
+        <div class="grille grille--stats">
+          <div class="stat"><div class="stat__valeur">${esc(frags(stats.solde))}</div><div class="stat__libelle">Solde</div></div>
+          <div class="stat"><div class="stat__valeur">${stats.paris}</div><div class="stat__libelle">Paris réglés</div></div>
+          <div class="stat"><div class="stat__valeur">${stats.paris ? Math.round((stats.gagnes / stats.paris) * 100) : 0} %</div><div class="stat__libelle">Réussite</div></div>
+          <div class="stat">
+            <div class="stat__valeur ${benefice >= 0 ? 'positif' : 'negatif'}">${benefice >= 0 ? '+' : ''}${esc(frags(benefice))}</div>
+            <div class="stat__libelle">Bénéfice net</div>
+          </div>
+          <div class="stat">
+            <div class="stat__valeur ${stats.roi >= 0 ? 'positif' : 'negatif'}">${stats.roi >= 0 ? '+' : ''}${Number(stats.roi).toFixed(1)} %</div>
+            <div class="stat__libelle">Retour sur mise</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grille grille--2" style="margin-bottom:16px">
       ${cartePrime(prime)}
       ${carteCall(call)}
-    </div>
-
-    <div class="grille grille--stats" style="margin-bottom:26px">
-      <div class="stat"><div class="stat__valeur">${esc(frags(stats.solde))}</div><div class="stat__libelle">Solde</div></div>
-      <div class="stat"><div class="stat__valeur">${stats.paris}</div><div class="stat__libelle">Paris réglés</div></div>
-      <div class="stat"><div class="stat__valeur">${stats.paris ? Math.round((stats.gagnes / stats.paris) * 100) : 0} %</div><div class="stat__libelle">Réussite</div></div>
-      <div class="stat">
-        <div class="stat__valeur ${benefice >= 0 ? 'positif' : 'negatif'}">${benefice >= 0 ? '+' : ''}${esc(frags(benefice))}</div>
-        <div class="stat__libelle">Bénéfice net</div>
-      </div>
-      <div class="stat">
-        <div class="stat__valeur ${stats.roi >= 0 ? 'positif' : 'negatif'}">${stats.roi >= 0 ? '+' : ''}${Number(stats.roi).toFixed(1)} %</div>
-        <div class="stat__libelle">Retour sur mise</div>
-      </div>
-    </div>
-
-    <h2>Mon équipe</h2>
-    <div class="carte" style="margin-bottom:26px">
-      <p style="color:var(--texte-doux);margin-bottom:12px">
-        Elle met tes matchs en avant dans le calendrier et affiche tes couleurs au classement.
-        Elle ne change rien aux cotes : personne ne te fera de cadeau.
-      </p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-        <label class="champ" style="flex:1;min-width:220px;margin:0">
-          <span class="champ__libelle">Équipe préférée</span>
-          <select id="equipe-favorite">
-            <option value="">Aucune</option>
-            ${equipes
-              .map(
-                (e) =>
-                  `<option value="${esc(e.id)}"${e.id === favorite?.id ? ' selected' : ''}>${esc(e.nom)} · ${esc(e.tag)}</option>`
-              )
-              .join('')}
-          </select>
-        </label>
-        <button class="btn btn--fantome" id="enregistrer-equipe">Enregistrer</button>
-      </div>
-    </div>
-
-    <h2>Le prono par défaut</h2>
-    <div class="carte" style="margin-bottom:26px">
-      <p style="color:var(--texte-doux);margin-bottom:12px">
-        Si tu n'as rien saisi à l'heure du coup d'envoi, Clutch mise pour toi sur le favori.
-        Ce n'est pas une stratégie — le favori perd lentement à cause de la marge —
-        c'est un filet : rater une soirée ne doit pas te sortir du classement.
-      </p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-        <label class="champ" style="flex:2;min-width:240px;margin:0">
-          <span class="champ__libelle">Quand ?</span>
-          <select id="auto-mode">
-            <option value="off"${modeAuto === 'off' ? ' selected' : ''}>Jamais — je gère mes paris</option>
-            <option value="favori"${modeAuto === 'favori' ? ' selected' : ''}>Sur les matchs de mon équipe seulement</option>
-            <option value="tous"${modeAuto === 'tous' ? ' selected' : ''}>Sur tous les matchs de la saison</option>
-          </select>
-        </label>
-        <label class="champ" style="flex:1;min-width:140px;margin:0">
-          <span class="champ__libelle">Mise (Frags)</span>
-          <input type="number" id="auto-mise" min="${PARI_AUTO_MISE_MIN}" max="${PARI_AUTO_MISE_MAX}" step="10"
-                 value="${contexte.utilisateur.pari_auto_mise ?? 100}" />
-        </label>
-        <button class="btn btn--fantome" id="enregistrer-auto">Enregistrer</button>
-      </div>
-      ${
-        modeAuto === 'favori' && !favorite
-          ? `<div class="encart encart--alerte" style="margin-top:12px">
-               Ce mode ne fera rien tant que tu n'auras pas choisi d'équipe préférée ci-dessus.
-             </div>`
-          : ''
-      }
     </div>
 
     <div class="bloc">
@@ -128,7 +76,7 @@ export async function vueProfil(racine) {
           </a>
           <a class="tuile" href="#/badges">
             <span class="tuile__titre">Badges</span>
-            <span class="tuile__aide">21 à décrocher</span>
+            <span class="tuile__aide">${total ? `${obtenus} sur ${total} décrochés` : 'À décrocher'}</span>
           </a>
           <a class="tuile" href="#/cartes">
             <span class="tuile__titre">Je l'avais dit</span>
@@ -138,14 +86,30 @@ export async function vueProfil(racine) {
       </div>
     </div>
 
-    <h2>Paris en cours (${enCours.length})</h2>
-    <p style="color:var(--texte-faible);font-size:0.82rem;margin-top:-8px">
-      Seuls les paris de ${esc(contexte.saison?.nom ?? 'la saison')} sont affichés ici.
-    </p>
-    <div class="carte" style="margin-bottom:26px">${enCours.length ? tableauParis(enCours) : vide('Rien en cours', 'Va miser sur un match.')}</div>
+    <div class="bloc">
+      <div class="bloc__titre">
+        <span>Paris en cours</span>
+        <span>${enCours.length} en attente de résultat</span>
+      </div>
+      <div class="bloc__corps" style="padding:${enCours.length ? '0' : '18px'}">
+        ${enCours.length ? tableauParis(enCours) : vide('Rien en cours', 'Va miser sur un match.')}
+      </div>
+    </div>
 
-    <h2>Historique (${regles.length})</h2>
-    <div class="carte">${regles.length ? tableauParis(regles) : vide('Historique vide', 'Tes paris réglés apparaîtront ici.')}</div>`;
+    <div class="bloc">
+      <div class="bloc__titre">
+        <span>Historique des paris</span>
+        <span>${regles.length} réglé${regles.length > 1 ? 's' : ''} sur ${esc(contexte.saison?.nom ?? 'la saison')}</span>
+      </div>
+      <div class="bloc__corps" style="padding:${regles.length ? '0' : '18px'}">
+        ${regles.length ? tableauParis(regles) : vide('Historique vide', 'Tes paris réglés apparaîtront ici.')}
+      </div>
+    </div>
+
+    <p style="color:var(--texte-faible);font-size:0.84rem">
+      Équipe préférée, prono par défaut, saison, déconnexion :
+      <a href="#/parametres">c'est dans les paramètres</a>.
+    </p>`;
 
   racine.querySelector('#prime')?.addEventListener('click', async (e) => {
     e.currentTarget.disabled = true;
@@ -163,41 +127,6 @@ export async function vueProfil(racine) {
       toast(err.message, 'erreur');
       e.currentTarget.disabled = false;
     }
-  });
-
-  racine.querySelector('#enregistrer-equipe').addEventListener('click', async (e) => {
-    e.currentTarget.disabled = true;
-    try {
-      await api.definirEquipeFavorite(racine.querySelector('#equipe-favorite').value || null);
-      toast('Équipe enregistrée.', 'succes');
-      await majSolde();
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
-    } catch (err) {
-      toast(err.message, 'erreur');
-      e.currentTarget.disabled = false;
-    }
-  });
-
-  racine.querySelector('#enregistrer-auto').addEventListener('click', async (e) => {
-    e.currentTarget.disabled = true;
-    try {
-      await api.definirPariAuto({
-        mode: racine.querySelector('#auto-mode').value,
-        mise: Number(racine.querySelector('#auto-mise').value),
-      });
-      toast('Prono par défaut enregistré.', 'succes');
-      await majSolde();
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
-    } catch (err) {
-      toast(err.message, 'erreur');
-      e.currentTarget.disabled = false;
-    }
-  });
-
-  racine.querySelector('#quitter').addEventListener('click', async () => {
-    await api.deconnexion();
-    location.hash = '#/matchs';
-    window.dispatchEvent(new HashChangeEvent('hashchange'));
   });
 }
 

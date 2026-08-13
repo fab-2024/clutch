@@ -8,14 +8,17 @@
 
 import * as api from './api.js';
 import { MODE_DEMO, NOM_APP } from './config.js';
-import { frags, toast } from './ui.js';
+import { esc, toast } from './ui.js';
+import { formaterFrags } from './core.js';
 
 import { vueMatchs } from './views/matchs.js';
 import { vueMatch } from './views/match.js';
 import { vueLigues } from './views/ligues.js';
 import { vueLigue } from './views/ligue.js';
-import { vueClassement } from './views/classement.js';
 import { vueProfil } from './views/profil.js';
+import { vueCommunaute } from './views/communaute.js';
+import { vueBoutique } from './views/boutique.js';
+import { vueParametres } from './views/parametres.js';
 import { vueCall } from './views/call.js';
 import { vueAnalyste } from './views/analyste.js';
 import { vueBadges } from './views/badges.js';
@@ -29,8 +32,14 @@ const ROUTES = [
   { motif: /^\/matchs\/(.+)$/, vue: vueMatch, nav: 'matchs' },
   { motif: /^\/ligues$/, vue: vueLigues, nav: 'ligues' },
   { motif: /^\/ligues\/(.+)$/, vue: vueLigue, nav: 'ligues' },
-  { motif: /^\/classement$/, vue: vueClassement, nav: 'classement' },
+  // Le classement global n'a plus d'entrée à lui : il est devenu le premier
+  // onglet de « Ligues ». L'adresse reste valide — les liens déjà partagés
+  // dans un Discord ne doivent pas tomber sur une page introuvable.
+  { motif: /^\/classement$/, vue: (r) => vueLigues(r, 'global'), nav: 'ligues' },
+  { motif: /^\/communaute$/, vue: vueCommunaute, nav: 'communaute' },
+  { motif: /^\/boutique$/, vue: vueBoutique, nav: 'boutique' },
   { motif: /^\/profil$/, vue: vueProfil, nav: 'profil' },
+  { motif: /^\/parametres$/, vue: vueParametres, nav: 'parametres' },
   { motif: /^\/call$/, vue: vueCall, nav: 'call' },
   { motif: /^\/analyste$/, vue: vueAnalyste, nav: 'profil' },
   { motif: /^\/badges$/, vue: vueBadges, nav: 'profil' },
@@ -40,22 +49,41 @@ const ROUTES = [
   { motif: /^\/diagnostic$/, vue: vueDiagnostic, nav: null },
 ];
 
-/**
- * Quatre entrées, pas sept.
- *
- * « Mon call » a quitté le menu : il ne se pose qu'avant le début d'un tournoi,
- * donc lui donner la place la plus chère de l'écran revenait à l'offrir à
- * quelque chose d'indisponible neuf fois sur dix. Il vit désormais en haut du
- * calendrier tant qu'il est posable, et sur le profil une fois posé.
- *
- * Badges, cartes et profil d'analyste étaient des culs-de-sac que personne
- * n'aurait découverts : ils sont regroupés sous « Moi ».
- */
+/* -------------------------------------------------------------------------
+   NAVIGATION
+
+   Cinq entrées, dessinées d'après la maquette : le calendrier, les
+   classements, les communautés, la boutique et soi. Elles vivent dans une
+   colonne à gauche sur ordinateur — toujours visible, on sait où on est —
+   et dans une barre en bas du pouce sur téléphone.
+
+   « Mon call » n'y figure pas : il ne se pose qu'avant le début d'un tournoi,
+   donc lui donner une place permanente revenait à l'offrir à quelque chose
+   d'indisponible neuf fois sur dix. Il vit en haut du calendrier tant qu'il
+   est posable, et sur le profil une fois posé. Badges, cartes et profil
+   d'analyste sont regroupés dans « Mon profil ».
+   ------------------------------------------------------------------------- */
+
+/** Icônes tracées à la main, en trait : aucune police d'icônes à télécharger. */
+const ICONES = {
+  matchs: '<path d="M3 10.6 12 3.2l9 7.4"/><path d="M5.8 9.4V20.4h12.4V9.4"/><path d="M9.6 20.4v-6h4.8v6"/>',
+  ligues: '<path d="M7.5 3.6h9v4.2a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 5.4H4.6v1.2a3 3 0 0 0 3 3"/><path d="M16.5 5.4h2.9v1.2a3 3 0 0 1-3 3"/><path d="M10.2 12.3 9.6 20.4h4.8l-.6-8.1"/><path d="M7.6 20.4h8.8"/>',
+  communaute: '<circle cx="9.3" cy="8.4" r="3.3"/><path d="M3.6 19.6c0-3.1 2.6-5.2 5.7-5.2s5.7 2.1 5.7 5.2"/><path d="M15.8 5.6a3.3 3.3 0 0 1 0 5.6"/><path d="M17.4 14.9c1.9.6 3 2.3 3 4.7"/>',
+  boutique: '<path d="M5.8 7.8h12.4l-1 12.6H6.8z"/><path d="M9.2 7.8V6a2.8 2.8 0 0 1 5.6 0v1.8"/>',
+  profil: '<circle cx="12" cy="8.6" r="5"/><path d="M8.6 12.9 7.2 20.8 12 18.3l4.8 2.5-1.4-7.9"/>',
+  admin: '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v2M12 19.5v2M4.2 7.2l1.7 1M18.1 15.8l1.7 1M4.2 16.8l1.7-1M18.1 8.2l1.7-1"/>',
+};
+
+const icone = (cle) =>
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONES[cle] ?? ''}</svg>`;
+
 const LIENS = [
-  { href: '#/matchs', libelle: 'Matchs', cle: 'matchs', icone: '◇' },
-  { href: '#/ligues', libelle: 'Ligues', cle: 'ligues', icone: '◈' },
-  { href: '#/classement', libelle: 'Classement', cle: 'classement', icone: '▲' },
-  { href: '#/profil', libelle: 'Moi', cle: 'profil', icone: '●' },
+  { href: '#/matchs', libelle: 'Matchs', court: 'Matchs', cle: 'matchs' },
+  { href: '#/ligues', libelle: 'Ligues', court: 'Ligues', cle: 'ligues' },
+  { href: '#/communaute', libelle: 'Communauté', court: 'Commu.', cle: 'communaute' },
+  { href: '#/boutique', libelle: 'Boutique', court: 'Boutique', cle: 'boutique' },
+  { href: '#/profil', libelle: 'Mon profil', court: 'Moi', cle: 'profil' },
 ];
 
 export const contexte = { utilisateur: null, admin: false, saison: null, saisons: [] };
@@ -73,45 +101,52 @@ async function rafraichirEntete(navActive) {
   await rattraperUneFois();
 
   const liens = [...LIENS];
-  if (contexte.admin) liens.push({ href: '#/admin', libelle: 'Admin', cle: 'admin', icone: '⚙' });
+  if (contexte.admin) liens.push({ href: '#/admin', libelle: 'Admin', court: 'Admin', cle: 'admin' });
 
-  document.getElementById('onglets').innerHTML = liens
+  // Deux rendus du même menu : la colonne de gauche et la barre du bas. C'est
+  // le CSS qui décide lequel s'affiche, selon la largeur de l'écran.
+  document.getElementById('nav-laterale').innerHTML = liens
     .map(
-      (l) => `<a href="${l.href}"${l.cle === navActive ? ' class="actif"' : ''}>
-        <span class="onglets__pastille" aria-hidden="true"></span>
+      (l) => `<a class="lateral__lien${l.cle === navActive ? ' actif' : ''}" href="${l.href}"${
+        l.cle === navActive ? ' aria-current="page"' : ''
+      }>
+        <span class="lateral__icone">${icone(l.cle)}</span>
         <span>${l.libelle}</span>
       </a>`
     )
     .join('');
 
+  document.getElementById('onglets').innerHTML = liens
+    .map(
+      (l) => `<a href="${l.href}"${l.cle === navActive ? ' class="actif" aria-current="page"' : ''}>
+        <span class="onglets__icone">${icone(l.cle)}</span>
+        <span class="onglets__libelle">${l.court}</span>
+      </a>`
+    )
+    .join('');
+
+  // L'en-tête ne porte plus que l'essentiel : combien j'ai, et qui je suis.
+  // Le sélecteur de saison est parti dans les paramètres — on en change trois
+  // fois par an, il n'avait rien à faire sur toutes les pages.
   const droite = document.getElementById('entete-droite');
-  const selecteur = !contexte.saisons.length
-    ? ''
-    : `
-    <select class="selecteur-saison" id="selecteur-saison" aria-label="Choisir la saison">
-      ${contexte.saisons
-        .map(
-          (s) =>
-            `<option value="${s.id}"${s.id === contexte.saison?.id ? ' selected' : ''}>${s.nom}${
-              s.statut === 'terminee' ? ' (terminée)' : s.statut === 'a_venir' ? ' (à venir)' : ''
-            }</option>`
-        )
-        .join('')}
-    </select>`;
+  droite.innerHTML = contexte.utilisateur
+    ? `<div class="solde" title="Solde de ${esc(contexte.saison?.nom ?? 'la saison')}. Monnaie fictive, sans valeur.">
+         <span class="solde__valeur">${esc(formaterFrags(contexte.utilisateur.solde))}</span>
+         <span class="solde__unite">Frags</span>
+       </div>
+       <a class="avatar${navActive === 'profil' ? ' actif' : ''}" href="#/profil"
+          title="${esc(contexte.utilisateur.pseudo ?? 'Mon profil')}" aria-label="Mon profil">${esc(
+            initiales(contexte.utilisateur.pseudo || contexte.utilisateur.email || '?')
+          )}</a>`
+    : `<a class="btn btn--petit" href="#/connexion">Jouer</a>`;
+}
 
-  droite.innerHTML =
-    selecteur +
-    (contexte.utilisateur
-      ? `<div class="solde" title="Solde de la saison en cours. Monnaie fictive, sans valeur.">
-           <span class="solde__valeur">${frags(contexte.utilisateur.solde).split(' ').slice(0, -1).join(' ')}</span>
-           <span class="solde__unite">Frags</span>
-         </div>`
-      : `<a class="btn btn--petit" href="#/connexion">Jouer</a>`);
-
-  document.getElementById('selecteur-saison')?.addEventListener('change', async (e) => {
-    await api.choisirSaison(e.target.value);
-    router();
-  });
+/** « NovaKill » → « NO », « Pierre Louis » → « PL ». */
+function initiales(nom) {
+  const mots = String(nom).trim().split(/[\s._-]+/).filter(Boolean);
+  if (!mots.length) return '?';
+  if (mots.length === 1) return mots[0].slice(0, 2).toUpperCase();
+  return (mots[0][0] + mots[1][0]).toUpperCase();
 }
 
 /**
@@ -146,7 +181,8 @@ export function bandeauSaison() {
     s.statut === 'terminee'
       ? `<strong>${s.nom} est terminée.</strong> Tu consultes des résultats figés : plus aucune mise n'est possible.`
       : `<strong>${s.nom} n'a pas encore commencé.</strong> Les soldes repartiront à zéro à son ouverture.`;
-  return `<div class="encart encart--alerte" style="margin-bottom:20px">${texte}</div>`;
+  return `<div class="encart encart--alerte" style="margin-bottom:20px">${texte}
+    <a href="#/parametres">Changer de saison</a></div>`;
 }
 
 /**

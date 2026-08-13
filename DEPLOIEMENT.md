@@ -55,6 +55,7 @@ Attends le message vert avant de passer au suivant.
 | 7 | `supabase/07_correctif_rls.sql` | **Indispensable** : corrige une récursion dans les règles de sécurité qui rendait toute la base illisible |
 | 8 | `supabase/08_palier2.sql` | Ajoute la note à vie, les classements enrichis et le récapitulatif des badges |
 | 9 | `supabase/09_admin_competition.sql` | Permet de créer tournois, équipes et matchs depuis l'admin, et d'annuler un match en remboursant |
+| 10 | `supabase/10_communautes.sql` | Ajoute le classement des communautés (l'écran « Communauté » et sa jauge d'élixir) |
 
 > `05_xs.sql` et `06_analyse.sql` sont **rejouables** : les relancer ne casse
 > rien. Ce sont les fichiers à réexécuter après chaque mise à jour du dépôt qui

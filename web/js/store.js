@@ -820,6 +820,41 @@ export async function statistiques({ saison = null } = {}) {
   };
 }
 
+/**
+ * Classement des communautés.
+ *
+ * Aucune donnée inventée : on compte les joueurs de la démo — les rivaux
+ * du jeu de départ et toi — qui ont désigné la même équipe préférée. Les
+ * chiffres sont donc petits, et c'est exactement ce que verra une vraie
+ * application le premier soir.
+ */
+export async function classementCommunautes() {
+  const d = charger();
+  const joueurs = [...d.rivaux];
+  if (d.utilisateur) joueurs.push(d.utilisateur);
+
+  const compte = new Map();
+  for (const j of joueurs) {
+    const id = j.equipe_favorite_id;
+    if (!id) continue;
+    const e = compte.get(id) ?? { membres: 0, moi: false };
+    e.membres += 1;
+    if (d.utilisateur && j.id === d.utilisateur.id) e.moi = true;
+    compte.set(id, e);
+  }
+
+  return [...compte.entries()]
+    .map(([id, e]) => {
+      const eq = equipe(id);
+      return {
+        equipe_id: id, nom: eq?.nom ?? id, tag: eq?.tag ?? '?',
+        jeu: eq?.jeu ?? 'lol', elo: eq?.elo ?? 1500,
+        membres: e.membres, moi: e.moi,
+      };
+    })
+    .sort((a, b) => b.membres - a.membres || a.nom.localeCompare(b.nom, 'fr'));
+}
+
 /** Palmarès : le vainqueur de chaque saison déjà terminée. */
 export async function palmares() {
   const saisons = (await listerSaisons()).filter((s) => statutSaison(s) === 'terminee');

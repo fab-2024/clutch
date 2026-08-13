@@ -5,7 +5,14 @@ import { MODES_CLASSEMENT, trierClassement, CLASSEMENT_MIN_PARIS, NOTE_MIN_PARIS
 
 let modeActif = 'solde';
 
-export async function vueClassement(racine) {
+/**
+ * Le classement global.
+ *
+ * `entete` est à faux quand cette vue est montée comme onglet d'un autre
+ * écran : le titre de page est alors déjà affiché au-dessus, et un second
+ * « Classement » en gros ferait doublon.
+ */
+export async function vueClassement(racine, { entete = true } = {}) {
   const [lignes, palmares, rivalite] = await Promise.all([
     api.classementGlobal(),
     api.palmares(),
@@ -13,13 +20,15 @@ export async function vueClassement(racine) {
   ]);
 
   racine.innerHTML = `
-    <div class="entete-page">
-      <div>
-        <h1>Classement</h1>
-        <p>${esc(contexte.saison?.nom ?? '')} — chaque saison repart de zéro pour tout le monde.</p>
-      </div>
-    </div>
-    ${bandeauSaison()}
+    ${
+      entete
+        ? `<div class="entete-page">
+             <h1>Classement</h1>
+             <p>${esc(contexte.saison?.nom ?? '')} — chaque saison repart de zéro pour tout le monde.</p>
+           </div>
+           ${bandeauSaison()}`
+        : ''
+    }
     ${carteRivalite(rivalite)}
     <div class="filtres" id="filtres-mode"></div>
     <p id="aide-mode" style="color:var(--texte-faible);font-size:0.85rem;margin-top:-8px"></p>

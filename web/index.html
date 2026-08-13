@@ -17,43 +17,61 @@
     <a class="saut-contenu" href="#contenu">Aller au contenu</a>
 
     <header class="entete">
-      <div class="conteneur entete__interieur">
+      <div class="enveloppe entete__interieur">
         <a class="logo" href="#/matchs" aria-label="Clutch, accueil">
           <span class="logo__marque">CLUTCH</span>
           <span class="logo__point" aria-hidden="true"></span>
         </a>
-
-        <nav class="nav" id="nav" aria-label="Navigation principale"></nav>
 
         <div class="entete__droite" id="entete-droite"></div>
       </div>
     </header>
 
     <div class="bandeau-demo" id="bandeau-demo" hidden>
-      <div class="conteneur">
+      <div class="enveloppe">
         <strong>Mode démo</strong> — tout est stocké dans ton navigateur, aucun compte n'est créé.
         Les Frags sont une monnaie fictive, sans aucune valeur.
         <button class="lien-bandeau" id="reset-demo">Réinitialiser la démo</button>
       </div>
     </div>
 
-    <main id="contenu" class="conteneur principal" tabindex="-1">
-      <div class="chargement"><span class="spinner"></span></div>
-    </main>
+    <div class="enveloppe agencement">
+      <!-- La colonne de gauche : la navigation en desktop. Sur téléphone elle
+           disparaît au profit de la barre d'onglets en bas de l'écran. -->
+      <aside class="lateral">
+        <nav class="lateral__nav" id="nav-laterale" aria-label="Navigation principale"></nav>
+        <div class="lateral__bas">
+          <a class="lateral__lien lateral__lien--discret" href="#/parametres">
+            <span class="lateral__icone" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 2.5v2M12 19.5v2M4.2 7.2l1.7 1M18.1 15.8l1.7 1M4.2 16.8l1.7-1M18.1 8.2l1.7-1" stroke-linecap="round" />
+              </svg>
+            </span>
+            <span>Paramètres</span>
+          </a>
+        </div>
+      </aside>
 
-    <footer class="pied">
-      <div class="conteneur pied__interieur">
-        <p>
-          <strong>Clutch</strong> — jeu de pronostics gratuit. Aucune mise réelle, aucun gain en
-          argent, aucun achat possible. Les « Frags » sont une monnaie fictive sans valeur
-          marchande et non convertible.
-        </p>
-        <p class="pied__legal">
-          Ce service n'est pas un opérateur de jeux d'argent et de hasard au sens de l'article
-          L320-1 du Code de la sécurité intérieure. Réservé aux personnes de 16 ans et plus.
-        </p>
+      <div class="colonne">
+        <main id="contenu" class="principal" tabindex="-1">
+          <div class="chargement"><span class="spinner"></span></div>
+        </main>
+
+        <footer class="pied">
+          <p>
+            <strong>Clutch</strong> — jeu de pronostics gratuit. Aucune mise réelle, aucun gain en
+            argent, aucun achat possible. Les « Frags » sont une monnaie fictive sans valeur
+            marchande et non convertible.
+          </p>
+          <p class="pied__legal">
+            Ce service n'est pas un opérateur de jeux d'argent et de hasard au sens de l'article
+            L320-1 du Code de la sécurité intérieure. Réservé aux personnes de 16 ans et plus.
+            <a href="#/parametres">Paramètres</a>
+          </p>
+        </footer>
       </div>
-    </footer>
+    </div>
 
     <nav class="onglets" id="onglets" aria-label="Navigation principale"></nav>
 

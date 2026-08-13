@@ -26,6 +26,10 @@ export const frags = (n) => `${formaterFrags(n)} ${MONNAIE}`;
 
 export const nomJeu = (id) => JEUX[id]?.court ?? id;
 
+/** 1 → « 1er », 2 → « 2e ». Écrit en toutes lettres : un <sup> disparaît
+    dans un bandeau en capitales, où « 1e » se lit « 1E ». */
+export const rangEcrit = (n) => (Number(n) === 1 ? '1er' : `${n}e`);
+
 /** "dans 2 h 15", "il y a 3 j", "maintenant" */
 export function quand(iso) {
   const delta = new Date(iso).getTime() - Date.now();

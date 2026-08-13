@@ -88,12 +88,15 @@
   --ombre: 0 12px 34px rgba(0, 0, 0, 0.45);
   --transition: 160ms cubic-bezier(0.2, 0.8, 0.3, 1);
 
-  /* UNE colonne, étroite. C'est le choix qui change tout : une application se
-     lit en descendant, un tableau de bord s'éparpille. */
-  --largeur: 720px;
-
-  /* Hauteur de la barre d'onglets, réservée en bas du contenu. */
-  --onglets: 0px;
+  /* GABARIT
+     Sur téléphone : une colonne, on lit en descendant.
+     Sur ordinateur : une colonne de navigation à gauche, le contenu à droite.
+     La navigation reste visible en permanence — c'est ce qui distingue une
+     application d'un site : on sait toujours où on est et où on peut aller. */
+  --lateral: 208px;
+  --gouttiere: 34px;
+  --largeur: 880px; /* largeur maximale de la colonne de contenu */
+  --enveloppe: calc(var(--lateral) + var(--gouttiere) + var(--largeur));
 }
 
 * { box-sizing: border-box; }
@@ -152,6 +155,8 @@ a {
 }
 a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 
+.enveloppe { width: 100%; max-width: var(--enveloppe); margin: 0 auto; padding: 0 18px; }
+/* Ancien nom, gardé pour les vues qui l'utilisent encore. */
 .conteneur { width: 100%; max-width: var(--largeur); margin: 0 auto; padding: 0 18px; }
 
 .saut-contenu {
@@ -169,7 +174,7 @@ a:hover { color: var(--accent); text-decoration-color: var(--accent); }
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--bordure);
 }
-.entete__interieur { display: flex; align-items: center; gap: 14px; height: 60px; }
+.entete__interieur { display: flex; align-items: center; gap: 14px; height: 64px; }
 
 .logo { display: flex; align-items: baseline; gap: 3px; text-decoration: none; flex-shrink: 0; }
 .logo:hover { text-decoration: none; }
@@ -179,11 +184,10 @@ a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 }
 .logo__point { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
 
-/* La navigation du haut disparaît : elle vit en bas, au pouce. */
-.nav { display: none; }
-
 .entete__droite { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 
+/* Le solde suit partout. C'est l'information qu'on va chercher le plus souvent
+   et qu'on ne devrait jamais avoir à chercher. */
 .solde {
   display: flex; align-items: baseline; gap: 6px;
   background: var(--surface); border: 1px solid var(--bordure);
@@ -191,6 +195,16 @@ a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 }
 .solde__valeur { font-family: var(--titre); font-weight: 700; font-size: 1.02rem; color: var(--texte); }
 .solde__unite { color: var(--texte-faible); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; }
+
+/* La pastille du joueur : ses initiales, et la teinte de son équipe s'il en a une. */
+.avatar {
+  width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%;
+  display: grid; place-items: center; text-decoration: none;
+  background: var(--surface-2); border: 1px solid var(--bordure-vive);
+  font-family: var(--titre); font-weight: 800; font-size: 0.8rem;
+  letter-spacing: 0.02em; color: var(--texte-doux); transition: var(--transition);
+}
+.avatar:hover, .avatar.actif { border-color: var(--accent); color: var(--accent); text-decoration: none; }
 
 .selecteur-saison {
   width: auto; background: var(--surface); border: 1px solid var(--bordure);
@@ -200,32 +214,74 @@ a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 .selecteur-saison:hover { color: var(--texte); border-color: var(--bordure-vive); }
 .selecteur-saison:focus { box-shadow: none; border-color: var(--accent); }
 
-.burger { display: none; }
+/* ------------------------------------------------------------ Agencement */
+
+.agencement {
+  flex: 1; display: grid; gap: 0 var(--gouttiere);
+  grid-template-columns: var(--lateral) minmax(0, 1fr);
+  align-items: start;
+}
+.colonne { min-width: 0; display: flex; flex-direction: column; min-height: 100%; }
+
+/* ------------------------------------------------- Navigation latérale */
+
+.lateral {
+  position: sticky; top: 84px;
+  display: flex; flex-direction: column; gap: 26px;
+  padding: 26px 0 40px;
+}
+.lateral__nav { display: flex; flex-direction: column; gap: 2px; }
+
+.lateral__lien {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 14px; border-radius: var(--rayon-s);
+  color: var(--texte-doux); text-decoration: none;
+  font-family: var(--titre); font-size: 0.98rem; font-weight: 600;
+  letter-spacing: -0.005em; transition: var(--transition);
+}
+.lateral__lien:hover { background: var(--surface); color: var(--texte); text-decoration: none; }
+/* Actif : le Volt, mais en aplat discret — 5 % de l'écran, pas 50. */
+.lateral__lien.actif {
+  background: var(--accent-fantome); color: var(--accent);
+  font-weight: 700; box-shadow: inset 2px 0 0 var(--accent);
+}
+.lateral__lien--discret { font-size: 0.88rem; color: var(--texte-faible); }
+.lateral__icone { width: 20px; height: 20px; flex-shrink: 0; display: grid; place-items: center; }
+.lateral__icone svg { width: 19px; height: 19px; }
+.lateral__bas { margin-top: auto; border-top: 1px solid var(--bordure); padding-top: 14px; }
 
 /* ------------------------------------------------------- Barre d'onglets */
 
-.onglets {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-  display: flex; justify-content: space-around;
-  background: rgba(8, 11, 16, 0.94);
-  backdrop-filter: blur(18px);
-  border-top: 1px solid var(--bordure);
-  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+/* Sur ordinateur, la colonne de gauche fait le travail : la barre du bas
+   ferait doublon et mangerait de la hauteur pour rien. */
+.onglets { display: none; }
+
+@media (max-width: 899px) {
+  .agencement { grid-template-columns: minmax(0, 1fr); }
+  .lateral { display: none; }
+
+  .onglets {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    display: flex; justify-content: space-around;
+    background: rgba(8, 11, 16, 0.94);
+    backdrop-filter: blur(18px);
+    border-top: 1px solid var(--bordure);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .onglets a {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px 2px; border-radius: var(--rayon-s);
+    color: var(--texte-faible); text-decoration: none;
+    font-family: var(--titre); font-size: 0.64rem; font-weight: 600;
+    letter-spacing: 0.02em; transition: var(--transition);
+  }
+  .onglets a:hover { color: var(--texte-doux); text-decoration: none; }
+  .onglets a.actif { color: var(--accent); }
+  .onglets__icone { width: 21px; height: 21px; display: grid; place-items: center; }
+  .onglets__icone svg { width: 21px; height: 21px; }
+  .onglets__libelle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 }
-.onglets a {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 7px 2px; border-radius: var(--rayon-s);
-  color: var(--texte-faible); text-decoration: none;
-  font-family: var(--titre); font-size: 0.68rem; font-weight: 600;
-  letter-spacing: 0.04em; transition: var(--transition);
-}
-.onglets a:hover { color: var(--texte-doux); text-decoration: none; }
-.onglets a.actif { color: var(--accent); }
-.onglets__pastille {
-  width: 20px; height: 3px; border-radius: 3px; background: transparent;
-  transition: var(--transition);
-}
-.onglets a.actif .onglets__pastille { background: var(--accent); }
 
 /* -------------------------------------------------------------- Bandeau */
 
@@ -243,7 +299,7 @@ a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 
 /* ------------------------------------------------------------ Structure */
 
-.principal { flex: 1; padding: 26px 18px calc(90px + env(safe-area-inset-bottom)); }
+.principal { flex: 1; padding: 26px 0 40px; }
 .principal:focus { outline: none; }
 
 .entete-page { margin-bottom: 22px; }
@@ -361,15 +417,15 @@ a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 .equipe { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .equipe--droite { text-align: right; align-items: flex-end; }
 .equipe__nom {
-  font-family: var(--titre); font-weight: 700; font-size: 1.14rem;
+  font-family: var(--titre); font-weight: 700; font-size: 1.06rem;
   letter-spacing: -0.015em;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
 }
 .equipe__elo { font-size: 0.7rem; color: var(--texte-faible); letter-spacing: 0.04em; }
 .versus {
   font-family: var(--titre); color: var(--texte-faible);
-  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em;
-  border: 1px solid var(--bordure); border-radius: var(--rayon-pilule); padding: 4px 10px;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; white-space: nowrap;
+  border: 1px solid var(--bordure); border-radius: var(--rayon-pilule); padding: 3px 8px;
 }
 .score { font-family: var(--titre); font-size: 1.7rem; font-weight: 800; }
 .score--perdant { color: var(--texte-faible); }
@@ -485,7 +541,10 @@ input::placeholder { color: var(--texte-faible); }
   border-radius: var(--rayon-s); padding: 15px 16px;
 }
 .stat__valeur {
-  font-family: var(--titre); font-size: 1.7rem; font-weight: 800;
+  font-family: var(--titre); font-weight: 800;
+  /* Deux tuiles côte à côte sur un téléphone de 390 px : à 1,7 rem fixe,
+     « 1 000 Frags » passait à la ligne au milieu du chiffre. */
+  font-size: clamp(1.3rem, 4.4vw, 1.7rem);
   letter-spacing: -0.03em; line-height: 1.1;
 }
 .stat__libelle {
@@ -516,11 +575,16 @@ input::placeholder { color: var(--texte-faible); }
 .encart--alerte { border-left-color: var(--info); }
 
 .pied {
-  border-top: 1px solid var(--bordure); padding: 26px 0 34px; margin-top: auto;
-  font-size: 0.78rem; color: var(--texte-faible); background: var(--fond-2);
+  border-top: 1px solid var(--bordure); padding: 22px 0 30px; margin-top: auto;
+  font-size: 0.76rem; color: var(--texte-faible);
 }
-.pied p { margin: 0 0 6px; }
-.pied__legal { font-size: 0.72rem; opacity: 0.75; }
+.pied p { margin: 0 0 6px; max-width: 68ch; }
+.pied__legal { font-size: 0.71rem; opacity: 0.75; }
+@media (max-width: 899px) {
+  /* Place réservée sous le pied de page pour que la barre d'onglets ne
+     recouvre jamais la mention légale ni le dernier bouton de la page. */
+  .pied { padding-bottom: calc(94px + env(safe-area-inset-bottom)); }
+}
 
 /* -------------------------------------------------------------- Toasts
 
@@ -528,7 +592,7 @@ input::placeholder { color: var(--texte-faible); }
    ------------------------------------------------------------------------- */
 
 .toasts {
-  position: fixed; bottom: calc(80px + env(safe-area-inset-bottom));
+  position: fixed; bottom: 24px;
   left: 50%; transform: translateX(-50%); z-index: 60;
   display: flex; flex-direction: column; gap: 8px; align-items: center;
   pointer-events: none;
@@ -538,6 +602,10 @@ input::placeholder { color: var(--texte-faible); }
   padding: 13px 20px; border-radius: var(--rayon-pilule); box-shadow: var(--ombre);
   font-size: 0.9rem; animation: monte 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
   max-width: min(92vw, 460px);
+}
+/* Sur téléphone, on les remonte au-dessus de la barre d'onglets. */
+@media (max-width: 899px) {
+  .toasts { bottom: calc(80px + env(safe-area-inset-bottom)); }
 }
 .toast--succes { border-color: var(--succes); }
 .toast--erreur { border-color: var(--danger); }
@@ -721,16 +789,87 @@ input::placeholder { color: var(--texte-faible); }
 .tuile__titre { font-family: var(--titre); font-weight: 700; font-size: 0.98rem; }
 .tuile__aide { font-size: 0.78rem; color: var(--texte-faible); }
 
-/* Sur grand écran, la barre d'onglets devient un dock flottant centré :
-   étalée sur 1280 px, elle perdait le lien avec la colonne de contenu. */
-@media (min-width: 760px) {
-  .onglets {
-    left: 50%; right: auto; transform: translateX(-50%);
-    bottom: 20px; width: min(var(--largeur), calc(100% - 40px));
-    border: 1px solid var(--bordure); border-radius: var(--rayon-pilule);
-    box-shadow: var(--ombre);
-    padding: 6px 10px;
-  }
-  .onglets a { padding: 8px 4px; }
-  .principal { padding-bottom: 110px; }
+/* =========================================================================
+   Refonte — onglets internes, communautés, boutique
+   ========================================================================= */
+
+/* ------------------------------------------------- Onglets d'un écran
+
+   À ne pas confondre avec la navigation : ceux-là découpent UNE page en
+   deux ou trois vues (classement global / mes ligues). Ils sont soulignés
+   plutôt qu'en pilule, pour qu'on ne les prenne pas pour des filtres.
+   ------------------------------------------------------------------------- */
+
+.sections {
+  display: flex; gap: 4px; margin-bottom: 22px;
+  border-bottom: 1px solid var(--bordure);
 }
+.sections__lien {
+  background: none; border: 0; cursor: pointer;
+  padding: 11px 16px 13px; margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  color: var(--texte-faible); font: inherit;
+  font-family: var(--titre); font-size: 0.95rem; font-weight: 600;
+  transition: var(--transition);
+}
+.sections__lien:hover { color: var(--texte); }
+.sections__lien.actif { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+
+/* ------------------------------------------------------- Communautés */
+
+.commu-vedette {
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  gap: 26px; align-items: center;
+}
+@media (max-width: 560px) {
+  .commu-vedette { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; gap: 18px; }
+}
+
+/* La bombonne : un anneau plutôt qu'une barre. Une barre de progression dit
+   « chargement en cours » ; un contenant qui se remplit dit « on y est
+   presque », ce qui est exactement l'effet recherché. */
+.bombonne { position: relative; width: 168px; height: 168px; flex-shrink: 0; }
+.bombonne svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.bombonne__piste { fill: none; stroke: var(--surface-2); stroke-width: 12; }
+.bombonne__jus {
+  fill: none; stroke: var(--accent); stroke-width: 12; stroke-linecap: round;
+  transition: stroke-dashoffset 700ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.bombonne__centre {
+  position: absolute; inset: 0; display: grid; place-content: center;
+  text-align: center; gap: 1px;
+}
+.bombonne__valeur {
+  font-family: var(--titre); font-size: 2rem; font-weight: 800;
+  letter-spacing: -0.03em; line-height: 1;
+}
+.bombonne__sur { font-size: 0.76rem; color: var(--texte-faible); }
+.bombonne__palier {
+  font-family: var(--titre); font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+  margin-top: 5px;
+}
+
+.commu-ligne {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center; gap: 14px;
+  padding: 13px 0; border-bottom: 1px solid var(--bordure);
+}
+.commu-ligne:last-child { border-bottom: 0; }
+.commu-ligne--moi { box-shadow: inset 3px 0 0 var(--accent); padding-left: 12px; margin-left: -12px; }
+.commu-ligne__nom { font-family: var(--titre); font-weight: 700; font-size: 1rem; }
+.commu-ligne__jauge { margin-top: 7px; }
+.commu-ligne__droite { text-align: right; }
+.commu-ligne__membres { font-family: var(--titre); font-weight: 800; font-size: 1.1rem; }
+.commu-ligne__palier { font-size: 0.72rem; color: var(--texte-faible); }
+
+/* --------------------------------------------------------- Boutique */
+
+.bientot {
+  display: grid; gap: 12px; padding: 16px 18px;
+  background: var(--fond-2); border: 1px dashed var(--bordure-vive);
+  border-radius: var(--rayon-s);
+}
+.bientot__ligne { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+.bientot__nom { font-family: var(--titre); font-weight: 700; }
+.bientot__prix { color: var(--texte-faible); font-size: 0.82rem; white-space: nowrap; }

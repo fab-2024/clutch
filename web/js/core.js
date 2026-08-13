@@ -978,3 +978,57 @@ export function validerEquipe({ nom, tag, jeu, elo }) {
   }
   return erreurs;
 }
+
+/* =========================================================================
+   COMMUNAUTÉS — la jauge d'élixir
+
+   Une communauté, c'est l'ensemble des joueurs qui ont choisi la même équipe
+   préférée. Sa jauge se remplit avec les inscriptions : un joueur de plus qui
+   met Karmine en favorite, et la jauge de Karmine monte d'un cran.
+
+   Le choix qui compte ici est celui des paliers. Une jauge unique sur 10 000
+   paraît vide et le reste : à cinq membres, elle affiche 0 %, ce qui dit
+   « vous n'êtes rien » à ceux qui viennent d'arriver. Des paliers successifs
+   racontent l'inverse — la première marche est à dix membres, elle se franchit
+   le premier soir, et il y en a toujours une suivante.
+   ========================================================================= */
+
+export const PALIERS_COMMUNAUTE = [
+  { seuil: 10, nom: 'Fiole' },
+  { seuil: 50, nom: 'Flacon' },
+  { seuil: 100, nom: 'Bombonne' },
+  { seuil: 500, nom: 'Cuve' },
+  { seuil: 1000, nom: 'Citerne' },
+  { seuil: 5000, nom: 'Réservoir' },
+  { seuil: 10000, nom: 'Océan' },
+];
+
+/**
+ * Où en est une communauté de `membres` personnes.
+ *
+ * Renvoie le palier visé, le plancher dont on part, et la progression entre
+ * les deux — pas la progression depuis zéro : une communauté de 520 membres
+ * qui vise 1 000 doit lire « 4 % de la Citerne », pas « 52 % ».
+ */
+export function palierCommunaute(membres) {
+  const n = Math.max(0, Math.floor(Number(membres) || 0));
+  const dernier = PALIERS_COMMUNAUTE[PALIERS_COMMUNAUTE.length - 1];
+
+  if (n >= dernier.seuil) {
+    return {
+      membres: n, niveau: PALIERS_COMMUNAUTE.length, nom: dernier.nom,
+      plancher: dernier.seuil, objectif: dernier.seuil,
+      progression: 1, restant: 0, max: true,
+    };
+  }
+
+  const index = PALIERS_COMMUNAUTE.findIndex((p) => n < p.seuil);
+  const palier = PALIERS_COMMUNAUTE[index];
+  const plancher = index === 0 ? 0 : PALIERS_COMMUNAUTE[index - 1].seuil;
+  return {
+    membres: n, niveau: index + 1, nom: palier.nom,
+    plancher, objectif: palier.seuil,
+    progression: (n - plancher) / (palier.seuil - plancher),
+    restant: palier.seuil - n, max: false,
+  };
+}

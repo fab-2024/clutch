@@ -715,3 +715,48 @@ test('formaterFrags : une donnée manquante n’affiche jamais NaN', () => {
   assert.equal(core.formaterFrags(0), '0');
   assert.equal(core.formaterFrags(1000), '1 000');
 });
+
+/* ------------------------------------------------------------------ */
+/* Communautés : les paliers de la jauge d'élixir                      */
+/* ------------------------------------------------------------------ */
+
+test('palier : la première marche est basse, pour qu\'elle se franchisse', () => {
+  const p = core.palierCommunaute(0);
+  assert.equal(p.plancher, 0);
+  assert.equal(p.objectif, 10);
+  assert.equal(p.progression, 0);
+  assert.equal(p.restant, 10);
+  assert.equal(p.max, false);
+});
+
+test('palier : la progression se compte depuis le palier précédent, pas depuis zéro', () => {
+  // 520 membres qui visent 1 000 : c'est 4 % du chemin restant, pas 52 %.
+  // Sans ça, chaque nouveau palier démarrerait déjà à moitié plein.
+  const p = core.palierCommunaute(520);
+  assert.equal(p.plancher, 500);
+  assert.equal(p.objectif, 1000);
+  assert.equal(Math.round(p.progression * 100), 4);
+  assert.equal(p.restant, 480);
+});
+
+test('palier : atteindre un seuil fait passer au suivant, pas rester dessus', () => {
+  assert.equal(core.palierCommunaute(9).objectif, 10);
+  assert.equal(core.palierCommunaute(10).objectif, 50);
+  assert.equal(core.palierCommunaute(10).progression, 0);
+});
+
+test('palier : au sommet, la jauge est pleine et ne demande plus rien', () => {
+  const p = core.palierCommunaute(99999);
+  assert.equal(p.max, true);
+  assert.equal(p.progression, 1);
+  assert.equal(p.restant, 0);
+  assert.equal(p.nom, core.PALIERS_COMMUNAUTE.at(-1).nom);
+});
+
+test('palier : une valeur absente ou absurde ne casse pas la jauge', () => {
+  for (const n of [null, undefined, NaN, -12, 'bidon']) {
+    const p = core.palierCommunaute(n);
+    assert.equal(p.membres, 0);
+    assert.ok(p.progression >= 0 && p.progression <= 1);
+  }
+});
