@@ -13,8 +13,9 @@
 
 import * as api from '../api.js';
 import { contexte } from '../app.js';
-import { esc, nomJeu, rangEcrit, vide } from '../ui.js';
-import { palierCommunaute, PALIERS_COMMUNAUTE } from '../core.js';
+import { esc, nomJeu, vide } from '../ui.js';
+import { palierCommunaute, PALIERS_COMMUNAUTE, formaterFrags } from '../core.js';
+import { bombonne } from './bombonne.js';
 
 export async function vueCommunaute(racine) {
   const communautes = await api.classementCommunautes();
@@ -79,11 +80,17 @@ function carteVedette(c, rang, estLaMienne) {
     <div class="bloc bloc--volt">
       <div class="bloc__titre">
         <span>${estLaMienne ? 'Ma communauté' : 'La communauté qui mène'}</span>
-        <span>${esc(nomJeu(c.jeu))} · ${rangEcrit(rang)} sur le classement</span>
+        <span>${esc(nomJeu(c.jeu))} · n°${rang} des communautés</span>
       </div>
       <div class="bloc__corps">
         <div class="commu-vedette">
-          ${bombonne(p)}
+          <div class="bombonne-bloc">
+            ${bombonne(p)}
+            <div class="bombonne-bloc__compte">
+              ${esc(formaterFrags(p.membres))}${p.max ? '' : `<small> / ${esc(formaterFrags(p.objectif))}</small>`}
+            </div>
+            <div class="bombonne-bloc__palier">${esc(p.nom)}</div>
+          </div>
           <div>
             <h2 style="margin-bottom:6px">${esc(c.nom)}
               <span class="badge badge--equipe">${esc(c.tag)}</span>
@@ -104,35 +111,6 @@ function carteVedette(c, rang, estLaMienne) {
             </div>
           </div>
         </div>
-      </div>
-    </div>`;
-}
-
-/**
- * L'anneau qui se remplit.
- *
- * Un cercle SVG dont on ne dessine qu'une portion, en jouant sur le tiret :
- * `stroke-dasharray` vaut la circonférence entière, `stroke-dashoffset` la
- * portion qu'on efface. Aucune image, aucune dépendance, et ça s'anime tout
- * seul quand la valeur change.
- */
-function bombonne(p) {
-  const R = 70;
-  const circonference = 2 * Math.PI * R;
-  const reste = circonference * (1 - Math.min(1, Math.max(0, p.progression)));
-  return `
-    <div class="bombonne" role="img"
-         aria-label="${p.membres} membres, palier ${esc(p.nom)} à ${p.objectif}">
-      <svg viewBox="0 0 168 168">
-        <circle class="bombonne__piste" cx="84" cy="84" r="${R}" />
-        <circle class="bombonne__jus" cx="84" cy="84" r="${R}"
-                stroke-dasharray="${circonference.toFixed(1)}"
-                stroke-dashoffset="${reste.toFixed(1)}" />
-      </svg>
-      <div class="bombonne__centre">
-        <span class="bombonne__valeur">${p.membres}</span>
-        <span class="bombonne__sur">${p.max ? 'au maximum' : `sur ${p.objectif}`}</span>
-        <span class="bombonne__palier">${esc(p.nom)}</span>
       </div>
     </div>`;
 }

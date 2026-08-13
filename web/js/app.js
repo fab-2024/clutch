@@ -8,7 +8,7 @@
 
 import * as api from './api.js';
 import { MODE_DEMO, NOM_APP } from './config.js';
-import { esc, toast } from './ui.js';
+import { esc, jeton, toast } from './ui.js';
 import { formaterFrags } from './core.js';
 
 import { vueMatchs } from './views/matchs.js';
@@ -131,6 +131,7 @@ async function rafraichirEntete(navActive) {
   const droite = document.getElementById('entete-droite');
   droite.innerHTML = contexte.utilisateur
     ? `<div class="solde" title="Solde de ${esc(contexte.saison?.nom ?? 'la saison')}. Monnaie fictive, sans valeur.">
+         ${jeton(19)}
          <span class="solde__valeur">${esc(formaterFrags(contexte.utilisateur.solde))}</span>
          <span class="solde__unite">Frags</span>
        </div>

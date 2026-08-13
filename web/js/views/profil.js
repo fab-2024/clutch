@@ -1,6 +1,6 @@
 import * as api from '../api.js';
 import { contexte, majSolde, bandeauSaison } from '../app.js';
-import { esc, frags, dateLisible, toast, vide } from '../ui.js';
+import { esc, frags, jeton, dateLisible, toast, vide } from '../ui.js';
 import { badgePari } from './match.js';
 import { carteCallPose } from './call.js';
 import { PRIME_SERIE_MAX } from '../core.js';
@@ -46,7 +46,7 @@ export async function vueProfil(racine) {
           <span class="badge">membre depuis le ${esc(new Date(contexte.utilisateur.cree_le).toLocaleDateString('fr-FR'))}</span>
         </div>
         <div class="grille grille--stats">
-          <div class="stat"><div class="stat__valeur">${esc(frags(stats.solde))}</div><div class="stat__libelle">Solde</div></div>
+          <div class="stat"><div class="stat__valeur">${jeton(20)} ${esc(frags(stats.solde))}</div><div class="stat__libelle">Solde</div></div>
           <div class="stat"><div class="stat__valeur">${stats.paris}</div><div class="stat__libelle">Paris réglés</div></div>
           <div class="stat"><div class="stat__valeur">${stats.paris ? Math.round((stats.gagnes / stats.paris) * 100) : 0} %</div><div class="stat__libelle">Réussite</div></div>
           <div class="stat">

@@ -24,6 +24,25 @@ export const brut = (valeur) => ({ __brut: true, valeur });
 
 export const frags = (n) => `${formaterFrags(n)} ${MONNAIE}`;
 
+/**
+ * Le jeton de Frag : une pièce Volt frappée d'un réticule.
+ *
+ * « Frag » est le terme FPS pour une élimination, et le réticule est le seul
+ * symbole que tout le monde y associe sans légende. Tracé en SVG plutôt que
+ * chargé en image : il suit la couleur d'accent, reste net partout, et ne
+ * coûte aucune requête.
+ */
+export function jeton(taille = 18) {
+  return `<svg class="jeton" width="${taille}" height="${taille}" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="10" fill="var(--accent)" />
+    <g fill="none" stroke="var(--sur-accent)" stroke-width="1.7" stroke-linecap="round">
+      <circle cx="12" cy="12" r="4.3" />
+      <path d="M12 3.4v3.1M12 17.5v3.1M3.4 12h3.1M17.5 12h3.1" />
+    </g>
+    <circle cx="12" cy="12" r="1.5" fill="var(--sur-accent)" />
+  </svg>`;
+}
+
 export const nomJeu = (id) => JEUX[id]?.court ?? id;
 
 /** 1 → « 1er », 2 → « 2e ». Écrit en toutes lettres : un <sup> disparaît

@@ -11,7 +11,7 @@
  */
 
 import { contexte } from '../app.js';
-import { esc, frags } from '../ui.js';
+import { esc, frags, jeton } from '../ui.js';
 
 const A_VENIR = [
   {
@@ -54,13 +54,13 @@ export async function vueBoutique(racine) {
     <div class="bloc bloc--info">
       <div class="bloc__titre">
         <span>Pas encore ouverte</span>
-        ${contexte.utilisateur ? `<span>Ton solde : ${esc(frags(solde))}</span>` : ''}
+        ${contexte.utilisateur ? `<span>${jeton(15)} Ton solde : ${esc(frags(solde))}</span>` : ''}
       </div>
       <div class="bloc__corps">
         <p style="color:var(--texte-doux);margin-bottom:0">
           ${
             contexte.utilisateur
-              ? `Tu as <strong style="color:var(--accent)">${esc(frags(solde))}</strong> de côté.
+              ? `Tu as ${jeton(17)} <strong style="color:var(--accent)">${esc(frags(solde))}</strong> de côté.
                  Rien n’est perdu : ce que tu accumules maintenant sera dépensable ici.`
               : `Crée ton compte : les Frags que tu gagnes dès aujourd’hui seront dépensables ici.
                  <a href="#/connexion">Commencer</a>`

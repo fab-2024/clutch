@@ -176,23 +176,27 @@ a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 }
 .entete__interieur { display: flex; align-items: center; gap: 14px; height: 64px; }
 
-.logo { display: flex; align-items: baseline; gap: 3px; text-decoration: none; flex-shrink: 0; }
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
 .logo:hover { text-decoration: none; }
+.logo:hover .logo__sceau { transform: rotate(-6deg) scale(1.05); }
+.logo__sceau { width: 32px; height: 32px; flex-shrink: 0; transition: var(--transition); }
 .logo__marque {
   font-family: var(--titre);
   font-weight: 800; font-size: 1.2rem; letter-spacing: 0.1em; color: var(--texte);
 }
-.logo__point { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
 
 .entete__droite { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 
 /* Le solde suit partout. C'est l'information qu'on va chercher le plus souvent
    et qu'on ne devrait jamais avoir à chercher. */
 .solde {
-  display: flex; align-items: baseline; gap: 6px;
+  display: flex; align-items: center; gap: 7px;
   background: var(--surface); border: 1px solid var(--bordure);
-  padding: 7px 14px; border-radius: var(--rayon-pilule);
+  padding: 6px 14px 6px 9px; border-radius: var(--rayon-pilule);
 }
+/* Le jeton s'aligne sur le texte partout où on le pose, y compris au milieu
+   d'une phrase — d'où le vertical-align plutôt qu'un flex sur le parent. */
+.jeton { flex-shrink: 0; vertical-align: -0.19em; }
 .solde__valeur { font-family: var(--titre); font-weight: 700; font-size: 1.02rem; color: var(--texte); }
 .solde__unite { color: var(--texte-faible); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; }
 
@@ -825,29 +829,46 @@ input::placeholder { color: var(--texte-faible); }
   .commu-vedette { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; gap: 18px; }
 }
 
-/* La bombonne : un anneau plutôt qu'une barre. Une barre de progression dit
-   « chargement en cours » ; un contenant qui se remplit dit « on y est
-   presque », ce qui est exactement l'effet recherché. */
-.bombonne { position: relative; width: 168px; height: 168px; flex-shrink: 0; }
-.bombonne svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.bombonne__piste { fill: none; stroke: var(--surface-2); stroke-width: 12; }
-.bombonne__jus {
-  fill: none; stroke: var(--accent); stroke-width: 12; stroke-linecap: round;
-  transition: stroke-dashoffset 700ms cubic-bezier(0.2, 0.8, 0.3, 1);
+/* La bombonne : une vraie dame-jeanne qui se remplit.
+
+   Une barre de progression dit « chargement en cours ». Un contenant qui se
+   remplit dit « on y est presque » — ce n'est pas la même phrase, et c'est la
+   seconde qu'on veut. */
+.bombonne { width: 150px; flex-shrink: 0; }
+.bombonne svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+.bombonne__verre { fill: rgba(255, 255, 255, 0.035); }
+.bombonne__contour { stroke: rgba(255, 255, 255, 0.22); stroke-width: 2.4; stroke-linejoin: round; }
+.bombonne__bouchon { fill: var(--bordure-vive); stroke: rgba(255,255,255,0.16); stroke-width: 1.6; }
+.bombonne__eclat { stroke: rgba(255, 255, 255, 0.28); stroke-width: 5; stroke-linecap: round; fill: none; }
+
+/* Le niveau glisse au lieu de sauter : la jauge d'une communauté qui vient de
+   gagner un membre doit se voir monter. */
+.bombonne__jus { transition: d 900ms cubic-bezier(0.2, 0.8, 0.3, 1); }
+
+/* Trois bulles qui montent, décalées pour qu'elles ne partent pas ensemble.
+   Elles s'arrêtent à la surface du liquide, d'où la variable --plancher. */
+.bombonne__bulles circle { fill: rgba(8, 11, 16, 0.22); animation: monte-bulle 4.2s linear infinite; }
+.bombonne__bulles circle:nth-child(2) { animation-duration: 5.4s; animation-delay: -1.8s; }
+.bombonne__bulles circle:nth-child(3) { animation-duration: 6.6s; animation-delay: -3.4s; }
+@keyframes monte-bulle {
+  0%   { transform: translateY(0); opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { transform: translateY(calc(var(--plancher) * -1)); opacity: 0; }
 }
-.bombonne__centre {
-  position: absolute; inset: 0; display: grid; place-content: center;
-  text-align: center; gap: 1px;
+@media (prefers-reduced-motion: reduce) { .bombonne__bulles { display: none; } }
+
+/* Le compteur sous la bombonne, aligné avec elle. */
+.bombonne-bloc { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.bombonne-bloc__compte {
+  font-family: var(--titre); font-size: 1.7rem; font-weight: 800;
+  letter-spacing: -0.03em; line-height: 1; text-align: center;
 }
-.bombonne__valeur {
-  font-family: var(--titre); font-size: 2rem; font-weight: 800;
-  letter-spacing: -0.03em; line-height: 1;
-}
-.bombonne__sur { font-size: 0.76rem; color: var(--texte-faible); }
-.bombonne__palier {
+.bombonne-bloc__compte small { font-size: 0.9rem; font-weight: 600; color: var(--texte-faible); }
+.bombonne-bloc__palier {
   font-family: var(--titre); font-size: 0.68rem; font-weight: 700;
   letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
-  margin-top: 5px;
 }
 
 .commu-ligne {

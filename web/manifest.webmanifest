@@ -1,14 +1,19 @@
 {
-  "name": "Clutch — prono esport",
+  "name": "Clutch — le prono esport entre potes",
   "short_name": "Clutch",
-  "description": "Pronostique les matchs LoL, CS2 et Valorant avec tes potes.",
-  "start_url": "./index.html#/matchs",
-  "display": "standalone",
-  "background_color": "#0c0e14",
-  "theme_color": "#0c0e14",
+  "description": "Pronostique les matchs LoL, CS2 et Valorant avec tes potes. Monnaie virtuelle, zéro argent réel.",
   "lang": "fr",
+  "start_url": "./index.html#/matchs",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080b10",
+  "theme_color": "#080b10",
+  "categories": ["games", "sports", "entertainment"],
   "icons": [
+    { "src": "assets/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
     { "src": "assets/icone-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "assets/icone-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "assets/icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
