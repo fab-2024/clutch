@@ -12,8 +12,8 @@
  * Ne colle JAMAIS la clé "service_role" ici.
  */
 
-export const SUPABASE_URL = '';
-export const SUPABASE_ANON_KEY = '';
+export const SUPABASE_URL = 'https://ipmswubihditoulfgivw.supabase.co/rest/v1/';
+export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbXN3dWJpaGRpdG91bGZnaXZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NDczNjUsImV4cCI6MjEwMjEyMzM2NX0.S0SWbOZmL542wZFKSs58D7cRulHNicVMak00siSgxq0';
 
 /** Nom affiché du produit. Change-le ici, il se propage partout. */
 export const NOM_APP = 'Clutch';
@@ -22,6 +22,7 @@ export const NOM_APP = 'Clutch';
 export const MONNAIE = 'Frags';
 
 /** Adresses e-mail autorisées à accéder à la page d'administration. */
-export const ADMINS = [];
+export const ADMINS = ['pierrelouis.blutel2@gmail.com'];
 
 export const MODE_DEMO = !SUPABASE_URL || !SUPABASE_ANON_KEY;
+
