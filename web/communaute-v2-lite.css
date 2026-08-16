@@ -41,12 +41,30 @@
   gap: 0;
 }
 .commu-core--epure .commu-reacteur {
+  position: relative;
   width: 218px;
   height: 266px;
 }
 .commu-core--epure .commu-reacteur .bombonne {
   width: 190px;
   height: 228px;
+}
+
+/*
+ * Un seul centre physique pour tout le réacteur.
+ * Les orbites étaient auparavant laissées à leur position statique d'éléments
+ * absolus : elles pouvaient donc être centrées légèrement différemment du SVG.
+ */
+.commu-core--epure .commu-reacteur::before,
+.commu-core--epure .commu-reacteur__halo,
+.commu-core--epure .commu-reacteur__orbite {
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+}
+.commu-core--epure .commu-reacteur__socle {
+  left: 50%;
+  translate: -50% 0;
 }
 .commu-core--epure .commu-reacteur__halo { opacity: .72; }
 .commu-core--epure .commu-reacteur__orbite--a { opacity: .76; }
@@ -55,18 +73,17 @@
 
 /*
  * Les premières formes occupent volontairement moins de place dans le viewBox
- * commun aux 7 récipients. Sans compensation, leur centre optique tombe sous
- * celui des orbites. On remonte uniquement le récipient : le halo, les orbites
- * et le socle restent sur l'axe fixe du réacteur.
+ * commun aux 7 récipients. La compensation ci-dessous aligne le centre OPTIQUE
+ * de la matière du récipient sur le centre des orbites sans grossir la forme.
  */
-.commu-core--epure .commu-reacteur--n1 .bombonne { transform: translateY(-42px); }
-.commu-core--epure .commu-reacteur--n2 .bombonne { transform: translateY(-25px); }
-.commu-core--epure .commu-reacteur--n3 .bombonne { transform: translateY(-11px); }
+.commu-core--epure .commu-reacteur--n1 .bombonne { transform: translateY(-44px); }
+.commu-core--epure .commu-reacteur--n2 .bombonne { transform: translateY(-23px); }
+.commu-core--epure .commu-reacteur--n3 .bombonne { transform: translateY(-9px); }
 
 /* Le numéro de forme reste un indicateur périphérique, pas un satellite. */
 .commu-core--epure .commu-reacteur__niveau {
-  top: 12px;
-  right: 8px;
+  top: 10px;
+  right: 4px;
 }
 
 .commu-core--epure .commu-core__charge { align-self: center; }
