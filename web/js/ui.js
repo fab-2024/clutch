@@ -46,6 +46,26 @@ export function jeton(taille = 18) {
   </svg>`;
 }
 
+/**
+ * Le jeton de Volt : la même pièce, l'anneau ouvert en deux arcs, traversé
+ * par un éclair.
+ *
+ * Même diamètre, même épaisseur de trait et mêmes couleurs que le jeton de
+ * Frag : les deux se lisent comme deux faces d'une même monnaie. Seul le
+ * contenu de l'anneau change — un réticule pour ce qu'on engage, un éclair
+ * pour ce qu'on dépense. Les arcs sont ouverts pour laisser passer l'éclair
+ * sans que les deux formes se touchent à petite taille.
+ */
+export function jetonVolt(taille = 18) {
+  return `<svg class="jeton" width="${taille}" height="${taille}" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="10" fill="var(--accent)" />
+    <g fill="none" stroke="var(--sur-accent)" stroke-width="1.7" stroke-linecap="round">
+      <path d="M7.7 7.4a6.5 6.5 0 0 0-.1 9.2M16.3 16.6a6.5 6.5 0 0 0 .1-9.2" />
+    </g>
+    <path d="M13.9 3.6 7.9 12.9h3.4l-1.2 7.5 6.2-9.5h-3.5z" fill="var(--sur-accent)" />
+  </svg>`;
+}
+
 export const nomJeu = (id) => JEUX[id]?.court ?? id;
 
 /** 1 → « 1er », 2 → « 2e ». Écrit en toutes lettres : un <sup> disparaît

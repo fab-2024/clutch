@@ -7,9 +7,11 @@
  * le solde, donc plus jamais la place au classement.
  *
  * Les Volts ne s'achètent pas avec de l'argent, ne se convertissent pas, ne se
- * transmettent pas. Ils se gagnent en décrochant des badges, en finissant bien
- * une saison, et en réussissant son call. Autrement dit : ce qu'on possède ici
- * est le relevé de ce qu'on a fait, pas de ce qu'on a payé.
+ * transmettent pas. Ils tombent au fil des paris, sur le sommet du bénéfice net
+ * de la saison : un Frag de bénéfice au-delà de son record vaut un Volt. Le
+ * volume ne rapporte donc rien — cent paris à pile ou face laissent le joueur à
+ * l'équilibre, et sans Volts. Autrement dit : ce qu'on possède ici est le relevé
+ * de ce qu'on a fait, pas de ce qu'on a payé.
  *
  * Et la ligne rouge, qui ne bougera pas : rien de ce qui s'achète ici ne donne
  * le moindre avantage de jeu. Le setup est un trophée, pas un équipement.
@@ -17,7 +19,8 @@
 
 import * as api from '../api.js';
 import { contexte } from '../app.js';
-import { esc, volts, vide, toast, surClic } from '../ui.js';
+import { esc, volts, vide, toast, surClic, jetonVolt } from '../ui.js';
+import { formaterFrags } from '../core.js';
 
 /** Les emplacements dans l'ordre d'affichage, avec leur intitulé lisible. */
 const EMPLACEMENTS = [
@@ -92,13 +95,14 @@ function rendre(racine, { solde, objets }) {
     <div class="bloc bloc--info">
       <div class="bloc__titre">
         <span>Tes Volts</span>
-        <span><strong style="color:var(--accent)">${esc(volts(solde))}</strong></span>
+        <span>${jetonVolt(16)} <strong style="color:var(--accent)">${esc(volts(solde))}</strong></span>
       </div>
       <div class="bloc__corps">
         <p style="color:var(--texte-doux);margin-bottom:0">
-          Les Volts ne se misent jamais. Dépenser ici ne touche pas à tes Frags,
-          donc jamais à ta place au classement. Ils se gagnent avec les badges,
-          le rang de fin de saison et le call réussi.
+          Les Volts ne se misent jamais : dépenser ici ne touche pas à tes Frags,
+          donc jamais à ta place au classement. Chaque Frag de bénéfice au-delà de
+          ton record de la saison te rapporte un Volt — et ton record ne redescend
+          jamais, une mauvaise série ne t’enlève rien.
         </p>
       </div>
     </div>
@@ -142,7 +146,7 @@ function carte(o, solde) {
   } else if (o.possede || gratuit) {
     action = `<button class="btn btn--fantome btn--petit" data-equiper="${esc(o.id)}">Équiper</button>`;
   } else if (abordable) {
-    action = `<button class="btn" data-acheter="${esc(o.id)}">${esc(volts(o.prix))}</button>`;
+    action = `<button class="btn" data-acheter="${esc(o.id)}">${jetonVolt(14)} ${esc(formaterFrags(o.prix))}</button>`;
   } else {
     action = `<span class="objet-carte__prix" title="Il te manque ${esc(volts(o.prix - solde))}">${esc(volts(o.prix))}</span>`;
   }
