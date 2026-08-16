@@ -37,36 +37,46 @@
   animation: founder-dot 2.4s ease-in-out infinite;
 }
 
+/* Le titre est une identité affichée, pas un champ de formulaire. */
 .profil-titre-equipe {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 30px;
-  padding: 4px 10px;
-  border: 1px solid rgba(255,255,255,.085);
-  border-radius: 999px;
-  background: rgba(5,8,12,.38);
-  color: var(--texte);
+  gap: 6px;
+  min-height: 28px;
+  padding: 2px 7px 2px 8px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--texte-doux);
   cursor: pointer;
-  transition: border-color .18s ease, background .18s ease, transform .18s ease;
+  transition: color .18s ease, border-color .18s ease, background .18s ease, transform .18s ease;
+}
+.profil-titre-equipe::before {
+  content: '✦';
+  color: var(--accent);
+  font-size: .66rem;
+  opacity: .62;
 }
 .profil-titre-equipe:hover {
-  border-color: rgba(232,255,61,.28);
-  background: rgba(232,255,61,.045);
+  color: var(--texte);
+  border-color: rgba(232,255,61,.16);
+  background: rgba(232,255,61,.035);
   transform: translateY(-1px);
-}
-.profil-titre-equipe__sur {
-  color: var(--texte-faible);
-  font-size: .58rem;
-  text-transform: uppercase;
-  letter-spacing: .12em;
 }
 .profil-titre-equipe strong {
   font-family: var(--titre);
-  font-size: .72rem;
-  letter-spacing: .035em;
+  font-size: .74rem;
+  font-weight: 780;
+  letter-spacing: .045em;
 }
-.profil-titre-equipe__chevron { color: var(--accent); opacity: .78; }
+.profil-titre-equipe__chevron {
+  color: var(--accent);
+  font-size: .7rem;
+  opacity: .24;
+  transition: opacity .18s ease, transform .18s ease;
+}
+.profil-titre-equipe:hover .profil-titre-equipe__chevron { opacity: .9; transform: translateY(1px); }
 
 .profil-titres-overlay,
 .badge-reveal {
@@ -144,7 +154,7 @@
 .profil-titre-option small { color: var(--texte-faible); font-size: .66rem; }
 .profil-titre-option i { color: var(--accent); font-style: normal; }
 
-/* Artefact Fondateur : volontairement différent de la grille standard. */
+/* Artefact Fondateur : pièce rare posée dans l'Arsenal, pas bannière marketing. */
 .profil-origin,
 .arsenal-origin {
   position: relative;
@@ -153,17 +163,18 @@
   align-items: center;
   border: 1px solid rgba(232,255,61,.18);
   background:
-    radial-gradient(360px 180px at 12% 50%, rgba(232,255,61,.10), transparent 68%),
-    radial-gradient(420px 170px at 92% 0%, rgba(80,120,255,.06), transparent 72%),
+    radial-gradient(320px 150px at 10% 50%, rgba(232,255,61,.10), transparent 68%),
+    radial-gradient(400px 150px at 92% 0%, rgba(80,120,255,.06), transparent 72%),
     linear-gradient(115deg, #080b0f, #121820 55%, #07090c);
   box-shadow: inset 0 0 40px rgba(232,255,61,.025);
 }
 .profil-origin {
-  grid-template-columns: 126px minmax(0,1fr) auto;
-  gap: 18px;
-  padding: 16px 18px;
-  margin-bottom: 18px;
-  border-radius: 18px;
+  grid-template-columns: 106px minmax(0,1fr) auto;
+  gap: 14px;
+  min-height: 122px;
+  padding: 9px 16px;
+  margin-bottom: 14px;
+  border-radius: 16px;
 }
 .profil-origin::before,
 .arsenal-origin::before {
@@ -175,25 +186,40 @@
   transform: translateX(-35%);
   animation: origin-scan 6.5s ease-in-out infinite;
 }
-.profil-origin__medaille { display: grid; place-items: center; }
+.profil-origin__medaille {
+  height: 104px;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+}
+.profil-origin__medaille .badge-medaille {
+  transform: scale(.84);
+  transform-origin: center;
+}
 .profil-origin__texte { min-width: 0; }
 .profil-origin__texte > span,
 .arsenal-origin > div > span {
   color: var(--accent);
   font-family: var(--titre);
-  font-size: .6rem;
+  font-size: .58rem;
   font-weight: 850;
   letter-spacing: .16em;
 }
-.profil-origin__texte strong { display: block; margin-top: 3px; font-family: var(--titre); font-size: 1.15rem; letter-spacing: .035em; }
-.profil-origin__texte p { margin: 4px 0 0; color: var(--texte-faible); font-size: .74rem; }
+.profil-origin__texte strong {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--titre);
+  font-size: 1.05rem;
+  letter-spacing: .035em;
+}
+.profil-origin__texte p { margin: 3px 0 0; color: var(--texte-faible); font-size: .72rem; }
 .profil-origin__sceau {
   font-family: var(--titre);
-  font-size: clamp(1.4rem, 4vw, 2.5rem);
+  font-size: clamp(1.2rem, 3vw, 2rem);
   font-weight: 950;
   letter-spacing: -.055em;
   color: var(--accent);
-  opacity: .08;
+  opacity: .065;
 }
 
 .arsenal-origin {
@@ -270,10 +296,10 @@
 /* Responsive QA */
 @media (max-width: 760px) {
   .profil-identite__ornements { gap: 6px; }
-  .profil-titre-equipe__sur { display: none; }
-  .profil-origin { grid-template-columns: 86px minmax(0,1fr); padding: 14px; }
+  .profil-origin { grid-template-columns: 82px minmax(0,1fr); min-height: 104px; padding: 8px 12px; }
   .profil-origin__sceau { display: none; }
-  .profil-origin .badge-medaille { transform: scale(.78); transform-origin: center; }
+  .profil-origin__medaille { height: 88px; }
+  .profil-origin__medaille .badge-medaille { transform: scale(.70); }
   .profil-titres-liste { grid-template-columns: 1fr; }
   .arsenal-origin { grid-template-columns: 92px minmax(0,1fr); padding: 17px 14px; gap: 12px; }
   .arsenal-origin .badge-medaille { transform: scale(.78); }
@@ -285,8 +311,10 @@
   .profil-fondateur { font-size: .57rem; min-height: 25px; }
   .profil-titre-equipe { max-width: 100%; }
   .profil-titre-equipe strong { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .profil-origin { grid-template-columns: 1fr; text-align: center; }
-  .profil-origin__medaille { height: 92px; }
+  .profil-origin { grid-template-columns: 74px minmax(0,1fr); text-align: left; }
+  .profil-origin__medaille { height: 78px; }
+  .profil-origin__medaille .badge-medaille { transform: scale(.62); }
+  .profil-origin__texte p { display: none; }
   .arsenal-origin { grid-template-columns: 1fr; text-align: center; }
   .badge-reveal__medaille { transform: scale(1.05); }
 }
