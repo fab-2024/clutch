@@ -1,96 +1,199 @@
 /**
- * La bombonne d'élixir.
+ * Les récipients d'élixir.
  *
- * Une vraie dame-jeanne dessinée en SVG : bouchon, col, épaules, panse. Le
- * liquide est un rectangle plein, découpé (`clipPath`) par la silhouette de la
- * bouteille — c'est ce découpage qui fait que le jus épouse exactement la forme
- * du verre au lieu de flotter dedans, y compris dans les épaules où la largeur
- * change.
+ * Sept paliers, sept contenants : Fiole, Flacon, Bombonne, Cuve, Citerne,
+ * Réservoir, Océan. La version précédente remplissait toujours la même
+ * dame-jeanne — le palier n'était alors qu'un mot sous un dessin identique.
+ * Ici la SILHOUETTE change à chaque palier, donc franchir un cran se voit
+ * sans lire la légende, et la progression a un cap visible.
+ *
+ * La couleur vient de l'équipe. On ne retient que sa TEINTE : la clarté et la
+ * saturation sont fixes pour tout le monde, comme pour les écussons. Deux
+ * communautés se distinguent donc au premier coup d'œil, sans qu'aucune ne
+ * puisse tomber sur le jaune d'accent — qui reste réservé à l'action.
+ *
+ * Le liquide est un rectangle ondulé découpé (`clipPath`) par la silhouette :
+ * c'est ce découpage qui fait que le jus épouse le verre au lieu de flotter
+ * dedans, y compris là où la largeur change.
  *
  * Aucune image, aucune dépendance : le fichier pèse ce que pèse son texte, et
  * reste net sur un écran Retina comme sur une carte partagée en 1200 px.
  */
 
-const SILHOUETTE =
-  'M 50 20 L 50 44 C 50 54 16 66 16 112 C 16 148 34 168 60 168 ' +
-  'C 86 168 104 148 104 112 C 104 66 70 54 70 44 L 70 20 Z';
-
 /**
- * Niveau du liquide. 166 = le fond, 43 = la naissance du col.
- *
- * On s'arrête volontairement sous le col : dans un goulot de 20 px de large,
- * l'ondulation de surface devient une diagonale qui donne l'impression d'un
- * dessin cassé plutôt que d'une bouteille pleine.
+ * Chaque palier : sa silhouette, les bornes du liquide, son bouchon et ses
+ * ornements. `fond` est le niveau vide, `plein` le niveau maximal — on
+ * s'arrête sous le col, parce qu'une ondulation dans un goulot étroit devient
+ * une diagonale qui fait dessin cassé plutôt que bouteille pleine.
  */
-const FOND = 166;
-const PLEIN = 43;
+const RECIPIENTS = [
+  {
+    // 1 · Fiole — un tube étroit, minuscule dans le cadre. C'est
+    // volontaire : tous les récipients partagent le même cadre, donc
+    // c'est la place occupée qui dit la taille. La Fiole en prend le
+    // tiers, l'Océan le remplit.
+    d: 'M 55 88 L 55 100 C 55 107 50 111 50 125 L 50 158 C 50 168 54 174 60 174 ' +
+       'C 66 174 70 168 70 158 L 70 125 C 70 111 65 107 65 100 L 65 88 Z',
+    fond: 172, plein: 104,
+    bouchon: '<rect x="52" y="76" width="16" height="13" rx="4" class="bb__bouchon" />',
+    orn: '<path d="M 55 88 h 10" class="bb__trait" />',
+    bulles: [[57, 166, 1.9], [63, 166, 1.4]],
+  },
+  {
+    // 2 · Flacon — la goutte renversée, col court.
+    d: 'M 53 66 L 53 90 C 53 99 37 106 37 132 C 37 158 47 175 60 175 ' +
+       'C 73 175 83 158 83 132 C 83 106 67 99 67 90 L 67 66 Z',
+    fond: 173, plein: 96,
+    bouchon: '<rect x="49" y="53" width="22" height="14" rx="5" class="bb__bouchon" />',
+    orn: '<path d="M 53 66 h 14" class="bb__trait" />',
+    bulles: [[51, 168, 2.4], [68, 168, 1.8], [59, 168, 3]],
+  },
+  {
+    // 3 · Bombonne — la dame-jeanne et sa vannerie.
+    d: 'M 49 42 L 49 68 C 49 81 21 94 21 132 C 21 160 38 177 60 177 ' +
+       'C 82 177 99 160 99 132 C 99 94 71 81 71 68 L 71 42 Z',
+    fond: 175, plein: 74,
+    bouchon: '<rect x="44" y="28" width="32" height="15" rx="5" class="bb__bouchon" />',
+    orn: '<path d="M 49 42 h 22" class="bb__trait" />' +
+         '<path d="M 25 146 q 35 13 70 0" class="bb__cerclage" />',
+    bulles: [[44, 170, 2.9], [76, 170, 2.2], [60, 170, 3.7]],
+  },
+  {
+    // 4 · Calice — le verre soufflé devient pierre taillée. Silhouette
+    // à facettes, plus de courbes : c'est là que l'objet cesse d'être
+    // une bouteille et devient un artefact.
+    d: 'M 46 34 L 46 56 L 17 88 L 12 130 L 33 176 L 87 176 L 108 130 ' +
+       'L 103 88 L 74 56 L 74 34 Z',
+    fond: 174, plein: 62,
+    bouchon: '<rect x="41" y="20" width="38" height="15" rx="4" class="bb__bouchon" />',
+    orn: '<path d="M 17 88 L 60 106 L 103 88 M 60 106 L 60 176" class="bb__facette" />' +
+         '<path d="M 12 130 L 60 148 L 108 130" class="bb__facette" />',
+    bulles: [[36, 170, 3], [84, 170, 2.4], [60, 170, 4]],
+  },
+  {
+    // 5 · Alambic — deux ventres reliés par un étranglement. La forme
+    // n'existe pas dans le commerce : elle vient du laboratoire.
+    d: 'M 60 20 C 74 20 85 30 85 45 C 85 56 79 64 71 69 C 67 71 67 76 71 78 ' +
+       'C 94 87 112 111 112 140 C 112 165 89 180 60 180 C 31 180 8 165 8 140 ' +
+       'C 8 111 26 87 49 78 C 53 76 53 71 49 69 C 41 64 35 56 35 45 ' +
+       'C 35 30 46 20 60 20 Z',
+    fond: 178, plein: 34,
+    bouchon: '<circle cx="60" cy="16" r="9" class="bb__bouchon" />',
+    orn: '<path d="M 44 74 q 16 8 32 0" class="bb__cerclage" />',
+    bulles: [[34, 173, 3.2], [86, 173, 2.6], [60, 173, 4.3]],
+  },
+  {
+    // 6 · Cornue — asymétrique, avec son col qui part de travers.
+    // Le déséquilibre est le sujet : rien d'aussi gros ne devrait
+    // tenir debout.
+    d: 'M 8 128 C 8 88 31 58 60 58 C 89 58 112 88 112 128 ' +
+       'C 112 160 89 181 60 181 C 31 181 8 160 8 128 Z',
+    fond: 179, plein: 74,
+    bouchon: '<circle cx="103" cy="26" r="8" class="bb__bouchon" />',
+    orn: '<path d="M 74 62 C 82 44 92 34 100 30" class="bb__col" />' +
+         '<path d="M 20 118 q 40 16 80 0" class="bb__cerclage" />',
+    bulles: [[30, 174, 3.4], [90, 174, 2.8], [60, 174, 4.6]],
+  },
+  {
+    // 7 · Océan — plus un récipient : un astre. Il remplit le cadre,
+    // il n'a plus de col, et un anneau tourne autour. Le palier
+    // terminal doit se lire comme une fin.
+    d: 'M 60 16 C 93 16 119 55 119 100 C 119 145 93 182 60 182 ' +
+       'C 27 182 1 145 1 100 C 1 55 27 16 60 16 Z',
+    fond: 180, plein: 26,
+    bouchon: '',
+    orn: '<ellipse cx="60" cy="100" rx="58" ry="17" class="bb__anneau" ' +
+         'transform="rotate(-18 60 100)" />' +
+         '<circle cx="60" cy="100" r="57" class="bb__halo" />',
+    bulles: [[28, 176, 3.6], [92, 176, 3], [60, 176, 5]],
+  },
+];
+
+/** Quatre éclats en croix, l'étincelle des flacons d'alchimiste. */
+const eclat = (x, y, r) =>
+  `<path d="M ${x} ${y - r} Q ${x + r * 0.22} ${y - r * 0.22} ${x + r} ${y} ` +
+  `Q ${x + r * 0.22} ${y + r * 0.22} ${x} ${y + r} ` +
+  `Q ${x - r * 0.22} ${y + r * 0.22} ${x - r} ${y} ` +
+  `Q ${x - r * 0.22} ${y - r * 0.22} ${x} ${y - r} Z" class="bb__eclat" />`;
 
 let compteur = 0;
 
 /**
- * @param {object} p  le retour de core.palierCommunaute()
+ * @param {object} p          le retour de core.palierCommunaute()
  * @param {object} options
- * @param {boolean} options.bulles  fait monter trois bulles (défaut : oui)
+ * @param {number} options.teinte  la teinte de l'équipe, 0-360. Sans elle, le
+ *                                 récipient reste dans l'accent du produit.
+ * @param {boolean} options.bulles fait monter les bulles (défaut : oui)
  */
-export function bombonne(p, { bulles = true } = {}) {
-  // Chaque instance a ses propres identifiants : deux bombonnes sur la même
-  // page partageraient sinon le même clipPath, et la seconde effacerait la
-  // première.
+export function bombonne(p, { teinte = null, bulles = true } = {}) {
+  // Chaque instance a ses propres identifiants : deux récipients sur la même
+  // page partageraient sinon le même clipPath, et le second effacerait le
+  // premier.
   const id = `bb${++compteur}`;
-  const taux = Math.min(1, Math.max(0, p.progression));
-  const y = FOND - taux * (FOND - PLEIN);
+  const r = RECIPIENTS[Math.min(RECIPIENTS.length, Math.max(1, p.niveau ?? 1)) - 1];
 
-  // Une surface parfaitement plate ferait « verre à moitié rempli sur un
-  // schéma » ; deux ondulations suffisent à faire liquide. L'amplitude
-  // s'écrase à mesure qu'on approche du plein : en haut la bouteille se
-  // resserre, et une grosse vague y déborderait de la silhouette.
+  const taux = Math.min(1, Math.max(0, p.progression));
+  const y = r.fond - taux * (r.fond - r.plein);
+
+  const clair = teinte == null ? 'var(--accent)' : `oklch(0.72 0.17 ${teinte})`;
+  const sombre = teinte == null ? 'var(--accent-sombre)' : `oklch(0.5 0.15 ${teinte})`;
+
+  // Une surface plate ferait « verre à moitié rempli sur un schéma » ; deux
+  // ondulations suffisent à faire liquide. L'amplitude s'écrase à mesure qu'on
+  // approche du plein : en haut le récipient se resserre, et une grosse vague y
+  // déborderait de la silhouette.
   const amplitude = (7 * (1 - 0.75 * taux)).toFixed(2);
   const vague =
     `M 0 ${y.toFixed(1)} q 15 -${amplitude} 30 0 t 30 0 t 30 0 t 30 0 t 30 0 ` +
-    `L 150 180 L 0 180 Z`;
+    `L 150 195 L 0 195 Z`;
 
   return `
     <div class="bombonne${taux === 0 ? ' bombonne--vide' : ''}" role="img"
+         style="--jus-clair:${clair};--jus-sombre:${sombre}"
          aria-label="${p.membres} membre${p.membres > 1 ? 's' : ''}, palier ${p.nom}${
            p.max ? ', au maximum' : ` sur ${p.objectif}`
          }">
-      <svg viewBox="0 0 120 180">
+      <svg viewBox="0 0 120 190">
         <defs>
-          <clipPath id="${id}-verre"><path d="${SILHOUETTE}" /></clipPath>
+          <clipPath id="${id}-verre"><path d="${r.d}" /></clipPath>
           <linearGradient id="${id}-jus" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="var(--accent)" />
-            <stop offset="1" stop-color="var(--accent-sombre)" />
-          </linearGradient>
-          <linearGradient id="${id}-reflet" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stop-color="rgba(255,255,255,0.22)" />
-            <stop offset="1" stop-color="rgba(255,255,255,0)" />
+            <stop offset="0" stop-color="var(--jus-clair)" />
+            <stop offset="1" stop-color="var(--jus-sombre)" />
           </linearGradient>
         </defs>
 
+        ${r.orn.includes('bb__halo') ? r.orn.match(/<circle[^>]*bb__halo[^>]*\/>/)[0] : ''}
+
         <!-- Le verre vide, derrière tout le reste -->
-        <path d="${SILHOUETTE}" class="bombonne__verre" />
+        <path d="${r.d}" class="bombonne__verre" />
 
         <!-- Le liquide, découpé par la silhouette -->
         <g clip-path="url(#${id}-verre)">
           ${taux > 0 ? `<path class="bombonne__jus" d="${vague}" fill="url(#${id}-jus)" />` : ''}
           ${
             bulles && taux > 0.08
-              ? `<g class="bombonne__bulles" style="--plancher:${(FOND - y).toFixed(0)}px">
-                   <circle cx="46" cy="160" r="3.1" />
-                   <circle cx="66" cy="160" r="2.2" />
-                   <circle cx="56" cy="160" r="4" />
+              ? `<g class="bombonne__bulles" style="--plancher:${(r.fond - y).toFixed(0)}px">
+                   ${r.bulles.map(([bx, by, br]) => `<circle cx="${bx}" cy="${by}" r="${br}" />`).join('')}
                  </g>`
               : ''
           }
         </g>
 
-        <!-- Reflet et contour, par-dessus le liquide -->
-        <path d="M 34 74 C 26 88 24 104 24 118" class="bombonne__eclat" />
-        <path d="${SILHOUETTE}" class="bombonne__contour" fill="none" />
+        <!-- Reflet et étincelles, DÉCOUPÉS eux aussi.
+             Sans ce découpage, ils gardent leur position absolue et se
+             retrouvent à côté du verre sur les silhouettes étroites : la
+             Fiole en portait un à sa gauche, dans le vide. -->
+        <g clip-path="url(#${id}-verre)">
+          <path d="M 34 74 C 26 88 24 104 24 118" class="bombonne__eclat" />
+          ${taux > 0.05 ? eclat(84, 66, 6) + eclat(38, 128, 4) : ''}
+        </g>
+
+        <!-- Ornements et contour -->
+        ${r.orn.replace(/<circle[^>]*bb__halo[^>]*\/>/, '')}
+        <path d="${r.d}" class="bombonne__contour" fill="none" />
 
         <!-- Col et bouchon -->
-        <rect x="45" y="6" width="30" height="13" rx="4" class="bombonne__bouchon" />
-        <path d="M 50 20 h 20" class="bombonne__contour" fill="none" />
+        ${r.bouchon}
       </svg>
     </div>`;
 }

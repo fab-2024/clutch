@@ -162,7 +162,9 @@ const TEINTES_EQUIPE = {
   T1: 10, TL: 235,
 };
 
-function teinteEquipe(tag, nom) {
+/** La teinte d'une équipe, 0-360. Exposée pour les récipients d'élixir,
+    qui doivent prendre exactement la même que l'écusson. */
+export function teinteEquipe(tag, nom) {
   const connue = TEINTES_EQUIPE[String(tag).toUpperCase()];
   if (connue != null) return connue;
   let h = 0;

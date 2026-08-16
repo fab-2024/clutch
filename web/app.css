@@ -1742,3 +1742,19 @@ input::placeholder { color: var(--texte-faible); }
   background: none;
   opacity: 0.5;
 }
+
+
+/* ------------------------------------------- Récipients d'élixir */
+/* Le jus prend la teinte de l'équipe (variables posées en ligne par
+   bombonne.js) ; le verre, le cerclage et le bouchon restent neutres,
+   pour que ce soit bien le LIQUIDE qui porte l'identité. */
+
+.bb__bouchon  { fill: var(--surface-2); stroke: var(--bordure-vive); stroke-width: 2; }
+.bb__trait    { stroke: var(--bordure-vive); stroke-width: 2; fill: none; }
+.bb__cerclage { stroke: var(--bordure-vive); stroke-width: 2.4; fill: none; stroke-linecap: round; }
+.bb__rivet    { fill: var(--bordure-vive); }
+.bb__halo     { fill: var(--jus-clair); opacity: 0.09; }
+.bb__eclat    { fill: #fff; opacity: 0.5; }
+.bb__facette  { stroke: var(--bordure-vive); stroke-width: 1.4; fill: none; opacity: .7; }
+.bb__col      { stroke: var(--bordure-vive); stroke-width: 5; fill: none; stroke-linecap: round; }
+.bb__anneau   { stroke: var(--jus-clair); stroke-width: 1.6; fill: none; opacity: .45; }

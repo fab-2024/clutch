@@ -13,7 +13,7 @@
 
 import * as api from '../api.js';
 import { contexte } from '../app.js';
-import { esc, nomJeu, vide, ecusson } from '../ui.js';
+import { esc, nomJeu, vide, ecusson, teinteEquipe } from '../ui.js';
 import { palierCommunaute, PALIERS_COMMUNAUTE, formaterFrags } from '../core.js';
 import { bombonne } from './bombonne.js';
 
@@ -84,7 +84,7 @@ function carteVedette(c, rang, estLaMienne) {
       <div class="bloc__corps">
         <div class="commu-vedette">
           <div class="bombonne-bloc">
-            ${bombonne(p)}
+            ${bombonne(p, { teinte: teinteEquipe(c.tag, c.nom) })}
             <div class="bombonne-bloc__compte">
               ${esc(formaterFrags(p.membres))}${p.max ? '' : `<small> / ${esc(formaterFrags(p.objectif))}</small>`}
             </div>
