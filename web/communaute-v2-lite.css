@@ -53,6 +53,22 @@
 .commu-core--epure .commu-reacteur__orbite--b { opacity: .48; }
 .commu-core--epure .commu-reacteur__motes i { opacity: .09; }
 
+/*
+ * Les premières formes occupent volontairement moins de place dans le viewBox
+ * commun aux 7 récipients. Sans compensation, leur centre optique tombe sous
+ * celui des orbites. On remonte uniquement le récipient : le halo, les orbites
+ * et le socle restent sur l'axe fixe du réacteur.
+ */
+.commu-core--epure .commu-reacteur--n1 .bombonne { transform: translateY(-42px); }
+.commu-core--epure .commu-reacteur--n2 .bombonne { transform: translateY(-25px); }
+.commu-core--epure .commu-reacteur--n3 .bombonne { transform: translateY(-11px); }
+
+/* Le numéro de forme reste un indicateur périphérique, pas un satellite. */
+.commu-core--epure .commu-reacteur__niveau {
+  top: 12px;
+  right: 8px;
+}
+
 .commu-core--epure .commu-core__charge { align-self: center; }
 .commu-core--epure .commu-core__charge h3 {
   margin: 5px 0 6px;
