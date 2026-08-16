@@ -1032,3 +1032,116 @@ export function palierCommunaute(membres) {
     restant: palier.seuil - n, max: false,
   };
 }
+
+/* ------------------------------------------------------------------ */
+/* Le niveau et l'expérience                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * La règle qui rend un niveau acceptable dans ce produit :
+ * AUCUNE ACTION UNITAIRE NE DONNE D'XP.
+ *
+ * Poser un pronostic n'en donne jamais. L'XP ne tombe que sur des
+ * événements déjà accomplis, dont chacun a déjà passé le test du volume :
+ * un badge (un test vérifie que 500 pronostics médiocres n'en décrochent
+ * aucun), une saison terminée avec assez de pronostics réglés, un palier
+ * de note à vie franchi (la mise n'entre pas dans le calcul de la note),
+ * un call réussi (un pari long, posé une fois).
+ *
+ * Le niveau occupe alors une place que rien d'autre n'occupe : c'est le
+ * seul compteur cumulatif, permanent et monotone. Les Frags sont
+ * saisonniers, les Volts se dépensent, la note est un instantané, le rang
+ * change chaque semaine, les badges sont binaires. Le niveau, c'est la
+ * carrière.
+ *
+ * Et il ne se stocke pas : tout est dérivé de données déjà en base. Un
+ * Volt est de l'argent, un niveau est une lecture.
+ */
+
+export const XP_SAISON = 500;
+export const XP_PALIER_NOTE = 250;
+export const XP_CALL = 300;
+export const XP_PAS_DE_NOTE = 25;
+
+export const XP_RARETE = { commun: 200, exigeant: 400, rare: 800 };
+
+/** La rareté de chaque badge, qui fixe son XP. */
+export const RARETE_BADGE = {
+  outsider: 'commun',      contre_pied: 'exigeant', braquage: 'rare',       tapis: 'exigeant',
+  horloger: 'commun',      chirurgien: 'exigeant',  lecteur: 'exigeant',    sans_faute: 'rare',
+  dans_le_vert: 'commun',  analyste: 'exigeant',    requin: 'rare',         banquier: 'exigeant',
+  assidu: 'commun',        habitue: 'commun',       marathonien: 'rare',
+  polyglotte: 'commun',    specialiste: 'exigeant', visionnaire: 'rare',    selectionneur: 'exigeant',
+  fondateur: 'commun',     recruteur: 'exigeant',
+};
+
+export const xpDuBadge = (cle) => XP_RARETE[RARETE_BADGE[cle] ?? 'commun'];
+
+/** Les titres, par bandes de cinq niveaux. */
+export const TITRES = [
+  { min: 30, nom: 'Légende' },
+  { min: 25, nom: 'Vétéran' },
+  { min: 20, nom: 'Expert des Frags' },
+  { min: 15, nom: 'Fin renard' },
+  { min: 10, nom: 'Analyste' },
+  { min: 5,  nom: 'Habitué' },
+  { min: 0,  nom: 'Recrue' },
+];
+
+export const titreDuNiveau = (n) => TITRES.find((t) => n >= t.min).nom;
+
+/** XP cumulée nécessaire pour atteindre le niveau n. */
+export const xpPourNiveau = (n) => 30 * n * n;
+
+/** Le niveau atteint avec une XP donnée. */
+export const niveauDepuisXp = (xp) => Math.floor(Math.sqrt(Math.max(0, xp) / 30));
+
+/**
+ * Le détail de l'XP, source par source. On renvoie le détail et pas
+ * seulement le total : un compteur qu'on ne sait pas expliquer ne motive
+ * personne, et le joueur doit pouvoir lire d'où viennent ses points.
+ */
+export function xpDetaillee({ badges = [], recap = {}, note = null, note_paris = 0 } = {}) {
+  const parBadges = badges
+    .filter((b) => b.obtenu)
+    .reduce((t, b) => t + xpDuBadge(b.cle), 0);
+
+  const parSaisons = (recap.saisons_jouees ?? 0) * XP_SAISON;
+  const parCalls = (recap.calls_gagnes ?? 0) * XP_CALL;
+
+  // La note ne compte qu'au-dessus du minimum de paris réglés : en dessous
+  // elle ne veut rien dire, et c'est déjà la règle du classement.
+  const paliersNote =
+    note != null && note_paris >= NOTE_MIN_PARIS
+      ? Math.max(0, Math.floor((note - NOTE_INITIALE) / XP_PAS_DE_NOTE))
+      : 0;
+  const parNote = paliersNote * XP_PALIER_NOTE;
+
+  const total = parBadges + parSaisons + parCalls + parNote;
+
+  return {
+    total,
+    sources: [
+      { cle: 'badges',  libelle: 'Badges décrochés',   xp: parBadges,  detail: `${badges.filter((b) => b.obtenu).length} badge(s)` },
+      { cle: 'saisons', libelle: 'Saisons terminées',  xp: parSaisons, detail: `${recap.saisons_jouees ?? 0} saison(s)` },
+      { cle: 'note',    libelle: 'Paliers de note',    xp: parNote,    detail: `${paliersNote} palier(s)` },
+      { cle: 'calls',   libelle: 'Calls réussis',      xp: parCalls,   detail: `${recap.calls_gagnes ?? 0} call(s)` },
+    ].filter((s) => s.xp > 0),
+  };
+}
+
+/** Tout ce qu'il faut pour dessiner la barre de niveau. */
+export function progressionNiveau(xp) {
+  const niveau = niveauDepuisXp(xp);
+  const bas = xpPourNiveau(niveau);
+  const haut = xpPourNiveau(niveau + 1);
+  return {
+    xp,
+    niveau,
+    titre: titreDuNiveau(niveau),
+    dansLeNiveau: xp - bas,
+    pourLeSuivant: haut - bas,
+    restant: haut - xp,
+    part: (xp - bas) / (haut - bas),
+  };
+}

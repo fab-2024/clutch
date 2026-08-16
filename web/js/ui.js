@@ -130,3 +130,52 @@ export function surClic(racine, selecteur, gestionnaire) {
     if (cible && racine.contains(cible)) gestionnaire(cible, e);
   });
 }
+
+/* ------------------------------------------------------------------ */
+/* Les écussons d'équipe                                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Il n'existe aucun logo d'équipe dans ce produit, et il n'en existera
+ * pas : ce sont des marques déposées, et il faudrait de toute façon un
+ * fichier par équipe. L'écusson les remplace — forme découpée, teinte
+ * propre à l'équipe, monogramme au centre. C'est la solution de Football
+ * Manager et de Sorare pour les clubs non licenciés.
+ *
+ * On ne retient de la couleur réelle d'une équipe que sa TEINTE. La
+ * clarté et la saturation sont fixes pour tout le monde (oklch 0,62 /
+ * 0,16), et c'est ce qui fait tenir l'ensemble :
+ *
+ *   · les écussons se distinguent mais forment une famille ;
+ *   · le monogramme blanc garde le même contraste sur chacun ;
+ *   · aucune équipe ne peut tomber sur le jaune d'accent, qui doit rester
+ *     réservé à l'action. Le jaune de Vitality devient un olivâtre, pas
+ *     un bouton.
+ *
+ * Une équipe absente de la table reçoit une teinte dérivée de son nom :
+ * stable d'un écran à l'autre, et jamais deux fois la même par hasard.
+ */
+const TEINTES_EQUIPE = {
+  KC: 250, G2: 25, FNC: 45, MKOI: 300, VIT: 100, BDS: 340, TH: 15,
+  SK: 205, GX: 150, RGE: 130, NAVI: 60, SPR: 215, FAZE: 8, MOUZ: 0,
+  FLC: 160, AST: 355, SEN: 350, DRX: 230, FUT: 195, M8: 190, SLY: 165,
+  T1: 10, TL: 235,
+};
+
+function teinteEquipe(tag, nom) {
+  const connue = TEINTES_EQUIPE[String(tag).toUpperCase()];
+  if (connue != null) return connue;
+  let h = 0;
+  for (const c of String(nom ?? tag)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return h % 360;
+}
+
+/** L'écusson d'une équipe : un monogramme dans une forme à six pans. */
+export function ecusson(tag, nom, taille = 'm') {
+  const t = teinteEquipe(tag, nom);
+  const couleur = `oklch(0.62 0.16 ${t})`;
+  const liseré = `oklch(0.78 0.11 ${t})`;
+  return `<span class="ecusson-cadre ecusson-cadre--${esc(taille)}" style="--liseré:${liseré}">
+    <span class="ecusson" style="--teinte:${couleur}">${esc(tag)}</span>
+  </span>`;
+}

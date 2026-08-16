@@ -989,3 +989,587 @@ input::placeholder { color: var(--texte-faible); }
   flex-shrink: 0;
   white-space: nowrap;
 }
+
+
+/* ==================================================================
+   Matchs — direction esport (voir le commentaire de carteMatch)
+   ================================================================== */
+
+/* ------------------------------------------------------------ Filtres */
+
+.es-filtres {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 0 16px;
+}
+.es-filtres::-webkit-scrollbar { display: none; }
+
+.es-puce {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 15px;
+  border-radius: var(--rayon-pilule);
+  border: 1px solid var(--bordure);
+  background: var(--surface);
+  color: var(--texte-doux);
+  font-size: 0.86rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.es-puce:hover { border-color: var(--bordure-vive); color: var(--texte); }
+
+.es-puce.actif {
+  color: var(--texte);
+  border-color: var(--jeu, var(--bordure-vive));
+  background: color-mix(in oklab, var(--jeu, var(--surface-2)) 14%, var(--surface));
+}
+
+.es-puce__pt {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--jeu, var(--texte-faible));
+}
+
+.es-puce--action.actif {
+  border-color: var(--accent);
+  background: var(--accent-fantome);
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------------- Carte */
+
+.es-match {
+  --jeu: var(--bordure-vive);
+  position: relative;
+  display: block;
+  border-radius: var(--rayon);
+  border: 1px solid var(--bordure);
+  background:
+    radial-gradient(120% 90% at 80% -10%, color-mix(in oklab, var(--jeu) 22%, transparent), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0) 38%),
+    var(--surface);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  margin-bottom: 12px;
+  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+.es-match[data-jeu='lol']      { --jeu: var(--lol); }
+.es-match[data-jeu='cs2']      { --jeu: var(--cs2); }
+.es-match[data-jeu='valorant'] { --jeu: var(--valorant); }
+
+.es-match:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--jeu) 45%, var(--bordure));
+}
+
+/* Le seul endroit où la lueur d'accent apparaît : ton équipe. Réservée,
+   donc elle signifie quelque chose au lieu d'être un effet. */
+.es-match--favori {
+  border-color: var(--accent-bordure);
+  box-shadow: 0 0 0 1px var(--accent-fantome), 0 10px 40px -14px rgba(232,255,61,.35);
+}
+
+.es-match__haut {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 15px 0;
+}
+
+.es-tournoi {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--texte-doux);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.es-tournoi__pt {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--jeu);
+  flex-shrink: 0;
+}
+
+.es-quand {
+  font-size: 0.75rem;
+  color: var(--texte-faible);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.es-direct {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--rayon-pilule);
+  background: var(--accent-fantome);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.es-pt {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent);
+  animation: es-pulse 1.7s ease-in-out infinite;
+}
+@keyframes es-pulse { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
+
+/* --------------------------------------------------------- L'écusson */
+
+.ecusson {
+  width: 42px; height: 46px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  position: relative;
+  background: var(--teinte);
+  clip-path: polygon(50% 0%, 100% 24%, 100% 74%, 50% 100%, 0% 74%, 0% 24%);
+  font-family: var(--titre);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,.45);
+}
+
+/* Le liseré : un second écusson légèrement plus grand, derrière. */
+.ecusson-cadre {
+  position: relative;
+  width: 48px; height: 52px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in oklab, var(--teinte) 55%, #ffffff);
+  clip-path: polygon(50% 0%, 100% 24%, 100% 74%, 50% 100%, 0% 74%, 0% 24%);
+  flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------ Le duel */
+/* Sur téléphone, les deux camps sont EMPILÉS et le format sert de
+   séparateur au milieu. Un duel horizontal à 430 px force à couper les
+   noms — « Movistar KOI » et « Gentle Mates » mordent sur le BO3 — et
+   c'est le défaut le plus visible de la maquette de référence, qui est
+   une vue bureau. Au-dessus de 640 px, la confrontation reprend sa
+   place en vis-à-vis. */
+
+.es-duel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 13px 15px 14px;
+}
+
+.es-camp {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.es-camp__txt {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1;
+}
+
+.es-camp__nom {
+  font-family: var(--titre);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--texte);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.es-camp__elo {
+  font-size: 0.73rem;
+  color: var(--texte-faible);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Le format, posé sur un filet qui traverse : il sépare les deux camps
+   au lieu de flotter entre eux. */
+.es-milieu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 1px 0 1px 53px;
+}
+
+.es-milieu::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--bordure);
+}
+
+.es-format {
+  font-family: var(--titre);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--texte-faible);
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .es-duel {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 16px 16px;
+  }
+  .es-camp--droite { flex-direction: row-reverse; }
+  .es-camp--droite .es-camp__txt { flex-direction: row-reverse; }
+  .es-camp--droite .es-camp__elo { margin-left: 0; margin-right: auto; }
+  .es-camp__txt { display: block; }
+  .es-camp--droite .es-camp__txt { text-align: right; }
+  .es-camp__elo { margin: 2px 0 0; display: block; }
+  .es-milieu { margin: 0; }
+  .es-milieu::after { display: none; }
+  .es-format {
+    padding: 5px 10px;
+    border-radius: var(--rayon-pilule);
+    border: 1px solid var(--bordure);
+    background: rgba(0,0,0,.25);
+  }
+}
+
+/* ------------------------------------------------------------- Cotes */
+
+.es-cotes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--bordure);
+  border-top: 1px solid var(--bordure);
+}
+
+.es-pari {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 15px;
+  background: color-mix(in oklab, var(--jeu) 5%, var(--surface));
+  transition: background var(--transition);
+}
+
+.es-pari:hover { background: var(--accent-fantome); }
+
+.es-pari__tag {
+  font-size: 0.78rem;
+  color: var(--texte-doux);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.es-pari__val {
+  font-family: var(--titre);
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* --------------------------------------------------------- Bureau */
+
+@media (min-width: 900px) {
+  .es-liste {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: start;
+  }
+  .es-match { margin-bottom: 0; }
+}
+
+@media (max-width: 430px) {
+  .es-camp__nom { font-size: 0.92rem; }
+  .ecusson-cadre { width: 42px; height: 46px; }
+  .ecusson { width: 37px; height: 40px; font-size: 0.66rem; }
+}
+
+
+/* ==================================================================
+   Écussons — voir le commentaire de ui.js pour la logique de teinte
+   ================================================================== */
+
+.ecusson-cadre {
+  position: relative;
+  width: 48px; height: 52px;
+  display: grid;
+  place-items: center;
+  background: var(--liseré);
+  clip-path: polygon(50% 0%, 100% 24%, 100% 74%, 50% 100%, 0% 74%, 0% 24%);
+  flex-shrink: 0;
+}
+
+.ecusson {
+  width: 42px; height: 46px;
+  display: grid;
+  place-items: center;
+  background: var(--teinte);
+  clip-path: polygon(50% 0%, 100% 24%, 100% 74%, 50% 100%, 0% 74%, 0% 24%);
+  font-family: var(--titre);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.ecusson-cadre--s { width: 34px; height: 37px; }
+.ecusson-cadre--s .ecusson { width: 29px; height: 32px; font-size: 0.58rem; }
+
+@media (max-width: 430px) {
+  .ecusson-cadre { width: 42px; height: 46px; }
+  .ecusson { width: 37px; height: 40px; font-size: 0.66rem; }
+}
+
+/* ==================================================================
+   Le niveau — un compteur cumulatif, permanent, jamais redescendant
+   ================================================================== */
+
+.niveau {
+  margin: 18px 0 8px;
+  padding: 18px;
+  border-radius: var(--rayon);
+  border: 1px solid var(--bordure);
+  background:
+    radial-gradient(130% 100% at 0% 0%, var(--accent-fantome), transparent 58%),
+    var(--surface);
+}
+
+.niveau__haut {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 13px;
+}
+
+.niveau__rang {
+  font-family: var(--titre);
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--texte);
+}
+
+.niveau__titre {
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--accent);
+  margin-top: 4px;
+}
+
+.niveau__xp {
+  text-align: right;
+  font-size: 0.86rem;
+  color: var(--texte-doux);
+  font-variant-numeric: tabular-nums;
+}
+
+.niveau__xp strong { color: var(--texte); font-size: 1.05rem; }
+
+.niveau__reste {
+  font-size: 0.76rem;
+  color: var(--texte-faible);
+  margin-top: 3px;
+}
+
+.niveau__jauge {
+  height: 8px;
+  border-radius: var(--rayon-pilule);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.niveau__remplie {
+  height: 100%;
+  border-radius: var(--rayon-pilule);
+  background: linear-gradient(90deg, var(--accent-sombre), var(--accent));
+}
+
+.niveau__sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 13px;
+  font-size: 0.79rem;
+  color: var(--texte-doux);
+}
+
+.niveau__source-xp { color: var(--accent); font-weight: 700; margin-right: 3px; }
+.niveau__source-detail { color: var(--texte-faible); }
+.niveau__source--vide { color: var(--texte-faible); max-width: 62ch; line-height: 1.5; }
+
+/* ==================================================================
+   L'Arsenal — les badges sur socles
+   ================================================================== */
+
+.vitrine {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.socle {
+  --lueur: var(--bordure-vive);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 18px 12px 14px;
+  border-radius: var(--rayon-s);
+  border: 1px solid var(--bordure);
+  background:
+    radial-gradient(80% 60% at 50% 8%, color-mix(in oklab, var(--lueur) 26%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--surface-2), var(--surface));
+  text-align: center;
+}
+
+.socle--rare     { --lueur: var(--accent); }
+.socle--exigeant { --lueur: var(--info); }
+.socle--commun   { --lueur: var(--bordure-vive); }
+
+.socle__sceau {
+  color: var(--lueur);
+  filter: drop-shadow(0 0 10px color-mix(in oklab, var(--lueur) 55%, transparent));
+}
+
+.socle__nom {
+  font-family: var(--titre);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.socle__rarete { font-size: 0.7rem; color: var(--texte-faible); }
+
+.trophee {
+  display: flex;
+  gap: 12px;
+  padding: 13px;
+  border-radius: var(--rayon-s);
+  border: 1px solid var(--bordure);
+  background: var(--surface);
+  opacity: 0.55;
+}
+
+.trophee--obtenu { opacity: 1; }
+
+.trophee__sceau {
+  width: 34px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  color: var(--texte-faible);
+  font-size: 1.2rem;
+}
+
+.trophee--obtenu.trophee--rare     .trophee__sceau { color: var(--accent); }
+.trophee--obtenu.trophee--exigeant .trophee__sceau { color: var(--info); }
+.trophee--obtenu.trophee--commun   .trophee__sceau { color: var(--texte-doux); }
+
+.trophee__nom  { font-weight: 650; }
+.trophee__desc { font-size: 0.8rem; color: var(--texte-doux); margin-top: 2px; }
+.trophee__xp   { font-size: 0.72rem; color: var(--texte-faible); margin-top: 5px; }
+
+/* ==================================================================
+   Communautés — l'échelle des sept paliers
+   ================================================================== */
+
+.commu-vedette-bloc { border-color: var(--accent-bordure); }
+
+.commu-jeu {
+  font-size: 0.8rem;
+  color: var(--texte-faible);
+  margin-bottom: 12px;
+}
+
+.echelle {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 4px;
+  border-left: 1px solid var(--bordure);
+}
+
+.echelle__cran {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 7px 0 7px 16px;
+  font-size: 0.84rem;
+  color: var(--texte-faible);
+}
+
+.echelle__pt {
+  position: absolute;
+  left: -5px;
+  top: 12px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--fond);
+  border: 1px solid var(--bordure-vive);
+}
+
+.echelle__cran--franchi { color: var(--texte-doux); }
+.echelle__cran--franchi .echelle__pt {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.echelle__cran--courant { color: var(--texte); font-weight: 650; }
+.echelle__cran--courant .echelle__pt {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-fantome);
+}
+
+.echelle__nom   { flex: 1; }
+.echelle__seuil { font-variant-numeric: tabular-nums; color: var(--texte-faible); }
+
+.commu-ligne__jeu {
+  font-size: 0.76rem;
+  color: var(--texte-faible);
+  margin-left: 7px;
+}
+
+@media (min-width: 760px) {
+  .commu-vedette { display: grid; grid-template-columns: auto 1fr auto; gap: 22px; align-items: start; }
+  .echelle { min-width: 170px; }
+}

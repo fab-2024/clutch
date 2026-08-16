@@ -13,7 +13,7 @@
 
 import * as api from '../api.js';
 import { contexte } from '../app.js';
-import { esc, nomJeu, vide } from '../ui.js';
+import { esc, nomJeu, vide, ecusson } from '../ui.js';
 import { palierCommunaute, PALIERS_COMMUNAUTE, formaterFrags } from '../core.js';
 import { bombonne } from './bombonne.js';
 
@@ -24,8 +24,8 @@ export async function vueCommunaute(racine) {
     racine.innerHTML = `
       ${entete()}
       ${vide(
-        'Aucune communauté pour l’instant',
-        'Personne n’a encore choisi d’équipe préférée. Sois le premier : la bombonne de ton équipe démarre à toi.',
+        'Toutes les bombonnes sont vides',
+        'Personne n’a encore choisi d’équipe préférée — celle que tu prendras démarrera donc à toi, et tu en seras le membre fondateur.',
         contexte.utilisateur
           ? '<a class="btn" href="#/parametres">Choisir mon équipe</a>'
           : '<a class="btn" href="#/connexion">Créer mon compte</a>'
@@ -77,10 +77,9 @@ function entete() {
 function carteVedette(c, rang, estLaMienne) {
   const p = palierCommunaute(c.membres);
   return `
-    <div class="bloc bloc--volt">
+    <div class="bloc commu-vedette-bloc">
       <div class="bloc__titre">
         <span>${estLaMienne ? 'Ma communauté' : 'La communauté qui mène'}</span>
-        <span>${esc(nomJeu(c.jeu))} · n°${rang} des communautés</span>
       </div>
       <div class="bloc__corps">
         <div class="commu-vedette">
@@ -91,10 +90,9 @@ function carteVedette(c, rang, estLaMienne) {
             </div>
             <div class="bombonne-bloc__palier">${esc(p.nom)}</div>
           </div>
-          <div>
-            <h2 style="margin-bottom:6px">${esc(c.nom)}
-              <span class="badge badge--equipe">${esc(c.tag)}</span>
-            </h2>
+          <div class="commu-vedette__txt">
+            <h2 style="margin-bottom:2px">${esc(c.nom)}</h2>
+            <div class="commu-jeu">${esc(nomJeu(c.jeu))} · n°${rang} des communautés</div>
             <p style="color:var(--texte-doux);margin-bottom:14px">
               ${
                 p.max
@@ -107,12 +105,35 @@ function carteVedette(c, rang, estLaMienne) {
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <span class="badge">${c.membres} membre${c.membres > 1 ? 's' : ''}</span>
               <span class="badge">Elo ${c.elo}</span>
-              ${estLaMienne ? '<span class="badge badge--gagne">tu en fais partie</span>' : ''}
             </div>
           </div>
+          ${echelle(p)}
         </div>
       </div>
     </div>`;
+}
+
+/**
+ * L'echelle des sept paliers.
+ *
+ * C'est ce qui manquait le plus : on voyait un remplissage sans savoir vers
+ * quoi. Les paliers franchis sont allumes, le palier courant est marque, les
+ * suivants restent visibles et eteints — meme regle que les badges, ce qu'on
+ * ne voit pas ne donne envie de rien.
+ */
+function echelle(p) {
+  return `
+    <ol class="echelle">
+      ${PALIERS_COMMUNAUTE.map((pal, i) => {
+        const franchi = p.membres >= pal.seuil;
+        const courant = !franchi && (i === 0 || p.membres >= PALIERS_COMMUNAUTE[i - 1].seuil);
+        return `<li class="echelle__cran${franchi ? ' echelle__cran--franchi' : ''}${courant ? ' echelle__cran--courant' : ''}">
+          <span class="echelle__pt"></span>
+          <span class="echelle__nom">${esc(pal.nom)}</span>
+          <span class="echelle__seuil">${esc(formaterFrags(pal.seuil))}</span>
+        </li>`;
+      }).join('')}
+    </ol>`;
 }
 
 /** Une ligne du classement des communautés. */
@@ -122,10 +143,10 @@ function ligne(c, rang) {
   return `
     <div class="commu-ligne${c.moi ? ' commu-ligne--moi' : ''}">
       <span class="rang rang--${rang}">${rang}</span>
+      ${ecusson(c.tag, c.nom, 's')}
       <div>
         <span class="commu-ligne__nom">${esc(c.nom)}</span>
-        <span class="badge" style="margin-left:6px">${esc(nomJeu(c.jeu))}</span>
-        ${c.moi ? '<span class="badge badge--equipe" style="margin-left:4px">la mienne</span>' : ''}
+        <span class="commu-ligne__jeu">${esc(nomJeu(c.jeu))}</span>
         <div class="jauge commu-ligne__jauge">
           <div class="jauge__remplie" style="width:${pourcent}%"></div>
         </div>

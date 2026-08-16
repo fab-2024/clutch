@@ -1,6 +1,6 @@
 import * as api from '../api.js';
 import { contexte, bandeauSaison } from '../app.js';
-import { esc, quand, dateLisible, nomJeu, vide, surClic } from '../ui.js';
+import { esc, quand, dateLisible, nomJeu, vide, surClic, ecusson } from '../ui.js';
 import { JEUX } from '../core.js';
 
 const FILTRES = [
@@ -29,24 +29,24 @@ export async function vueMatchs(racine) {
     </div>
     ${bandeauSaison()}
     ${rappelCall}
-    <div class="filtres" id="filtres-jeu"></div>
-    <div class="filtres" id="filtres-statut"></div>
-    <div class="grille grille--2" id="liste"></div>
+    <div class="es-filtres" id="filtres-jeu"></div>
+    <div class="es-filtres" id="filtres-statut"></div>
+    <div class="es-liste" id="liste"></div>
   `;
 
   const rendreFiltres = () => {
     racine.querySelector('#filtres-jeu').innerHTML = FILTRES.map(
-      (f) => `<button class="puce${f.cle === jeuActif ? ' actif' : ''}" data-jeu="${f.cle}">${f.libelle}</button>`
+      (f) => `<button class="es-puce${f.cle === jeuActif ? ' actif' : ''}" style="--jeu:${f.cle ? `var(--${f.cle})` : 'transparent'}" data-jeu="${f.cle}">${f.cle ? '<span class="es-puce__pt"></span>' : ''}${f.libelle}</button>`
     ).join('');
     racine.querySelector('#filtres-statut').innerHTML =
       [
         { cle: 'a_venir', libelle: 'À venir' },
         { cle: 'termine', libelle: 'Résultats' },
       ]
-        .map((f) => `<button class="puce${f.cle === statutActif ? ' actif' : ''}" data-statut="${f.cle}">${f.libelle}</button>`)
+        .map((f) => `<button class="es-puce es-puce--action${f.cle === statutActif ? ' actif' : ''}" data-statut="${f.cle}">${f.libelle}</button>`)
         .join('') +
       (favorite
-        ? `<button class="puce puce--favori${favoriSeul ? ' actif' : ''}" data-favori="1">★ ${esc(favorite.tag)}</button>`
+        ? `<button class="es-puce es-puce--action${favoriSeul ? ' actif' : ''}" data-favori="1">★ ${esc(favorite.tag)}</button>`
         : '');
   };
 
@@ -91,56 +91,70 @@ export async function vueMatchs(racine) {
   });
 }
 
+/**
+ * Une carte de match.
+ *
+ * Trois choses portent l'energie de l'ecran, et aucune ne demande d'image :
+ * l'ecusson donne son identite a chaque camp, le degrade du haut donne son
+ * atmosphere au jeu, et la lueur d'accent est RESERVEE a ton equipe — c'est
+ * le seul endroit jaune de la liste, donc elle veut dire quelque chose.
+ *
+ * Sur telephone les deux camps sont empiles, le format servant de separateur.
+ * En vis-a-vis a 430 px, « Movistar KOI » et « Gentle Mates » mordent sur le
+ * BO3 : la confrontation ne reprend sa place qu'au-dessus de 640 px.
+ */
 async function carteMatch(m, favorite = null) {
   const termine = m.statut === 'termine';
   const monMatch =
     favorite && (m.equipe_a_id === favorite.id || m.equipe_b_id === favorite.id);
   const imminent = !termine && new Date(m.debut) - Date.now() < 3600 * 1000;
 
-  let bas = '';
+  let bas;
   if (termine) {
-    const gA = m.score_a > m.score_b;
-    bas = `<div class="match__cotes"><div class="badge">Terminé — ${esc(m.tag_a)} ${m.score_a} / ${m.score_b} ${esc(m.tag_b)}${gA ? '' : ''}</div></div>`;
+    const aGagne = m.score_a > m.score_b;
+    bas = `<div class="es-cotes">
+        <span class="es-pari"><span class="es-pari__tag">${esc(m.tag_a)}</span>
+          <span class="es-pari__val${aGagne ? '' : ' es-pari__val--terne'}">${m.score_a}</span></span>
+        <span class="es-pari"><span class="es-pari__tag">${esc(m.tag_b)}</span>
+          <span class="es-pari__val${aGagne ? ' es-pari__val--terne' : ''}">${m.score_b}</span></span>
+      </div>`;
   } else {
     const marches = await api.cotesDuMatch(m.id);
     const vainqueur = marches.find((x) => x.cle === 'vainqueur');
-    bas = `<div class="match__cotes">${vainqueur.choix
+    bas = `<div class="es-cotes">${vainqueur.choix
       .map(
-        (c) => `<span class="cote"><span class="cote__libelle">${esc(c.libelle)}</span><span class="cote__valeur">${c.cote.toFixed(2)}</span></span>`
+        (c) => `<span class="es-pari">
+            <span class="es-pari__tag">${esc(c.libelle)}</span>
+            <span class="es-pari__val">${c.cote.toFixed(2)}</span>
+          </span>`
       )
       .join('')}</div>`;
   }
 
-  const centre = termine
-    ? `<div><span class="score${m.score_a > m.score_b ? '' : ' score--perdant'}">${m.score_a}</span><span class="versus"> – </span><span class="score${m.score_b > m.score_a ? '' : ' score--perdant'}">${m.score_b}</span></div>`
-    : `<span class="versus">BO${m.format}</span>`;
-
-  const etoile = (id) =>
-    favorite && id === favorite.id ? '<span class="equipe__favori" title="Ton équipe">★</span>' : '';
+  const camp = (nom, tag, elo, droite = false) => `
+    <span class="es-camp${droite ? ' es-camp--droite' : ''}">
+      ${ecusson(tag, nom)}
+      <span class="es-camp__txt">
+        <span class="es-camp__nom">${esc(nom)}</span>
+        <span class="es-camp__elo">Elo ${elo}</span>
+      </span>
+    </span>`;
 
   return `
-    <a class="match${monMatch ? ' match--favori' : ''}" href="#/matchs/${encodeURIComponent(m.id)}">
-      <div class="match__haut">
-        <span class="match__event">
-          <span class="pastille-jeu" data-jeu="${esc(m.jeu)}"></span>
-          <span>${esc(nomJeu(m.jeu))} · ${esc(m.evenement)}</span>
-        </span>
-        <span>${
+    <a class="es-match${monMatch ? ' es-match--favori' : ''}" data-jeu="${esc(m.jeu)}"
+       href="#/matchs/${encodeURIComponent(m.id)}">
+      <div class="es-match__haut">
+        <span class="es-tournoi"><span class="es-tournoi__pt"></span>${esc(m.evenement)}</span>
+        ${
           imminent
-            ? `<span class="badge badge--direct"><span class="point-direct"></span>${esc(quand(m.debut))}</span>`
-            : esc(termine ? dateLisible(m.debut) : quand(m.debut))
-        }</span>
+            ? `<span class="es-direct"><span class="es-pt"></span>${esc(quand(m.debut))}</span>`
+            : `<span class="es-quand">${esc(termine ? dateLisible(m.debut) : quand(m.debut))}</span>`
+        }
       </div>
-      <div class="match__corps">
-        <div class="equipe">
-          <span class="equipe__nom">${etoile(m.equipe_a_id)} ${esc(m.equipe_a)}</span>
-          <span class="equipe__elo">Elo ${m.elo_a}</span>
-        </div>
-        ${centre}
-        <div class="equipe equipe--droite">
-          <span class="equipe__nom">${esc(m.equipe_b)} ${etoile(m.equipe_b_id)}</span>
-          <span class="equipe__elo">Elo ${m.elo_b}</span>
-        </div>
+      <div class="es-duel">
+        ${camp(m.equipe_a, m.tag_a, m.elo_a)}
+        <span class="es-milieu"><span class="es-format">BO${m.format}</span></span>
+        ${camp(m.equipe_b, m.tag_b, m.elo_b, true)}
       </div>
       ${bas}
     </a>`;
