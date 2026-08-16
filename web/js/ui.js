@@ -28,34 +28,34 @@ export const frags = (n) => `${formaterFrags(n)} ${MONNAIE}`;
 export const volts = (n) => `${formaterFrags(n)} ${MONNAIE_VOLTS}`;
 
 /**
- * Le jeton de Frag : une pièce Volt frappée d'un réticule.
+ * Le jeton de Frag : un crâne dans une mire.
  *
- * « Frag » est le terme FPS pour une élimination, et le réticule est le seul
- * symbole que tout le monde y associe sans légende. Tracé en SVG plutôt que
- * chargé en image : il suit la couleur d'accent, reste net partout, et ne
- * coûte aucune requête.
+ * « Frag » est le terme FPS pour une élimination. Le crâne le dit ; les quatre
+ * crans autour disent la visée. Le réticule seul, qui était là avant, ne disait
+ * que la seconde moitié du mot.
+ *
+ * Tracé à plat, frontal, en deux couleurs, et en SVG plutôt que chargé en
+ * image : il suit la couleur d'accent — la changer un jour suffit —, reste net
+ * à toutes les tailles, et ne coûte aucune requête. Un rendu en perspective
+ * avec sa lumière cuite dedans deviendrait une tache à 18 px, la taille à
+ * laquelle il vit réellement dans l'en-tête.
  */
 export function jeton(taille = 18) {
   return `<svg class="jeton" width="${taille}" height="${taille}" viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="12" r="10" fill="var(--accent)" />
-    <g fill="none" stroke="var(--sur-accent)" stroke-width="1.7" stroke-linecap="round">
-      <circle cx="12" cy="12" r="4.3" />
-      <path d="M12 3.4v3.1M12 17.5v3.1M3.4 12h3.1M17.5 12h3.1" />
+    <g stroke="var(--sur-accent)" stroke-width="1.6" stroke-linecap="round">
+      <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2" />
     </g>
-    <circle cx="12" cy="12" r="1.5" fill="var(--sur-accent)" />
+    <path d="M12 5.1c-3.15 0-5.45 2.15-5.45 5.05 0 1.72.82 2.98 1.85 3.7v1.5c0 .62.5 1.12 1.12 1.12h4.96c.62 0 1.12-.5 1.12-1.12v-1.5c1.03-.72 1.85-1.98 1.85-3.7 0-2.9-2.3-5.05-5.45-5.05z"
+          fill="var(--sur-accent)" />
+    <circle cx="9.75" cy="10.5" r="1.62" fill="var(--accent)" />
+    <circle cx="14.25" cy="10.5" r="1.62" fill="var(--accent)" />
+    <path d="M12 12.5l-.85 1.5h1.7z" fill="var(--accent)" />
+    <path d="M10.4 15.4v1.6M12 15.4v1.6M13.6 15.4v1.6"
+          stroke="var(--accent)" stroke-width="1" stroke-linecap="round" />
   </svg>`;
 }
 
-/**
- * Le jeton de Volt : la même pièce, l'anneau ouvert en deux arcs, traversé
- * par un éclair.
- *
- * Même diamètre, même épaisseur de trait et mêmes couleurs que le jeton de
- * Frag : les deux se lisent comme deux faces d'une même monnaie. Seul le
- * contenu de l'anneau change — un réticule pour ce qu'on engage, un éclair
- * pour ce qu'on dépense. Les arcs sont ouverts pour laisser passer l'éclair
- * sans que les deux formes se touchent à petite taille.
- */
 export function jetonVolt(taille = 18) {
   return `<svg class="jeton" width="${taille}" height="${taille}" viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="12" r="10" fill="var(--accent)" />

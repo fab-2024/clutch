@@ -941,3 +941,9 @@ export async function activiteAmis(options) {
   const saison = options?.saison ?? (await saisonCourante())?.id;
   return (await rpc('clutch_activite_amis', { p_saison_id: saison, p_limite: 20 })) ?? [];
 }
+
+/** Le seul solde de Volts, sans le catalogue : l'en-tête le demande à chaque écran. */
+export async function soldeVolts() {
+  if (MODE_DEMO) return demo.soldeVolts?.() ?? 0;
+  return (await rpc('clutch_solde_volts')) ?? 0;
+}

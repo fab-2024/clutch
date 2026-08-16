@@ -8,7 +8,7 @@
 
 import * as api from './api.js';
 import { MODE_DEMO, NOM_APP } from './config.js';
-import { esc, jeton, toast } from './ui.js';
+import { esc, jeton, jetonVolt, toast } from './ui.js';
 import { formaterFrags } from './core.js';
 
 import { vueMatchs } from './views/matchs.js';
@@ -130,16 +130,45 @@ async function rafraichirEntete(navActive) {
   // fois par an, il n'avait rien à faire sur toutes les pages.
   const droite = document.getElementById('entete-droite');
   droite.innerHTML = contexte.utilisateur
-    ? `<div class="solde" title="Solde de ${esc(contexte.saison?.nom ?? 'la saison')}. Monnaie fictive, sans valeur.">
-         ${jeton(19)}
-         <span class="solde__valeur">${esc(formaterFrags(contexte.utilisateur.solde))}</span>
-         <span class="solde__unite">Frags</span>
+    ? `<div class="soldes">
+         <div class="solde" title="Frags — ta bankroll de ${esc(contexte.saison?.nom ?? 'la saison')}. Monnaie fictive, sans valeur. On les engage, on ne les dépense pas.">
+           ${jeton(19)}
+           <span class="solde__valeur">${esc(formaterFrags(contexte.utilisateur.solde))}</span>
+           <span class="solde__unite">Frags</span>
+         </div>
+         <a class="solde solde--volts" href="#/boutique" id="solde-volts"
+            title="Volts — la monnaie cosmétique. On les dépense, on ne les engage jamais : ton classement n'en dépend pas.">
+           ${jetonVolt(19)}
+           <span class="solde__valeur">—</span>
+           <span class="solde__unite">Volts</span>
+         </a>
        </div>
        <a class="avatar${navActive === 'profil' ? ' actif' : ''}" href="#/profil"
           title="${esc(contexte.utilisateur.pseudo ?? 'Mon profil')}" aria-label="Mon profil">${esc(
             initiales(contexte.utilisateur.pseudo || contexte.utilisateur.email || '?')
           )}</a>`
     : `<a class="btn btn--petit" href="#/connexion">Jouer</a>`;
+
+  if (contexte.utilisateur) remplirSoldeVolts();
+}
+
+/**
+ * Le solde de Volts arrive après coup.
+ *
+ * Il vit dans une autre table que les Frags, donc dans une autre requête. La
+ * charger en même temps que l'ossature retarderait l'affichage de tout l'écran
+ * pour un chiffre secondaire : on peint l'en-tête tout de suite avec un tiret,
+ * et on le remplace quand la réponse arrive. Une erreur ici ne doit jamais
+ * empêcher l'application de s'afficher — le tiret reste, c'est tout.
+ */
+async function remplirSoldeVolts() {
+  try {
+    const solde = await api.soldeVolts();
+    const cible = document.querySelector('#solde-volts .solde__valeur');
+    if (cible) cible.textContent = formaterFrags(solde ?? 0);
+  } catch {
+    /* silencieux : l'en-tête garde son tiret */
+  }
 }
 
 /** « NovaKill » → « NO », « Pierre Louis » → « PL ». */

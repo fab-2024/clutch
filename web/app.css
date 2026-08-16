@@ -1573,3 +1573,40 @@ input::placeholder { color: var(--texte-faible); }
   .commu-vedette { display: grid; grid-template-columns: auto 1fr auto; gap: 22px; align-items: start; }
   .echelle { min-width: 170px; }
 }
+
+
+/* ==================================================================
+   Les deux monnaies dans l'en-tête
+   ------------------------------------------------------------------
+   Côte à côte, et volontairement dissemblables : les Frags sont pleins
+   — c'est la bankroll, le chiffre qui compte —, les Volts sont en
+   retrait et cliquables vers la boutique. Deux monnaies, deux rôles,
+   deux poids visuels. Sur téléphone, seuls les Frags restent : un
+   en-tête à deux soldes ne tient pas à 430 px, et c'est la boutique
+   qui porte le solde de Volts.
+   ================================================================== */
+
+.soldes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.solde--volts {
+  background: transparent;
+  border-color: var(--bordure);
+  text-decoration: none;
+  opacity: 0.82;
+  transition: opacity var(--transition), border-color var(--transition);
+}
+
+.solde--volts:hover {
+  opacity: 1;
+  border-color: var(--accent-bordure);
+}
+
+.solde--volts .solde__valeur { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 620px) {
+  .solde--volts { display: none; }
+}
