@@ -1,0 +1,397 @@
+/* ========================================================================
+   CLUTCH — Profil V2
+   Cette feuille reste volontairement séparée de app.css pendant l'itération.
+   Elle ne touche qu'aux classes profil-v2 / profil-*.
+   ======================================================================== */
+
+.profil-v2 {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.profil-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 315px;
+  border: 1px solid var(--bordure);
+  border-radius: 28px;
+  background:
+    radial-gradient(680px 320px at 88% 8%, color-mix(in oklab, var(--teinte-eq, var(--accent)) 24%, transparent), transparent 68%),
+    radial-gradient(420px 260px at 10% 108%, rgba(232,255,61,.08), transparent 72%),
+    linear-gradient(145deg, #111823 0%, #0b1017 62%, #080b10 100%);
+  box-shadow: 0 26px 70px rgba(0,0,0,.26);
+}
+
+.profil-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(110deg, transparent 0 37%, rgba(255,255,255,.025) 37.2% 37.6%, transparent 37.8% 100%);
+}
+
+.profil-hero__tag {
+  position: absolute;
+  right: -18px;
+  bottom: -40px;
+  z-index: 0;
+  font-family: var(--titre);
+  font-size: clamp(7rem, 19vw, 11rem);
+  font-weight: 900;
+  letter-spacing: -.08em;
+  line-height: 1;
+  color: #fff;
+  opacity: .035;
+  user-select: none;
+  pointer-events: none;
+}
+
+.profil-hero__badges {
+  position: relative;
+  z-index: 2;
+  min-height: 84px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 20px 10px;
+}
+
+.profil-pin {
+  --pin: var(--texte-doux);
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px 16px 20px 20px;
+  border: 1px solid color-mix(in oklab, var(--pin) 35%, var(--bordure));
+  background:
+    radial-gradient(circle at 50% 14%, color-mix(in oklab, var(--pin) 22%, transparent), transparent 55%),
+    rgba(8,11,16,.72);
+  color: var(--pin);
+  box-shadow: 0 8px 26px rgba(0,0,0,.22);
+  transform: rotate(var(--angle, 0deg));
+}
+
+.profil-pin:nth-child(2) { --angle: 3deg; margin-top: 7px; }
+.profil-pin:nth-child(3) { --angle: -4deg; margin-top: 2px; }
+.profil-pin:nth-child(4) { --angle: 2deg; margin-top: 9px; }
+.profil-pin--rare { --pin: var(--accent); }
+.profil-pin--exigeant { --pin: var(--info); }
+.profil-pin--commun { --pin: var(--texte-doux); }
+.profil-pin--vide {
+  border-style: dashed;
+  color: var(--texte-faible);
+  opacity: .45;
+  font-family: var(--titre);
+  font-size: 1.2rem;
+}
+
+.profil-hero__principal {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr);
+  gap: 20px;
+  align-items: center;
+  padding: 10px 22px 22px;
+}
+
+.profil-embleme {
+  --prestige: var(--accent);
+  position: relative;
+  width: 112px;
+  height: 112px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.profil-embleme::before,
+.profil-embleme::after {
+  content: '';
+  position: absolute;
+  border-radius: 32px;
+  pointer-events: none;
+}
+
+.profil-embleme::before {
+  inset: 6px;
+  border: 1px solid rgba(255,255,255,.09);
+  background: rgba(8,11,16,.58);
+  transform: rotate(7deg);
+}
+
+.profil-embleme::after {
+  inset: -5px;
+  border: 1px solid transparent;
+  opacity: 0;
+}
+
+.profil-embleme__logo {
+  position: relative;
+  z-index: 2;
+  width: 78px;
+  height: 78px;
+  filter: drop-shadow(0 12px 18px rgba(0,0,0,.35));
+}
+
+/* Progression visuelle : le même symbole gagne du prestige sans changer
+   d'identité. Les effets restent Clutch Volt, jamais RGB. */
+.profil-embleme--initie .profil-embleme__logo {
+  filter: drop-shadow(0 0 10px rgba(232,255,61,.22)) drop-shadow(0 12px 18px rgba(0,0,0,.35));
+}
+
+.profil-embleme--challenger::after {
+  inset: -2px;
+  opacity: 1;
+  border-color: rgba(232,255,61,.28);
+  box-shadow: 0 0 28px rgba(232,255,61,.08);
+}
+
+.profil-embleme--elite::after,
+.profil-embleme--master::after,
+.profil-embleme--clutch::after {
+  opacity: 1;
+  border-color: rgba(232,255,61,.42);
+  box-shadow: 0 0 32px rgba(232,255,61,.14), inset 0 0 30px rgba(232,255,61,.05);
+}
+
+.profil-embleme--elite .profil-embleme__logo,
+.profil-embleme--master .profil-embleme__logo,
+.profil-embleme--clutch .profil-embleme__logo {
+  filter: drop-shadow(0 0 14px rgba(232,255,61,.34)) drop-shadow(0 12px 18px rgba(0,0,0,.35));
+}
+
+.profil-embleme--master::before,
+.profil-embleme--clutch::before {
+  box-shadow: 0 0 42px rgba(232,255,61,.12);
+  animation: profil-pulse 2.8s ease-in-out infinite;
+}
+
+.profil-embleme--clutch .profil-embleme__logo {
+  animation: profil-brillance 3.4s ease-in-out infinite;
+}
+
+@keyframes profil-pulse {
+  0%,100% { transform: rotate(7deg) scale(1); }
+  50% { transform: rotate(7deg) scale(1.035); }
+}
+
+@keyframes profil-brillance {
+  0%,75%,100% { filter: drop-shadow(0 0 14px rgba(232,255,61,.34)) drop-shadow(0 12px 18px rgba(0,0,0,.35)); }
+  83% { filter: drop-shadow(0 0 26px rgba(232,255,61,.7)) drop-shadow(0 12px 18px rgba(0,0,0,.35)); }
+}
+
+.profil-identite { min-width: 0; }
+.profil-identite__sur {
+  font-family: var(--titre);
+  font-size: .7rem;
+  font-weight: 750;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.profil-identite__pseudo {
+  font-family: var(--titre);
+  font-size: clamp(1.9rem, 5vw, 2.65rem);
+  line-height: 1;
+  font-weight: 850;
+  letter-spacing: -.045em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profil-identite__meta {
+  margin-top: 7px;
+  color: var(--texte-doux);
+  font-size: .82rem;
+}
+
+.profil-xp { margin-top: 18px; }
+.profil-xp__ligne {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 7px;
+  font-size: .78rem;
+}
+.profil-xp__ligne strong { font-family: var(--titre); font-size: .9rem; }
+.profil-xp__ligne span { color: var(--texte-faible); }
+.profil-xp__barre {
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(0,0,0,.42);
+  border: 1px solid rgba(255,255,255,.04);
+}
+.profil-xp__barre i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent-sombre), var(--accent));
+  box-shadow: 0 0 16px rgba(232,255,61,.28);
+}
+
+.profil-stats {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid rgba(255,255,255,.07);
+  background: rgba(5,8,12,.34);
+  backdrop-filter: blur(10px);
+}
+.profil-stat {
+  min-width: 0;
+  padding: 14px 12px 15px;
+  text-align: center;
+  border-right: 1px solid rgba(255,255,255,.06);
+}
+.profil-stat:last-child { border-right: 0; }
+.profil-stat b {
+  display: block;
+  font-family: var(--titre);
+  font-size: 1.18rem;
+  font-weight: 820;
+  letter-spacing: -.025em;
+}
+.profil-stat span {
+  display: block;
+  margin-top: 2px;
+  font-size: .66rem;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--texte-faible);
+}
+
+.profil-section {
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+  overflow: hidden;
+}
+.profil-section__haut {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--bordure);
+}
+.profil-section__haut strong {
+  font-family: var(--titre);
+  font-size: .82rem;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+.profil-section__haut span { color: var(--texte-faible); font-size: .76rem; }
+.profil-section__corps { padding: 15px 16px; }
+
+.profil-arsenal {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0,1fr));
+  gap: 9px;
+}
+.profil-trophee {
+  --lueur: var(--texte-doux);
+  min-height: 106px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 7px;
+  border: 1px solid color-mix(in oklab, var(--lueur) 24%, var(--bordure));
+  border-radius: 14px;
+  color: var(--lueur);
+  background:
+    radial-gradient(80% 52% at 50% 8%, color-mix(in oklab, var(--lueur) 16%, transparent), transparent 70%),
+    var(--fond-2);
+  text-align: center;
+}
+.profil-trophee--rare { --lueur: var(--accent); }
+.profil-trophee--exigeant { --lueur: var(--info); }
+.profil-trophee--commun { --lueur: var(--texte-doux); }
+.profil-trophee--vide { border-style: dashed; opacity: .38; font-size: 1.2rem; }
+.profil-trophee__nom {
+  color: var(--texte-doux);
+  font-size: .68rem;
+  line-height: 1.18;
+  font-weight: 650;
+}
+
+.profil-prime {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 18px;
+  align-items: center;
+}
+.profil-prime__titre {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 11px;
+}
+.profil-prime__titre strong { font-family: var(--titre); font-size: 1.03rem; }
+.profil-prime__titre span { color: var(--accent); font-size: .74rem; font-weight: 700; }
+.profil-prime__jours { display: flex; align-items: center; gap: 6px; }
+.profil-prime__jour {
+  flex: 1;
+  min-width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  border: 1px solid var(--bordure);
+  color: var(--texte-faible);
+  background: var(--fond-2);
+  font-size: .7rem;
+  font-weight: 700;
+}
+.profil-prime__jour--ok {
+  border-color: var(--accent-bordure);
+  color: var(--accent);
+  background: var(--accent-fantome);
+}
+.profil-prime__jour--maintenant {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-fantome);
+}
+.profil-prime__jour--coffre::after { content: '🎁'; font-size: .85rem; }
+.profil-prime__jour--coffre { font-size: 0; }
+.profil-prime__aide { margin: 10px 0 0; color: var(--texte-faible); font-size: .75rem; }
+.profil-prime__action { min-width: 168px; }
+
+@media (max-width: 720px) {
+  .profil-hero__principal { grid-template-columns: 82px minmax(0,1fr); gap: 14px; padding: 8px 16px 18px; }
+  .profil-embleme { width: 82px; height: 82px; }
+  .profil-embleme__logo { width: 58px; height: 58px; }
+  .profil-embleme::before { border-radius: 24px; }
+  .profil-hero__badges { padding: 14px 15px 8px; gap: 8px; min-height: 72px; }
+  .profil-pin { width: 44px; height: 44px; border-radius: 13px 13px 17px 17px; }
+  .profil-pin svg { width: 18px; height: 18px; }
+  .profil-stats { grid-template-columns: repeat(2,1fr); }
+  .profil-stat:nth-child(2) { border-right: 0; }
+  .profil-stat:nth-child(-n+2) { border-bottom: 1px solid rgba(255,255,255,.06); }
+  .profil-arsenal { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .profil-prime { grid-template-columns: 1fr; }
+  .profil-prime__action { width: 100%; }
+}
+
+@media (max-width: 460px) {
+  .profil-hero { border-radius: 22px; }
+  .profil-identite__pseudo { font-size: 1.6rem; }
+  .profil-identite__meta { font-size: .72rem; }
+  .profil-xp { margin-top: 13px; }
+  .profil-arsenal { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profil-embleme--master::before,
+  .profil-embleme--clutch::before,
+  .profil-embleme--clutch .profil-embleme__logo { animation: none !important; }
+}
