@@ -1,0 +1,430 @@
+/* ========================================================================
+   CLUTCH — Badges V2
+   Médailles de collection : une silhouette commune, une matière par rareté.
+   ======================================================================== */
+
+.badge-medaille {
+  --metal-1: #697586;
+  --metal-2: #a8b1bd;
+  --metal-3: #394350;
+  --coeur: #151b24;
+  --encre: #d8dee7;
+  --lueur: rgba(168,177,189,.18);
+  position: relative;
+  width: 74px;
+  height: 88px;
+  display: inline-grid;
+  place-items: start center;
+  flex: 0 0 auto;
+  color: var(--encre);
+  text-decoration: none;
+  isolation: isolate;
+  transition: transform 180ms cubic-bezier(.2,.8,.3,1), filter 180ms ease;
+}
+
+.badge-medaille:hover { transform: translateY(-3px); text-decoration: none; }
+
+.badge-medaille__corps {
+  position: relative;
+  z-index: 3;
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 34% 22%, rgba(255,255,255,.7), transparent 17%),
+    conic-gradient(from 10deg, var(--metal-1), var(--metal-2), var(--metal-3), var(--metal-2), var(--metal-1));
+  clip-path: polygon(
+    50% 0%, 57% 6%, 66% 2%, 71% 10%, 81% 8%, 84% 18%,
+    94% 20%, 93% 31%, 100% 38%, 94% 47%, 99% 56%, 91% 63%,
+    93% 74%, 82% 77%, 79% 87%, 69% 85%, 62% 95%, 53% 90%,
+    44% 100%, 36% 91%, 25% 94%, 22% 83%, 11% 81%, 13% 70%,
+    3% 64%, 8% 54%, 0% 46%, 7% 37%, 4% 27%, 15% 23%,
+    17% 13%, 28% 14%, 34% 4%, 43% 8%
+  );
+  filter: drop-shadow(0 9px 13px rgba(0,0,0,.42));
+}
+
+.badge-medaille__corps::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 22%, rgba(255,255,255,.18), transparent 32%),
+    linear-gradient(145deg, color-mix(in oklab, var(--coeur) 80%, white), var(--coeur));
+  border: 2px solid color-mix(in oklab, var(--metal-2) 72%, white);
+  box-shadow:
+    inset 0 0 0 3px color-mix(in oklab, var(--metal-1) 38%, transparent),
+    inset 0 -10px 20px rgba(0,0,0,.2),
+    0 0 22px var(--lueur);
+}
+
+.badge-medaille__corps::after {
+  content: '';
+  position: absolute;
+  inset: 13px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in oklab, var(--metal-2) 68%, transparent);
+}
+
+.badge-medaille__centre {
+  position: relative;
+  z-index: 2;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--encre);
+  filter: drop-shadow(0 0 8px var(--lueur));
+}
+
+.badge-medaille__ruban {
+  position: absolute;
+  z-index: 1;
+  top: 54px;
+  width: 25px;
+  height: 31px;
+  background: linear-gradient(90deg, var(--metal-3), var(--metal-1) 48%, var(--metal-2));
+  border: 1px solid color-mix(in oklab, var(--metal-2) 70%, transparent);
+  clip-path: polygon(0 0, 100% 0, 86% 100%, 52% 73%, 18% 100%);
+  opacity: .94;
+}
+.badge-medaille__ruban--g { left: 17px; transform: rotate(10deg); }
+.badge-medaille__ruban--d { right: 17px; transform: rotate(-10deg) scaleX(-1); }
+
+.badge-medaille--commun {
+  --metal-1: #5e6977;
+  --metal-2: #aab3bf;
+  --metal-3: #303946;
+  --coeur: #151b23;
+  --encre: #d4dbe4;
+  --lueur: rgba(170,179,191,.16);
+}
+
+.badge-medaille--rare {
+  --metal-1: #1d75c9;
+  --metal-2: #63c8ff;
+  --metal-3: #0a396c;
+  --coeur: #08192b;
+  --encre: #78d5ff;
+  --lueur: rgba(66,165,255,.42);
+}
+
+.badge-medaille--epique {
+  --metal-1: #7548d8;
+  --metal-2: #c29bff;
+  --metal-3: #351b72;
+  --coeur: #170d2c;
+  --encre: #cdb2ff;
+  --lueur: rgba(154,103,255,.42);
+}
+
+.badge-medaille--legendaire {
+  --metal-1: #b97808;
+  --metal-2: #ffe28a;
+  --metal-3: #6c3e00;
+  --coeur: #fff8df;
+  --encre: #9b6500;
+  --lueur: rgba(255,198,55,.5);
+}
+
+.badge-medaille--mythique {
+  --metal-1: #20252b;
+  --metal-2: #59606a;
+  --metal-3: #05070a;
+  --coeur: #06090d;
+  --encre: var(--accent);
+  --lueur: rgba(232,255,61,.55);
+}
+
+.badge-medaille--secret.badge-medaille--legendaire {
+  --coeur: #0b0d10;
+  --encre: #f1c85a;
+}
+
+.badge-medaille--secret .badge-medaille__corps::after {
+  border-style: dashed;
+  opacity: .7;
+}
+
+.badge-medaille--verrouillee {
+  filter: grayscale(.9) brightness(.55);
+  opacity: .46;
+}
+.badge-medaille--verrouillee:hover { transform: none; }
+
+.badge-medaille__question {
+  font-family: var(--titre);
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #b8a36a;
+  opacity: .72;
+}
+
+.badge-medaille--mini {
+  width: 58px;
+  height: 68px;
+}
+.badge-medaille--mini .badge-medaille__corps { width: 52px; height: 52px; }
+.badge-medaille--mini .badge-medaille__corps::before { inset: 6px; border-width: 1.5px; }
+.badge-medaille--mini .badge-medaille__corps::after { inset: 10px; }
+.badge-medaille--mini .badge-medaille__centre { width: 30px; height: 30px; }
+.badge-medaille--mini .badge-medaille__ruban { top: 42px; width: 19px; height: 24px; }
+.badge-medaille--mini .badge-medaille__ruban--g { left: 13px; }
+.badge-medaille--mini .badge-medaille__ruban--d { right: 13px; }
+
+.badge-medaille--vedette {
+  width: 72px;
+  height: 84px;
+  margin-right: 3px;
+}
+.badge-medaille--vedette .badge-medaille__corps { width: 66px; height: 66px; }
+.badge-medaille--vedette .badge-medaille__ruban { top: 53px; }
+.badge-medaille--vedette::after {
+  content: '';
+  position: absolute;
+  width: 74px;
+  height: 74px;
+  top: -4px;
+  border-radius: 50%;
+  box-shadow: 0 0 30px var(--lueur);
+  opacity: .7;
+  pointer-events: none;
+}
+
+.badge-medaille--hero {
+  width: 112px;
+  height: 132px;
+}
+.badge-medaille--hero .badge-medaille__corps { width: 102px; height: 102px; }
+.badge-medaille--hero .badge-medaille__corps::before { inset: 10px; border-width: 3px; }
+.badge-medaille--hero .badge-medaille__corps::after { inset: 19px; }
+.badge-medaille--hero .badge-medaille__centre { width: 56px; height: 56px; }
+.badge-medaille--hero .badge-medaille__ruban { top: 82px; width: 36px; height: 46px; }
+.badge-medaille--hero .badge-medaille__ruban--g { left: 23px; }
+.badge-medaille--hero .badge-medaille__ruban--d { right: 23px; }
+
+/* ------------------------------------------------------------- Profil */
+.profil-hero__badges--medailles {
+  min-height: 92px;
+  align-items: flex-start;
+  gap: 7px;
+  padding-top: 14px;
+  padding-bottom: 0;
+}
+
+.badge-medaille-vide {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  margin-top: 5px;
+  border-radius: 50%;
+  border: 1px dashed var(--bordure-vive);
+  color: var(--texte-faible);
+  text-decoration: none;
+  opacity: .42;
+}
+.badge-medaille-vide:hover { opacity: .8; color: var(--accent); border-color: var(--accent-bordure); text-decoration: none; }
+.badge-medaille-vide--vedette { width: 58px; height: 58px; margin-top: 0; }
+
+.profil-arsenal--medailles {
+  grid-template-columns: repeat(5, minmax(0,1fr));
+  align-items: start;
+  padding: 4px 0 2px;
+}
+
+.profil-badge-item {
+  min-height: 116px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+  color: inherit;
+  text-decoration: none;
+}
+.profil-badge-item:hover { text-decoration: none; }
+.profil-badge-item__nom {
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--titre);
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--texte-doux);
+}
+.profil-badge-item--vide {
+  min-height: 94px;
+  justify-content: center;
+}
+.profil-badge-item--vide i {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px dashed var(--bordure);
+  color: var(--texte-faible);
+  font-style: normal;
+  opacity: .34;
+}
+
+/* ------------------------------------------------------------- Arsenal */
+.arsenal-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 24px;
+}
+.arsenal-entete__compte {
+  font-family: var(--titre);
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--accent);
+  opacity: .16;
+}
+
+.arsenal-legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 15px;
+  margin: 22px 0 8px;
+  color: var(--texte-faible);
+  font-size: .74rem;
+}
+.arsenal-legende__item { display: inline-flex; align-items: center; gap: 6px; }
+.arsenal-legende__item i { width: 7px; height: 7px; border-radius: 50%; background: #8e99a8; }
+.arsenal-legende__item--rare i { background: #42a5ff; box-shadow: 0 0 8px rgba(66,165,255,.45); }
+.arsenal-legende__item--epique i { background: #9a67ff; box-shadow: 0 0 8px rgba(154,103,255,.45); }
+.arsenal-legende__item--legendaire i { background: #e7b53c; box-shadow: 0 0 8px rgba(231,181,60,.45); }
+.arsenal-legende__item--mythique i { background: var(--accent); box-shadow: 0 0 9px rgba(232,255,61,.5); }
+
+.arsenal-vitrine {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 12px;
+}
+.arsenal-piece {
+  --piece: var(--bordure-vive);
+  min-height: 205px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 12px 15px;
+  border-radius: var(--rayon);
+  border: 1px solid color-mix(in oklab, var(--piece) 30%, var(--bordure));
+  background:
+    radial-gradient(85% 62% at 50% 8%, color-mix(in oklab, var(--piece) 14%, transparent), transparent 74%),
+    linear-gradient(180deg, var(--surface-2), var(--surface));
+}
+.arsenal-piece--rare { --piece: #42a5ff; }
+.arsenal-piece--epique { --piece: #9a67ff; }
+.arsenal-piece--legendaire { --piece: #e7b53c; }
+.arsenal-piece--mythique { --piece: var(--accent); }
+.arsenal-piece__nom { margin-top: 4px; font-family: var(--titre); font-size: 1rem; font-weight: 800; text-align: center; }
+.arsenal-piece__meta { margin-top: 3px; color: var(--texte-faible); font-size: .7rem; text-align: center; }
+
+.arsenal-famille { margin-top: 30px; }
+.arsenal-famille__titre {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.arsenal-famille__titre h2 { margin: 0; }
+.arsenal-famille__titre span { color: var(--texte-faible); font-size: .78rem; }
+
+.arsenal-grille {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 10px;
+}
+
+.badge-fiche {
+  --fiche: var(--bordure-vive);
+  display: grid;
+  grid-template-columns: 90px minmax(0,1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 138px;
+  padding: 13px 14px 12px 10px;
+  border-radius: 18px;
+  border: 1px solid var(--bordure);
+  background: linear-gradient(145deg, rgba(255,255,255,.018), transparent 48%), var(--surface);
+  opacity: .52;
+}
+.badge-fiche--obtenu { opacity: 1; border-color: color-mix(in oklab, var(--fiche) 34%, var(--bordure)); }
+.badge-fiche--rare { --fiche: #42a5ff; }
+.badge-fiche--epique { --fiche: #9a67ff; }
+.badge-fiche--legendaire { --fiche: #e7b53c; }
+.badge-fiche--mythique { --fiche: var(--accent); }
+.badge-fiche__visuel { display: grid; place-items: center; min-width: 0; }
+.badge-fiche__nom { font-family: var(--titre); font-weight: 800; font-size: 1rem; }
+.badge-fiche__rarete { margin-top: 2px; color: var(--fiche); font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.badge-fiche__desc { margin-top: 7px; color: var(--texte-doux); font-size: .78rem; line-height: 1.35; }
+.badge-fiche__condition { margin-top: 7px; color: var(--texte-faible); font-size: .72rem; line-height: 1.3; }
+.badge-fiche--obtenu .badge-fiche__condition { color: var(--succes); }
+
+.arsenal-secrets {
+  position: relative;
+  overflow: hidden;
+  margin-top: 34px;
+  padding: 20px;
+  border: 1px solid rgba(231,181,60,.18);
+  border-radius: var(--rayon);
+  background:
+    radial-gradient(520px 230px at 100% 0, rgba(231,181,60,.08), transparent 70%),
+    linear-gradient(145deg, #0a0d12, #10141b);
+}
+.arsenal-secrets::after {
+  content: 'CLASSIFIÉ';
+  position: absolute;
+  right: -18px;
+  top: 22px;
+  transform: rotate(9deg);
+  font-family: var(--titre);
+  font-weight: 900;
+  font-size: 2.8rem;
+  letter-spacing: .1em;
+  color: #fff;
+  opacity: .022;
+  pointer-events: none;
+}
+.arsenal-secrets__haut { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
+.arsenal-secrets__haut h2 { margin: 3px 0 0; }
+.arsenal-secrets__haut > span { color: var(--texte-faible); font-size: .72rem; }
+.arsenal-secrets__intro { max-width: 68ch; color: var(--texte-doux); font-size: .8rem; margin: 10px 0 16px; }
+.arsenal-grille--secrets { position: relative; z-index: 1; }
+.badge-fiche--secret { box-shadow: inset 0 0 38px rgba(231,181,60,.025); }
+.badge-fiche--mystere { opacity: .62; border-style: dashed; }
+.badge-fiche--mystere .badge-fiche__rarete { color: #b6a16e; }
+
+@media (max-width: 760px) {
+  .arsenal-vitrine { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .arsenal-grille { grid-template-columns: 1fr; }
+  .arsenal-entete__compte { display: none; }
+  .profil-arsenal--medailles { grid-template-columns: repeat(3, minmax(0,1fr)); }
+}
+
+@media (max-width: 480px) {
+  .badge-medaille--hero { transform: scale(.88); margin: -7px; }
+  .arsenal-piece { min-height: 184px; }
+  .badge-fiche { grid-template-columns: 76px minmax(0,1fr); padding-left: 6px; }
+  .badge-medaille { transform: scale(.9); }
+  .badge-medaille:hover { transform: scale(.9) translateY(-2px); }
+  .profil-hero__badges--medailles { gap: 1px; }
+  .profil-hero__badges--medailles .badge-medaille { transform: scale(.82); margin: -5px; }
+  .profil-hero__badges--medailles .badge-medaille:hover { transform: scale(.82); }
+  .badge-medaille-vide { width: 40px; height: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-medaille { transition: none; }
+}
