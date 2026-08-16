@@ -68,13 +68,39 @@ const ORIGIN = {
   description: 'Présent avant que Clutch ait une histoire.',
 };
 
+function ligneNiveauDom() {
+  return document.querySelector('.profil-identite__sur')?.textContent || '';
+}
+
 function titreNiveauDepuisDom() {
-  const sur = document.querySelector('.profil-identite__sur')?.textContent || '';
+  const sur = ligneNiveauDom();
   return sur.split('·').slice(1).join('·').trim() || 'Recrue';
 }
 
+function niveauDepuisDom() {
+  const match = ligneNiveauDom().match(/niveau\s+(\d+)/i);
+  return match ? Number(match[1]) : null;
+}
+
+function rangProgression(niveau) {
+  if (niveau >= 50) return 'CLUTCH';
+  if (niveau >= 35) return 'MASTER';
+  if (niveau >= 20) return 'ELITE';
+  if (niveau >= 10) return 'CHALLENGER';
+  if (niveau >= 5) return 'INITIÉ';
+  return 'RECRUE';
+}
+
+function normaliserRangProfil() {
+  const cible = document.querySelector('.profil-identite__sur');
+  const niveau = niveauDepuisDom();
+  if (!cible || !niveau) return;
+  cible.textContent = `Niveau ${niveau} · ${rangProgression(niveau)}`;
+  cible.setAttribute('title', 'Rang de progression Clutch');
+}
+
 function optionsTitres(badges, u, niveauTitre) {
-  const titres = [{ value: niveauTitre, label: niveauTitre, meta: 'Titre de niveau' }];
+  const titres = [{ value: niveauTitre, label: niveauTitre, meta: 'Titre de progression' }];
   if (u.est_fondateur) titres.push({ value: 'Fondateur', label: 'Fondateur', meta: 'Historique · Mythique' });
   badges
     .filter((b) => b.obtenu && (ordreRareteV2(b) <= 3 || b.secret))
@@ -88,7 +114,12 @@ function injecterIdentite(u, badges) {
   const pseudo = document.querySelector('.profil-identite__pseudo');
   if (!pseudo || document.querySelector('.profil-identite__ornements')) return;
 
+  // On capture le titre de progression historique AVANT de remplacer la ligne
+  // supérieure par le rang compétitif (Elite, Master, etc.). Les deux notions
+  // deviennent ainsi indépendantes : rang = progression, titre = identité.
   const niveauTitre = titreNiveauDepuisDom();
+  normaliserRangProfil();
+
   let titre = titreActuel(u, niveauTitre);
   const options = optionsTitres(badges, u, niveauTitre);
   if (!options.some((o) => o.value === titre)) titre = niveauTitre;
@@ -97,9 +128,8 @@ function injecterIdentite(u, badges) {
   bloc.className = 'profil-identite__ornements';
   bloc.innerHTML = `
     ${u.est_fondateur ? '<span class="profil-fondateur"><i></i>FONDATEUR</span>' : ''}
-    <button class="profil-titre-equipe" type="button" aria-haspopup="dialog">
-      <span class="profil-titre-equipe__sur">Titre équipé</span>
-      <strong>${esc(titre)}</strong><span class="profil-titre-equipe__chevron">⌄</span>
+    <button class="profil-titre-equipe" type="button" aria-haspopup="dialog" aria-label="Changer mon titre : ${esc(titre)}" title="Changer mon titre">
+      <strong>${esc(titre)}</strong><span class="profil-titre-equipe__chevron" aria-hidden="true">⌄</span>
     </button>`;
   pseudo.insertAdjacentElement('afterend', bloc);
 
@@ -113,7 +143,7 @@ function ouvrirTitres(u, options, actuel) {
   overlay.innerHTML = `
     <section class="profil-titres-modal" role="dialog" aria-modal="true" aria-label="Choisir un titre">
       <div class="profil-titres-modal__haut">
-        <div><span>IDENTITÉ</span><h2>Choisis ton titre</h2><p>Il apparaît sous ton pseudo sur ta player card.</p></div>
+        <div><span>IDENTITÉ</span><h2>Choisis ton titre</h2><p>Le rang montre ta progression. Le titre, lui, raconte qui tu es.</p></div>
         <button type="button" data-close aria-label="Fermer">×</button>
       </div>
       <div class="profil-titres-liste">
@@ -133,6 +163,8 @@ function ouvrirTitres(u, options, actuel) {
       u.titre_profil = titre;
       const cible = document.querySelector('.profil-titre-equipe strong');
       if (cible) cible.textContent = titre;
+      const bouton = document.querySelector('.profil-titre-equipe');
+      bouton?.setAttribute('aria-label', `Changer mon titre : ${titre}`);
       fermer();
     } catch (err) {
       b.disabled = false;
