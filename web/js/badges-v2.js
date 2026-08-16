@@ -239,22 +239,24 @@ export function xpDuBadgeV2(badgeOuCle) {
 
 export function evaluerBadgesV2(recap = {}) {
   const r = recap ?? {};
+  const fondateur = oui(r.est_fondateur);
   const publics = PUBLICS.map((b) => {
     let obtenu = false;
     if (!b.meta) {
       try { obtenu = Boolean(b.test?.(r)); } catch { obtenu = false; }
     }
-    return { ...b, secret: false, obtenu };
+    return { ...b, secret: false, obtenu: fondateur || obtenu };
   });
 
   // Petit Arsenal dépend des autres badges : il est évalué en seconde passe,
-  // sans jamais se compter lui-même.
+  // sans jamais se compter lui-même. Un compte Fondateur dispose de toute la
+  // collection pour tester et construire son identité sans fausser ses stats.
   const autresObtenus = publics.filter((b) => b.cle !== 'petit_arsenal' && b.obtenu).length;
   const petit = publics.find((b) => b.cle === 'petit_arsenal');
-  if (petit) petit.obtenu = autresObtenus >= 3;
+  if (petit) petit.obtenu = fondateur || autresObtenus >= 3;
 
   const secretsObtenus = new Set(Array.isArray(r.secrets_obtenus) ? r.secrets_obtenus : []);
-  const secrets = SECRETS.map((b) => ({ ...b, obtenu: secretsObtenus.has(b.cle) }));
+  const secrets = SECRETS.map((b) => ({ ...b, obtenu: fondateur || secretsObtenus.has(b.cle) }));
   return [...publics, ...secrets];
 }
 
