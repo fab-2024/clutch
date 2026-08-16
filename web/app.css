@@ -1610,3 +1610,135 @@ input::placeholder { color: var(--texte-faible); }
 @media (max-width: 620px) {
   .solde--volts { display: none; }
 }
+
+
+/* ==================================================================
+   Le profil — bannière et vitrine
+   ------------------------------------------------------------------
+   Le tag de l'équipe en filigrane remplace le logo qu'on n'a pas, et le
+   fond prend sa teinte. Toute l'identité vient donc de deux valeurs
+   déjà en base — le tag et le nom — sans charger une seule image.
+   ================================================================== */
+
+.ban {
+  position: relative;
+  border-radius: var(--rayon);
+  overflow: hidden;
+  border: 1px solid var(--bordure);
+  margin-bottom: 16px;
+}
+
+.ban__fond {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(120% 140% at 12% 0%, color-mix(in oklab, var(--teinte-eq, var(--bordure-vive)) 42%, transparent), transparent 62%),
+    radial-gradient(90% 120% at 100% 100%, color-mix(in oklab, var(--teinte-eq, var(--bordure-vive)) 20%, transparent), transparent 58%),
+    linear-gradient(160deg, var(--surface-2), var(--surface));
+}
+
+.ban__filigrane {
+  position: absolute; right: -14px; top: 42%;
+  transform: translateY(-50%);
+  font-family: var(--titre);
+  font-weight: 900;
+  font-size: 7rem;
+  letter-spacing: -0.06em;
+  color: #fff;
+  opacity: 0.055;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.ban__corps { position: relative; padding: 17px 18px 0; }
+
+.ban__haut { display: flex; align-items: center; gap: 13px; }
+.ban__id { min-width: 0; }
+
+.ban__pseudo {
+  font-family: var(--titre);
+  font-size: 1.5rem; font-weight: 800;
+  letter-spacing: -0.03em; line-height: 1.05;
+}
+
+.ban__eq { font-size: 0.79rem; color: var(--texte-doux); margin-top: 4px; }
+
+.ban__niv {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 10px; margin-top: 16px; font-size: 0.88rem;
+}
+.ban__niv strong { font-family: var(--titre); letter-spacing: -0.02em; }
+.ban__titre { color: var(--accent); font-weight: 650; }
+.ban__xp { font-size: 0.76rem; color: var(--texte-faible); font-variant-numeric: tabular-nums; }
+
+.ban__jauge {
+  height: 6px; margin-top: 7px;
+  border-radius: var(--rayon-pilule);
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+.ban__jauge i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--accent-sombre), var(--accent));
+}
+
+.ban__chiffres {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1px; background: var(--bordure);
+  margin: 17px -18px 0;
+  border-top: 1px solid var(--bordure);
+}
+.ban__chiffres > div {
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  padding: 11px 6px; text-align: center;
+}
+.ban__chiffres b {
+  display: block;
+  font-family: var(--titre); font-size: 1.05rem; font-weight: 800;
+  letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+}
+.ban__chiffres span { font-size: 0.68rem; color: var(--texte-faible); }
+
+/* ----------------------------------------------------- La vitrine */
+/* Les emplacements libres restent visibles, en pointillé : c'est le
+   vide qui donne envie de remplir. Même règle que les badges non
+   obtenus, qu'on affiche au lieu de les masquer. */
+
+.vitrine-p {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
+  gap: 9px;
+}
+
+.vitrine-p__t {
+  --lueur: var(--bordure-vive);
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 7px;
+  aspect-ratio: 1 / 1.05;
+  border-radius: var(--rayon-s);
+  border: 1px solid var(--bordure);
+  background:
+    radial-gradient(75% 55% at 50% 12%, color-mix(in oklab, var(--lueur) 24%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--surface-2), var(--surface));
+  color: var(--lueur);
+  text-align: center;
+  padding: 8px 6px;
+}
+
+.vitrine-p__t--rare     { --lueur: var(--accent); border-color: var(--accent-bordure); }
+.vitrine-p__t--exigeant { --lueur: var(--info); }
+.vitrine-p__t--commun   { --lueur: var(--texte-doux); }
+
+.vitrine-p__n {
+  font-size: 0.7rem; font-weight: 600;
+  color: var(--texte-doux);
+  line-height: 1.2;
+}
+
+.vitrine-p__t--libre {
+  border-style: dashed;
+  color: var(--texte-faible);
+  font-size: 1.3rem;
+  background: none;
+  opacity: 0.5;
+}

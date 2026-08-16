@@ -1,114 +1,79 @@
 import * as api from '../api.js';
 import { contexte, majSolde, bandeauSaison } from '../app.js';
-import { esc, frags, jeton, dateLisible, toast, vide } from '../ui.js';
+import { esc, frags, jeton, dateLisible, toast, vide, ecusson } from '../ui.js';
 import { badgePari } from './match.js';
-import { carteCallPose } from './call.js';
-import { PRIME_SERIE_MAX } from '../core.js';
+import { PRIME_SERIE_MAX, RARETE_BADGE, xpDetaillee, progressionNiveau } from '../core.js';
+
+/**
+ * Le profil, en cinq étages, dans cet ordre :
+ *
+ *   1. la bannière — qui je suis
+ *   2. la vitrine de badges — ce que j'ai décroché
+ *   3. le bonus de connexion — ce que je peux prendre maintenant
+ *   4. les pronostics en cours — ce que j'attends
+ *   5. l'historique — ce que j'ai fait
+ *
+ * L'ordre va de l'identité vers l'activité : on ouvre son profil pour se
+ * regarder, pas pour travailler. Le poste de pilotage, c'est l'écran des
+ * matchs.
+ *
+ * Le call de la saison n'est plus ici : son rappel vit sur l'écran des
+ * matchs, c'est-à-dire au moment où le joueur pense déjà à pronostiquer.
+ * L'afficher aux deux endroits le diluait.
+ */
+
+const ORDRE_RARETE = { rare: 0, exigeant: 1, commun: 2 };
 
 export async function vueProfil(racine) {
   if (!contexte.utilisateur) {
     racine.innerHTML = vide(
       'Pas encore de compte',
-      'Crée-toi un profil pour suivre tes paris.',
+      'Crée-toi un profil pour suivre tes pronostics.',
       '<a class="btn" href="#/connexion">Commencer</a>'
     );
     return;
   }
 
-  const [paris, stats, prime, call, badges] = await Promise.all([
+  const [paris, stats, prime, badges] = await Promise.all([
     api.mesParis(),
     api.statistiques(),
     api.etatPrime(),
-    api.monCall(),
     api.mesBadges().catch(() => null),
   ]);
+
   const enCours = paris.filter((p) => p.statut === 'en_cours');
   const regles = paris.filter((p) => p.statut !== 'en_cours');
-  const benefice = stats.gains - stats.mises;
-  const favorite = contexte.utilisateur.equipe_favorite;
-  const obtenus = badges?.badges?.filter((b) => b.obtenu)?.length ?? 0;
-  const total = badges?.badges?.length ?? 0;
 
   racine.innerHTML = `
     ${bandeauSaison()}
-
-    <!-- La carte d'identité, en premier : qui je suis, mon titre, mon équipe. -->
-    <div class="bloc bloc--volt">
-      <div class="bloc__titre">
-        <span>Mon profil</span>
-        <span>${esc(contexte.saison?.nom ?? '')}</span>
-      </div>
-      <div class="bloc__corps">
-        <h1 style="margin-bottom:8px">${esc(contexte.utilisateur.pseudo || contexte.utilisateur.email || 'Mon profil')}</h1>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-          ${favorite ? `<span class="badge badge--equipe">★ ${esc(favorite.tag)} · ${esc(favorite.nom)}</span>` : ''}
-          ${total ? `<span class="badge">${obtenus} / ${total} badges</span>` : ''}
-          <span class="badge">membre depuis le ${esc(new Date(contexte.utilisateur.cree_le).toLocaleDateString('fr-FR'))}</span>
-        </div>
-        <div class="grille grille--stats">
-          <div class="stat"><div class="stat__valeur">${jeton(20)} ${esc(frags(stats.solde))}</div><div class="stat__libelle">Solde</div></div>
-          <div class="stat"><div class="stat__valeur">${stats.paris}</div><div class="stat__libelle">Paris réglés</div></div>
-          <div class="stat"><div class="stat__valeur">${stats.paris ? Math.round((stats.gagnes / stats.paris) * 100) : 0} %</div><div class="stat__libelle">Réussite</div></div>
-          <div class="stat">
-            <div class="stat__valeur ${benefice >= 0 ? 'positif' : 'negatif'}">${benefice >= 0 ? '+' : ''}${esc(frags(benefice))}</div>
-            <div class="stat__libelle">Bénéfice net</div>
-          </div>
-          <div class="stat">
-            <div class="stat__valeur ${stats.roi >= 0 ? 'positif' : 'negatif'}">${stats.roi >= 0 ? '+' : ''}${Number(stats.roi).toFixed(1)} %</div>
-            <div class="stat__libelle">Retour sur mise</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="grille grille--2" style="margin-bottom:16px">
-      ${cartePrime(prime)}
-      ${carteCall(call)}
-    </div>
-
-    <div class="bloc">
-      <div class="bloc__titre"><span>Mon dossier</span></div>
-      <div class="bloc__corps">
-        <div class="grille grille--3">
-          <a class="tuile" href="#/analyste">
-            <span class="tuile__titre">Profil d'analyste</span>
-            <span class="tuile__aide">Où tu gagnes vraiment</span>
-          </a>
-          <a class="tuile" href="#/badges">
-            <span class="tuile__titre">Badges</span>
-            <span class="tuile__aide">${total ? `${obtenus} sur ${total} décrochés` : 'À décrocher'}</span>
-          </a>
-          <a class="tuile" href="#/cartes">
-            <span class="tuile__titre">Je l'avais dit</span>
-            <span class="tuile__aide">Tes paris à partager</span>
-          </a>
-        </div>
-      </div>
-    </div>
+    ${banniere(stats, badges)}
+    ${vitrineBadges(badges)}
+    ${cartePrime(prime)}
 
     <div class="bloc">
       <div class="bloc__titre">
-        <span>Paris en cours</span>
+        <span>Pronostics en cours</span>
         <span>${enCours.length} en attente de résultat</span>
       </div>
       <div class="bloc__corps" style="padding:${enCours.length ? '0' : '18px'}">
-        ${enCours.length ? tableauParis(enCours) : vide('Rien en cours', 'Va miser sur un match.')}
+        ${enCours.length ? tableauParis(enCours) : vide('Rien en cours', 'Va pronostiquer sur un match.')}
       </div>
     </div>
 
     <div class="bloc">
       <div class="bloc__titre">
-        <span>Historique des paris</span>
+        <span>Historique des pronostics</span>
         <span>${regles.length} réglé${regles.length > 1 ? 's' : ''} sur ${esc(contexte.saison?.nom ?? 'la saison')}</span>
       </div>
       <div class="bloc__corps" style="padding:${regles.length ? '0' : '18px'}">
-        ${regles.length ? tableauParis(regles) : vide('Historique vide', 'Tes paris réglés apparaîtront ici.')}
+        ${regles.length ? tableauParis(regles) : vide('Historique vide', 'Tes pronostics réglés apparaîtront ici.')}
       </div>
     </div>
 
     <p style="color:var(--texte-faible);font-size:0.84rem">
-      Équipe préférée, prono par défaut, saison, déconnexion :
-      <a href="#/parametres">c'est dans les paramètres</a>.
+      <a href="#/analyste">Profil d'analyste</a> ·
+      <a href="#/cartes">Cartes « je l'avais dit »</a> ·
+      <a href="#/parametres">Paramètres</a>
     </p>`;
 
   racine.querySelector('#prime')?.addEventListener('click', async (e) => {
@@ -130,11 +95,129 @@ export async function vueProfil(racine) {
   });
 }
 
+/**
+ * La bannière.
+ *
+ * Le tag de l'équipe en filigrane remplace le logo qu'on n'a pas, et le fond
+ * prend sa teinte : l'identité vient de l'équipe, sans jamais charger d'image.
+ * Elle porte le niveau parce que c'est le seul compteur qui traverse les
+ * saisons — les Frags, eux, repartent à zéro.
+ */
+function banniere(stats, donnees) {
+  const u = contexte.utilisateur;
+  const eq = u.equipe_favorite;
+  const benefice = stats.gains - stats.mises;
+
+  const n = progressionNiveau(
+    xpDetaillee({
+      badges: donnees?.badges ?? [],
+      recap: donnees?.recap ?? {},
+      note: u?.note ?? null,
+      note_paris: u?.note_paris ?? stats.paris ?? 0,
+    }).total
+  );
+
+  return `
+    <div class="ban"${eq ? '' : ' data-sans-equipe'}>
+      <div class="ban__fond"></div>
+      ${eq ? `<div class="ban__filigrane" aria-hidden="true">${esc(eq.tag)}</div>` : ''}
+      <div class="ban__corps">
+        <div class="ban__haut">
+          ${eq ? ecusson(eq.tag, eq.nom) : ''}
+          <div class="ban__id">
+            <div class="ban__pseudo">${esc(u.pseudo || u.email || 'Mon profil')}</div>
+            <div class="ban__eq">
+              ${eq ? esc(eq.nom) : '<a href="#/parametres">Choisis ton équipe</a>'}
+              · membre depuis le ${esc(new Date(u.cree_le).toLocaleDateString('fr-FR'))}
+            </div>
+          </div>
+        </div>
+
+        <div class="ban__niv">
+          <span><strong>Niveau ${n.niveau}</strong> <span class="ban__titre">${esc(n.titre)}</span></span>
+          <span class="ban__xp">${n.xp.toLocaleString('fr-FR')} XP</span>
+        </div>
+        <div class="ban__jauge"><i style="width:${Math.max(2, Math.round(n.part * 100))}%"></i></div>
+
+        <div class="ban__chiffres">
+          <div><b>${jeton(17)} ${esc(String(stats.solde))}</b><span>Frags</span></div>
+          <div><b class="${benefice >= 0 ? 'positif' : 'negatif'}">${benefice >= 0 ? '+' : ''}${esc(String(benefice))}</b><span>Bénéfice</span></div>
+          <div><b class="${stats.roi >= 0 ? 'positif' : 'negatif'}">${stats.roi >= 0 ? '+' : ''}${Number(stats.roi).toFixed(1)} %</b><span>Retour</span></div>
+          <div><b>${stats.paris}</b><span>Réglés</span></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/**
+ * La vitrine de badges.
+ *
+ * Cinq emplacements, les plus rares d'abord, et les emplacements libres
+ * restent visibles en pointillé : c'est le vide qui donne envie de remplir.
+ * Le détail complet reste dans l'Arsenal — ici on montre, on n'inventorie pas.
+ */
+function vitrineBadges(donnees) {
+  const badges = donnees?.badges ?? [];
+  const obtenus = badges.filter((b) => b.obtenu);
+  const total = badges.length;
+
+  const exposes = [...obtenus]
+    .sort((a, b) => ORDRE_RARETE[RARETE_BADGE[a.cle]] - ORDRE_RARETE[RARETE_BADGE[b.cle]])
+    .slice(0, 5);
+  const libres = Math.max(0, 5 - exposes.length);
+
+  return `
+    <div class="bloc">
+      <div class="bloc__titre">
+        <span>Ma vitrine</span>
+        <span>${obtenus.length}${total ? ` / ${total}` : ''} trophée${obtenus.length > 1 ? 's' : ''}</span>
+      </div>
+      <div class="bloc__corps">
+        <div class="vitrine-p">
+          ${exposes
+            .map(
+              (b) => `<span class="vitrine-p__t vitrine-p__t--${esc(RARETE_BADGE[b.cle])}"
+                            title="${esc(b.nom)} — ${esc(b.description)}">
+                ${sceau(b.famille)}
+                <span class="vitrine-p__n">${esc(b.nom)}</span>
+              </span>`
+            )
+            .join('')}
+          ${Array.from({ length: libres })
+            .map(() => `<span class="vitrine-p__t vitrine-p__t--libre" aria-hidden="true">+</span>`)
+            .join('')}
+        </div>
+        <p style="color:var(--texte-faible);font-size:0.8rem;margin:14px 0 0">
+          ${
+            obtenus.length
+              ? `Tes trophées les plus rares. <a href="#/badges">Voir l’Arsenal complet</a>.`
+              : `Aucun trophée pour l’instant — <strong>Dans le vert</strong> se décroche dès que ton
+                 bénéfice repasse au-dessus de zéro. <a href="#/badges">Voir ce qu’il y a à décrocher</a>.`
+          }
+        </p>
+      </div>
+    </div>`;
+}
+
+function sceau(famille) {
+  const formes = {
+    Audace: 'M12 3 4 13h5l-1 8 8-10h-5z',
+    Précision: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6z',
+    Rentabilité: 'M5 17 10 11l3 3 6-7',
+    Régularité: 'M6 4v16M12 4v16M18 4v16',
+    Connaissance: 'M12 3 3 8l9 5 9-5zM3 13l9 5 9-5',
+    Social: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20a6 6 0 0 1 12 0M15 20a6 6 0 0 1 6-6',
+  };
+  const d = formes[famille] ?? formes.Précision;
+  const plein = famille === 'Audace' || famille === 'Connaissance';
+  return `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+    <path d="${d}" fill="${plein ? 'currentColor' : 'none'}" stroke="currentColor"
+          stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>`;
+}
+
 /** Prime de connexion : la série de sept jours et ce qu'elle vaut aujourd'hui. */
 function cartePrime(prime) {
   if (!prime) return '';
-  // Deux lectures différentes : prime disponible, on montre le jour qu'on est
-  // sur le point de prendre ; prime déjà prise, on montre le jour acquis.
   const serie = prime.disponible ? prime.serie_prochaine : prime.serie_actuelle;
   const heures = Math.ceil((prime.attente_ms || 0) / 3600000);
 
@@ -147,43 +230,29 @@ function cartePrime(prime) {
   }).join('');
 
   return `
-    <div class="carte carte--prime">
-      <div class="carte-call-pose__haut">
-        <strong>Prime de connexion</strong>
-        <span class="badge">jour ${serie} / ${PRIME_SERIE_MAX}</span>
+    <div class="bloc">
+      <div class="bloc__titre">
+        <span>Bonus de connexion</span>
+        <span>jour ${serie} / ${PRIME_SERIE_MAX}</span>
       </div>
-      <div class="serie">${points}</div>
-      <p style="color:var(--texte-doux);font-size:0.86rem;margin:12px 0">
-        ${
-          prime.disponible
-            ? `Disponible maintenant : <strong style="color:var(--accent)">${prime.montant} Frags</strong>.
-               Reviens demain pour passer au jour ${serie >= PRIME_SERIE_MAX ? 1 : serie + 1}.`
-            : `Jour ${serie} encaissé. Prochaine prime dans ${heures} h — passer un jour remet la série à zéro.`
-        }
-      </p>
-      <button class="btn btn--large" id="prime" ${prime.disponible ? '' : 'disabled'}>
-        ${prime.disponible ? `Encaisser ${prime.montant} Frags` : `Revenir dans ${heures} h`}
-      </button>
-      <p style="color:var(--texte-faible);font-size:0.76rem;margin:12px 0 0">
-        Total encaissé cette saison : ${esc(frags(prime.total_encaisse || 0))}. À partir du
-        jour 3, la prime bonifiée demande d'avoir misé dans la semaine.
-      </p>
-    </div>`;
-}
-
-function carteCall(call) {
-  if (call) return carteCallPose(call);
-  return `
-    <div class="carte carte--appel">
-      <div class="carte-call-pose__haut">
-        <strong>Le call de la saison</strong>
-        <span class="badge badge--attente">à poser</span>
+      <div class="bloc__corps">
+        <div class="serie">${points}</div>
+        <p style="color:var(--texte-doux);font-size:0.86rem;margin:12px 0">
+          ${
+            prime.disponible
+              ? `Disponible maintenant : <strong style="color:var(--accent)">${prime.montant} Frags</strong>.
+                 Reviens demain pour passer au jour ${serie >= PRIME_SERIE_MAX ? 1 : serie + 1}.`
+              : `Jour ${serie} encaissé. Prochain bonus dans ${heures} h — passer un jour remet la série à zéro.`
+          }
+        </p>
+        <button class="btn btn--large" id="prime" ${prime.disponible ? '' : 'disabled'}>
+          ${prime.disponible ? `Encaisser ${prime.montant} Frags` : `Revenir dans ${heures} h`}
+        </button>
+        <p style="color:var(--texte-faible);font-size:0.76rem;margin:12px 0 0">
+          Total encaissé cette saison : ${esc(frags(prime.total_encaisse || 0))}. À partir du
+          jour 3, le bonus bonifié demande d'avoir pronostiqué dans la semaine.
+        </p>
       </div>
-      <p style="color:var(--texte-doux);margin:12px 0">
-        Un seul pronostic pour toute la saison : qui gagne le tournoi ? Il se pose avant
-        le premier match, reste affiché ici jusqu'à la finale, et il ne se reprend pas.
-      </p>
-      <a class="btn btn--large" href="#/call">Poser mon call</a>
     </div>`;
 }
 
@@ -191,14 +260,14 @@ function tableauParis(paris) {
   return `
     <table class="tableau">
       <thead>
-        <tr><th>Match</th><th>Pari</th><th class="num">Mise</th><th class="num">Cote</th><th class="num">Résultat</th></tr>
+        <tr><th>Match</th><th>Pronostic</th><th class="num">Engagé</th><th class="num">Multipl.</th><th class="num">Résultat</th></tr>
       </thead>
       <tbody>
         ${paris
           .map(
             (p) => `<tr>
               <td>
-                <a href="#/matchs/${encodeURIComponent(p.match_id)}">${esc(p.match?.equipe_a ?? p.equipe_a ?? '')} vs ${esc(p.match?.equipe_b ?? p.equipe_b ?? '')}</a>
+                <a href="#/matchs/${encodeURIComponent(p.match_id)}">${esc(p.match?.equipe_a ?? p.equipe_a ?? '')} – ${esc(p.match?.equipe_b ?? p.equipe_b ?? '')}</a>
                 <div style="font-size:0.75rem;color:var(--texte-faible)">${esc(dateLisible(p.cree_le))}</div>
               </td>
               <td>${esc(p.libelle_choix)}<div style="font-size:0.75rem;color:var(--texte-faible)">${esc(p.libelle_marche)}</div></td>
