@@ -1,0 +1,176 @@
+/* ========================================================================
+   CLUTCH — Relic Vessels V4 / final harmonisation
+   Même famille, rôles plus distincts : précieux → massif → rituel → machine
+   → anomalie → reliquaire.
+   ======================================================================== */
+
+/* Une seule patine commune sur toute la collection. */
+.relic-vessel--v3 .rv__metal-plate,
+.relic-vessel--v3 .rv__metal-fill,
+.relic-vessel--v3 .rv__strap,
+.relic-vessel--v3 .rv__brace,
+.relic-vessel--v3 .rv__pipe-metal {
+  filter: saturate(.84) contrast(1.1) drop-shadow(0 2px 2px rgba(0,0,0,.28));
+}
+.relic-vessel--v3 .rv__metal-wear { opacity: .68; }
+.relic-vessel--v3 .rv__glass-edge { opacity: .72; }
+.relic-vessel--v3 .rv__age { opacity: .72; }
+
+/* ------------------------------------------------------------------------
+   Hiérarchie des socles : les premiers flottent presque, les derniers pèsent.
+   ------------------------------------------------------------------------ */
+.relic-vessel--n1 .rv__ground,
+.relic-vessel--n1 .rv__ground-core {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scaleX(.64);
+  opacity: .48;
+}
+.relic-vessel--n2 .rv__ground,
+.relic-vessel--n2 .rv__ground-core {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scaleX(.78);
+  opacity: .58;
+}
+.relic-vessel--n3 .rv__ground,
+.relic-vessel--n3 .rv__ground-core { opacity: .72; }
+.relic-vessel--n4 .rv__ground,
+.relic-vessel--n4 .rv__ground-core { opacity: .78; }
+.relic-vessel--n5 .rv__ground,
+.relic-vessel--n5 .rv__ground-core {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scaleX(1.05);
+  opacity: .86;
+}
+.relic-vessel--n6 .rv__ground,
+.relic-vessel--n6 .rv__ground-core {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scaleX(1.03);
+  opacity: .88;
+}
+.relic-vessel--n7 .rv__ground,
+.relic-vessel--n7 .rv__ground-core {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scaleX(1.12);
+  opacity: .96;
+}
+
+/* II — Flacon : davantage bijou, moins mini-Bombonne. */
+.relic-vessel--n2 .rv__strap { opacity: .78; }
+.relic-vessel--n2 .rv__strap--shoulder { stroke-width: 6.2; }
+.relic-vessel--n2 .rv__emblem-ring { stroke-width: 3.7; }
+.relic-vessel--n2 .rv__emblem-mark {
+  filter: drop-shadow(0 0 6px color-mix(in oklab,var(--rv-mid) 50%,transparent));
+}
+.relic-vessel--n2 .rv__sigil {
+  filter: drop-shadow(0 0 8px color-mix(in oklab,var(--rv-mid) 22%,transparent));
+}
+
+/* III — Bombonne : masse, cage et réserve. */
+.relic-vessel--n3 .rv__strap--broad { stroke-width: 9.6; }
+.relic-vessel--n3 .rv__metal-plate--dark { filter: brightness(.62) saturate(.68); }
+.relic-vessel--n3 .rv__emblem-ring { stroke-width: 5.1; }
+.relic-vessel--n3 .rv__core--deep {
+  filter: drop-shadow(0 0 10px var(--rv-mid)) drop-shadow(0 0 25px color-mix(in oklab,var(--rv-mid) 52%,transparent));
+}
+
+/* IV — Calice : objet de rituel. */
+.relic-vessel--n4 .rv__ritual-diamond {
+  stroke-width: 2.1;
+  filter:
+    drop-shadow(0 3px 4px rgba(0,0,0,.72))
+    drop-shadow(0 0 7px color-mix(in oklab,var(--rv-mid) 24%,transparent));
+}
+.relic-vessel--n4 .rv__strap--faceted { stroke-width: 7.1; }
+.relic-vessel--n4 .rv__emblem-ring { stroke-width: 4.4; }
+.relic-vessel--n4 .rv__runes {
+  opacity: .42;
+  filter: drop-shadow(0 0 5px color-mix(in oklab,var(--rv-mid) 26%,transparent));
+}
+.relic-vessel--n4 .rv__liquid { animation: rv-ritual-liquid 6.8s ease-in-out infinite; }
+
+/* V — Alambic : on exagère volontairement la machine pour la lecture miniature. */
+.relic-vessel--n5 .rv__pipe-metal { stroke-width: 13.5; }
+.relic-vessel--n5 .rv__pipe-highlight { stroke-width: 2.5; opacity: .66; }
+.relic-vessel--n5 .rv__glass--orb,
+.relic-vessel--n5 .rv__energy-orb {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(1.07);
+}
+.relic-vessel--n5 .rv__energy-orb {
+  filter: drop-shadow(0 0 16px var(--rv-mid));
+}
+.relic-vessel--n5 .rv__emblem-ring { stroke-width: 5.2; }
+
+/* VI — Cornue : la seule forme volontairement déséquilibrée. */
+.relic-vessel--n6 svg {
+  transform-origin: 50% 54%;
+  transform: rotate(-1.15deg) translateX(-1px);
+}
+.relic-vessel--n6 .rv__brace { stroke-width: 10.4; }
+.relic-vessel--n6 .rv__sigil--side {
+  filter:
+    drop-shadow(0 3px 4px rgba(0,0,0,.8))
+    drop-shadow(0 0 7px color-mix(in oklab,var(--rv-mid) 34%,transparent));
+}
+.relic-vessel--n6 .rv__liquid {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rv-anomaly-liquid 4.4s ease-in-out infinite;
+}
+.relic-vessel--n6 .rv__crack--unstable { stroke-width: 2.35; }
+
+/* VII — Océan : moins nerveux, plus monumental. */
+.relic-vessel--n7 .rv__emblem-ring { stroke-width: 5.8; }
+.relic-vessel--n7 .rv__core--deep {
+  animation-duration: 5.2s;
+  filter:
+    drop-shadow(0 0 13px var(--rv-mid))
+    drop-shadow(0 0 32px color-mix(in oklab,var(--rv-mid) 48%,transparent));
+}
+.relic-vessel--n7 .rv__liquid { animation: rv-ocean-liquid 7.8s ease-in-out infinite; }
+
+/* ------------------------------------------------------------------------
+   Proportions du laboratoire : progression visible sans rogner les cartes.
+   ------------------------------------------------------------------------ */
+.commu-lab__forme--n1 .relic-vessel--v3 { width:132px; height:176px; }
+.commu-lab__forme--n2 .relic-vessel--v3 { width:136px; height:179px; }
+.commu-lab__forme--n3 .relic-vessel--v3 { width:149px; height:184px; }
+.commu-lab__forme--n4 .relic-vessel--v3 { width:148px; height:185px; }
+.commu-lab__forme--n5 .relic-vessel--v3 { width:156px; height:188px; }
+.commu-lab__forme--n6 .relic-vessel--v3 { width:153px; height:187px; }
+.commu-lab__forme--n7 .relic-vessel--v3 { width:158px; height:190px; }
+
+/* Le hero reste calme : l'objet est devant, les orbites derrière. */
+.commu-core--epure .commu-reacteur__orbite--a { opacity:.27; }
+.commu-core--epure .commu-reacteur__orbite--b { opacity:.15; }
+.commu-core--epure .commu-reacteur__halo { opacity:.4; }
+
+@keyframes rv-ritual-liquid {
+  0%,100% { opacity:.84; filter:saturate(1.1) drop-shadow(0 0 5px color-mix(in oklab,var(--rv-mid) 42%,transparent)); }
+  50% { opacity:1; filter:saturate(1.2) drop-shadow(0 0 10px color-mix(in oklab,var(--rv-mid) 58%,transparent)); }
+}
+@keyframes rv-anomaly-liquid {
+  0%,100% { transform:skewY(-1.2deg) translateY(1px); filter:saturate(1.14) drop-shadow(0 0 6px color-mix(in oklab,var(--rv-mid) 48%,transparent)); }
+  45% { transform:skewY(1.8deg) translateY(-2px); filter:saturate(1.26) drop-shadow(0 0 11px color-mix(in oklab,var(--rv-mid) 62%,transparent)); }
+  72% { transform:skewY(-.6deg) translateY(0); }
+}
+@keyframes rv-ocean-liquid {
+  0%,100% { opacity:.88; filter:saturate(1.08) drop-shadow(0 0 7px color-mix(in oklab,var(--rv-mid) 46%,transparent)); }
+  50% { opacity:1; filter:saturate(1.17) drop-shadow(0 0 14px color-mix(in oklab,var(--rv-mid) 60%,transparent)); }
+}
+
+@media (max-width:640px) {
+  .commu-lab__forme .relic-vessel--v3 { width:130px; height:171px; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .relic-vessel--n4 .rv__liquid,
+  .relic-vessel--n6 .rv__liquid,
+  .relic-vessel--n7 .rv__liquid { animation:none !important; }
+}
