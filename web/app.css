@@ -958,3 +958,34 @@ input::placeholder { color: var(--texte-faible); }
 .objet-carte--hors-budget {
   opacity: 0.55;
 }
+
+
+/* ------------------------------------------------------------------ */
+/* Amis — une ligne par personne                                       */
+/* ------------------------------------------------------------------ */
+
+.ligne-ami {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--bordure);
+}
+
+.ligne-ami:last-child { border-bottom: 0; }
+
+.ligne-ami__nom { font-weight: 600; }
+
+.ligne-ami__aide {
+  font-size: 0.82rem;
+  color: var(--texte-faible);
+  margin-top: 2px;
+}
+
+.ligne-ami__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}

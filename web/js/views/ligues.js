@@ -11,10 +11,12 @@ import * as api from '../api.js';
 import { contexte, bandeauSaison } from '../app.js';
 import { esc, toast, vide, surClic } from '../ui.js';
 import { vueClassement } from './classement.js';
+import { sectionAmis } from './amis.js';
 
 const ONGLETS = [
   { cle: 'global', libelle: 'Classement global' },
   { cle: 'mes', libelle: 'Mes ligues' },
+  { cle: 'amis', libelle: 'Amis' },
 ];
 
 /** Retenu d'une visite à l'autre — mais jamais imposé au premier passage. */
@@ -56,6 +58,7 @@ export async function vueLigues(racine, force = null) {
     ancienne.replaceWith(zone);
     zone.innerHTML = '<div class="chargement"><span class="spinner"></span></div>';
     if (cle === 'global') await vueClassement(zone, { entete: false });
+    else if (cle === 'amis') await sectionAmis(zone);
     else await sectionMesLigues(zone);
   };
 

@@ -902,3 +902,42 @@ export async function equiperObjet(objetId) {
   if (MODE_DEMO) return demo.equiperObjet(objetId);
   return rpc('clutch_equiper', { p_objet_id: objetId });
 }
+
+/* ------------------------------------------------------------------ */
+/* Amis                                                                */
+/* ------------------------------------------------------------------ */
+
+/** Recherche par pseudo. Deux caractères minimum, dix résultats. */
+export async function chercherJoueurs(terme) {
+  if (MODE_DEMO) return demo.chercherJoueurs(terme);
+  return (await rpc('clutch_chercher_joueurs', { p_terme: terme })) ?? [];
+}
+
+export async function demanderAmi(userId) {
+  if (MODE_DEMO) return demo.demanderAmi(userId);
+  return rpc('clutch_demander_ami', { p_user: userId });
+}
+
+export async function repondreDemande(userId, accepter) {
+  if (MODE_DEMO) return demo.repondreDemande(userId, accepter);
+  return rpc('clutch_repondre_demande', { p_user: userId, p_accepter: accepter });
+}
+
+export async function retirerAmi(userId) {
+  if (MODE_DEMO) return demo.retirerAmi(userId);
+  return rpc('clutch_retirer_ami', { p_user: userId });
+}
+
+/** Amis, demandes reçues et demandes envoyées en un seul aller-retour. */
+export async function mesAmis(options) {
+  if (MODE_DEMO) return demo.mesAmis(options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return rpc('clutch_mes_amis', { p_saison_id: saison });
+}
+
+/** Uniquement des paris réglés — voir le commentaire de 13_amis.sql. */
+export async function activiteAmis(options) {
+  if (MODE_DEMO) return demo.activiteAmis(options);
+  const saison = options?.saison ?? (await saisonCourante())?.id;
+  return (await rpc('clutch_activite_amis', { p_saison_id: saison, p_limite: 20 })) ?? [];
+}
