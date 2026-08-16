@@ -2,9 +2,15 @@ import * as api from '../api.js';
 import { contexte, majSolde, bandeauSaison } from '../app.js';
 import { esc, frags, dateLisible, toast, vide } from '../ui.js';
 import { badgePari } from './match.js';
-import { PRIME_SERIE_MAX, RARETE_BADGE, xpDetaillee, progressionNiveau } from '../core.js';
-
-const ORDRE_RARETE = { rare: 0, exigeant: 1, commun: 2 };
+import { PRIME_SERIE_MAX, progressionNiveau } from '../core.js';
+import {
+  NB_BADGES_PUBLICS,
+  evaluerBadgesV2,
+  xpDetailleeV2,
+  ordreRareteV2,
+  rareteBadgeV2,
+  iconeFamilleBadge,
+} from '../badges-v2.js';
 
 export async function vueProfil(racine) {
   if (!contexte.utilisateur) {
@@ -16,12 +22,19 @@ export async function vueProfil(racine) {
     return;
   }
 
-  const [paris, stats, prime, badges] = await Promise.all([
+  const [paris, stats, prime, badgesBruts] = await Promise.all([
     api.mesParis(),
     api.statistiques(),
     api.etatPrime(),
     api.mesBadges().catch(() => null),
   ]);
+
+  // api.mesBadges() continue de fournir le récapitulatif historique. Le nouveau
+  // catalogue est volontairement appliqué ici : on peut itérer sur les badges
+  // sans toucher à l'API ni dupliquer leurs règles dans Supabase.
+  const badges = badgesBruts
+    ? { ...badgesBruts, badges: evaluerBadgesV2(badgesBruts.recap ?? {}) }
+    : null;
 
   const enCours = paris.filter((p) => p.statut === 'en_cours');
   const regles = paris.filter((p) => p.statut !== 'en_cours');
@@ -82,7 +95,7 @@ export async function vueProfil(racine) {
 function infosNiveau(donnees, stats) {
   const u = contexte.utilisateur;
   return progressionNiveau(
-    xpDetaillee({
+    xpDetailleeV2({
       badges: donnees?.badges ?? [],
       recap: donnees?.recap ?? {},
       note: u?.note ?? null,
@@ -112,15 +125,29 @@ function logoClutch(niveau) {
     </div>`;
 }
 
-function rareteBadge(b) {
-  return RARETE_BADGE[b?.cle] ?? 'commun';
-}
-
 function badgesExposes(donnees, limite = 4) {
   return [...(donnees?.badges ?? [])]
     .filter((b) => b.obtenu)
-    .sort((a, b) => (ORDRE_RARETE[rareteBadge(a)] ?? 9) - (ORDRE_RARETE[rareteBadge(b)] ?? 9))
+    .sort((a, b) => ordreRareteV2(a) - ordreRareteV2(b))
     .slice(0, limite);
+}
+
+function medailleBadge(badge, { vedette = false, lien = false } = {}) {
+  const rarete = rareteBadgeV2(badge);
+  const secret = badge.secret ? ' badge-medaille--secret' : '';
+  const hero = vedette ? ' badge-medaille--vedette' : '';
+  const contenu = `
+    <span class="badge-medaille__corps">
+      <span class="badge-medaille__centre">${iconeFamilleBadge(badge.famille, vedette ? 25 : 20)}</span>
+    </span>
+    <span class="badge-medaille__ruban badge-medaille__ruban--g" aria-hidden="true"></span>
+    <span class="badge-medaille__ruban badge-medaille__ruban--d" aria-hidden="true"></span>`;
+
+  const titre = `${badge.nom} · ${badge.secret ? 'Légendaire secret' : rarete}`;
+  if (lien) {
+    return `<a class="badge-medaille badge-medaille--${esc(rarete)}${secret}${hero}" href="#/badges" title="${esc(titre)}">${contenu}</a>`;
+  }
+  return `<span class="badge-medaille badge-medaille--${esc(rarete)}${secret}${hero}" title="${esc(titre)}">${contenu}</span>`;
 }
 
 function heroProfil(stats, donnees, regles, enCours) {
@@ -137,17 +164,10 @@ function heroProfil(stats, donnees, regles, enCours) {
     <section class="profil-hero"${eq ? '' : ' data-sans-equipe'}>
       ${eq ? `<div class="profil-hero__tag" aria-hidden="true">${esc(eq.tag)}</div>` : ''}
 
-      <div class="profil-hero__badges" aria-label="Badges exposés">
-        ${exposes
-          .map(
-            (b) => `<span class="profil-pin profil-pin--${esc(rareteBadge(b))}"
-                         title="${esc(b.nom)} — ${esc(b.description)}">
-              ${sceau(b.famille)}
-            </span>`
-          )
-          .join('')}
+      <div class="profil-hero__badges profil-hero__badges--medailles" aria-label="Badges exposés">
+        ${exposes.map((b, i) => medailleBadge(b, { vedette: i === 0, lien: true })).join('')}
         ${Array.from({ length: libres })
-          .map(() => `<span class="profil-pin profil-pin--vide" aria-hidden="true">+</span>`)
+          .map((_, i) => `<a class="badge-medaille-vide${i === 0 && !exposes.length ? ' badge-medaille-vide--vedette' : ''}" href="#/badges" aria-label="Choisir un badge à exposer">+</a>`)
           .join('')}
       </div>
 
@@ -193,55 +213,43 @@ function serieGagnante(regles) {
 function arsenalProfil(donnees) {
   const badges = donnees?.badges ?? [];
   const obtenus = badges.filter((b) => b.obtenu);
+  const publicsObtenus = obtenus.filter((b) => !b.secret);
+  const secretsObtenus = obtenus.filter((b) => b.secret);
   const exposes = badgesExposes(donnees, 5);
   const libres = Math.max(0, 5 - exposes.length);
 
   return `
-    <section class="profil-section">
+    <section class="profil-section profil-section--arsenal">
       <div class="profil-section__haut">
         <strong>Arsenal</strong>
-        <span>${obtenus.length}${badges.length ? ` / ${badges.length}` : ''} trophée${obtenus.length > 1 ? 's' : ''}</span>
+        <span>
+          ${publicsObtenus.length} / ${NB_BADGES_PUBLICS} découverts
+          ${secretsObtenus.length ? ` · ✦ ${secretsObtenus.length} secret${secretsObtenus.length > 1 ? 's' : ''}` : ' · secrets classifiés'}
+        </span>
       </div>
       <div class="profil-section__corps">
-        <div class="profil-arsenal">
+        <div class="profil-arsenal profil-arsenal--medailles">
           ${exposes
             .map(
-              (b) => `<a class="profil-trophee profil-trophee--${esc(rareteBadge(b))}" href="#/badges"
-                          title="${esc(b.description)}">
-                ${sceau(b.famille)}
-                <span class="profil-trophee__nom">${esc(b.nom)}</span>
+              (b) => `<a class="profil-badge-item" href="#/badges" title="${esc(b.description)}">
+                ${medailleBadge(b)}
+                <span class="profil-badge-item__nom">${esc(b.nom)}</span>
               </a>`
             )
             .join('')}
           ${Array.from({ length: libres })
-            .map(() => `<span class="profil-trophee profil-trophee--vide" aria-hidden="true">+</span>`)
+            .map(() => `<span class="profil-badge-item profil-badge-item--vide" aria-hidden="true"><i>+</i></span>`)
             .join('')}
         </div>
         <p style="color:var(--texte-faible);font-size:.78rem;margin:12px 0 0">
           ${
             obtenus.length
-              ? `Tes trophées les plus rares sont exposés ici. <a href="#/badges">Ouvrir l’Arsenal complet</a>.`
-              : `Ton Arsenal est encore vide. <a href="#/badges">Voir les trophées à décrocher</a>.`
+              ? `Tes distinctions les plus rares sont exposées ici. <a href="#/badges">Ouvrir l’Arsenal complet</a>.`
+              : `Ton Arsenal est encore vide. <a href="#/badges">Voir les badges à décrocher</a>.`
           }
         </p>
       </div>
     </section>`;
-}
-
-function sceau(famille) {
-  const formes = {
-    Audace: 'M12 3 4 13h5l-1 8 8-10h-5z',
-    Précision: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6z',
-    Rentabilité: 'M5 17 10 11l3 3 6-7',
-    Régularité: 'M6 4v16M12 4v16M18 4v16',
-    Connaissance: 'M12 3 3 8l9 5 9-5zM3 13l9 5 9-5',
-    Social: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20a6 6 0 0 1 12 0M15 20a6 6 0 0 1 6-6',
-  };
-  const d = formes[famille] ?? formes.Précision;
-  const plein = famille === 'Audace' || famille === 'Connaissance';
-  return `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-    <path d="${d}" fill="${plein ? 'currentColor' : 'none'}" stroke="currentColor"
-          stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>`;
 }
 
 function primeCompacte(prime) {
