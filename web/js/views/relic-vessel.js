@@ -3,23 +3,38 @@ let serial = 0;
 const VESSELS = [
   {
     name: 'Fiole',
-    body: 'M105 58 L105 82 C105 96 99 103 99 119 L99 250 C99 271 106 282 120 284 C134 282 141 271 141 250 L141 119 C141 103 135 96 135 82 L135 58 Z',
-    top: 92,
-    bottom: 278,
+    body: 'M103 64 L103 84 C103 98 97 106 97 122 L97 248 C97 272 105 286 120 288 C135 286 143 272 143 248 L143 122 C143 106 137 98 137 84 L137 64 Z',
+    top: 94,
+    bottom: 282,
     metal: `
-      <g class="rv__metal">
-        <rect x="101" y="43" width="38" height="19" rx="6" class="rv__metal-fill"/>
-        <rect x="104" y="48" width="32" height="5" rx="2.5" class="rv__metal-wear"/>
-        <rect x="101" y="79" width="38" height="8" rx="3" class="rv__metal-fill"/>
-        <ellipse cx="120" cy="278" rx="25" ry="6" class="rv__metal-line"/>
+      <g class="rv__metal rv__metal--heavy">
+        <rect x="96" y="30" width="48" height="31" rx="7" class="rv__metal-plate"/>
+        <rect x="100" y="35" width="40" height="7" rx="3" class="rv__metal-wear"/>
+        <rect x="99" y="58" width="42" height="10" rx="3" class="rv__metal-plate"/>
+        <path d="M101 83 V245 M139 83 V245" class="rv__strap"/>
+        <rect x="94" y="238" width="52" height="12" rx="4" class="rv__metal-plate"/>
+        <path d="M102 245 L120 264 L138 245" class="rv__metal-line rv__metal-line--thick"/>
+        <path d="M120 253 L126 263 L120 272 L114 263 Z" class="rv__metal-plate rv__metal-gem"/>
+        <ellipse cx="120" cy="282" rx="31" ry="8" class="rv__metal-line rv__metal-line--thick"/>
+        <circle cx="101" cy="88" r="2.3" class="rv__rivet"/><circle cx="139" cy="88" r="2.3" class="rv__rivet"/>
+        <circle cx="101" cy="232" r="2.3" class="rv__rivet"/><circle cx="139" cy="232" r="2.3" class="rv__rivet"/>
       </g>`,
+    extras: `
+      <g class="rv__sigil" transform="translate(120 47)">
+        <circle r="12" class="rv__sigil-plate"/>
+        <path d="M0 -7 L3 -2 L8 0 L3 2 L0 8 L-3 2 L-8 0 L-3 -2 Z" class="rv__sigil-mark"/>
+      </g>
+    `,
     ornament: `
-      <g class="rv__runes">
-        <path d="M109 154 H131 M112 148 V160 M120 146 V162 M128 148 V160"/>
-        <circle cx="120" cy="111" r="5"/>
+      <g class="rv__runes rv__runes--subtle">
+        <path d="M109 157 H131 M112 151 V163 M120 149 V165 M128 151 V163"/>
       </g>`,
+    inner: `
+      <path d="M113 229 C116 217 127 214 129 204 C131 194 124 187 116 186" class="rv__crack"/>
+      <path d="M111 241 C116 235 125 233 130 226" class="rv__crack rv__crack--soft"/>
+    `,
     emblem: false,
-    swirls: ['M111 242 C113 225 132 223 130 207 C128 195 112 194 113 181'],
+    swirls: ['M111 244 C113 226 132 224 130 207 C128 195 112 194 113 181'],
   },
   {
     name: 'Flacon',
@@ -44,26 +59,35 @@ const VESSELS = [
   },
   {
     name: 'Bombonne',
-    body: 'M98 49 L98 87 C98 104 61 116 50 158 C35 215 59 263 93 278 C109 285 131 285 147 278 C181 263 205 215 190 158 C179 116 142 104 142 87 L142 49 Z',
-    top: 92,
+    body: 'M99 54 L99 87 C99 103 69 114 56 145 C37 190 45 242 75 269 C87 280 103 286 120 286 C137 286 153 280 165 269 C195 242 203 190 184 145 C171 114 141 103 141 87 L141 54 Z',
+    top: 94,
     bottom: 282,
     metal: `
-      <g class="rv__metal">
-        <rect x="92" y="31" width="56" height="21" rx="6" class="rv__metal-fill"/>
-        <rect x="96" y="38" width="48" height="5" rx="2" class="rv__metal-wear"/>
-        <rect x="92" y="83" width="56" height="10" rx="3" class="rv__metal-fill"/>
-        <path d="M54 180 Q120 151 186 180" class="rv__metal-line rv__metal-line--thick"/>
-        <path d="M58 240 Q120 262 182 240" class="rv__metal-line rv__metal-line--thick"/>
-        <path d="M76 124 L63 242 M164 124 L177 242" class="rv__metal-line"/>
-        <ellipse cx="120" cy="280" rx="68" ry="8" class="rv__metal-line rv__metal-line--thick"/>
+      <g class="rv__metal rv__metal--heavy">
+        <rect x="90" y="29" width="60" height="24" rx="7" class="rv__metal-plate"/>
+        <rect x="95" y="35" width="50" height="7" rx="3" class="rv__metal-wear"/>
+        <rect x="91" y="80" width="58" height="13" rx="4" class="rv__metal-plate"/>
+        <path d="M67 130 L97 149 M173 130 L143 149" class="rv__strap rv__strap--broad"/>
+        <path d="M64 142 L48 221 M176 142 L192 221" class="rv__strap rv__strap--broad"/>
+        <path d="M49 218 Q120 248 191 218" class="rv__strap rv__strap--broad"/>
+        <rect x="53" y="250" width="134" height="16" rx="6" class="rv__metal-plate"/>
+        <rect x="61" y="266" width="118" height="13" rx="5" class="rv__metal-plate rv__metal-plate--dark"/>
+        <ellipse cx="120" cy="282" rx="76" ry="10" class="rv__metal-line rv__metal-line--thick"/>
+        <circle cx="70" cy="135" r="2.7" class="rv__rivet"/><circle cx="170" cy="135" r="2.7" class="rv__rivet"/>
+        <circle cx="56" cy="218" r="2.7" class="rv__rivet"/><circle cx="184" cy="218" r="2.7" class="rv__rivet"/>
       </g>`,
     ornament: `
-      <g class="rv__runes">
-        <path d="M69 203 Q120 184 171 203"/>
-        <circle cx="81" cy="226" r="4"/><circle cx="159" cy="226" r="4"/>
+      <g class="rv__runes rv__runes--subtle">
+        <path d="M78 201 Q120 187 162 201"/>
+        <circle cx="82" cy="228" r="4"/><circle cx="158" cy="228" r="4"/>
       </g>`,
+    inner: `
+      <path d="M76 226 C94 211 105 221 118 211 C131 201 138 181 151 173" class="rv__crack"/>
+      <path d="M94 245 C105 233 122 237 139 222" class="rv__crack rv__crack--soft"/>
+    `,
     emblem: true,
-    swirls: ['M69 226 C90 189 121 224 145 198 C160 181 152 160 133 161 C107 162 107 197 84 191'],
+    emblemAt: [120, 183],
+    swirls: ['M69 231 C90 194 121 227 145 201 C160 184 152 162 133 163 C107 164 107 199 84 193'],
   },
   {
     name: 'Calice',
@@ -84,29 +108,37 @@ const VESSELS = [
   },
   {
     name: 'Alambic',
-    body: 'M91 132 C61 151 48 190 52 226 C56 265 83 286 120 286 C157 286 184 265 188 226 C192 190 179 151 149 132 C137 124 134 111 134 98 L106 98 C106 111 103 124 91 132 Z',
-    top: 105,
+    body: 'M92 137 C63 153 49 188 52 224 C55 263 82 286 120 286 C158 286 185 263 188 224 C191 188 177 153 148 137 C137 131 133 118 133 105 L107 105 C107 118 103 131 92 137 Z',
+    top: 110,
     bottom: 282,
     metal: `
-      <g class="rv__metal">
-        <rect x="99" y="91" width="42" height="12" rx="4" class="rv__metal-fill"/>
-        <rect x="78" y="48" width="84" height="11" rx="5" class="rv__metal-fill"/>
-        <circle cx="120" cy="70" r="39" class="rv__metal-line rv__metal-line--thick"/>
-        <path d="M159 70 C204 69 205 92 205 118 L205 205" class="rv__metal-line rv__metal-line--thick"/>
-        <rect x="198" y="112" width="14" height="27" rx="4" class="rv__metal-fill"/>
-        <path d="M58 231 Q120 253 182 231" class="rv__metal-line rv__metal-line--thick"/>
-        <ellipse cx="120" cy="284" rx="67" ry="8" class="rv__metal-line rv__metal-line--thick"/>
+      <g class="rv__metal rv__metal--heavy">
+        <rect x="98" y="96" width="44" height="14" rx="4" class="rv__metal-plate"/>
+        <rect x="75" y="39" width="90" height="14" rx="5" class="rv__metal-plate"/>
+        <circle cx="120" cy="72" r="42" class="rv__metal-line rv__metal-line--thick"/>
+        <circle cx="120" cy="72" r="37" class="rv__metal-line"/>
+        <path d="M161 69 C201 67 207 86 207 114 V206" class="rv__pipe-metal"/>
+        <path d="M166 71 C191 72 196 84 196 110 V197" class="rv__pipe-highlight"/>
+        <rect x="198" y="111" width="18" height="30" rx="4" class="rv__metal-plate"/>
+        <rect x="50" y="245" width="140" height="18" rx="6" class="rv__metal-plate"/>
+        <rect x="58" y="263" width="124" height="14" rx="5" class="rv__metal-plate rv__metal-plate--dark"/>
+        <ellipse cx="120" cy="284" rx="74" ry="9" class="rv__metal-line rv__metal-line--thick"/>
       </g>`,
     extras: `
-      <circle cx="120" cy="70" r="34" class="rv__glass rv__glass--orb"/>
-      <path d="M159 69 C189 69 196 80 196 111 V198" class="rv__glass-pipe"/>
-      <circle cx="120" cy="70" r="22" class="rv__energy-orb"/>
-      <path d="M100 75 C112 49 140 50 141 72 C142 91 118 95 105 83" class="rv__energy-stroke"/>
+      <circle cx="120" cy="72" r="34" class="rv__glass rv__glass--orb"/>
+      <circle cx="120" cy="72" r="27" class="rv__orb-shadow"/>
+      <circle cx="120" cy="72" r="23" class="rv__energy-orb"/>
+      <path d="M99 77 C109 52 138 51 143 70 C148 90 123 99 105 85" class="rv__energy-stroke rv__energy-stroke--strong"/>
+      <path d="M104 64 C116 72 127 53 138 67" class="rv__crack"/>
     `,
     ornament: `
-      <g class="rv__runes"><path d="M78 191 Q120 169 162 191"/><circle cx="120" cy="156" r="6"/></g>`,
+      <g class="rv__runes rv__runes--subtle"><path d="M78 193 Q120 174 162 193"/><circle cx="120" cy="158" r="6"/></g>`,
+    inner: `
+      <path d="M73 228 C94 214 113 228 137 205 C150 192 149 175 137 168" class="rv__crack"/>
+    `,
     emblem: true,
-    swirls: ['M74 236 C91 209 115 229 137 206 C155 187 146 165 126 166 C105 168 102 194 82 191'],
+    emblemAt: [120, 198],
+    swirls: ['M74 238 C91 211 115 231 137 208 C155 189 146 167 126 168 C105 170 102 196 82 193'],
   },
   {
     name: 'Cornue',
@@ -127,22 +159,33 @@ const VESSELS = [
   },
   {
     name: 'Océan',
-    body: 'M120 46 C181 46 213 92 216 165 C219 238 181 289 120 294 C59 289 21 238 24 165 C27 92 59 46 120 46 Z',
-    top: 61,
-    bottom: 290,
+    body: 'M120 57 C176 57 209 99 212 166 C215 232 181 281 120 289 C59 281 25 232 28 166 C31 99 64 57 120 57 Z',
+    top: 70,
+    bottom: 286,
     metal: `
-      <g class="rv__metal">
-        <path d="M98 47 Q120 25 142 47" class="rv__metal-line rv__metal-line--thick"/>
-        <path d="M120 46 V293 M34 170 H206" class="rv__metal-line rv__metal-line--thick"/>
-        <path d="M51 96 Q120 66 189 96 M50 239 Q120 264 190 239" class="rv__metal-line"/>
-        <path d="M48 78 C36 115 29 151 34 190 M192 78 C204 115 211 151 206 190" class="rv__metal-line"/>
-        <ellipse cx="120" cy="292" rx="93" ry="10" class="rv__metal-line rv__metal-line--thick"/>
-        <rect x="38" y="276" width="18" height="30" rx="4" class="rv__metal-fill"/><rect x="184" y="276" width="18" height="30" rx="4" class="rv__metal-fill"/>
+      <g class="rv__metal rv__metal--heavy">
+        <path d="M105 58 L105 40 H135 V58" class="rv__metal-line rv__metal-line--thick"/>
+        <rect x="96" y="34" width="48" height="15" rx="4" class="rv__metal-plate"/>
+        <path d="M120 9 L132 29 L120 39 L108 29 Z" class="rv__spire"/>
+        <path d="M120 57 V288 M32 171 H208" class="rv__strap rv__strap--broad"/>
+        <path d="M51 98 Q120 71 189 98 M49 238 Q120 262 191 238" class="rv__metal-line rv__metal-line--thick"/>
+        <path d="M47 80 C35 116 30 151 34 190 M193 80 C205 116 210 151 206 190" class="rv__metal-line rv__metal-line--thick"/>
+        <rect x="27" y="257" width="18" height="35" rx="5" class="rv__metal-plate"/>
+        <rect x="195" y="257" width="18" height="35" rx="5" class="rv__metal-plate"/>
+        <rect x="41" y="260" width="158" height="17" rx="6" class="rv__metal-plate"/>
+        <rect x="49" y="277" width="142" height="13" rx="5" class="rv__metal-plate rv__metal-plate--dark"/>
+        <ellipse cx="120" cy="291" rx="100" ry="11" class="rv__metal-line rv__metal-line--thick"/>
+        <circle cx="40" cy="171" r="3" class="rv__rivet"/><circle cx="200" cy="171" r="3" class="rv__rivet"/>
       </g>`,
     ornament: `
-      <g class="rv__runes"><circle cx="120" cy="118" r="12"/><path d="M57 200 Q120 174 183 200"/></g>`,
+      <g class="rv__runes rv__runes--subtle"><circle cx="120" cy="119" r="12"/><path d="M57 204 Q120 179 183 204"/></g>`,
+    inner: `
+      <path d="M62 228 C87 193 105 221 132 197 C154 177 151 142 129 135" class="rv__crack"/>
+      <path d="M81 250 C106 224 139 247 174 217" class="rv__crack rv__crack--soft"/>
+    `,
     emblem: true,
-    swirls: ['M51 238 C78 183 109 239 153 196 C183 167 162 115 128 126 C93 138 96 179 62 173', 'M71 249 C99 221 136 248 177 214'],
+    emblemAt: [120, 174],
+    swirls: ['M51 241 C78 186 109 242 153 199 C183 170 162 118 128 129 C93 141 96 182 62 176', 'M71 252 C99 224 136 251 177 217'],
   },
 ];
 
@@ -174,6 +217,7 @@ export function relicVessel(p, { teinte = null, bulles = true } = {}) {
   const dark = `oklch(0.47 0.15 ${hue})`;
   const wave = `M-10 ${y.toFixed(1)} Q30 ${(y - amp).toFixed(1)} 60 ${y.toFixed(1)} T120 ${y.toFixed(1)} T180 ${y.toFixed(1)} T250 ${y.toFixed(1)} L250 330 L-10 330 Z`;
   const aria = `${p?.membres ?? 0} membre${Number(p?.membres ?? 0) > 1 ? 's' : ''}, ${v.name}`;
+  const [emblemX, emblemY] = v.emblemAt || [120, level === 7 ? 172 : level === 4 ? 177 : 190];
 
   return `
     <div class="relic-vessel relic-vessel--n${level}" role="img" aria-label="${aria}" style="--rv-hue:${hue};--rv-light:${light};--rv-mid:${mid};--rv-dark:${dark};--rv-fill:${fill}">
@@ -181,11 +225,11 @@ export function relicVessel(p, { teinte = null, bulles = true } = {}) {
         <defs>
           <clipPath id="${id}-clip"><path d="${v.body}"/></clipPath>
           <linearGradient id="${id}-glass" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#edf5f3" stop-opacity=".25"/>
-            <stop offset=".18" stop-color="#9da7a2" stop-opacity=".08"/>
-            <stop offset=".5" stop-color="#11161b" stop-opacity=".58"/>
-            <stop offset=".78" stop-color="#78827c" stop-opacity=".12"/>
-            <stop offset="1" stop-color="#e5e9dc" stop-opacity=".2"/>
+            <stop offset="0" stop-color="#f5f8f2" stop-opacity=".31"/>
+            <stop offset=".14" stop-color="#b8c1bc" stop-opacity=".13"/>
+            <stop offset=".42" stop-color="#12171c" stop-opacity=".63"/>
+            <stop offset=".72" stop-color="#626b68" stop-opacity=".14"/>
+            <stop offset="1" stop-color="#eef2df" stop-opacity=".23"/>
           </linearGradient>
           <linearGradient id="${id}-liquid" x1="0" y1="0" x2=".7" y2="1">
             <stop offset="0" stop-color="var(--rv-light)"/>
@@ -193,16 +237,17 @@ export function relicVessel(p, { teinte = null, bulles = true } = {}) {
             <stop offset="1" stop-color="var(--rv-dark)"/>
           </linearGradient>
           <linearGradient id="${id}-metal" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#17191c"/>
-            <stop offset=".18" stop-color="#4b3b1f"/>
-            <stop offset=".34" stop-color="#c39b3b"/>
-            <stop offset=".49" stop-color="#3a2b16"/>
-            <stop offset=".72" stop-color="#92742f"/>
-            <stop offset="1" stop-color="#101318"/>
+            <stop offset="0" stop-color="#0f1216"/>
+            <stop offset=".13" stop-color="#3a301f"/>
+            <stop offset=".29" stop-color="#c5a14a"/>
+            <stop offset=".42" stop-color="#5e4922"/>
+            <stop offset=".61" stop-color="#1b1d20"/>
+            <stop offset=".79" stop-color="#8e7131"/>
+            <stop offset="1" stop-color="#090b0e"/>
           </linearGradient>
           <radialGradient id="${id}-core">
             <stop offset="0" stop-color="#fffbd7" stop-opacity="1"/>
-            <stop offset=".2" stop-color="var(--rv-light)" stop-opacity=".95"/>
+            <stop offset=".2" stop-color="var(--rv-light)" stop-opacity=".98"/>
             <stop offset="1" stop-color="var(--rv-mid)" stop-opacity="0"/>
           </radialGradient>
           <pattern id="${id}-age" width="19" height="17" patternUnits="userSpaceOnUse">
@@ -214,19 +259,20 @@ export function relicVessel(p, { teinte = null, bulles = true } = {}) {
             <feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
           <filter id="${id}-metal-shadow" x="-40%" y="-40%" width="180%" height="180%">
-            <feDropShadow dx="0" dy="2" stdDeviation="2.4" flood-color="#000" flood-opacity=".75"/>
+            <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity=".82"/>
           </filter>
         </defs>
 
-        <ellipse cx="120" cy="294" rx="86" ry="13" class="rv__ground"/>
-        <ellipse cx="120" cy="287" rx="64" ry="8" class="rv__ground-core"/>
+        <ellipse cx="120" cy="295" rx="91" ry="14" class="rv__ground"/>
+        <ellipse cx="120" cy="288" rx="68" ry="9" class="rv__ground-core"/>
 
         <path d="${v.body}" class="rv__glass" style="fill:url(#${id}-glass)"/>
         <g clip-path="url(#${id}-clip)">
           ${fill > 0 ? `<path d="${wave}" class="rv__liquid" style="fill:url(#${id}-liquid)"/>` : ''}
           <rect x="0" y="0" width="240" height="320" fill="url(#${id}-age)" class="rv__age"/>
-          ${fill > .03 ? `<ellipse cx="120" cy="${Math.min(v.bottom - 13, y + 68)}" rx="42" ry="14" fill="url(#${id}-core)" class="rv__core" filter="url(#${id}-glow)"/>` : ''}
+          ${fill > .03 ? `<ellipse cx="120" cy="${Math.min(v.bottom - 14, y + 70)}" rx="49" ry="18" fill="url(#${id}-core)" class="rv__core rv__core--deep" filter="url(#${id}-glow)"/>` : ''}
           ${fill > .06 ? v.swirls.map((d) => `<path d="${d}" class="rv__energy-stroke" filter="url(#${id}-glow)"/>`).join('') : ''}
+          ${v.inner || ''}
           ${bulles && fill > .08 ? bubbles.slice(0, 3 + level).map(([cx, cy, r], i) => `<circle cx="${cx}" cy="${cy}" r="${r}" class="rv__bubble" style="--delay:${-i * .53}s"/>`).join('') : ''}
           <path d="M76 78 C63 124 67 209 84 250" class="rv__spec rv__spec--wide"/>
           <path d="M91 69 C82 110 86 146 91 171" class="rv__spec"/>
@@ -237,7 +283,7 @@ export function relicVessel(p, { teinte = null, bulles = true } = {}) {
         ${v.extras || ''}
         <g style="--metal:url(#${id}-metal)" filter="url(#${id}-metal-shadow)">${v.metal}</g>
         ${v.ornament}
-        ${v.emblem ? emblem(120, level === 7 ? 172 : level === 4 ? 177 : 190) : ''}
+        ${v.emblem ? emblem(emblemX, emblemY) : ''}
       </svg>
     </div>`;
 }
