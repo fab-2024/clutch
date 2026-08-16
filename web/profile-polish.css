@@ -1,0 +1,305 @@
+/* ========================================================================
+   CLUTCH — Profil V2 final polish
+   Fondateur, titres équipables, reveal badges, responsive QA.
+   ======================================================================== */
+
+.profil-identite__ornements {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.profil-fondateur {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(232,255,61,.28);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(232,255,61,.10), rgba(232,255,61,.035));
+  color: var(--accent);
+  font-family: var(--titre);
+  font-size: .64rem;
+  font-weight: 900;
+  letter-spacing: .14em;
+  box-shadow: inset 0 0 16px rgba(232,255,61,.035), 0 0 20px rgba(232,255,61,.05);
+}
+.profil-fondateur i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(232,255,61,.85);
+  animation: founder-dot 2.4s ease-in-out infinite;
+}
+
+.profil-titre-equipe {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255,255,255,.085);
+  border-radius: 999px;
+  background: rgba(5,8,12,.38);
+  color: var(--texte);
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+.profil-titre-equipe:hover {
+  border-color: rgba(232,255,61,.28);
+  background: rgba(232,255,61,.045);
+  transform: translateY(-1px);
+}
+.profil-titre-equipe__sur {
+  color: var(--texte-faible);
+  font-size: .58rem;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+.profil-titre-equipe strong {
+  font-family: var(--titre);
+  font-size: .72rem;
+  letter-spacing: .035em;
+}
+.profil-titre-equipe__chevron { color: var(--accent); opacity: .78; }
+
+.profil-titres-overlay,
+.badge-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(3,5,8,.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.profil-titres-modal {
+  width: min(620px, 100%);
+  max-height: min(720px, 88vh);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 24px;
+  background:
+    radial-gradient(480px 220px at 12% 0%, rgba(232,255,61,.075), transparent 70%),
+    linear-gradient(160deg, #111823, #090d13 72%);
+  box-shadow: 0 28px 90px rgba(0,0,0,.58);
+}
+.profil-titres-modal__haut {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 22px 17px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.profil-titres-modal__haut span {
+  color: var(--accent);
+  font-family: var(--titre);
+  font-size: .62rem;
+  letter-spacing: .17em;
+}
+.profil-titres-modal__haut h2 { margin: 4px 0 4px; font-size: 1.55rem; }
+.profil-titres-modal__haut p { margin: 0; color: var(--texte-faible); font-size: .8rem; }
+.profil-titres-modal__haut > button {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--bordure); background: rgba(0,0,0,.2); color: var(--texte-doux);
+  font-size: 1.25rem; cursor: pointer;
+}
+.profil-titres-liste {
+  max-height: 520px;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 8px;
+  padding: 14px;
+}
+.profil-titre-option {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 13px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px;
+  background: rgba(255,255,255,.025);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.profil-titre-option:hover { border-color: rgba(232,255,61,.22); }
+.profil-titre-option.actif {
+  border-color: rgba(232,255,61,.42);
+  background: rgba(232,255,61,.07);
+}
+.profil-titre-option span { min-width: 0; display: grid; gap: 2px; }
+.profil-titre-option strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--titre); font-size: .82rem; }
+.profil-titre-option small { color: var(--texte-faible); font-size: .66rem; }
+.profil-titre-option i { color: var(--accent); font-style: normal; }
+
+/* Artefact Fondateur : volontairement différent de la grille standard. */
+.profil-origin,
+.arsenal-origin {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  align-items: center;
+  border: 1px solid rgba(232,255,61,.18);
+  background:
+    radial-gradient(360px 180px at 12% 50%, rgba(232,255,61,.10), transparent 68%),
+    radial-gradient(420px 170px at 92% 0%, rgba(80,120,255,.06), transparent 72%),
+    linear-gradient(115deg, #080b0f, #121820 55%, #07090c);
+  box-shadow: inset 0 0 40px rgba(232,255,61,.025);
+}
+.profil-origin {
+  grid-template-columns: 126px minmax(0,1fr) auto;
+  gap: 18px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  border-radius: 18px;
+}
+.profil-origin::before,
+.arsenal-origin::before {
+  content: '';
+  position: absolute;
+  inset: -80% -10%;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 42%, rgba(232,255,61,.035) 48%, rgba(255,255,255,.07) 50%, transparent 56%);
+  transform: translateX(-35%);
+  animation: origin-scan 6.5s ease-in-out infinite;
+}
+.profil-origin__medaille { display: grid; place-items: center; }
+.profil-origin__texte { min-width: 0; }
+.profil-origin__texte > span,
+.arsenal-origin > div > span {
+  color: var(--accent);
+  font-family: var(--titre);
+  font-size: .6rem;
+  font-weight: 850;
+  letter-spacing: .16em;
+}
+.profil-origin__texte strong { display: block; margin-top: 3px; font-family: var(--titre); font-size: 1.15rem; letter-spacing: .035em; }
+.profil-origin__texte p { margin: 4px 0 0; color: var(--texte-faible); font-size: .74rem; }
+.profil-origin__sceau {
+  font-family: var(--titre);
+  font-size: clamp(1.4rem, 4vw, 2.5rem);
+  font-weight: 950;
+  letter-spacing: -.055em;
+  color: var(--accent);
+  opacity: .08;
+}
+
+.arsenal-origin {
+  grid-template-columns: 150px minmax(0,1fr);
+  gap: 22px;
+  margin: 22px 0;
+  padding: 22px 24px;
+  border-radius: 22px;
+}
+.arsenal-origin .badge-medaille { justify-self: center; }
+.arsenal-origin h2 { margin: 4px 0 5px; }
+.arsenal-origin p { margin: 0; color: var(--texte-faible); }
+
+/* Badge reveal */
+.badge-reveal { z-index: 1200; overflow: hidden; }
+.badge-reveal__carte {
+  --reveal: #e7b53c;
+  position: relative;
+  isolation: isolate;
+  width: min(470px, 100%);
+  min-height: 530px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 42px 34px 32px;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--reveal) 36%, rgba(255,255,255,.10));
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 50% 39%, color-mix(in oklab, var(--reveal) 17%, transparent), transparent 34%),
+    linear-gradient(160deg, #111720 0%, #080c12 72%);
+  box-shadow: 0 38px 120px rgba(0,0,0,.7), 0 0 70px color-mix(in oklab, var(--reveal) 10%, transparent);
+  text-align: center;
+  animation: badge-reveal-in .48s cubic-bezier(.16,.85,.34,1.1) both;
+}
+.badge-reveal--rare .badge-reveal__carte { --reveal: #58c8ff; }
+.badge-reveal--epique .badge-reveal__carte { --reveal: #a878ff; }
+.badge-reveal--legendaire .badge-reveal__carte { --reveal: #f1c85a; }
+.badge-reveal--mythique .badge-reveal__carte { --reveal: var(--accent); }
+.badge-reveal__rayons {
+  position: absolute;
+  z-index: -1;
+  width: 520px;
+  height: 520px;
+  top: 65px;
+  left: 50%;
+  translate: -50% 0;
+  opacity: .14;
+  background: repeating-conic-gradient(from 0deg, var(--reveal) 0 2deg, transparent 2deg 18deg);
+  -webkit-mask: radial-gradient(circle, transparent 0 14%, #000 25% 58%, transparent 74%);
+  mask: radial-gradient(circle, transparent 0 14%, #000 25% 58%, transparent 74%);
+  animation: reveal-rays 22s linear infinite;
+}
+.badge-reveal__eyebrow,
+.badge-reveal__rarete {
+  font-family: var(--titre);
+  font-size: .65rem;
+  font-weight: 900;
+  letter-spacing: .18em;
+  color: var(--reveal);
+}
+.badge-reveal__medaille { margin: 28px 0 15px; transform: scale(1.22); }
+.badge-reveal__rarete { margin-top: 9px; }
+.badge-reveal h2 { margin: 6px 0 7px; font-size: clamp(2rem, 8vw, 3rem); letter-spacing: -.045em; }
+.badge-reveal p { max-width: 330px; margin: 0 0 24px; color: var(--texte-doux); font-size: .9rem; }
+.badge-reveal--secret .badge-reveal__carte {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(241,200,90,.13), transparent 32%),
+    radial-gradient(420px 240px at 50% 60%, rgba(82,59,17,.12), transparent 70%),
+    linear-gradient(160deg, #0d0e11, #050608 72%);
+}
+
+/* Responsive QA */
+@media (max-width: 760px) {
+  .profil-identite__ornements { gap: 6px; }
+  .profil-titre-equipe__sur { display: none; }
+  .profil-origin { grid-template-columns: 86px minmax(0,1fr); padding: 14px; }
+  .profil-origin__sceau { display: none; }
+  .profil-origin .badge-medaille { transform: scale(.78); transform-origin: center; }
+  .profil-titres-liste { grid-template-columns: 1fr; }
+  .arsenal-origin { grid-template-columns: 92px minmax(0,1fr); padding: 17px 14px; gap: 12px; }
+  .arsenal-origin .badge-medaille { transform: scale(.78); }
+  .badge-reveal { padding: 12px; }
+  .badge-reveal__carte { min-height: min(520px, 90vh); padding: 34px 20px 24px; border-radius: 22px; }
+}
+
+@media (max-width: 520px) {
+  .profil-fondateur { font-size: .57rem; min-height: 25px; }
+  .profil-titre-equipe { max-width: 100%; }
+  .profil-titre-equipe strong { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .profil-origin { grid-template-columns: 1fr; text-align: center; }
+  .profil-origin__medaille { height: 92px; }
+  .arsenal-origin { grid-template-columns: 1fr; text-align: center; }
+  .badge-reveal__medaille { transform: scale(1.05); }
+}
+
+@keyframes founder-dot { 0%,100%{opacity:.45;transform:scale(.82)} 50%{opacity:1;transform:scale(1.15)} }
+@keyframes origin-scan { 0%,55%{transform:translateX(-48%);opacity:0} 67%{opacity:1} 82%,100%{transform:translateX(45%);opacity:0} }
+@keyframes badge-reveal-in { from{opacity:0;transform:translateY(22px) scale(.92)} to{opacity:1;transform:translateY(0) scale(1)} }
+@keyframes reveal-rays { to{rotate:360deg} }
+
+@media (prefers-reduced-motion: reduce) {
+  .profil-fondateur i,
+  .profil-origin::before,
+  .arsenal-origin::before,
+  .badge-reveal__rayons,
+  .badge-reveal__carte { animation: none !important; }
+}
