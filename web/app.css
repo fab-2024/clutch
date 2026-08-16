@@ -185,6 +185,24 @@ a:hover { color: var(--accent); text-decoration-color: var(--accent); }
   font-weight: 800; font-size: 1.2rem; letter-spacing: 0.1em; color: var(--texte);
 }
 
+/* Le point de signature.
+   Tracé plutôt qu'écrit : un point de ponctuation hérite de la chasse et de
+   l'interlettrage du mot, il se retrouve donc trop loin et trop petit derrière
+   un CLUTCH espacé à 0,1 em. Celui-ci est un carré arrondi, calé sur la ligne
+   de base, et sa taille suit celle du texte — il reste juste à toutes les
+   échelles sans être retouché. */
+.logo__point {
+  display: inline-block;
+  width: 0.3em; height: 0.3em;
+  margin-left: 0.06em;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: baseline;
+  transition: transform var(--transition);
+}
+
+.logo:hover .logo__point { transform: translateY(-2px); }
+
 .entete__droite { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 
 /* Le solde suit partout. C'est l'information qu'on va chercher le plus souvent
