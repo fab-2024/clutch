@@ -1,9 +1,6 @@
 /**
  * Clutch — Communauté V2.
- *
- * Une communauté n'est plus présentée comme une jauge administrative : c'est
- * une faction alimentant un réacteur d'élixir. Les données restent les mêmes
- * (équipe favorite + nombre de membres), seule leur mise en scène change.
+ * Une faction = une équipe favorite + un réacteur communautaire.
  */
 
 import * as api from '../api.js';
@@ -46,12 +43,12 @@ export async function vueCommunaute(racine) {
   const mienne = communautes.find((c) => c.moi) ?? null;
   const vedette = mienne ?? communautes[0];
   const rang = communautes.indexOf(vedette) + 1;
-  const leader = communautes[0];
 
   racine.innerHTML = `
     ${entete(communautes, mienne)}
     <div class="commu-v2">
-      ${coeurFaction(vedette, rang, Boolean(mienne), leader)}
+      ${coeurFaction(vedette, rang, Boolean(mienne))}
+      ${parcoursMutation(vedette)}
       ${classementFactions(communautes)}
       ${explication(mienne)}
     </div>`;
@@ -77,27 +74,20 @@ function entete(communautes, mienne) {
     </div>`;
 }
 
-function coeurFaction(c, rang, estLaMienne, leader) {
+function coeurFaction(c, rang, estLaMienne) {
   const p = palierCommunaute(c.membres);
   const f = forme(p);
   const hue = teinteEquipe(c.tag, c.nom);
   const pct = pourcent(p);
-  const ecartLeader = Math.max(0, Number(leader?.membres || 0) - Number(c.membres || 0));
-  const statutRang = rang === 1
-    ? 'Faction en tête'
-    : ecartLeader === 0
-      ? 'À égalité avec le leader'
-      : `${ecartLeader} membre${ecartLeader > 1 ? 's' : ''} derrière le leader`;
 
   return `
-    <section class="commu-core" style="--team-hue:${hue};--charge:${Math.max(.08, p.progression)}">
+    <section class="commu-core commu-core--epure" style="--team-hue:${hue};--charge:${Math.max(.08, p.progression)}">
       <div class="commu-core__grain" aria-hidden="true"></div>
       <div class="commu-core__flare" aria-hidden="true"></div>
 
       <div class="commu-core__identite">
         <div class="commu-core__eyebrow">
           <span>${estLaMienne ? 'MA FACTION' : 'FACTION EN VEDETTE'}</span>
-          <i>#${rang}</i>
         </div>
         <div class="commu-core__equipe">
           ${ecusson(c.tag, c.nom, 'm')}
@@ -106,18 +96,12 @@ function coeurFaction(c, rang, estLaMienne, leader) {
             <p>${esc(nomJeu(c.jeu))} · ${esc(c.tag)}</p>
           </div>
         </div>
-        <p class="commu-core__manifeste">${esc(f.phrase)}</p>
-        <div class="commu-core__microstats">
-          <span><small>RANG</small><strong>#${rang}</strong></span>
-          <span><small>MEMBRES</small><strong>${esc(formaterFrags(c.membres))}</strong></span>
-          <span><small>ELO</small><strong>${esc(c.elo)}</strong></span>
-        </div>
+        <p class="commu-core__resume">#${rang} · ${esc(formaterFrags(c.membres))} membre${c.membres > 1 ? 's' : ''} · Elo ${esc(c.elo)}</p>
         ${estLaMienne ? '<a class="commu-core__gerer" href="#/parametres">Gérer mon équipe →</a>' : ''}
       </div>
 
       <div class="commu-core__reacteur">
         ${reacteur(c, p, hue)}
-        <div class="commu-core__rang-signal">${esc(statutRang)}</div>
       </div>
 
       <div class="commu-core__charge">
@@ -128,26 +112,35 @@ function coeurFaction(c, rang, estLaMienne, leader) {
         <h3>${esc(f.nom)}</h3>
         <p class="commu-charge__objectif">
           ${p.max
-            ? 'Palier terminal atteint. Chaque nouveau membre ne fait plus monter le niveau : il élargit l’Océan.'
-            : `<strong>${esc(formaterFrags(c.membres))}</strong> / ${esc(formaterFrags(p.objectif))} membres · encore ${esc(formaterFrags(p.restant))} avant mutation.`}
+            ? 'Palier terminal atteint. Chaque nouveau supporter élargit désormais l’Océan.'
+            : `<strong>${esc(formaterFrags(c.membres))}</strong> / ${esc(formaterFrags(p.objectif))} supporters`}
         </p>
         <div class="commu-charge__barre" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}">
           <i style="width:${p.max ? 100 : pct}%"></i>
           <span style="left:${p.max ? 100 : pct}%"></span>
         </div>
-        <div class="commu-charge__legende">
-          <span>${p.max ? 'Océan stabilisé' : `${esc(formePrecedente(p))} · ${esc(formaterFrags(p.plancher))}`}</span>
-          <span>${p.max ? esc(formaterFrags(c.membres)) : `${esc(f.nom)} · ${esc(formaterFrags(p.objectif))}`}</span>
-        </div>
-        <div class="commu-charge__etat ${pct >= 75 ? 'commu-charge__etat--chaud' : ''}">
-          <i></i>
-          <span>${etatCharge(p)}</span>
-        </div>
+        <p class="commu-charge__reste">
+          ${p.max
+            ? 'Forme terminale atteinte.'
+            : `Encore <strong>${esc(formaterFrags(p.restant))}</strong> supporter${p.restant > 1 ? 's' : ''} avant ${esc(f.nom)}.`}
+        </p>
       </div>
+    </section>`;
+}
 
-      <div class="commu-core__rail">
-        ${railMutation(c.membres, p)}
+function parcoursMutation(c) {
+  const p = palierCommunaute(c.membres);
+  const hue = teinteEquipe(c.tag, c.nom);
+  return `
+    <section class="commu-evolution" style="--team-hue:${hue}">
+      <div class="commu-evolution__haut">
+        <div>
+          <span>ÉVOLUTION DE LA FACTION</span>
+          <strong>${esc(forme(p).phrase)}</strong>
+        </div>
+        <small>7 formes permanentes</small>
       </div>
+      ${railMutation(c.membres, p)}
     </section>`;
 }
 
@@ -175,24 +168,8 @@ function reacteur(c, p, hue, { compact = false } = {}) {
     </div>`;
 }
 
-function formePrecedente(p) {
-  if ((p?.niveau ?? 1) <= 1) return 'Noyau';
-  return FORMES[p.niveau - 2]?.nom ?? 'Noyau';
-}
-
-function etatCharge(p) {
-  if (p.max) return 'État terminal · charge ouverte';
-  const pct = pourcent(p);
-  if (pct >= 90) return 'Mutation imminente · réacteur instable';
-  if (pct >= 75) return 'Charge critique · prochain palier proche';
-  if (pct >= 40) return 'Réaction active · l’élixir accélère';
-  if (pct >= 15) return 'Réaction stable · charge en cours';
-  return 'Noyau stable · la faction se forme';
-}
-
 function railMutation(membres, p) {
   return `
-    <div class="commu-rail__titre"><span>Chaîne de mutation</span><small>7 formes permanentes</small></div>
     <ol class="commu-rail">
       ${PALIERS_COMMUNAUTE.map((palier, i) => {
         const f = FORMES[i];
