@@ -48,13 +48,13 @@ function carte(forme, index, hue) {
 }
 
 function injecter() {
-  if (route() !== '/communaute') return;
+  if (route() !== '/communaute') return false;
   const u = contexte.utilisateur;
-  if (!u?.est_fondateur) return;
-  if (document.querySelector('.commu-lab')) return;
+  if (!u?.est_fondateur) return false;
+  if (document.querySelector('.commu-lab')) return true;
 
   const ancre = document.querySelector('.commu-evolution');
-  if (!ancre) return;
+  if (!ancre) return false;
 
   const equipe = u.equipe_favorite;
   const hue = teinteEquipe(equipe?.tag || 'CLT', equipe?.nom || 'Clutch');
@@ -67,24 +67,28 @@ function injecter() {
         <span>LABORATOIRE FONDATEUR</span>
         <h2>Les 7 récipients</h2>
       </div>
-      <p>Aperçu comparatif · remplissage simulé à 65 % · aucune donnée de faction modifiée.</p>
+      <p>Aperçu comparatif · remplissage simulé · aucune donnée de faction modifiée.</p>
     </div>
     <div class="commu-lab__grille">
       ${FORMES.map((f, i) => carte(f, i, hue)).join('')}
     </div>`;
   ancre.insertAdjacentElement('afterend', section);
+  return true;
 }
 
+let generation = 0;
 function programmer() {
-  setTimeout(() => {
-    for (let i = 0; i < 18; i++) {
-      if (route() !== '/communaute') return;
-      if (document.querySelector('.commu-evolution')) {
-        injecter();
-        return;
-      }
-    }
-  }, 80);
+  const maGeneration = ++generation;
+  let tentative = 0;
+
+  const essayer = () => {
+    if (maGeneration !== generation || route() !== '/communaute') return;
+    tentative += 1;
+    if (injecter()) return;
+    if (tentative < 50) setTimeout(essayer, 100);
+  };
+
+  setTimeout(essayer, 30);
 }
 
 window.addEventListener('hashchange', programmer);
