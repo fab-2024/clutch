@@ -874,3 +874,31 @@ export async function annulerMatch(matchId, options) {
   if (MODE_DEMO) return demo.annulerMatch(matchId, options);
   return rpc('annuler_match', { p_match_id: matchId, p_motif: options?.motif ?? '' });
 }
+
+/* ------------------------------------------------------------------ */
+/* Boutique — les Volts                                                */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Le catalogue, le solde de Volts, et ce que le joueur possède déjà, en un
+ * seul aller-retour : la boutique est un écran qu'on ouvre souvent et qu'on
+ * rafraîchit après chaque achat, trois requêtes séparées s'y verraient.
+ */
+export async function boutique() {
+  if (MODE_DEMO) return demo.boutique();
+  return rpc('clutch_boutique');
+}
+
+/**
+ * L'achat est atomique côté base : débit, entrée en inventaire et équipement
+ * dans la même transaction. Rien à réconcilier ici, on relit et on réaffiche.
+ */
+export async function acheterObjet(objetId) {
+  if (MODE_DEMO) return demo.acheterObjet(objetId);
+  return rpc('clutch_acheter_objet', { p_objet_id: objetId });
+}
+
+export async function equiperObjet(objetId) {
+  if (MODE_DEMO) return demo.equiperObjet(objetId);
+  return rpc('clutch_equiper', { p_objet_id: objetId });
+}

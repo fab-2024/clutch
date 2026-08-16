@@ -21,6 +21,9 @@ export const NOM_APP = 'Clutch';
 /** Nom de la monnaie virtuelle. */
 export const MONNAIE = 'Frags';
 
+/** Nom de la monnaie cosmétique. Elle ne se mise pas, elle se dépense. */
+export const MONNAIE_VOLTS = 'Volts';
+
 /** Adresses e-mail autorisées à accéder à la page d'administration. */
 export const ADMINS = ['pierre-louis.blutel@student-cs.fr'];
 

@@ -1,6 +1,6 @@
 /** Petits utilitaires d'interface partagés par toutes les vues. */
 
-import { MONNAIE } from './config.js';
+import { MONNAIE, MONNAIE_VOLTS } from './config.js';
 import { JEUX, formaterFrags } from './core.js';
 
 /** Échappe une chaîne avant injection dans du HTML. */
@@ -23,6 +23,9 @@ export function html(morceaux, ...valeurs) {
 export const brut = (valeur) => ({ __brut: true, valeur });
 
 export const frags = (n) => `${formaterFrags(n)} ${MONNAIE}`;
+
+/** Les Volts, la monnaie cosmétique. On ne les mise jamais : on les dépense. */
+export const volts = (n) => `${formaterFrags(n)} ${MONNAIE_VOLTS}`;
 
 /**
  * Le jeton de Frag : une pièce Volt frappée d'un réticule.
