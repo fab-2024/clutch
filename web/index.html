@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="badge-effects.css" />
     <link rel="stylesheet" href="profile-polish.css" />
     <link rel="stylesheet" href="communaute-v2.css" />
+    <link rel="stylesheet" href="communaute-v2-lite.css" />
   </head>
   <body>
     <a class="saut-contenu" href="#contenu">Aller au contenu</a>
@@ -25,8 +26,6 @@
     <header class="entete">
       <div class="enveloppe entete__interieur">
         <a class="logo" href="#/matchs" aria-label="Clutch, accueil">
-          <!-- Le sceau est tracé ici plutôt que chargé en image : une requête
-               de moins, et il reste net à toutes les tailles. -->
           <svg class="logo__sceau" viewBox="0 0 100 100" aria-hidden="true">
             <rect width="100" height="100" rx="27" fill="var(--accent)" />
             <path d="M 63.6 63.6 A 19.2 19.2 0 1 1 63.6 36.4"
@@ -48,8 +47,6 @@
     </div>
 
     <div class="enveloppe agencement">
-      <!-- La colonne de gauche : la navigation en desktop. Sur téléphone elle
-           disparaît au profit de la barre d'onglets en bas de l'écran. -->
       <aside class="lateral">
         <nav class="lateral__nav" id="nav-laterale" aria-label="Navigation principale"></nav>
         <div class="lateral__bas">
