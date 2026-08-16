@@ -1,0 +1,583 @@
+/* ========================================================================
+   CLUTCH — Profil V2 / Finalisation identité
+   ======================================================================== */
+
+.profil-etendard {
+  position: relative;
+  z-index: 4;
+  padding: 16px 22px 0;
+}
+
+.profil-etendard__haut {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 22px;
+}
+
+.profil-etendard__haut > span {
+  font-family: var(--titre);
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: .17em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.42);
+}
+
+.profil-action-discrete {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--texte-faible);
+  font: inherit;
+  font-size: .7rem;
+  cursor: pointer;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,.13);
+  transition: color 160ms ease, border-color 160ms ease;
+}
+.profil-action-discrete:hover {
+  color: var(--accent);
+  border-color: color-mix(in oklab, var(--accent) 55%, transparent);
+}
+
+.profil-etendard .profil-hero__badges {
+  padding: 4px 0 0;
+  min-height: 78px;
+  gap: 3px;
+  align-items: flex-start;
+}
+.profil-etendard .profil-hero__badges::after {
+  left: 18px;
+  top: 28px;
+  width: 210px;
+  opacity: .7;
+}
+
+.badge-medaille-vide {
+  appearance: none;
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  margin-top: 5px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255,255,255,.16);
+  background: rgba(8,11,16,.14);
+  color: rgba(255,255,255,.22);
+  font-family: var(--titre);
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+.badge-medaille-vide--vedette {
+  width: 72px;
+  height: 72px;
+  margin-top: 0;
+}
+.badge-medaille-vide--mini {
+  width: 50px;
+  height: 50px;
+  margin-top: 7px;
+}
+.badge-medaille-vide:hover {
+  border-color: color-mix(in oklab, var(--accent) 52%, transparent);
+  color: var(--accent);
+}
+
+/* -------------------------------------------------------------------------
+   Emblème évolutif
+   ------------------------------------------------------------------------- */
+.profil-embleme {
+  isolation: isolate;
+}
+.profil-embleme__orbite,
+.profil-embleme__eclats,
+.profil-embleme__niveau {
+  position: absolute;
+  pointer-events: none;
+}
+.profil-embleme__orbite {
+  left: 50%;
+  top: 50%;
+  border-radius: 36%;
+  transform: translate(-50%, -50%) rotate(8deg);
+  opacity: 0;
+}
+.profil-embleme__orbite--1 {
+  width: 103px;
+  height: 103px;
+  border: 1px solid rgba(232,255,61,.28);
+}
+.profil-embleme__orbite--2 {
+  width: 116px;
+  height: 116px;
+  border: 1px dashed rgba(232,255,61,.16);
+}
+.profil-embleme__eclats {
+  inset: -3px;
+  opacity: 0;
+}
+.profil-embleme__eclats i {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+.profil-embleme__eclats i:nth-child(1) { left: 10px; top: 18px; }
+.profil-embleme__eclats i:nth-child(2) { right: 4px; top: 43px; }
+.profil-embleme__eclats i:nth-child(3) { right: 18px; bottom: 6px; }
+.profil-embleme__eclats i:nth-child(4) { left: 2px; bottom: 31px; }
+.profil-embleme__niveau {
+  z-index: 5;
+  right: 7px;
+  bottom: 8px;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.11);
+  background: rgba(4,7,10,.88);
+  color: rgba(255,255,255,.72);
+  font-family: var(--titre);
+  font-size: .61rem;
+  font-weight: 850;
+  box-shadow: 0 7px 17px rgba(0,0,0,.34);
+}
+
+.profil-embleme--initie .profil-embleme__orbite--1,
+.profil-embleme--challenger .profil-embleme__orbite--1,
+.profil-embleme--elite .profil-embleme__orbite--1,
+.profil-embleme--master .profil-embleme__orbite,
+.profil-embleme--clutch .profil-embleme__orbite {
+  opacity: 1;
+}
+.profil-embleme--challenger .profil-embleme__orbite--2,
+.profil-embleme--elite .profil-embleme__orbite--2 {
+  opacity: .75;
+}
+.profil-embleme--elite .profil-embleme__eclats,
+.profil-embleme--master .profil-embleme__eclats,
+.profil-embleme--clutch .profil-embleme__eclats {
+  opacity: 1;
+}
+.profil-embleme--master .profil-embleme__orbite--1,
+.profil-embleme--clutch .profil-embleme__orbite--1 {
+  animation: profil-orbite-a 7s linear infinite;
+}
+.profil-embleme--master .profil-embleme__orbite--2,
+.profil-embleme--clutch .profil-embleme__orbite--2 {
+  animation: profil-orbite-b 11s linear infinite reverse;
+}
+.profil-embleme--master .profil-embleme__eclats,
+.profil-embleme--clutch .profil-embleme__eclats {
+  animation: profil-eclats 2.7s ease-in-out infinite;
+}
+.profil-embleme--clutch::after {
+  box-shadow:
+    0 0 45px rgba(232,255,61,.22),
+    inset 0 0 35px rgba(232,255,61,.08),
+    0 0 0 5px rgba(232,255,61,.025);
+}
+.profil-embleme--clutch .profil-embleme__niveau {
+  color: var(--accent);
+  border-color: rgba(232,255,61,.3);
+}
+
+@keyframes profil-orbite-a {
+  from { transform: translate(-50%,-50%) rotate(8deg); }
+  to   { transform: translate(-50%,-50%) rotate(368deg); }
+}
+@keyframes profil-orbite-b {
+  from { transform: translate(-50%,-50%) rotate(-12deg); }
+  to   { transform: translate(-50%,-50%) rotate(348deg); }
+}
+@keyframes profil-eclats {
+  0%,100% { opacity: .32; filter: brightness(.8); }
+  50% { opacity: 1; filter: brightness(1.25); }
+}
+
+/* Le cadre de la player card progresse lui aussi avec le prestige. */
+.profil-hero--challenger { box-shadow: 0 26px 70px rgba(0,0,0,.26), inset 0 0 0 1px rgba(232,255,61,.025); }
+.profil-hero--elite { border-color: color-mix(in oklab, var(--accent) 18%, var(--bordure)); }
+.profil-hero--master { border-color: color-mix(in oklab, var(--accent) 28%, var(--bordure)); }
+.profil-hero--clutch {
+  border-color: color-mix(in oklab, var(--accent) 42%, var(--bordure));
+  box-shadow: 0 26px 80px rgba(0,0,0,.34), 0 0 42px rgba(232,255,61,.05);
+}
+
+/* -------------------------------------------------------------------------
+   Section Arsenal
+   ------------------------------------------------------------------------- */
+.profil-section__haut > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+.profil-section__haut small {
+  color: var(--texte-faible);
+  font-size: .66rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.profil-section__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.profil-section__actions > span {
+  color: var(--texte-faible);
+  font-size: .74rem;
+}
+.profil-badge-item small {
+  margin-top: -2px;
+  color: var(--texte-faible);
+  font-size: .61rem;
+}
+.profil-arsenal__aide {
+  color: var(--texte-faible);
+  font-size: .78rem;
+  margin: 13px 0 0;
+}
+
+/* -------------------------------------------------------------------------
+   Éditeur d'identité
+   ------------------------------------------------------------------------- */
+.profil-editeur {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--accent) 22%, var(--bordure));
+  border-radius: 25px;
+  background:
+    radial-gradient(560px 250px at 0 0, rgba(232,255,61,.055), transparent 70%),
+    linear-gradient(145deg, #111923, #0b1017 70%);
+  box-shadow: 0 28px 70px rgba(0,0,0,.28);
+}
+.profil-editeur[hidden] { display: none !important; }
+.profil-editeur__entete {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--bordure);
+}
+.profil-editeur__eyebrow {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent);
+  font-family: var(--titre);
+  font-size: .62rem;
+  font-weight: 850;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.profil-editeur__entete h2 {
+  margin: 0;
+  font-family: var(--titre);
+  font-size: 1.32rem;
+  letter-spacing: -.02em;
+}
+.profil-editeur__entete p {
+  margin: 5px 0 0;
+  color: var(--texte-faible);
+  font-size: .76rem;
+}
+.profil-editeur__fermer {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border: 1px solid var(--bordure);
+  border-radius: 50%;
+  background: rgba(255,255,255,.025);
+  color: var(--texte-doux);
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+
+.profil-editeur__grille {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 1px;
+  background: var(--bordure);
+  border-bottom: 1px solid var(--bordure);
+}
+.profil-editeur__zone {
+  min-width: 0;
+  padding: 19px 22px 22px;
+  background: #0d131c;
+}
+.profil-editeur__zone-titre {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.profil-editeur__zone-titre strong {
+  font-family: var(--titre);
+  font-size: .82rem;
+}
+.profil-editeur__zone-titre span {
+  color: var(--texte-faible);
+  font-size: .66rem;
+}
+.profil-editeur__slots {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(62px, 1fr));
+  gap: 7px;
+}
+.profil-editeur__slots--arsenal {
+  grid-template-columns: repeat(5, minmax(58px, 1fr));
+}
+.profil-editeur__slot-wrap {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+}
+.profil-editeur__slot-wrap > span {
+  color: var(--texte-faible);
+  font-size: .59rem;
+  text-align: center;
+}
+.profil-editeur__slot {
+  width: 100%;
+  min-height: 100px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 17px;
+  background: rgba(255,255,255,.017);
+  color: var(--texte-doux);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+.profil-editeur__slot:hover,
+.profil-editeur__slot.actif {
+  border-color: color-mix(in oklab, var(--accent) 47%, transparent);
+  background: rgba(232,255,61,.025);
+}
+.profil-editeur__slot.actif {
+  box-shadow: inset 0 0 0 1px rgba(232,255,61,.08);
+}
+.profil-editeur__slot .badge-medaille { transform: scale(.86); }
+.profil-editeur__plus {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(255,255,255,.14);
+  border-radius: 50%;
+  color: rgba(255,255,255,.28);
+  font-family: var(--titre);
+  font-size: 1rem;
+}
+.profil-editeur__retirer {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.28);
+  font-size: .55rem;
+  cursor: pointer;
+}
+.profil-editeur__retirer:hover { color: #ff8c8c; }
+
+.profil-editeur__collection {
+  padding: 19px 22px 22px;
+}
+.profil-editeur__badges {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 8px;
+}
+.profil-editeur__badge {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px 7px 5px;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 15px;
+  background: rgba(255,255,255,.018);
+  color: var(--texte);
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+.profil-editeur__badge:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--accent) 32%, transparent);
+  background: rgba(255,255,255,.028);
+}
+.profil-editeur__badge .badge-medaille { transform: scale(.76); margin: -7px -8px -7px -5px; }
+.profil-editeur__badge > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.profil-editeur__badge strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--titre);
+  font-size: .69rem;
+}
+.profil-editeur__badge small {
+  color: var(--texte-faible);
+  font-size: .57rem;
+}
+.profil-editeur__vide {
+  color: var(--texte-faible);
+  font-size: .76rem;
+}
+.profil-editeur__bas {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  padding: 16px 22px 20px;
+  border-top: 1px solid var(--bordure);
+  background: rgba(0,0,0,.08);
+}
+
+/* -------------------------------------------------------------------------
+   Série de connexion = reward track
+   ------------------------------------------------------------------------- */
+.profil-section--serie .profil-section__corps { padding-block: 18px; }
+.profil-prime__contenu { min-width: 0; width: 100%; }
+.profil-prime__jours {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(58px,1fr));
+  gap: 8px;
+}
+.profil-prime__jours::before {
+  content: '';
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: 50%;
+  height: 1px;
+  background: rgba(255,255,255,.08);
+  z-index: 0;
+}
+.profil-prime__jour {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  height: 49px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1px;
+  border-radius: 14px;
+  background: #0c121a;
+  border: 1px solid var(--bordure);
+}
+.profil-prime__jour small {
+  color: var(--texte-faible);
+  font-size: .53rem;
+  line-height: 1;
+}
+.profil-prime__jour b {
+  color: var(--texte-doux);
+  font-family: var(--titre);
+  font-size: .64rem;
+  line-height: 1.1;
+}
+.profil-prime__jour--ok {
+  background: color-mix(in oklab, var(--accent) 7%, #0c121a);
+  border-color: color-mix(in oklab, var(--accent) 24%, var(--bordure));
+}
+.profil-prime__jour--ok b { color: var(--accent); }
+.profil-prime__jour--maintenant {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(232,255,61,.07), 0 0 18px rgba(232,255,61,.08);
+}
+.profil-prime__jour--coffre {
+  border-color: rgba(232,255,61,.24);
+  background: linear-gradient(145deg, rgba(232,255,61,.04), #0c121a);
+}
+.profil-prime__jour--coffre b { font-size: .9rem; }
+
+/* -------------------------------------------------------------------------
+   Level up
+   ------------------------------------------------------------------------- */
+.profil-levelup {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(3,5,8,.82);
+  backdrop-filter: blur(12px);
+  animation: profil-levelup-fond 240ms ease both;
+}
+.profil-levelup__carte {
+  width: min(390px, 92vw);
+  display: grid;
+  justify-items: center;
+  padding: 30px 26px 26px;
+  border: 1px solid rgba(232,255,61,.24);
+  border-radius: 30px;
+  background:
+    radial-gradient(260px 210px at 50% 28%, rgba(232,255,61,.1), transparent 70%),
+    #0b1017;
+  box-shadow: 0 35px 110px rgba(0,0,0,.65), 0 0 60px rgba(232,255,61,.06);
+  text-align: center;
+  animation: profil-levelup-carte 380ms cubic-bezier(.2,.85,.3,1) both;
+}
+.profil-levelup__sur {
+  color: var(--accent);
+  font-family: var(--titre);
+  font-size: .65rem;
+  font-weight: 850;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.profil-levelup__carte .profil-embleme { margin: 18px 0 10px; transform: scale(1.22); }
+.profil-levelup__carte > strong {
+  color: var(--accent);
+  font-family: var(--titre);
+  font-size: .72rem;
+  letter-spacing: .12em;
+}
+.profil-levelup__carte h2 {
+  margin: 3px 0 0;
+  font-family: var(--titre);
+  font-size: 2rem;
+}
+.profil-levelup__carte p {
+  margin: 7px 0 20px;
+  color: var(--texte-faible);
+  font-size: .78rem;
+}
+@keyframes profil-levelup-fond { from { opacity: 0; } to { opacity: 1; } }
+@keyframes profil-levelup-carte { from { opacity: 0; transform: scale(.9) translateY(14px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 850px) {
+  .profil-editeur__grille { grid-template-columns: 1fr; }
+  .profil-editeur__badges { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .profil-section__actions { align-items: flex-end; flex-direction: column; gap: 4px; }
+  .profil-prime__jours { grid-template-columns: repeat(7, minmax(44px,1fr)); gap: 5px; }
+}
+
+@media (max-width: 620px) {
+  .profil-etendard { padding-inline: 16px; }
+  .profil-etendard__haut { margin-bottom: 2px; }
+  .profil-editeur__entete,
+  .profil-editeur__zone,
+  .profil-editeur__collection,
+  .profil-editeur__bas { padding-inline: 16px; }
+  .profil-editeur__slots { grid-template-columns: repeat(4,1fr); }
+  .profil-editeur__slots--arsenal { grid-template-columns: repeat(5,1fr); }
+  .profil-editeur__slot { min-height: 82px; }
+  .profil-editeur__badges { grid-template-columns: 1fr; }
+  .profil-prime { display: grid; }
+  .profil-prime__jours { overflow-x: auto; grid-template-columns: repeat(7, 58px); padding-bottom: 3px; }
+}
