@@ -1,4 +1,10 @@
+import { BASE } from './api.js';
+import { SUPABASE_ANON_KEY, MODE_DEMO } from './config.js';
+
 const KEY = 'clutch:onboarding:v1';
+const SESSION_KEY = 'clutch.session';
+const SYNC_KEY = 'clutch:onboarding:jeux-sync-v1';
+const JEUX_VALIDES = new Set(['lol', 'cs2', 'valorant']);
 
 function readOnboarding() {
   try {
@@ -35,6 +41,9 @@ function syncOnboardingProgress() {
     segment.classList.toggle('actif', index < step);
   });
   progress.setAttribute('aria-label', `Étape ${step} sur 3`);
+
+  // Phase 4.1 : l'abandon sans compte n'est proposé qu'à l'étape 3.
+  if (step === 2) screen.querySelector('[data-explore]')?.remove();
 }
 
 function buildFlowTop() {
@@ -57,8 +66,17 @@ function syncAuthStep() {
   document.body.classList.toggle('phase4-auth-onboarding', signup);
   if (!signup) return;
 
+  // Important : ne pas remettre `termine` à false avant que le routeur ait
+  // effectivement rendu l'étape 3. Sinon son garde-fou renvoie vers l'étape 1.
   const auth = document.querySelector('.auth-v4');
   if (!auth) return;
+
+  // Atteindre le formulaire n'est pas terminer l'onboarding. Le vieux handler
+  // de l'étape 2 utilise encore `termine=true` comme ticket de transition ;
+  // une fois le formulaire réellement présent, ce ticket est consommé.
+  const current = readOnboarding();
+  if (current.termine) writeOnboarding({ ...current, termine: false });
+
   auth.classList.add('auth-v4--onboarding-step');
 
   if (!auth.querySelector('.auth-v4__flow-top')) {
@@ -86,8 +104,8 @@ function syncAuthStep() {
     skip.innerHTML = '<span>Continuer sans inscription</span><b>→</b>';
     validate.after(skip);
     skip.addEventListener('click', () => {
-      const current = readOnboarding();
-      writeOnboarding({ ...current, termine: true });
+      const currentState = readOnboarding();
+      writeOnboarding({ ...currentState, termine: true });
       localStorage.removeItem('clutch:auth-intent');
       location.hash = '#/accueil';
     });
@@ -103,19 +121,68 @@ function syncAuthStep() {
   }
 }
 
+function readSession() {
+  try {
+    return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+  } catch {
+    return null;
+  }
+}
+
+function normaliserJeux(jeux) {
+  return [...new Set((Array.isArray(jeux) ? jeux : [])
+    .map((jeu) => String(jeu || '').toLowerCase())
+    .filter((jeu) => JEUX_VALIDES.has(jeu)))].sort();
+}
+
+async function persistJeuxSuivis() {
+  if (MODE_DEMO) return;
+  const onboarding = readOnboarding();
+  if (!onboarding.termine) return;
+
+  const jeux = normaliserJeux(onboarding.jeux);
+  if (!jeux.length) return;
+
+  const session = readSession();
+  if (!session?.access_token) return;
+
+  const signature = `${session.access_token.slice(-20)}:${jeux.join(',')}`;
+  if (localStorage.getItem(SYNC_KEY) === signature) return;
+
+  try {
+    const response = await fetch(`${BASE}/rest/v1/rpc/clutch_definir_jeux_suivis`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ p_jeux: jeux }),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    localStorage.setItem(SYNC_KEY, signature);
+  } catch (error) {
+    // La préférence améliore le feed mais ne doit jamais bloquer l'accès à Clutch.
+    console.warn('[Clutch] jeux suivis non persistés', error);
+  }
+}
+
 function sync() {
   requestAnimationFrame(() => {
     syncOnboardingProgress();
     syncAuthStep();
+    void persistJeuxSuivis();
   });
 }
 
+// Le routeur remplace entièrement #contenu à chaque navigation. Observer l'ancien
+// noeud seulement faisait perdre la mutation qui rend l'étape 3. Le body, lui,
+// reste stable pendant tout le cycle de vie de l'application.
 window.addEventListener('hashchange', sync);
 window.addEventListener('DOMContentLoaded', sync);
 
-const root = document.getElementById('contenu');
-if (root) {
-  new MutationObserver(sync).observe(root, { childList: true, subtree: true });
+if (document.body) {
+  new MutationObserver(sync).observe(document.body, { childList: true, subtree: true });
 }
 
 sync();
