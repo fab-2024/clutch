@@ -16,7 +16,7 @@
   backdrop-filter: blur(20px);
 }
 .ui-v4 .social-shell__tab {
-  min-height: 38px;
+  min-height: 42px;
   display: grid;
   place-items: center;
   border-radius: 13px 6px 13px 6px;
@@ -39,8 +39,125 @@
 @media (max-width: 899px) {
   .ui-v4 .social-shell { gap: 12px; }
   .ui-v4 .social-shell__nav {
-    top: 72px;
+    top: 68px;
     width: 100%;
-    margin-bottom: 2px;
+    margin-bottom: 0;
+    padding: 4px;
+    border-radius: 16px 7px 16px 7px;
   }
+  .ui-v4 .social-shell__tab { min-height: 44px; }
+
+  /* Ligues embarqué dans Social : pas de second hero desktop ni de double sticky. */
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__hero {
+    display: block;
+    min-height: 0;
+    margin: 0;
+    padding: 0 0 10px;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__hero::before,
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__hero-copy { display: none; }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__hero-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__action {
+    min-height: 48px;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 14px 6px 14px 6px;
+    text-align: center;
+  }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__action:nth-child(2) { border-radius: 6px 14px 6px 14px; }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__action-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px 4px 9px 4px;
+    font-size: .92rem;
+  }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__action strong { font-size: .79rem; }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__action small { display: none; }
+
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__tabs {
+    position: static;
+    top: auto;
+    z-index: auto;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    margin: 2px 0 16px;
+    overflow: visible;
+    border-radius: 14px 6px 14px 6px;
+  }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__tab {
+    min-height: 42px;
+    padding: 7px 8px;
+    white-space: nowrap;
+  }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__section-head {
+    align-items: flex-start;
+    margin-top: 20px;
+  }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__empty-state {
+    min-height: 0;
+    display: block;
+    padding: 18px 2px 24px;
+  }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__empty-mark { display: none; }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__empty-state h2 { font-size: clamp(1.55rem, 8vw, 2.15rem); }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__empty-actions { display: none; }
+
+  /* Les demandes/ajouts d'amis passent sous l'identité au lieu de rester collés à droite. */
+  .ui-v4 .social-shell .friends-v4__request,
+  .ui-v4 .social-shell .friends-v4__result {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+  }
+  .ui-v4 .social-shell .friends-v4__request .friends-v4__actions,
+  .ui-v4 .social-shell .friends-v4__result > div:last-child {
+    grid-column: 2;
+    width: 100%;
+    justify-self: stretch;
+  }
+  .ui-v4 .social-shell .friends-v4__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .ui-v4 .social-shell .friends-v4__result .btn,
+  .ui-v4 .social-shell .friends-v4__request .btn { width: 100%; min-height: 42px; }
+  .ui-v4 .social-shell .friends-v4__friend--pending > .btn {
+    width: 100%;
+    min-height: 42px;
+    margin-top: 12px;
+  }
+
+  .ui-v4 .social-shell .ligues-v2__composer-close {
+    width: 44px;
+    height: 44px;
+    top: calc(12px + env(safe-area-inset-top));
+    right: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__hero-actions { gap: 6px; }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__action { min-height: 46px; padding-inline: 8px; }
+  .ui-v4 .social-shell[data-section="ligues"] .ligues-v2__action-icon { width: 27px; height: 27px; }
+  .ui-v4 .social-shell .friends-v4__hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+  .ui-v4 .social-shell .friends-v4__hero p { grid-column: 1 / -1; }
+  .ui-v4 .social-shell .friends-v4__count strong { font-size: 2.35rem; }
+  .ui-v4 .social-shell .friends-v4__section-title--row { align-items: flex-start; }
 }
