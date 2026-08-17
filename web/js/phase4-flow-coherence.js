@@ -66,14 +66,17 @@ function syncAuthStep() {
   document.body.classList.toggle('phase4-auth-onboarding', signup);
   if (!signup) return;
 
-  // Phase 4.1 : atteindre le formulaire n'est pas "terminer" l'onboarding.
-  // Le routeur historique a besoin du flag pendant la transition depuis l'étape 2 ;
-  // on le remet immédiatement à false une fois l'étape 3 réellement affichée.
+  // Important : ne pas remettre `termine` à false avant que le routeur ait
+  // effectivement rendu l'étape 3. Sinon son garde-fou renvoie vers l'étape 1.
+  const auth = document.querySelector('.auth-v4');
+  if (!auth) return;
+
+  // Atteindre le formulaire n'est pas terminer l'onboarding. Le vieux handler
+  // de l'étape 2 utilise encore `termine=true` comme ticket de transition ;
+  // une fois le formulaire réellement présent, ce ticket est consommé.
   const current = readOnboarding();
   if (current.termine) writeOnboarding({ ...current, termine: false });
 
-  const auth = document.querySelector('.auth-v4');
-  if (!auth) return;
   auth.classList.add('auth-v4--onboarding-step');
 
   if (!auth.querySelector('.auth-v4__flow-top')) {
@@ -172,16 +175,14 @@ function sync() {
   });
 }
 
-// Le vieux handler de l'étape 2 marque `termine=true` pour franchir le garde-fou
-// du routeur. On le laisse passer uniquement comme flag de transition ; syncAuthStep
-// le remet à false dès l'affichage de l'étape 3. Cela garantit qu'un onglet fermé
-// sur le formulaire ne compte plus comme onboarding terminé.
+// Le routeur remplace entièrement #contenu à chaque navigation. Observer l'ancien
+// noeud seulement faisait perdre la mutation qui rend l'étape 3. Le body, lui,
+// reste stable pendant tout le cycle de vie de l'application.
 window.addEventListener('hashchange', sync);
 window.addEventListener('DOMContentLoaded', sync);
 
-const root = document.getElementById('contenu');
-if (root) {
-  new MutationObserver(sync).observe(root, { childList: true, subtree: true });
+if (document.body) {
+  new MutationObserver(sync).observe(document.body, { childList: true, subtree: true });
 }
 
 sync();
