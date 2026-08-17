@@ -8,10 +8,6 @@
 --  500 -> Alambic V (+750)
 -- 1000 -> Cornue VI (+1000)
 -- 5000 -> Océan VII (+1500)
---
--- Les tables techniques ne sont pas exposées directement au Data API :
--- l'interface passe par classement_communautes(), qui ne renvoie que des
--- agrégats et, pour l'utilisateur courant, sa propre contribution.
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
@@ -21,15 +17,14 @@ alter table public.profils
   add column if not exists equipe_favorite_changee_le timestamptz,
   add column if not exists equipe_favorite_rejointe_le timestamptz;
 
--- Les membres déjà présents avant cette migration n'ont pas de faux événement
--- de croissance. On peut toutefois dater leur appartenance au plus tard de la
--- création du compte pour afficher une ancienneté raisonnable.
+-- Pas de faux mouvement pour les membres préexistants : leur ancienneté est
+-- simplement bornée par la date de création de leur profil.
 update public.profils
 set equipe_favorite_rejointe_le = coalesce(equipe_favorite_rejointe_le, cree_le)
 where equipe_favorite_id is not null;
 
 -- ---------------------------------------------------------------------
--- État permanent d'une faction
+-- État permanent + journal + mutations
 -- ---------------------------------------------------------------------
 create table if not exists public.communaute_etat (
   equipe_id       text primary key references public.equipes(id) on delete cascade,
@@ -62,8 +57,7 @@ create table if not exists public.communaute_mutations (
 create index if not exists communaute_mutations_equipe_date_idx
   on public.communaute_mutations(equipe_id, cree_le desc);
 
--- Défense en profondeur : ces tables sont internes. Même si public est exposé,
--- aucune donnée brute de mouvements/membres n'est lisible depuis le navigateur.
+-- Tables internes : le navigateur ne lit jamais les mouvements individuels.
 alter table public.communaute_etat enable row level security;
 alter table public.communaute_mouvements enable row level security;
 alter table public.communaute_mutations enable row level security;
@@ -71,8 +65,7 @@ revoke all on table public.communaute_etat from anon, authenticated;
 revoke all on table public.communaute_mouvements from anon, authenticated;
 revoke all on table public.communaute_mutations from anon, authenticated;
 
--- Bootstrap sans récompense rétroactive : on mémorise seulement le niveau que
--- les effectifs actuels justifient déjà.
+-- Bootstrap sans récompense rétroactive.
 insert into public.communaute_etat (equipe_id, niveau_atteint, atteint_le, maj_le)
 select
   e.id,
@@ -93,15 +86,15 @@ group by e.id
 on conflict (equipe_id) do nothing;
 
 -- ---------------------------------------------------------------------
--- Cooldown : 7 jours entre deux changements une fois une faction choisie
+-- Cooldown serveur : 7 jours après chaque choix/changement
 -- ---------------------------------------------------------------------
 create or replace function public.clutch_verifier_changement_faction()
 returns trigger
 language plpgsql
-set search_path = public
+set search_path = public, pg_temp
 as $$
 begin
-  -- Ces timestamps sont pilotés par la base, jamais par un PATCH client.
+  -- Les timestamps sont pilotés par la base, jamais par un PATCH client.
   if new.equipe_favorite_id is not distinct from old.equipe_favorite_id then
     new.equipe_favorite_changee_le := old.equipe_favorite_changee_le;
     new.equipe_favorite_rejointe_le := old.equipe_favorite_rejointe_le;
@@ -139,13 +132,13 @@ create or replace function public.clutch_evaluer_mutation(p_equipe_id text)
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, pg_temp
 as $$
 declare
   v_membres integer;
   v_cible smallint;
   v_courant smallint;
-  v_niveau smallint;
+  v_niveau integer;
   v_nom text;
   v_seuil integer;
   v_recompense integer;
@@ -220,9 +213,6 @@ begin
     )
     on conflict (equipe_id, niveau) do nothing;
 
-    -- Une récompense de mutation appartient à la saison en cours, exactement
-    -- comme les autres Frags. Les membres sans ligne de participation reçoivent
-    -- leur solde initial + la récompense ; les autres sont simplement crédités.
     if v_saison.id is not null and v_recompense > 0 then
       insert into public.participations(
         saison_id, user_id, solde, derniere_prime, rejoint_le, serie_prime
@@ -241,7 +231,7 @@ begin
     end if;
 
     update public.communaute_etat
-    set niveau_atteint = v_niveau,
+    set niveau_atteint = v_niveau::smallint,
         atteint_le = now(),
         maj_le = now()
     where equipe_id = p_equipe_id;
@@ -249,16 +239,17 @@ begin
 end;
 $$;
 
+-- Critique : cette fonction crédite des Frags. Elle n'est jamais exposée.
 revoke all on function public.clutch_evaluer_mutation(text) from public, anon, authenticated;
 
 -- ---------------------------------------------------------------------
--- Journaliser les entrées/sorties et déclencher l'évaluation
+-- Journaliser entrées/sorties, puis évaluer la nouvelle faction
 -- ---------------------------------------------------------------------
 create or replace function public.clutch_journaliser_faction()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, pg_temp
 as $$
 begin
   if tg_op = 'UPDATE' and old.equipe_favorite_id is distinct from new.equipe_favorite_id then
@@ -272,12 +263,14 @@ begin
       values (new.id, new.equipe_favorite_id, 1);
       perform public.clutch_evaluer_mutation(new.equipe_favorite_id);
     end if;
+    return new;
   elsif tg_op = 'DELETE' and old.equipe_favorite_id is not null then
     insert into public.communaute_mouvements(user_id, equipe_id, delta)
     values (null, old.equipe_favorite_id, -1);
+    return old;
   end if;
 
-  return coalesce(new, old);
+  return case when tg_op = 'DELETE' then old else new end;
 end;
 $$;
 
@@ -296,31 +289,31 @@ drop function if exists public.classement_communautes();
 
 create or replace function public.classement_communautes()
 returns table (
-  equipe_id                  text,
-  nom                        text,
-  tag                        text,
-  jeu                        text,
-  elo                        integer,
-  logo                       text,
-  membres                    bigint,
-  moi                        boolean,
-  niveau_atteint             smallint,
-  croissance_24h             integer,
-  croissance_7j              integer,
-  membre_depuis              timestamptz,
-  pronos_depuis              bigint,
-  mutations_vecues           bigint,
-  dernier_evenement_id       bigint,
-  dernier_evenement_niveau   smallint,
-  dernier_evenement_nom      text,
-  dernier_evenement_le       timestamptz,
+  equipe_id                    text,
+  nom                          text,
+  tag                          text,
+  jeu                          text,
+  elo                          integer,
+  logo                         text,
+  membres                      bigint,
+  moi                          boolean,
+  niveau_atteint               smallint,
+  croissance_24h               integer,
+  croissance_7j                integer,
+  membre_depuis                timestamptz,
+  pronos_depuis                bigint,
+  mutations_vecues             bigint,
+  dernier_evenement_id         bigint,
+  dernier_evenement_niveau     smallint,
+  dernier_evenement_nom        text,
+  dernier_evenement_le         timestamptz,
   dernier_evenement_recompense integer,
-  historique                 jsonb
+  historique                   jsonb
 )
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, pg_temp
 as $$
   with effectifs as (
     select e.id as equipe_id, count(p.id)::bigint as membres
