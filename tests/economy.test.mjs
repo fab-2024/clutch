@@ -22,7 +22,6 @@ test('barème K=40 : favoris, 50/50 et outsiders', () => {
     [0.25, 30, -10],
     [0.15, 34, -6],
   ];
-
   for (const [p, gain, perte] of cas) {
     assert.equal(deltaFrags(p, true, { k: FRAGS_K }), gain);
     assert.equal(deltaFrags(p, false, { k: FRAGS_K }), perte);
@@ -68,10 +67,11 @@ test('soft reset conserve 40 % de l’écart à 1000', () => {
   assert.equal(softResetFrags(1500), 1200);
   assert.equal(softResetFrags(800), 920);
   assert.equal(softResetFrags(1000), 1000);
+  // Cas extrême uniquement pour verrouiller la parité d'arrondi avec PostgreSQL.
+  assert.equal(softResetFrags(-1526.25), -11);
 });
 
 test('arrondi déterministe : les demi-entiers négatifs gardent leur magnitude', () => {
-  // 40 × 0,2625 = 10,5 : la perte doit être -11, comme PostgreSQL.
   assert.equal(deltaFrags(0.2625, false, { k: 40 }), -11);
   assert.equal(deltaFrags(0.7375, true, { k: 40 }), 11);
 });
