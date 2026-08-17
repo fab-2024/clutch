@@ -17,6 +17,33 @@ const JEUX = [
 
 const JEU_COURT = { lol: 'LOL', cs2: 'CS2', valorant: 'VAL' };
 
+// Assets HD / vectoriels issus des brand kits officiels ou de fichiers haute résolution.
+// Le favicon n'est plus la source principale : il ne sert qu'en dernier recours.
+const TEAM_LOGOS_HQ = {
+  'Fnatic': 'https://cdn.sanity.io/images/5gii1snx/production/22ded60518ddaf71975d334849039189cb106e87-1000x1000.png',
+  'G2 Esports': 'https://commons.wikimedia.org/wiki/Special:FilePath/Esports%20organization%20G2%20Esports%20logo.svg',
+  'GiantX': 'https://giantx.gg/cdn/shop/files/logo_0620238f-1e58-435d-bcd2-aa131bba7992_600x.png?v=1772036626',
+  'Karmine Corp': 'https://commons.wikimedia.org/wiki/Special:FilePath/Karmine_Corp_logo.svg',
+  'Movistar KOI': 'https://commons.wikimedia.org/wiki/Special:FilePath/Movistar_KOI_Logo.webp',
+  'Rogue': 'https://commons.wikimedia.org/wiki/Special:FilePath/Rogue_logo.svg',
+  'SK Gaming': 'https://commons.wikimedia.org/wiki/Special:FilePath/SK_Gaming_Logo_2022.svg',
+  'Team BDS': 'https://gamepedia.cursecdn.com/lolesports_gamepedia_en/9/9e/Team_BDSlogo_square.png',
+  'Team Heretics': 'https://teamheretics.com/en/modules/wim_esports/views/img/heretics-logo-png.webp',
+  'Team Vitality': 'https://vitality.gg/wp-content/uploads/2024/04/vitality-logo-yellow.eps_-1.png',
+  'Astralis': 'https://commons.wikimedia.org/wiki/Special:FilePath/Astralis_logo.svg',
+  'FaZe Clan': 'https://commons.wikimedia.org/wiki/Special:FilePath/FaZe_Clan_2025_svg.svg',
+  'Heroic': 'https://commons.wikimedia.org/wiki/Special:FilePath/Heroic_2023_logo.png',
+  'MOUZ': 'https://commons.wikimedia.org/wiki/Special:FilePath/MOUZlogo2021.png',
+  'NAVI': 'https://commons.wikimedia.org/wiki/Special:FilePath/Navilogo.jpg',
+  'Natus Vincere': 'https://commons.wikimedia.org/wiki/Special:FilePath/Navilogo.jpg',
+  'Team Spirit': 'https://commons.wikimedia.org/wiki/Special:FilePath/Team_Spirit_new_em.svg',
+  'Paper Rex': 'https://commons.wikimedia.org/wiki/Special:FilePath/Paper_Rex_logo.svg',
+  'Sentinels': 'https://commons.wikimedia.org/wiki/Special:FilePath/Sentinels_logo.svg',
+  'T1': 'https://commons.wikimedia.org/wiki/Special:FilePath/T1_esports_logo.svg',
+  'DRX': 'https://commons.wikimedia.org/wiki/Special:FilePath/DRX_logo_2023.png',
+  'EDward Gaming': 'https://commons.wikimedia.org/wiki/Special:FilePath/Edward_Gaming_logo.png',
+};
+
 const TEAM_DOMAINS = {
   'G2 Esports': 'g2esports.com', 'Karmine Corp': 'karminecorp.fr', Fnatic: 'fnatic.com',
   'Movistar KOI': 'movistarkoi.com', 'Team Vitality': 'vitality.gg', 'Team BDS': 'team-bds.com',
@@ -99,6 +126,8 @@ function idEquipePourOrganisation(org, jeux) {
 }
 
 function logoOrganisation(org) {
+  const direct = TEAM_LOGOS_HQ[org.nom] || org.membres.map((e) => TEAM_LOGOS_HQ[e.nom]).find(Boolean);
+  if (direct) return direct;
   const domaine = org.membres.map((e) => TEAM_DOMAINS[e.nom]).find(Boolean) || TEAM_DOMAINS[org.nom];
   if (!domaine) return '';
   return `https://www.google.com/s2/favicons?sz=256&domain=${encodeURIComponent(domaine)}`;
@@ -132,7 +161,7 @@ export async function vueOnboarding(racine) {
             <img src="assets/logo.svg" alt="" aria-hidden="true">
             <strong>CLUTCH<span>.</span></strong>
           </a>
-          <div class="onboarding-v5__progress" aria-label="Étape ${etat.etape + 1} sur 2"><i class="actif"></i><i class="${etat.etape === 1 ? 'actif' : ''}"></i></div>
+          <div class="onboarding-v5__progress" aria-label="Étape ${etat.etape + 1} sur 3"><i class="actif"></i><i class="${etat.etape === 1 ? 'actif' : ''}"></i><i></i></div>
           <button class="onboarding-v5__login" type="button" data-login>Se connecter</button>
         </div>
         ${etat.etape === 0 ? ecranJeux(etat) : ecranEquipes(etat, equipes)}
