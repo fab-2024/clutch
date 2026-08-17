@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="accueil-v3-fix.css" />
     <link rel="stylesheet" href="matchs-v2.css" />
     <link rel="stylesheet" href="economy-v2.css" />
+    <link rel="stylesheet" href="economy-v2-cleanup.css" />
     <link rel="stylesheet" href="ligues-v2.css" />
     <link rel="stylesheet" href="boutique-v2.css" />
     <link rel="stylesheet" href="parametres-v2.css" />
@@ -36,25 +37,10 @@
   </head>
   <body>
     <a class="saut-contenu" href="#contenu">Aller au contenu</a>
-    <header class="entete">
-      <div class="enveloppe entete__interieur">
-        <a class="logo" href="#/accueil" aria-label="Clutch, accueil">
-          <svg class="logo__sceau" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="27" fill="var(--accent)" /><path d="M 63.6 63.6 A 19.2 19.2 0 1 1 63.6 36.4" fill="none" stroke="var(--sur-accent)" stroke-width="11.5" /></svg>
-          <span class="logo__marque">CLUTCH<i class="logo__point" aria-hidden="true"></i></span>
-        </a>
-        <div class="entete__droite" id="entete-droite"></div>
-      </div>
-    </header>
+    <header class="entete"><div class="enveloppe entete__interieur"><a class="logo" href="#/accueil" aria-label="Clutch, accueil"><svg class="logo__sceau" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="27" fill="var(--accent)" /><path d="M 63.6 63.6 A 19.2 19.2 0 1 1 63.6 36.4" fill="none" stroke="var(--sur-accent)" stroke-width="11.5" /></svg><span class="logo__marque">CLUTCH<i class="logo__point" aria-hidden="true"></i></span></a><div class="entete__droite" id="entete-droite"></div></div></header>
     <div class="bandeau-demo" id="bandeau-demo" hidden><div class="enveloppe"><strong>Mode démo</strong> — tout est stocké dans ton navigateur, aucun compte n'est créé. Les compteurs sont fictifs, sans aucune valeur. <button class="lien-bandeau" id="reset-demo">Réinitialiser la démo</button></div></div>
-    <div class="enveloppe agencement">
-      <aside class="lateral"><nav class="lateral__nav" id="nav-laterale" aria-label="Navigation principale"></nav><div class="lateral__bas"><a class="lateral__lien lateral__lien--discret" href="#/parametres"><span class="lateral__icone" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3" /><path d="M12 2.5v2M12 19.5v2M4.2 7.2l1.7 1M18.1 15.8l1.7 1M4.2 16.8l1.7-1M18.1 8.2l1.7-1" stroke-linecap="round" /></svg></span><span>Paramètres</span></a></div></aside>
-      <div class="colonne">
-        <main id="contenu" class="principal" tabindex="-1"><div class="chargement"><span class="spinner"></span></div></main>
-        <footer class="pied"><p><strong>Clutch</strong> — jeu de pronostics gratuit. Aucune mise réelle, aucun gain en argent. Les Frags sont un rating de classement non dépensable ; les Volts servent uniquement à la personnalisation et ne donnent aucun avantage compétitif.</p><p class="pied__legal">Ce service n'est pas un opérateur de jeux d'argent et de hasard au sens de l'article L320-1 du Code de la sécurité intérieure. Réservé aux personnes de 16 ans et plus. <a href="#/parametres">Paramètres</a></p></footer>
-      </div>
-    </div>
-    <nav class="onglets" id="onglets" aria-label="Navigation principale"></nav>
-    <div id="toasts" class="toasts" aria-live="polite"></div>
+    <div class="enveloppe agencement"><aside class="lateral"><nav class="lateral__nav" id="nav-laterale" aria-label="Navigation principale"></nav><div class="lateral__bas"><a class="lateral__lien lateral__lien--discret" href="#/parametres"><span class="lateral__icone" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3" /><path d="M12 2.5v2M12 19.5v2M4.2 7.2l1.7 1M18.1 15.8l1.7 1M4.2 16.8l1.7-1M18.1 8.2l1.7-1" stroke-linecap="round" /></svg></span><span>Paramètres</span></a></div></aside><div class="colonne"><main id="contenu" class="principal" tabindex="-1"><div class="chargement"><span class="spinner"></span></div></main><footer class="pied"><p><strong>Clutch</strong> — jeu de pronostics gratuit. Aucune mise réelle, aucun gain en argent. Les Frags sont un rating de classement non dépensable ; les Volts servent uniquement à la personnalisation et ne donnent aucun avantage compétitif.</p><p class="pied__legal">Ce service n'est pas un opérateur de jeux d'argent et de hasard au sens de l'article L320-1 du Code de la sécurité intérieure. Réservé aux personnes de 16 ans et plus. <a href="#/parametres">Paramètres</a></p></footer></div></div>
+    <nav class="onglets" id="onglets" aria-label="Navigation principale"></nav><div id="toasts" class="toasts" aria-live="polite"></div>
     <script type="module" src="js/app.js"></script>
     <script type="module" src="js/settings-preset-bindings.js"></script>
     <script type="module" src="js/profile-polish.js"></script>
