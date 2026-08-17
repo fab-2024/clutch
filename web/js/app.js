@@ -14,6 +14,8 @@ import { vueLigues } from './views/ligues.js';
 import { vueLigue } from './views/ligue.js';
 import { vueProfil } from './views/profil.js';
 import { vueCommunaute } from './views/communaute.js';
+import { vueSocial } from './views/social.js';
+import { vueRoom } from './views/room.js';
 import { vueBoutique } from './views/boutique.js';
 import { vueParametres } from './views/parametres.js';
 import { vueCall } from './views/call.js';
@@ -25,23 +27,30 @@ import { vueConnexion } from './views/connexion.js';
 import { vueDiagnostic } from './views/diagnostic.js';
 
 const ROUTES = [
-  { motif: /^\/accueil$/, vue: vueAccueil, nav: 'accueil' },
-  { motif: /^\/matchs$/, vue: vueMatchs, nav: 'matchs' },
-  { motif: /^\/matchs\/(.+)$/, vue: vueMatch, nav: 'matchs' },
-  { motif: /^\/ligues$/, vue: vueLigues, nav: 'ligues' },
-  { motif: /^\/ligues\/(.+)$/, vue: vueLigue, nav: 'ligues' },
-  { motif: /^\/classement$/, vue: (r) => vueLigues(r, 'global'), nav: 'ligues' },
-  { motif: /^\/communaute$/, vue: vueCommunaute, nav: 'communaute' },
-  { motif: /^\/boutique$/, vue: vueBoutique, nav: 'boutique' },
-  { motif: /^\/profil$/, vue: vueProfil, nav: 'profil' },
-  { motif: /^\/parametres$/, vue: vueParametres, nav: 'parametres' },
-  { motif: /^\/call$/, vue: vueCall, nav: 'call' },
-  { motif: /^\/analyste$/, vue: vueAnalyste, nav: 'profil' },
-  { motif: /^\/badges$/, vue: vueBadges, nav: 'profil' },
-  { motif: /^\/cartes$/, vue: vueCartes, nav: 'profil' },
-  { motif: /^\/admin$/, vue: vueAdmin, nav: null },
-  { motif: /^\/connexion$/, vue: vueConnexion, nav: null },
-  { motif: /^\/diagnostic$/, vue: vueDiagnostic, nav: null },
+  { motif: /^\/accueil$/, vue: vueAccueil, nav: 'accueil', mobile: 'hub' },
+  { motif: /^\/matchs$/, vue: vueMatchs, nav: 'matchs', mobile: 'matchs' },
+  { motif: /^\/matchs\/(.+)$/, vue: vueMatch, nav: 'matchs', mobile: 'matchs' },
+
+  { motif: /^\/social$/, vue: (r) => vueSocial(r, 'ligues'), nav: 'social', desktop: 'ligues', mobile: 'social' },
+  { motif: /^\/social\/(ligues|faction|amis)$/, vue: vueSocial, nav: 'social', desktop: 'ligues', mobile: 'social' },
+  { motif: /^\/amis$/, vue: (r) => vueSocial(r, 'amis'), nav: 'social', desktop: 'ligues', mobile: 'social' },
+  { motif: /^\/ligues$/, vue: vueLigues, nav: 'ligues', mobile: 'social' },
+  { motif: /^\/ligues\/(.+)$/, vue: vueLigue, nav: 'ligues', mobile: 'social' },
+  { motif: /^\/classement$/, vue: (r) => vueLigues(r, 'global'), nav: 'ligues', mobile: 'social' },
+  { motif: /^\/communaute$/, vue: vueCommunaute, nav: 'communaute', mobile: 'social' },
+
+  { motif: /^\/room$/, vue: vueRoom, nav: 'room', mobile: 'room' },
+  { motif: /^\/boutique$/, vue: vueBoutique, nav: 'boutique', mobile: 'room' },
+
+  { motif: /^\/profil$/, vue: vueProfil, nav: 'profil', mobile: 'moi' },
+  { motif: /^\/parametres$/, vue: vueParametres, nav: 'parametres', mobile: 'moi' },
+  { motif: /^\/call$/, vue: vueCall, nav: 'call', mobile: 'moi' },
+  { motif: /^\/analyste$/, vue: vueAnalyste, nav: 'profil', mobile: 'moi' },
+  { motif: /^\/badges$/, vue: vueBadges, nav: 'profil', mobile: 'moi' },
+  { motif: /^\/cartes$/, vue: vueCartes, nav: 'profil', mobile: 'moi' },
+  { motif: /^\/admin$/, vue: vueAdmin, nav: null, mobile: null },
+  { motif: /^\/connexion$/, vue: vueConnexion, nav: null, mobile: null },
+  { motif: /^\/diagnostic$/, vue: vueDiagnostic, nav: null, mobile: null },
 ];
 
 const ICONES = {
@@ -51,17 +60,29 @@ const ICONES = {
   communaute: '<circle cx="9.3" cy="8.4" r="3.3"/><path d="M3.6 19.6c0-3.1 2.6-5.2 5.7-5.2s5.7 2.1 5.7 5.2"/><path d="M15.8 5.6a3.3 3.3 0 0 1 0 5.6"/><path d="M17.4 14.9c1.9.6 3 2.3 3 4.7"/>',
   boutique: '<path d="M5.8 7.8h12.4l-1 12.6H6.8z"/><path d="M9.2 7.8V6a2.8 2.8 0 0 1 5.6 0v1.8"/>',
   profil: '<circle cx="12" cy="8.6" r="5"/><path d="M8.6 12.9 7.2 20.8 12 18.3l4.8 2.5-1.4-7.9"/>',
+  room: '<path d="M4.2 9.2 12 4.8l7.8 4.4v10H4.2z"/><path d="M8.2 19.2v-6.4h7.6v6.4"/><path d="M9.6 9.7 12 11l2.4-1.3"/>',
+  social: '<circle cx="8.6" cy="8.2" r="3"/><circle cx="16.4" cy="9.4" r="2.5"/><path d="M3.7 19c0-3 2.2-5 4.9-5s4.9 2 4.9 5"/><path d="M13.8 14.8c.8-.7 1.7-1 2.8-1 2.3 0 4 1.7 4 4.3"/>',
+  moi: '<circle cx="12" cy="8.2" r="3.8"/><path d="M5.5 20c.5-4.1 3-6.2 6.5-6.2s6 2.1 6.5 6.2"/>',
 };
 
 const icone = (cle) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONES[cle] ?? ''}</svg>`;
 
-const LIENS = [
-  { href: '#/accueil', libelle: 'Accueil', court: 'Accueil', cle: 'accueil' },
-  { href: '#/matchs', libelle: 'Matchs', court: 'Matchs', cle: 'matchs' },
-  { href: '#/ligues', libelle: 'Ligues', court: 'Ligues', cle: 'ligues' },
-  { href: '#/communaute', libelle: 'Communauté', court: 'Commu.', cle: 'communaute' },
-  { href: '#/boutique', libelle: 'Boutique', court: 'Shop', cle: 'boutique' },
-  { href: '#/profil', libelle: 'Mon profil', court: 'Moi', cle: 'profil' },
+const LIENS_DESKTOP = [
+  { href: '#/accueil', libelle: 'Accueil', cle: 'accueil' },
+  { href: '#/matchs', libelle: 'Matchs', cle: 'matchs' },
+  { href: '#/ligues', libelle: 'Ligues', cle: 'ligues' },
+  { href: '#/communaute', libelle: 'Communauté', cle: 'communaute' },
+  { href: '#/room', libelle: 'Room', cle: 'room' },
+  { href: '#/boutique', libelle: 'Boutique', cle: 'boutique' },
+  { href: '#/profil', libelle: 'Mon profil', cle: 'profil' },
+];
+
+const LIENS_MOBILE = [
+  { href: '#/accueil', libelle: 'Hub', cle: 'hub', icone: 'accueil' },
+  { href: '#/matchs', libelle: 'Matchs', cle: 'matchs', icone: 'matchs' },
+  { href: '#/social/ligues', libelle: 'Social', cle: 'social', icone: 'social' },
+  { href: '#/room', libelle: 'Room', cle: 'room', icone: 'room', classe: 'mobile-nav__room' },
+  { href: '#/profil', libelle: 'Moi', cle: 'moi', icone: 'moi' },
 ];
 
 export const contexte = { utilisateur: null, admin: false, saison: null, saisons: [], frags: null, entete: null };
@@ -74,10 +95,17 @@ function chemin() {
 function ecranPourNav(nav) {
   if (nav === 'accueil') return 'hub';
   if (nav === 'matchs') return 'matchs';
-  if (nav === 'ligues' || nav === 'communaute') return 'social';
+  if (nav === 'ligues' || nav === 'communaute' || nav === 'social') return 'social';
+  if (nav === 'room') return 'room';
   if (nav === 'boutique') return 'vault';
-  if (['profil', 'parametres', 'call', 'analyste'].includes(nav)) return 'moi';
+  if (['profil', 'parametres', 'call', 'analyste', 'badges', 'cartes'].includes(nav)) return 'moi';
   return 'system';
+}
+
+function mobilePourNav(nav) {
+  const ecran = ecranPourNav(nav);
+  if (ecran === 'vault') return 'room';
+  return ['hub', 'matchs', 'social', 'room', 'moi'].includes(ecran) ? ecran : null;
 }
 
 async function chargerContexteEntete(navActive) {
@@ -96,7 +124,7 @@ async function chargerContexteEntete(navActive) {
     }
   }
 
-  if (navActive === 'ligues' || navActive === 'communaute') {
+  if (navActive === 'ligues' || navActive === 'communaute' || navActive === 'social') {
     try {
       const communautes = await api.classementCommunautes();
       const idx = communautes.findIndex((c) => c.moi);
@@ -109,7 +137,7 @@ async function chargerContexteEntete(navActive) {
   return extra;
 }
 
-async function rafraichirEntete(navActive) {
+async function rafraichirEntete(navActive, desktopActive = navActive, mobileActive = mobilePourNav(navActive)) {
   contexte.saisons = await api.listerSaisons();
   contexte.saison = await api.saisonCourante();
   contexte.utilisateur = await api.utilisateurCourant();
@@ -121,8 +149,8 @@ async function rafraichirEntete(navActive) {
   }
   contexte.entete = await chargerContexteEntete(navActive);
 
-  document.getElementById('nav-laterale').innerHTML = LIENS.map((l) => `<a class="lateral__lien${l.cle === navActive ? ' actif' : ''}" href="${l.href}"${l.cle === navActive ? ' aria-current="page"' : ''}><span class="lateral__icone">${icone(l.cle)}</span><span>${l.libelle}</span></a>`).join('');
-  document.getElementById('onglets').innerHTML = LIENS.map((l) => `<a href="${l.href}"${l.cle === navActive ? ' class="actif" aria-current="page"' : ''}><span class="onglets__icone">${icone(l.cle)}</span><span class="onglets__libelle">${l.court}</span></a>`).join('');
+  document.getElementById('nav-laterale').innerHTML = LIENS_DESKTOP.map((l) => `<a class="lateral__lien${l.cle === desktopActive ? ' actif' : ''}" href="${l.href}"${l.cle === desktopActive ? ' aria-current="page"' : ''}><span class="lateral__icone">${icone(l.cle)}</span><span>${l.libelle}</span></a>`).join('');
+  document.getElementById('onglets').innerHTML = LIENS_MOBILE.map((l) => `<a class="mobile-nav__item${l.classe ? ` ${l.classe}` : ''}${l.cle === mobileActive ? ' actif' : ''}" href="${l.href}"${l.cle === mobileActive ? ' aria-current="page"' : ''}><span class="onglets__icone">${icone(l.icone)}</span><span class="onglets__libelle">${l.libelle}</span></a>`).join('');
 
   const droite = document.getElementById('entete-droite');
   if (!contexte.utilisateur) {
@@ -142,19 +170,19 @@ async function rafraichirEntete(navActive) {
     contenu = `${MetaChip({ label: 'Niveau', value: niveau ? `${niveau.niveau} · ${niveau.titre}` : '—', tone: 'muted' })}${MetaChip({ label: 'Série', value: `${serie} j`, tone: serie >= 3 ? 'volt' : 'default' })}`;
   } else if (navActive === 'matchs') {
     contenu = `${MetaChip({ label: provisoire, value: `${formaterFrags(rating)} Frags`, icon: jeton(16), title: 'Rating compétitif saisonnier — non dépensable.' })}`;
-  } else if (navActive === 'ligues' || navActive === 'communaute') {
+  } else if (navActive === 'ligues' || navActive === 'communaute' || navActive === 'social') {
     contenu = faction
       ? MetaChip({ label: 'Faction', value: `#${faction.rang} · ${faction.nom}`, tone: 'volt' })
       : MetaChip({ label: 'Rating', value: `${formaterFrags(rating)} Frags`, icon: jeton(16) });
-  } else if (navActive === 'boutique') {
+  } else if (navActive === 'room' || navActive === 'boutique') {
     contenu = MetaChip({ label: 'Volts', value: '—', icon: jetonVolt(16), href: '#/boutique', tone: 'volt', id: 'solde-volts', title: 'Monnaie cosmétique uniquement.' });
   } else if (navActive === 'profil') {
     contenu = MetaChip({ label: 'Identité', value: niveau ? `Niv. ${niveau.niveau}` : 'Profil', tone: 'muted' });
   }
 
-  droite.innerHTML = `<div class="context-header"><div class="context-header__label"><small>${esc(ecranPourNav(navActive))}</small><strong>${esc(contexte.saison?.nom ?? 'Clutch')}</strong></div>${contenu}${Avatar({ name: pseudo, className: navActive === 'profil' ? 'actif' : '' })}</div>`;
+  droite.innerHTML = `<div class="context-header"><div class="context-header__label"><small>${esc(ecranPourNav(navActive))}</small><strong>${esc(contexte.saison?.nom ?? 'Clutch')}</strong></div>${contenu}${Avatar({ name: pseudo, className: mobileActive === 'moi' ? 'actif' : '' })}</div>`;
 
-  if (navActive === 'boutique') remplirSoldeVolts();
+  if (navActive === 'room' || navActive === 'boutique') remplirSoldeVolts();
 }
 
 async function remplirSoldeVolts() {
@@ -196,7 +224,7 @@ async function router() {
   document.body.dataset.screen = ecranPourNav(route.nav);
   contenu.innerHTML = '<div class="chargement"><span class="spinner"></span></div>';
   try {
-    await rafraichirEntete(route.nav);
+    await rafraichirEntete(route.nav, route.desktop ?? route.nav, route.mobile ?? mobilePourNav(route.nav));
   } catch (e) {
     console.error('[Clutch] échec du chargement initial', e);
     if (route.vue !== vueDiagnostic) {
@@ -204,7 +232,7 @@ async function router() {
       return;
     }
   }
-  const params = (p.match(route.motif) || []).slice(1).map(decodeURIComponent);
+  const params = (p.match(route.motif) || []).slice(1).filter((v) => v !== undefined).map(decodeURIComponent);
   try {
     await route.vue(contenu, ...params);
   } catch (e) {
@@ -223,7 +251,7 @@ function ecranPanne(erreur) {
 export async function majSolde() {
   const p = chemin();
   const route = ROUTES.find((r) => r.motif.test(p));
-  await rafraichirEntete(route?.nav);
+  await rafraichirEntete(route?.nav, route?.desktop ?? route?.nav, route?.mobile ?? mobilePourNav(route?.nav));
 }
 
 function init() {
