@@ -1,30 +1,35 @@
 /* Phase 4 — organization cards: one org across games, high-quality logo treatment. */
 .ui-v4 .onboarding-v5__team-logo.has-image {
   overflow:hidden;
-  background:linear-gradient(145deg,#f7f8f4 0%,#e5e8e9 68%,#cfd4d7 100%);
-  border-color:color-mix(in srgb,var(--team) 42%,rgba(255,255,255,.28));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 16px 36px rgba(0,0,0,.28);
+  background:#030507;
+  border-color:color-mix(in srgb,var(--team) 40%,rgba(255,255,255,.16));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035),0 16px 36px rgba(0,0,0,.42),0 0 28px color-mix(in srgb,var(--team) 10%,transparent);
 }
 .ui-v4 .onboarding-v5__team-logo.has-image > b {
   position:absolute;
   z-index:1;
-  color:#0a0d12;
-  opacity:.06;
+  color:#fff;
+  opacity:.035;
   font-size:1.7rem;
 }
 .ui-v4 .onboarding-v5__team-logo.has-image img {
   position:relative;
   z-index:2;
   inset:auto;
-  width:70px;
-  height:70px;
-  padding:4px;
-  border-radius:8px;
+  width:72px;
+  height:72px;
+  padding:3px;
+  border-radius:0;
   background:transparent;
   object-fit:contain;
   object-position:center;
-  /* Respecte les couleurs/proportions des assets de marque. */
   filter:none;
+}
+/* Logos monochromes noirs : on les passe en blanc sur la plaque noire, sans toucher aux logos couleur. */
+.ui-v4 .onboarding-v5__team[data-team-name="G2 Esports"] .onboarding-v5__team-logo img,
+.ui-v4 .onboarding-v5__team[data-team-name="Rogue"] .onboarding-v5__team-logo img,
+.ui-v4 .onboarding-v5__team[data-team-name="T1"] .onboarding-v5__team-logo img {
+  filter:grayscale(1) brightness(0) invert(1);
 }
 .ui-v4 .onboarding-v5__team-games {
   position:relative;
@@ -56,7 +61,7 @@
 }
 
 @media(max-width:760px) {
-  .ui-v4 .onboarding-v5__team-logo.has-image img { width:58px;height:58px;padding:3px; }
+  .ui-v4 .onboarding-v5__team-logo.has-image img { width:60px;height:60px;padding:2px; }
   .ui-v4 .onboarding-v5__team-games { gap:4px; }
   .ui-v4 .onboarding-v5__team-games b { padding:3px 6px;font-size:.48rem; }
 }
