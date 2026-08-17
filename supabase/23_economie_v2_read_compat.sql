@@ -4,8 +4,6 @@
 -- Aucun de ces contrats ne recrée une bankroll.
 -- =====================================================================
 
--- L'ancien widget de prime reçoit désormais "aucune prime" au lieu d'une
--- erreur de permission. Cela laisse les anciens bundles se dégrader proprement.
 create or replace function public.etat_prime(p_saison_id text)
 returns jsonb
 language sql
@@ -16,8 +14,6 @@ as $$ select null::jsonb $$;
 revoke execute on function public.etat_prime(text) from public, anon;
 grant execute on function public.etat_prime(text) to authenticated;
 
--- L'ancien endpoint mesParis devient un adaptateur de lecture vers les
--- pronostics classés. Les champs financiers sont neutralisés à zéro/1.
 create or replace view public.v_mes_paris
 with (security_invoker = true)
 as
@@ -41,7 +37,8 @@ select
   m.statut::text as statut_match,
   m.score_a,
   m.score_b,
-  m.debut
+  m.debut,
+  p.delta_frags
 from public.pronostics_classes p
 join public.matchs m on m.id=p.match_id
 join public.equipes ea on ea.id=m.equipe_a_id
@@ -50,9 +47,6 @@ where p.user_id=(select auth.uid());
 
 grant select on public.v_mes_paris to authenticated;
 
--- Le contrat statistique historique reste disponible pour le Profil, mais son
--- "solde" est maintenant le rating Frags et toutes les métriques financières
--- sont neutralisées.
 create or replace function public.mes_statistiques(p_saison_id text)
 returns jsonb
 language sql
