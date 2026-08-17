@@ -47,6 +47,10 @@ export function kFrags(nbPronosticsClasses = 0) {
  *
  * Correct   : +K × (1 - p)
  * Incorrect : -K × p
+ *
+ * La perte arrondit d'abord la magnitude positive puis applique le signe.
+ * PostgreSQL fait la même chose dans la migration V2 : cela évite le désaccord
+ * JS/Postgres sur les demi-entiers négatifs (ex. -10,5).
  */
 export function deltaFrags(proba, gagnant, { k = FRAGS_K } = {}) {
   const p = bornerProbaFrags(proba);
@@ -54,7 +58,9 @@ export function deltaFrags(proba, gagnant, { k = FRAGS_K } = {}) {
   if (!Number.isFinite(facteur) || facteur <= 0) {
     throw new RangeError(`Coefficient K invalide : ${k}`);
   }
-  return Math.round(gagnant ? facteur * (1 - p) : -facteur * p);
+  return gagnant
+    ? Math.round(facteur * (1 - p))
+    : -Math.round(facteur * p);
 }
 
 /**
