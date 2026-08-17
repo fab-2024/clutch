@@ -15,6 +15,8 @@ const JEUX = [
   { id: 'valorant', nom: 'VALORANT', court: 'VAL', classe: 'valorant', logo: GAME_LOGOS.valorant },
 ];
 
+const JEU_COURT = { lol: 'LOL', cs2: 'CS2', valorant: 'VAL' };
+
 const TEAM_DOMAINS = {
   'G2 Esports': 'g2esports.com', 'Karmine Corp': 'karminecorp.fr', Fnatic: 'fnatic.com',
   'Movistar KOI': 'movistarkoi.com', 'Team Vitality': 'vitality.gg', 'Team BDS': 'team-bds.com',
@@ -23,6 +25,23 @@ const TEAM_DOMAINS = {
   MOUZ: 'mouz.gg', 'Team Falcons': 'falcons.sa', Astralis: 'astralis.gg', 'Virtus.pro': 'virtus.pro',
   Heroic: 'heroic.gg', 'Team Liquid': 'teamliquid.com', 'Paper Rex': 'paper-rex.com', Sentinels: 'sentinels.gg',
   DRX: 'drx.gg', T1: 't1.gg', 'EDward Gaming': 'edgteam.cn',
+};
+
+// Les lignes de la base sont des équipes par jeu. L'onboarding, lui, présente des
+// organisations : G2 / Fnatic / KC ne doivent donc apparaître qu'une seule fois.
+const TEAM_ALIASES = {
+  'natus vincere': 'navi',
+  'navi': 'navi',
+  'g2 esports': 'g2 esports',
+  'g2': 'g2 esports',
+  'team vitality': 'team vitality',
+  'vitality': 'team vitality',
+};
+
+const TEAM_DISPLAY = {
+  navi: 'NAVI',
+  'g2 esports': 'G2 Esports',
+  'team vitality': 'Team Vitality',
 };
 
 const TEAM_PALETTE = ['#8f5cff', '#31d7ff', '#ff5d6c', '#f4b545', '#42e69b', '#d7ff1f', '#ff7a45', '#b77cff'];
@@ -41,14 +60,56 @@ export function onboardingTermine() { return Boolean(lireOnboarding().termine); 
 function sauver(etat) { localStorage.setItem(CLE, JSON.stringify(etat)); }
 function choisirIntent(intent) { localStorage.setItem('clutch:auth-intent', intent); }
 
-function logoEquipe(equipe) {
-  const domaine = TEAM_DOMAINS[equipe.nom];
+function cleOrganisation(nom = '') {
+  const normalise = String(nom).trim().toLowerCase().replace(/\s+/g, ' ');
+  return TEAM_ALIASES[normalise] || normalise;
+}
+
+function organisationsVisibles(equipes, jeux) {
+  const selection = equipes.filter((e) => !jeux.length || jeux.includes(String(e.jeu || '').toLowerCase()));
+  const groupes = new Map();
+
+  for (const equipe of selection) {
+    const cle = cleOrganisation(equipe.nom);
+    if (!cle) continue;
+    if (!groupes.has(cle)) {
+      groupes.set(cle, {
+        cle,
+        nom: TEAM_DISPLAY[cle] || equipe.nom,
+        tag: equipe.tag || String(equipe.nom || '').slice(0, 3).toUpperCase(),
+        ids: [],
+        jeux: [],
+        membres: [],
+      });
+    }
+    const groupe = groupes.get(cle);
+    groupe.ids.push(String(equipe.id));
+    groupe.membres.push(equipe);
+    const jeu = String(equipe.jeu || '').toLowerCase();
+    if (jeu && !groupe.jeux.includes(jeu)) groupe.jeux.push(jeu);
+  }
+
+  return [...groupes.values()]
+    .sort((a, b) => b.jeux.length - a.jeux.length || a.nom.localeCompare(b.nom, 'fr'))
+    .slice(0, 16);
+}
+
+function idEquipePourOrganisation(org, jeux) {
+  for (const jeu of jeux) {
+    const membre = org.membres.find((e) => String(e.jeu || '').toLowerCase() === jeu);
+    if (membre) return String(membre.id);
+  }
+  return String(org.membres[0]?.id || org.ids[0] || '');
+}
+
+function logoOrganisation(org) {
+  const domaine = org.membres.map((e) => TEAM_DOMAINS[e.nom]).find(Boolean) || TEAM_DOMAINS[org.nom];
   if (!domaine) return '';
   return `https://www.google.com/s2/favicons?sz=256&domain=${encodeURIComponent(domaine)}`;
 }
 
 function accentEquipe(equipe) {
-  const cle = `${equipe.id || ''}${equipe.tag || ''}`;
+  const cle = `${equipe.cle || equipe.id || ''}${equipe.tag || ''}`;
   let total = 0;
   for (const char of cle) total += char.charCodeAt(0);
   return TEAM_PALETTE[total % TEAM_PALETTE.length];
@@ -150,29 +211,30 @@ function ecranJeux(etat) {
 }
 
 function ecranEquipes(etat, equipes) {
-  const filtrees = equipes.filter((e) => !etat.jeux.length || etat.jeux.includes(String(e.jeu).toLowerCase()));
-  const visibles = (filtrees.length ? filtrees : equipes).slice(0, 16);
+  const visibles = organisationsVisibles(equipes, etat.jeux);
   return `
     <div class="onboarding-v5__body">
       <button class="onboarding-v5__back" type="button" data-back>← Retour</button>
       <div class="onboarding-v5__heading onboarding-v5__heading--teams">
         <span>02 // TA FACTION</span>
         <h1>Choisis<br>ton camp.</h1>
-        <p>Une équipe favorite pour personnaliser ton univers. Aucun impact sur tes Frags.</p>
+        <p>Une organisation favorite pour personnaliser ton univers. Aucun impact sur tes Frags.</p>
       </div>
       <div class="onboarding-v5__team-grid">
-        ${visibles.map((e) => {
-          const actif = String(etat.equipeId) === String(e.id);
-          const logo = logoEquipe(e);
-          const tag = esc(e.tag || String(e.nom).slice(0, 3).toUpperCase());
-          return `<button type="button" class="onboarding-v5__team${actif ? ' actif' : ''}" style="--team:${accentEquipe(e)}" data-team="${esc(String(e.id))}" data-team-name="${esc(e.nom)}">
+        ${visibles.map((org) => {
+          const actif = org.ids.includes(String(etat.equipeId));
+          const logo = logoOrganisation(org);
+          const tag = esc(org.tag || org.nom.slice(0, 3).toUpperCase());
+          const teamId = idEquipePourOrganisation(org, etat.jeux);
+          const jeux = org.jeux.map((jeu) => `<b>${esc(JEU_COURT[jeu] || jeu.toUpperCase())}</b>`).join('');
+          return `<button type="button" class="onboarding-v5__team${actif ? ' actif' : ''}" style="--team:${accentEquipe(org)}" data-team="${esc(teamId)}" data-team-name="${esc(org.nom)}">
             <span class="onboarding-v5__team-watermark" aria-hidden="true">${tag}</span>
-            <span class="onboarding-v5__team-logo">
+            <span class="onboarding-v5__team-logo${logo ? ' has-image' : ''}">
               <b>${tag}</b>
-              ${logo ? `<img src="${esc(logo)}" alt="Logo ${esc(e.nom)}" loading="eager" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}
+              ${logo ? `<img src="${esc(logo)}" alt="Logo ${esc(org.nom)}" loading="eager" referrerpolicy="no-referrer" onerror="this.remove();this.parentElement.classList.remove('has-image')">` : ''}
             </span>
-            <strong>${esc(e.nom)}</strong>
-            <small>${esc(String(e.jeu || '').toUpperCase())}</small>
+            <strong>${esc(org.nom)}</strong>
+            <span class="onboarding-v5__team-games">${jeux}</span>
             <i>${actif ? '✓' : ''}</i>
           </button>`;
         }).join('')}
