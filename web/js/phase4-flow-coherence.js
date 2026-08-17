@@ -1,5 +1,4 @@
 const KEY = 'clutch:onboarding:v1';
-const GAME_LABELS = { lol: 'LOL', cs2: 'CS2', valorant: 'VAL' };
 
 function readOnboarding() {
   try {
@@ -15,15 +14,6 @@ function writeOnboarding(next) {
   localStorage.setItem(KEY, JSON.stringify(next));
 }
 
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
-
 function signupRouteActive() {
   const hash = location.hash || '#/accueil';
   return hash === '#/connexion' && localStorage.getItem('clutch:auth-intent') !== 'connexion';
@@ -36,7 +26,7 @@ function syncOnboardingProgress() {
   const progress = screen.querySelector('.onboarding-v5__progress');
   if (!progress) return;
 
-  if (progress.querySelectorAll('i').length < 3) {
+  while (progress.querySelectorAll('i').length < 3) {
     progress.append(document.createElement('i'));
   }
 
@@ -75,34 +65,17 @@ function syncAuthStep() {
     auth.prepend(buildFlowTop());
   }
 
-  const state = readOnboarding();
   const intro = auth.querySelector('.auth-v4__intro');
   const overline = intro?.querySelector('.sur-titre');
   if (overline) overline.textContent = '03 // TON PROFIL';
 
-  const resume = auth.querySelector('.auth-v4__resume');
-  if (resume) {
-    const chips = [
-      ...state.jeux.map((jeu) => GAME_LABELS[jeu] || String(jeu).toUpperCase()),
-      ...(state.equipeNom ? [state.equipeNom] : []),
-    ];
-    resume.innerHTML = chips.map((label) => `<span>${escapeHtml(label)}</span>`).join('');
-  }
+  // Les choix des étapes 1/2 restent uniquement des données : aucun récap visuel ici.
+  auth.querySelector('.auth-v4__resume')?.remove();
+  auth.querySelector('.auth-v4__locked-faction')?.remove();
 
+  // On conserve la valeur pré-sélectionnée pour l'inscription, sans redemander le choix.
   const select = auth.querySelector('#equipe-favorite');
-  const sourceFaction = select?.closest('.champ');
-  if (sourceFaction) {
-    sourceFaction.classList.add('auth-v4__source-faction');
-    if (!auth.querySelector('.auth-v4__locked-faction')) {
-      const locked = document.createElement('div');
-      locked.className = 'auth-v4__locked-faction';
-      locked.innerHTML = `
-        <span>Ton camp</span>
-        <strong>${escapeHtml(state.equipeNom || 'Aucune équipe sélectionnée')}</strong>
-        <small>${state.equipeNom ? 'Choisi à l’étape 2' : 'Tu as choisi de continuer sans équipe'}</small>`;
-      sourceFaction.before(locked);
-    }
-  }
+  select?.closest('.champ')?.classList.add('auth-v4__source-faction');
 
   const validate = auth.querySelector('#valider');
   if (validate && !auth.querySelector('#continuer-sans-inscription')) {
