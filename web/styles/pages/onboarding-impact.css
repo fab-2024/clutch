@@ -1,0 +1,70 @@
+/* Phase 4 — impact pass: stronger brand, cleaner team marks, more cinematic composition. */
+body[data-screen="onboarding"] .principal{overflow:hidden}
+
+.ui-v4 .onboarding-v5__impact{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.ui-v4 .onboarding-v5__impact i{position:absolute;width:46vw;height:130vh;top:-25vh;filter:blur(2px);opacity:.15;transform:rotate(18deg)}
+.ui-v4 .onboarding-v5__impact i:first-child{right:7vw;background:linear-gradient(180deg,rgba(141,73,255,.8),transparent 76%);clip-path:polygon(38% 0,100% 0,64% 100%,0 100%)}
+.ui-v4 .onboarding-v5__impact i:nth-child(2){right:-18vw;background:linear-gradient(180deg,rgba(215,255,31,.2),transparent 72%);clip-path:polygon(30% 0,100% 0,70% 100%,0 100%)}
+.ui-v4 .onboarding-v5__impact b{position:absolute;left:-.035em;bottom:-.17em;color:rgba(255,255,255,.018);font:950 clamp(11rem,26vw,30rem)/.72 var(--font-display);letter-spacing:-.09em;white-space:nowrap}
+
+.ui-v4 .onboarding-v5__top{min-height:92px;padding-top:20px;border-bottom:1px solid rgba(255,255,255,.055)}
+.ui-v4 .onboarding-v5__brand{display:inline-flex;align-items:center;gap:14px;min-width:max-content}
+.ui-v4 .onboarding-v5__brand img{width:52px;height:52px;display:block;filter:drop-shadow(0 0 24px rgba(232,255,61,.14))}
+.ui-v4 .onboarding-v5__brand strong{color:#f7f8f4;font:950 1.22rem/1 var(--font-ui);letter-spacing:.18em}
+.ui-v4 .onboarding-v5__brand strong span{color:var(--lime)}
+.ui-v4 .onboarding-v5__login{padding:11px 15px;border:1px solid rgba(255,255,255,.1);border-radius:13px;background:rgba(255,255,255,.025);color:#a1a9b4;text-transform:uppercase;letter-spacing:.08em}
+
+.ui-v4 .onboarding-v5__heading>span{display:inline-flex;align-items:center;gap:9px}
+.ui-v4 .onboarding-v5__heading>span::before{content:"";width:28px;height:2px;background:var(--lime);box-shadow:0 0 14px rgba(215,255,31,.38)}
+.ui-v4 .onboarding-v5__heading h1{text-shadow:0 10px 55px rgba(0,0,0,.34)}
+.ui-v4 .onboarding-v5__heading p{font-size:1rem;color:#a0a9b5}
+
+.ui-v4 .onboarding-v5__game{isolation:isolate;border-color:rgba(255,255,255,.12);background:linear-gradient(110deg,rgba(255,255,255,.075),rgba(255,255,255,.012) 64%)}
+.ui-v4 .onboarding-v5__game::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,color-mix(in srgb,var(--game) 16%,transparent),transparent 58%);opacity:.5;z-index:-1}
+.ui-v4 .onboarding-v5__game::after{content:"";position:absolute;left:0;top:18px;bottom:18px;width:3px;border-radius:999px;background:var(--game);opacity:.55;box-shadow:0 0 20px color-mix(in srgb,var(--game) 45%,transparent)}
+.ui-v4 .onboarding-v5__game.actif{transform:translateX(8px);background:linear-gradient(110deg,rgba(215,255,31,.1),rgba(255,255,255,.025) 58%)}
+.ui-v4 .onboarding-v5__game.actif::after{background:var(--lime);opacity:1;box-shadow:0 0 28px rgba(215,255,31,.55)}
+.ui-v4 .onboarding-v5__game-logo{transform:rotate(-2deg);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 16px 34px rgba(0,0,0,.3)}
+.ui-v4 .onboarding-v5__game-copy strong{font-size:2rem;letter-spacing:-.025em}
+.ui-v4 .onboarding-v5__check{border-radius:50%;width:38px;height:38px}
+
+.ui-v4 .onboarding-v5__team-grid{perspective:1200px}
+.ui-v4 .onboarding-v5__team{isolation:isolate;min-height:205px;border-color:rgba(255,255,255,.11);background:linear-gradient(155deg,color-mix(in srgb,var(--team) 13%,rgba(255,255,255,.035)),rgba(5,7,10,.86) 64%);box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 24px 56px rgba(0,0,0,.19)}
+.ui-v4 .onboarding-v5__team::before{content:"";position:absolute;inset:auto -30% -42% auto;width:170px;height:170px;border-radius:50%;background:var(--team);opacity:.13;filter:blur(32px);z-index:-1}
+.ui-v4 .onboarding-v5__team::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--team),transparent);opacity:.35}
+.ui-v4 .onboarding-v5__team:hover{transform:translateY(-5px) rotateX(1deg);border-color:color-mix(in srgb,var(--team) 70%,white 8%)}
+.ui-v4 .onboarding-v5__team.actif{transform:translateY(-5px);border-color:var(--lime);background:linear-gradient(155deg,rgba(215,255,31,.11),color-mix(in srgb,var(--team) 11%,rgba(5,7,10,.9)) 56%);box-shadow:0 0 0 1px rgba(215,255,31,.14),0 24px 60px rgba(0,0,0,.3),inset 0 0 44px rgba(215,255,31,.025)}
+.ui-v4 .onboarding-v5__team-watermark{position:absolute;right:-.06em;bottom:-.14em;color:color-mix(in srgb,var(--team) 15%,transparent);font:950 5.6rem/.8 var(--font-display);letter-spacing:-.08em;z-index:-1;pointer-events:none}
+.ui-v4 .onboarding-v5__team-logo{width:96px;height:96px;border-radius:28px 10px 28px 10px;background:radial-gradient(circle at 45% 35%,rgba(255,255,255,.11),rgba(6,8,12,.92) 70%);border:1px solid color-mix(in srgb,var(--team) 45%,rgba(255,255,255,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 16px 36px rgba(0,0,0,.35),0 0 34px color-mix(in srgb,var(--team) 12%,transparent)}
+.ui-v4 .onboarding-v5__team-logo b{font:950 1.38rem/1 var(--font-display);letter-spacing:-.03em;color:color-mix(in srgb,var(--team) 76%,white 24%);text-shadow:0 0 22px color-mix(in srgb,var(--team) 28%,transparent)}
+.ui-v4 .onboarding-v5__team-logo img{inset:14px;width:68px;height:68px;object-fit:contain;border-radius:10px;filter:drop-shadow(0 0 1px rgba(255,255,255,.95)) drop-shadow(0 8px 12px rgba(0,0,0,.45))}
+.ui-v4 .onboarding-v5__team>strong{font-size:.96rem;position:relative;z-index:2}
+.ui-v4 .onboarding-v5__team>small{position:relative;z-index:2;color:color-mix(in srgb,var(--team) 58%,#8a94a0 42%)}
+.ui-v4 .onboarding-v5__team>i{width:29px;height:29px;box-shadow:0 0 24px rgba(215,255,31,.28)}
+
+.ui-v4 .onboarding-v5__dock{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.ui-v4 .onboarding-v5__cta{min-height:64px;border-radius:21px 8px 21px 8px;font-size:1rem;box-shadow:0 18px 50px rgba(0,0,0,.4),0 0 36px rgba(215,255,31,.12)}
+.ui-v4 .onboarding-v5__cta:hover{transform:translateY(-2px);filter:brightness(1.04)}
+
+@media(max-width:1080px){
+  .ui-v4 .onboarding-v5__brand img{width:46px;height:46px}
+  .ui-v4 .onboarding-v5__brand strong{font-size:1.05rem}
+  .ui-v4 .onboarding-v5__team{min-height:190px}
+}
+
+@media(max-width:760px){
+  .ui-v4 .onboarding-v5__top{min-height:76px;border-bottom:0}
+  .ui-v4 .onboarding-v5__brand{gap:9px}
+  .ui-v4 .onboarding-v5__brand img{width:38px;height:38px}
+  .ui-v4 .onboarding-v5__brand strong{font-size:.9rem;letter-spacing:.12em}
+  .ui-v4 .onboarding-v5__login{padding:8px 10px;font-size:.58rem}
+  .ui-v4 .onboarding-v5__impact b{font-size:10rem;bottom:-.08em}
+  .ui-v4 .onboarding-v5__game.actif{transform:translateX(4px)}
+  .ui-v4 .onboarding-v5__game-copy strong{font-size:1.42rem}
+  .ui-v4 .onboarding-v5__team{min-height:166px}
+  .ui-v4 .onboarding-v5__team-logo{width:78px;height:78px;border-radius:22px 8px 22px 8px}
+  .ui-v4 .onboarding-v5__team-logo img{inset:11px;width:56px;height:56px}
+  .ui-v4 .onboarding-v5__team-watermark{font-size:4.1rem}
+}
+
+@media(prefers-reduced-motion:reduce){.ui-v4 .onboarding-v5__cta,.ui-v4 .onboarding-v5__game,.ui-v4 .onboarding-v5__team{transition:none}}
