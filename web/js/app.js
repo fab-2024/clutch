@@ -236,6 +236,7 @@ async function router() {
   }
 
   if (route.nav === 'auth-login') localStorage.setItem('clutch:auth-intent', 'connexion');
+  if (route.nav === 'auth') localStorage.setItem('clutch:auth-intent', 'inscription');
 
   document.body.dataset.screen = ecranPourNav(route.nav);
   contenu.innerHTML = '<div class="chargement"><span class="spinner"></span></div>';
