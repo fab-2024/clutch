@@ -7,6 +7,8 @@
  * mutation déjà acquise ne redescend jamais si des membres quittent la faction.
  */
 
+import { teinteEquipe } from './ui.js';
+
 export const FORMES_COMMUNAUTE = [
   {
     niveau: 1,
@@ -141,46 +143,12 @@ export function mutationDepuisNiveau(niveau) {
   return { ...forme, precedente };
 }
 
-/** Palette d’énergie — volontairement distincte des couleurs d’interface. */
-const TEINTES_FACTION = {
-  VIT: 102,
-  KC: 252,
-  G2: 18,
-  FNC: 52,
-  T1: 8,
-  TL: 232,
-  MKOI: 302,
-  BDS: 338,
-  TH: 12,
-  SK: 205,
-  GX: 154,
-  RGE: 132,
-  NAVI: 66,
-  SPR: 214,
-  FAZE: 5,
-  MOUZ: 355,
-  SEN: 348,
-  DRX: 228,
-  FUT: 196,
-  M8: 190,
-  SLY: 166,
-  FLC: 158,
-  AST: 355,
-  PRX: 32,
-  EDG: 4,
-  VP: 20,
-  HER: 350,
-};
-
+/**
+ * Même teinte que l'écusson. La lumière/saturation restent propres au réacteur
+ * via CSS, mais l'identité chromatique d'une équipe n'a qu'une source.
+ */
 export function teinteFaction(tag, nom = '') {
-  const cle = String(tag || '').trim().toUpperCase();
-  if (TEINTES_FACTION[cle] != null) return TEINTES_FACTION[cle];
-  let h = 2166136261;
-  for (const c of String(nom || tag)) {
-    h ^= c.charCodeAt(0);
-    h = Math.imul(h, 16777619);
-  }
-  return (h >>> 0) % 360;
+  return teinteEquipe(tag, nom);
 }
 
 export function croissanceTexte(valeur) {
