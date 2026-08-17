@@ -1,0 +1,118 @@
+/* Phase 4 typography experiment — rounded UI voice, display headlines stay aggressive. */
+body[data-screen="onboarding"],
+body[data-screen="auth"] {
+  --font-ui-phase4: ui-rounded, "SF Pro Rounded", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Onboarding: rounded UI, preserve display headline / watermark language. */
+.ui-v4 .onboarding-v5,
+.ui-v4 .onboarding-v5 button {
+  font-family: var(--font-ui-phase4);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.ui-v4 .onboarding-v5__heading h1,
+.ui-v4 .onboarding-v5__impact b,
+.ui-v4 .onboarding-v5__team-watermark,
+.ui-v4 .onboarding-v5__team-logo b {
+  font-family: var(--font-display);
+}
+.ui-v4 .onboarding-v5__brand strong {
+  font-family: var(--font-ui-phase4);
+  font-weight: 800;
+  letter-spacing: .115em;
+}
+.ui-v4 .onboarding-v5__login {
+  font-family: var(--font-ui-phase4);
+  font-weight: 650;
+  letter-spacing: .035em;
+  text-transform: none;
+}
+.ui-v4 .onboarding-v5__heading>span {
+  font-family: var(--font-ui-phase4);
+  font-weight: 750;
+  letter-spacing: .105em;
+}
+.ui-v4 .onboarding-v5__heading p {
+  font-family: var(--font-ui-phase4);
+  font-weight: 450;
+  letter-spacing: -.012em;
+}
+.ui-v4 .onboarding-v5__game-copy strong {
+  font-family: var(--font-ui-phase4);
+  font-weight: 800;
+  letter-spacing: -.035em;
+}
+.ui-v4 .onboarding-v5__game-copy small {
+  font-family: var(--font-ui-phase4);
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+.ui-v4 .onboarding-v5__team>strong {
+  font-family: var(--font-ui-phase4);
+  font-weight: 750;
+  letter-spacing: -.022em;
+}
+.ui-v4 .onboarding-v5__team-games b {
+  font-family: var(--font-ui-phase4);
+  font-weight: 700;
+  letter-spacing: .015em;
+}
+.ui-v4 .onboarding-v5__cta {
+  font-family: var(--font-ui-phase4);
+  font-weight: 800;
+  letter-spacing: -.018em;
+}
+.ui-v4 .onboarding-v5__dock>small,
+.ui-v4 .onboarding-v5__explore,
+.ui-v4 .onboarding-v5__back {
+  font-family: var(--font-ui-phase4);
+  font-weight: 600;
+  letter-spacing: -.008em;
+}
+
+/* Post-onboarding account form: same rounded voice. */
+body[data-screen="auth"] .auth-v4,
+body[data-screen="auth"] .auth-v4 input,
+body[data-screen="auth"] .auth-v4 select,
+body[data-screen="auth"] .auth-v4 button,
+body[data-screen="auth"] .auth-v4 label {
+  font-family: var(--font-ui-phase4);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body[data-screen="auth"] .auth-v4__intro h1 {
+  font-family: var(--font-display);
+}
+body[data-screen="auth"] .auth-v4__intro p {
+  font-family: var(--font-ui-phase4);
+  font-weight: 450;
+  letter-spacing: -.012em;
+}
+body[data-screen="auth"] .auth-v4__resume span {
+  font-family: var(--font-ui-phase4);
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+body[data-screen="auth"] .auth-v4__card label {
+  font-family: var(--font-ui-phase4);
+  font-weight: 700;
+  letter-spacing: .035em;
+}
+body[data-screen="auth"] .auth-v4__card input,
+body[data-screen="auth"] .auth-v4__card select {
+  font-family: var(--font-ui-phase4);
+  font-weight: 500;
+  letter-spacing: -.012em;
+}
+body[data-screen="auth"] .auth-v4__card #valider {
+  font-family: var(--font-ui-phase4);
+  font-weight: 800;
+  letter-spacing: -.015em;
+}
+body[data-screen="auth"] .auth-v4__hint,
+body[data-screen="auth"] .auth-v4__switch,
+body[data-screen="auth"] .auth-v4__magic {
+  font-family: var(--font-ui-phase4);
+  letter-spacing: -.008em;
+}
