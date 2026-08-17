@@ -59,10 +59,25 @@
 
 @media (max-width: 899px) {
   body.ui-v4 { --largeur: 100%; }
-  .ui-v4 .entete__interieur { height: 64px; }
+  .ui-v4 .entete__interieur { height: 64px; min-width: 0; }
   .ui-v4 .logo__marque { font-size: 1.02rem; }
+  .ui-v4 .entete__droite { min-width: 0; }
   .ui-v4 .principal { padding-top: 24px; padding-bottom: 126px; }
+  .ui-v4 .context-header { min-width: 0; gap: 6px; }
   .ui-v4 .context-header__label { display: none; }
+  .ui-v4 .context-header .c-chip {
+    min-width: 0;
+    max-width: 138px;
+    padding-inline: 9px;
+  }
+  .ui-v4 .context-header .c-chip + .c-chip { display: none; }
+  .ui-v4 .context-header .c-chip strong {
+    min-width: 0;
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
   .ui-v4 .onglets {
     left: 10px;
@@ -135,10 +150,17 @@
 @media (max-width: 540px) {
   .ui-v4 .enveloppe { padding-inline: 13px; }
   .ui-v4 .entete__droite { gap: 6px; }
-  .ui-v4 .context-header .c-chip { padding-inline: 9px; }
   .ui-v4 .context-header .c-chip span { display: none; }
   .ui-v4 .carte,
   .ui-v4 .bloc__corps { padding: 17px; }
   .ui-v4 .onglets { left: 7px; right: 7px; gap: 0; }
   .ui-v4 .onglets__libelle { font-size: .58rem; }
+}
+
+@media (max-width: 410px) {
+  .ui-v4 .logo { gap: 7px; }
+  .ui-v4 .logo__sceau { width: 31px; height: 31px; }
+  .ui-v4 .logo__marque { font-size: .9rem; letter-spacing: .09em; }
+  .ui-v4 .context-header .c-chip { max-width: 112px; }
+  .ui-v4 .context-header .c-chip strong { max-width: 70px; }
 }
