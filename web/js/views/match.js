@@ -255,6 +255,15 @@ function badgePronostic(p) {
   return '<span class="match-pick-status">En cours</span>';
 }
 
+// Compatibilité avec Profil : cette fonction était exportée par Match V1.
+// La supprimer casse l'instanciation de tout le graphe ES modules car profil.js
+// l'importe statiquement, même quand l'utilisateur ouvre une autre route.
+export function badgePari(p) {
+  if (p.statut === 'gagne') return `<span class="badge badge--gagne">+${esc(frags(p.gain))}</span>`;
+  if (p.statut === 'perdu') return '<span class="badge badge--perdu">Perdu</span>';
+  return '<span class="badge badge--attente">En cours</span>';
+}
+
 function blocRepere(vainqueur, probas) {
   const choix = vainqueur?.choix ?? [];
   if (choix.length < 2) return '';
