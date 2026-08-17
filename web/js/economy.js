@@ -43,14 +43,25 @@ export function kFrags(nbPronosticsClasses = 0) {
 }
 
 /**
+ * Arrondi .5 vers le haut sur une magnitude positive.
+ *
+ * Le petit epsilon absorbe uniquement l'erreur IEEE-754 autour d'un demi
+ * exact (10.5 pouvant devenir 10.499999999999998). Il est plusieurs ordres
+ * de grandeur sous la précision de nos probabilités serveur (7 décimales).
+ */
+function arrondirMagnitude(valeur) {
+  return Math.floor(Number(valeur) + 0.5 + 1e-12);
+}
+
+/**
  * Delta de rating pour un pronostic résolu.
  *
  * Correct   : +K × (1 - p)
  * Incorrect : -K × p
  *
- * La perte arrondit d'abord la magnitude positive puis applique le signe.
- * PostgreSQL fait la même chose dans la migration V2 : cela évite le désaccord
- * JS/Postgres sur les demi-entiers négatifs (ex. -10,5).
+ * On arrondit toujours une magnitude positive puis on applique le signe.
+ * PostgreSQL utilise `round(numeric)` sur la même magnitude : navigateur et
+ * serveur produisent donc le même entier, même sur les demi-entiers.
  */
 export function deltaFrags(proba, gagnant, { k = FRAGS_K } = {}) {
   const p = bornerProbaFrags(proba);
@@ -59,8 +70,8 @@ export function deltaFrags(proba, gagnant, { k = FRAGS_K } = {}) {
     throw new RangeError(`Coefficient K invalide : ${k}`);
   }
   return gagnant
-    ? Math.round(facteur * (1 - p))
-    : -Math.round(facteur * p);
+    ? arrondirMagnitude(facteur * (1 - p))
+    : -arrondirMagnitude(facteur * p);
 }
 
 /**
