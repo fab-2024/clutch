@@ -94,3 +94,23 @@ export async function classementFrags(saisonId = null) {
   if (!saison?.id) return [];
   return (await rpc('clutch_classement_frags', { p_saison_id: saison.id })) ?? [];
 }
+
+export async function classementLigueFrags(ligueId, saisonId = null) {
+  const saison = saisonId ? { id: saisonId } : await api.saisonCourante();
+  if (!saison?.id) return [];
+  return (
+    (await rpc('clutch_classement_ligue_frags', {
+      p_ligue_id: ligueId,
+      p_saison_id: saison.id,
+    })) ?? []
+  );
+}
+
+export async function rivaliteFrags({ saisonId = null, ligueId = null } = {}) {
+  const saison = saisonId ? { id: saisonId } : await api.saisonCourante();
+  if (!saison?.id) return null;
+  return rpc('clutch_rivalite_frags', {
+    p_saison_id: saison.id,
+    p_ligue_id: ligueId,
+  });
+}
