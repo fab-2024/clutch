@@ -1,0 +1,344 @@
+/* ========================================================================
+   CLUTCH — Community polish
+   Dernière passe visuelle au-dessus de community-v3.css.
+   ======================================================================== */
+
+/* ---------------------------------------------------------------- HERO */
+.commu-core--v3 {
+  grid-template-columns: minmax(188px,.76fr) 298px minmax(224px,.94fr);
+  gap: 14px 28px;
+}
+
+.commu-core--v3 .commu-core__reacteur {
+  min-height: 322px;
+}
+
+.commu-core--v3 .commu-reacteur {
+  width: 292px;
+  height: 322px;
+}
+
+/* On agrandit physiquement la relique sans utiliser transform : les premières
+   formes ont déjà une correction de centrage optique sur .bombonne. */
+.commu-core--v3 .commu-reacteur .relic-vessel--v3 {
+  width: 266px;
+  height: 318px;
+  filter:
+    drop-shadow(0 20px 28px rgba(0,0,0,.58))
+    drop-shadow(0 0 12px color-mix(in oklab,var(--team) 8%,transparent));
+}
+
+.commu-core--v3 .commu-reacteur--n1 .relic-vessel--v3 {
+  width: 276px;
+  height: 324px;
+}
+
+/* Le halo reste présent, mais les orbites ne doivent plus concurrencer l'objet. */
+.commu-core--v3 .commu-reacteur__halo {
+  width: 192px;
+  height: 192px;
+  opacity: .24;
+  filter: drop-shadow(0 0 16px color-mix(in oklab,var(--team) 11%,transparent));
+}
+.commu-core--v3 .commu-reacteur__orbite--a { opacity: .105; }
+.commu-core--v3 .commu-reacteur__orbite--b { opacity: .045; }
+.commu-core--v3 .commu-reacteur__orbite--a::after,
+.commu-core--v3 .commu-reacteur__orbite--b::after { opacity: .31; }
+.commu-core--v3 .commu-reacteur__motes i { opacity: .042; }
+.commu-core--v3 .commu-reacteur__vapeur { opacity: .09; }
+
+.commu-core--v3 .commu-core__charge {
+  align-self: center;
+}
+.commu-core--v3 .commu-charge__lore {
+  max-width: 34ch;
+  min-height: 50px;
+  margin-bottom: 15px;
+  line-height: 1.66;
+  color: color-mix(in oklab,var(--texte-doux) 86%,var(--texte-faible));
+}
+.commu-core--v3 .commu-charge__objectif {
+  margin-bottom: 13px;
+}
+.commu-core--v3 .commu-charge__reste {
+  margin-top: 11px;
+}
+
+/* La récompense devient un petit objet premium plutôt qu'un simple encart. */
+.commu-core--v3 .commu-recompense {
+  margin-top: 15px;
+  border-color: color-mix(in oklab,var(--team) 28%,rgba(255,255,255,.07));
+  background:
+    radial-gradient(120px 70px at 8% 50%,color-mix(in oklab,var(--team) 8%,transparent),transparent 75%),
+    linear-gradient(180deg,rgba(10,14,19,.76),rgba(6,9,13,.9));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035),
+    0 10px 26px rgba(0,0,0,.11);
+}
+.commu-core--v3 .commu-recompense__sigil {
+  box-shadow:
+    0 0 12px color-mix(in oklab,var(--team) 17%,transparent),
+    inset 0 0 9px color-mix(in oklab,var(--team) 7%,transparent);
+}
+
+/* ---------------------------------------------------------- RIVALITÉ */
+.commu-core--v3 .commu-core__resume.commu-core__resume--vivant {
+  display: grid;
+  gap: 4px;
+  margin-top: 16px;
+  line-height: 1.42;
+}
+.commu-rivalite__signal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  color: var(--texte-doux);
+  font-size: .69rem;
+}
+.commu-rivalite__signal b {
+  color: var(--team);
+  font-family: var(--titre);
+  font-size: .74rem;
+  font-weight: 900;
+}
+.commu-rivalite__signal em {
+  color: var(--team);
+  font-style: normal;
+  font-weight: 760;
+}
+.commu-rivalite__lore {
+  color: var(--texte-faible);
+  font-size: .61rem;
+}
+
+/* --------------------------------------------------------- 7 FORMES */
+.commu-evolution--v3 {
+  position: relative;
+  padding-top: 15px;
+  padding-bottom: 21px;
+}
+.commu-evolution--v3::after {
+  content: '';
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  bottom: 4px;
+  height: 1px;
+  background: linear-gradient(90deg,transparent,color-mix(in oklab,var(--team) 13%,transparent),transparent);
+  opacity: .7;
+}
+
+.commu-rail--v3 .commu-rail__point {
+  position: relative;
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease,
+    background .2s ease,
+    transform .2s ease;
+}
+.commu-rail--v3 li.est-franchi .commu-rail__point {
+  border-color: color-mix(in oklab,var(--team) 36%,var(--bordure-vive));
+  box-shadow: 0 0 11px color-mix(in oklab,var(--team) 10%,transparent);
+}
+.commu-rail--v3 li.est-courant .commu-rail__point {
+  transform: scale(1.08);
+  box-shadow:
+    0 0 0 3px color-mix(in oklab,var(--team) 7%,transparent),
+    0 0 18px color-mix(in oklab,var(--team) 25%,transparent);
+}
+.commu-rail--v3 li.est-courant .commu-rail__point::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border: 1px solid color-mix(in oklab,var(--team) 18%,transparent);
+  border-radius: 50%;
+  animation: commu-polish-rail-pulse 2.9s ease-in-out infinite;
+}
+.commu-rail--v3 li.est-franchi strong { color: var(--texte-doux); }
+.commu-rail--v3 li.est-courant strong { color: var(--team); }
+.commu-rail--v3 li.est-courant em {
+  opacity: 1;
+  color: color-mix(in oklab,var(--team) 48%,var(--texte-faible));
+}
+
+@keyframes commu-polish-rail-pulse {
+  0%,100% { opacity:.18; transform:scale(.92); }
+  50% { opacity:.62; transform:scale(1.08); }
+}
+
+/* --------------------------------------------------- TRACE PERSONNELLE */
+.commu-contribution {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-color: color-mix(in oklab,var(--team) 15%,var(--bordure));
+  background:
+    radial-gradient(270px 150px at -2% -22%,color-mix(in oklab,var(--team) 8%,transparent),transparent 72%),
+    linear-gradient(112deg,color-mix(in oklab,var(--team) 3.5%,var(--surface)),var(--surface));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.026),
+    0 16px 38px rgba(0,0,0,.08);
+}
+.commu-contribution::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 245px;
+  height: 180px;
+  right: -105px;
+  top: -90px;
+  border-radius: 50%;
+  background: radial-gradient(circle,color-mix(in oklab,var(--team) 7%,transparent),transparent 70%);
+  filter: blur(18px);
+  pointer-events: none;
+}
+.commu-contribution dl {
+  border-color: color-mix(in oklab,var(--team) 7%,rgba(255,255,255,.05));
+}
+.commu-contribution dd { font-weight: 860; }
+
+/* ------------------------------------------------ MUTATION FULLSCREEN */
+body:has(.commu-mutation-v3:not(.est-fermee)) { overflow: hidden; }
+
+.commu-mutation-v3 {
+  background:
+    radial-gradient(circle at 50% 45%,color-mix(in oklab,var(--team) 18%,transparent),transparent 34%),
+    radial-gradient(circle at 50% 52%,rgba(255,255,255,.018),transparent 54%),
+    rgba(2,4,7,.955);
+}
+.commu-mutation-v3__carte {
+  box-shadow:
+    0 38px 110px rgba(0,0,0,.72),
+    0 0 55px color-mix(in oklab,var(--team) 8%,transparent),
+    inset 0 0 76px rgba(0,0,0,.22);
+}
+.commu-mutation-v3__scene {
+  width: 316px;
+  height: 352px;
+  filter: drop-shadow(0 0 26px color-mix(in oklab,var(--team) 11%,transparent));
+}
+.commu-mutation-v3 .commu-reacteur--compact {
+  width: 296px;
+  height: 342px;
+}
+.commu-mutation-v3 .commu-reacteur--compact .relic-vessel--v3 {
+  width: 284px;
+  height: 342px;
+}
+.commu-mutation-v3 .commu-reacteur__orbite--a { opacity:.08; }
+.commu-mutation-v3 .commu-reacteur__orbite--b { opacity:.025; }
+
+.commu-mutation-v3__ancien,
+.commu-mutation-v3__nouveau {
+  transition:
+    opacity .58s ease,
+    transform .82s cubic-bezier(.16,.84,.22,1),
+    filter .58s ease;
+}
+.commu-mutation-v3__ancien {
+  transform: scale(.95);
+}
+.commu-mutation-v3__nouveau {
+  transform: scale(.72) translateY(13px) rotate(-3deg);
+  filter: blur(11px) brightness(1.65) saturate(1.28);
+}
+.commu-mutation-v3.phase-charge .commu-mutation-v3__ancien {
+  transform: scale(.99);
+  filter:
+    brightness(1.27)
+    saturate(1.23)
+    drop-shadow(0 0 18px color-mix(in oklab,var(--team) 39%,transparent));
+}
+.commu-mutation-v3.phase-surcharge .commu-mutation-v3__ancien {
+  filter:
+    brightness(1.9)
+    saturate(1.55)
+    drop-shadow(0 0 38px color-mix(in oklab,var(--team) 78%,transparent));
+}
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__ancien {
+  opacity: 0;
+  transform: scale(1.44);
+  filter: blur(18px) brightness(2.35);
+}
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__nouveau {
+  opacity: 1;
+  transform: scale(1) translateY(0) rotate(0);
+  filter: blur(0) brightness(1) saturate(1);
+}
+.commu-mutation-v3.phase-flash .commu-mutation-v3__flash {
+  animation: commu-polish-flash .54s cubic-bezier(.2,.72,.2,1) both;
+}
+.commu-mutation-v3__niveau,
+.commu-mutation-v3__carte h2,
+.commu-mutation-v3__carte > p,
+.commu-mutation-v3__gain,
+.commu-mutation-v3__carte > button {
+  transition: opacity .5s ease .22s, translate .5s ease .22s;
+}
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__carte h2 {
+  text-shadow: 0 0 22px color-mix(in oklab,var(--team) 16%,transparent);
+}
+
+@keyframes commu-polish-flash {
+  0% { opacity:0; }
+  16% { opacity:.28; }
+  34% { opacity:1; }
+  52% { opacity:.83; }
+  100% { opacity:0; }
+}
+
+/* ------------------------------------------------------- RESPONSIVE */
+@media (max-width: 920px) {
+  .commu-core--v3 {
+    grid-template-columns: minmax(180px,.78fr) 276px minmax(210px,.9fr);
+    gap: 13px 20px;
+  }
+  .commu-core--v3 .commu-reacteur { width:272px; }
+  .commu-core--v3 .commu-reacteur .relic-vessel--v3 { width:252px; }
+}
+
+@media (max-width: 820px) {
+  .commu-core--v3 {
+    grid-template-columns: minmax(0,1fr) 250px;
+    grid-template-areas:'identity reactor' 'charge charge';
+  }
+  .commu-core--v3 .commu-reacteur { width:246px; height:302px; }
+  .commu-core--v3 .commu-reacteur .relic-vessel--v3 { width:232px; height:296px; }
+  .commu-core--v3 .commu-reacteur--n1 .relic-vessel--v3 { width:240px; }
+  .commu-core--v3 .commu-charge__lore { max-width:none; min-height:0; }
+}
+
+@media (max-width: 640px) {
+  .commu-core--v3 {
+    grid-template-columns:1fr;
+    grid-template-areas:'identity' 'reactor' 'charge';
+  }
+  .commu-core--v3 .commu-core__reacteur { margin:-8px 0 -1px; }
+  .commu-core--v3 .commu-reacteur { width:278px; height:315px; }
+  .commu-core--v3 .commu-reacteur .relic-vessel--v3 { width:254px; height:308px; }
+  .commu-core--v3 .commu-reacteur--n1 .relic-vessel--v3 { width:264px; }
+
+  .commu-rivalite__signal { font-size:.66rem; }
+  .commu-rivalite__lore { font-size:.59rem; }
+
+  .commu-evolution--v3::after { display:none; }
+  .commu-rail--v3 li.est-courant .commu-rail__point { transform:none; }
+
+  .commu-mutation-v3__scene { width:282px; height:326px; }
+  .commu-mutation-v3 .commu-reacteur--compact { width:270px; height:318px; }
+  .commu-mutation-v3 .commu-reacteur--compact .relic-vessel--v3 { width:258px; height:318px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .commu-rail--v3 li.est-courant .commu-rail__point::after { animation:none !important; }
+  .commu-mutation-v3__ancien,
+  .commu-mutation-v3__nouveau,
+  .commu-mutation-v3__flash { animation:none !important; transition:none !important; }
+  .commu-mutation-v3.est-reduite .commu-mutation-v3__ancien { display:none; }
+  .commu-mutation-v3.est-reduite .commu-mutation-v3__nouveau {
+    opacity:1;
+    transform:none;
+    filter:none;
+  }
+}

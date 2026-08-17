@@ -1,0 +1,274 @@
+/* ========================================================================
+   CLUTCH — Mutation signature
+   Chorégraphie commune aux vraies mutations Supabase et au simulateur Fondateur.
+   ======================================================================== */
+
+.commu-mutation-v3__carte {
+  isolation: isolate;
+  transition:
+    border-color .45s ease,
+    box-shadow .45s ease,
+    background .45s ease;
+}
+
+/* Vignette lumineuse qui se resserre autour de la relique. */
+.commu-mutation-v3__carte::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 440px;
+  height: 440px;
+  left: 50%;
+  top: 41%;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle,
+      color-mix(in oklab,var(--team) 12%,rgba(255,255,255,.02)) 0 13%,
+      color-mix(in oklab,var(--team) 5%,transparent) 32%,
+      transparent 67%);
+  opacity: .42;
+  filter: blur(4px);
+  pointer-events: none;
+  transition: opacity .4s ease, transform .7s cubic-bezier(.2,.82,.2,1), filter .4s ease;
+}
+
+/* Halo de rupture après le flash. */
+.commu-mutation-v3__carte::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  width: 218px;
+  height: 218px;
+  left: 50%;
+  top: 42%;
+  translate: -50% -50%;
+  border: 1px solid color-mix(in oklab,var(--team) 65%,white);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.commu-mutation-v3.phase-charge .commu-mutation-v3__carte::before {
+  opacity: .72;
+  transform: scale(.9);
+  filter: blur(2px) brightness(1.14);
+}
+
+.commu-mutation-v3.phase-surcharge .commu-mutation-v3__carte {
+  border-color: color-mix(in oklab,var(--team) 58%,rgba(255,255,255,.2));
+  box-shadow:
+    0 38px 110px rgba(0,0,0,.74),
+    0 0 72px color-mix(in oklab,var(--team) 14%,transparent),
+    inset 0 0 90px color-mix(in oklab,var(--team) 4%,rgba(0,0,0,.22));
+}
+
+.commu-mutation-v3.phase-surcharge .commu-mutation-v3__carte::before {
+  opacity: .94;
+  transform: scale(.66);
+  filter: blur(1px) brightness(1.65);
+  animation: clutch-mutation-core-pulse .18s ease-in-out infinite alternate;
+}
+
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__carte::after {
+  animation: clutch-mutation-shockwave .88s cubic-bezier(.12,.72,.18,1) both;
+}
+
+/* ---------------------------------------------------------------- SCÈNE */
+.commu-mutation-v3__scene::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  width: 246px;
+  height: 246px;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  border: 1px solid color-mix(in oklab,var(--team) 23%,transparent);
+  border-radius: 50%;
+  opacity: .28;
+  box-shadow:
+    0 0 28px color-mix(in oklab,var(--team) 8%,transparent),
+    inset 0 0 28px color-mix(in oklab,var(--team) 5%,transparent);
+  pointer-events: none;
+}
+
+.commu-mutation-v3__scene::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  width: 88px;
+  height: 88px;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(255,255,255,.82),
+    color-mix(in oklab,var(--team) 55%,transparent) 34%,
+    transparent 72%);
+  opacity: 0;
+  filter: blur(5px);
+  pointer-events: none;
+}
+
+.commu-mutation-v3.phase-charge .commu-mutation-v3__scene::before {
+  animation: clutch-mutation-ring-compress 1.2s cubic-bezier(.22,.72,.18,1) both;
+}
+
+.commu-mutation-v3.phase-surcharge .commu-mutation-v3__scene::after {
+  opacity: .48;
+  animation: clutch-mutation-core-flicker .16s ease-in-out infinite alternate;
+}
+
+.commu-mutation-v3.phase-flash .commu-mutation-v3__scene::after {
+  opacity: 1;
+  transform: scale(2.1);
+}
+
+/* ---------------------------------------------------------------- RELIQUES */
+.commu-mutation-v3.phase-charge .commu-mutation-v3__ancien {
+  transform: scale(1.015);
+}
+
+.commu-mutation-v3.phase-surcharge .commu-mutation-v3__ancien {
+  animation: clutch-mutation-overload-signature .12s linear infinite;
+}
+
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__ancien {
+  animation: clutch-mutation-old-collapse .46s cubic-bezier(.28,.04,.64,.98) both;
+}
+
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__nouveau {
+  animation: clutch-mutation-new-arrival .92s cubic-bezier(.12,.82,.18,1) both;
+}
+
+/* Le socle reçoit la nouvelle relique avec un bref impact lumineux. */
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__nouveau .commu-reacteur__socle {
+  animation: clutch-mutation-base-impact .95s cubic-bezier(.18,.8,.18,1) both;
+}
+
+/* ---------------------------------------------------------------- FLASH */
+.commu-mutation-v3.phase-flash .commu-mutation-v3__flash {
+  background:
+    radial-gradient(circle at 50% 46%,
+      white 0 8%,
+      color-mix(in oklab,var(--team) 70%,white) 24%,
+      color-mix(in oklab,var(--team) 34%,rgba(255,255,255,.78)) 42%,
+      rgba(255,255,255,.74) 100%);
+  animation: clutch-mutation-signature-flash .5s cubic-bezier(.15,.74,.22,1) both;
+}
+
+/* ---------------------------------------------------------------- REVEAL UI */
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__niveau {
+  transition-delay: .22s;
+}
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__carte h2 {
+  transition-delay: .28s;
+}
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__carte > p {
+  transition-delay: .36s;
+}
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__gain {
+  transition-delay: .44s;
+}
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__carte > button {
+  transition-delay: .52s;
+}
+
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__gain {
+  text-shadow: 0 0 18px color-mix(in oklab,var(--accent) 22%,transparent);
+}
+
+/* ---------------------------------------------------------------- KEYFRAMES */
+@keyframes clutch-mutation-core-pulse {
+  from { transform: scale(.65); opacity: .78; }
+  to { transform: scale(.69); opacity: 1; }
+}
+
+@keyframes clutch-mutation-ring-compress {
+  0% {
+    width: 260px;
+    height: 260px;
+    opacity: .2;
+    filter: blur(.2px);
+  }
+  72% {
+    width: 174px;
+    height: 174px;
+    opacity: .62;
+  }
+  100% {
+    width: 136px;
+    height: 136px;
+    opacity: .82;
+    filter: blur(0) drop-shadow(0 0 14px color-mix(in oklab,var(--team) 28%,transparent));
+  }
+}
+
+@keyframes clutch-mutation-core-flicker {
+  from { transform: scale(.85); filter: blur(6px) brightness(1.05); }
+  to { transform: scale(1.12); filter: blur(3px) brightness(1.55); }
+}
+
+@keyframes clutch-mutation-overload-signature {
+  0% { transform: translate(0,0) scale(1.015) rotate(0); }
+  20% { transform: translate(2px,-1px) scale(1.022) rotate(.32deg); }
+  40% { transform: translate(-1px,2px) scale(1.018) rotate(-.28deg); }
+  60% { transform: translate(-2px,-1px) scale(1.024) rotate(.25deg); }
+  80% { transform: translate(1px,1px) scale(1.019) rotate(-.18deg); }
+  100% { transform: translate(0,0) scale(1.015) rotate(0); }
+}
+
+@keyframes clutch-mutation-old-collapse {
+  0% { opacity: 1; transform: scale(1.02); filter: brightness(1.9) saturate(1.5) drop-shadow(0 0 38px var(--team)); }
+  45% { opacity: .72; transform: scale(1.12); filter: brightness(2.25) saturate(1.3) blur(3px); }
+  100% { opacity: 0; transform: scale(1.42); filter: brightness(2.6) blur(18px); }
+}
+
+@keyframes clutch-mutation-new-arrival {
+  0% { opacity: 0; transform: scale(.66) translateY(18px); filter: blur(13px) brightness(1.9); }
+  45% { opacity: 1; transform: scale(1.075) translateY(-3px); filter: blur(1px) brightness(1.35); }
+  72% { transform: scale(.985) translateY(1px); filter: blur(0) brightness(1.08); }
+  100% { opacity: 1; transform: scale(1) translateY(0); filter: none; }
+}
+
+@keyframes clutch-mutation-base-impact {
+  0%,36% { filter: drop-shadow(0 0 0 transparent); transform: scaleX(.9); }
+  52% { filter: drop-shadow(0 0 22px color-mix(in oklab,var(--team) 58%,transparent)); transform: scaleX(1.08); }
+  100% { filter: drop-shadow(0 0 5px color-mix(in oklab,var(--team) 15%,transparent)); transform: scaleX(1); }
+}
+
+@keyframes clutch-mutation-shockwave {
+  0% { opacity: .88; transform: scale(.48); }
+  60% { opacity: .34; }
+  100% { opacity: 0; transform: scale(2.25); }
+}
+
+@keyframes clutch-mutation-signature-flash {
+  0% { opacity: 0; }
+  22% { opacity: .32; }
+  42% { opacity: .95; }
+  56% { opacity: .72; }
+  100% { opacity: 0; }
+}
+
+/* ---------------------------------------------------------------- ACCESSIBILITÉ */
+@media (prefers-reduced-motion: reduce) {
+  .commu-mutation-v3__carte::before,
+  .commu-mutation-v3__carte::after,
+  .commu-mutation-v3__scene::before,
+  .commu-mutation-v3__scene::after,
+  .commu-mutation-v3__ancien,
+  .commu-mutation-v3__nouveau,
+  .commu-mutation-v3__nouveau .commu-reacteur__socle {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .commu-mutation-v3.est-reduite .commu-mutation-v3__carte::after,
+  .commu-mutation-v3.est-reduite .commu-mutation-v3__scene::before,
+  .commu-mutation-v3.est-reduite .commu-mutation-v3__scene::after {
+    display: none;
+  }
+}

@@ -1,0 +1,613 @@
+/* ========================================================================
+   CLUTCH — Communauté V3
+   Ajustements au-dessus de communaute-v2 + relic-vessels-v4.
+   ======================================================================== */
+
+/* --------------------------------------------------------------- HERO */
+.commu-core--v3 {
+  grid-template-columns: minmax(188px,.78fr) 282px minmax(224px,.94fr);
+  gap: 14px 26px;
+  min-height: 352px;
+}
+
+.commu-core--v3 .commu-core__reacteur { min-height: 310px; }
+.commu-core--v3 .commu-reacteur {
+  width: 268px;
+  height: 310px;
+}
+.commu-core--v3 .commu-reacteur .relic-vessel--v3 {
+  position: relative;
+  z-index: 4;
+  width: 246px;
+  height: 304px;
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 18px 25px rgba(0,0,0,.55));
+}
+.commu-core--v3 .commu-reacteur .relic-vessel--v3 svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Le récipient doit être l'objet principal : les orbites deviennent une trace. */
+.commu-core--v3 .commu-reacteur__halo {
+  width: 184px;
+  height: 184px;
+  opacity: .31;
+}
+.commu-core--v3 .commu-reacteur__orbite--a {
+  width: 212px;
+  height: 82px;
+  opacity: .16;
+}
+.commu-core--v3 .commu-reacteur__orbite--b {
+  width: 104px;
+  height: 224px;
+  opacity: .08;
+}
+.commu-core--v3 .commu-reacteur__orbite--a::after,
+.commu-core--v3 .commu-reacteur__orbite--b::after { opacity: .45; }
+.commu-core--v3 .commu-reacteur__motes i { opacity: .055; }
+.commu-core--v3 .commu-reacteur__vapeur { opacity: .12; }
+.commu-core--v3 .commu-reacteur__socle { bottom: 5px; }
+.commu-core--v3 .commu-reacteur__niveau { top: 7px; right: -1px; }
+
+.commu-core__microstats--v3 strong.est-positive,
+.commu-faction__vitesse .est-positive,
+.commu-contribution .est-positive { color: var(--team); }
+.est-negative { color: var(--danger) !important; }
+.est-neutre { color: var(--texte-doux); }
+
+.commu-charge__lore {
+  min-height: 54px;
+  margin: 0 0 13px;
+  color: var(--texte-doux);
+  font-size: .72rem;
+  line-height: 1.55;
+}
+
+.commu-recompense {
+  display: grid;
+  grid-template-columns: 31px 1fr;
+  gap: 10px;
+  margin-top: 13px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in oklab, var(--team) 25%, var(--bordure));
+  border-radius: 13px;
+  background: color-mix(in oklab, var(--team) 5%, rgba(0,0,0,.18));
+}
+.commu-recompense__sigil {
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--team) 13%, rgba(255,255,255,.02));
+  color: var(--team);
+  box-shadow: 0 0 17px color-mix(in oklab, var(--team) 19%, transparent);
+}
+.commu-recompense small {
+  display: block;
+  color: var(--team);
+  font-size: .49rem;
+  font-weight: 850;
+  letter-spacing: .12em;
+}
+.commu-recompense strong {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--titre);
+  font-size: .72rem;
+}
+.commu-recompense p {
+  margin: 2px 0 0;
+  color: var(--texte-faible);
+  font-size: .58rem;
+  line-height: 1.4;
+}
+
+/* --------------------------------------------------------- 7 FORMES */
+.commu-evolution--v3 { padding-bottom: 18px; }
+.commu-rail--v3 li { min-width: 0; }
+.commu-rail--v3 li small { white-space: nowrap; }
+.commu-rail--v3 li em {
+  display: block;
+  max-width: 96px;
+  margin: 4px auto 0;
+  color: var(--texte-faible);
+  font-size: .46rem;
+  font-style: normal;
+  line-height: 1.25;
+  opacity: 0;
+  transition: opacity .16s ease;
+}
+.commu-rail--v3 li.est-courant em,
+.commu-rail--v3 li:hover em { opacity: 1; }
+
+/* Le liquide raconte la forme, sans rajouter des objets autour. */
+.relic-vessel--n4 .rv__runes { animation: commu-v3-mist 5.8s ease-in-out infinite; }
+.relic-vessel--n5 .rv__energy-stroke {
+  stroke-dasharray: 17 9;
+  animation: commu-v3-vortex 4.1s linear infinite;
+}
+.relic-vessel--n5 .rv__energy-orb { animation: commu-v3-transmute 3.2s ease-in-out infinite; }
+.relic-vessel--n6 .rv__bubble:nth-of-type(2n) { animation-duration: 1.7s !important; }
+.relic-vessel--n7 .rv__energy-stroke { opacity: .55; animation: commu-v3-deep-flow 8.6s ease-in-out infinite; }
+
+@keyframes commu-v3-mist {
+  0%,100% { opacity:.24; filter:blur(.15px) drop-shadow(0 0 4px color-mix(in oklab,var(--rv-mid) 25%,transparent)); }
+  50% { opacity:.56; filter:blur(.7px) drop-shadow(0 0 9px color-mix(in oklab,var(--rv-mid) 42%,transparent)); }
+}
+@keyframes commu-v3-vortex { to { stroke-dashoffset:-52; } }
+@keyframes commu-v3-transmute {
+  0%,100% { transform:scale(.94); opacity:.75; }
+  50% { transform:scale(1.08); opacity:1; }
+}
+@keyframes commu-v3-deep-flow {
+  0%,100% { transform:translateX(-1px); opacity:.4; }
+  50% { transform:translateX(3px); opacity:.72; }
+}
+
+/* ------------------------------------------------ CONTRIBUTION + HISTO */
+.commu-contribution {
+  --team: oklch(.73 .18 var(--team-hue, 100));
+  display: grid;
+  grid-template-columns: minmax(180px,.75fr) 1.5fr;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 17px;
+  border: 1px solid var(--bordure);
+  border-radius: 17px;
+  background: linear-gradient(110deg, color-mix(in oklab, var(--team) 4%, var(--surface)), var(--surface));
+}
+.commu-contribution > div > span,
+.commu-histoire__haut span {
+  color: var(--texte-faible);
+  font-family: var(--titre);
+  font-size: .52rem;
+  font-weight: 850;
+  letter-spacing: .13em;
+}
+.commu-contribution > div > strong {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--titre);
+  font-size: .78rem;
+}
+.commu-contribution dl {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.05);
+  border-radius: 11px;
+  background: var(--bordure);
+}
+.commu-contribution dl > div { padding: 8px 10px; background: rgba(8,12,17,.94); }
+.commu-contribution dt { color: var(--texte-faible); font-size: .51rem; }
+.commu-contribution dd {
+  margin: 1px 0 0;
+  font-family: var(--titre);
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.commu-histoire {
+  padding: 16px 17px;
+  border: 1px solid var(--bordure);
+  border-radius: 18px;
+  background: rgba(10,14,20,.68);
+}
+.commu-histoire__haut {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 18px;
+  margin-bottom: 10px;
+}
+.commu-histoire__haut h2 { margin: 2px 0 0; font-size: 1.08rem; }
+.commu-histoire__haut small { color: var(--texte-faible); font-size: .58rem; }
+.commu-histoire__liste { display: grid; gap: 1px; border-radius: 11px; overflow: hidden; background: var(--bordure); }
+.commu-histoire__liste article {
+  display: grid;
+  grid-template-columns: 70px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--surface);
+}
+.commu-histoire__liste article > span {
+  color: var(--texte-faible);
+  font-size: .48rem;
+  font-weight: 850;
+  letter-spacing: .11em;
+}
+.commu-histoire__liste article strong { display:block; font-size:.7rem; }
+.commu-histoire__liste article small { display:block; margin-top:1px; color:var(--texte-faible); font-size:.54rem; }
+.commu-histoire__liste article b { color:var(--accent); font-family:var(--titre); font-size:.65rem; }
+
+/* ------------------------------------------------ GUERRE DES FACTIONS */
+.commu-classement--v3 .commu-classement__haut p {
+  max-width: 560px;
+  margin: 3px 0 0;
+  color: var(--texte-faible);
+  font-size: .66rem;
+}
+.commu-faction--v3 {
+  grid-template-columns: 34px 42px minmax(150px,1fr) 82px minmax(130px,.78fr);
+}
+.commu-faction__vitesse {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  justify-content: start;
+  column-gap: 4px;
+  line-height: 1;
+}
+.commu-faction__vitesse strong {
+  font-family: var(--titre);
+  font-size: 1rem;
+  font-weight: 900;
+}
+.commu-faction__vitesse small {
+  color: var(--texte-faible);
+  font-size: .48rem;
+  text-transform: uppercase;
+}
+.commu-faction__vitesse span {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  color: var(--texte-faible);
+  font-size: .5rem;
+}
+
+/* ------------------------------------------------ MUTATION FULLSCREEN */
+.commu-mutation-v3 {
+  --team: oklch(.73 .18 var(--team-hue));
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background:
+    radial-gradient(circle at 50% 44%, color-mix(in oklab,var(--team) 14%,transparent), transparent 38%),
+    rgba(3,5,8,.94);
+  backdrop-filter: blur(20px);
+  opacity: 1;
+  transition: opacity .26s ease;
+}
+.commu-mutation-v3.est-fermee { opacity: 0; }
+.commu-mutation-v3__flash {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: color-mix(in oklab, var(--team) 62%, white);
+  opacity: 0;
+}
+.commu-mutation-v3.phase-flash .commu-mutation-v3__flash {
+  animation: commu-v3-flash .42s ease-out both;
+}
+.commu-mutation-v3__carte {
+  position: relative;
+  z-index: 7;
+  width: min(520px,100%);
+  min-height: 610px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 30px 24px 27px;
+  border: 1px solid color-mix(in oklab,var(--team) 29%,var(--bordure-vive));
+  border-radius: 30px;
+  background:
+    radial-gradient(330px 330px at 50% 40%, color-mix(in oklab,var(--team) 12%,transparent), transparent 70%),
+    linear-gradient(180deg,#101720,#070a0f);
+  box-shadow: 0 35px 100px rgba(0,0,0,.68), inset 0 0 70px rgba(0,0,0,.2);
+  text-align: center;
+}
+.commu-mutation-v3__sur {
+  position: absolute;
+  top: 24px;
+  color: var(--team);
+  font-family: var(--titre);
+  font-size: .58rem;
+  font-weight: 900;
+  letter-spacing: .18em;
+}
+.commu-mutation-v3__scene {
+  position: relative;
+  width: 300px;
+  height: 340px;
+  display: grid;
+  place-items: center;
+}
+.commu-mutation-v3__ancien,
+.commu-mutation-v3__nouveau {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition: opacity .48s ease, transform .65s cubic-bezier(.2,.85,.22,1), filter .48s ease;
+}
+.commu-mutation-v3__ancien { opacity:1; transform:scale(.92); }
+.commu-mutation-v3__nouveau { opacity:0; transform:scale(.62) rotate(-5deg); filter:blur(10px) brightness(1.8); }
+.commu-mutation-v3 .commu-reacteur--compact {
+  width: 280px;
+  height: 330px;
+}
+.commu-mutation-v3 .commu-reacteur--compact .relic-vessel--v3 {
+  position: relative;
+  z-index: 4;
+  width: 270px;
+  height: 330px;
+}
+.commu-mutation-v3 .commu-reacteur__orbite--a { opacity:.12; }
+.commu-mutation-v3 .commu-reacteur__orbite--b { opacity:.06; }
+.commu-mutation-v3.phase-charge .commu-mutation-v3__ancien {
+  filter: brightness(1.22) saturate(1.2) drop-shadow(0 0 14px color-mix(in oklab,var(--team) 35%,transparent));
+}
+.commu-mutation-v3.phase-surcharge .commu-mutation-v3__ancien {
+  animation: commu-v3-overload .14s linear infinite;
+  filter: brightness(1.8) saturate(1.5) drop-shadow(0 0 30px var(--team));
+}
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__ancien {
+  opacity:0;
+  transform:scale(1.34);
+  filter:blur(15px) brightness(2.2);
+}
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__nouveau {
+  opacity:1;
+  transform:scale(1) rotate(0);
+  filter:blur(0) brightness(1);
+}
+.commu-mutation-v3__niveau,
+.commu-mutation-v3__carte h2,
+.commu-mutation-v3__carte > p,
+.commu-mutation-v3__gain,
+.commu-mutation-v3__carte > button {
+  opacity:0;
+  translate:0 9px;
+  transition: opacity .42s ease .2s, translate .42s ease .2s;
+}
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__niveau,
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__carte h2,
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__carte > p,
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__gain,
+.commu-mutation-v3.phase-reveal .commu-mutation-v3__carte > button {
+  opacity:1;
+  translate:0 0;
+}
+.commu-mutation-v3__niveau { color:var(--team); font-size:.57rem; font-weight:850; letter-spacing:.14em; }
+.commu-mutation-v3__carte h2 { margin:4px 0 4px; font-size:2rem; }
+.commu-mutation-v3__carte > p { margin:0 0 11px; color:var(--texte-doux); font-size:.72rem; }
+.commu-mutation-v3__gain {
+  display:flex;
+  align-items:baseline;
+  gap:7px;
+  margin-bottom:17px;
+  color:var(--accent);
+  font-family:var(--titre);
+  font-size:1rem;
+  font-weight:900;
+}
+.commu-mutation-v3__gain small { color:var(--texte-faible); font-size:.55rem; font-weight:500; }
+
+@keyframes commu-v3-overload {
+  0% { transform:translate(0,0) scale(.94) rotate(0); }
+  25% { transform:translate(2px,-1px) scale(.95) rotate(.4deg); }
+  50% { transform:translate(-2px,1px) scale(.94) rotate(-.45deg); }
+  75% { transform:translate(1px,2px) scale(.955) rotate(.25deg); }
+  100% { transform:translate(0,0) scale(.94) rotate(0); }
+}
+@keyframes commu-v3-flash {
+  0% { opacity:0; }
+  22% { opacity:.96; }
+  48% { opacity:.78; }
+  100% { opacity:0; }
+}
+
+/* -------------------------------------------------- CHOIX DE FACTION */
+.faction-settings__intro {
+  display:flex;
+  align-items:start;
+  justify-content:space-between;
+  gap:18px;
+  margin-bottom:17px;
+}
+.faction-settings__intro h2 { margin:0 0 5px; font-size:1.2rem; }
+.faction-settings__intro p { max-width:630px; margin:0; color:var(--texte-doux); font-size:.82rem; }
+.faction-settings__intro > a { flex:0 0 auto; color:var(--texte-faible); font-size:.7rem; text-decoration:none; }
+.faction-settings__choix { display:grid; gap:12px; }
+
+.faction-preview {
+  --team:oklch(.73 .18 var(--team-hue));
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  min-height:92px;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:13px;
+  padding:13px 15px;
+  border:1px solid color-mix(in oklab,var(--team) 22%,var(--bordure));
+  border-radius:15px;
+  background:linear-gradient(110deg,color-mix(in oklab,var(--team) 7%,var(--surface)),var(--surface));
+}
+.faction-preview__energie {
+  position:absolute;
+  z-index:-1;
+  width:220px;
+  height:160px;
+  left:-50px;
+  top:50%;
+  translate:0 -50%;
+  border-radius:50%;
+  background:radial-gradient(circle,color-mix(in oklab,var(--team) 18%,transparent),transparent 68%);
+  filter:blur(12px);
+}
+.faction-preview__texte { display:grid; min-width:0; }
+.faction-preview__texte span { color:var(--team); font-size:.49rem; font-weight:850; letter-spacing:.13em; }
+.faction-preview__texte strong { margin-top:1px; font-family:var(--titre); font-size:1rem; }
+.faction-preview__texte small { color:var(--texte-faible); font-size:.63rem; }
+.faction-preview > i {
+  font-family:var(--titre);
+  font-size:2.7rem;
+  font-weight:900;
+  font-style:normal;
+  color:#fff;
+  opacity:.035;
+}
+.faction-preview--actuelle { border-color:color-mix(in oklab,var(--team) 35%,var(--bordure)); }
+
+.faction-settings__cooldown {
+  padding:11px 13px;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:13px;
+  background:rgba(0,0,0,.16);
+}
+.faction-settings__cooldown span { color:var(--accent); font-size:.49rem; font-weight:850; letter-spacing:.13em; }
+.faction-settings__cooldown strong { display:block; margin-top:2px; font-size:.72rem; }
+.faction-settings__cooldown p { margin:3px 0 0; color:var(--texte-faible); font-size:.62rem; }
+
+.faction-confirmation[hidden] { display:none; }
+.faction-confirmation {
+  --team:oklch(.73 .18 var(--team-hue));
+  margin-top:14px;
+  border-top:1px solid var(--bordure);
+  padding-top:14px;
+}
+.faction-confirmation__interieur {
+  padding:16px;
+  border:1px solid color-mix(in oklab,oklch(.73 .18 var(--team-hue)) 24%,var(--bordure));
+  border-radius:16px;
+  background:rgba(7,11,16,.74);
+}
+.faction-confirmation__interieur > span { color:var(--accent); font-size:.52rem; font-weight:850; letter-spacing:.13em; }
+.faction-confirmation__interieur h3 { margin:4px 0 9px; font-size:1.1rem; }
+.faction-confirmation__interieur ul { margin:0; padding-left:18px; color:var(--texte-doux); font-size:.72rem; line-height:1.55; }
+.faction-confirmation__interieur li + li { margin-top:4px; }
+.faction-confirmation__actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+
+/* ------------------------------------------------- LABO FONDATEUR */
+.commu-lab-debug {
+  --team:oklch(.73 .18 var(--team-hue));
+  overflow:hidden;
+  border:1px dashed rgba(255,255,255,.08);
+  border-radius:15px;
+  background:rgba(7,10,14,.45);
+}
+.commu-lab-debug > summary {
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:10px;
+  padding:10px 13px;
+  cursor:pointer;
+  list-style:none;
+}
+.commu-lab-debug > summary::-webkit-details-marker { display:none; }
+.commu-lab-debug > summary span { color:var(--team); font-size:.47rem; font-weight:900; letter-spacing:.13em; }
+.commu-lab-debug > summary strong { font-family:var(--titre); font-size:.68rem; }
+.commu-lab-debug > summary small { color:var(--texte-faible); font-size:.52rem; }
+.commu-lab-debug[open] > summary { border-bottom:1px solid rgba(255,255,255,.055); }
+.commu-lab-debug__contenu { padding:14px; }
+
+/* ------------------------------------------------------- RESPONSIVE */
+@media (max-width:820px) {
+  .commu-core--v3 {
+    grid-template-columns:minmax(0,1fr) 250px;
+    grid-template-areas:'identity reactor' 'charge charge';
+  }
+  .commu-core--v3 .commu-reacteur { width:240px; }
+  .commu-core--v3 .commu-reacteur .relic-vessel--v3 { width:228px; }
+  .commu-faction--v3 { grid-template-columns:30px 38px minmax(130px,1fr) 70px; }
+  .commu-faction--v3 .commu-faction__progress { grid-column:3 / -1; }
+  .commu-contribution { grid-template-columns:1fr; }
+}
+
+@media (max-width:640px) {
+  .commu-core--v3 {
+    grid-template-columns:1fr;
+    grid-template-areas:'identity' 'reactor' 'charge';
+    gap:7px;
+  }
+  .commu-core--v3 .commu-core__reacteur { margin:-10px 0 -4px; }
+  .commu-core--v3 .commu-reacteur { width:268px; }
+  .commu-core--v3 .commu-reacteur .relic-vessel--v3 { width:246px; }
+  .commu-core__microstats--v3 { margin-top:12px; }
+  .commu-charge__lore { min-height:0; }
+
+  .commu-rail--v3 { min-width:720px !important; }
+  .commu-rail--v3 li em { opacity:1; }
+
+  .commu-contribution dl { grid-template-columns:1fr 1fr 1fr; }
+  .commu-contribution dt { min-height:28px; }
+
+  .commu-histoire__haut { align-items:start; }
+  .commu-histoire__haut small { display:none; }
+  .commu-histoire__liste article { grid-template-columns:58px 1fr; }
+  .commu-histoire__liste article b { grid-column:2; }
+
+  .commu-faction--v3 {
+    grid-template-columns:28px 36px 1fr 62px;
+    gap:8px;
+  }
+  .commu-faction--v3 .commu-faction__progress { grid-column:3 / -1; }
+
+  .commu-mutation-v3__carte { min-height:570px; padding-inline:14px; }
+  .commu-mutation-v3__scene { width:270px; height:320px; }
+  .commu-mutation-v3 .commu-reacteur--compact { width:260px; height:310px; }
+  .commu-mutation-v3 .commu-reacteur--compact .relic-vessel--v3 { width:250px; height:310px; }
+
+  .faction-settings__intro { display:block; }
+  .faction-settings__intro > a { display:inline-block; margin-top:8px; }
+  .faction-preview > i { display:none; }
+  .commu-lab-debug > summary { grid-template-columns:1fr; gap:1px; }
+  .commu-lab-debug > summary small { display:none; }
+}
+
+@media (max-width:430px) {
+  .commu-contribution dl { grid-template-columns:1fr; }
+  .commu-contribution dt { min-height:0; }
+  .commu-faction--v3 { grid-template-columns:26px 34px 1fr; }
+  .commu-faction__vitesse { grid-column:3; }
+  .commu-faction--v3 .commu-faction__progress { grid-column:3; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .commu-rail--v3 li em,
+  .commu-mutation-v3,
+  .commu-mutation-v3__ancien,
+  .commu-mutation-v3__nouveau,
+  .commu-mutation-v3__niveau,
+  .commu-mutation-v3__carte h2,
+  .commu-mutation-v3__carte > p,
+  .commu-mutation-v3__gain,
+  .commu-mutation-v3__carte > button { transition:none !important; }
+
+  .relic-vessel--n4 .rv__runes,
+  .relic-vessel--n5 .rv__energy-stroke,
+  .relic-vessel--n5 .rv__energy-orb,
+  .relic-vessel--n7 .rv__energy-stroke { animation:none !important; }
+
+  .commu-mutation-v3.est-reduite .commu-mutation-v3__ancien { display:none; }
+  .commu-mutation-v3.est-reduite .commu-mutation-v3__nouveau {
+    opacity:1;
+    transform:none;
+    filter:none;
+  }
+  .commu-mutation-v3.est-reduite .commu-mutation-v3__niveau,
+  .commu-mutation-v3.est-reduite .commu-mutation-v3__carte h2,
+  .commu-mutation-v3.est-reduite .commu-mutation-v3__carte > p,
+  .commu-mutation-v3.est-reduite .commu-mutation-v3__gain,
+  .commu-mutation-v3.est-reduite .commu-mutation-v3__carte > button {
+    opacity:1;
+    translate:0;
+  }
+}

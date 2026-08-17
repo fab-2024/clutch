@@ -1,0 +1,494 @@
+/* ========================================================================
+   CLUTCH — Badge Effects V2 / HIGH IMPACT
+   Brillant · électrique · cryptique.
+
+   Principe perf :
+   - Profil / vitrine : effets idle visibles.
+   - Arsenal complet : effets calmes au repos, plein effet au hover.
+   - CSS only, aucun timer JavaScript.
+   - prefers-reduced-motion respecté.
+   ======================================================================== */
+
+.badge-medaille {
+  --fx-electric: #67d7ff;
+  --fx-epic: #b687ff;
+  --fx-gold: #ffd45c;
+  --fx-cryptic: #f0bd43;
+  --fx-clutch: #e8ff3d;
+}
+
+/* Couche d'énergie commune. */
+.badge-medaille::before {
+  content: '';
+  position: absolute;
+  z-index: 7;
+  top: -2px;
+  left: 50%;
+  width: 72px;
+  height: 72px;
+  translate: -50% 0;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.badge-medaille--mini::before {
+  width: 56px;
+  height: 56px;
+  top: -2px;
+}
+
+.badge-medaille--hero::before {
+  width: 110px;
+  height: 110px;
+  top: -4px;
+}
+
+/* ========================================================================
+   RARE — ÉLECTRIQUE
+   ======================================================================== */
+
+.badge-medaille--rare:not(.badge-medaille--verrouillee)::before {
+  opacity: .86;
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0 4%,
+      rgba(210,247,255,1) 4.5% 6.2%,
+      rgba(75,196,255,.22) 7% 9%,
+      transparent 10% 20%,
+      rgba(82,198,255,.95) 21% 23%,
+      transparent 24% 37%,
+      rgba(220,250,255,1) 38% 39.6%,
+      transparent 40.5% 54%,
+      rgba(58,170,255,.92) 55% 57.5%,
+      transparent 58.5% 70%,
+      rgba(190,238,255,1) 71% 73%,
+      transparent 74% 88%,
+      rgba(71,204,255,.9) 89% 91%,
+      transparent 92% 100%
+    );
+  -webkit-mask: radial-gradient(circle, transparent 0 54%, #000 57% 68%, transparent 72% 100%);
+  mask: radial-gradient(circle, transparent 0 54%, #000 57% 68%, transparent 72% 100%);
+  filter:
+    drop-shadow(0 0 3px rgba(225,250,255,.98))
+    drop-shadow(0 0 9px rgba(57,183,255,.95))
+    drop-shadow(0 0 16px rgba(57,183,255,.42));
+  animation:
+    clutch-electric-spin 2.9s linear infinite,
+    clutch-electric-flicker 1.65s steps(1,end) infinite;
+}
+
+.badge-medaille--rare:not(.badge-medaille--verrouillee) .badge-medaille__corps {
+  animation: clutch-electric-core 2.15s ease-in-out infinite;
+}
+
+.badge-medaille--rare:not(.badge-medaille--verrouillee) .badge-medaille__centre {
+  text-shadow: 0 0 10px rgba(103,215,255,.85);
+}
+
+/* ========================================================================
+   ÉPIQUE — AURA / ÉNERGIE VIOLETTE
+   ======================================================================== */
+
+.badge-medaille--epique:not(.badge-medaille--verrouillee)::before {
+  opacity: .82;
+  background:
+    radial-gradient(circle,
+      rgba(226,205,255,.28) 0 28%,
+      rgba(182,135,255,.30) 34%,
+      rgba(135,74,255,.16) 49%,
+      transparent 70%);
+  box-shadow:
+    0 0 12px rgba(195,153,255,.38),
+    0 0 28px rgba(135,74,255,.26);
+  filter: blur(.4px);
+  animation: clutch-epic-aura 2.75s ease-in-out infinite;
+}
+
+.badge-medaille--epique:not(.badge-medaille--verrouillee) .badge-medaille__corps {
+  animation: clutch-epic-core 3.1s ease-in-out infinite;
+}
+
+.badge-medaille--epique:not(.badge-medaille--verrouillee) .badge-medaille__centre {
+  animation: clutch-epic-symbol 3.1s ease-in-out infinite;
+}
+
+/* ========================================================================
+   LÉGENDAIRE — OR BRILLANT
+   Reflet plus franc + respiration lumineuse.
+   ======================================================================== */
+
+.badge-medaille--legendaire:not(.badge-medaille--secret):not(.badge-medaille--verrouillee)::before {
+  opacity: 0;
+  width: 66px;
+  height: 66px;
+  top: 1px;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      108deg,
+      transparent 0 25%,
+      rgba(255,255,255,0) 31%,
+      rgba(255,248,210,.45) 38%,
+      rgba(255,255,255,1) 46%,
+      rgba(255,226,122,.75) 51%,
+      rgba(255,255,255,.92) 56%,
+      rgba(255,255,255,0) 64%,
+      transparent 70% 100%
+    );
+  background-size: 260% 100%;
+  background-position: 155% 0;
+  mix-blend-mode: screen;
+  clip-path: circle(48% at 50% 50%);
+  filter:
+    drop-shadow(0 0 6px rgba(255,230,145,.85))
+    drop-shadow(0 0 14px rgba(255,190,39,.45));
+  animation: clutch-gold-shimmer 4.65s cubic-bezier(.22,.75,.25,1) infinite;
+}
+
+.badge-medaille--mini.badge-medaille--legendaire:not(.badge-medaille--secret)::before {
+  width: 50px;
+  height: 50px;
+  top: 0;
+}
+
+.badge-medaille--hero.badge-medaille--legendaire:not(.badge-medaille--secret)::before {
+  width: 99px;
+  height: 99px;
+  top: 1px;
+}
+
+.badge-medaille--legendaire:not(.badge-medaille--secret):not(.badge-medaille--verrouillee) .badge-medaille__corps {
+  animation: clutch-gold-core 3.25s ease-in-out infinite;
+}
+
+.badge-medaille--legendaire:not(.badge-medaille--secret):not(.badge-medaille--verrouillee) .badge-medaille__centre {
+  animation: clutch-gold-symbol 3.25s ease-in-out infinite;
+}
+
+/* ========================================================================
+   SECRET LÉGENDAIRE — CRYPTIQUE
+   Anneau classifié, pulsation irrégulière et flashes brefs.
+   ======================================================================== */
+
+.badge-medaille--secret:not(.badge-medaille--verrouillee) {
+  animation: clutch-cryptic-body 4.2s ease-in-out infinite;
+}
+
+.badge-medaille--secret:not(.badge-medaille--verrouillee)::before {
+  opacity: .76;
+  width: 76px;
+  height: 76px;
+  top: -5px;
+  background:
+    repeating-conic-gradient(
+      from 7deg,
+      transparent 0 7deg,
+      rgba(255,224,132,.95) 8deg 9.2deg,
+      transparent 10deg 22deg,
+      rgba(112,72,7,.60) 23deg 24deg,
+      transparent 25deg 42deg,
+      rgba(240,189,67,.76) 43deg 44deg,
+      transparent 45deg 68deg
+    ),
+    radial-gradient(circle,
+      transparent 0 45%,
+      rgba(240,189,67,.24) 52%,
+      rgba(0,0,0,.20) 61%,
+      transparent 72%);
+  -webkit-mask: radial-gradient(circle, transparent 0 48%, #000 53% 69%, transparent 74% 100%);
+  mask: radial-gradient(circle, transparent 0 48%, #000 53% 69%, transparent 74% 100%);
+  filter:
+    drop-shadow(0 0 3px rgba(255,234,172,.8))
+    drop-shadow(0 0 10px rgba(240,189,67,.72))
+    drop-shadow(0 0 24px rgba(141,87,0,.35));
+  animation:
+    clutch-cryptic-orbit 5.8s linear infinite,
+    clutch-cryptic-flicker 2.35s steps(1,end) infinite;
+}
+
+.badge-medaille--mini.badge-medaille--secret::before {
+  width: 60px;
+  height: 60px;
+  top: -5px;
+}
+
+.badge-medaille--hero.badge-medaille--secret::before {
+  width: 116px;
+  height: 116px;
+  top: -7px;
+}
+
+.badge-medaille--secret:not(.badge-medaille--verrouillee) .badge-medaille__corps {
+  animation: clutch-cryptic-core 2.9s ease-in-out infinite;
+}
+
+.badge-medaille--secret:not(.badge-medaille--verrouillee) .badge-medaille__centre {
+  animation: clutch-cryptic-symbol 2.15s steps(1,end) infinite;
+}
+
+/* Secret non découvert : présence inquiétante mais pas spectaculaire. */
+.badge-medaille--secret.badge-medaille--verrouillee::before {
+  opacity: .22;
+  background: repeating-conic-gradient(
+    from 0deg,
+    transparent 0 16deg,
+    rgba(177,139,58,.65) 17deg 18deg,
+    transparent 19deg 43deg
+  );
+  -webkit-mask: radial-gradient(circle, transparent 0 55%, #000 59% 67%, transparent 72% 100%);
+  mask: radial-gradient(circle, transparent 0 55%, #000 59% 67%, transparent 72% 100%);
+  filter: drop-shadow(0 0 6px rgba(177,139,58,.28));
+  animation: clutch-cryptic-orbit 11s linear infinite;
+}
+
+/* ========================================================================
+   MYTHIQUE — ÉLECTRIQUE CLUTCH
+   ======================================================================== */
+
+.badge-medaille--mythique:not(.badge-medaille--verrouillee)::before {
+  opacity: 1;
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0 3%,
+      rgba(255,255,230,1) 4% 5.7%,
+      rgba(232,255,61,.35) 6% 9%,
+      transparent 10% 20%,
+      rgba(232,255,61,1) 21% 23%,
+      transparent 24% 36%,
+      rgba(255,255,240,1) 37% 39%,
+      transparent 40% 52%,
+      rgba(205,255,31,.95) 53% 56%,
+      transparent 57% 70%,
+      rgba(255,255,235,1) 71% 73%,
+      transparent 74% 86%,
+      rgba(232,255,61,.88) 87% 90%,
+      transparent 91% 100%
+    );
+  -webkit-mask: radial-gradient(circle, transparent 0 51%, #000 55% 69%, transparent 73% 100%);
+  mask: radial-gradient(circle, transparent 0 51%, #000 55% 69%, transparent 73% 100%);
+  filter:
+    drop-shadow(0 0 3px rgba(255,255,235,1))
+    drop-shadow(0 0 10px rgba(232,255,61,.95))
+    drop-shadow(0 0 22px rgba(232,255,61,.46));
+  animation:
+    clutch-electric-spin 2.15s linear infinite,
+    clutch-mythic-flicker 1.5s steps(1,end) infinite;
+}
+
+.badge-medaille--mythique:not(.badge-medaille--verrouillee) .badge-medaille__corps {
+  animation: clutch-mythic-core 2s ease-in-out infinite;
+}
+
+.badge-medaille--mythique:not(.badge-medaille--verrouillee) .badge-medaille__centre {
+  filter: drop-shadow(0 0 9px rgba(232,255,61,.85));
+}
+
+/* ========================================================================
+   VEDETTE / HOVER — LE CRAN SUPÉRIEUR
+   ======================================================================== */
+
+.profil-hero__badges .badge-medaille--vedette:not(.badge-medaille--verrouillee) {
+  transform: scale(1.035);
+  filter:
+    drop-shadow(0 9px 16px rgba(0,0,0,.32))
+    drop-shadow(0 0 13px var(--lueur));
+}
+
+.profil-hero__badges .badge-medaille--vedette:not(.badge-medaille--verrouillee)::before {
+  scale: 1.10;
+}
+
+.badge-medaille:not(.badge-medaille--verrouillee):hover {
+  transform: translateY(-4px) scale(1.075);
+  z-index: 20;
+}
+
+.badge-medaille--rare:hover::before,
+.badge-medaille--epique:hover::before,
+.badge-medaille--legendaire:hover::before,
+.badge-medaille--secret:hover::before,
+.badge-medaille--mythique:hover::before {
+  opacity: 1 !important;
+  scale: 1.09;
+}
+
+.profil-badge-item:hover .badge-medaille {
+  transform: translateY(-5px) scale(1.065);
+}
+
+/* ========================================================================
+   ARSENAL COMPLET — PAS 30 ANIMATIONS PLEINE PUISSANCE EN PERMANENCE
+   Les cartes détaillées sont calmes au repos. Le hover réactive tout.
+   ======================================================================== */
+
+.badge-fiche:not(:hover) .badge-medaille:not(.badge-medaille--verrouillee)::before {
+  animation-play-state: paused;
+  opacity: .22;
+}
+
+.badge-fiche:not(:hover) .badge-medaille:not(.badge-medaille--verrouillee) .badge-medaille__corps,
+.badge-fiche:not(:hover) .badge-medaille:not(.badge-medaille--verrouillee) .badge-medaille__centre {
+  animation-play-state: paused;
+}
+
+.badge-fiche:hover .badge-medaille:not(.badge-medaille--verrouillee)::before,
+.badge-fiche:hover .badge-medaille:not(.badge-medaille--verrouillee) .badge-medaille__corps,
+.badge-fiche:hover .badge-medaille:not(.badge-medaille--verrouillee) .badge-medaille__centre {
+  animation-play-state: running;
+}
+
+/* Les quatre distinctions majeures restent vivantes. */
+.arsenal-vitrine .badge-medaille::before,
+.profil-hero__badges .badge-medaille::before,
+.profil-arsenal .badge-medaille::before {
+  animation-play-state: running;
+}
+
+/* ========================================================================
+   KEYFRAMES
+   ======================================================================== */
+
+@keyframes clutch-electric-spin {
+  to { rotate: 360deg; }
+}
+
+@keyframes clutch-electric-flicker {
+  0%, 14%, 19%, 38%, 43%, 71%, 76%, 100% { opacity: .86; }
+  15%, 39%, 72% { opacity: 1; scale: 1.045; }
+  17%, 41%, 74% { opacity: .42; scale: .97; }
+}
+
+@keyframes clutch-electric-core {
+  0%, 100% {
+    filter: drop-shadow(0 9px 13px rgba(0,0,0,.42)) drop-shadow(0 0 4px rgba(70,190,255,.25));
+  }
+  45% {
+    filter: drop-shadow(0 9px 13px rgba(0,0,0,.42)) drop-shadow(0 0 13px rgba(80,205,255,.72));
+  }
+  51% {
+    filter: drop-shadow(0 9px 13px rgba(0,0,0,.42)) drop-shadow(0 0 5px rgba(80,205,255,.34));
+  }
+}
+
+@keyframes clutch-epic-aura {
+  0%, 100% { opacity: .54; scale: .90; }
+  48% { opacity: 1; scale: 1.17; }
+  58% { opacity: .72; scale: 1.05; }
+}
+
+@keyframes clutch-epic-core {
+  0%, 100% {
+    filter: drop-shadow(0 9px 13px rgba(0,0,0,.42)) drop-shadow(0 0 5px rgba(154,103,255,.25));
+  }
+  50% {
+    filter: drop-shadow(0 9px 13px rgba(0,0,0,.42)) drop-shadow(0 0 16px rgba(174,119,255,.68));
+  }
+}
+
+@keyframes clutch-epic-symbol {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(194,155,255,.28)); }
+  50% { filter: drop-shadow(0 0 13px rgba(210,180,255,.85)); }
+}
+
+@keyframes clutch-gold-shimmer {
+  0%, 42% { opacity: 0; background-position: 155% 0; }
+  46% { opacity: .18; }
+  55% { opacity: 1; background-position: -45% 0; }
+  61%, 100% { opacity: 0; background-position: -75% 0; }
+}
+
+@keyframes clutch-gold-core {
+  0%, 100% {
+    filter: drop-shadow(0 9px 13px rgba(0,0,0,.42)) drop-shadow(0 0 5px rgba(255,198,55,.22));
+  }
+  50% {
+    filter: drop-shadow(0 9px 13px rgba(0,0,0,.42)) drop-shadow(0 0 15px rgba(255,198,55,.58));
+  }
+}
+
+@keyframes clutch-gold-symbol {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(255,222,130,.25)); }
+  50% { filter: drop-shadow(0 0 11px rgba(255,226,145,.82)); }
+}
+
+@keyframes clutch-cryptic-orbit {
+  to { rotate: -360deg; }
+}
+
+@keyframes clutch-cryptic-flicker {
+  0%, 10%, 15%, 30%, 35%, 62%, 67%, 84%, 89%, 100% { opacity: .76; scale: 1; }
+  11%, 31%, 63%, 85% { opacity: 1; scale: 1.08; }
+  13%, 33%, 65%, 87% { opacity: .22; scale: .95; }
+}
+
+@keyframes clutch-cryptic-body {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px rgba(207,145,22,.22));
+  }
+  43% {
+    filter: drop-shadow(0 0 13px rgba(240,189,67,.52));
+  }
+  47% {
+    filter: drop-shadow(0 0 4px rgba(207,145,22,.16));
+  }
+  71% {
+    filter: drop-shadow(0 0 10px rgba(240,189,67,.38));
+  }
+}
+
+@keyframes clutch-cryptic-core {
+  0%, 100% {
+    filter: drop-shadow(0 9px 13px rgba(0,0,0,.44)) drop-shadow(0 0 5px rgba(240,189,67,.20));
+  }
+  49% {
+    filter: drop-shadow(0 9px 13px rgba(0,0,0,.44)) drop-shadow(0 0 16px rgba(240,189,67,.62));
+  }
+  54% {
+    filter: drop-shadow(0 9px 13px rgba(0,0,0,.44)) drop-shadow(0 0 3px rgba(240,189,67,.14));
+  }
+}
+
+@keyframes clutch-cryptic-symbol {
+  0%, 20%, 24%, 55%, 59%, 100% { opacity: .9; filter: drop-shadow(0 0 5px rgba(241,200,90,.32)); }
+  21%, 56% { opacity: 1; filter: drop-shadow(0 0 15px rgba(255,225,139,.92)); }
+  23%, 58% { opacity: .58; filter: none; }
+}
+
+@keyframes clutch-mythic-flicker {
+  0%, 17%, 21%, 45%, 49%, 72%, 76%, 100% { opacity: .92; scale: 1; }
+  18%, 46%, 73% { opacity: 1; scale: 1.10; }
+  20%, 48%, 75% { opacity: .38; scale: .94; }
+}
+
+@keyframes clutch-mythic-core {
+  0%, 100% {
+    filter: drop-shadow(0 9px 13px rgba(0,0,0,.42)) drop-shadow(0 0 7px rgba(232,255,61,.32));
+  }
+  50% {
+    filter: drop-shadow(0 9px 13px rgba(0,0,0,.42)) drop-shadow(0 0 19px rgba(232,255,61,.76));
+  }
+}
+
+/* ========================================================================
+   ACCESSIBILITÉ
+   ======================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-medaille,
+  .badge-medaille::before,
+  .badge-medaille__corps,
+  .badge-medaille__centre {
+    animation: none !important;
+  }
+
+  .badge-medaille--rare:not(.badge-medaille--verrouillee)::before,
+  .badge-medaille--epique:not(.badge-medaille--verrouillee)::before,
+  .badge-medaille--legendaire:not(.badge-medaille--verrouillee)::before,
+  .badge-medaille--secret:not(.badge-medaille--verrouillee)::before,
+  .badge-medaille--mythique:not(.badge-medaille--verrouillee)::before {
+    opacity: .48;
+  }
+}
