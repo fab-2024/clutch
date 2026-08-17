@@ -39,9 +39,16 @@ export function kFrags(nbPronosticsClasses = 0) {
   return n < FRAGS_NB_PLACEMENTS ? FRAGS_K_PLACEMENTS : FRAGS_K;
 }
 
-/** Arrondi half-up stable, y compris face aux erreurs binaires JS. */
+/** Arrondi half-up d'une magnitude positive, stable face aux flottants JS. */
 function arrondirMagnitude(valeur) {
   return Math.floor(Number(valeur) + 0.5 + Number.EPSILON * 16);
+}
+
+/** PostgreSQL `round(numeric)` : les demi-entiers s'éloignent de zéro. */
+function arrondirCommePostgres(valeur) {
+  const n = Number(valeur);
+  const magnitude = arrondirMagnitude(Math.abs(n));
+  return n < 0 ? -magnitude : magnitude;
 }
 
 export function deltaFrags(proba, gagnant, { k = FRAGS_K } = {}) {
@@ -74,7 +81,7 @@ export function softResetFrags(frags, {
 } = {}) {
   const score = Number(frags);
   if (!Number.isFinite(score)) throw new RangeError(`Score de Frags invalide : ${frags}`);
-  return arrondirMagnitude(centre + conserve * (score - centre));
+  return arrondirCommePostgres(centre + conserve * (score - centre));
 }
 
 export function formaterProjectionFrags(projection) {
