@@ -1,0 +1,46 @@
+/* Phase 3 — Social mobile entry. */
+.ui-v4 .social-shell { display: grid; gap: 18px; }
+.ui-v4 .social-shell__nav {
+  position: sticky;
+  top: 82px;
+  z-index: 18;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  width: min(430px, 100%);
+  padding: 5px;
+  border: 1px solid var(--v4-line);
+  border-radius: 18px 8px 18px 8px;
+  background: rgba(7,10,14,.88);
+  box-shadow: 0 16px 36px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.03);
+  backdrop-filter: blur(20px);
+}
+.ui-v4 .social-shell__tab {
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px 6px 13px 6px;
+  color: #75808e;
+  font-size: .75rem;
+  font-weight: 760;
+  letter-spacing: .02em;
+  text-decoration: none;
+  transition: color var(--motion-micro), background var(--motion-micro), transform var(--motion-micro);
+}
+.ui-v4 .social-shell__tab:hover { color: #eef2f3; background: rgba(255,255,255,.035); }
+.ui-v4 .social-shell__tab.actif {
+  color: var(--sur-accent);
+  background: var(--accent);
+  box-shadow: 0 8px 22px rgba(232,255,61,.12);
+}
+.ui-v4 .social-shell__content { min-width: 0; }
+.ui-v4 .social-shell[data-section="ligues"] .ligues-v2__tab[data-onglet="amis"] { display: none; }
+
+@media (max-width: 899px) {
+  .ui-v4 .social-shell { gap: 12px; }
+  .ui-v4 .social-shell__nav {
+    top: 72px;
+    width: 100%;
+    margin-bottom: 2px;
+  }
+}
