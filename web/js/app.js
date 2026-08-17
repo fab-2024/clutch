@@ -3,7 +3,9 @@ import * as api from './api.js';
 import * as economyApi from './economy-api.js';
 import { MODE_DEMO, NOM_APP } from './config.js';
 import { esc, jeton, jetonVolt, toast } from './ui.js';
-import { formaterFrags } from './core.js';
+import { formaterFrags, progressionNiveau } from './core.js';
+import { MetaChip, Avatar } from './components-v4.js';
+import { evaluerBadgesV2, xpDetailleeV2 } from './badges-v2.js';
 
 import { vueAccueil } from './views/accueil.js';
 import { vueMatchs } from './views/matchs.js';
@@ -62,11 +64,49 @@ const LIENS = [
   { href: '#/profil', libelle: 'Mon profil', court: 'Moi', cle: 'profil' },
 ];
 
-export const contexte = { utilisateur: null, admin: false, saison: null, saisons: [], frags: null };
+export const contexte = { utilisateur: null, admin: false, saison: null, saisons: [], frags: null, entete: null };
 
 function chemin() {
   const h = location.hash.replace(/^#/, '');
   return h || '/accueil';
+}
+
+function ecranPourNav(nav) {
+  if (nav === 'accueil') return 'hub';
+  if (nav === 'matchs') return 'matchs';
+  if (nav === 'ligues' || nav === 'communaute') return 'social';
+  if (nav === 'boutique') return 'vault';
+  if (['profil', 'parametres', 'call', 'analyste'].includes(nav)) return 'moi';
+  return 'system';
+}
+
+async function chargerContexteEntete(navActive) {
+  const extra = {};
+  if (!contexte.utilisateur) return extra;
+
+  if (navActive === 'accueil' || navActive === 'profil') {
+    try {
+      const bruts = await api.mesBadges();
+      const badges = evaluerBadgesV2(bruts?.recap ?? {});
+      const detail = xpDetailleeV2({ badges, recap: bruts?.recap ?? {} });
+      extra.niveau = progressionNiveau(detail.total);
+      extra.serie = Number(bruts?.recap?.serie_jours_actifs_max ?? 0);
+    } catch {
+      // Le header reste utilisable même si la progression est indisponible.
+    }
+  }
+
+  if (navActive === 'ligues' || navActive === 'communaute') {
+    try {
+      const communautes = await api.classementCommunautes();
+      const idx = communautes.findIndex((c) => c.moi);
+      if (idx >= 0) extra.faction = { nom: communautes[idx].nom, rang: idx + 1 };
+    } catch {
+      // Le social retombe sur le rating si la faction n'est pas disponible.
+    }
+  }
+
+  return extra;
 }
 
 async function rafraichirEntete(navActive) {
@@ -79,45 +119,52 @@ async function rafraichirEntete(navActive) {
   if (contexte.utilisateur && contexte.saison?.id && !MODE_DEMO) {
     contexte.frags = await economyApi.etatFrags(contexte.saison.id).catch(() => null);
   }
+  contexte.entete = await chargerContexteEntete(navActive);
 
   document.getElementById('nav-laterale').innerHTML = LIENS.map((l) => `<a class="lateral__lien${l.cle === navActive ? ' actif' : ''}" href="${l.href}"${l.cle === navActive ? ' aria-current="page"' : ''}><span class="lateral__icone">${icone(l.cle)}</span><span>${l.libelle}</span></a>`).join('');
   document.getElementById('onglets').innerHTML = LIENS.map((l) => `<a href="${l.href}"${l.cle === navActive ? ' class="actif" aria-current="page"' : ''}><span class="onglets__icone">${icone(l.cle)}</span><span class="onglets__libelle">${l.court}</span></a>`).join('');
 
   const droite = document.getElementById('entete-droite');
-  // En production, aucun fallback vers l'ancienne bankroll : une panne du RPC
-  // ne doit jamais ressusciter `participations.solde` comme monnaie de jeu.
-  const fragsAffiches = contexte.frags?.frags ?? (MODE_DEMO ? contexte.utilisateur?.solde : null) ?? 1000;
-  const statutFrags = contexte.frags?.provisoire ? ' · placement provisoire' : '';
-  droite.innerHTML = contexte.utilisateur
-    ? `<div class="soldes">
-         <div class="solde" title="Frags — ton rating compétitif de ${esc(contexte.saison?.nom ?? 'la saison')}${esc(statutFrags)}. Ils ne se dépensent jamais.">
-           ${jeton(19)}<span class="solde__valeur">${esc(formaterFrags(fragsAffiches))}</span><span class="solde__unite">Frags</span>
-         </div>
-         <a class="solde solde--volts" href="#/boutique" id="solde-volts" title="Volts — la seule monnaie dépensable dans la Boutique. Ton classement n'en dépend pas.">
-           ${jetonVolt(19)}<span class="solde__valeur">—</span><span class="solde__unite">Volts</span>
-         </a>
-       </div>
-       <a class="avatar${navActive === 'profil' ? ' actif' : ''}" href="#/profil" title="${esc(contexte.utilisateur.pseudo ?? 'Mon profil')}" aria-label="Mon profil">${esc(initiales(contexte.utilisateur.pseudo || contexte.utilisateur.email || '?'))}</a>`
-    : '<a class="btn btn--petit" href="#/connexion">Jouer</a>';
+  if (!contexte.utilisateur) {
+    droite.innerHTML = '<a class="btn btn--petit" href="#/connexion">Jouer</a>';
+    return;
+  }
 
-  if (contexte.utilisateur) remplirSoldeVolts();
+  const pseudo = contexte.utilisateur.pseudo || contexte.utilisateur.email || '?';
+  const rating = contexte.frags?.frags ?? (MODE_DEMO ? contexte.utilisateur?.solde : null) ?? 1000;
+  const provisoire = contexte.frags?.provisoire ? 'Placement' : 'Saison';
+  const niveau = contexte.entete?.niveau;
+  const serie = contexte.entete?.serie ?? 0;
+  const faction = contexte.entete?.faction;
+
+  let contenu = '';
+  if (navActive === 'accueil') {
+    contenu = `${MetaChip({ label: 'Niveau', value: niveau ? `${niveau.niveau} · ${niveau.titre}` : '—', tone: 'muted' })}${MetaChip({ label: 'Série', value: `${serie} j`, tone: serie >= 3 ? 'volt' : 'default' })}`;
+  } else if (navActive === 'matchs') {
+    contenu = `${MetaChip({ label: provisoire, value: `${formaterFrags(rating)} Frags`, icon: jeton(16), title: 'Rating compétitif saisonnier — non dépensable.' })}`;
+  } else if (navActive === 'ligues' || navActive === 'communaute') {
+    contenu = faction
+      ? MetaChip({ label: 'Faction', value: `#${faction.rang} · ${faction.nom}`, tone: 'volt' })
+      : MetaChip({ label: 'Rating', value: `${formaterFrags(rating)} Frags`, icon: jeton(16) });
+  } else if (navActive === 'boutique') {
+    contenu = MetaChip({ label: 'Volts', value: '—', icon: jetonVolt(16), href: '#/boutique', tone: 'volt', id: 'solde-volts', title: 'Monnaie cosmétique uniquement.' });
+  } else if (navActive === 'profil') {
+    contenu = MetaChip({ label: 'Identité', value: niveau ? `Niv. ${niveau.niveau}` : 'Profil', tone: 'muted' });
+  }
+
+  droite.innerHTML = `<div class="context-header"><div class="context-header__label"><small>${esc(ecranPourNav(navActive))}</small><strong>${esc(contexte.saison?.nom ?? 'Clutch')}</strong></div>${contenu}${Avatar({ name: pseudo, className: navActive === 'profil' ? 'actif' : '' })}</div>`;
+
+  if (navActive === 'boutique') remplirSoldeVolts();
 }
 
 async function remplirSoldeVolts() {
   try {
     const solde = await api.soldeVolts();
-    const cible = document.querySelector('#solde-volts .solde__valeur');
+    const cible = document.querySelector('#solde-volts strong');
     if (cible) cible.textContent = formaterFrags(solde ?? 0);
   } catch {
     // La monnaie cosmétique ne doit jamais bloquer l'app.
   }
-}
-
-function initiales(nom) {
-  const mots = String(nom).trim().split(/[\s._-]+/).filter(Boolean);
-  if (!mots.length) return '?';
-  if (mots.length === 1) return mots[0].slice(0, 2).toUpperCase();
-  return (mots[0][0] + mots[1][0]).toUpperCase();
 }
 
 export function bandeauSaison() {
@@ -141,9 +188,12 @@ async function router() {
   const route = ROUTES.find((r) => r.motif.test(p));
   const contenu = conteneurNeuf();
   if (!route) {
+    document.body.dataset.screen = 'system';
     contenu.innerHTML = '<div class="vide"><h3>Page introuvable</h3><p><a href="#/accueil">Retour à l’accueil</a></p></div>';
     return;
   }
+
+  document.body.dataset.screen = ecranPourNav(route.nav);
   contenu.innerHTML = '<div class="chargement"><span class="spinner"></span></div>';
   try {
     await rafraichirEntete(route.nav);
