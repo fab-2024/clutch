@@ -2,6 +2,32 @@ import * as api from '../api.js';
 import { toast, esc } from '../ui.js';
 import { MODE_DEMO } from '../config.js';
 import { SOLDE_INITIAL } from '../core.js';
+import { lireOnboarding } from './onboarding.js';
+
+const CLE_ONBOARDING = 'clutch:onboarding:v1';
+
+function terminerOnboarding() {
+  try {
+    const courant = JSON.parse(localStorage.getItem(CLE_ONBOARDING) || '{}');
+    localStorage.setItem(CLE_ONBOARDING, JSON.stringify({ ...courant, termine: true }));
+  } catch {
+    localStorage.setItem(CLE_ONBOARDING, JSON.stringify({ termine: true }));
+  }
+}
+
+function enteteEtapeProfil() {
+  return `
+    <div class="auth-v4__flow-top">
+      <a class="auth-v4__flow-brand" href="#/accueil" aria-label="Clutch">
+        <img src="assets/logo.svg" alt="" aria-hidden="true" />
+        <strong>CLUTCH<span>.</span></strong>
+      </a>
+      <div class="auth-v4__flow-progress" aria-label="Étape 3 sur 3">
+        <i class="actif"></i><i class="actif"></i><i class="actif"></i>
+      </div>
+      <button class="auth-v4__flow-login" type="button" id="connexion-directe">Se connecter</button>
+    </div>`;
+}
 
 /**
  * Page de connexion.
@@ -19,28 +45,32 @@ export async function vueConnexion(racine) {
 
   if (MODE_DEMO) return vueDemo(racine);
 
-  let mode = 'inscription'; // ou 'connexion'
-
-  // Le choix de l'équipe se fait ici parce que c'est le seul moment où on a
-  // l'attention du joueur. Il reste facultatif, et se change depuis le profil.
-  const equipes = await api.listerEquipes().catch(() => []);
+  const onboarding = lireOnboarding();
+  let mode = localStorage.getItem('clutch:auth-intent') === 'connexion' ? 'connexion' : 'inscription';
 
   const dessiner = () => {
-    racine.innerHTML = `
-      <div style="max-width:440px;margin:40px auto">
-        <h1>${mode === 'inscription' ? 'Créer mon compte' : 'Me connecter'}</h1>
-        <p style="color:var(--texte-doux)">
-          ${
-            mode === 'inscription'
-              ? `Tu démarres avec <strong style="color:var(--accent)">${SOLDE_INITIAL} Frags</strong>.
-                 Aucun paiement, aucun gain réel : c'est un jeu.`
-              : 'Content de te revoir.'
-          }
-        </p>
+    const inscription = mode === 'inscription';
+    document.body.classList.toggle('phase4-auth-onboarding', inscription);
 
-        <div class="carte" style="margin-top:20px">
+    racine.innerHTML = `
+      <section class="auth-v4${inscription ? ' auth-v4--onboarding-step' : ''}">
+        ${inscription ? enteteEtapeProfil() : ''}
+
+        <div class="auth-v4__intro">
+          <span class="sur-titre">${inscription ? '03 // TON PROFIL' : 'RETOUR DANS CLUTCH'}</span>
+          <h1>${inscription ? 'Ton profil peut maintenant exister.' : 'Reprends ta place.'}</h1>
+          <p>
+            ${
+              inscription
+                ? `Ton rating démarre à <strong>${SOLDE_INITIAL} Frags</strong>. Les Frags restent un classement : rien à miser, rien à retirer.`
+                : 'Content de te revoir.'
+            }
+          </p>
+        </div>
+
+        <div class="carte auth-v4__card">
           ${
-            mode === 'inscription'
+            inscription
               ? `<label class="champ">
                    <span class="champ__libelle">Ton pseudo</span>
                    <input type="text" id="pseudo" placeholder="Ex : NovaKill" maxlength="20" autocomplete="nickname" />
@@ -52,69 +82,71 @@ export async function vueConnexion(racine) {
             <input type="email" id="email" placeholder="toi@exemple.fr" autocomplete="email" />
           </label>
           <label class="champ">
-            <span class="champ__libelle">Mot de passe${mode === 'inscription' ? ' (6 caractères minimum)' : ''}</span>
+            <span class="champ__libelle">Mot de passe${inscription ? ' (6 caractères minimum)' : ''}</span>
             <input type="password" id="motdepasse" placeholder="••••••••"
-                   autocomplete="${mode === 'inscription' ? 'new-password' : 'current-password'}" />
+                   autocomplete="${inscription ? 'new-password' : 'current-password'}" />
           </label>
 
+          <button class="btn btn--large" id="valider">
+            ${inscription ? 'Créer mon profil' : 'Me connecter'}
+          </button>
+
           ${
-            mode === 'inscription' && equipes.length
-              ? `<label class="champ">
-                   <span class="champ__libelle">Ton équipe (facultatif)</span>
-                   <select id="equipe-favorite">
-                     <option value="">Je n'en ai pas</option>
-                     ${equipes
-                       .map((e) => `<option value="${esc(e.id)}">${esc(e.nom)} · ${esc(e.tag)}</option>`)
-                       .join('')}
-                   </select>
-                   <span style="font-size:0.76rem;color:var(--texte-faible);margin-top:6px;display:block">
-                     Elle met tes matchs en avant dans le calendrier. Aucune incidence sur les cotes.
-                   </span>
-                 </label>`
+            inscription
+              ? `<button class="auth-v4__skip" type="button" id="continuer-sans-inscription"><span>Continuer sans inscription</span><b>→</b></button>`
               : ''
           }
 
-          <button class="btn btn--large" id="valider">
-            ${mode === 'inscription' ? 'Créer mon compte et jouer' : 'Me connecter'}
-          </button>
-
-          <p style="font-size:0.85rem;color:var(--texte-doux);margin:16px 0 0;text-align:center">
+          <p class="auth-v4__switch">
             ${
-              mode === 'inscription'
-                ? 'Déjà un compte ? <button class="lien-bandeau" id="bascule" style="margin:0">Se connecter</button>'
-                : 'Pas encore de compte ? <button class="lien-bandeau" id="bascule" style="margin:0">En créer un</button>'
+              inscription
+                ? 'Déjà un compte ? <button class="lien-bandeau" id="bascule">Se connecter</button>'
+                : 'Pas encore de compte ? <button class="lien-bandeau" id="bascule">En créer un</button>'
             }
           </p>
         </div>
 
-        <details style="margin-top:18px">
-          <summary style="cursor:pointer;color:var(--texte-faible);font-size:0.85rem">
-            Je préfère recevoir un lien par e-mail
-          </summary>
-          <div class="carte" style="margin-top:12px">
+        <details class="auth-v4__magic">
+          <summary>Je préfère recevoir un lien par e-mail</summary>
+          <div class="carte">
             <label class="champ">
               <span class="champ__libelle">Adresse e-mail</span>
               <input type="email" id="email-lien" placeholder="toi@exemple.fr" autocomplete="email" />
             </label>
             <button class="btn btn--fantome btn--large" id="envoyer-lien">Recevoir un lien</button>
-            <p style="font-size:0.76rem;color:var(--texte-faible);margin:12px 0 0">
-              Supabase ne laisse partir que quelques e-mails par heure. Si tu obtiens
-              une erreur, passe par le mot de passe : il n'envoie rien.
-            </p>
+            <p>Supabase ne laisse partir que quelques e-mails par heure. Si tu obtiens une erreur, passe par le mot de passe : il n'envoie rien.</p>
           </div>
         </details>
-      </div>`;
+      </section>`;
+
+    racine.querySelector('#connexion-directe')?.addEventListener('click', () => {
+      localStorage.setItem('clutch:auth-intent', 'connexion');
+      location.hash = '#/connexion-login';
+    });
 
     racine.querySelector('#bascule').addEventListener('click', () => {
-      mode = mode === 'inscription' ? 'connexion' : 'inscription';
-      dessiner();
+      if (mode === 'inscription') {
+        localStorage.setItem('clutch:auth-intent', 'connexion');
+        location.hash = '#/connexion-login';
+        return;
+      }
+      localStorage.setItem('clutch:auth-intent', 'inscription');
+      location.hash = '#/onboarding';
+    });
+
+    racine.querySelector('#continuer-sans-inscription')?.addEventListener('click', () => {
+      terminerOnboarding();
+      localStorage.removeItem('clutch:auth-intent');
+      document.body.classList.remove('phase4-auth-onboarding');
+      location.hash = '#/accueil';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
 
     const valider = async (bouton) => {
       const email = racine.querySelector('#email').value.trim();
       const motDePasse = racine.querySelector('#motdepasse').value;
       const pseudo = racine.querySelector('#pseudo')?.value.trim();
-      const equipeFavoriteId = racine.querySelector('#equipe-favorite')?.value || null;
+      const equipeFavoriteId = mode === 'inscription' ? (onboarding.equipeId || null) : null;
 
       if (!email || !motDePasse) return toast('Remplis les deux champs.', 'erreur');
       if (mode === 'inscription' && motDePasse.length < 6) {
@@ -129,12 +161,12 @@ export async function vueConnexion(racine) {
             : await api.connexionMotDePasse({ email, motDePasse });
 
         if (r?.enAttenteEmail) {
-          // Le compte est créé mais Supabase attend une confirmation par e-mail.
-          // Un toast qui disparaît en trois secondes laisse le joueur bloqué sans
-          // savoir quoi faire : on affiche la marche à suivre, et elle reste à l'écran.
           ecranConfirmationAttendue(racine, email);
           return;
         }
+        if (mode === 'inscription') terminerOnboarding();
+        localStorage.removeItem('clutch:auth-intent');
+        document.body.classList.remove('phase4-auth-onboarding');
         toast(`Bienvenue ${pseudo || email} !`, 'succes');
         location.hash = '#/matchs';
         window.dispatchEvent(new HashChangeEvent('hashchange'));
@@ -171,32 +203,32 @@ export async function vueConnexion(racine) {
 
 /** En mode démo, aucun compte n'existe : un pseudo suffit. */
 async function vueDemo(racine) {
-  const equipes = await api.listerEquipes().catch(() => []);
+  const onboarding = lireOnboarding();
+  document.body.classList.add('phase4-auth-onboarding');
   racine.innerHTML = `
-    <div style="max-width:440px;margin:40px auto">
-      <h1>Rejoindre la partie</h1>
-      <p style="color:var(--texte-doux)">
-        Tu démarres avec <strong style="color:var(--accent)">${SOLDE_INITIAL} Frags</strong>.
-        Aucun paiement, aucun gain réel : c'est un jeu.
-      </p>
-      <div class="carte" style="margin-top:20px">
+    <section class="auth-v4 auth-v4--onboarding-step">
+      ${enteteEtapeProfil()}
+      <div class="auth-v4__intro"><span class="sur-titre">03 // TON PROFIL</span><h1>Rejoindre la partie</h1><p>Ton rating démarre à <strong>${SOLDE_INITIAL} Frags</strong>. Aucun paiement, aucun gain réel : c'est un jeu.</p></div>
+      <div class="carte auth-v4__card">
         <label class="champ">
           <span class="champ__libelle">Ton pseudo</span>
           <input type="text" id="identifiant" placeholder="Ex : NovaKill" autocomplete="nickname" />
         </label>
-        <label class="champ">
-          <span class="champ__libelle">Ton équipe (facultatif)</span>
-          <select id="equipe-favorite">
-            <option value="">Je n'en ai pas</option>
-            ${equipes.map((e) => `<option value="${esc(e.id)}">${esc(e.nom)} · ${esc(e.tag)}</option>`).join('')}
-          </select>
-        </label>
         <button class="btn btn--large" id="ok">Commencer à jouer</button>
-        <p style="font-size:0.78rem;color:var(--texte-faible);margin:14px 0 0">
-          En mode démo, aucun compte n'est créé : ta progression reste dans ce navigateur.
-        </p>
+        <button class="auth-v4__skip" type="button" id="continuer-sans-inscription"><span>Continuer sans inscription</span><b>→</b></button>
+        <p class="auth-v4__hint">En mode démo, aucun compte n'est créé : ta progression reste dans ce navigateur.</p>
       </div>
-    </div>`;
+    </section>`;
+
+  racine.querySelector('#connexion-directe')?.addEventListener('click', () => {
+    localStorage.setItem('clutch:auth-intent', 'connexion');
+    location.hash = '#/connexion-login';
+  });
+  racine.querySelector('#continuer-sans-inscription')?.addEventListener('click', () => {
+    terminerOnboarding();
+    document.body.classList.remove('phase4-auth-onboarding');
+    location.hash = '#/accueil';
+  });
 
   const champ = racine.querySelector('#identifiant');
   champ.focus();
@@ -207,8 +239,10 @@ async function vueDemo(racine) {
       email: valeur,
       motDePasse: '',
       pseudo: valeur,
-      equipeFavoriteId: racine.querySelector('#equipe-favorite')?.value || null,
+      equipeFavoriteId: onboarding.equipeId || null,
     });
+    terminerOnboarding();
+    document.body.classList.remove('phase4-auth-onboarding');
     toast(`Bienvenue ${valeur} !`, 'succes');
     location.hash = '#/matchs';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
@@ -217,14 +251,7 @@ async function vueDemo(racine) {
   champ.addEventListener('keydown', (e) => e.key === 'Enter' && valider());
 }
 
-/**
- * Écran affiché quand Supabase exige une confirmation par e-mail.
- *
- * C'est presque toujours un réglage oublié, pas un incident : le service d'envoi
- * intégré de Supabase n'écrit qu'aux adresses de l'équipe du projet et n'envoie
- * que quelques messages par heure. Autant le dire franchement plutôt que de
- * laisser quelqu'un rafraîchir sa boîte mail pendant dix minutes.
- */
+/** Écran affiché quand Supabase exige une confirmation par e-mail. */
 function ecranConfirmationAttendue(racine, email) {
   racine.innerHTML = `
     <div style="max-width:560px;margin:40px auto">

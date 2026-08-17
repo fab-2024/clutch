@@ -1,0 +1,181 @@
+/* Phase 4 — make account creation the visible third onboarding step. */
+body.phase4-auth-onboarding .entete { display:none!important; }
+body.phase4-auth-onboarding .enveloppe.agencement {
+  width:100%;
+  max-width:none;
+  padding:0;
+  display:block;
+}
+body.phase4-auth-onboarding .principal {
+  min-height:100dvh;
+  padding:0!important;
+  background:
+    radial-gradient(70% 60% at 100% 0%,rgba(93,42,255,.18),transparent 68%),
+    radial-gradient(60% 56% at 0% 100%,rgba(215,255,31,.04),transparent 70%),
+    linear-gradient(180deg,#080a0e 0%,#05070a 100%);
+}
+
+.ui-v4 .auth-v4--onboarding-step {
+  width:min(1320px,calc(100% - 48px));
+  min-height:100dvh;
+  margin:0 auto;
+  padding:0 0 60px;
+  grid-template-columns:minmax(320px,.78fr) minmax(430px,.72fr);
+  column-gap:clamp(54px,8vw,132px);
+  row-gap:0;
+  position:relative;
+  isolation:isolate;
+}
+.ui-v4 .auth-v4--onboarding-step::before {
+  content:"CLUTCH";
+  position:fixed;
+  left:-.035em;
+  bottom:-.17em;
+  color:rgba(255,255,255,.018);
+  font:950 clamp(11rem,26vw,30rem)/.72 var(--font-display);
+  letter-spacing:-.09em;
+  pointer-events:none;
+  z-index:-1;
+}
+.ui-v4 .auth-v4__flow-top {
+  grid-column:1/-1;
+  min-height:92px;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:20px;
+  border-bottom:1px solid rgba(255,255,255,.055);
+  margin-bottom:clamp(34px,6vh,76px);
+}
+.ui-v4 .auth-v4__flow-brand {
+  display:inline-flex;
+  align-items:center;
+  gap:14px;
+  color:#f7f8f4;
+  text-decoration:none;
+}
+.ui-v4 .auth-v4__flow-brand img {
+  width:52px;
+  height:52px;
+  filter:drop-shadow(0 0 24px rgba(232,255,61,.14));
+}
+.ui-v4 .auth-v4__flow-brand strong {
+  font-family:var(--font-ui-phase4,var(--font-ui));
+  font-size:1.22rem;
+  font-weight:800;
+  letter-spacing:.115em;
+}
+.ui-v4 .auth-v4__flow-brand strong span { color:#d7ff1f; }
+.ui-v4 .auth-v4__flow-progress {
+  display:flex;
+  justify-content:center;
+  gap:8px;
+}
+.ui-v4 .auth-v4__flow-progress i {
+  width:72px;
+  height:4px;
+  border-radius:999px;
+  background:rgba(255,255,255,.13);
+}
+.ui-v4 .auth-v4__flow-progress i.actif {
+  background:#d7ff1f;
+  box-shadow:0 0 18px rgba(215,255,31,.28);
+}
+.ui-v4 .auth-v4__flow-login {
+  border:0;
+  background:none;
+  color:#8b94a0;
+  font-family:var(--font-ui-phase4,var(--font-ui));
+  font-weight:650;
+  cursor:pointer;
+}
+.ui-v4 .auth-v4__flow-login:hover { color:#d7ff1f; }
+
+.ui-v4 .auth-v4--onboarding-step .auth-v4__intro { padding-top:34px; }
+.ui-v4 .auth-v4--onboarding-step .auth-v4__intro .sur-titre {
+  color:#d7ff1f;
+  letter-spacing:.105em;
+}
+.ui-v4 .auth-v4--onboarding-step .auth-v4__intro h1 {
+  font-size:clamp(4.8rem,8vw,8rem);
+  line-height:.78;
+  max-width:620px;
+}
+.ui-v4 .auth-v4--onboarding-step .auth-v4__card {
+  align-self:start;
+  margin-top:0;
+  padding:28px;
+}
+/* Les choix des étapes précédentes restent en mémoire, jamais ré-affichés ici. */
+.ui-v4 .auth-v4--onboarding-step .auth-v4__resume,
+.ui-v4 .auth-v4__source-faction,
+.ui-v4 .auth-v4__locked-faction { display:none!important; }
+
+.ui-v4 .auth-v4__skip {
+  width:100%;
+  min-height:52px;
+  margin-top:10px;
+  padding:0 14px 0 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:16px 7px 16px 7px;
+  background:rgba(255,255,255,.025);
+  color:#c6cdd4;
+  font-family:var(--font-ui-phase4,var(--font-ui));
+  font-weight:700;
+  cursor:pointer;
+}
+.ui-v4 .auth-v4__skip b {
+  width:32px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  border-radius:10px 4px 10px 4px;
+  background:rgba(215,255,31,.08);
+  color:#d7ff1f;
+  font-size:1.15rem;
+}
+.ui-v4 .auth-v4__skip:hover {
+  border-color:rgba(215,255,31,.32);
+  color:#fff;
+}
+.ui-v4 .auth-v4--onboarding-step .auth-v4__magic {
+  grid-column:2;
+  margin-top:14px;
+}
+
+/* First two pages now visibly belong to a three-step flow. */
+.ui-v4 .onboarding-v5__progress { min-width:232px; }
+
+@media(max-width:780px) {
+  .ui-v4 .auth-v4--onboarding-step {
+    width:min(100% - 28px,620px);
+    grid-template-columns:1fr;
+    padding-bottom:34px;
+  }
+  .ui-v4 .auth-v4__flow-top {
+    grid-column:1;
+    min-height:76px;
+    margin-bottom:20px;
+    gap:10px;
+    border-bottom:0;
+  }
+  .ui-v4 .auth-v4__flow-brand { gap:9px; }
+  .ui-v4 .auth-v4__flow-brand img { width:38px;height:38px; }
+  .ui-v4 .auth-v4__flow-brand strong { font-size:.9rem;letter-spacing:.12em; }
+  .ui-v4 .auth-v4__flow-progress { gap:5px; }
+  .ui-v4 .auth-v4__flow-progress i { width:34px;height:3px; }
+  .ui-v4 .auth-v4__flow-login { font-size:.68rem;padding:0; }
+  .ui-v4 .auth-v4--onboarding-step .auth-v4__intro { padding-top:0; }
+  .ui-v4 .auth-v4--onboarding-step .auth-v4__intro h1 {
+    font-size:clamp(3.2rem,15vw,5rem);
+    margin-bottom:14px;
+  }
+  .ui-v4 .auth-v4--onboarding-step .auth-v4__card { padding:20px 17px; }
+  .ui-v4 .auth-v4--onboarding-step .auth-v4__magic { grid-column:1; }
+  .ui-v4 .onboarding-v5__progress { min-width:0; }
+  .ui-v4 .onboarding-v5__progress i { width:34px; }
+}

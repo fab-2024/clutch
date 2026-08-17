@@ -25,8 +25,10 @@ import { vueCartes } from './views/cartes.js';
 import { vueAdmin } from './views/admin.js';
 import { vueConnexion } from './views/connexion.js';
 import { vueDiagnostic } from './views/diagnostic.js';
+import { vueOnboarding, onboardingTermine } from './views/onboarding.js';
 
 const ROUTES = [
+  { motif: /^\/onboarding$/, vue: vueOnboarding, nav: 'onboarding', mobile: null, desktop: null },
   { motif: /^\/accueil$/, vue: vueAccueil, nav: 'accueil', mobile: 'hub' },
   { motif: /^\/matchs$/, vue: vueMatchs, nav: 'matchs', mobile: 'matchs' },
   { motif: /^\/matchs\/(.+)$/, vue: vueMatch, nav: 'matchs', mobile: 'matchs' },
@@ -49,7 +51,8 @@ const ROUTES = [
   { motif: /^\/badges$/, vue: vueBadges, nav: 'profil', mobile: 'moi' },
   { motif: /^\/cartes$/, vue: vueCartes, nav: 'profil', mobile: 'moi' },
   { motif: /^\/admin$/, vue: vueAdmin, nav: null, mobile: null },
-  { motif: /^\/connexion$/, vue: vueConnexion, nav: null, mobile: null },
+  { motif: /^\/connexion-login$/, vue: vueConnexion, nav: 'auth-login', mobile: null, desktop: null },
+  { motif: /^\/connexion$/, vue: vueConnexion, nav: 'auth', mobile: null, desktop: null },
   { motif: /^\/diagnostic$/, vue: vueDiagnostic, nav: null, mobile: null },
 ];
 
@@ -93,6 +96,8 @@ function chemin() {
 }
 
 function ecranPourNav(nav) {
+  if (nav === 'onboarding') return 'onboarding';
+  if (nav === 'auth' || nav === 'auth-login') return 'auth';
   if (nav === 'accueil') return 'hub';
   if (nav === 'matchs') return 'matchs';
   if (nav === 'ligues' || nav === 'communaute' || nav === 'social') return 'social';
@@ -154,7 +159,15 @@ async function rafraichirEntete(navActive, desktopActive = navActive, mobileActi
 
   const droite = document.getElementById('entete-droite');
   if (!contexte.utilisateur) {
-    droite.innerHTML = '<a class="btn btn--petit" href="#/connexion">Jouer</a>';
+    if (navActive === 'onboarding') {
+      droite.innerHTML = '<a class="btn btn--petit btn--fantome" href="#/connexion-login">Se connecter</a>';
+    } else if (navActive === 'auth' || navActive === 'auth-login') {
+      droite.innerHTML = '<a class="btn btn--petit btn--fantome" href="#/onboarding">Découvrir Clutch</a>';
+    } else if (onboardingTermine()) {
+      droite.innerHTML = '<a class="btn btn--petit" href="#/connexion">Créer mon profil</a>';
+    } else {
+      droite.innerHTML = '<a class="btn btn--petit" href="#/onboarding">Découvrir</a>';
+    }
     return;
   }
 
@@ -213,6 +226,7 @@ function conteneurNeuf() {
 
 async function router() {
   const p = chemin();
+  const entreeSansHash = !location.hash;
   const route = ROUTES.find((r) => r.motif.test(p));
   const contenu = conteneurNeuf();
   if (!route) {
@@ -220,6 +234,9 @@ async function router() {
     contenu.innerHTML = '<div class="vide"><h3>Page introuvable</h3><p><a href="#/accueil">Retour à l’accueil</a></p></div>';
     return;
   }
+
+  if (route.nav === 'auth-login') localStorage.setItem('clutch:auth-intent', 'connexion');
+  if (route.nav === 'auth') localStorage.setItem('clutch:auth-intent', 'inscription');
 
   document.body.dataset.screen = ecranPourNav(route.nav);
   contenu.innerHTML = '<div class="chargement"><span class="spinner"></span></div>';
@@ -232,6 +249,20 @@ async function router() {
       return;
     }
   }
+
+  if (entreeSansHash && !contexte.utilisateur && !onboardingTermine() && route.nav === 'accueil') {
+    location.hash = '#/onboarding';
+    return;
+  }
+  if (!contexte.utilisateur && route.nav === 'auth' && !onboardingTermine()) {
+    location.hash = '#/onboarding';
+    return;
+  }
+  if (contexte.utilisateur && ['onboarding', 'auth', 'auth-login'].includes(route.nav)) {
+    location.hash = '#/accueil';
+    return;
+  }
+
   const params = (p.match(route.motif) || []).slice(1).filter((v) => v !== undefined).map(decodeURIComponent);
   try {
     await route.vue(contenu, ...params);
