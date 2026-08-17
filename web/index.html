@@ -6,7 +6,7 @@
     <title>Clutch — le prono esport entre potes</title>
     <meta
       name="description"
-      content="Pronostique les matchs LoL, CS2 et Valorant avec tes potes. Monnaie virtuelle, zéro argent réel."
+      content="Pronostique les matchs LoL, CS2 et Valorant avec tes potes. Classement en Frags, personnalisation en Volts, zéro argent réel en jeu."
     />
     <meta name="theme-color" content="#080b10" />
     <link rel="manifest" href="manifest.webmanifest" />
@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="accueil-v3.css" />
     <link rel="stylesheet" href="accueil-v3-fix.css" />
     <link rel="stylesheet" href="matchs-v2.css" />
+    <link rel="stylesheet" href="economy-v2.css" />
     <link rel="stylesheet" href="ligues-v2.css" />
     <link rel="stylesheet" href="boutique-v2.css" />
     <link rel="stylesheet" href="parametres-v2.css" />
@@ -57,7 +58,7 @@
     <div class="bandeau-demo" id="bandeau-demo" hidden>
       <div class="enveloppe">
         <strong>Mode démo</strong> — tout est stocké dans ton navigateur, aucun compte n'est créé.
-        Les Frags sont une monnaie fictive, sans aucune valeur.
+        Les compteurs sont fictifs, sans aucune valeur.
         <button class="lien-bandeau" id="reset-demo">Réinitialiser la démo</button>
       </div>
     </div>
@@ -86,8 +87,8 @@
         <footer class="pied">
           <p>
             <strong>Clutch</strong> — jeu de pronostics gratuit. Aucune mise réelle, aucun gain en
-            argent, aucun achat en argent réel. Les « Frags » et les « Volts » sont des monnaies
-            fictives sans valeur marchande et non convertibles.
+            argent. Les Frags sont un score de classement non dépensable ; les Volts servent
+            uniquement à la personnalisation et ne donnent aucun avantage compétitif.
           </p>
           <p class="pied__legal">
             Ce service n'est pas un opérateur de jeux d'argent et de hasard au sens de l'article
@@ -103,6 +104,7 @@
     <div id="toasts" class="toasts" aria-live="polite"></div>
 
     <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/economy-v2-runtime.js"></script>
     <script type="module" src="js/settings-preset-bindings.js"></script>
     <script type="module" src="js/profile-polish.js"></script>
     <script type="module" src="js/community-lab.js"></script>
