@@ -92,7 +92,7 @@ export async function vueOnboarding(racine) {
       etat.termine = true;
       sauver(etat);
       choisirIntent('connexion');
-      location.hash = '#/connexion';
+      location.hash = '#/connexion-login';
     });
   };
 
