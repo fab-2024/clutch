@@ -9,11 +9,9 @@
     <meta name="color-scheme" content="dark" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+
+    <!-- Legacy structural baselines still required by screens not yet rewritten. -->
     <link rel="stylesheet" href="app.css" />
-    <link rel="stylesheet" href="accueil-v2.css" />
-    <link rel="stylesheet" href="accueil-v2-polish.css" />
-    <link rel="stylesheet" href="accueil-v3.css" />
-    <link rel="stylesheet" href="accueil-v3-fix.css" />
     <link rel="stylesheet" href="matchs-v2.css" />
     <link rel="stylesheet" href="economy-v2.css" />
     <link rel="stylesheet" href="economy-v2-cleanup.css" />
@@ -28,22 +26,24 @@
     <link rel="stylesheet" href="communaute-v2.css" />
     <link rel="stylesheet" href="communaute-v2-lite.css" />
     <link rel="stylesheet" href="community-lab.css" />
-    <link rel="stylesheet" href="relic-vessels.css" />
-    <link rel="stylesheet" href="relic-vessels-v2.css" />
-    <link rel="stylesheet" href="relic-vessels-v3.css" />
     <link rel="stylesheet" href="relic-vessels-v4.css" />
     <link rel="stylesheet" href="community-v3.css" />
     <link rel="stylesheet" href="community-polish.css" />
     <link rel="stylesheet" href="community-mutation-signature.css" />
-    <!-- Phase 2 V4 compatibility layers; legacy CSS is retired screen by screen. -->
-    <link rel="stylesheet" href="ui-v4.css" />
-    <link rel="stylesheet" href="hub-v4.css" />
-    <link rel="stylesheet" href="matchs-v4.css" />
-    <link rel="stylesheet" href="social-v4.css" />
-    <link rel="stylesheet" href="profile-v4.css" />
-    <link rel="stylesheet" href="profile-signature-v4.css" />
+
+    <!-- Phase 2 final UI system. New work belongs here, not in v2/v3/fix/polish files. -->
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/components.css" />
+    <link rel="stylesheet" href="styles/layout.css" />
+    <link rel="stylesheet" href="styles/pages/hub.css" />
+    <link rel="stylesheet" href="styles/pages/matches.css" />
+    <link rel="stylesheet" href="styles/pages/social.css" />
+    <link rel="stylesheet" href="styles/pages/profile.css" />
+    <link rel="stylesheet" href="styles/pages/profile-signature.css" />
+    <link rel="stylesheet" href="styles/pages/composition.css" />
   </head>
-  <body class="ui-v4">
+  <body class="ui-v4" data-screen="hub">
     <a class="saut-contenu" href="#contenu">Aller au contenu</a>
     <header class="entete"><div class="enveloppe entete__interieur"><a class="logo" href="#/accueil" aria-label="Clutch, accueil"><svg class="logo__sceau" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="27" fill="var(--accent)" /><path d="M 63.6 63.6 A 19.2 19.2 0 1 1 63.6 36.4" fill="none" stroke="var(--sur-accent)" stroke-width="11.5" /></svg><span class="logo__marque">CLUTCH<i class="logo__point" aria-hidden="true"></i></span></a><div class="entete__droite" id="entete-droite"></div></div></header>
     <div class="bandeau-demo" id="bandeau-demo" hidden><div class="enveloppe"><strong>Mode démo</strong> — tout est stocké dans ton navigateur, aucun compte n'est créé. Les compteurs sont fictifs, sans aucune valeur. <button class="lien-bandeau" id="reset-demo">Réinitialiser la démo</button></div></div>
