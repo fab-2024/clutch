@@ -1,0 +1,6 @@
+/* Correction de perspective du sol de l'arène. */
+.hub-hero::before {
+  filter: none;
+  transform: perspective(340px) rotateX(58deg);
+  transform-origin: 50% 100%;
+}
