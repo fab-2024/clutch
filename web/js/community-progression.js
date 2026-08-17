@@ -96,18 +96,17 @@ export function niveauDepuisSupporters(membres) {
 /**
  * État de progression utilisé par le renderer des reliques.
  *
- * `niveauAtteint` est monotone quand il vient de Supabase. Sans backend V3
- * (mode démo / migration non encore appliquée), on retombe proprement sur le
- * niveau calculé à partir du nombre de supporters.
+ * Quand `niveauAtteint` est fourni, Supabase est la source de vérité : on ne
+ * prédit jamais une mutation côté navigateur. Sans backend V3 (mode démo), le
+ * niveau est simplement déduit du nombre de supporters.
  */
 export function palierFaction(membres, niveauAtteint = null) {
   const n = Math.max(0, Math.floor(Number(membres) || 0));
   const derive = niveauDepuisSupporters(n);
   const persistant = Number(niveauAtteint);
-  const niveau = Math.max(
-    derive,
-    Number.isFinite(persistant) ? Math.max(1, Math.min(7, Math.floor(persistant))) : 1
-  );
+  const niveau = Number.isFinite(persistant)
+    ? Math.max(1, Math.min(7, Math.floor(persistant)))
+    : derive;
 
   const courant = formeCommunaute(niveau);
   const suivant = niveau < FORMES_COMMUNAUTE.length ? formeCommunaute(niveau + 1) : null;
@@ -139,20 +138,17 @@ export function palierFaction(membres, niveauAtteint = null) {
 export function mutationDepuisNiveau(niveau) {
   const forme = formeCommunaute(niveau);
   const precedente = niveau > 1 ? formeCommunaute(niveau - 1) : null;
-  return {
-    ...forme,
-    precedente,
-  };
+  return { ...forme, precedente };
 }
 
 /** Palette d’énergie — volontairement distincte des couleurs d’interface. */
 const TEINTES_FACTION = {
-  VIT: 102, // jaune acide / vert Vitality
-  KC: 252,  // bleu Karmine
-  G2: 18,   // rouge chaud, le noir/blanc reste porté par l’écusson
-  FNC: 52,  // orange Fnatic
-  T1: 8,    // rouge T1
-  TL: 232,  // bleu Team Liquid
+  VIT: 102,
+  KC: 252,
+  G2: 18,
+  FNC: 52,
+  T1: 8,
+  TL: 232,
   MKOI: 302,
   BDS: 338,
   TH: 12,
