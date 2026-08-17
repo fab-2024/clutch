@@ -115,23 +115,19 @@
   .ui-v4 .onglets__icone svg { width: 22px; height: 22px; }
   .ui-v4 .onglets__libelle { max-width: 100%; overflow: hidden; text-overflow: ellipsis; color: currentColor; font-size: .61rem; font-weight: 760; line-height: 1; letter-spacing: .01em; white-space: nowrap; }
 
-  /* Room is the exposure hub, so it gets a tactile central affordance without becoming a FAB. */
-  .ui-v4 .onglets a.mobile-nav__room { margin-top: -12px; background: transparent; overflow: visible; }
-  .ui-v4 .onglets a.mobile-nav__room::after { bottom: -1px; }
+  /* Room garde une signature Volt, sans modifier la géométrie commune des 5 destinations. */
   .ui-v4 .mobile-nav__room .onglets__icone {
-    width: 43px;
-    height: 43px;
-    margin-bottom: -1px;
-    border: 1px solid rgba(232,255,61,.24);
-    border-radius: 15px 7px 15px 7px;
-    background: linear-gradient(145deg, rgba(232,255,61,.14), rgba(12,16,21,.96));
-    color: #dff53a;
-    box-shadow: 0 10px 30px rgba(0,0,0,.38), 0 0 24px rgba(232,255,61,.08), inset 0 1px 0 rgba(255,255,255,.05);
+    border: 1px solid rgba(232,255,61,.17);
+    border-radius: 9px 4px 9px 4px;
+    background: rgba(232,255,61,.045);
+    color: #cadd36;
+    box-shadow: 0 0 18px rgba(232,255,61,.035), inset 0 1px 0 rgba(255,255,255,.025);
   }
   .ui-v4 .mobile-nav__room.actif .onglets__icone {
+    border-color: rgba(232,255,61,.36);
     background: var(--accent);
     color: var(--sur-accent);
-    box-shadow: 0 10px 30px rgba(0,0,0,.35), 0 0 30px rgba(232,255,61,.18);
+    box-shadow: 0 0 22px rgba(232,255,61,.12);
   }
   .ui-v4 .entete-page { margin-bottom: 24px; }
 }
