@@ -34,6 +34,48 @@
   text-align: right;
 }
 
+/* Le test reste volontairement compact : le labo est un outil, pas une page. */
+.commu-lab-debug__test {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 13px;
+  padding: 10px 11px;
+  border: 1px solid rgba(255,255,255,.055);
+  border-radius: 12px;
+  background: rgba(0,0,0,.14);
+}
+.commu-lab-debug__test label {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 5px;
+}
+.commu-lab-debug__test label > span {
+  color: var(--texte-faible);
+  font-size: .53rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.commu-lab-debug__test select {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 1px solid var(--bordure);
+  border-radius: 9px;
+  color: var(--texte);
+  background: var(--surface-2);
+  font: inherit;
+  font-size: .68rem;
+}
+.commu-lab-debug__test .btn {
+  flex: 0 0 auto;
+  min-height: 34px;
+  white-space: nowrap;
+}
+
 .commu-lab__grille {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -150,17 +192,26 @@
   .commu-lab__grille {
     grid-template-columns: repeat(7, 118px);
     overflow-x: auto;
-    padding-bottom: 4px;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: inline proximity;
+    padding-bottom: 5px;
     scrollbar-width: none;
   }
+  .commu-lab__forme { scroll-snap-align: start; }
   .commu-lab__haut p { display: none; }
 }
 
 @media (max-width: 520px) {
   .commu-lab { padding-inline: 12px; }
   .commu-lab__haut { align-items: start; }
+  .commu-lab-debug__test {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .commu-lab-debug__test .btn { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .commu-lab__forme { transition: none; }
+  .commu-lab__grille { scroll-behavior: auto; }
 }
