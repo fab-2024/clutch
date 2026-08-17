@@ -27,7 +27,7 @@ select
   'Vainqueur du match'::text as libelle_marche,
   case when p.choix='a' then ea.nom else eb.nom end::text as libelle_choix,
   0::integer as mise,
-  1::numeric as cote,
+  1::numeric(6,2) as cote,
   p.statut,
   coalesce(p.delta_frags,0)::integer as gain,
   p.cree_le,
