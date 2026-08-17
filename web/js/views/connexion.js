@@ -4,6 +4,31 @@ import { MODE_DEMO } from '../config.js';
 import { SOLDE_INITIAL } from '../core.js';
 import { lireOnboarding } from './onboarding.js';
 
+const CLE_ONBOARDING = 'clutch:onboarding:v1';
+
+function terminerOnboarding() {
+  try {
+    const courant = JSON.parse(localStorage.getItem(CLE_ONBOARDING) || '{}');
+    localStorage.setItem(CLE_ONBOARDING, JSON.stringify({ ...courant, termine: true }));
+  } catch {
+    localStorage.setItem(CLE_ONBOARDING, JSON.stringify({ termine: true }));
+  }
+}
+
+function enteteEtapeProfil() {
+  return `
+    <div class="auth-v4__flow-top">
+      <a class="auth-v4__flow-brand" href="#/accueil" aria-label="Clutch">
+        <img src="assets/logo.svg" alt="" aria-hidden="true" />
+        <strong>CLUTCH<span>.</span></strong>
+      </a>
+      <div class="auth-v4__flow-progress" aria-label="Étape 3 sur 3">
+        <i class="actif"></i><i class="actif"></i><i class="actif"></i>
+      </div>
+      <button class="auth-v4__flow-login" type="button" id="connexion-directe">Se connecter</button>
+    </div>`;
+}
+
 /**
  * Page de connexion.
  *
@@ -23,29 +48,29 @@ export async function vueConnexion(racine) {
   const onboarding = lireOnboarding();
   let mode = localStorage.getItem('clutch:auth-intent') === 'connexion' ? 'connexion' : 'inscription';
 
-  // Le choix de l'équipe vient désormais de l'onboarding quand il existe.
-  // Le select reste présent pour pouvoir corriger ce choix avant création.
-  const equipes = await api.listerEquipes().catch(() => []);
-
   const dessiner = () => {
+    const inscription = mode === 'inscription';
+    document.body.classList.toggle('phase4-auth-onboarding', inscription);
+
     racine.innerHTML = `
-      <section class="auth-v4">
+      <section class="auth-v4${inscription ? ' auth-v4--onboarding-step' : ''}">
+        ${inscription ? enteteEtapeProfil() : ''}
+
         <div class="auth-v4__intro">
-          <span class="sur-titre">${mode === 'inscription' ? 'DERNIÈRE ÉTAPE' : 'RETOUR DANS CLUTCH'}</span>
-          <h1>${mode === 'inscription' ? 'Ton profil peut maintenant exister.' : 'Reprends ta place.'}</h1>
+          <span class="sur-titre">${inscription ? '03 // TON PROFIL' : 'RETOUR DANS CLUTCH'}</span>
+          <h1>${inscription ? 'Ton profil peut maintenant exister.' : 'Reprends ta place.'}</h1>
           <p>
             ${
-              mode === 'inscription'
+              inscription
                 ? `Ton rating démarre à <strong>${SOLDE_INITIAL} Frags</strong>. Les Frags restent un classement : rien à miser, rien à retirer.`
                 : 'Content de te revoir.'
             }
           </p>
-          ${mode === 'inscription' && (onboarding.jeu || onboarding.equipeNom) ? `<div class="auth-v4__resume">${onboarding.jeu ? `<span>${esc(onboarding.jeu.toUpperCase())}</span>` : ''}${onboarding.equipeNom ? `<span>${esc(onboarding.equipeNom)}</span>` : ''}</div>` : ''}
         </div>
 
         <div class="carte auth-v4__card">
           ${
-            mode === 'inscription'
+            inscription
               ? `<label class="champ">
                    <span class="champ__libelle">Ton pseudo</span>
                    <input type="text" id="pseudo" placeholder="Ex : NovaKill" maxlength="20" autocomplete="nickname" />
@@ -57,33 +82,24 @@ export async function vueConnexion(racine) {
             <input type="email" id="email" placeholder="toi@exemple.fr" autocomplete="email" />
           </label>
           <label class="champ">
-            <span class="champ__libelle">Mot de passe${mode === 'inscription' ? ' (6 caractères minimum)' : ''}</span>
+            <span class="champ__libelle">Mot de passe${inscription ? ' (6 caractères minimum)' : ''}</span>
             <input type="password" id="motdepasse" placeholder="••••••••"
-                   autocomplete="${mode === 'inscription' ? 'new-password' : 'current-password'}" />
+                   autocomplete="${inscription ? 'new-password' : 'current-password'}" />
           </label>
 
+          <button class="btn btn--large" id="valider">
+            ${inscription ? 'Créer mon profil' : 'Me connecter'}
+          </button>
+
           ${
-            mode === 'inscription' && equipes.length
-              ? `<label class="champ">
-                   <span class="champ__libelle">Ta faction (facultatif)</span>
-                   <select id="equipe-favorite">
-                     <option value="">Je choisirai plus tard</option>
-                     ${equipes
-                       .map((e) => `<option value="${esc(e.id)}"${String(e.id) === String(onboarding.equipeId || '') ? ' selected' : ''}>${esc(e.nom)} · ${esc(e.tag)}</option>`)
-                       .join('')}
-                   </select>
-                   <span class="auth-v4__hint">Elle personnalise ton univers et met ses matchs en avant. Aucun impact sur le calcul des Frags.</span>
-                 </label>`
+            inscription
+              ? `<button class="auth-v4__skip" type="button" id="continuer-sans-inscription"><span>Continuer sans inscription</span><b>→</b></button>`
               : ''
           }
 
-          <button class="btn btn--large" id="valider">
-            ${mode === 'inscription' ? 'Créer mon profil' : 'Me connecter'}
-          </button>
-
           <p class="auth-v4__switch">
             ${
-              mode === 'inscription'
+              inscription
                 ? 'Déjà un compte ? <button class="lien-bandeau" id="bascule">Se connecter</button>'
                 : 'Pas encore de compte ? <button class="lien-bandeau" id="bascule">En créer un</button>'
             }
@@ -103,17 +119,34 @@ export async function vueConnexion(racine) {
         </details>
       </section>`;
 
+    racine.querySelector('#connexion-directe')?.addEventListener('click', () => {
+      localStorage.setItem('clutch:auth-intent', 'connexion');
+      location.hash = '#/connexion-login';
+    });
+
     racine.querySelector('#bascule').addEventListener('click', () => {
-      mode = mode === 'inscription' ? 'connexion' : 'inscription';
-      localStorage.setItem('clutch:auth-intent', mode);
-      dessiner();
+      if (mode === 'inscription') {
+        localStorage.setItem('clutch:auth-intent', 'connexion');
+        location.hash = '#/connexion-login';
+        return;
+      }
+      localStorage.setItem('clutch:auth-intent', 'inscription');
+      location.hash = '#/onboarding';
+    });
+
+    racine.querySelector('#continuer-sans-inscription')?.addEventListener('click', () => {
+      terminerOnboarding();
+      localStorage.removeItem('clutch:auth-intent');
+      document.body.classList.remove('phase4-auth-onboarding');
+      location.hash = '#/accueil';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
 
     const valider = async (bouton) => {
       const email = racine.querySelector('#email').value.trim();
       const motDePasse = racine.querySelector('#motdepasse').value;
       const pseudo = racine.querySelector('#pseudo')?.value.trim();
-      const equipeFavoriteId = racine.querySelector('#equipe-favorite')?.value || null;
+      const equipeFavoriteId = mode === 'inscription' ? (onboarding.equipeId || null) : null;
 
       if (!email || !motDePasse) return toast('Remplis les deux champs.', 'erreur');
       if (mode === 'inscription' && motDePasse.length < 6) {
@@ -131,7 +164,9 @@ export async function vueConnexion(racine) {
           ecranConfirmationAttendue(racine, email);
           return;
         }
+        if (mode === 'inscription') terminerOnboarding();
         localStorage.removeItem('clutch:auth-intent');
+        document.body.classList.remove('phase4-auth-onboarding');
         toast(`Bienvenue ${pseudo || email} !`, 'succes');
         location.hash = '#/matchs';
         window.dispatchEvent(new HashChangeEvent('hashchange'));
@@ -168,27 +203,32 @@ export async function vueConnexion(racine) {
 
 /** En mode démo, aucun compte n'existe : un pseudo suffit. */
 async function vueDemo(racine) {
-  const equipes = await api.listerEquipes().catch(() => []);
   const onboarding = lireOnboarding();
+  document.body.classList.add('phase4-auth-onboarding');
   racine.innerHTML = `
-    <section class="auth-v4">
-      <div class="auth-v4__intro"><span class="sur-titre">MODE DÉMO</span><h1>Rejoindre la partie</h1><p>Ton rating démarre à <strong>${SOLDE_INITIAL} Frags</strong>. Aucun paiement, aucun gain réel : c'est un jeu.</p></div>
+    <section class="auth-v4 auth-v4--onboarding-step">
+      ${enteteEtapeProfil()}
+      <div class="auth-v4__intro"><span class="sur-titre">03 // TON PROFIL</span><h1>Rejoindre la partie</h1><p>Ton rating démarre à <strong>${SOLDE_INITIAL} Frags</strong>. Aucun paiement, aucun gain réel : c'est un jeu.</p></div>
       <div class="carte auth-v4__card">
         <label class="champ">
           <span class="champ__libelle">Ton pseudo</span>
           <input type="text" id="identifiant" placeholder="Ex : NovaKill" autocomplete="nickname" />
         </label>
-        <label class="champ">
-          <span class="champ__libelle">Ta faction (facultatif)</span>
-          <select id="equipe-favorite">
-            <option value="">Je choisirai plus tard</option>
-            ${equipes.map((e) => `<option value="${esc(e.id)}"${String(e.id) === String(onboarding.equipeId || '') ? ' selected' : ''}>${esc(e.nom)} · ${esc(e.tag)}</option>`).join('')}
-          </select>
-        </label>
         <button class="btn btn--large" id="ok">Commencer à jouer</button>
+        <button class="auth-v4__skip" type="button" id="continuer-sans-inscription"><span>Continuer sans inscription</span><b>→</b></button>
         <p class="auth-v4__hint">En mode démo, aucun compte n'est créé : ta progression reste dans ce navigateur.</p>
       </div>
     </section>`;
+
+  racine.querySelector('#connexion-directe')?.addEventListener('click', () => {
+    localStorage.setItem('clutch:auth-intent', 'connexion');
+    location.hash = '#/connexion-login';
+  });
+  racine.querySelector('#continuer-sans-inscription')?.addEventListener('click', () => {
+    terminerOnboarding();
+    document.body.classList.remove('phase4-auth-onboarding');
+    location.hash = '#/accueil';
+  });
 
   const champ = racine.querySelector('#identifiant');
   champ.focus();
@@ -199,8 +239,10 @@ async function vueDemo(racine) {
       email: valeur,
       motDePasse: '',
       pseudo: valeur,
-      equipeFavoriteId: racine.querySelector('#equipe-favorite')?.value || null,
+      equipeFavoriteId: onboarding.equipeId || null,
     });
+    terminerOnboarding();
+    document.body.classList.remove('phase4-auth-onboarding');
     toast(`Bienvenue ${valeur} !`, 'succes');
     location.hash = '#/matchs';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
