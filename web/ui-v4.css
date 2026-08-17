@@ -1,0 +1,676 @@
+/* ==========================================================================
+   CLUTCH UI SYSTEM V4 — FOUNDATION
+   Loaded after legacy styles while screens migrate one-by-one.
+   Remove this file to instantly fall back to the previous UI.
+   ========================================================================== */
+
+body.ui-v4 {
+  /* Core palette */
+  --fond: #06080b;
+  --fond-2: #0a0d12;
+  --surface: #0e1218;
+  --surface-2: #141a22;
+  --bordure: rgba(255,255,255,.075);
+  --bordure-vive: rgba(255,255,255,.15);
+  --texte: #f4f7f8;
+  --texte-doux: #a1aab6;
+  --texte-faible: #697382;
+  --accent: #e8ff3d;
+  --accent-sombre: #d8ef2f;
+  --accent-fantome: rgba(232,255,61,.085);
+  --accent-bordure: rgba(232,255,61,.31);
+  --sur-accent: #090b08;
+
+  /* V4 semantic aliases */
+  --v4-bg-deep: #040608;
+  --v4-bg: #06080b;
+  --v4-panel: rgba(15,19,25,.76);
+  --v4-panel-solid: #0f1319;
+  --v4-panel-raised: #151b23;
+  --v4-line: rgba(255,255,255,.075);
+  --v4-line-strong: rgba(255,255,255,.14);
+  --v4-volt-soft: rgba(232,255,61,.08);
+  --v4-volt-mid: rgba(232,255,61,.18);
+  --v4-glow: 0 0 42px rgba(232,255,61,.10);
+  --v4-shadow-sm: 0 12px 34px rgba(0,0,0,.24);
+  --v4-shadow-lg: 0 28px 80px rgba(0,0,0,.46);
+
+  /* Geometry */
+  --rayon: 24px;
+  --rayon-s: 14px;
+  --v4-r-xs: 10px;
+  --v4-r-sm: 14px;
+  --v4-r-md: 20px;
+  --v4-r-lg: 28px;
+  --v4-r-xl: 38px;
+  --v4-pill: 999px;
+
+  /* Layout */
+  --lateral: 196px;
+  --gouttiere: 40px;
+  --largeur: 980px;
+  --enveloppe: calc(var(--lateral) + var(--gouttiere) + var(--largeur));
+
+  /* Motion */
+  --transition: 180ms cubic-bezier(.2,.8,.2,1);
+  --v4-spring: 420ms cubic-bezier(.18,.88,.24,1.12);
+
+  background:
+    radial-gradient(1000px 520px at 55% -170px, rgba(232,255,61,.08), transparent 62%),
+    radial-gradient(760px 540px at 105% 20%, rgba(92,117,255,.045), transparent 68%),
+    linear-gradient(180deg, #07090d 0%, #05070a 52%, #040608 100%);
+  color: var(--texte);
+}
+
+body.ui-v4::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: .24;
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.014) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent 74%);
+  mask-image: linear-gradient(to bottom, black, transparent 74%);
+}
+
+/* --------------------------------------------------------------------------
+   TYPE + ACCESSIBILITY
+   -------------------------------------------------------------------------- */
+
+.ui-v4 h1,
+.ui-v4 h2,
+.ui-v4 h3 {
+  text-wrap: balance;
+}
+
+.ui-v4 h1 {
+  font-size: clamp(2.25rem, 5vw, 3.55rem);
+  line-height: .98;
+  letter-spacing: -.055em;
+  font-weight: 820;
+}
+
+.ui-v4 h2 {
+  font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+  letter-spacing: -.035em;
+}
+
+.ui-v4 h3 {
+  letter-spacing: -.02em;
+}
+
+.ui-v4 .sur-titre {
+  color: var(--accent);
+  letter-spacing: .18em;
+  font-size: .67rem;
+}
+
+.ui-v4 :where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.ui-v4 ::selection {
+  background: var(--accent);
+  color: var(--sur-accent);
+}
+
+.ui-v4 * {
+  scrollbar-color: rgba(255,255,255,.16) transparent;
+}
+
+/* --------------------------------------------------------------------------
+   APP SHELL
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .enveloppe {
+  padding-inline: clamp(14px, 2.2vw, 26px);
+}
+
+.ui-v4 .entete {
+  top: 0;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+  background: rgba(5,7,10,.72);
+  backdrop-filter: blur(24px) saturate(1.25);
+  -webkit-backdrop-filter: blur(24px) saturate(1.25);
+}
+
+.ui-v4 .entete__interieur {
+  height: 72px;
+}
+
+.ui-v4 .logo {
+  gap: 11px;
+}
+
+.ui-v4 .logo__sceau {
+  width: 34px;
+  height: 34px;
+  filter: drop-shadow(0 0 15px rgba(232,255,61,.16));
+}
+
+.ui-v4 .logo__marque {
+  font-size: 1.17rem;
+  letter-spacing: .12em;
+}
+
+.ui-v4 .entete__droite {
+  gap: 8px;
+}
+
+.ui-v4 .solde,
+.ui-v4 .selecteur-saison,
+.ui-v4 .avatar {
+  background: rgba(17,22,29,.68);
+  border-color: rgba(255,255,255,.09);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+  backdrop-filter: blur(16px);
+}
+
+.ui-v4 .solde {
+  min-height: 38px;
+  padding: 7px 13px 7px 10px;
+}
+
+.ui-v4 .avatar {
+  width: 38px;
+  height: 38px;
+}
+
+.ui-v4 .agencement {
+  gap: 0 var(--gouttiere);
+}
+
+.ui-v4 .principal {
+  padding: 34px 0 64px;
+}
+
+.ui-v4 .entete-page {
+  position: relative;
+  margin-bottom: 30px;
+  max-width: 760px;
+}
+
+.ui-v4 .entete-page::after {
+  content: "";
+  display: block;
+  width: 52px;
+  height: 2px;
+  margin-top: 18px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+}
+
+.ui-v4 .entete-page p {
+  max-width: 62ch;
+  color: #919ba8;
+}
+
+/* --------------------------------------------------------------------------
+   DESKTOP NAV — FLOATING RAIL
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .lateral {
+  top: 92px;
+  gap: 18px;
+  margin-top: 18px;
+  padding: 12px;
+  border: 1px solid var(--v4-line);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(16,20,27,.78), rgba(9,12,16,.66));
+  box-shadow: var(--v4-shadow-sm), inset 0 1px 0 rgba(255,255,255,.03);
+  backdrop-filter: blur(20px);
+}
+
+.ui-v4 .lateral__nav {
+  gap: 4px;
+}
+
+.ui-v4 .lateral__lien {
+  position: relative;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  color: #7f8997;
+  font-size: .9rem;
+}
+
+.ui-v4 .lateral__lien:hover {
+  background: rgba(255,255,255,.035);
+  color: #eef2f3;
+  transform: translateX(2px);
+}
+
+.ui-v4 .lateral__lien.actif {
+  color: var(--texte);
+  background:
+    radial-gradient(120% 130% at 0% 50%, rgba(232,255,61,.16), transparent 60%),
+    rgba(255,255,255,.035);
+  box-shadow: inset 0 0 0 1px rgba(232,255,61,.12);
+}
+
+.ui-v4 .lateral__lien.actif::before {
+  content: "";
+  position: absolute;
+  left: -13px;
+  width: 3px;
+  height: 20px;
+  border-radius: 0 5px 5px 0;
+  background: var(--accent);
+  box-shadow: 0 0 16px rgba(232,255,61,.4);
+}
+
+.ui-v4 .lateral__bas {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-color: rgba(255,255,255,.055);
+}
+
+/* --------------------------------------------------------------------------
+   SURFACES — LESS DASHBOARD, MORE OBJECT
+   -------------------------------------------------------------------------- */
+
+.ui-v4 :where(.carte, .bloc, .match, .es-match, .objet-carte, .badge-carte, .carte-part, .tuile, .constat) {
+  border-color: var(--v4-line);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.ui-v4 .carte {
+  position: relative;
+  background:
+    linear-gradient(155deg, rgba(255,255,255,.035), transparent 38%),
+    var(--v4-panel);
+  border-radius: var(--v4-r-lg);
+  padding: clamp(18px, 2.4vw, 26px);
+  backdrop-filter: blur(16px);
+}
+
+.ui-v4 .carte:hover {
+  border-color: rgba(255,255,255,.105);
+}
+
+.ui-v4 .carte--plat {
+  background: rgba(9,12,16,.72);
+}
+
+.ui-v4 .bloc {
+  overflow: visible;
+  margin-bottom: 22px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ui-v4 .bloc__titre {
+  min-height: 36px;
+  padding: 0 4px 10px;
+  background: transparent;
+  border-bottom: 1px solid var(--v4-line);
+  color: #77818f;
+  font-size: .67rem;
+  letter-spacing: .17em;
+}
+
+.ui-v4 .bloc__corps {
+  margin-top: 10px;
+  padding: clamp(18px, 2.2vw, 24px);
+  border: 1px solid var(--v4-line);
+  border-radius: var(--v4-r-lg);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.025), transparent 35%),
+    rgba(13,17,23,.72);
+  box-shadow: var(--v4-shadow-sm), inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.ui-v4 .bloc--volt .bloc__titre,
+.ui-v4 .bloc--info .bloc__titre,
+.ui-v4 .bloc--succes .bloc__titre,
+.ui-v4 .bloc--danger .bloc__titre {
+  background: transparent;
+}
+
+.ui-v4 .bloc--volt .bloc__titre { color: var(--accent); border-bottom-color: rgba(232,255,61,.22); }
+.ui-v4 .bloc--info .bloc__titre { color: var(--info); }
+.ui-v4 .bloc--succes .bloc__titre { color: var(--succes); }
+.ui-v4 .bloc--danger .bloc__titre { color: var(--danger); }
+
+.ui-v4 .grille {
+  gap: clamp(12px, 2vw, 18px);
+}
+
+/* --------------------------------------------------------------------------
+   BUTTONS, CHIPS, TABS
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .btn {
+  position: relative;
+  min-height: 44px;
+  border-radius: 14px;
+  padding: 11px 18px;
+  letter-spacing: .045em;
+  box-shadow: 0 8px 24px rgba(232,255,61,.08), inset 0 1px 0 rgba(255,255,255,.3);
+  overflow: hidden;
+}
+
+.ui-v4 .btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 20%, rgba(255,255,255,.22), transparent 55%);
+  transform: translateX(-120%);
+  transition: transform 520ms cubic-bezier(.2,.8,.2,1);
+}
+
+.ui-v4 .btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(232,255,61,.12), inset 0 1px 0 rgba(255,255,255,.34);
+}
+
+.ui-v4 .btn:hover:not(:disabled)::after {
+  transform: translateX(120%);
+}
+
+.ui-v4 .btn:active:not(:disabled) {
+  transform: translateY(0) scale(.985);
+}
+
+.ui-v4 .btn--fantome {
+  color: #dce1e5;
+  background: rgba(255,255,255,.035);
+  border: 1px solid var(--v4-line-strong);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+}
+
+.ui-v4 .btn--fantome:hover:not(:disabled) {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.2);
+}
+
+.ui-v4 :where(.puce, .es-puce) {
+  min-height: 38px;
+  border-color: rgba(255,255,255,.08);
+  background: rgba(14,18,24,.72);
+  backdrop-filter: blur(12px);
+}
+
+.ui-v4 :where(.puce, .es-puce):hover {
+  transform: translateY(-1px);
+}
+
+.ui-v4 :where(.puce.actif, .es-puce.actif) {
+  box-shadow: inset 0 0 0 1px rgba(232,255,61,.055);
+}
+
+.ui-v4 .sections {
+  gap: 18px;
+  margin-bottom: 28px;
+  border-color: var(--v4-line);
+}
+
+.ui-v4 .sections__lien {
+  padding: 10px 2px 13px;
+  font-size: .9rem;
+  color: #727d8b;
+}
+
+.ui-v4 .sections__lien.actif {
+  color: var(--texte);
+  border-bottom-color: var(--accent);
+  text-shadow: 0 0 22px rgba(232,255,61,.18);
+}
+
+/* --------------------------------------------------------------------------
+   FORMS
+   -------------------------------------------------------------------------- */
+
+.ui-v4 :where(input, select, textarea) {
+  color: var(--texte);
+  background: rgba(8,11,15,.82);
+  border-color: rgba(255,255,255,.1);
+  border-radius: 14px;
+}
+
+.ui-v4 :where(input, select, textarea):hover {
+  border-color: rgba(255,255,255,.16);
+}
+
+.ui-v4 :where(input, select, textarea):focus {
+  border-color: var(--accent-bordure);
+  box-shadow: 0 0 0 3px rgba(232,255,61,.06);
+}
+
+/* --------------------------------------------------------------------------
+   MATCH SURFACES
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .match,
+.ui-v4 .es-match {
+  border-radius: var(--v4-r-lg);
+  background:
+    radial-gradient(90% 100% at 100% 0%, rgba(255,255,255,.04), transparent 60%),
+    linear-gradient(180deg, rgba(16,21,28,.94), rgba(10,13,18,.92));
+  box-shadow: var(--v4-shadow-sm), inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.ui-v4 .match:hover,
+.ui-v4 .es-match:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255,255,255,.16);
+  box-shadow: var(--v4-shadow-lg), inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.ui-v4 .match__haut,
+.ui-v4 .es-match__haut {
+  background: rgba(255,255,255,.025);
+  border-bottom-color: rgba(255,255,255,.055);
+}
+
+.ui-v4 .versus {
+  background: rgba(0,0,0,.18);
+  border-color: rgba(255,255,255,.075);
+}
+
+.ui-v4 .cote {
+  min-height: 50px;
+  border-radius: 15px;
+  background: rgba(255,255,255,.025);
+  border-color: rgba(255,255,255,.075);
+}
+
+.ui-v4 .cote:hover:not(:disabled),
+.ui-v4 .cote.selectionne {
+  transform: translateY(-1px);
+  border-color: var(--accent-bordure);
+  background: linear-gradient(180deg, rgba(232,255,61,.09), rgba(232,255,61,.045));
+  box-shadow: 0 12px 32px rgba(0,0,0,.18), inset 0 0 0 1px rgba(232,255,61,.04);
+}
+
+/* --------------------------------------------------------------------------
+   BADGES / INVENTORY / SOCIAL ROWS
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .badge {
+  border-color: rgba(255,255,255,.085);
+  background: rgba(255,255,255,.035);
+}
+
+.ui-v4 .badge-carte,
+.ui-v4 .objet-carte,
+.ui-v4 .tuile,
+.ui-v4 .carte-part {
+  border-radius: 20px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.028), transparent 42%),
+    rgba(13,17,23,.76);
+}
+
+.ui-v4 .badge-carte--obtenu,
+.ui-v4 .objet-carte--equipe {
+  box-shadow: var(--v4-glow), inset 0 0 0 1px rgba(232,255,61,.05);
+}
+
+.ui-v4 .tuile:hover {
+  background:
+    linear-gradient(145deg, rgba(232,255,61,.08), transparent 56%),
+    rgba(14,18,23,.88);
+  border-color: var(--accent-bordure);
+  transform: translateY(-3px);
+}
+
+.ui-v4 .constat {
+  border: 1px solid var(--v4-line);
+  border-left: 1px solid var(--v4-line);
+  border-radius: 18px;
+  background:
+    linear-gradient(90deg, rgba(232,255,61,.07), transparent 38%),
+    rgba(14,18,23,.72);
+}
+
+.ui-v4 .ligne-ami,
+.ui-v4 .commu-ligne {
+  border-bottom-color: rgba(255,255,255,.055);
+}
+
+/* --------------------------------------------------------------------------
+   PROGRESS + VOLT MOMENTS
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .jauge {
+  height: 7px;
+  background: rgba(255,255,255,.055);
+}
+
+.ui-v4 .jauge__remplie {
+  background: linear-gradient(90deg, #cbe923, var(--accent));
+  box-shadow: 0 0 18px rgba(232,255,61,.28);
+}
+
+.ui-v4 .point-direct {
+  box-shadow: 0 0 14px rgba(66,165,255,.55);
+}
+
+/* --------------------------------------------------------------------------
+   FOOTER
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .pied {
+  opacity: .62;
+  border-top-color: rgba(255,255,255,.055);
+}
+
+/* --------------------------------------------------------------------------
+   MOBILE — FLOATING APP BAR, EDGE-TO-EDGE CONTENT
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 899px) {
+  body.ui-v4 {
+    --largeur: 100%;
+  }
+
+  .ui-v4 .entete__interieur {
+    height: 64px;
+  }
+
+  .ui-v4 .logo__marque {
+    font-size: 1.02rem;
+  }
+
+  .ui-v4 .principal {
+    padding-top: 24px;
+    padding-bottom: 112px;
+  }
+
+  .ui-v4 .onglets {
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    padding: 6px;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 22px;
+    background: rgba(10,13,18,.88);
+    box-shadow: 0 18px 50px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.04);
+    backdrop-filter: blur(24px) saturate(1.25);
+    -webkit-backdrop-filter: blur(24px) saturate(1.25);
+  }
+
+  .ui-v4 .onglets a {
+    min-height: 50px;
+    justify-content: center;
+    border-radius: 16px;
+    color: #65707e;
+  }
+
+  .ui-v4 .onglets a.actif {
+    color: var(--accent);
+    background: rgba(232,255,61,.07);
+  }
+
+  .ui-v4 .entete-page {
+    margin-bottom: 24px;
+  }
+
+  .ui-v4 h1 {
+    font-size: clamp(2.05rem, 10.5vw, 3rem);
+  }
+
+  .ui-v4 .carte,
+  .ui-v4 .bloc__corps {
+    border-radius: 22px;
+  }
+}
+
+@media (max-width: 540px) {
+  .ui-v4 .enveloppe {
+    padding-inline: 13px;
+  }
+
+  .ui-v4 .entete__droite {
+    gap: 6px;
+  }
+
+  .ui-v4 .selecteur-saison {
+    max-width: 118px;
+  }
+
+  .ui-v4 .solde {
+    padding-right: 10px;
+  }
+
+  .ui-v4 .solde__unite {
+    display: none;
+  }
+
+  .ui-v4 .carte,
+  .ui-v4 .bloc__corps {
+    padding: 17px;
+  }
+
+  .ui-v4 .match__corps {
+    padding-inline: 14px;
+  }
+
+  .ui-v4 .match__cotes {
+    padding-inline: 14px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   REDUCED MOTION
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-v4 *,
+  .ui-v4 *::before,
+  .ui-v4 *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
