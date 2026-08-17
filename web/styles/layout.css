@@ -1,0 +1,89 @@
+/* CLUTCH UI SYSTEM — LAYOUT + CONTEXT HEADER */
+.ui-v4 .enveloppe { padding-inline: clamp(14px, 2.2vw, 26px); }
+.ui-v4 .entete {
+  top: 0;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+  background: rgba(5,7,10,.76);
+  backdrop-filter: blur(24px) saturate(1.25);
+  -webkit-backdrop-filter: blur(24px) saturate(1.25);
+}
+.ui-v4 .entete__interieur { height: 72px; }
+.ui-v4 .logo { gap: 11px; }
+.ui-v4 .logo__sceau { width: 34px; height: 34px; filter: drop-shadow(0 0 15px rgba(232,255,61,.16)); }
+.ui-v4 .logo__marque { font-size: 1.17rem; letter-spacing: .12em; }
+.ui-v4 .entete__droite { display: flex; align-items: center; gap: 8px; }
+.ui-v4 .context-header { display: flex; align-items: center; gap: 8px; }
+.ui-v4 .context-header__label { display: grid; gap: 1px; padding-right: 4px; text-align: right; }
+.ui-v4 .context-header__label small { color: #626e7c; font-size: .57rem; font-weight: 760; letter-spacing: .16em; text-transform: uppercase; }
+.ui-v4 .context-header__label strong { color: #dce2e7; font-size: .73rem; font-weight: 760; }
+.ui-v4 .context-header .jeton { flex: 0 0 auto; }
+
+.ui-v4 .agencement { gap: 0 var(--gouttiere); }
+.ui-v4 .principal { padding: 34px 0 64px; }
+.ui-v4 .entete-page { position: relative; max-width: 760px; margin-bottom: 30px; }
+.ui-v4 .entete-page::after { content: ""; display: block; width: 52px; height: 2px; margin-top: 18px; border-radius: var(--pill); background: linear-gradient(90deg, var(--accent), transparent); }
+.ui-v4 .entete-page p { max-width: 62ch; color: #919ba8; }
+
+/* Desktop navigation is one floating rail, not another panel grid. */
+.ui-v4 .lateral {
+  top: 92px;
+  gap: 18px;
+  margin-top: 18px;
+  padding: 12px;
+  border: 1px solid var(--v4-line);
+  border-radius: 24px 10px 24px 10px;
+  background: linear-gradient(180deg, rgba(16,20,27,.80), rgba(9,12,16,.68));
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,.03);
+  backdrop-filter: blur(20px);
+}
+.ui-v4 .lateral__nav { gap: 4px; }
+.ui-v4 .lateral__lien {
+  position: relative;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 14px 6px 14px 6px;
+  color: #7f8997;
+  font-size: .9rem;
+  transition: transform var(--motion-micro), color var(--motion-micro), background var(--motion-micro);
+}
+.ui-v4 .lateral__lien:hover { color: #eef2f3; background: rgba(255,255,255,.035); transform: translateX(2px); }
+.ui-v4 .lateral__lien.actif {
+  color: var(--texte);
+  background: radial-gradient(120% 130% at 0% 50%, rgba(232,255,61,.16), transparent 60%), rgba(255,255,255,.035);
+  box-shadow: inset 0 0 0 1px rgba(232,255,61,.12);
+}
+.ui-v4 .lateral__lien.actif::before { content: ""; position: absolute; left: -13px; width: 3px; height: 20px; border-radius: 0 5px 5px 0; background: var(--accent); box-shadow: 0 0 16px rgba(232,255,61,.4); }
+.ui-v4 .lateral__bas { margin-top: 8px; padding-top: 10px; border-color: rgba(255,255,255,.055); }
+
+.ui-v4 .pied { opacity: .58; border-top-color: rgba(255,255,255,.055); }
+
+@media (max-width: 899px) {
+  body.ui-v4 { --largeur: 100%; }
+  .ui-v4 .entete__interieur { height: 64px; }
+  .ui-v4 .logo__marque { font-size: 1.02rem; }
+  .ui-v4 .principal { padding-top: 24px; padding-bottom: 112px; }
+  .ui-v4 .context-header__label { display: none; }
+  .ui-v4 .onglets {
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    padding: 6px;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 22px 10px 22px 10px;
+    background: rgba(10,13,18,.90);
+    box-shadow: 0 18px 50px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.04);
+    backdrop-filter: blur(24px) saturate(1.25);
+  }
+  .ui-v4 .onglets a { min-height: 50px; justify-content: center; border-radius: 16px 7px 16px 7px; color: #65707e; }
+  .ui-v4 .onglets a.actif { color: var(--accent); background: rgba(232,255,61,.07); }
+  .ui-v4 .entete-page { margin-bottom: 24px; }
+}
+
+@media (max-width: 540px) {
+  .ui-v4 .enveloppe { padding-inline: 13px; }
+  .ui-v4 .entete__droite { gap: 6px; }
+  .ui-v4 .context-header .c-chip { padding-inline: 9px; }
+  .ui-v4 .context-header .c-chip span { display: none; }
+  .ui-v4 .carte,
+  .ui-v4 .bloc__corps { padding: 17px; }
+}

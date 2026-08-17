@@ -1,0 +1,73 @@
+/* CLUTCH UI SYSTEM — BASE */
+html { background: var(--v4-bg-deep); }
+body.ui-v4 {
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 620px at 52% -220px, rgba(232,255,61,.085), transparent 62%),
+    radial-gradient(820px 580px at 108% 22%, rgba(82,104,255,.05), transparent 68%),
+    linear-gradient(180deg, #07090d 0%, #05070a 52%, #040608 100%);
+  color: var(--texte);
+  font-family: var(--font-ui);
+}
+body.ui-v4::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .2;
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.014) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent 74%);
+  mask-image: linear-gradient(to bottom, black, transparent 74%);
+}
+
+.ui-v4 h1,
+.ui-v4 h2,
+.ui-v4 h3 { text-wrap: balance; }
+.ui-v4 h1 {
+  font-size: clamp(2.25rem, 5vw, 3.55rem);
+  line-height: .98;
+  letter-spacing: -.055em;
+  font-weight: 820;
+}
+.ui-v4 h2 { font-size: clamp(1.35rem, 2.6vw, 1.9rem); letter-spacing: -.035em; }
+.ui-v4 h3 { letter-spacing: -.02em; }
+.ui-v4 .display-clutch,
+.ui-v4 [data-display="clutch"] {
+  font-family: var(--font-display);
+  font-stretch: condensed;
+  font-weight: 900;
+  letter-spacing: -.055em;
+  text-transform: uppercase;
+}
+.ui-v4 .sur-titre {
+  color: var(--accent);
+  font-size: .66rem;
+  font-weight: 760;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+.ui-v4 :where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.ui-v4 ::selection { background: var(--accent); color: var(--sur-accent); }
+.ui-v4 * { scrollbar-color: rgba(255,255,255,.16) transparent; }
+
+.ui-v4 [data-motion="micro"] { transition-duration: var(--motion-micro); }
+.ui-v4 [data-motion="transition"] { transition-duration: var(--motion-transition); }
+.ui-v4 [data-motion="ceremony"] { transition-duration: var(--motion-ceremony); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-v4 *,
+  .ui-v4 *::before,
+  .ui-v4 *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

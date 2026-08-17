@@ -1,0 +1,165 @@
+/* PHASE 2 FINAL — COMPOSITION RULE
+   One screen = one dominant object. This is intentionally more radical than V3/V4 polish. */
+
+/* ---------------- HUB: the match owns the first viewport ---------------- */
+body[data-screen="hub"] .principal { padding-top: 22px; }
+body[data-screen="hub"] .hub-intro {
+  display: block;
+  max-width: 760px;
+  margin: 4px 0 14px;
+  padding: 0 2px;
+}
+body[data-screen="hub"] .hub-intro::before { display: none; }
+body[data-screen="hub"] .hub-intro h1 {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  font-weight: 900;
+  line-height: .9;
+  letter-spacing: -.055em;
+  text-transform: uppercase;
+}
+body[data-screen="hub"] .hub-intro p { margin-top: 8px; }
+body[data-screen="hub"] .hub-career { display: none; }
+
+body[data-screen="hub"] .hub-hero {
+  min-height: min(680px, 72vh);
+  border-radius: 64px 18px 64px 18px;
+  border-color: rgba(255,255,255,.13);
+  box-shadow: 0 44px 130px -54px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.055);
+}
+body[data-screen="hub"] .hub-hero__question {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: 74px;
+  width: min(680px, 80%);
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+}
+body[data-screen="hub"] .hub-hero__question span { display: block; color: #75808d; font-size: .62rem; font-weight: 780; letter-spacing: .2em; text-transform: uppercase; }
+body[data-screen="hub"] .hub-hero__question strong {
+  display: block;
+  margin-top: 7px;
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 5vw, 4.6rem);
+  line-height: .82;
+  letter-spacing: -.055em;
+  text-transform: uppercase;
+  text-shadow: 0 12px 40px rgba(0,0,0,.48);
+}
+body[data-screen="hub"] .hub-duel { min-height: 450px; padding: 145px 18px 116px; grid-template-columns: minmax(0,1fr) 150px minmax(0,1fr); }
+body[data-screen="hub"] .hub-team .ecusson { width: clamp(100px, 11vw, 138px); height: clamp(100px, 11vw, 138px); flex-basis: clamp(100px, 11vw, 138px); border-radius: 36px 12px 36px 12px; }
+body[data-screen="hub"] .hub-team--right .ecusson { border-radius: 12px 36px 12px 36px; }
+body[data-screen="hub"] .hub-team__txt strong { font-size: clamp(1.65rem, 3.6vw, 2.7rem); }
+body[data-screen="hub"] .hub-duel__centre strong { font-family: var(--font-display); font-size: clamp(4rem, 7vw, 6.4rem); }
+body[data-screen="hub"] .hub-hero__bottom {
+  left: 24px;
+  right: 24px;
+  bottom: 22px;
+  border-radius: 24px 8px 24px 8px;
+  background: rgba(4,7,10,.62);
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 18px 50px rgba(0,0,0,.28);
+  backdrop-filter: blur(22px);
+}
+body[data-screen="hub"] .hub-context-focus { margin: 24px 0 30px; }
+body[data-screen="hub"] .hub-context-focus > .hub-panel { min-height: 360px; border-radius: 46px 14px 46px 14px; }
+
+/* ---------------- MATCHS: confrontation, not a list page ---------------- */
+body[data-screen="matchs"] .matchs-v2__entete { min-height: 180px; padding-top: 34px; }
+body[data-screen="matchs"] .matchs-v2__entete h1 {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 9vw, 7.4rem);
+  font-weight: 900;
+  line-height: .76;
+  text-transform: uppercase;
+}
+body[data-screen="matchs"] .arena-hero {
+  min-height: min(760px, 76vh);
+  border-radius: 72px 18px 72px 18px;
+  box-shadow: 0 54px 150px -62px rgba(0,0,0,.96), inset 0 1px 0 rgba(255,255,255,.055);
+}
+body[data-screen="matchs"] .arena-hero:nth-of-type(even) { border-radius: 18px 72px 18px 72px; }
+
+/* ---------------- SOCIAL: private club / rivalry HQ ---------------- */
+body[data-screen="social"] .ligues-v2__hero,
+body[data-screen="social"] .ligue-v2__hero {
+  min-height: 430px;
+  border-radius: 58px 14px 58px 14px;
+  padding: 52px 42px;
+}
+body[data-screen="social"] .ligues-v2__hero-copy h1,
+body[data-screen="social"] .ligue-v2__identity h1 {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 8vw, 7rem);
+  font-weight: 900;
+  line-height: .78;
+  text-transform: uppercase;
+}
+body[data-screen="social"] .ligues-v2__league-grid { gap: 24px; }
+body[data-screen="social"] .ligues-v2__league-card { min-height: 350px; border-radius: 42px 10px 42px 10px; }
+body[data-screen="social"] .ligues-v2__league-card:nth-child(even) { border-radius: 10px 42px 10px 42px; }
+body[data-screen="social"] .commu-v2 { --relic-stage-min: 68vh; }
+
+/* ---------------- MOI: identity exhibit ---------------- */
+body[data-screen="moi"] .profil-hero {
+  min-height: 570px;
+  grid-template-columns: minmax(0,1fr) minmax(360px,.9fr);
+  border-radius: 74px 18px 74px 18px;
+  box-shadow: 0 48px 140px -58px rgba(0,0,0,.96), inset 0 1px rgba(255,255,255,.035);
+}
+body[data-screen="moi"] .profil-hero__principal { padding: 64px 36px 34px 44px; grid-template-columns: 190px minmax(0,1fr); gap: 34px; }
+body[data-screen="moi"] .profil-embleme { width: 184px; height: 184px; }
+body[data-screen="moi"] .profil-identite__pseudo {
+  font-family: var(--font-display);
+  font-size: clamp(3.4rem, 7vw, 6.2rem);
+  font-weight: 900;
+  line-height: .78;
+  text-transform: uppercase;
+}
+body[data-screen="moi"] .profil-etendard { transform: perspective(900px) rotateY(-2.5deg); transform-origin: right center; }
+
+/* Context-specific atmosphere subtly changes, identity stays Clutch. */
+body[data-screen="hub"] { --screen-aura: rgba(232,255,61,.055); }
+body[data-screen="matchs"] { --screen-aura: rgba(86,169,255,.045); }
+body[data-screen="social"] { --screen-aura: rgba(159,124,255,.045); }
+body[data-screen="vault"] { --screen-aura: rgba(232,255,61,.05); }
+body[data-screen="moi"] { --screen-aura: rgba(232,255,61,.045); }
+body.ui-v4::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  inset: 72px 0 auto 0;
+  height: 46vh;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 55% 0%, var(--screen-aura, transparent), transparent 68%);
+}
+
+@media (max-width: 899px) {
+  body[data-screen="hub"] .hub-hero { min-height: 590px; border-radius: 42px 12px 42px 12px; }
+  body[data-screen="hub"] .hub-hero__question { top: 74px; width: 90%; }
+  body[data-screen="hub"] .hub-duel { min-height: 390px; padding: 145px 8px 116px; grid-template-columns: minmax(0,1fr) 88px minmax(0,1fr); gap: 8px; }
+  body[data-screen="hub"] .hub-team { flex-direction: column; text-align: center; gap: 12px; }
+  body[data-screen="hub"] .hub-team--right { flex-direction: column; text-align: center; }
+  body[data-screen="hub"] .hub-team .ecusson { width: 92px; height: 92px; flex-basis: 92px; }
+  body[data-screen="hub"] .hub-team__txt strong { font-size: 1.35rem; }
+  body[data-screen="hub"] .hub-team__txt span { display: none; }
+  body[data-screen="hub"] .hub-duel__centre strong { font-size: 3.5rem; }
+  body[data-screen="hub"] .hub-hero__bottom { left: 12px; right: 12px; bottom: 12px; }
+
+  body[data-screen="matchs"] .matchs-v2__entete { min-height: 140px; }
+  body[data-screen="matchs"] .matchs-v2__entete h1 { font-size: clamp(3.2rem, 15vw, 5.4rem); }
+  body[data-screen="matchs"] .arena-hero { min-height: 640px; border-radius: 44px 12px 44px 12px; }
+
+  body[data-screen="social"] .ligues-v2__hero,
+  body[data-screen="social"] .ligue-v2__hero { min-height: 360px; border-radius: 42px 12px 42px 12px; padding: 34px 24px; }
+  body[data-screen="social"] .ligues-v2__hero-copy h1,
+  body[data-screen="social"] .ligue-v2__identity h1 { font-size: clamp(3.1rem, 14vw, 5.2rem); }
+
+  body[data-screen="moi"] .profil-hero { min-height: 0; grid-template-columns: 1fr; border-radius: 44px 12px 44px 12px; }
+  body[data-screen="moi"] .profil-hero__principal { grid-template-columns: 124px minmax(0,1fr); padding: 34px 22px; gap: 20px; }
+  body[data-screen="moi"] .profil-embleme { width: 120px; height: 120px; }
+  body[data-screen="moi"] .profil-identite__pseudo { font-size: clamp(2.8rem, 13vw, 4.6rem); }
+}
