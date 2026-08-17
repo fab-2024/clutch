@@ -1,146 +1,87 @@
 import * as api from '../api.js';
+import * as economie from '../economy-api.js';
 import { contexte, bandeauSaison } from '../app.js';
 import { esc, frags, nomJeu, vide } from '../ui.js';
-import { constatsAnalyste, TRANCHES_COTE, SEUIL_SIGNIFICATIF } from '../core.js';
 
-/**
- * Le profil d'analyste.
- *
- * Rien de nouveau n'est stocké ici : tout se déduit des paris déjà réglés.
- * L'intérêt n'est pas la statistique, c'est le constat — « tu perds sur les
- * BO1 » vaut mieux que douze colonnes de chiffres que personne ne lit.
- */
+/** Profil d'analyste V2 : précision, difficulté et impact rating — jamais ROI. */
 export async function vueAnalyste(racine) {
   if (!contexte.utilisateur) {
-    racine.innerHTML = vide(
-      'Pas encore de compte',
-      "Crée-toi un profil, mise, et je te dirai quel parieur tu es.",
-      '<a class="btn" href="#/connexion">Commencer</a>'
-    );
+    racine.innerHTML = vide('Pas encore de compte', 'Crée ton profil, pronostique, et Clutch te montrera où ton jugement est le plus solide.', '<a class="btn" href="#/connexion">Commencer</a>');
     return;
   }
 
-  const detail = await api.statistiquesDetaillees();
-  const total = detail?.total ?? { paris: 0 };
-
-  if (!total.paris) {
-    racine.innerHTML = `
-      <div class="entete-page"><div><h1>Mon profil d'analyste</h1></div></div>
-      ${bandeauSaison()}
-      ${vide(
-        'Aucun pari réglé',
-        "Reviens quand tes premiers paris seront tombés : sans résultat, il n'y a rien à analyser.",
-        '<a class="btn" href="#/matchs">Voir les matchs</a>'
-      )}`;
+  const pronostics = (await economie.mesPronosticsClasses().catch(() => [])).filter((p) => p.statut === 'gagne' || p.statut === 'perdu');
+  if (!pronostics.length) {
+    racine.innerHTML = `<div class="entete-page"><div><h1>Mon profil d'analyste</h1></div></div>${bandeauSaison()}${vide('Aucun pronostic réglé', "Reviens quand tes premiers résultats seront tombés : sans résultat, il n'y a rien à analyser.", '<a class="btn" href="#/matchs">Voir les matchs</a>')}`;
     return;
   }
 
-  const constats = constatsAnalyste(detail);
+  const ids = [...new Set(pronostics.map((p) => p.match_id))];
+  const matches = new Map((await Promise.all(ids.map((id) => api.lireMatch(id).catch(() => null)))).filter(Boolean).map((m) => [m.id, m]));
+  const enrichis = pronostics.map((p) => ({ ...p, match: matches.get(p.match_id) ?? null }));
+  const total = bilan(enrichis);
+  const parJeu = agreger(enrichis, (p) => p.match?.jeu ?? 'autre');
+  const parFormat = agreger(enrichis, (p) => `BO${p.match?.format ?? '?'}`);
+  const parDifficulte = agreger(enrichis, difficulte);
+  const favorite = contexte.utilisateur.equipe_favorite;
+  const avecFavorite = favorite ? enrichis.filter((p) => [p.match?.equipe_a_id, p.match?.equipe_b_id].includes(favorite.id)) : [];
+  const sansFavorite = favorite ? enrichis.filter((p) => ![p.match?.equipe_a_id, p.match?.equipe_b_id].includes(favorite.id)) : [];
 
   racine.innerHTML = `
-    <p><a href="#/profil">← Mes paris</a></p>
-    <div class="entete-page">
-      <div>
-        <h1>Mon profil d'analyste</h1>
-        <p>
-          ${esc(contexte.saison?.nom ?? '')} — ${total.paris} pari${total.paris > 1 ? 's' : ''} réglé${total.paris > 1 ? 's' : ''},
-          ${Number(total.roi).toFixed(1)} % de retour sur mise.
-        </p>
-      </div>
-    </div>
+    <p><a href="#/profil">← Mon profil</a></p>
+    <div class="entete-page"><div><h1>Mon profil d'analyste</h1><p>${esc(contexte.saison?.nom ?? '')} — ${total.paris} pronostic${total.paris > 1 ? 's' : ''} réglé${total.paris > 1 ? 's' : ''}, ${total.precision}% de précision, ${formatDelta(total.delta)} Frags de mouvement cumulé.</p></div></div>
     ${bandeauSaison()}
-
-    <h2>Ce que disent tes paris</h2>
-    <div class="grille" style="margin-bottom:26px">
-      ${constats.map((c) => `<div class="constat">${c.texte}</div>`).join('')}
-    </div>
-
-    <p style="color:var(--texte-faible);font-size:0.82rem">
-      Les catégories de moins de ${SEUIL_SIGNIFICATIF} paris ne sont jamais commentées :
-      en dessous, un écart de rentabilité raconte le hasard, pas ton jugement.
-    </p>
-
-    ${bloc('Par format', detail.par_format, (c) => `BO${c}`)}
-    ${bloc('Par jeu', detail.par_jeu, (c) => nomJeu(c))}
-    ${bloc('Par marché', detail.par_marche, (c) => LIBELLE_MARCHE[c] ?? c)}
-    ${bloc('Par niveau de cote', detail.par_cote, (c) => TRANCHES_COTE.find((t) => t.cle === c)?.libelle ?? c)}
-    ${blocFavorite(detail.equipe_favorite)}`;
+    <div class="grille" style="margin-bottom:26px">${constats(enrichis, parJeu).map((texte) => `<div class="constat">${texte}</div>`).join('')}</div>
+    <p style="color:var(--texte-faible);font-size:0.82rem">Le delta Frags tient compte de la difficulté : réussir un outsider compte davantage qu'un favori attendu. Il n'y a ni mise, ni rendement financier.</p>
+    ${bloc('Par format', parFormat)}
+    ${bloc('Par jeu', parJeu, (c) => nomJeu(c))}
+    ${bloc('Par difficulté du choix', parDifficulte, libelleDifficulte)}
+    ${favorite ? blocFavorite(favorite, bilan(avecFavorite), bilan(sansFavorite)) : ''}`;
 }
 
-const LIBELLE_MARCHE = {
-  vainqueur: 'Vainqueur du match',
-  score_exact: 'Score exact en maps',
-  total_maps: 'Nombre de maps',
-};
-
-function bloc(titre, lignes, formate) {
-  if (!lignes?.length) return '';
-  return `
-    <h2 style="margin-top:26px">${esc(titre)}</h2>
-    <div class="carte">
-      <table class="tableau">
-        <thead>
-          <tr>
-            <th>${esc(titre.replace('Par ', '').replace(/^./, (c) => c.toUpperCase()))}</th>
-            <th class="num">Paris</th>
-            <th class="num">Réussite</th>
-            <th class="num">Misé</th>
-            <th class="num">Net</th>
-            <th class="num">Retour</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${lignes
-            .map(
-              (l) => `<tr>
-                <td>${esc(formate(l.cle))}</td>
-                <td class="num">${l.paris}</td>
-                <td class="num">${l.paris ? Math.round((l.gagnes / l.paris) * 100) : 0} %</td>
-                <td class="num">${esc(frags(l.mises))}</td>
-                <td class="num ${l.net >= 0 ? 'positif' : 'negatif'}">${l.net >= 0 ? '+' : ''}${esc(frags(l.net))}</td>
-                <td class="num ${l.roi >= 0 ? 'positif' : 'negatif'}">${l.roi >= 0 ? '+' : ''}${Number(l.roi).toFixed(1)} %</td>
-              </tr>`
-            )
-            .join('')}
-        </tbody>
-      </table>
-    </div>`;
+function bilan(lignes) {
+  const paris = lignes.length;
+  const gagnes = lignes.filter((p) => p.statut === 'gagne').length;
+  const delta = lignes.reduce((s, p) => s + Number(p.delta_frags ?? 0), 0);
+  return { paris, gagnes, precision: paris ? Math.round((gagnes / paris) * 100) : 0, delta };
 }
 
-function blocFavorite(fav) {
-  if (!fav) {
-    return `
-      <h2 style="margin-top:26px">Ton équipe</h2>
-      <div class="carte" style="color:var(--texte-doux)">
-        Tu n'as pas choisi d'équipe préférée. C'est pourtant la comparaison la plus
-        instructive du lot : presque tout le monde surestime son équipe, et le chiffrer
-        est le seul moyen de s'en rendre compte.
-        <a href="#/profil">En choisir une</a>.
-      </div>`;
+function agreger(lignes, cle) {
+  const groupes = new Map();
+  for (const p of lignes) {
+    const k = cle(p);
+    if (!groupes.has(k)) groupes.set(k, []);
+    groupes.get(k).push(p);
   }
-  const ligne = (titre, b) => `<tr>
-      <td>${esc(titre)}</td>
-      <td class="num">${b.paris}</td>
-      <td class="num">${b.paris ? Math.round((b.gagnes / b.paris) * 100) : 0} %</td>
-      <td class="num">${esc(frags(b.mises))}</td>
-      <td class="num ${b.net >= 0 ? 'positif' : 'negatif'}">${b.net >= 0 ? '+' : ''}${esc(frags(b.net))}</td>
-      <td class="num ${b.roi >= 0 ? 'positif' : 'negatif'}">${b.roi >= 0 ? '+' : ''}${Number(b.roi).toFixed(1)} %</td>
-    </tr>`;
-
-  return `
-    <h2 style="margin-top:26px">Le biais du supporter</h2>
-    <div class="carte">
-      <table class="tableau">
-        <thead>
-          <tr>
-            <th>Périmètre</th><th class="num">Paris</th><th class="num">Réussite</th>
-            <th class="num">Misé</th><th class="num">Net</th><th class="num">Retour</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${ligne(`Matchs de ${fav.nom}`, fav.avec)}
-          ${ligne('Tous les autres matchs', fav.sans)}
-        </tbody>
-      </table>
-    </div>`;
+  return [...groupes].map(([cleGroupe, valeurs]) => ({ cle: cleGroupe, ...bilan(valeurs) })).sort((a, b) => b.paris - a.paris);
 }
+
+function difficulte(p) {
+  const proba = Number(p.proba_figee ?? 0.5);
+  if (proba <= 0.4) return 'outsider';
+  if (proba >= 0.6) return 'favori';
+  return 'equilibre';
+}
+function libelleDifficulte(cle) { return { outsider: 'Outsider ≤ 40 %', equilibre: 'Équilibré 40–60 %', favori: 'Favori ≥ 60 %' }[cle] ?? cle; }
+
+function constats(lignes, parJeu) {
+  const r = [];
+  const total = bilan(lignes);
+  r.push(total.precision >= 65 ? `🎯 Ta précision globale est de <strong>${total.precision}%</strong>.` : `🧭 Ta précision globale est de <strong>${total.precision}%</strong> : ton rating dira mieux que le volume si tes choix sont réellement difficiles.`);
+  const significatifs = parJeu.filter((x) => x.paris >= 3).sort((a, b) => b.precision - a.precision);
+  if (significatifs[0]) r.push(`🧠 Ton meilleur terrain pour l'instant : <strong>${esc(nomJeu(significatifs[0].cle))}</strong> à ${significatifs[0].precision}% sur ${significatifs[0].paris} résultats.`);
+  const upsets = lignes.filter((p) => p.statut === 'gagne' && Number(p.proba_figee) <= 0.4).length;
+  if (upsets) r.push(`⚡ Tu as déjà converti <strong>${upsets} choix outsider</strong> à 40 % ou moins.`);
+  return r;
+}
+
+function bloc(titre, lignes, formate = (x) => x) {
+  if (!lignes?.length) return '';
+  return `<h2 style="margin-top:26px">${esc(titre)}</h2><div class="carte"><table class="tableau"><thead><tr><th>${esc(titre.replace('Par ', '').replace(/^./, (c) => c.toUpperCase()))}</th><th class="num">Pronostics</th><th class="num">Réussite</th><th class="num">∆ Frags</th></tr></thead><tbody>${lignes.map((l) => `<tr><td>${esc(formate(l.cle))}</td><td class="num">${l.paris}</td><td class="num">${l.precision}%</td><td class="num ${l.delta >= 0 ? 'positif' : 'negatif'}">${formatDelta(l.delta)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+function blocFavorite(fav, avec, sans) {
+  const ligne = (titre, b) => `<tr><td>${esc(titre)}</td><td class="num">${b.paris}</td><td class="num">${b.precision}%</td><td class="num ${b.delta >= 0 ? 'positif' : 'negatif'}">${formatDelta(b.delta)}</td></tr>`;
+  return `<h2 style="margin-top:26px">Le biais du supporter</h2><div class="carte"><table class="tableau"><thead><tr><th>Périmètre</th><th class="num">Pronostics</th><th class="num">Réussite</th><th class="num">∆ Frags</th></tr></thead><tbody>${ligne(`Matchs de ${fav.nom}`, avec)}${ligne('Tous les autres matchs', sans)}</tbody></table></div>`;
+}
+function formatDelta(n) { const v = Number(n ?? 0); return `${v >= 0 ? '+' : '−'}${frags(Math.abs(v))}`; }

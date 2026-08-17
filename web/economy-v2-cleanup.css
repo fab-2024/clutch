@@ -1,0 +1,22 @@
+/* Economy V2 cleanup — aucun contrôle V1 ne doit rester visible. */
+
+/* Le réglage historique de pari automatique reste lisible dans les anciennes
+   migrations, mais il n'existe plus dans le produit. */
+.settings-prono-auto {
+  display: none !important;
+}
+
+/* Le Profil garde son tableau historique/polish, mais les colonnes de bankroll
+   n'ont plus de sens : les données viennent désormais de pronostics_classes. */
+.profil-v2 ~ .bloc .tableau th:nth-child(3),
+.profil-v2 ~ .bloc .tableau td:nth-child(3),
+.profil-v2 ~ .bloc .tableau th:nth-child(4),
+.profil-v2 ~ .bloc .tableau td:nth-child(4) {
+  display: none;
+}
+
+/* Les tickets classés doivent lire comme un risque de rating, pas comme une cote. */
+.ranked-risk b,
+.ranked-risk strong {
+  font-variant-numeric: tabular-nums;
+}

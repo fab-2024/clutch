@@ -1,14 +1,9 @@
-/**
- * Match Center V2.
- *
- * Le détail d'un match devient l'endroit où l'on comprend l'affiche et où l'on
- * verrouille un pronostic. Les mots et la hiérarchie sont ceux d'un jeu, pas
- * ceux d'un bookmaker. Le backend conserve ses noms historiques (pari/cote).
- */
+/** Match Center — pronostic classé Economy V2, sans mise. */
 import * as api from '../api.js';
-import { contexte, majSolde } from '../app.js';
-import { esc, quand, dateLisible, nomJeu, toast, surClic, frags, ecusson, jeton } from '../ui.js';
-import { MISE_MIN, MISE_MAX, formaterFrags } from '../core.js';
+import * as economie from '../economy-api.js';
+import { projectionFrags } from '../economy.js';
+import { contexte } from '../app.js';
+import { esc, quand, dateLisible, nomJeu, toast, surClic, frags, ecusson } from '../ui.js';
 
 export async function vueMatch(racine, id) {
   const m = await api.lireMatch(id);
@@ -20,48 +15,39 @@ export async function vueMatch(racine, id) {
   const saisonMatch = contexte.saisons.find((s) => s.id === m.saison_id) ?? contexte.saison;
   const saisonOuverte = saisonMatch?.statut === 'en_cours';
   const ouvert = saisonOuverte && m.statut === 'a_venir' && new Date(m.debut) > new Date();
-  const marches = m.statut === 'termine' ? [] : await api.cotesDuMatch(m.id).catch(() => []);
-  let mesPronostics = (await api.mesParis().catch(() => [])).filter((p) => p.match_id === m.id);
-  const vainqueur = marches.find((x) => x.cle === 'vainqueur') ?? null;
-  const probas = probabilitesNormalisees(vainqueur?.choix ?? []);
+  const projection = m.statut === 'termine' ? null : await economie.projectionMatchFrags(m.id).catch(() => null);
+  const mesPronostics = contexte.utilisateur
+    ? (await economie.mesPronosticsClasses(m.saison_id).catch(() => [])).filter((p) => p.match_id === m.id)
+    : [];
+  const monProno = mesPronostics[0] ?? null;
 
   racine.innerHTML = `
     <section class="match-center" data-jeu="${esc(m.jeu)}">
       <a class="match-center__back" href="#/matchs">← Retour à la Match Arena</a>
-
-      ${heroMatchCenter(m, vainqueur, probas)}
-
+      ${heroMatchCenter(m, projection)}
       <div class="match-center__layout">
         <main class="match-center__main">
-          ${mesPronostics.length ? blocMesPronostics(mesPronostics) : ''}
-          ${etatMarches({ m, marches, ouvert, saisonOuverte, saisonMatch })}
+          ${monProno ? blocMesPronostics(m, [monProno]) : ''}
+          ${zonePronostic({ m, projection, ouvert, saisonOuverte, saisonMatch, monProno })}
         </main>
-
         <aside class="match-center__side">
-          <div class="match-ticket-shell" id="match-ticket">
-            ${ticketInitial(m, ouvert, mesPronostics)}
-          </div>
-          ${blocRepere(vainqueur, probas)}
+          <div class="match-ticket-shell" id="match-ticket">${ticketInitial(m, ouvert, monProno)}</div>
+          ${blocRepere(m, projection)}
         </aside>
       </div>
     </section>`;
 
-  if (!ouvert) return;
-
+  if (!ouvert || monProno || !projection) return;
   surClic(racine, '[data-prono-choice]', (btn) => {
     racine.querySelectorAll('[data-prono-choice].is-selected').forEach((el) => el.classList.remove('is-selected'));
     btn.classList.add('is-selected');
-    ouvrirTicket(racine, m, btn, async () => {
-      mesPronostics = (await api.mesParis().catch(() => mesPronostics)).filter((p) => p.match_id === m.id);
-      rafraichirResume(racine, mesPronostics);
-    });
+    ouvrirTicket(racine, m, projection, btn);
   });
 }
 
-function heroMatchCenter(m, vainqueur, probas) {
-  const choix = vainqueur?.choix ?? [];
-  const pA = choix[0] ? probas.get(choix[0].cle) ?? 50 : 50;
-  const pB = choix[1] ? probas.get(choix[1].cle) ?? 50 : 50;
+function heroMatchCenter(m, projection) {
+  const pA = Math.round(Number(projection?.choix?.find((c) => c.cle === 'a')?.proba ?? 0.5) * 100);
+  const pB = Math.round(Number(projection?.choix?.find((c) => c.cle === 'b')?.proba ?? 0.5) * 100);
   const termine = m.statut === 'termine';
   const live = !termine && new Date(m.debut).getTime() <= Date.now();
   const gagnantA = termine && Number(m.score_a) > Number(m.score_b);
@@ -71,339 +57,135 @@ function heroMatchCenter(m, vainqueur, probas) {
     <section class="match-center__hero">
       <div class="match-center__hero-glow" aria-hidden="true"></div>
       <div class="match-center__meta">
-        <span class="arena-game-dot"></span>
-        <strong>${esc(nomJeu(m.jeu))}</strong>
-        <i></i>
-        <span>${esc(m.evenement)}</span>
-        <i></i>
-        <span>BO${esc(String(m.format))}</span>
+        <span class="arena-game-dot"></span><strong>${esc(nomJeu(m.jeu))}</strong><i></i>
+        <span>${esc(m.evenement)}</span><i></i><span>BO${esc(String(m.format))}</span>
         <span class="match-center__date${live ? ' is-live' : ''}">${live ? '● LIVE' : esc(dateLisible(m.debut))}</span>
       </div>
-
       <div class="match-center__duel">
         <div class="match-center__team${gagnantA ? ' gagnant' : ''}">
-          ${ecusson(m.tag_a, m.equipe_a)}
-          <span>${esc(m.tag_a)}</span>
-          <strong>${esc(m.equipe_a)}</strong>
+          ${ecusson(m.tag_a, m.equipe_a)}<span>${esc(m.tag_a)}</span><strong>${esc(m.equipe_a)}</strong>
           ${termine ? `<b class="match-center__score">${esc(String(m.score_a))}</b>` : ''}
         </div>
-
-        <div class="match-center__versus">
-          <span>BO${esc(String(m.format))}</span>
-          <strong>${termine ? 'FINAL' : 'VS'}</strong>
-          <small>${termine ? 'Match terminé' : esc(quand(m.debut))}</small>
-        </div>
-
+        <div class="match-center__versus"><span>BO${esc(String(m.format))}</span><strong>${termine ? 'FINAL' : 'VS'}</strong><small>${termine ? 'Match terminé' : esc(quand(m.debut))}</small></div>
         <div class="match-center__team match-center__team--right${gagnantB ? ' gagnant' : ''}">
-          ${ecusson(m.tag_b, m.equipe_b)}
-          <span>${esc(m.tag_b)}</span>
-          <strong>${esc(m.equipe_b)}</strong>
+          ${ecusson(m.tag_b, m.equipe_b)}<span>${esc(m.tag_b)}</span><strong>${esc(m.equipe_b)}</strong>
           ${termine ? `<b class="match-center__score">${esc(String(m.score_b))}</b>` : ''}
         </div>
       </div>
-
-      ${termine || !choix.length ? '' : `
+      ${termine || !projection ? '' : `
         <div class="match-center__probability" role="img" aria-label="${pA} % pour ${esc(m.equipe_a)}, ${pB} % pour ${esc(m.equipe_b)}">
-          <span><strong>${pA}%</strong> ${esc(m.tag_a)}</span>
-          <i><b style="width:${pA}%"></b></i>
-          <span>${esc(m.tag_b)} <strong>${pB}%</strong></span>
+          <span><strong>${pA}%</strong> ${esc(m.tag_a)}</span><i><b style="width:${pA}%"></b></i><span>${esc(m.tag_b)} <strong>${pB}%</strong></span>
         </div>`}
     </section>`;
 }
 
-function etatMarches({ m, marches, ouvert, saisonOuverte, saisonMatch }) {
-  if (m.statut === 'termine') {
-    return `
-      <section class="match-closed">
-        <span class="sur-titre">Terminé</span>
-        <h2>Le verdict est tombé.</h2>
-        <p>Les pronostics associés à ce match ont été réglés. Ton historique reste visible ci-dessus.</p>
-      </section>`;
-  }
+function zonePronostic({ m, projection, ouvert, saisonOuverte, saisonMatch, monProno }) {
+  if (m.statut === 'termine') return fermeture('Terminé', 'Le verdict est tombé.', 'Ton delta Frags est figé dans ton historique.');
+  if (!saisonOuverte) return fermeture('Pronostics fermés', "Cette saison n'est plus active.", `Ce match appartient à ${esc(saisonMatch?.nom ?? 'une autre saison')}.`);
+  if (!ouvert) return fermeture('Match en cours', 'Les choix sont verrouillés.', 'Après le coup d’envoi, aucun nouveau pronostic classé n’est accepté.');
+  if (monProno) return fermeture('Pronostic verrouillé', 'Ton choix est enregistré.', 'Tu ne peux poser qu’un seul pronostic classé par match.');
+  if (!projection) return fermeture('Pronostic indisponible', 'Le modèle arrive bientôt.', 'La probabilité figée du match n’est pas encore disponible.');
 
-  if (!saisonOuverte) {
-    return `
-      <section class="match-closed">
-        <span class="sur-titre">Pronostics fermés</span>
-        <h2>Cette saison n'est plus active.</h2>
-        <p>Ce match appartient à <strong>${esc(saisonMatch?.nom ?? 'une autre saison')}</strong>.</p>
-      </section>`;
-  }
-
-  if (!ouvert) {
-    return `
-      <section class="match-closed match-closed--live">
-        <span class="sur-titre">Match en cours</span>
-        <h2>Les choix sont verrouillés.</h2>
-        <p>Une fois le match commencé, aucun nouveau Frag ne peut être engagé.</p>
-      </section>`;
-  }
-
-  if (!marches.length) {
-    return `
-      <section class="match-closed">
-        <span class="sur-titre">Marchés</span>
-        <h2>Les choix arrivent bientôt.</h2>
-        <p>Aucun pronostic n'est encore publié pour cette affiche.</p>
-      </section>`;
-  }
-
+  const a = projection.choix.find((c) => c.cle === 'a');
+  const b = projection.choix.find((c) => c.cle === 'b');
   return `
     <section class="match-markets">
       <div class="match-markets__heading">
-        <div>
-          <span class="sur-titre">Pronostics</span>
-          <h2>Qu'est-ce que tu vois arriver ?</h2>
+        <div><span class="sur-titre">Pronostic classé</span><h2>Qui remporte le match ?</h2></div>
+        <span>Aucune mise · rating uniquement</span>
+      </div>
+      <section class="match-market match-market--main">
+        <header><div><h3>Vainqueur</h3><p>Le risque est calculé à partir de la probabilité figée avant ton choix.</p></div><span>${projection.placements_restants > 0 ? 'Placement' : 'Classé'}</span></header>
+        <div class="match-market__choices">
+          ${choixClasse('a', m.equipe_a, a)}${choixClasse('b', m.equipe_b, b)}
         </div>
-        <span>Les Frags sont fictifs et non convertibles.</span>
-      </div>
-      ${marches.map((marche) => blocMarche(marche)).join('')}
+      </section>
+      <div class="encart" style="margin-top:16px">Correct : plus de Frags. Faux : moins de Frags. <strong>Aucun Frag n’est jamais engagé ni dépensé.</strong></div>
     </section>`;
 }
 
-function blocMarche(marche) {
-  const probas = probabilitesNormalisees(marche.choix);
-  const principal = marche.cle === 'vainqueur';
-
-  return `
-    <section class="match-market${principal ? ' match-market--main' : ''}">
-      <header>
-        <div>
-          <h3>${esc(marche.libelle)}</h3>
-          <p>${esc(marche.aide)}</p>
-        </div>
-        ${principal ? '<span>Choix principal</span>' : ''}
-      </header>
-
-      <div class="match-market__choices${marche.choix.length > 3 ? ' match-market__choices--wrap' : ''}">
-        ${marche.choix.map((c) => choixMarche(marche, c, probas.get(c.cle))).join('')}
-      </div>
-    </section>`;
+function fermeture(surtitre, titre, texte) {
+  return `<section class="match-closed"><span class="sur-titre">${esc(surtitre)}</span><h2>${esc(titre)}</h2><p>${texte}</p></section>`;
 }
 
-function choixMarche(marche, c, proba) {
-  const potentiel = Math.round(100 * Number(c.cote || 0));
-  return `
-    <button class="match-choice" data-prono-choice="1"
-            data-marche="${esc(marche.cle)}" data-choix="${esc(c.cle)}"
-            data-libelle="${esc(c.libelle)}" data-cote="${esc(String(c.cote))}" type="button">
-      <span class="match-choice__label">${esc(c.libelle)}</span>
-      ${proba == null ? '' : `<strong>${proba}%</strong>`}
-      <small>${jeton(13)} 100 <i>→</i> ${esc(formaterFrags(potentiel))}</small>
-    </button>`;
+function choixClasse(cle, libelle, p) {
+  if (!p) return '';
+  const confiance = Math.round(Number(p.proba) * 100);
+  return `<button class="match-choice" data-prono-choice="1" data-choix="${cle}" data-libelle="${esc(libelle)}" type="button">
+    <span class="match-choice__label">${esc(libelle)}</span><strong>${confiance}%</strong>
+    <small><b class="positif">+${Math.abs(p.gain)}</b> si correct · <b class="negatif">−${Math.abs(p.perte)}</b> si faux</small>
+  </button>`;
 }
 
-function ticketInitial(m, ouvert, pronostics) {
-  const principal = pronostics.find((p) => p.marche === 'vainqueur' && p.statut === 'en_cours');
-  if (principal) {
-    const potentiel = Math.round(Number(principal.mise || 0) * Number(principal.cote || 0));
-    return `
-      <div class="match-ticket match-ticket--locked">
-        <span class="sur-titre">Ton choix principal</span>
-        <span class="match-ticket__lock">✓</span>
-        <strong>${esc(principal.libelle_choix)}</strong>
-        <p>${jeton(14)} ${esc(formaterFrags(principal.mise))} Frags engagés</p>
-        <div class="match-ticket__potential"><span>Potentiel</span><b>${esc(formaterFrags(potentiel))}</b></div>
-        <small>Tu peux encore explorer les autres pronostics du match tant qu'il n'a pas commencé.</small>
-      </div>`;
+function ticketInitial(m, ouvert, p) {
+  if (p) {
+    const libelle = libelleChoix(m, p.choix);
+    const risque = projectionFrags(p.proba_scoring, { k: p.k_frags });
+    return `<div class="match-ticket match-ticket--locked"><span class="sur-titre">Ton pronostic classé</span><span class="match-ticket__lock">✓</span><strong>${esc(libelle)}</strong>
+      <div class="ranked-risk"><span><small>Si correct</small><strong class="positif">+${Math.abs(risque.gain)} 💥</strong></span><span><small>Si faux</small><strong class="negatif">−${Math.abs(risque.perte)} 💥</strong></span></div>
+      <small>${p.k_frags === 60 ? 'Placement en cours' : 'Rating établi'} · aucun Frag engagé.</small></div>`;
   }
-
-  if (!ouvert) {
-    return `
-      <div class="match-ticket match-ticket--idle">
-        <span class="sur-titre">Pronostic</span>
-        <strong>Choix verrouillés</strong>
-        <p>Le Match Center reste consultable, mais l'action est fermée.</p>
-      </div>`;
-  }
-
-  return `
-    <div class="match-ticket match-ticket--idle">
-      <span class="sur-titre">Ton pronostic</span>
-      <div class="match-ticket__target">+</div>
-      <strong>Choisis une issue.</strong>
-      <p>Clique sur un choix à gauche. Ton bulletin apparaîtra ici sans quitter le match.</p>
-    </div>`;
+  if (!ouvert) return '<div class="match-ticket match-ticket--idle"><span class="sur-titre">Pronostic</span><strong>Choix verrouillés</strong><p>Le Match Center reste consultable.</p></div>';
+  return '<div class="match-ticket match-ticket--idle"><span class="sur-titre">Ton pronostic</span><div class="match-ticket__target">+</div><strong>Choisis une équipe.</strong><p>Le risque +/− Frags apparaîtra ici avant validation.</p></div>';
 }
 
-function blocMesPronostics(pronostics) {
-  return `
-    <section class="match-my-picks" id="mes-pronostics">
-      <div class="match-my-picks__heading">
-        <div><span class="sur-titre">Déjà posé</span><h2>Tes pronostics</h2></div>
-        <span>${pronostics.length}</span>
-      </div>
-      <div class="match-my-picks__list">
-        ${pronostics.map(lignePronostic).join('')}
-      </div>
-    </section>`;
-}
-
-function lignePronostic(p) {
-  const potentiel = Math.round(Number(p.mise || 0) * Number(p.cote || 0));
-  return `
-    <div class="match-my-pick">
-      <div><span>${esc(p.libelle_marche)}</span><strong>${esc(p.libelle_choix)}</strong></div>
-      <div><span>${jeton(13)} ${esc(formaterFrags(p.mise))} engagés</span><small>${esc(formaterFrags(potentiel))} potentiel</small></div>
-      ${badgePronostic(p)}
-    </div>`;
-}
-
-function badgePronostic(p) {
-  if (p.statut === 'gagne') return `<span class="match-pick-status match-pick-status--win">+${esc(formaterFrags(p.gain))}</span>`;
-  if (p.statut === 'perdu') return '<span class="match-pick-status match-pick-status--loss">Perdu</span>';
-  return '<span class="match-pick-status">En cours</span>';
-}
-
-// Compatibilité avec Profil : cette fonction était exportée par Match V1.
-// La supprimer casse l'instanciation de tout le graphe ES modules car profil.js
-// l'importe statiquement, même quand l'utilisateur ouvre une autre route.
-export function badgePari(p) {
-  if (p.statut === 'gagne') return `<span class="badge badge--gagne">+${esc(frags(p.gain))}</span>`;
-  if (p.statut === 'perdu') return '<span class="badge badge--perdu">Perdu</span>';
-  return '<span class="badge badge--attente">En cours</span>';
-}
-
-function blocRepere(vainqueur, probas) {
-  const choix = vainqueur?.choix ?? [];
-  if (choix.length < 2) return '';
-  const favori = [...choix].sort((a, b) => Number(a.cote) - Number(b.cote))[0];
-  const proba = probas.get(favori.cle);
-  return `
-    <div class="match-insight">
-      <span class="sur-titre">Repère</span>
-      <strong>${esc(favori.libelle)} part favori.</strong>
-      <p>${proba == null ? 'La tendance est proche.' : `${proba}% dans la répartition calculée à partir des coefficients du match.`}</p>
-      <small>Ce repère décrit le modèle de Clutch, pas le vote de la communauté.</small>
-    </div>`;
-}
-
-function ouvrirTicket(racine, m, btn, apresValidation) {
+function ouvrirTicket(racine, m, projection, btn) {
   const zone = racine.querySelector('#match-ticket');
-  const marche = btn.dataset.marche;
   const choix = btn.dataset.choix;
   const libelle = btn.dataset.libelle;
-  const cote = Number(btn.dataset.cote || 0);
+  const p = projection.choix.find((c) => c.cle === choix);
+  if (!p) return;
 
   if (!contexte.utilisateur) {
-    zone.innerHTML = `
-      <div class="match-ticket match-ticket--login">
-        <span class="sur-titre">${esc(libelle)}</span>
-        <strong>Crée ton profil pour jouer.</strong>
-        <p>Ton compte démarre avec des Frags fictifs pour participer à la saison.</p>
-        <a class="btn" href="#/connexion">Créer mon profil</a>
-      </div>`;
-    scrollTicket(zone);
-    return;
+    zone.innerHTML = `<div class="match-ticket match-ticket--login"><span class="sur-titre">${esc(libelle)}</span><strong>Crée ton profil pour jouer.</strong><p>Ton rating démarre à 1000 Frags.</p><a class="btn" href="#/connexion">Créer mon profil</a></div>`;
+    scrollTicket(zone); return;
   }
 
-  const solde = Number(contexte.utilisateur.solde || 0);
-  const maximum = Math.min(MISE_MAX, solde);
-  if (maximum < MISE_MIN) {
-    zone.innerHTML = `
-      <div class="match-ticket match-ticket--idle">
-        <span class="sur-titre">${esc(libelle)}</span>
-        <strong>Pas assez de Frags.</strong>
-        <p>Il faut au moins ${MISE_MIN} Frags pour engager un pronostic.</p>
-      </div>`;
-    scrollTicket(zone);
-    return;
-  }
+  zone.innerHTML = `<div class="match-ticket match-ticket--active"><span class="sur-titre">Pronostic classé</span><div class="match-ticket__selected"><small>${esc(m.equipe_a)} vs ${esc(m.equipe_b)}</small><strong>${esc(libelle)}</strong></div>
+    <div class="ranked-risk"><span><small>Si correct</small><strong class="positif">+${Math.abs(p.gain)} 💥</strong></span><span><small>Si faux</small><strong class="negatif">−${Math.abs(p.perte)} 💥</strong></span></div>
+    <small class="match-ticket__balance">${projection.placements_restants > 0 ? `${projection.placements_restants} placement(s) restant(s)` : 'Rating établi'} · K=${projection.k}</small>
+    <button class="match-ticket__confirm" id="match-valider" type="button">Verrouiller mon pronostic</button></div>`;
 
-  const depart = Math.min(100, maximum);
-  const rapides = [...new Set([50, 100, 250, 500].filter((v) => v >= MISE_MIN && v <= maximum))];
-
-  zone.innerHTML = `
-    <div class="match-ticket match-ticket--active">
-      <span class="sur-titre">Ton pronostic</span>
-      <div class="match-ticket__selected">
-        <small>${esc(m.equipe_a)} vs ${esc(m.equipe_b)}</small>
-        <strong>${esc(libelle)}</strong>
-      </div>
-
-      <label class="match-ticket__label" for="match-mise">Frags engagés</label>
-      <div class="match-ticket__stake">
-        ${jeton(20)}
-        <input id="match-mise" type="number" min="${MISE_MIN}" max="${maximum}" step="10" value="${depart}" inputmode="numeric" />
-      </div>
-
-      <div class="match-ticket__quick">
-        ${rapides.map((v) => `<button data-ticket-mise="${v}" type="button">${v}</button>`).join('')}
-        <button data-ticket-mise="max" type="button">Max</button>
-      </div>
-
-      <div class="match-ticket__potential">
-        <span>Gain potentiel</span>
-        <b id="match-gain"></b>
-      </div>
-      <small class="match-ticket__balance">Solde : ${frags(solde)} · coefficient figé à la validation</small>
-      <button class="match-ticket__confirm" id="match-valider" type="button">Valider mon pronostic</button>
-    </div>`;
-
-  const input = zone.querySelector('#match-mise');
-  const gain = zone.querySelector('#match-gain');
-  const valider = zone.querySelector('#match-valider');
-
-  const maj = () => {
-    const mise = Math.max(0, Number(input.value || 0));
-    gain.innerHTML = `${jeton(15)} ${esc(formaterFrags(Math.round(mise * cote)))}`;
-    valider.disabled = mise < MISE_MIN || mise > maximum;
-  };
-  maj();
-  input.addEventListener('input', maj);
-
-  zone.querySelectorAll('[data-ticket-mise]').forEach((quick) => {
-    quick.addEventListener('click', () => {
-      input.value = quick.dataset.ticketMise === 'max' ? maximum : quick.dataset.ticketMise;
-      maj();
-    });
-  });
-
-  valider.addEventListener('click', async () => {
-    valider.disabled = true;
-    const mise = Number(input.value);
+  zone.querySelector('#match-valider')?.addEventListener('click', async (e) => {
+    e.currentTarget.disabled = true;
     try {
-      const cree = await api.placerPari({ matchId: m.id, marche, choix, mise });
-      await majSolde();
-      const potentiel = Math.round(Number(cree?.mise ?? mise) * Number(cree?.cote ?? cote));
-      zone.innerHTML = `
-        <div class="match-ticket match-ticket--success">
-          <span class="match-ticket__success-icon">✓</span>
-          <span class="sur-titre">Pronostic verrouillé</span>
-          <strong>${esc(libelle)}</strong>
-          <p>${jeton(14)} ${esc(formaterFrags(mise))} engagés · ${esc(formaterFrags(potentiel))} potentiel</p>
-          <small>Ton choix est enregistré. Le résultat du match décidera du reste.</small>
-        </div>`;
-      toast(`Pronostic validé : ${libelle}`, 'succes');
-      await apresValidation();
+      await economie.placerPronosticClasse({ matchId: m.id, choix });
+      toast(`Pronostic classé verrouillé : ${libelle}`, 'succes');
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
     } catch (err) {
-      toast(err.message, 'erreur');
-      valider.disabled = false;
+      toast(err.message, 'erreur'); e.currentTarget.disabled = false;
     }
   });
-
   scrollTicket(zone);
 }
 
-function rafraichirResume(racine, pronostics) {
-  const existant = racine.querySelector('#mes-pronostics');
-  const html = blocMesPronostics(pronostics);
-  if (existant) {
-    existant.outerHTML = html;
-    return;
-  }
-  const main = racine.querySelector('.match-center__main');
-  if (main) main.insertAdjacentHTML('afterbegin', html);
+function blocMesPronostics(m, pronostics) {
+  return `<section class="match-my-picks" id="mes-pronostics"><div class="match-my-picks__heading"><div><span class="sur-titre">Déjà posé</span><h2>Ton pronostic</h2></div></div><div class="match-my-picks__list">${pronostics.map((p) => lignePronostic(m, p)).join('')}</div></section>`;
 }
 
-function scrollTicket(zone) {
-  if (window.matchMedia('(max-width: 760px)').matches) {
-    zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
+function lignePronostic(m, p) {
+  const delta = p.delta_frags;
+  return `<div class="match-my-pick"><div><span>Vainqueur</span><strong>${esc(libelleChoix(m, p.choix))}</strong></div><div><span>${Math.round(Number(p.proba_figee) * 100)}% modèle</span><small>K=${p.k_frags}</small></div>${badgePronostic(p, delta)}</div>`;
 }
 
-function probabilitesNormalisees(choix) {
-  const poids = choix.map((c) => ({ cle: c.cle, v: Number(c.cote) > 0 ? 1 / Number(c.cote) : 0 }));
-  const total = poids.reduce((s, x) => s + x.v, 0) || 1;
-  return new Map(poids.map((x) => [x.cle, Math.round((x.v / total) * 100)]));
+function badgePronostic(p, delta = p.delta_frags) {
+  if (p.statut === 'gagne') return `<span class="match-pick-status match-pick-status--win">+${esc(frags(Math.abs(delta ?? 0)))}</span>`;
+  if (p.statut === 'perdu') return `<span class="match-pick-status match-pick-status--loss">−${esc(frags(Math.abs(delta ?? 0)))}</span>`;
+  return '<span class="match-pick-status">En cours</span>';
 }
+
+// Nom historique conservé pour les imports existants du Profil.
+export function badgePari(p) {
+  if (p.statut === 'gagne') return `<span class="badge badge--gagne">+${esc(frags(Math.abs(p.delta_frags ?? p.gain ?? 0)))}</span>`;
+  if (p.statut === 'perdu') return `<span class="badge badge--perdu">−${esc(frags(Math.abs(p.delta_frags ?? 0)))}</span>`;
+  return '<span class="badge badge--attente">En cours</span>';
+}
+
+function blocRepere(m, projection) {
+  if (!projection?.choix?.length) return '';
+  const favori = [...projection.choix].sort((a, b) => Number(b.proba) - Number(a.proba))[0];
+  return `<div class="match-insight"><span class="sur-titre">Repère</span><strong>${esc(libelleChoix(m, favori.cle))} part favori.</strong><p>${Math.round(Number(favori.proba) * 100)}% selon le snapshot du modèle.</p><small>Cette probabilité est figée pour tous les joueurs.</small></div>`;
+}
+
+function libelleChoix(m, choix) { return choix === 'a' ? m.equipe_a : m.equipe_b; }
+function scrollTicket(zone) { if (window.matchMedia('(max-width: 760px)').matches) zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
