@@ -27,8 +27,6 @@ const TEAM_DOMAINS = {
   DRX: 'drx.gg', T1: 't1.gg', 'EDward Gaming': 'edgteam.cn',
 };
 
-// Les lignes de la base sont des équipes par jeu. L'onboarding, lui, présente des
-// organisations : G2 / Fnatic / KC ne doivent donc apparaître qu'une seule fois.
 const TEAM_ALIASES = {
   'natus vincere': 'navi',
   'navi': 'navi',
@@ -68,7 +66,6 @@ function cleOrganisation(nom = '') {
 function organisationsVisibles(equipes, jeux) {
   const selection = equipes.filter((e) => !jeux.length || jeux.includes(String(e.jeu || '').toLowerCase()));
   const groupes = new Map();
-
   for (const equipe of selection) {
     const cle = cleOrganisation(equipe.nom);
     if (!cle) continue;
@@ -88,7 +85,6 @@ function organisationsVisibles(equipes, jeux) {
     const jeu = String(equipe.jeu || '').toLowerCase();
     if (jeu && !groupe.jeux.includes(jeu)) groupe.jeux.push(jeu);
   }
-
   return [...groupes.values()]
     .sort((a, b) => b.jeux.length - a.jeux.length || a.nom.localeCompare(b.nom, 'fr'))
     .slice(0, 16);
@@ -222,7 +218,7 @@ function ecranEquipes(etat, equipes) {
       </div>
       <div class="onboarding-v5__team-grid">
         ${visibles.map((org) => {
-          const actif = org.ids.includes(String(etat.equipeId));
+          const actif = org.ids.includes(String(etat.equipeId)) || String(etat.equipeNom) === String(org.nom);
           const logo = logoOrganisation(org);
           const tag = esc(org.tag || org.nom.slice(0, 3).toUpperCase());
           const teamId = idEquipePourOrganisation(org, etat.jeux);
