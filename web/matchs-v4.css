@@ -1,0 +1,1252 @@
+/* ========================================================================== 
+   CLUTCH — MATCHS + MATCH CENTER V4
+   Visual migration only. Economy V2 / prediction logic stays in JS.
+   Loaded after matchs-v2.css and ui-v4.css.
+   ========================================================================== */
+
+.ui-v4 .matchs-v2,
+.ui-v4 .match-center {
+  --arena-blue: #56a9ff;
+  --arena-pink: #ff4d8d;
+  --arena-ink: #070a0f;
+  --arena-panel: rgba(11,15,21,.82);
+  --arena-line: rgba(255,255,255,.08);
+  --arena-line-strong: rgba(255,255,255,.15);
+  --arena-glass: rgba(16,21,29,.66);
+  position: relative;
+}
+
+/* --------------------------------------------------------------------------
+   LIST HEADER + FILTER BAR
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .matchs-v2__entete {
+  position: relative;
+  align-items: end;
+  padding: 22px 2px 30px;
+  margin-bottom: 4px;
+}
+
+.ui-v4 .matchs-v2__entete::before {
+  content: "MATCH ARENA";
+  position: absolute;
+  right: 0;
+  bottom: 18px;
+  z-index: -1;
+  color: rgba(255,255,255,.018);
+  font: 900 clamp(4.4rem, 11vw, 8.6rem)/.75 var(--titre);
+  letter-spacing: -.075em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.ui-v4 .matchs-v2__entete h1 {
+  max-width: 760px;
+  margin: 8px 0 10px;
+  font-size: clamp(3rem, 7.5vw, 5.6rem);
+  line-height: .86;
+  letter-spacing: -.072em;
+}
+
+.ui-v4 .matchs-v2__entete p {
+  max-width: 580px;
+  color: #8793a1;
+  font-size: .92rem;
+}
+
+.ui-v4 .matchs-v2__historique {
+  min-height: 40px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 13px;
+  background: rgba(255,255,255,.025);
+  color: #7b8694;
+  text-transform: none;
+  letter-spacing: .02em;
+}
+
+.ui-v4 .matchs-v2__historique:hover,
+.ui-v4 .matchs-v2__historique.actif {
+  color: var(--texte);
+  border-color: rgba(232,255,61,.28);
+  background: rgba(232,255,61,.055);
+}
+
+.ui-v4 .matchs-v2__barre {
+  position: sticky;
+  top: 72px;
+  z-index: 15;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 10px 10px;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 18px;
+  background: rgba(6,8,11,.76);
+  box-shadow: 0 14px 42px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.025);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+}
+
+.ui-v4 .arena-filter {
+  min-height: 34px;
+  padding: 8px 12px;
+  border-radius: 11px;
+  color: #6f7a88;
+  font-size: .72rem;
+}
+
+.ui-v4 .arena-filter:hover {
+  color: #dce2e7;
+  background: rgba(255,255,255,.04);
+}
+
+.ui-v4 .arena-filter.actif {
+  color: var(--texte);
+  border-color: rgba(232,255,61,.14);
+  background: linear-gradient(180deg, rgba(232,255,61,.085), rgba(232,255,61,.035));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+/* --------------------------------------------------------------------------
+   HERO ARENA — THE DOMINANT OBJECT
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .arena-hero {
+  --left-light: rgba(86,169,255,.28);
+  --right-light: rgba(255,77,141,.24);
+  min-height: 570px;
+  padding: 22px 24px 22px;
+  border-radius: 34px;
+  border-color: rgba(255,255,255,.11);
+  background:
+    radial-gradient(58% 74% at 8% 52%, var(--left-light), transparent 68%),
+    radial-gradient(58% 74% at 92% 52%, var(--right-light), transparent 68%),
+    radial-gradient(48% 32% at 50% 112%, rgba(232,255,61,.08), transparent 76%),
+    linear-gradient(180deg, rgba(15,20,28,.96), rgba(7,10,15,.98));
+  box-shadow:
+    0 38px 110px -48px rgba(0,0,0,.92),
+    inset 0 1px 0 rgba(255,255,255,.04),
+    inset 0 -1px 0 rgba(232,255,61,.035);
+}
+
+.ui-v4 .arena-hero[data-jeu='lol'] {
+  --left-light: rgba(55,145,255,.29);
+  --right-light: rgba(192,93,255,.22);
+}
+
+.ui-v4 .arena-hero[data-jeu='cs2'] {
+  --left-light: rgba(72,151,255,.25);
+  --right-light: rgba(244,148,61,.24);
+}
+
+.ui-v4 .arena-hero[data-jeu='valorant'] {
+  --left-light: rgba(74,145,255,.24);
+  --right-light: rgba(255,70,85,.28);
+}
+
+.ui-v4 .arena-hero::before {
+  content: "";
+  position: absolute;
+  left: -8%;
+  right: -8%;
+  bottom: -125px;
+  height: 270px;
+  z-index: -2;
+  opacity: .52;
+  background:
+    repeating-linear-gradient(97deg, rgba(86,169,255,.12) 0 1px, transparent 1px 38px),
+    repeating-linear-gradient(83deg, rgba(255,77,141,.10) 0 1px, transparent 1px 39px),
+    linear-gradient(180deg, rgba(10,14,20,.06), rgba(2,4,7,.92));
+  transform: perspective(420px) rotateX(58deg);
+  transform-origin: center top;
+  pointer-events: none;
+}
+
+.ui-v4 .arena-hero::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 78px;
+  bottom: 112px;
+  width: 1px;
+  z-index: -1;
+  background: linear-gradient(180deg, transparent, rgba(232,255,61,.17), transparent);
+  box-shadow: 0 0 50px 12px rgba(232,255,61,.025);
+  pointer-events: none;
+}
+
+.ui-v4 .arena-hero__grain {
+  opacity: .10;
+  background-size: 58px 58px;
+}
+
+.ui-v4 .arena-hero__glow {
+  width: 430px;
+  height: 430px;
+  filter: blur(100px);
+  opacity: .12;
+}
+
+.ui-v4 .arena-hero__glow--a {
+  left: -210px;
+  top: 60px;
+  background: var(--arena-blue);
+}
+
+.ui-v4 .arena-hero__glow--b {
+  right: -210px;
+  top: 50px;
+  background: var(--game);
+}
+
+.ui-v4 .arena-hero__meta {
+  position: relative;
+  z-index: 4;
+  min-height: 36px;
+  color: #94a0ad;
+  font-size: .7rem;
+  letter-spacing: .02em;
+}
+
+.ui-v4 .arena-hero__meta strong {
+  color: #dfe4e8;
+  font-size: .69rem;
+  letter-spacing: .11em;
+}
+
+.ui-v4 .arena-countdown {
+  padding: 8px 12px;
+  border-color: rgba(255,255,255,.09);
+  background: rgba(4,7,11,.48);
+  backdrop-filter: blur(12px);
+}
+
+/* Camps become stage wings, not cards. */
+.ui-v4 .arena-versus {
+  grid-template-columns: minmax(0,1fr) 124px minmax(0,1fr);
+  gap: 12px;
+  margin: 34px 0 18px;
+  min-height: 390px;
+}
+
+.ui-v4 .arena-team {
+  min-height: 360px;
+  padding: 34px 30px 26px;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.ui-v4 .arena-team::before {
+  content: "";
+  position: absolute;
+  inset: 0 8% 0 0;
+  z-index: -1;
+  clip-path: polygon(0 5%, 84% 0, 100% 18%, 94% 86%, 76% 100%, 0 94%);
+  border: 1px solid rgba(255,255,255,.075);
+  background:
+    radial-gradient(95% 80% at 5% 48%, rgba(86,169,255,.12), transparent 66%),
+    linear-gradient(145deg, rgba(255,255,255,.046), rgba(255,255,255,.012));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+  transition: border-color var(--transition), background var(--transition), filter var(--transition);
+}
+
+.ui-v4 .arena-team--right::before {
+  inset: 0 0 0 8%;
+  clip-path: polygon(16% 0, 100% 5%, 100% 94%, 24% 100%, 6% 86%, 0 18%);
+  background:
+    radial-gradient(95% 80% at 95% 48%, color-mix(in oklab,var(--game) 16%,transparent), transparent 66%),
+    linear-gradient(215deg, rgba(255,255,255,.046), rgba(255,255,255,.012));
+}
+
+.ui-v4 .arena-team::after {
+  inset: auto 18% 5px 7%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  filter: drop-shadow(0 0 8px rgba(232,255,61,.52));
+}
+
+.ui-v4 .arena-team--right::after {
+  inset: auto 7% 5px 18%;
+}
+
+.ui-v4 .arena-team:not(:disabled):hover {
+  transform: translateY(-5px) scale(1.008);
+  background: transparent;
+}
+
+.ui-v4 .arena-team:not(:disabled):hover::before {
+  border-color: rgba(255,255,255,.15);
+  filter: brightness(1.12);
+}
+
+.ui-v4 .arena-team.is-selected {
+  transform: translateY(-6px) scale(1.012);
+  border: 0;
+  box-shadow: none;
+}
+
+.ui-v4 .arena-team.is-selected::before {
+  border-color: rgba(232,255,61,.37);
+  background:
+    radial-gradient(95% 80% at 5% 48%, rgba(232,255,61,.12), transparent 66%),
+    linear-gradient(145deg, rgba(232,255,61,.055), rgba(255,255,255,.014));
+  box-shadow: inset 0 0 0 1px rgba(232,255,61,.055), 0 24px 70px -42px rgba(232,255,61,.4);
+}
+
+.ui-v4 .arena-team--right.is-selected::before {
+  background:
+    radial-gradient(95% 80% at 95% 48%, rgba(232,255,61,.12), transparent 66%),
+    linear-gradient(215deg, rgba(232,255,61,.055), rgba(255,255,255,.014));
+}
+
+.ui-v4 .arena-team__logo {
+  margin-bottom: 29px;
+}
+
+.ui-v4 .arena-team .ecusson-cadre {
+  width: 92px;
+  height: 102px;
+  filter: drop-shadow(0 18px 26px rgba(0,0,0,.43));
+}
+
+.ui-v4 .arena-team .ecusson {
+  width: 80px;
+  height: 88px;
+  font-size: 1rem;
+}
+
+.ui-v4 .arena-team__copy small {
+  color: #7f8a99;
+  font-size: .63rem;
+  letter-spacing: .2em;
+}
+
+.ui-v4 .arena-team__copy strong {
+  margin: 7px 0 8px;
+  font-size: clamp(2rem,4.2vw,3.25rem);
+  font-weight: 780;
+  line-height: .88;
+  letter-spacing: -.06em;
+  text-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+.ui-v4 .arena-team__copy span {
+  color: #929dab;
+  font-size: .76rem;
+}
+
+.ui-v4 .arena-team__return {
+  gap: 8px;
+  padding-top: 30px;
+  font-size: .75rem;
+}
+
+.ui-v4 .arena-team__return .positif,
+.ui-v4 .arena-team__return .negatif {
+  font-size: .9rem;
+}
+
+.ui-v4 .arena-versus__centre {
+  align-self: stretch;
+}
+
+.ui-v4 .arena-versus__centre span {
+  color: #6f7a87;
+  letter-spacing: .24em;
+}
+
+.ui-v4 .arena-versus__centre strong {
+  position: relative;
+  margin: 12px 0;
+  font-size: 3rem;
+  font-weight: 650;
+  color: #f0f3f5;
+  text-shadow: 0 9px 28px rgba(0,0,0,.52);
+}
+
+.ui-v4 .arena-versus__centre strong::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -12px;
+  width: 32px;
+  height: 2px;
+  transform: translateX(-50%);
+  border-radius: 99px;
+  background: var(--accent);
+  box-shadow: 0 0 12px rgba(232,255,61,.55);
+}
+
+.ui-v4 .arena-versus__centre i {
+  top: 4%;
+  bottom: 4%;
+  background: linear-gradient(to bottom, transparent, rgba(255,255,255,.11), rgba(232,255,61,.10), rgba(255,255,255,.11), transparent);
+}
+
+.ui-v4 .arena-hero__footer {
+  min-height: 56px;
+  padding: 15px 3px 0;
+  border-color: rgba(255,255,255,.055);
+}
+
+.ui-v4 .arena-details {
+  min-height: 38px;
+  padding: 0 3px 0 12px;
+  gap: 10px;
+  color: #ccd3d9;
+}
+
+.ui-v4 .arena-details svg {
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  background: rgba(255,255,255,.03);
+}
+
+/* --------------------------------------------------------------------------
+   ARENA DECISION TICKET
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .arena-dock {
+  position: relative;
+  z-index: 8;
+  margin-top: 18px;
+}
+
+.ui-v4 .arena-ticket {
+  grid-template-columns: minmax(150px,1.1fr) minmax(220px,1fr) minmax(180px,.9fr) auto;
+  gap: 18px;
+  min-height: 104px;
+  padding: 16px 17px 16px 20px;
+  border-radius: 22px 10px 22px 10px;
+  border-color: rgba(232,255,61,.3);
+  background:
+    linear-gradient(90deg, rgba(232,255,61,.055), transparent 32%),
+    rgba(5,8,12,.9);
+  box-shadow:
+    0 22px 60px -34px rgba(232,255,61,.35),
+    inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.ui-v4 .arena-ticket::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 18px;
+  bottom: 18px;
+  width: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 15px rgba(232,255,61,.5);
+}
+
+.ui-v4 .arena-ticket__pick span {
+  color: var(--accent);
+  letter-spacing: .15em;
+}
+
+.ui-v4 .arena-ticket__pick strong {
+  margin: 5px 0 4px;
+  font-size: 1.32rem;
+}
+
+.ui-v4 .ranked-risk {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ui-v4 .ranked-risk > span {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 13px;
+  background: rgba(255,255,255,.025);
+}
+
+.ui-v4 .ranked-risk small {
+  display: block;
+  margin-bottom: 3px;
+  color: #6f7a87;
+  font-size: .62rem;
+}
+
+.ui-v4 .ranked-risk strong {
+  font-family: var(--titre);
+  font-size: 1.04rem;
+}
+
+.ui-v4 .ranked-rule {
+  color: #87919e;
+  font-size: .7rem;
+  line-height: 1.42;
+}
+
+.ui-v4 .arena-ticket__confirm,
+.ui-v4 .match-ticket__confirm {
+  min-height: 48px;
+  padding: 12px 17px;
+  border-radius: 12px;
+  box-shadow: 0 10px 32px rgba(232,255,61,.12), inset 0 1px 0 rgba(255,255,255,.36);
+}
+
+/* --------------------------------------------------------------------------
+   CALENDAR TIMELINE — DENSE, EDITORIAL
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .arena-call {
+  margin: 20px 4px 34px;
+  padding: 14px 4px;
+  border-top: 1px solid rgba(255,255,255,.045);
+  border-bottom-color: rgba(255,255,255,.045);
+}
+
+.ui-v4 .arena-call__mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px 8px 14px 8px;
+  box-shadow: 0 0 24px rgba(232,255,61,.08);
+}
+
+.ui-v4 .arena-timeline-section {
+  padding-top: 14px;
+}
+
+.ui-v4 .arena-section-title {
+  margin-bottom: 24px;
+}
+
+.ui-v4 .arena-section-title h2 {
+  font-size: clamp(1.65rem,3vw,2.15rem);
+}
+
+.ui-v4 .arena-day {
+  margin-bottom: 30px;
+}
+
+.ui-v4 .arena-day__label {
+  margin: 0 0 7px;
+  color: #66717f;
+  font-size: .59rem;
+  letter-spacing: .18em;
+}
+
+.ui-v4 .arena-row {
+  grid-template-columns: 62px 118px minmax(290px,1.45fr) minmax(130px,.7fr) 120px;
+  min-height: 82px;
+  padding: 10px 12px 10px 8px;
+  border-radius: 17px;
+}
+
+.ui-v4 .arena-row:hover {
+  transform: translateX(4px);
+  background:
+    linear-gradient(90deg, color-mix(in oklab,var(--game) 7%,transparent), transparent 42%),
+    rgba(255,255,255,.02);
+  border-color: rgba(255,255,255,.08);
+}
+
+.ui-v4 .arena-row--picked {
+  background: linear-gradient(90deg, rgba(232,255,61,.035), transparent 42%);
+}
+
+.ui-v4 .arena-row--picked::after {
+  top: 17px;
+  bottom: 17px;
+  width: 2px;
+}
+
+.ui-v4 .arena-row__duel {
+  gap: 9px;
+}
+
+.ui-v4 .arena-row__team strong {
+  font-size: .8rem;
+}
+
+.ui-v4 .arena-row__prob i {
+  height: 4px;
+  background: rgba(255,255,255,.055);
+}
+
+.ui-v4 .arena-row__prob i b {
+  background: linear-gradient(90deg, #8593a2, #c9d0d6);
+}
+
+.ui-v4 .arena-result-badge {
+  padding: 6px 9px;
+  border-color: rgba(255,255,255,.07);
+  background: rgba(255,255,255,.025);
+}
+
+/* --------------------------------------------------------------------------
+   MATCH CENTER — COMMAND ROOM
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .match-center {
+  padding-top: 8px;
+}
+
+.ui-v4 .match-center__back {
+  align-items: center;
+  min-height: 34px;
+  margin-bottom: 14px;
+  color: #6f7a87;
+}
+
+.ui-v4 .match-center__hero {
+  min-height: 410px;
+  padding: 22px 24px 27px;
+  border-radius: 32px;
+  border-color: rgba(255,255,255,.10);
+  background:
+    radial-gradient(55% 80% at 8% 52%, rgba(86,169,255,.18), transparent 67%),
+    radial-gradient(55% 80% at 92% 52%, color-mix(in oklab,var(--game) 17%,transparent), transparent 67%),
+    radial-gradient(48% 36% at 50% 110%, rgba(232,255,61,.06), transparent 70%),
+    linear-gradient(180deg, #0d1219, #070a0f);
+  box-shadow: var(--v4-shadow-lg), inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+.ui-v4 .match-center__hero::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 64px;
+  bottom: 58px;
+  width: 1px;
+  z-index: -1;
+  background: linear-gradient(180deg, transparent, rgba(232,255,61,.13), transparent);
+}
+
+.ui-v4 .match-center__hero-glow {
+  inset: -55% 12% auto;
+  height: 350px;
+  opacity: .08;
+  filter: blur(90px);
+}
+
+.ui-v4 .match-center__meta {
+  position: relative;
+  z-index: 3;
+  min-height: 30px;
+  color: #8c97a4;
+}
+
+.ui-v4 .match-center__date {
+  padding: 7px 10px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px;
+  background: rgba(4,7,11,.42);
+}
+
+.ui-v4 .match-center__duel {
+  grid-template-columns: minmax(0,1fr) 120px minmax(0,1fr);
+  gap: 14px;
+  min-height: 260px;
+  padding: 42px 24px 26px;
+}
+
+.ui-v4 .match-center__team .ecusson-cadre {
+  width: 88px;
+  height: 98px;
+  margin-bottom: 18px;
+  filter: drop-shadow(0 17px 25px rgba(0,0,0,.4));
+}
+
+.ui-v4 .match-center__team .ecusson {
+  width: 76px;
+  height: 84px;
+}
+
+.ui-v4 .match-center__team > strong {
+  margin-top: 7px;
+  font-size: clamp(2rem,4.4vw,3.35rem);
+  font-weight: 790;
+  line-height: .9;
+}
+
+.ui-v4 .match-center__team > span {
+  color: #75818f;
+  letter-spacing: .19em;
+}
+
+.ui-v4 .match-center__versus strong {
+  position: relative;
+  font-size: 2.8rem;
+  font-weight: 650;
+}
+
+.ui-v4 .match-center__versus strong::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  width: 28px;
+  height: 2px;
+  transform: translateX(-50%);
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(232,255,61,.48);
+}
+
+.ui-v4 .match-center__versus small {
+  margin-top: 10px;
+  color: #76818e;
+}
+
+.ui-v4 .match-center__probability {
+  grid-template-columns: 120px 1fr 120px;
+  max-width: 720px;
+  gap: 13px;
+}
+
+.ui-v4 .match-center__probability i {
+  height: 6px;
+  background: rgba(255,255,255,.06);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.4);
+}
+
+.ui-v4 .match-center__probability i b {
+  background: linear-gradient(90deg, var(--accent), #b6d12e);
+  box-shadow: 0 0 15px rgba(232,255,61,.25);
+}
+
+.ui-v4 .match-center__layout {
+  grid-template-columns: minmax(0,1fr) 300px;
+  gap: 28px;
+  margin-top: 32px;
+}
+
+.ui-v4 .match-center__side {
+  top: 94px;
+  gap: 15px;
+}
+
+/* Main market is a decision surface rather than a card stack. */
+.ui-v4 .match-markets__heading {
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.ui-v4 .match-markets__heading h2 {
+  margin-top: 5px;
+  font-size: clamp(1.7rem,3vw,2.2rem);
+}
+
+.ui-v4 .match-markets__heading > span {
+  color: #697482;
+  font-size: .67rem;
+}
+
+.ui-v4 .match-market {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ui-v4 .match-market > header {
+  padding: 14px 2px;
+  border-top: 1px solid rgba(255,255,255,.055);
+  border-bottom: 1px solid rgba(255,255,255,.055);
+  background: transparent;
+}
+
+.ui-v4 .match-market__choices {
+  gap: 12px;
+  padding-top: 16px;
+}
+
+.ui-v4 .match-choice {
+  position: relative;
+  min-height: 164px;
+  padding: 22px;
+  border-radius: 22px 10px 22px 10px;
+  border-color: rgba(255,255,255,.08);
+  background:
+    radial-gradient(90% 120% at 0% 50%, rgba(86,169,255,.08), transparent 62%),
+    linear-gradient(145deg, rgba(255,255,255,.032), rgba(255,255,255,.01)),
+    rgba(10,14,19,.76);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+  overflow: hidden;
+}
+
+.ui-v4 .match-choice:nth-child(2) {
+  border-radius: 10px 22px 10px 22px;
+  background:
+    radial-gradient(90% 120% at 100% 50%, color-mix(in oklab,var(--game) 9%,transparent), transparent 62%),
+    linear-gradient(215deg, rgba(255,255,255,.032), rgba(255,255,255,.01)),
+    rgba(10,14,19,.76);
+}
+
+.ui-v4 .match-choice::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transform: scaleX(.4);
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+.ui-v4 .match-choice:hover,
+.ui-v4 .match-choice.is-selected {
+  transform: translateY(-3px);
+  border-color: rgba(232,255,61,.28);
+  background:
+    radial-gradient(90% 120% at 0% 50%, rgba(232,255,61,.09), transparent 62%),
+    rgba(12,16,21,.92);
+}
+
+.ui-v4 .match-choice:hover::after,
+.ui-v4 .match-choice.is-selected::after {
+  opacity: .9;
+  transform: scaleX(1);
+}
+
+.ui-v4 .match-choice__label {
+  font: 780 1.25rem/1 var(--titre);
+  letter-spacing: -.025em;
+}
+
+.ui-v4 .match-choice > strong {
+  margin-top: 18px;
+  font-size: 2.35rem;
+  font-weight: 750;
+}
+
+.ui-v4 .match-choice small {
+  margin-top: 7px;
+  color: #818c99;
+}
+
+/* Sticky decision card */
+.ui-v4 .match-ticket {
+  border-radius: 22px 10px 22px 10px;
+  border-color: rgba(255,255,255,.09);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.035), transparent 36%),
+    rgba(10,14,19,.88);
+  box-shadow: 0 20px 55px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.03);
+}
+
+.ui-v4 .match-ticket--active,
+.ui-v4 .match-ticket--locked {
+  border-color: rgba(232,255,61,.28);
+  background:
+    linear-gradient(145deg, rgba(232,255,61,.065), transparent 38%),
+    rgba(8,12,16,.92);
+  box-shadow: 0 22px 60px -34px rgba(232,255,61,.3), inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+.ui-v4 .match-ticket__target {
+  border-color: rgba(255,255,255,.08);
+  background: rgba(255,255,255,.025);
+}
+
+.ui-v4 .match-insight {
+  border-radius: 10px 22px 10px 22px;
+  border-color: rgba(255,255,255,.065);
+  background: rgba(10,14,19,.58);
+}
+
+.ui-v4 .match-closed {
+  padding: 26px 0;
+  border-top: 1px solid rgba(255,255,255,.055);
+  border-bottom: 1px solid rgba(255,255,255,.055);
+  background: transparent;
+}
+
+.ui-v4 .match-my-picks {
+  margin-bottom: 32px;
+}
+
+.ui-v4 .match-my-picks__list {
+  border-top-color: rgba(255,255,255,.055);
+}
+
+.ui-v4 .match-my-pick {
+  min-height: 62px;
+  padding: 13px 4px;
+  border-bottom-color: rgba(255,255,255,.05);
+}
+
+/* --------------------------------------------------------------------------
+   HISTORICAL RESULT SCREEN
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .arena-results-intro {
+  margin: 24px 0 34px;
+  padding: 30px 2px 24px;
+  border-bottom-color: rgba(255,255,255,.055);
+}
+
+.ui-v4 .arena-results-intro h2 {
+  font-size: clamp(2rem,4vw,2.8rem);
+  letter-spacing: -.045em;
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVE
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1080px) {
+  .ui-v4 .arena-hero {
+    min-height: 530px;
+  }
+
+  .ui-v4 .arena-versus {
+    grid-template-columns: minmax(0,1fr) 96px minmax(0,1fr);
+  }
+
+  .ui-v4 .arena-team {
+    padding-inline: 22px;
+  }
+
+  .ui-v4 .arena-row {
+    grid-template-columns: 58px 102px minmax(250px,1fr) 118px 104px;
+    gap: 9px;
+  }
+
+  .ui-v4 .match-center__layout {
+    grid-template-columns: minmax(0,1fr) 278px;
+  }
+}
+
+@media (max-width: 899px) {
+  .ui-v4 .matchs-v2__barre {
+    top: 64px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .ui-v4 .matchs-v2__barre::-webkit-scrollbar { display: none; }
+
+  .ui-v4 .arena-filtres {
+    flex-wrap: nowrap;
+  }
+
+  .ui-v4 .arena-hero {
+    min-height: auto;
+    border-radius: 28px;
+  }
+
+  .ui-v4 .arena-versus {
+    grid-template-columns: minmax(0,1fr) 72px minmax(0,1fr);
+    min-height: 330px;
+  }
+
+  .ui-v4 .arena-team {
+    min-height: 310px;
+    padding: 26px 15px 20px;
+  }
+
+  .ui-v4 .arena-team .ecusson-cadre {
+    width: 74px;
+    height: 82px;
+  }
+
+  .ui-v4 .arena-team .ecusson {
+    width: 64px;
+    height: 70px;
+  }
+
+  .ui-v4 .arena-team__copy strong {
+    font-size: clamp(1.5rem,5vw,2.15rem);
+  }
+
+  .ui-v4 .arena-versus__centre strong {
+    font-size: 2.15rem;
+  }
+
+  .ui-v4 .arena-ticket {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ui-v4 .arena-ticket__confirm {
+    grid-column: 1 / -1;
+  }
+
+  .ui-v4 .arena-row {
+    grid-template-columns: 54px minmax(0,1fr) 102px;
+  }
+
+  .ui-v4 .arena-row__event,
+  .ui-v4 .arena-row__prob {
+    display: none;
+  }
+
+  .ui-v4 .arena-row__duel {
+    grid-column: 2;
+  }
+
+  .ui-v4 .arena-row__action {
+    grid-column: 3;
+  }
+
+  .ui-v4 .match-center__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-v4 .match-center__side {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ui-v4 .match-ticket-shell {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .ui-v4 .matchs-v2__entete {
+    display: block;
+    padding-top: 10px;
+  }
+
+  .ui-v4 .matchs-v2__entete::before {
+    display: none;
+  }
+
+  .ui-v4 .matchs-v2__entete h1 {
+    font-size: clamp(2.8rem,16vw,4.25rem);
+  }
+
+  .ui-v4 .matchs-v2__historique {
+    margin-top: 17px;
+  }
+
+  .ui-v4 .matchs-v2__barre {
+    margin-inline: -3px;
+    padding: 7px;
+    border-radius: 15px;
+  }
+
+  .ui-v4 .arena-hero {
+    padding: 17px 15px 18px;
+    border-radius: 24px;
+  }
+
+  .ui-v4 .arena-hero__meta {
+    align-items: flex-start;
+  }
+
+  .ui-v4 .arena-hero__meta > div {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .ui-v4 .arena-hero__meta > div > i,
+  .ui-v4 .arena-hero__meta > div > span:nth-last-child(1) {
+    display: none;
+  }
+
+  .ui-v4 .arena-countdown {
+    font-size: .63rem;
+  }
+
+  .ui-v4 .arena-versus {
+    grid-template-columns: 1fr 52px 1fr;
+    min-height: 270px;
+    margin: 25px 0 10px;
+  }
+
+  .ui-v4 .arena-team {
+    min-height: 255px;
+    padding: 20px 8px 16px;
+  }
+
+  .ui-v4 .arena-team::before {
+    inset-inline: 0;
+    opacity: .84;
+  }
+
+  .ui-v4 .arena-team__logo {
+    margin-bottom: 17px;
+  }
+
+  .ui-v4 .arena-team .ecusson-cadre {
+    width: 58px;
+    height: 64px;
+  }
+
+  .ui-v4 .arena-team .ecusson {
+    width: 50px;
+    height: 55px;
+  }
+
+  .ui-v4 .arena-team__copy small {
+    font-size: .55rem;
+  }
+
+  .ui-v4 .arena-team__copy strong {
+    font-size: clamp(1.15rem,6.1vw,1.6rem);
+    overflow-wrap: anywhere;
+  }
+
+  .ui-v4 .arena-team__copy span {
+    font-size: .62rem;
+  }
+
+  .ui-v4 .arena-team__return {
+    display: block;
+    padding-top: 14px;
+    font-size: .6rem;
+  }
+
+  .ui-v4 .arena-team__return b {
+    font-size: .72rem !important;
+  }
+
+  .ui-v4 .arena-versus__centre span {
+    display: none;
+  }
+
+  .ui-v4 .arena-versus__centre strong {
+    font-size: 1.55rem;
+  }
+
+  .ui-v4 .arena-hero__footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ui-v4 .arena-details {
+    align-self: stretch;
+    justify-content: space-between;
+    padding-left: 0;
+  }
+
+  .ui-v4 .arena-ticket,
+  .ui-v4 .arena-ticket--login {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .ui-v4 .ranked-risk {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ui-v4 .arena-ticket__confirm {
+    grid-column: auto;
+    width: 100%;
+  }
+
+  .ui-v4 .arena-call {
+    grid-template-columns: auto 1fr;
+  }
+
+  .ui-v4 .arena-call > a {
+    grid-column: 2;
+  }
+
+  .ui-v4 .arena-row {
+    grid-template-columns: 48px minmax(0,1fr);
+    min-height: 88px;
+    padding-right: 7px;
+  }
+
+  .ui-v4 .arena-row__duel {
+    grid-column: 2;
+  }
+
+  .ui-v4 .arena-row__action {
+    display: none;
+  }
+
+  .ui-v4 .arena-row__team strong {
+    font-size: .72rem;
+  }
+
+  .ui-v4 .match-center__hero {
+    min-height: auto;
+    padding: 17px 14px 21px;
+    border-radius: 24px;
+  }
+
+  .ui-v4 .match-center__meta {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .ui-v4 .match-center__meta i {
+    display: none;
+  }
+
+  .ui-v4 .match-center__date {
+    margin-left: 0;
+  }
+
+  .ui-v4 .match-center__duel {
+    grid-template-columns: 1fr 54px 1fr;
+    gap: 6px;
+    padding: 30px 2px 24px;
+  }
+
+  .ui-v4 .match-center__team .ecusson-cadre {
+    width: 58px;
+    height: 64px;
+  }
+
+  .ui-v4 .match-center__team .ecusson {
+    width: 50px;
+    height: 55px;
+  }
+
+  .ui-v4 .match-center__team > strong {
+    font-size: clamp(1.25rem,6.7vw,1.75rem);
+  }
+
+  .ui-v4 .match-center__versus strong {
+    font-size: 1.55rem;
+  }
+
+  .ui-v4 .match-center__versus span,
+  .ui-v4 .match-center__versus small {
+    font-size: .52rem;
+  }
+
+  .ui-v4 .match-center__probability {
+    grid-template-columns: 76px 1fr 76px;
+    gap: 7px;
+    font-size: .6rem;
+  }
+
+  .ui-v4 .match-center__side {
+    display: flex;
+  }
+
+  .ui-v4 .match-market__choices {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-v4 .match-choice,
+  .ui-v4 .match-choice:nth-child(2) {
+    min-height: 142px;
+    border-radius: 18px;
+  }
+
+  .ui-v4 .match-my-pick {
+    grid-template-columns: minmax(0,1fr) auto;
+  }
+
+  .ui-v4 .match-my-pick > div:nth-child(2) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-v4 .arena-team,
+  .ui-v4 .arena-row,
+  .ui-v4 .match-choice {
+    transform: none !important;
+  }
+}

@@ -1,0 +1,67 @@
+/* Profile V4 — data-backed player style signature. */
+.ui-v4 .profil-v4-signature {
+  --signature: var(--accent);
+  position: relative;
+  max-width: 510px;
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr);
+  grid-template-areas:
+    'rail title'
+    'rail copy'
+    'rail detail';
+  column-gap: 13px;
+  margin-top: 18px;
+  padding: 11px 13px 11px 11px;
+  border-top: 1px solid color-mix(in oklab, var(--signature) 24%, transparent);
+  border-bottom: 1px solid rgba(255,255,255,.045);
+  background: linear-gradient(90deg, color-mix(in oklab, var(--signature) 6%, transparent), transparent 76%);
+}
+.ui-v4 .profil-v4-signature::before {
+  content: '';
+  grid-area: rail;
+  align-self: stretch;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--signature);
+  box-shadow: 0 0 14px color-mix(in oklab, var(--signature) 48%, transparent);
+}
+.ui-v4 .profil-v4-signature > span {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  color: rgba(255,255,255,.18);
+  font: 800 .48rem var(--titre);
+  letter-spacing: .17em;
+}
+.ui-v4 .profil-v4-signature strong {
+  grid-area: title;
+  font: 850 .84rem var(--titre);
+  letter-spacing: .035em;
+  color: color-mix(in oklab, var(--signature) 78%, white);
+}
+.ui-v4 .profil-v4-signature p {
+  grid-area: copy;
+  margin: 3px 62px 0 0;
+  color: var(--texte-doux);
+  font-size: .68rem;
+  line-height: 1.35;
+}
+.ui-v4 .profil-v4-signature small {
+  grid-area: detail;
+  margin-top: 5px;
+  color: var(--texte-faible);
+  font-size: .58rem;
+  letter-spacing: .04em;
+}
+.ui-v4 .profil-v4-signature--oracle { --signature: #e8ff3d; }
+.ui-v4 .profil-v4-signature--upset { --signature: #ff9b59; }
+.ui-v4 .profil-v4-signature--streaker { --signature: #ff6b73; }
+.ui-v4 .profil-v4-signature--safe { --signature: #65d9ff; }
+.ui-v4 .profil-v4-signature--contrarian { --signature: #ba8cff; }
+.ui-v4 .profil-v4-signature--forming { --signature: #8a95a5; opacity: .84; }
+
+@media (max-width:720px) {
+  .ui-v4 .profil-v4-signature { margin-top: 15px; padding-right: 8px; }
+  .ui-v4 .profil-v4-signature p { margin-right: 0; }
+  .ui-v4 .profil-v4-signature > span { display: none; }
+}

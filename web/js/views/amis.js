@@ -1,36 +1,20 @@
-/**
- * Les amis — troisième onglet de Ligues.
- *
- * Une ligue est un classement ; un ami est une personne. On peut suivre
- * quelqu'un sans jouer dans la même ligue que lui, et c'est le seul endroit
- * du produit où on choisit qui on regarde.
- *
- * La règle qui commande tout l'écran : **on ne montre jamais un pronostic
- * non résolu.** La répartition anonyme de la communauté existe déjà pour
- * donner le sentiment du groupe avant un match ; afficher nommément ce que
- * le meilleur joueur de la ligue a joué sur un match à venir en ferait une
- * antisèche, et viderait le jeu de son intérêt. L'activité affichée ici est
- * du récit, jamais de l'information.
- */
-
+/** Amis V4 — social graph natif Economy V2. */
 import * as api from '../api.js';
 import { contexte } from '../app.js';
 import { esc, frags, vide, toast, surClic, quand } from '../ui.js';
 
 export async function sectionAmis(zone) {
   if (!contexte.utilisateur) {
-    zone.innerHTML = vide(
-      'Connecte-toi',
-      'Les amis, c’est voir qui a eu raison hier soir — et le leur rappeler.',
-      '<a class="btn" href="#/connexion">Créer mon compte</a>'
-    );
+    zone.innerHTML = `<section class="friends-v4 friends-v4--guest">${vide(
+      'Tes rivalités commencent avec des gens que tu connais.',
+      'Connecte-toi pour retrouver tes amis, comparer vos ratings et revivre vos pronostics déjà réglés.',
+      '<a class="btn" href="#/connexion">Créer mon profil</a>'
+    )}</section>`;
     return;
   }
 
   await rafraichir(zone);
 
-  // Un seul jeu d'écouteurs pour toute la section : les listes sont
-  // reconstruites à chaque action, des écouteurs par bouton s'empileraient.
   surClic(zone, '[data-action]', async (btn) => {
     const { action, user } = btn.dataset;
     btn.disabled = true;
@@ -46,7 +30,7 @@ export async function sectionAmis(zone) {
         toast('Demande refusée.');
       } else if (action === 'retirer') {
         await api.retirerAmi(user);
-        toast('Retiré de tes amis.');
+        toast('Lien retiré.');
       }
       await rafraichir(zone, zone.querySelector('#recherche')?.value ?? '');
     } catch (e) {
@@ -57,37 +41,49 @@ export async function sectionAmis(zone) {
 }
 
 async function rafraichir(zone, terme = '') {
-  const [donnees, activite] = await Promise.all([api.mesAmis(), api.activiteAmis()]);
-  const resultats = terme.trim().length >= 2 ? await api.chercherJoueurs(terme) : [];
+  const [donnees, activite] = await Promise.all([
+    api.mesAmis().catch(() => ({ amis: [], recues: [], envoyees: [] })),
+    api.activiteAmis().catch(() => []),
+  ]);
+  const resultats = terme.trim().length >= 2 ? await api.chercherJoueurs(terme).catch(() => []) : [];
 
   zone.innerHTML = `
-    ${blocDemandes(donnees.recues)}
+    <section class="friends-v4">
+      <header class="friends-v4__hero">
+        <div>
+          <span class="ligues-v2__kicker">TON CERCLE</span>
+          <h2>Les gens derrière les pseudos.</h2>
+          <p>Comparez vos ratings, créez des ligues et gardez les pronostics en cours secrets jusqu'au verdict.</p>
+        </div>
+        <div class="friends-v4__count"><strong>${donnees.amis?.length ?? 0}</strong><span>ami${(donnees.amis?.length ?? 0) > 1 ? 's' : ''}</span></div>
+      </header>
 
-    <div class="bloc">
-      <div class="bloc__titre"><span>Trouver quelqu’un</span></div>
-      <div class="bloc__corps">
-        <label class="champ">
-          <span class="champ__libelle">Pseudo</span>
-          <input type="text" id="recherche" placeholder="Deux lettres suffisent"
-                 autocomplete="off" value="${esc(terme)}" />
+      ${blocDemandes(donnees.recues)}
+
+      <section class="friends-v4__search">
+        <div class="friends-v4__section-title">
+          <span class="ligues-v2__kicker">TROUVER UN JOUEUR</span>
+          <h3>Ajoute quelqu'un à ton cercle.</h3>
+        </div>
+        <label class="friends-v4__searchbox">
+          <span aria-hidden="true">⌕</span>
+          <input type="text" id="recherche" placeholder="Chercher un pseudo…" autocomplete="off" value="${esc(terme)}" />
         </label>
-        <div id="resultats">${listeResultats(resultats, terme)}</div>
-      </div>
-    </div>
+        <div class="friends-v4__search-results" id="resultats">${listeResultats(resultats, terme)}</div>
+      </section>
 
-    ${blocAmis(donnees.amis, donnees.envoyees)}
-    ${blocActivite(activite)}`;
+      ${blocAmis(donnees.amis, donnees.envoyees)}
+      ${blocActivite(activite)}
+    </section>`;
 
   const champ = zone.querySelector('#recherche');
   if (champ) {
-    // Une frappe ne déclenche pas une requête : on attend que la main
-    // s'arrête. Sans ça, « Thomas » en lance six.
     let minuteur;
     champ.addEventListener('input', (e) => {
       const v = e.target.value;
       clearTimeout(minuteur);
       minuteur = setTimeout(async () => {
-        const liste = v.trim().length >= 2 ? await api.chercherJoueurs(v) : [];
+        const liste = v.trim().length >= 2 ? await api.chercherJoueurs(v).catch(() => []) : [];
         const cible = zone.querySelector('#resultats');
         if (cible) cible.innerHTML = listeResultats(liste, v);
       }, 280);
@@ -101,136 +97,67 @@ async function rafraichir(zone, terme = '') {
 
 function blocDemandes(recues) {
   if (!recues?.length) return '';
-  return `
-    <div class="bloc bloc--info">
-      <div class="bloc__titre">
-        <span>Demandes reçues</span><span>${recues.length}</span>
-      </div>
-      <div class="bloc__corps">
-        ${recues
-          .map(
-            (d) => `
-          <div class="ligne-ami">
-            <div>
-              <div class="ligne-ami__nom">${esc(d.pseudo)}</div>
-              <div class="ligne-ami__aide">${esc(quand(d.depuis))}</div>
-            </div>
-            <div class="ligne-ami__actions">
-              <button class="btn btn--petit" data-action="accepter" data-user="${esc(d.id)}">Accepter</button>
-              <button class="btn btn--petit btn--fantome" data-action="refuser" data-user="${esc(d.id)}">Refuser</button>
-            </div>
-          </div>`
-          )
-          .join('')}
-      </div>
-    </div>`;
+  return `<section class="friends-v4__requests">
+    <div class="friends-v4__section-title friends-v4__section-title--row"><div><span class="ligues-v2__kicker">EN ATTENTE</span><h3>${recues.length} demande${recues.length > 1 ? 's' : ''} reçue${recues.length > 1 ? 's' : ''}</h3></div><span>${recues.length}</span></div>
+    <div class="friends-v4__request-list">${recues.map((d) => `
+      <article class="friends-v4__request">
+        <span class="friends-v4__avatar">${esc(initiales(d.pseudo))}</span>
+        <div><strong>${esc(d.pseudo)}</strong><small>${esc(quand(d.depuis))}</small></div>
+        <div class="friends-v4__actions"><button class="btn btn--petit" data-action="accepter" data-user="${esc(d.id)}">Accepter</button><button class="btn btn--petit btn--fantome" data-action="refuser" data-user="${esc(d.id)}">Refuser</button></div>
+      </article>`).join('')}</div>
+  </section>`;
 }
 
 function listeResultats(liste, terme) {
-  if (terme.trim().length < 2) {
-    return '<p class="ligne-ami__aide" style="margin:0">Tape au moins deux lettres.</p>';
-  }
-  if (!liste.length) {
-    return '<p class="ligne-ami__aide" style="margin:0">Personne de ce nom.</p>';
-  }
+  if (terme.trim().length < 2) return '<p class="friends-v4__hint">Tape au moins deux lettres.</p>';
+  if (!liste.length) return '<p class="friends-v4__hint">Aucun joueur trouvé.</p>';
   const bouton = {
     aucune: (id) => `<button class="btn btn--petit" data-action="demander" data-user="${esc(id)}">Ajouter</button>`,
     demande_envoyee: () => '<span class="badge">Demande envoyée</span>',
     demande_recue: (id) => `<button class="btn btn--petit" data-action="accepter" data-user="${esc(id)}">Accepter</button>`,
     ami: () => '<span class="badge">Ami</span>',
   };
-  return liste
-    .map(
-      (j) => `
-    <div class="ligne-ami">
-      <div class="ligne-ami__nom">${esc(j.pseudo)}</div>
-      <div class="ligne-ami__actions">${bouton[j.relation](j.id)}</div>
-    </div>`
-    )
-    .join('');
+  return liste.map((j) => `<div class="friends-v4__result"><span class="friends-v4__avatar friends-v4__avatar--small">${esc(initiales(j.pseudo))}</span><strong>${esc(j.pseudo)}</strong><div>${bouton[j.relation](j.id)}</div></div>`).join('');
 }
 
-function blocAmis(amis, envoyees) {
-  const enAttente = (envoyees ?? [])
-    .map(
-      (d) => `
-    <div class="ligne-ami">
-      <div>
-        <div class="ligne-ami__nom" style="opacity:.7">${esc(d.pseudo)}</div>
-        <div class="ligne-ami__aide">Demande envoyée ${esc(quand(d.depuis))}</div>
-      </div>
-      <div class="ligne-ami__actions">
-        <button class="btn btn--petit btn--fantome" data-action="retirer" data-user="${esc(d.id)}">Annuler</button>
-      </div>
-    </div>`
-    )
-    .join('');
+function blocAmis(amis = [], envoyees = []) {
+  const enAttente = envoyees.map((d) => `<article class="friends-v4__friend friends-v4__friend--pending"><span class="friends-v4__avatar">${esc(initiales(d.pseudo))}</span><div class="friends-v4__friend-copy"><strong>${esc(d.pseudo)}</strong><small>Demande envoyée ${esc(quand(d.depuis))}</small></div><button class="btn btn--petit btn--fantome" data-action="retirer" data-user="${esc(d.id)}">Annuler</button></article>`).join('');
 
-  return `
-    <div class="bloc">
-      <div class="bloc__titre">
-        <span>Mes amis</span><span>${amis?.length ?? 0}</span>
-      </div>
-      <div class="bloc__corps">
-        ${
-          amis?.length
-            ? amis
-                .map(
-                  (a) => `
-          <div class="ligne-ami">
-            <div>
-              <div class="ligne-ami__nom">${esc(a.pseudo)}${
-                a.tag_favori ? ` <span class="badge">${esc(a.tag_favori)}</span>` : ''
-              }</div>
-              <div class="ligne-ami__aide">
-                ${esc(frags(a.solde))} · ${a.paris} pari${a.paris > 1 ? 's' : ''}
-                · retour <span class="${Number(a.roi) >= 0 ? 'positif' : 'negatif'}">${
-                    Number(a.roi) >= 0 ? '+' : ''
-                  }${esc(Number(a.roi).toFixed(1))} %</span>
-                · note ${a.note}
-              </div>
-            </div>
-            <div class="ligne-ami__actions">
-              <button class="btn btn--petit btn--fantome" data-action="retirer" data-user="${esc(a.id)}">Retirer</button>
-            </div>
-          </div>`
-                )
-                .join('')
-            : vide('Personne pour l’instant', 'Cherche un pseudo au-dessus, ou envoie ton code de ligue.')
-        }
-        ${enAttente}
-      </div>
-    </div>`;
+  return `<section class="friends-v4__roster">
+    <div class="friends-v4__section-title friends-v4__section-title--row"><div><span class="ligues-v2__kicker">MES AMIS</span><h3>Ton cercle de jeu.</h3></div><span>${amis.length}</span></div>
+    <div class="friends-v4__grid">${amis.length ? amis.map(carteAmi).join('') : `<div class="friends-v4__empty">${vide('Personne pour l’instant', 'Cherche un pseudo ou partage le code d’une ligue.')}</div>`}${enAttente}</div>
+  </section>`;
+}
+
+function carteAmi(a) {
+  const pronostics = Number(a.paris ?? 0);
+  const gagnes = Number(a.gagnes ?? 0);
+  const precision = pronostics > 0 ? Math.round((gagnes / pronostics) * 100) : null;
+  return `<article class="friends-v4__friend">
+    <div class="friends-v4__friend-top"><span class="friends-v4__avatar">${esc(initiales(a.pseudo))}</span>${a.tag_favori ? `<span class="friends-v4__faction">${esc(a.tag_favori)}</span>` : ''}</div>
+    <div class="friends-v4__friend-copy"><strong>${esc(a.pseudo)}</strong><span>${esc(frags(a.solde ?? 1000))} Frags</span></div>
+    <dl class="friends-v4__stats"><div><dt>Pronostics</dt><dd>${pronostics}</dd></div><div><dt>Réussite</dt><dd>${precision == null ? '—' : `${precision}%`}</dd></div></dl>
+    <div class="friends-v4__friend-foot"><span>Rating saisonnier</span><button class="friends-v4__remove" data-action="retirer" data-user="${esc(a.id)}" type="button">Retirer</button></div>
+  </article>`;
 }
 
 function blocActivite(activite) {
   if (!activite?.length) return '';
-  return `
-    <div class="bloc">
-      <div class="bloc__titre"><span>Ce qu’ils ont fait</span></div>
-      <div class="bloc__corps">
-        ${activite
-          .map(
-            (e) => `
-          <div class="ligne-ami">
-            <div>
-              <div class="ligne-ami__nom">${esc(e.pseudo)}</div>
-              <div class="ligne-ami__aide">
-                ${esc(e.libelle_choix ?? e.choix)} sur ${esc(e.equipe_a)} – ${esc(e.equipe_b)},
-                cote ${esc(Number(e.cote).toFixed(2))} · ${esc(quand(e.quand))}
-              </div>
-            </div>
-            <div class="ligne-ami__actions ${e.statut === 'gagne' ? 'positif' : 'negatif'}">
-              ${e.statut === 'gagne' ? `+${esc(frags(e.net))}` : `−${esc(frags(e.mise))}`}
-            </div>
-          </div>`
-          )
-          .join('')}
-      </div>
-      <div class="encart" style="margin:0 14px 14px">
-        Seuls les pronostics déjà résolus apparaissent ici. Ce que tes amis ont
-        joué sur les matchs à venir reste caché — sinon il suffirait de recopier
-        le meilleur d’entre vous.
-      </div>
-    </div>`;
+  return `<section class="friends-v4__activity">
+    <div class="friends-v4__section-title"><span class="ligues-v2__kicker">APRÈS LE VERDICT</span><h3>Ce qu'ils ont tenté.</h3><p>Les choix en cours restent privés. L'activité n'apparaît qu'une fois le match réglé.</p></div>
+    <div class="friends-v4__feed">${activite.slice(0, 12).map((e) => {
+      const choix = e.choix === 'a' ? e.equipe_a : e.choix === 'b' ? e.equipe_b : e.choix;
+      const delta = Number(e.delta_frags ?? 0);
+      const gagne = e.statut === 'gagne';
+      const proba = Number.isFinite(Number(e.proba_figee)) ? Math.round(Number(e.proba_figee) * 100) : null;
+      return `<article class="friends-v4__feed-row"><span class="friends-v4__avatar friends-v4__avatar--small">${esc(initiales(e.pseudo))}</span><div><strong>${esc(e.pseudo)}</strong><p>a choisi <b>${esc(choix)}</b> sur ${esc(e.equipe_a)} – ${esc(e.equipe_b)}${proba == null ? '' : ` · ${proba}% modèle`}.</p><small>${esc(quand(e.quand))}</small></div><span class="friends-v4__delta ${gagne ? 'positif' : 'negatif'}">${gagne ? '+' : '−'}${esc(frags(Math.abs(delta)))}</span></article>`;
+    }).join('')}</div>
+  </section>`;
+}
+
+function initiales(nom = '') {
+  const mots = String(nom).trim().split(/[\s._-]+/).filter(Boolean);
+  if (!mots.length) return '?';
+  if (mots.length === 1) return mots[0].slice(0, 2).toUpperCase();
+  return `${mots[0][0]}${mots[1][0]}`.toUpperCase();
 }

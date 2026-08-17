@@ -1,0 +1,619 @@
+/* ========================================================================== 
+   CLUTCH — SOCIAL / LEAGUES / FACTIONS V4
+   The "belong" pillar: private leagues, friends, weekly rivalries and faction relics.
+   Loaded after legacy social/community CSS while migration is in progress.
+   ========================================================================== */
+
+.ui-v4 .ligues-v2,
+.ui-v4 .ligue-v2,
+.ui-v4 .commu-v2,
+.ui-v4 .friends-v4 {
+  --social-volt: #e8ff3d;
+  --social-ink: #070a0f;
+  --social-panel: rgba(10,14,19,.78);
+  --social-line: rgba(255,255,255,.075);
+  --social-line-strong: rgba(255,255,255,.14);
+  position: relative;
+}
+
+/* --------------------------------------------------------------------------
+   LEAGUES HQ
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .ligues-v2__hero {
+  position: relative;
+  overflow: hidden;
+  grid-template-columns: minmax(0,1.45fr) minmax(250px,.55fr);
+  min-height: 330px;
+  padding: 42px 34px 36px;
+  margin: 8px 0 22px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 34px 14px 34px 14px;
+  background:
+    linear-gradient(90deg, rgba(232,255,61,.06), transparent 31%),
+    radial-gradient(520px 260px at 86% 12%, rgba(232,255,61,.075), transparent 70%),
+    linear-gradient(150deg, rgba(255,255,255,.035), rgba(255,255,255,.008) 44%),
+    #090d12;
+  box-shadow: 0 34px 90px -58px rgba(0,0,0,.92), inset 0 1px 0 rgba(255,255,255,.03);
+}
+
+.ui-v4 .ligues-v2__hero::before {
+  content: "RIVALRY";
+  position: absolute;
+  right: -22px;
+  bottom: -19px;
+  color: rgba(255,255,255,.018);
+  font: 900 clamp(5.4rem,13vw,10rem)/.75 var(--titre);
+  letter-spacing: -.08em;
+  pointer-events: none;
+}
+
+.ui-v4 .ligues-v2__hero-copy,
+.ui-v4 .ligues-v2__hero-actions { position: relative; z-index: 1; }
+
+.ui-v4 .ligues-v2__hero-copy h1 {
+  max-width: 760px;
+  margin: 10px 0 16px;
+  font-size: clamp(3.1rem,6.6vw,5.4rem);
+  line-height: .87;
+  letter-spacing: -.067em;
+}
+
+.ui-v4 .ligues-v2__hero-copy h1 span { color: #77828e; }
+.ui-v4 .ligues-v2__hero-copy p { max-width: 650px; color: #8b96a2; }
+
+.ui-v4 .ligues-v2__hero-actions {
+  align-self: end;
+  gap: 9px;
+}
+
+.ui-v4 .ligues-v2__action {
+  min-height: 72px;
+  padding: 13px 15px;
+  border-radius: 18px 8px 18px 8px;
+  border-color: rgba(255,255,255,.075);
+  background: rgba(8,12,17,.65);
+  backdrop-filter: blur(18px);
+}
+
+.ui-v4 .ligues-v2__action:nth-child(2) { border-radius: 8px 18px 8px 18px; }
+.ui-v4 .ligues-v2__action:hover { border-color: rgba(255,255,255,.15); background: rgba(14,20,27,.9); }
+.ui-v4 .ligues-v2__action--primary { border-color: rgba(232,255,61,.25); background: rgba(232,255,61,.065); }
+
+.ui-v4 .ligues-v2__tabs {
+  position: sticky;
+  top: 72px;
+  z-index: 14;
+  width: fit-content;
+  margin: 18px 0 28px;
+  padding: 5px;
+  border-color: rgba(255,255,255,.075);
+  background: rgba(7,10,14,.79);
+  backdrop-filter: blur(22px) saturate(1.15);
+  box-shadow: 0 14px 36px rgba(0,0,0,.22);
+}
+
+.ui-v4 .ligues-v2__tab { min-height: 36px; padding: 9px 16px; }
+.ui-v4 .ligues-v2__tab.actif { background: var(--accent); color: var(--sur-accent); }
+
+.ui-v4 .ligues-v2__section-head { margin: 34px 2px 18px; }
+.ui-v4 .ligues-v2__section-head h2 { font-size: clamp(1.7rem,3vw,2.35rem); letter-spacing: -.045em; }
+
+.ui-v4 .ligues-v2__league-grid {
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 16px;
+}
+
+.ui-v4 .ligues-v2__league-card {
+  min-height: 300px;
+  padding: 22px;
+  border-radius: 28px 10px 28px 10px;
+  border-color: rgba(255,255,255,.075);
+  background:
+    radial-gradient(90% 90% at 100% 0%, rgba(232,255,61,.05), transparent 66%),
+    linear-gradient(145deg, rgba(255,255,255,.035), transparent 40%),
+    rgba(9,13,18,.79);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.ui-v4 .ligues-v2__league-card:nth-child(even) { border-radius: 10px 28px 10px 28px; }
+.ui-v4 .ligues-v2__league-card:hover {
+  transform: translateY(-5px) rotate(-.15deg);
+  border-color: rgba(232,255,61,.28);
+  box-shadow: 0 28px 65px -42px rgba(232,255,61,.24), inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+.ui-v4 .ligues-v2__league-card:nth-child(even):hover { transform: translateY(-5px) rotate(.15deg); }
+.ui-v4 .ligues-v2__crest,
+.ui-v4 .ligue-v2__crest {
+  filter: drop-shadow(0 12px 24px rgba(232,255,61,.08));
+}
+
+.ui-v4 .ligues-v2__league-rank strong {
+  color: #f6f8f4;
+  font-size: 3.4rem;
+  font-weight: 780;
+}
+
+.ui-v4 .ligues-v2__league-foot { border-top-color: rgba(255,255,255,.055); }
+
+/* League detail = club room / leaderboard stage */
+.ui-v4 .ligue-v2__hero {
+  min-height: 320px;
+  padding: 34px;
+  border-radius: 36px 14px 36px 14px;
+  background:
+    radial-gradient(480px 250px at 88% 12%, rgba(232,255,61,.08), transparent 70%),
+    linear-gradient(145deg, rgba(232,255,61,.04), transparent 35%),
+    #090d12;
+}
+
+.ui-v4 .ligue-v2__identity h1 {
+  font-size: clamp(2.8rem,5.8vw,4.8rem);
+  line-height: .9;
+  letter-spacing: -.065em;
+}
+
+.ui-v4 .ligue-v2__status,
+.ui-v4 .ligue-v2__invite {
+  border-radius: 18px 8px 18px 8px;
+  border-color: rgba(255,255,255,.08);
+  background: rgba(6,9,13,.62);
+  backdrop-filter: blur(16px);
+}
+
+.ui-v4 .ligue-v2__invite { border-radius: 8px 18px 8px 18px; }
+
+.ui-v4 .ligue-v2__podium {
+  position: relative;
+  overflow: hidden;
+  margin: 34px 0 28px;
+  padding: 30px 24px 0;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 14px 34px 14px 34px;
+  background:
+    linear-gradient(to top, rgba(232,255,61,.045), transparent 45%),
+    rgba(9,13,18,.58);
+}
+
+.ui-v4 .ligue-v2__podium::before {
+  content: "TOP 3";
+  position: absolute;
+  right: 18px;
+  top: 12px;
+  color: rgba(255,255,255,.025);
+  font: 900 4.5rem/1 var(--titre);
+  letter-spacing: -.07em;
+}
+
+.ui-v4 .ligue-v2__podium-player {
+  filter: drop-shadow(0 22px 30px rgba(0,0,0,.34));
+}
+
+.ui-v4 .ligue-v2__podium-player--1 .ligue-v2__player-avatar {
+  border-color: rgba(232,255,61,.52);
+  box-shadow: 0 0 0 7px rgba(232,255,61,.035), 0 0 34px rgba(232,255,61,.14);
+}
+
+.ui-v4 .ligue-v2__duo-grid { gap: 16px; }
+.ui-v4 .ligue-v2__focus-card {
+  border-radius: 28px 10px 28px 10px;
+  border-color: rgba(255,255,255,.075);
+  background: rgba(9,13,18,.68);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+}
+.ui-v4 .ligue-v2__focus-card:nth-child(2) { border-radius: 10px 28px 10px 28px; }
+
+.ui-v4 .ligue-v2__ranking {
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 26px 10px 26px 10px;
+  background: rgba(7,11,15,.54);
+}
+
+.ui-v4 .ligue-v2__ranking-row {
+  min-height: 72px;
+  padding-inline: 16px;
+  border-bottom-color: rgba(255,255,255,.045);
+}
+
+.ui-v4 .ligue-v2__ranking-row.moi {
+  background: linear-gradient(90deg, rgba(232,255,61,.085), rgba(232,255,61,.015));
+  box-shadow: inset 3px 0 var(--accent);
+}
+
+/* The old tournament challenge is based on legacy net-profit semantics.
+   Economy V2 keeps weekly rating rivalry as the social event until a new
+   rating-safe challenge contract is introduced. */
+.ui-v4 .ligue-v2__event-section { display: none; }
+
+.ui-v4 .ligue-v2__rewards {
+  border-radius: 10px 30px 10px 30px;
+  border-color: rgba(255,255,255,.07);
+  background: linear-gradient(135deg, rgba(232,255,61,.045), transparent 42%), rgba(9,13,18,.68);
+}
+
+/* --------------------------------------------------------------------------
+   FRIENDS — people first, no betting metrics
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .friends-v4 { padding: 4px 0 20px; }
+
+.ui-v4 .friends-v4__hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 28px;
+  min-height: 210px;
+  padding: 30px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 30px 12px 30px 12px;
+  background:
+    radial-gradient(360px 180px at 88% 20%, rgba(108,122,255,.09), transparent 70%),
+    linear-gradient(145deg, rgba(255,255,255,.03), transparent 42%),
+    rgba(9,13,18,.72);
+}
+
+.ui-v4 .friends-v4__hero::after {
+  content: "CIRCLE";
+  position: absolute;
+  right: -8px;
+  top: 4px;
+  color: rgba(255,255,255,.018);
+  font: 900 6rem/1 var(--titre);
+  letter-spacing: -.075em;
+  pointer-events: none;
+}
+
+.ui-v4 .friends-v4__hero > div { position: relative; z-index: 1; }
+.ui-v4 .friends-v4__hero h2 { margin: 6px 0 8px; font-size: clamp(2rem,4vw,3.2rem); letter-spacing: -.05em; }
+.ui-v4 .friends-v4__hero p { max-width: 620px; margin: 0; color: #8995a1; }
+
+.ui-v4 .friends-v4__count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 100px;
+}
+.ui-v4 .friends-v4__count strong { font: 800 3.2rem/.9 var(--titre); letter-spacing: -.07em; }
+.ui-v4 .friends-v4__count span { margin-top: 5px; color: #77828e; font-size: .72rem; }
+
+.ui-v4 .friends-v4__section-title { margin: 0 0 14px; }
+.ui-v4 .friends-v4__section-title h3 { margin: 4px 0 0; font-size: 1.45rem; letter-spacing: -.035em; }
+.ui-v4 .friends-v4__section-title p { max-width: 600px; color: #7f8a97; }
+.ui-v4 .friends-v4__section-title--row { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
+.ui-v4 .friends-v4__section-title--row > span { color: #6d7783; }
+
+.ui-v4 .friends-v4__requests,
+.ui-v4 .friends-v4__search,
+.ui-v4 .friends-v4__roster,
+.ui-v4 .friends-v4__activity {
+  margin-top: 22px;
+}
+
+.ui-v4 .friends-v4__search {
+  padding: 22px;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 26px 10px 26px 10px;
+  background: rgba(9,13,18,.56);
+}
+
+.ui-v4 .friends-v4__searchbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 15px;
+  background: rgba(4,7,10,.66);
+}
+.ui-v4 .friends-v4__searchbox > span { color: #67727f; font-size: 1.2rem; }
+.ui-v4 .friends-v4__searchbox input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--texte); font: 650 .9rem var(--titre); }
+
+.ui-v4 .friends-v4__search-results { margin-top: 10px; }
+.ui-v4 .friends-v4__result,
+.ui-v4 .friends-v4__request {
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 2px;
+  border-bottom: 1px solid rgba(255,255,255,.045);
+}
+
+.ui-v4 .friends-v4__avatar {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 17px 8px 17px 8px;
+  border: 1px solid rgba(255,255,255,.09);
+  background: linear-gradient(145deg, rgba(255,255,255,.06), rgba(255,255,255,.015));
+  color: #e7ebee;
+  font: 800 .75rem/1 var(--titre);
+  letter-spacing: .04em;
+}
+.ui-v4 .friends-v4__avatar--small { width: 36px; height: 36px; border-radius: 12px 6px 12px 6px; font-size: .66rem; }
+
+.ui-v4 .friends-v4__grid {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 13px;
+}
+
+.ui-v4 .friends-v4__friend {
+  position: relative;
+  min-height: 230px;
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 24px 9px 24px 9px;
+  background:
+    radial-gradient(110% 90% at 100% 0%, rgba(108,122,255,.065), transparent 62%),
+    rgba(9,13,18,.68);
+  display: flex;
+  flex-direction: column;
+}
+.ui-v4 .friends-v4__friend:nth-child(3n+2) { border-radius: 9px 24px 9px 24px; }
+.ui-v4 .friends-v4__friend-top { display: flex; justify-content: space-between; align-items: start; gap: 10px; }
+.ui-v4 .friends-v4__faction { padding: 5px 8px; border: 1px solid rgba(232,255,61,.18); border-radius: 999px; color: #b6c34f; font: 750 .6rem/1 var(--titre); }
+.ui-v4 .friends-v4__friend-copy { margin-top: 16px; display: flex; flex-direction: column; }
+.ui-v4 .friends-v4__friend-copy strong { font: 760 1.05rem/1.15 var(--titre); }
+.ui-v4 .friends-v4__friend-copy span { margin-top: 5px; color: var(--accent); font: 700 .8rem/1 var(--titre); }
+.ui-v4 .friends-v4__stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: auto 0 15px; }
+.ui-v4 .friends-v4__stats div { padding: 10px 0; border-top: 1px solid rgba(255,255,255,.05); }
+.ui-v4 .friends-v4__stats dt { color: #697482; font-size: .61rem; }
+.ui-v4 .friends-v4__stats dd { margin: 3px 0 0; color: #e7eaed; font: 750 .84rem/1 var(--titre); }
+.ui-v4 .friends-v4__friend-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #65707d; font-size: .61rem; }
+.ui-v4 .friends-v4__remove { appearance: none; border: 0; background: transparent; color: #65707d; cursor: pointer; font-size: .65rem; }
+.ui-v4 .friends-v4__remove:hover { color: var(--danger); }
+
+.ui-v4 .friends-v4__activity {
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,.055);
+}
+.ui-v4 .friends-v4__feed { border-top: 1px solid rgba(255,255,255,.045); }
+.ui-v4 .friends-v4__feed-row {
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr) auto;
+  align-items: center;
+  gap: 13px;
+  min-height: 76px;
+  padding: 10px 2px;
+  border-bottom: 1px solid rgba(255,255,255,.045);
+}
+.ui-v4 .friends-v4__feed-row p { margin: 3px 0; color: #8a95a2; font-size: .75rem; }
+.ui-v4 .friends-v4__feed-row small { color: #59636e; font-size: .62rem; }
+.ui-v4 .friends-v4__delta { font: 800 .85rem/1 var(--titre); }
+
+/* --------------------------------------------------------------------------
+   FACTIONS — relic shrine, not a statistics dashboard
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .commu-v2-entete {
+  position: relative;
+  align-items: end;
+  min-height: 220px;
+  padding: 26px 2px 28px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+}
+
+.ui-v4 .commu-v2-entete::after {
+  content: "FACTIONS";
+  position: absolute;
+  right: 0;
+  bottom: 12px;
+  z-index: -1;
+  color: rgba(255,255,255,.018);
+  font: 900 clamp(4.8rem,12vw,9rem)/.8 var(--titre);
+  letter-spacing: -.08em;
+}
+
+.ui-v4 .commu-v2-entete h1 {
+  margin: 6px 0 10px;
+  font-size: clamp(3rem,7vw,5.3rem);
+  line-height: .87;
+  letter-spacing: -.07em;
+}
+
+.ui-v4 .commu-v2-entete p { max-width: 650px; color: #87929e; }
+.ui-v4 .commu-v2-entete__signal {
+  min-width: 160px;
+  padding: 15px 16px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 18px 8px 18px 8px;
+  background: rgba(9,13,18,.62);
+}
+
+.ui-v4 .commu-core--v3 {
+  position: relative;
+  overflow: hidden;
+  min-height: 600px;
+  padding: 30px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 38px 14px 38px 14px;
+  background:
+    radial-gradient(55% 70% at 50% 48%, hsla(var(--team-hue),90%,56%,.08), transparent 70%),
+    radial-gradient(42% 50% at 50% 62%, rgba(232,255,61,.035), transparent 72%),
+    linear-gradient(145deg, rgba(255,255,255,.03), transparent 42%),
+    #080c11;
+  box-shadow: 0 38px 100px -62px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.ui-v4 .commu-core--v3::after {
+  content: "RELIC";
+  position: absolute;
+  right: -18px;
+  bottom: -20px;
+  color: rgba(255,255,255,.018);
+  font: 900 7.5rem/1 var(--titre);
+  letter-spacing: -.08em;
+  pointer-events: none;
+}
+
+.ui-v4 .commu-core__identite,
+.ui-v4 .commu-core__reacteur,
+.ui-v4 .commu-core__charge { position: relative; z-index: 2; }
+
+.ui-v4 .commu-core__identite h2 { font-size: clamp(2rem,4.5vw,3.5rem); letter-spacing: -.055em; }
+.ui-v4 .commu-core__microstats--v3 { gap: 2px; }
+.ui-v4 .commu-core__microstats--v3 > span {
+  padding: 11px 12px;
+  border: 1px solid rgba(255,255,255,.055);
+  background: rgba(5,8,11,.48);
+}
+
+.ui-v4 .commu-core__reacteur {
+  display: grid;
+  place-items: center;
+  min-height: 440px;
+}
+
+.ui-v4 .commu-reacteur {
+  filter: drop-shadow(0 32px 50px rgba(0,0,0,.38));
+}
+
+.ui-v4 .commu-core__charge {
+  align-self: center;
+  padding: 22px;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 24px 9px 24px 9px;
+  background: rgba(5,8,12,.58);
+  backdrop-filter: blur(14px);
+}
+
+.ui-v4 .commu-charge__barre { height: 6px; background: rgba(255,255,255,.055); }
+.ui-v4 .commu-charge__barre i { box-shadow: 0 0 18px rgba(232,255,61,.24); }
+
+.ui-v4 .commu-recompense {
+  border-radius: 16px 7px 16px 7px;
+  border-color: rgba(232,255,61,.18);
+  background: rgba(232,255,61,.04);
+}
+
+.ui-v4 .commu-evolution--v3,
+.ui-v4 .commu-contribution,
+.ui-v4 .commu-histoire,
+.ui-v4 .commu-classement--v3 {
+  margin-top: 28px;
+}
+
+.ui-v4 .commu-evolution--v3 {
+  padding: 24px 0 8px;
+  border-top: 1px solid rgba(255,255,255,.055);
+  border-bottom: 1px solid rgba(255,255,255,.055);
+  background: transparent;
+}
+
+.ui-v4 .commu-rail--v3 {
+  gap: 7px;
+  margin-top: 20px;
+}
+
+.ui-v4 .commu-rail--v3 li {
+  min-height: 150px;
+  border-radius: 18px 7px 18px 7px;
+  border-color: rgba(255,255,255,.055);
+  background: rgba(8,12,17,.54);
+}
+
+.ui-v4 .commu-rail--v3 li.est-courant {
+  border-color: rgba(232,255,61,.26);
+  background: linear-gradient(145deg, rgba(232,255,61,.07), transparent 48%), rgba(8,12,17,.72);
+  box-shadow: 0 18px 45px -34px rgba(232,255,61,.35);
+}
+
+.ui-v4 .commu-contribution {
+  border-radius: 26px 9px 26px 9px;
+  border-color: rgba(255,255,255,.065);
+  background: rgba(9,13,18,.58);
+}
+
+.ui-v4 .commu-histoire__liste article {
+  min-height: 72px;
+  border-bottom-color: rgba(255,255,255,.045);
+}
+
+.ui-v4 .commu-factions { display: grid; gap: 8px; }
+.ui-v4 .commu-faction--v3 {
+  min-height: 86px;
+  border-radius: 18px 7px 18px 7px;
+  border-color: rgba(255,255,255,.055);
+  background: rgba(8,12,17,.5);
+}
+.ui-v4 .commu-faction--v3.commu-faction--moi {
+  border-color: rgba(232,255,61,.22);
+  background: linear-gradient(90deg, rgba(232,255,61,.065), transparent 55%), rgba(8,12,17,.65);
+}
+
+/* Economy V2 wording. Values are Volts after migration 30. */
+.ui-v4 .commu-recompense p::after {
+  content: " · Récompense cosmétique : ton rating Frags ne bouge pas.";
+  color: #6e7985;
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVE
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1080px) {
+  .ui-v4 .friends-v4__grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .ui-v4 .ligues-v2__hero { grid-template-columns: 1fr 250px; }
+}
+
+@media (max-width: 899px) {
+  .ui-v4 .ligues-v2__hero {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding: 30px 24px;
+  }
+  .ui-v4 .ligues-v2__hero-actions { grid-template-columns: 1fr 1fr; }
+  .ui-v4 .ligues-v2__tabs { top: 64px; max-width: 100%; overflow-x: auto; }
+  .ui-v4 .ligues-v2__league-grid { grid-template-columns: 1fr; }
+  .ui-v4 .ligue-v2__hero { grid-template-columns: 1fr; }
+  .ui-v4 .ligue-v2__hero-meta { justify-content: flex-start; }
+  .ui-v4 .friends-v4__hero { min-height: 190px; }
+}
+
+@media (max-width: 680px) {
+  .ui-v4 .ligues-v2__hero { margin-inline: -4px; padding: 26px 18px; border-radius: 26px 10px 26px 10px; }
+  .ui-v4 .ligues-v2__hero-copy h1 { font-size: clamp(2.6rem,14vw,4rem); }
+  .ui-v4 .ligues-v2__hero-actions { grid-template-columns: 1fr; }
+  .ui-v4 .ligues-v2__action { min-height: 62px; }
+  .ui-v4 .ligues-v2__tabs { width: 100%; }
+  .ui-v4 .ligues-v2__tab { flex: 1; white-space: nowrap; }
+
+  .ui-v4 .ligue-v2__hero { padding: 24px 18px; border-radius: 28px 10px 28px 10px; }
+  .ui-v4 .ligue-v2__identity { align-items: flex-start; }
+  .ui-v4 .ligue-v2__crest { width: 65px; height: 74px; }
+  .ui-v4 .ligue-v2__hero-meta { display: grid; grid-template-columns: 1fr 1fr; }
+  .ui-v4 .ligue-v2__duo-grid { grid-template-columns: 1fr; }
+
+  .ui-v4 .friends-v4__hero { align-items: flex-start; min-height: auto; padding: 24px 18px; border-radius: 24px 9px 24px 9px; }
+  .ui-v4 .friends-v4__hero h2 { font-size: 2.15rem; }
+  .ui-v4 .friends-v4__count { min-width: auto; }
+  .ui-v4 .friends-v4__grid { grid-template-columns: 1fr; }
+  .ui-v4 .friends-v4__friend { min-height: 205px; }
+  .ui-v4 .friends-v4__search { padding: 17px; }
+  .ui-v4 .friends-v4__feed-row { grid-template-columns: auto minmax(0,1fr); }
+  .ui-v4 .friends-v4__delta { grid-column: 2; justify-self: start; }
+
+  .ui-v4 .commu-v2-entete { min-height: auto; }
+  .ui-v4 .commu-v2-entete h1 { font-size: 3rem; }
+  .ui-v4 .commu-core--v3 { min-height: auto; padding: 20px 16px; border-radius: 30px 10px 30px 10px; }
+  .ui-v4 .commu-core__reacteur { min-height: 330px; }
+  .ui-v4 .commu-core__charge { padding: 17px; }
+  .ui-v4 .commu-rail--v3 { overflow-x: auto; scroll-snap-type: x mandatory; }
+  .ui-v4 .commu-rail--v3 li { min-width: 170px; scroll-snap-align: start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-v4 .ligues-v2__league-card,
+  .ui-v4 .commu-reacteur,
+  .ui-v4 .friends-v4__friend { transition: none !important; animation: none !important; }
+}

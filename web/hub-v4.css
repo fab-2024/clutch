@@ -1,0 +1,1281 @@
+/* ==========================================================================
+   CLUTCH HUB V4 — ARENA / DAILY LOOP / ARTIFACT / ROOM
+   Loaded after ui-v4.css. This file owns the Accueil composition only.
+   ========================================================================== */
+
+.ui-v4 .hub-intro,
+.ui-v4 .hub-hero,
+.ui-v4 .hub-missions,
+.ui-v4 .hub-split,
+.ui-v4 .hub-feed {
+  width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   INTRO — CAREER STRIP, NOT A DASHBOARD HEADER
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .hub-intro {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, .8fr);
+  align-items: end;
+  gap: clamp(24px, 4vw, 52px);
+  margin: 4px 0 26px;
+  padding: 14px 2px 0;
+}
+
+.ui-v4 .hub-intro::before {
+  content: "";
+  position: absolute;
+  left: -40px;
+  top: -52px;
+  width: 320px;
+  height: 180px;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(232,255,61,.075), transparent 68%);
+  filter: blur(18px);
+  opacity: .7;
+}
+
+.ui-v4 .hub-intro__salut,
+.ui-v4 .hub-career {
+  position: relative;
+  z-index: 1;
+}
+
+.ui-v4 .hub-intro .sur-titre {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ui-v4 .hub-intro .sur-titre::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: var(--accent);
+  box-shadow: 0 0 12px rgba(232,255,61,.35);
+}
+
+.ui-v4 .hub-intro h1 {
+  max-width: 720px;
+  margin: 0;
+  font-size: clamp(2.55rem, 5vw, 4.5rem);
+  line-height: .9;
+  letter-spacing: -.07em;
+  font-weight: 860;
+}
+
+.ui-v4 .hub-intro p {
+  max-width: 620px;
+  margin: 14px 0 0;
+  color: #8e98a6;
+  font-size: .98rem;
+  line-height: 1.5;
+}
+
+.ui-v4 .hub-intro--invite {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 170px;
+  padding: 24px 26px;
+  border: 1px solid var(--v4-line);
+  border-radius: 30px;
+  background:
+    radial-gradient(520px 230px at 0 50%, rgba(232,255,61,.08), transparent 65%),
+    rgba(10,13,18,.72);
+}
+
+.ui-v4 .hub-career {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 11px;
+  padding: 18px 0 4px 22px;
+  border-left: 1px solid rgba(255,255,255,.065);
+}
+
+.ui-v4 .hub-career__ligne,
+.ui-v4 .hub-career__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ui-v4 .hub-career__ligne {
+  color: #b9c1cb;
+  font-size: .79rem;
+}
+
+.ui-v4 .hub-career__ligne strong {
+  color: var(--texte);
+  font-family: var(--titre);
+  font-size: .92rem;
+}
+
+.ui-v4 .hub-career__jauge {
+  position: relative;
+  height: 6px;
+  overflow: visible;
+  border-radius: 999px;
+  background: rgba(255,255,255,.055);
+}
+
+.ui-v4 .hub-career__jauge::after {
+  content: "";
+  position: absolute;
+  inset: -5px 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(232,255,61,.08), transparent 70%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.ui-v4 .hub-career__jauge i {
+  position: relative;
+  z-index: 1;
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #bcd61d, var(--accent));
+  box-shadow: 0 0 16px rgba(232,255,61,.24);
+}
+
+.ui-v4 .hub-career__meta {
+  color: #707b89;
+  font-size: .72rem;
+}
+
+.ui-v4 .hub-career__meta span:last-child {
+  color: #9da7b3;
+}
+
+/* --------------------------------------------------------------------------
+   HERO — MAIN ARENA, THE ONE DOMINANT OBJECT
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .hub-hero {
+  --arena-left: rgba(70,139,255,.29);
+  --arena-right: rgba(255,58,121,.25);
+  position: relative;
+  isolation: isolate;
+  min-height: 470px;
+  margin: 0 0 24px;
+  padding: 22px clamp(20px, 3vw, 32px) 28px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.105);
+  border-radius: 34px 22px 34px 22px;
+  background:
+    radial-gradient(620px 350px at 2% 42%, var(--arena-left), transparent 68%),
+    radial-gradient(590px 340px at 98% 43%, var(--arena-right), transparent 68%),
+    radial-gradient(430px 200px at 50% 105%, rgba(232,255,61,.08), transparent 70%),
+    linear-gradient(180deg, rgba(13,18,25,.98), rgba(5,8,12,.99));
+  box-shadow:
+    0 30px 90px rgba(0,0,0,.46),
+    inset 0 1px 0 rgba(255,255,255,.05),
+    inset 0 -1px 0 rgba(232,255,61,.035);
+}
+
+.ui-v4 .hub-hero[data-jeu="lol"] {
+  --arena-left: rgba(52,133,255,.31);
+  --arena-right: rgba(229,70,155,.25);
+}
+
+.ui-v4 .hub-hero[data-jeu="cs2"] {
+  --arena-left: rgba(57,129,255,.28);
+  --arena-right: rgba(240,145,60,.26);
+}
+
+.ui-v4 .hub-hero[data-jeu="valorant"] {
+  --arena-left: rgba(60,126,255,.27);
+  --arena-right: rgba(255,70,85,.3);
+}
+
+.ui-v4 .hub-hero::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  left: -10%;
+  right: -10%;
+  bottom: -142px;
+  height: 315px;
+  border-radius: 50% 50% 0 0;
+  background:
+    repeating-linear-gradient(94deg, rgba(111,170,255,.07) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(86deg, rgba(255,91,154,.06) 0 1px, transparent 1px 37px),
+    linear-gradient(180deg, rgba(17,24,34,.18), rgba(2,4,7,.82));
+  transform: perspective(390px) rotateX(58deg);
+  transform-origin: center top;
+  opacity: .92;
+}
+
+.ui-v4 .hub-hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 84px;
+  bottom: 96px;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(232,255,61,.18) 38%, rgba(232,255,61,.08), transparent);
+  box-shadow: 0 0 56px 18px rgba(232,255,61,.02);
+}
+
+.ui-v4 .hub-hero__aura {
+  position: absolute;
+  z-index: -2;
+  left: 12%;
+  right: 12%;
+  bottom: -120px;
+  height: 230px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, rgba(64,142,255,.14), rgba(232,255,61,.04), rgba(255,66,133,.14));
+  filter: blur(54px);
+  opacity: .9;
+}
+
+.ui-v4 .hub-hero__top {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.ui-v4 .hub-hero__event {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  color: #9ca7b5;
+  font-family: var(--titre);
+  font-size: .67rem;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+.ui-v4 .hub-hero__event i {
+  width: 24px;
+  height: 1px;
+  background: rgba(255,255,255,.12);
+}
+
+.ui-v4 .hub-game-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 14px currentColor;
+}
+
+.ui-v4 .hub-hero__time {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  padding: 7px 11px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 999px;
+  background: rgba(5,8,12,.46);
+  color: #aeb7c2;
+  font-family: var(--titre);
+  font-size: .67rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  backdrop-filter: blur(12px);
+}
+
+.ui-v4 .hub-hero__time--live {
+  color: #ffdfe3;
+  border-color: rgba(255,92,104,.36);
+  background: rgba(124,27,40,.17);
+}
+
+.ui-v4 .hub-hero__time--live b {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 12px rgba(255,92,104,.7);
+  animation: hub-v4-live 1.45s ease-in-out infinite;
+}
+
+@keyframes hub-v4-live {
+  50% { opacity: .35; transform: scale(.8); }
+}
+
+.ui-v4 .hub-duel {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 126px minmax(0, 1fr);
+  align-items: center;
+  min-height: 315px;
+  gap: 24px;
+  padding: 48px 8px 94px;
+}
+
+.ui-v4 .hub-team {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.ui-v4 .hub-team--right {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.ui-v4 .hub-team .ecusson {
+  width: clamp(76px, 8vw, 98px);
+  height: clamp(76px, 8vw, 98px);
+  flex: 0 0 clamp(76px, 8vw, 98px);
+  border-radius: 26px 18px 26px 18px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(10,14,20,.66);
+  box-shadow:
+    0 22px 44px rgba(0,0,0,.4),
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 0 42px rgba(116,124,255,.075);
+  transition: transform var(--v4-spring), border-color var(--transition);
+}
+
+.ui-v4 .hub-hero:hover .hub-team .ecusson {
+  transform: translateY(-3px);
+  border-color: rgba(255,255,255,.17);
+}
+
+.ui-v4 .hub-team__txt {
+  min-width: 0;
+}
+
+.ui-v4 .hub-team__txt strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #f5f7f8;
+  font-family: var(--titre);
+  font-size: clamp(1.4rem, 3vw, 2.15rem);
+  font-weight: 760;
+  line-height: 1;
+  letter-spacing: -.045em;
+  text-shadow: 0 7px 22px rgba(0,0,0,.4);
+}
+
+.ui-v4 .hub-team__txt span {
+  display: block;
+  margin-top: 7px;
+  color: #7e8997;
+  font-size: .73rem;
+}
+
+.ui-v4 .hub-duel__centre {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.ui-v4 .hub-duel__centre > span {
+  color: #808b99;
+  font-family: var(--titre);
+  font-size: .64rem;
+  font-weight: 700;
+  letter-spacing: .19em;
+}
+
+.ui-v4 .hub-duel__centre strong {
+  position: relative;
+  color: #eef2f4;
+  font-family: var(--titre);
+  font-size: clamp(2.9rem, 5vw, 4.2rem);
+  font-weight: 760;
+  line-height: .9;
+  letter-spacing: -.07em;
+}
+
+.ui-v4 .hub-duel__centre strong::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -11px;
+  width: 30px;
+  height: 2px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 14px rgba(232,255,61,.45);
+}
+
+.ui-v4 .hub-duel__centre small {
+  max-width: 122px;
+  margin-top: 8px;
+  color: #8792a0;
+  font-size: .7rem;
+  line-height: 1.35;
+}
+
+.ui-v4 .hub-hero__bottom {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: 15px;
+  width: min(410px, calc(100% - 48px));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  text-align: center;
+}
+
+.ui-v4 .hub-hero__bottom::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -11px -30px 27px;
+  clip-path: polygon(8% 0, 92% 0, 100% 38%, 88% 100%, 12% 100%, 0 38%);
+  border: 1px solid rgba(232,255,61,.18);
+  background: linear-gradient(180deg, rgba(13,18,25,.74), rgba(5,8,12,.34));
+  box-shadow: 0 0 34px rgba(232,255,61,.04);
+}
+
+.ui-v4 .hub-cta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 55px;
+  padding: 14px 24px;
+  overflow: hidden;
+  border: 1px solid rgba(232,255,61,.4);
+  border-radius: 15px;
+  clip-path: polygon(5% 0, 95% 0, 100% 50%, 95% 100%, 5% 100%, 0 50%);
+  background: var(--accent);
+  color: var(--sur-accent);
+  font-family: var(--titre);
+  font-size: .9rem;
+  font-weight: 850;
+  letter-spacing: .02em;
+  text-decoration: none;
+  box-shadow: 0 10px 30px rgba(232,255,61,.14), 0 0 42px rgba(232,255,61,.08);
+  transition: transform var(--transition), filter var(--transition), box-shadow var(--transition);
+}
+
+.ui-v4 .hub-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,.32), transparent 55%);
+  transform: translateX(-120%);
+  transition: transform 560ms cubic-bezier(.2,.8,.2,1);
+}
+
+.ui-v4 .hub-cta:hover {
+  color: var(--sur-accent);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 15px 38px rgba(232,255,61,.18), 0 0 48px rgba(232,255,61,.1);
+}
+
+.ui-v4 .hub-cta:hover::before {
+  transform: translateX(120%);
+}
+
+.ui-v4 .hub-cta svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.3;
+}
+
+.ui-v4 .hub-hero__hint,
+.ui-v4 .hub-mybet {
+  color: #828d9b;
+  font-size: .69rem;
+}
+
+.ui-v4 .hub-hero__hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.ui-v4 .hub-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 14px rgba(232,255,61,.58);
+}
+
+.ui-v4 .hub-mybet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 7px;
+}
+
+.ui-v4 .hub-mybet span { color: #707b89; }
+.ui-v4 .hub-mybet strong { color: #e5eaed; }
+.ui-v4 .hub-mybet small { color: #858f9d; }
+
+.ui-v4 .hub-hero--vide {
+  min-height: 270px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+}
+
+/* --------------------------------------------------------------------------
+   DAILY MISSIONS — A LIGHT RAIL, NOT FOUR IDENTICAL CARDS
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .hub-missions {
+  margin: 0 0 30px;
+  padding: 2px 2px 0;
+}
+
+.ui-v4 .hub-section-label {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.ui-v4 .hub-section-label > span:last-child,
+.ui-v4 .hub-section-label > a {
+  color: #697483;
+  font-size: .72rem;
+  text-decoration: none;
+}
+
+.ui-v4 .hub-missions__rail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0;
+}
+
+.ui-v4 .hub-mission {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 70px;
+  padding: 11px 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.055);
+  border-radius: 16px 12px 16px 12px;
+  background: rgba(11,15,20,.52);
+  color: inherit;
+  text-decoration: none;
+  transition: transform var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.ui-v4 .hub-mission::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232,255,61,.22), transparent);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.ui-v4 .hub-mission:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.11);
+  background: rgba(16,21,28,.72);
+}
+
+.ui-v4 .hub-mission:hover::after {
+  opacity: 1;
+}
+
+.ui-v4 .hub-mission__check {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 9px;
+  color: transparent;
+  background: rgba(255,255,255,.025);
+  font-family: var(--titre);
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.ui-v4 .hub-mission strong {
+  display: block;
+  color: #cdd4db;
+  font-family: var(--titre);
+  font-size: .78rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.ui-v4 .hub-mission small {
+  display: block;
+  margin-top: 3px;
+  color: #626d7b;
+  font-size: .66rem;
+  line-height: 1.25;
+}
+
+.ui-v4 .hub-mission--done {
+  border-color: rgba(232,255,61,.11);
+  background: linear-gradient(145deg, rgba(232,255,61,.045), rgba(11,15,20,.5));
+}
+
+.ui-v4 .hub-mission--done .hub-mission__check {
+  color: var(--sur-accent);
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: 0 0 16px rgba(232,255,61,.14);
+}
+
+.ui-v4 .hub-mission--done strong {
+  color: #edf0d5;
+}
+
+/* --------------------------------------------------------------------------
+   FACTION + ROOM — TWO DIFFERENT OBJECTS, NOT A 50/50 CARD GRID
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .hub-split {
+  display: grid;
+  grid-template-columns: minmax(260px, .7fr) minmax(0, 1.55fr);
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 30px;
+}
+
+.ui-v4 .hub-panel {
+  position: relative;
+  min-width: 0;
+  min-height: 390px;
+  padding: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 26px 18px 26px 18px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.025), transparent 42%),
+    rgba(10,14,19,.78);
+  box-shadow: var(--v4-shadow-sm), inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.ui-v4 .hub-panel__heading {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.ui-v4 .hub-panel__heading h2 {
+  margin-top: 6px;
+  color: #eef2f4;
+  font-size: 1.35rem;
+}
+
+.ui-v4 .hub-rank,
+.ui-v4 .hub-room__tag {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 12px;
+  background: rgba(255,255,255,.035);
+  color: #909aa7;
+  font-family: var(--titre);
+  font-size: .72rem;
+  font-weight: 750;
+}
+
+/* Faction behaves like a display pedestal. */
+.ui-v4 .hub-faction {
+  border-color: rgba(232,255,61,.12);
+  background:
+    radial-gradient(210px 240px at 50% 57%, color-mix(in srgb, var(--faction, #6da6ff) 16%, transparent), transparent 70%),
+    linear-gradient(160deg, rgba(15,22,30,.94), rgba(6,10,14,.98));
+}
+
+.ui-v4 .hub-faction::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 51px;
+  width: 128px;
+  height: 26px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--faction, #6da6ff) 30%, transparent);
+  filter: blur(17px);
+  opacity: .5;
+}
+
+.ui-v4 .hub-faction::after {
+  content: "";
+  position: absolute;
+  inset: 58px 20px 70px;
+  border: 1px solid rgba(255,255,255,.035);
+  border-radius: 50%;
+  clip-path: inset(42% 0 0);
+  opacity: .7;
+  pointer-events: none;
+}
+
+.ui-v4 .hub-faction__body {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  align-content: center;
+  min-height: 240px;
+  gap: 6px;
+}
+
+.ui-v4 .hub-faction__relic {
+  position: relative;
+  width: 100%;
+  height: 155px;
+  display: grid;
+  place-items: center;
+}
+
+.ui-v4 .hub-faction__relic::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  width: 86px;
+  height: 18px;
+  transform: translateX(-50%);
+  clip-path: polygon(12% 0, 88% 0, 100% 45%, 85% 100%, 15% 100%, 0 45%);
+  background: linear-gradient(180deg, #202a35, #0b1016);
+  border-bottom: 2px solid rgba(232,255,61,.7);
+  box-shadow: 0 5px 22px rgba(232,255,61,.12);
+}
+
+.ui-v4 .hub-faction__relic .bombonne {
+  position: relative;
+  z-index: 2;
+  width: 108px;
+  filter: drop-shadow(0 20px 20px rgba(0,0,0,.44));
+  transform: translateY(-5px);
+}
+
+.ui-v4 .hub-faction__copy {
+  width: 100%;
+  text-align: center;
+}
+
+.ui-v4 .hub-faction__copy > strong {
+  display: block;
+  color: #eef2f3;
+  font-family: var(--titre);
+  font-size: .91rem;
+}
+
+.ui-v4 .hub-faction__copy > span,
+.ui-v4 .hub-faction__copy > small {
+  display: block;
+  color: #76818f;
+  font-size: .68rem;
+}
+
+.ui-v4 .hub-faction__copy > span {
+  margin-top: 4px;
+}
+
+.ui-v4 .hub-faction__bar {
+  width: min(230px, 100%);
+  height: 5px;
+  margin: 10px auto 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255,255,255,.055);
+}
+
+.ui-v4 .hub-faction__bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--faction, #6da6ff) 70%, white), var(--accent));
+  box-shadow: 0 0 16px rgba(232,255,61,.18);
+}
+
+.ui-v4 .hub-link {
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  margin-top: 8px;
+  color: #8e98a6;
+  font-size: .7rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.ui-v4 .hub-link:hover {
+  color: var(--accent);
+}
+
+/* Room is a window into a world, not an inventory tile. */
+.ui-v4 .hub-room {
+  min-height: 390px;
+  border-radius: 18px 32px 18px 32px;
+  background:
+    radial-gradient(460px 230px at 70% 58%, rgba(119,73,255,.09), transparent 65%),
+    linear-gradient(150deg, rgba(15,20,28,.94), rgba(5,8,12,.99));
+}
+
+.ui-v4 .hub-room::before {
+  content: "";
+  position: absolute;
+  inset: 68px 18px 70px;
+  border: 1px solid rgba(255,255,255,.045);
+  border-radius: 20px 30px 16px 28px;
+  background: linear-gradient(180deg, rgba(255,255,255,.016), transparent);
+  pointer-events: none;
+}
+
+.ui-v4 .hub-room__scene {
+  position: relative;
+  height: 224px;
+  margin: 17px 0 14px;
+  overflow: hidden;
+  border-radius: 18px 26px 14px 24px;
+  border: 1px solid rgba(255,255,255,.05);
+  background:
+    radial-gradient(260px 150px at 63% 45%, rgba(112,73,255,.16), transparent 65%),
+    linear-gradient(180deg, #0a0e15 0 58%, #070a0f 58% 100%);
+  perspective: 700px;
+  box-shadow: inset 0 0 60px rgba(0,0,0,.35);
+}
+
+.ui-v4 .hub-room__wall {
+  position: absolute;
+  inset: 0 0 42%;
+  background:
+    linear-gradient(90deg, transparent 49.7%, rgba(255,255,255,.025) 50%, transparent 50.3%),
+    linear-gradient(180deg, rgba(255,255,255,.012), transparent);
+}
+
+.ui-v4 .hub-room__desk {
+  position: absolute;
+  left: 24%;
+  right: 14%;
+  bottom: 25%;
+  height: 12px;
+  transform: rotateX(64deg) skewX(-8deg);
+  transform-origin: center;
+  border-radius: 5px;
+  background: #171e26;
+  box-shadow: 0 14px 0 -8px #0b0f14, 0 18px 26px rgba(0,0,0,.5);
+}
+
+.ui-v4 .hub-room__screen {
+  position: absolute;
+  left: 40%;
+  top: 24%;
+  width: 31%;
+  height: 30%;
+  transform: perspective(360px) rotateY(-8deg);
+  border: 4px solid #151b22;
+  border-radius: 7px;
+  background:
+    radial-gradient(circle at 70% 20%, rgba(232,255,61,.16), transparent 45%),
+    linear-gradient(135deg, #0f1623, #06080c);
+  box-shadow: 0 0 28px rgba(109,82,255,.13);
+}
+
+.ui-v4 .hub-room__screen::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -17px;
+  width: 4px;
+  height: 16px;
+  background: #151b22;
+}
+
+.ui-v4 .hub-room__screen i {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 14%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  box-shadow: 0 0 12px rgba(232,255,61,.4);
+}
+
+.ui-v4 .hub-room__pc {
+  position: absolute;
+  right: 16%;
+  bottom: 29%;
+  width: 13%;
+  height: 40%;
+  transform: perspective(300px) rotateY(-10deg);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 11px, rgba(232,255,61,.08) 11px 12px),
+    linear-gradient(160deg, #171d25, #080b10);
+  box-shadow: inset 0 0 22px rgba(232,255,61,.035), 0 16px 24px rgba(0,0,0,.35);
+}
+
+.ui-v4 .hub-room__shelf {
+  position: absolute;
+  left: 8%;
+  top: 21%;
+  width: 22%;
+  display: grid;
+  gap: 16px;
+}
+
+.ui-v4 .hub-room__shelf::before,
+.ui-v4 .hub-room__shelf::after {
+  content: "";
+  height: 4px;
+  background: #1a212a;
+  box-shadow: 0 6px 10px rgba(0,0,0,.35);
+}
+
+.ui-v4 .hub-room__shelf i {
+  position: absolute;
+  bottom: 4px;
+  width: 10px;
+  height: 16px;
+  border-radius: 4px 4px 2px 2px;
+  background: linear-gradient(180deg, var(--accent), #566018);
+  box-shadow: 0 0 10px rgba(232,255,61,.12);
+}
+
+.ui-v4 .hub-room__shelf i:nth-child(1) { left: 12%; }
+.ui-v4 .hub-room__shelf i:nth-child(2) { left: 44%; height: 12px; }
+.ui-v4 .hub-room__shelf i:nth-child(3) { right: 11%; height: 20px; }
+
+.ui-v4 .hub-room__glow {
+  position: absolute;
+  left: 36%;
+  right: 10%;
+  bottom: 16%;
+  height: 20%;
+  border-radius: 50%;
+  background: linear-gradient(90deg, rgba(92,111,255,.11), rgba(232,255,61,.05));
+  filter: blur(22px);
+}
+
+.ui-v4 .hub-room p {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  color: #7f8996;
+  font-size: .72rem;
+  line-height: 1.45;
+}
+
+.ui-v4 .hub-room p strong {
+  color: #cbd2d9;
+}
+
+.ui-v4 .hub-room__soon {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  margin-top: 9px;
+  color: #596472;
+  font-size: .63rem;
+  letter-spacing: .04em;
+}
+
+/* --------------------------------------------------------------------------
+   SOCIAL FEED — EDITORIAL STRIP
+   -------------------------------------------------------------------------- */
+
+.ui-v4 .hub-feed {
+  margin-top: 2px;
+}
+
+.ui-v4 .hub-feed__list {
+  border-top: 1px solid rgba(255,255,255,.055);
+}
+
+.ui-v4 .hub-feed__item {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 2px;
+  border-bottom: 1px solid rgba(255,255,255,.045);
+}
+
+.ui-v4 .hub-feed__avatar {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,.035);
+  color: #aeb7c2;
+  font-family: var(--titre);
+  font-size: .65rem;
+  font-weight: 800;
+}
+
+.ui-v4 .hub-feed__item p {
+  margin: 0;
+  color: #7d8794;
+  font-size: .74rem;
+  line-height: 1.45;
+}
+
+.ui-v4 .hub-feed__item p strong {
+  color: #d5dbe0;
+}
+
+.ui-v4 .hub-feed__item time {
+  color: #596473;
+  font-size: .64rem;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVE
+   -------------------------------------------------------------------------- */
+
+@media (min-width: 900px) {
+  .ui-v4 .hub-hero,
+  .ui-v4 .hub-missions,
+  .ui-v4 .hub-split,
+  .ui-v4 .hub-feed {
+    width: calc(100% + 34px);
+    margin-left: -17px;
+  }
+}
+
+@media (max-width: 1040px) {
+  .ui-v4 .hub-intro {
+    grid-template-columns: minmax(0, 1.2fr) minmax(240px, .8fr);
+  }
+
+  .ui-v4 .hub-duel {
+    grid-template-columns: minmax(0, 1fr) 100px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .ui-v4 .hub-team {
+    gap: 12px;
+  }
+
+  .ui-v4 .hub-missions__rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .ui-v4 .hub-intro {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+
+  .ui-v4 .hub-career {
+    padding: 15px 0 0;
+    border-left: 0;
+    border-top: 1px solid rgba(255,255,255,.06);
+  }
+
+  .ui-v4 .hub-intro--invite {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .ui-v4 .hub-hero {
+    min-height: 520px;
+    padding-inline: 18px;
+    border-radius: 28px 18px 28px 18px;
+  }
+
+  .ui-v4 .hub-hero__top {
+    align-items: flex-start;
+  }
+
+  .ui-v4 .hub-hero__event {
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    max-width: 68%;
+  }
+
+  .ui-v4 .hub-duel {
+    grid-template-columns: 1fr 72px 1fr;
+    min-height: 360px;
+    gap: 8px;
+    padding: 62px 0 104px;
+  }
+
+  .ui-v4 .hub-team,
+  .ui-v4 .hub-team--right {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .ui-v4 .hub-team .ecusson {
+    width: 72px;
+    height: 72px;
+    flex-basis: 72px;
+    border-radius: 22px 15px 22px 15px;
+  }
+
+  .ui-v4 .hub-team__txt strong {
+    max-width: 120px;
+    font-size: 1.05rem;
+  }
+
+  .ui-v4 .hub-team__txt span {
+    font-size: .62rem;
+  }
+
+  .ui-v4 .hub-duel__centre strong {
+    font-size: 2.6rem;
+  }
+
+  .ui-v4 .hub-duel__centre small {
+    max-width: 78px;
+    font-size: .61rem;
+  }
+
+  .ui-v4 .hub-split {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-v4 .hub-faction,
+  .ui-v4 .hub-room {
+    min-height: 360px;
+  }
+}
+
+@media (max-width: 520px) {
+  .ui-v4 .hub-intro h1 {
+    font-size: clamp(2.45rem, 13vw, 3.5rem);
+  }
+
+  .ui-v4 .hub-intro p {
+    font-size: .9rem;
+  }
+
+  .ui-v4 .hub-hero {
+    min-height: 490px;
+    padding-top: 17px;
+  }
+
+  .ui-v4 .hub-hero__event {
+    font-size: .57rem;
+    letter-spacing: .1em;
+  }
+
+  .ui-v4 .hub-hero__event i {
+    display: none;
+  }
+
+  .ui-v4 .hub-hero__time {
+    padding: 6px 8px;
+    font-size: .57rem;
+  }
+
+  .ui-v4 .hub-duel {
+    grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1fr);
+    padding-top: 58px;
+  }
+
+  .ui-v4 .hub-team .ecusson {
+    width: 62px;
+    height: 62px;
+    flex-basis: 62px;
+  }
+
+  .ui-v4 .hub-team__txt strong {
+    max-width: 105px;
+    font-size: .92rem;
+  }
+
+  .ui-v4 .hub-duel__centre strong {
+    font-size: 2.15rem;
+  }
+
+  .ui-v4 .hub-duel__centre > span {
+    font-size: .55rem;
+  }
+
+  .ui-v4 .hub-hero__bottom {
+    width: calc(100% - 34px);
+    bottom: 13px;
+  }
+
+  .ui-v4 .hub-hero__bottom::before {
+    inset-inline: -12px;
+  }
+
+  .ui-v4 .hub-cta {
+    min-height: 51px;
+    font-size: .82rem;
+  }
+
+  .ui-v4 .hub-missions__rail {
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+  }
+
+  .ui-v4 .hub-mission {
+    min-height: 66px;
+    grid-template-columns: 23px minmax(0, 1fr);
+    padding: 9px;
+  }
+
+  .ui-v4 .hub-mission__check {
+    width: 23px;
+    height: 23px;
+  }
+
+  .ui-v4 .hub-panel {
+    padding: 18px;
+  }
+
+  .ui-v4 .hub-room__scene {
+    height: 205px;
+  }
+
+  .ui-v4 .hub-feed__item {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+
+  .ui-v4 .hub-feed__item time {
+    display: none;
+  }
+}
