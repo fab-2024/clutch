@@ -25,6 +25,8 @@ const TEAM_DOMAINS = {
   DRX: 'drx.gg', T1: 't1.gg', 'EDward Gaming': 'edgteam.cn',
 };
 
+const TEAM_PALETTE = ['#8f5cff', '#31d7ff', '#ff5d6c', '#f4b545', '#42e69b', '#d7ff1f', '#ff7a45', '#b77cff'];
+
 export function lireOnboarding() {
   try {
     const brut = JSON.parse(localStorage.getItem(CLE) || '{}');
@@ -42,7 +44,14 @@ function choisirIntent(intent) { localStorage.setItem('clutch:auth-intent', inte
 function logoEquipe(equipe) {
   const domaine = TEAM_DOMAINS[equipe.nom];
   if (!domaine) return '';
-  return `https://www.google.com/s2/favicons?sz=128&domain_url=https://${encodeURIComponent(domaine)}`;
+  return `https://www.google.com/s2/favicons?sz=256&domain=${encodeURIComponent(domaine)}`;
+}
+
+function accentEquipe(equipe) {
+  const cle = `${equipe.id || ''}${equipe.tag || ''}`;
+  let total = 0;
+  for (const char of cle) total += char.charCodeAt(0);
+  return TEAM_PALETTE[total % TEAM_PALETTE.length];
 }
 
 export async function vueOnboarding(racine) {
@@ -60,8 +69,12 @@ export async function vueOnboarding(racine) {
     sauver(etat);
     racine.innerHTML = `
       <section class="onboarding-v5 onboarding-v5--${etat.etape === 0 ? 'games' : 'teams'}">
+        <div class="onboarding-v5__impact" aria-hidden="true"><i></i><i></i><b>CLUTCH</b></div>
         <div class="onboarding-v5__top">
-          <a class="onboarding-v5__brand" href="#/accueil" aria-label="Clutch">CLUTCH<span>.</span></a>
+          <a class="onboarding-v5__brand" href="#/accueil" aria-label="Clutch">
+            <img src="assets/logo.svg" alt="" aria-hidden="true">
+            <strong>CLUTCH<span>.</span></strong>
+          </a>
           <div class="onboarding-v5__progress" aria-label="Étape ${etat.etape + 1} sur 2"><i class="actif"></i><i class="${etat.etape === 1 ? 'actif' : ''}"></i></div>
           <button class="onboarding-v5__login" type="button" data-login>Se connecter</button>
         </div>
@@ -151,10 +164,12 @@ function ecranEquipes(etat, equipes) {
         ${visibles.map((e) => {
           const actif = String(etat.equipeId) === String(e.id);
           const logo = logoEquipe(e);
-          return `<button type="button" class="onboarding-v5__team${actif ? ' actif' : ''}" data-team="${esc(String(e.id))}" data-team-name="${esc(e.nom)}">
+          const tag = esc(e.tag || String(e.nom).slice(0, 3).toUpperCase());
+          return `<button type="button" class="onboarding-v5__team${actif ? ' actif' : ''}" style="--team:${accentEquipe(e)}" data-team="${esc(String(e.id))}" data-team-name="${esc(e.nom)}">
+            <span class="onboarding-v5__team-watermark" aria-hidden="true">${tag}</span>
             <span class="onboarding-v5__team-logo">
-              <b>${esc(e.tag || String(e.nom).slice(0, 3).toUpperCase())}</b>
-              ${logo ? `<img src="${esc(logo)}" alt="Logo ${esc(e.nom)}" loading="lazy" onerror="this.remove()">` : ''}
+              <b>${tag}</b>
+              ${logo ? `<img src="${esc(logo)}" alt="Logo ${esc(e.nom)}" loading="eager" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}
             </span>
             <strong>${esc(e.nom)}</strong>
             <small>${esc(String(e.jeu || '').toUpperCase())}</small>
