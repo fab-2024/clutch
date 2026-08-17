@@ -6,9 +6,9 @@
   display: grid;
   grid-template-columns: auto minmax(0,1fr);
   grid-template-areas:
-    'eyebrow title'
-    'eyebrow copy'
-    'eyebrow detail';
+    'rail title'
+    'rail copy'
+    'rail detail';
   column-gap: 13px;
   margin-top: 18px;
   padding: 11px 13px 11px 11px;
@@ -18,7 +18,7 @@
 }
 .ui-v4 .profil-v4-signature::before {
   content: '';
-  grid-area: eyebrow;
+  grid-area: rail;
   align-self: stretch;
   width: 3px;
   border-radius: 999px;
@@ -63,5 +63,5 @@
 @media (max-width:720px) {
   .ui-v4 .profil-v4-signature { margin-top: 15px; padding-right: 8px; }
   .ui-v4 .profil-v4-signature p { margin-right: 0; }
-  .ui-v4 .profil-v4-signature > span { position: static; grid-area: unset; display: none; }
+  .ui-v4 .profil-v4-signature > span { display: none; }
 }
