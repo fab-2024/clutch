@@ -53,7 +53,14 @@ test('projection expose le risque avant validation', () => {
   });
 });
 
-test('l’espérance est nulle si la probabilité de référence est calibrée', () => {
+test('les demi-entiers négatifs gardent le même arrondi que PostgreSQL', () => {
+  // 40 × 26,25 % = 10,5 : on veut −11 côté navigateur ET côté serveur.
+  assert.equal(deltaFrags(0.2625, false, { k: 40 }), -11);
+  // Côté gain : 40 × (1 − 73,75 %) = 10,5 -> +11.
+  assert.equal(deltaFrags(0.7375, true, { k: 40 }), 11);
+});
+
+test('l’espérance est nulle avant arrondi si la probabilité de référence est calibrée', () => {
   for (const p of [0.15, 0.25, 0.35, 0.5, 0.65, 0.75, 0.85]) {
     const gainExact = FRAGS_K * (1 - p);
     const perteExacte = -FRAGS_K * p;
