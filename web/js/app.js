@@ -3,6 +3,7 @@
  * Chaque vue est une fonction async qui reçoit le conteneur principal.
  */
 import * as api from './api.js';
+import * as economyApi from './economy-api.js';
 import { MODE_DEMO, NOM_APP } from './config.js';
 import { esc, jeton, jetonVolt, toast } from './ui.js';
 import { formaterFrags } from './core.js';
@@ -73,7 +74,7 @@ const LIENS = [
   { href: '#/profil', libelle: 'Mon profil', court: 'Moi', cle: 'profil' },
 ];
 
-export const contexte = { utilisateur: null, admin: false, saison: null, saisons: [] };
+export const contexte = { utilisateur: null, admin: false, saison: null, saisons: [], frags: null };
 
 function chemin() {
   const h = location.hash.replace(/^#/, '');
@@ -85,7 +86,14 @@ async function rafraichirEntete(navActive) {
   contexte.saison = await api.saisonCourante();
   contexte.utilisateur = await api.utilisateurCourant();
   contexte.admin = await api.estAdmin();
-  await rattraperUneFois();
+
+  // Economy V2 : les Frags affichés dans le shell sont désormais le rating
+  // compétitif. Le vieux `utilisateur.solde` reste disponible pour les vues
+  // legacy, mais ne représente plus l'économie cible de Clutch.
+  contexte.frags = null;
+  if (contexte.utilisateur && contexte.saison?.id && !MODE_DEMO) {
+    contexte.frags = await economyApi.etatFrags(contexte.saison.id).catch(() => null);
+  }
 
   document.getElementById('nav-laterale').innerHTML = LIENS.map(
     (l) => `<a class="lateral__lien${l.cle === navActive ? ' actif' : ''}" href="${l.href}"${
@@ -104,17 +112,19 @@ async function rafraichirEntete(navActive) {
   ).join('');
 
   const droite = document.getElementById('entete-droite');
+  const fragsAffiches = contexte.frags?.frags ?? contexte.utilisateur?.solde ?? 1000;
+  const statutFrags = contexte.frags?.provisoire ? ' · placement provisoire' : '';
   droite.innerHTML = contexte.utilisateur
     ? `<div class="soldes">
-         <div class="solde" title="Frags — ta bankroll de ${esc(
+         <div class="solde" title="Frags — ton rating compétitif de ${esc(
            contexte.saison?.nom ?? 'la saison'
-         )}. Monnaie fictive, sans valeur.">
+         )}${esc(statutFrags)}. Ils ne se dépensent jamais.">
            ${jeton(19)}
-           <span class="solde__valeur">${esc(formaterFrags(contexte.utilisateur.solde))}</span>
+           <span class="solde__valeur">${esc(formaterFrags(fragsAffiches))}</span>
            <span class="solde__unite">Frags</span>
          </div>
          <a class="solde solde--volts" href="#/boutique" id="solde-volts"
-            title="Volts — la monnaie cosmétique. Ton classement n'en dépend pas.">
+            title="Volts — la seule monnaie dépensable dans la Boutique. Ton classement n'en dépend pas.">
            ${jetonVolt(19)}
            <span class="solde__valeur">—</span>
            <span class="solde__unite">Volts</span>
@@ -146,6 +156,9 @@ function initiales(nom) {
   return (mots[0][0] + mots[1][0]).toUpperCase();
 }
 
+// Conservé pendant la migration pour les anciennes vues, mais volontairement
+// plus appelé au chargement : un mode automatique ne doit jamais engager des
+// Frags puisque les Frags ne sont plus une bankroll.
 let rattrapageFait = false;
 async function rattraperUneFois() {
   if (rattrapageFait || !contexte.utilisateur) return;
@@ -155,11 +168,11 @@ async function rattraperUneFois() {
     const r = await api.rattraperParisAuto();
     const poses = r?.poses ?? 0;
     if (poses) {
-      toast(`${poses} pari(s) posé(s) automatiquement sur les matchs commencés.`, 'succes');
+      toast(`${poses} pari(s) legacy posé(s) automatiquement.`, 'succes');
       contexte.utilisateur = await api.utilisateurCourant();
     }
   } catch (e) {
-    console.warn('[Clutch] rattrapage des paris automatiques impossible', e);
+    console.warn('[Clutch] rattrapage legacy impossible', e);
   }
 }
 
@@ -168,8 +181,8 @@ export function bandeauSaison() {
   if (!s || s.statut === 'en_cours') return '';
   const texte =
     s.statut === 'terminee'
-      ? `<strong>${s.nom} est terminée.</strong> Tu consultes des résultats figés : plus aucune mise n'est possible.`
-      : `<strong>${s.nom} n'a pas encore commencé.</strong> Les soldes repartiront à zéro à son ouverture.`;
+      ? `<strong>${s.nom} est terminée.</strong> Tu consultes des résultats figés : plus aucun pronostic classé n'est possible.`
+      : `<strong>${s.nom} n'a pas encore commencé.</strong> Le classement saisonnier s'activera à son ouverture.`;
   return `<div class="encart encart--alerte" style="margin-bottom:20px">${texte}
     <a href="#/parametres">Changer de saison</a></div>`;
 }
@@ -225,6 +238,8 @@ function ecranPanne(erreur) {
     </div>`;
 }
 
+// Nom historique conservé pour ne pas casser les imports. En V2 cette fonction
+// rafraîchit le rating Frags + les Volts, elle ne recharge plus une bankroll.
 export async function majSolde() {
   const p = chemin();
   const route = ROUTES.find((r) => r.motif.test(p));
