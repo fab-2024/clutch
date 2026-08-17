@@ -51,6 +51,7 @@ const ROUTES = [
   { motif: /^\/badges$/, vue: vueBadges, nav: 'profil', mobile: 'moi' },
   { motif: /^\/cartes$/, vue: vueCartes, nav: 'profil', mobile: 'moi' },
   { motif: /^\/admin$/, vue: vueAdmin, nav: null, mobile: null },
+  { motif: /^\/connexion-login$/, vue: vueConnexion, nav: 'auth-login', mobile: null, desktop: null },
   { motif: /^\/connexion$/, vue: vueConnexion, nav: 'auth', mobile: null, desktop: null },
   { motif: /^\/diagnostic$/, vue: vueDiagnostic, nav: null, mobile: null },
 ];
@@ -96,7 +97,7 @@ function chemin() {
 
 function ecranPourNav(nav) {
   if (nav === 'onboarding') return 'onboarding';
-  if (nav === 'auth') return 'auth';
+  if (nav === 'auth' || nav === 'auth-login') return 'auth';
   if (nav === 'accueil') return 'hub';
   if (nav === 'matchs') return 'matchs';
   if (nav === 'ligues' || nav === 'communaute' || nav === 'social') return 'social';
@@ -159,8 +160,8 @@ async function rafraichirEntete(navActive, desktopActive = navActive, mobileActi
   const droite = document.getElementById('entete-droite');
   if (!contexte.utilisateur) {
     if (navActive === 'onboarding') {
-      droite.innerHTML = '<a class="btn btn--petit btn--fantome" href="#/connexion">Se connecter</a>';
-    } else if (navActive === 'auth') {
+      droite.innerHTML = '<a class="btn btn--petit btn--fantome" href="#/connexion-login">Se connecter</a>';
+    } else if (navActive === 'auth' || navActive === 'auth-login') {
       droite.innerHTML = '<a class="btn btn--petit btn--fantome" href="#/onboarding">Découvrir Clutch</a>';
     } else if (onboardingTermine()) {
       droite.innerHTML = '<a class="btn btn--petit" href="#/connexion">Créer mon profil</a>';
@@ -234,6 +235,8 @@ async function router() {
     return;
   }
 
+  if (route.nav === 'auth-login') localStorage.setItem('clutch:auth-intent', 'connexion');
+
   document.body.dataset.screen = ecranPourNav(route.nav);
   contenu.innerHTML = '<div class="chargement"><span class="spinner"></span></div>';
   try {
@@ -250,7 +253,11 @@ async function router() {
     location.hash = '#/onboarding';
     return;
   }
-  if (contexte.utilisateur && (route.nav === 'onboarding' || route.nav === 'auth')) {
+  if (!contexte.utilisateur && route.nav === 'auth' && !onboardingTermine()) {
+    location.hash = '#/onboarding';
+    return;
+  }
+  if (contexte.utilisateur && ['onboarding', 'auth', 'auth-login'].includes(route.nav)) {
     location.hash = '#/accueil';
     return;
   }
