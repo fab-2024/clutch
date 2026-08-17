@@ -1,4 +1,5 @@
 /** Phase 3 — point d'entrée Social mobile : Ligues | Faction | Amis. */
+import { contexte } from '../app.js';
 import { vueLigues } from './ligues.js';
 import { vueCommunaute } from './communaute.js';
 import { sectionAmis } from './amis.js';
@@ -30,5 +31,5 @@ export async function vueSocial(racine, section = 'ligues') {
   const zone = racine.querySelector('#social-shell-content');
   if (actif === 'faction') await vueCommunaute(zone);
   else if (actif === 'amis') await sectionAmis(zone);
-  else await vueLigues(zone, 'mes');
+  else await vueLigues(zone, contexte.utilisateur ? 'mes' : 'global');
 }
