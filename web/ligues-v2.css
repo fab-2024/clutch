@@ -1,0 +1,285 @@
+/* ==========================================================================
+   LIGUES V2 — rivalité, podium, progression.
+   Scopé à .ligues-v2 / .ligue-v2 pour ne pas toucher aux autres écrans.
+   ========================================================================== */
+
+.ligues-v2,
+.ligue-v2 {
+  --league-glow: rgba(232, 255, 61, 0.14);
+  --league-line: rgba(232, 255, 61, 0.24);
+  position: relative;
+  isolation: isolate;
+}
+
+.ligues-v2::before,
+.ligue-v2::before {
+  content: '';
+  position: fixed;
+  inset: 64px 0 auto;
+  height: 420px;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(560px 240px at 74% 15%, rgba(232, 255, 61, 0.055), transparent 72%),
+    radial-gradient(480px 220px at 22% 20%, rgba(96, 116, 255, 0.04), transparent 70%);
+}
+
+.ligues-v2__kicker,
+.ligue-v2__kicker {
+  display: inline-block;
+  color: var(--accent);
+  font: 800 0.68rem var(--titre);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* QG -------------------------------------------------------------------- */
+.ligues-v2__hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(250px, 0.55fr);
+  gap: 42px;
+  align-items: end;
+  padding: 28px 0 34px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.065);
+}
+
+.ligues-v2__hero-copy h1 {
+  max-width: 700px;
+  margin: 8px 0 14px;
+  font-size: clamp(2.7rem, 6vw, 4.85rem);
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+}
+.ligues-v2__hero-copy h1 span { color: #8f99a8; }
+.ligues-v2__hero-copy p { max-width: 620px; margin: 0; color: var(--texte-doux); font-size: 0.94rem; }
+.ligues-v2__hero-actions { display: grid; gap: 10px; }
+
+.ligues-v2__action {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--bordure);
+  border-radius: 18px;
+  background: rgba(18, 24, 33, 0.72);
+  color: var(--texte);
+  cursor: pointer;
+  text-align: left;
+  transition: 180ms ease;
+}
+.ligues-v2__action:hover { transform: translateY(-2px); border-color: var(--bordure-vive); background: rgba(26, 35, 48, 0.88); }
+.ligues-v2__action--primary { border-color: var(--accent-bordure); background: var(--accent-fantome); }
+.ligues-v2__action--primary:hover { border-color: var(--accent); }
+.ligues-v2__action-icon { width: 38px; height: 38px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 13px; background: rgba(255,255,255,.055); font-size: 1.15rem; font-weight: 800; }
+.ligues-v2__action--primary .ligues-v2__action-icon { background: var(--accent); color: var(--sur-accent); }
+.ligues-v2__action strong, .ligues-v2__action small { display: block; }
+.ligues-v2__action strong { font: 700 .93rem var(--titre); }
+.ligues-v2__action small { color: var(--texte-faible); font-size: .72rem; }
+
+.ligues-v2__tabs { display: flex; gap: 6px; width: max-content; max-width: 100%; margin: 24px 0 26px; padding: 4px; border: 1px solid rgba(255,255,255,.06); border-radius: 999px; background: rgba(13,19,27,.68); }
+.ligues-v2__tab { border: 0; background: transparent; color: var(--texte-faible); border-radius: 999px; padding: 8px 15px; font: 700 .78rem var(--titre); cursor: pointer; transition: 160ms ease; }
+.ligues-v2__tab:hover { color: var(--texte); }
+.ligues-v2__tab.actif { background: var(--texte); color: var(--fond); }
+.ligues-v2__content { min-height: 240px; }
+.ligues-v2__loading { min-height: 260px; display: grid; place-items: center; }
+
+.ligues-v2__section-head,
+.ligue-v2__section-head { display: flex; justify-content: space-between; gap: 24px; align-items: end; margin-bottom: 18px; }
+.ligues-v2__section-head h2,
+.ligue-v2__section-head h2 { margin: 4px 0 0; max-width: 600px; font-size: clamp(1.45rem, 3vw, 2.1rem); }
+.ligues-v2__count { min-width: 52px; height: 52px; display: grid; place-items: center; border: 1px solid var(--bordure); border-radius: 50%; color: var(--texte-doux); font: 800 1rem var(--titre); }
+
+.ligues-v2__league-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.ligues-v2__league-card { position: relative; overflow: hidden; min-height: 270px; padding: 19px; display: flex; flex-direction: column; color: var(--texte); text-decoration: none; border: 1px solid rgba(255,255,255,.075); border-radius: 24px 12px 24px 12px; background: linear-gradient(150deg, rgba(255,255,255,.035), transparent 38%), rgba(13,19,27,.78); transition: transform 190ms ease, border-color 190ms ease, background 190ms ease; }
+.ligues-v2__league-card:nth-child(even) { border-radius: 12px 24px 12px 24px; }
+.ligues-v2__league-card:hover { transform: translateY(-4px); color: var(--texte); text-decoration: none; border-color: var(--accent-bordure); background: linear-gradient(150deg, rgba(232,255,61,.055), transparent 42%), rgba(16,23,31,.96); }
+.ligues-v2__league-orbit { position: absolute; width: 210px; height: 210px; right: -94px; top: -92px; border: 1px solid rgba(232,255,61,.11); border-radius: 50%; box-shadow: 0 0 0 36px rgba(232,255,61,.015), 0 0 0 72px rgba(232,255,61,.008); }
+.ligues-v2__league-top, .ligues-v2__league-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+.ligues-v2__crest,
+.ligue-v2__crest { width: 52px; height: 58px; display: grid; place-items: center; background: linear-gradient(160deg, rgba(232,255,61,.18), rgba(232,255,61,.035)); border: 1px solid rgba(232,255,61,.32); clip-path: polygon(50% 0, 92% 18%, 86% 76%, 50% 100%, 14% 76%, 8% 18%); color: var(--accent); font: 900 .82rem var(--titre); letter-spacing: .05em; }
+.ligues-v2__members { color: var(--texte-faible); font-size: .73rem; }
+.ligues-v2__league-title { margin-top: 27px; display: grid; gap: 4px; }
+.ligues-v2__league-title > span { font: 800 clamp(1.18rem,2vw,1.48rem) var(--titre); letter-spacing: -.025em; }
+.ligues-v2__league-title small { color: var(--texte-faible); letter-spacing: .16em; font-size: .64rem; }
+.ligues-v2__league-rank { margin-top: auto; display: flex; align-items: baseline; gap: 10px; padding: 22px 0 14px; }
+.ligues-v2__league-rank strong { font: 850 2.9rem/1 var(--titre); letter-spacing: -.07em; }
+.ligues-v2__league-rank span { max-width: 150px; color: var(--texte-doux); font-size: .72rem; line-height: 1.3; }
+.ligues-v2__league-foot { padding-top: 13px; border-top: 1px solid rgba(255,255,255,.055); color: var(--texte-faible); font-size: .7rem; }
+.ligues-v2__league-arrow { color: var(--accent); font-size: 1rem; }
+
+.ligues-v2__empty-state { min-height: 360px; display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 34px; align-items: center; padding: 36px 28px; border-top: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06); }
+.ligues-v2__empty-mark { width: 128px; height: 144px; display: grid; place-items: center; clip-path: polygon(50% 0,92% 17%,86% 76%,50% 100%,14% 76%,8% 17%); background: linear-gradient(160deg, rgba(232,255,61,.16), rgba(232,255,61,.02)); color: var(--accent); font: 900 2rem var(--titre); }
+.ligues-v2__empty-state h2 { margin: 6px 0 10px; font-size: clamp(1.8rem,4vw,2.7rem); }
+.ligues-v2__empty-state p { max-width: 520px; color: var(--texte-doux); }
+.ligues-v2__empty-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Composer --------------------------------------------------------------- */
+.ligues-v2__composer[hidden] { display: none; }
+.ligues-v2__composer { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 24px; background: rgba(3,5,8,.76); backdrop-filter: blur(15px); opacity: 0; transition: opacity 180ms ease; }
+.ligues-v2__composer.ouvert { opacity: 1; }
+.ligues-v2__composer > div { width: min(480px,100%); padding: 28px; border: 1px solid var(--bordure-vive); border-radius: 28px 14px 28px 14px; background: linear-gradient(155deg,#151d27,#0d1219 76%); box-shadow: 0 30px 90px rgba(0,0,0,.62); transform: translateY(12px) scale(.985); transition: transform 180ms ease; }
+.ligues-v2__composer.ouvert > div { transform: translateY(0) scale(1); }
+.ligues-v2__composer-close { position: fixed; top: 22px; right: 24px; width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid var(--bordure); border-radius: 50%; background: rgba(18,24,33,.82); color: var(--texte); font-size: 1.4rem; cursor: pointer; }
+.ligues-v2__form-intro h2 { margin: 6px 0 8px; font-size: 2rem; }
+.ligues-v2__form-intro p { color: var(--texte-doux); font-size: .86rem; }
+.ligues-v2__field { margin: 22px 0 14px; }
+#code-ligue-v2 { text-transform: uppercase; letter-spacing: .26em; font-weight: 800; }
+
+/* Global / amis, encore alimentés par les vues historiques */
+.ligues-v2__content > .carte,
+.ligues-v2__content > .bloc,
+.ligues-v2__content .carte--rivalite { border-color: rgba(255,255,255,.065); background: rgba(13,19,27,.66); box-shadow: none; }
+.ligues-v2__content .tableau { font-size: .84rem; }
+
+/* Arène ----------------------------------------------------------------- */
+.ligue-v2__back { display: inline-flex; margin: 12px 0 18px; color: var(--texte-faible); text-decoration: none; font-size: .78rem; }
+.ligue-v2__back:hover { color: var(--accent); text-decoration: none; }
+.ligue-v2__hero { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 34px; align-items: end; min-height: 280px; padding: 30px; border: 1px solid rgba(255,255,255,.075); border-radius: 34px 15px 34px 15px; background: linear-gradient(135deg, rgba(232,255,61,.045), transparent 38%), linear-gradient(165deg,#121923,#0b1017 78%); }
+.ligue-v2__hero-glow { position: absolute; right: -130px; top: -180px; width: 420px; height: 420px; border: 1px solid rgba(232,255,61,.12); border-radius: 50%; box-shadow: 0 0 0 55px rgba(232,255,61,.016), 0 0 0 110px rgba(232,255,61,.008), 0 0 90px rgba(232,255,61,.05); }
+.ligue-v2__identity { position: relative; z-index: 1; display: flex; align-items: center; gap: 22px; }
+.ligue-v2__crest { width: 88px; height: 98px; flex: 0 0 auto; font-size: 1.2rem; }
+.ligue-v2__identity h1 { margin: 7px 0 8px; max-width: 560px; font-size: clamp(2.25rem,5vw,4.2rem); letter-spacing: -.055em; }
+.ligue-v2__identity p { margin: 0; max-width: 520px; color: var(--texte-doux); font-size: .83rem; }
+.ligue-v2__hero-meta { position: relative; z-index: 1; display: flex; align-items: stretch; gap: 8px; }
+.ligue-v2__status, .ligue-v2__invite { min-width: 145px; padding: 14px 15px; border: 1px solid rgba(255,255,255,.07); border-radius: 16px; background: rgba(8,11,16,.55); }
+.ligue-v2__status > span, .ligue-v2__invite > span { display: block; color: var(--texte-faible); font: 800 .56rem var(--titre); letter-spacing: .14em; }
+.ligue-v2__status strong { display: block; margin: 4px 0 1px; font: 900 2.15rem/1 var(--titre); letter-spacing: -.06em; }
+.ligue-v2__status small, .ligue-v2__invite small { display: block; color: var(--texte-faible); font-size: .62rem; line-height: 1.25; }
+.ligue-v2__invite-code { display: block; border: 0; padding: 7px 0 5px; background: transparent; color: var(--accent); font: 850 1.12rem var(--titre); letter-spacing: .16em; cursor: pointer; }
+
+/* Podium */
+.ligue-v2__podium { padding: 46px 8px 34px; }
+.ligue-v2__podium-heading { text-align: center; margin-bottom: 18px; }
+.ligue-v2__podium-heading p { margin: 5px 0 0; color: var(--texte-faible); font-size: .75rem; }
+.ligue-v2__podium-stage { min-height: 285px; display: flex; justify-content: center; align-items: end; gap: clamp(8px,3vw,22px); }
+.ligue-v2__podium-player { position: relative; width: min(190px,31%); min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 20px 12px 16px; border: 1px solid rgba(255,255,255,.07); border-radius: 20px 20px 10px 10px; background: linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012)); }
+.ligue-v2__podium-player--1 { width: min(220px,34%); min-height: 250px; border-color: rgba(232,255,61,.22); background: linear-gradient(180deg,rgba(232,255,61,.08),rgba(232,255,61,.012)); box-shadow: 0 18px 55px rgba(232,255,61,.035); }
+.ligue-v2__podium-player--2 { min-height: 205px; }
+.ligue-v2__podium-player--3 { min-height: 174px; }
+.ligue-v2__podium-player.moi { box-shadow: inset 0 0 0 1px var(--accent-bordure); }
+.ligue-v2__crown { position: absolute; top: -25px; color: var(--accent); font-size: 1.35rem; text-shadow: 0 0 22px rgba(232,255,61,.3); }
+.ligue-v2__player-avatar { width: 62px; height: 62px; display: grid; place-items: center; margin-bottom: 10px; border: 1px solid var(--bordure-vive); border-radius: 50%; background: #151c26; font: 850 .8rem var(--titre); }
+.ligue-v2__podium-player--1 .ligue-v2__player-avatar { width: 76px; height: 76px; border-color: var(--accent-bordure); }
+.ligue-v2__podium-player > strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 .92rem var(--titre); }
+.ligue-v2__podium-player > small { color: var(--texte-faible); font-size: .59rem; text-align: center; }
+.ligue-v2__score { margin-top: 7px; font: 800 .84rem var(--titre); }
+.ligue-v2__podium-player > i { position: absolute; left: 12px; bottom: 7px; color: rgba(255,255,255,.07); font: italic 900 3.5rem/1 var(--titre); z-index: -1; }
+.ligue-v2__podium--empty { min-height: 220px; display: grid; place-items: center; text-align: center; }
+
+/* Progression + rivalité */
+.ligue-v2__duo-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin: 8px 0 42px; }
+.ligue-v2__focus-card { min-height: 245px; padding: 22px; border: 1px solid rgba(255,255,255,.07); border-radius: 24px 12px 24px 12px; background: rgba(13,19,27,.68); }
+.ligue-v2__focus-card--rival { border-radius: 12px 24px 12px 24px; }
+.ligue-v2__focus-card h3 { margin: 10px 0 12px; font-size: clamp(1.3rem,2.5vw,1.8rem); }
+.ligue-v2__focus-card p { margin: 0; color: var(--texte-faible); font-size: .73rem; }
+.ligue-v2__focus-card.is-leading { background: linear-gradient(145deg,rgba(232,255,61,.065),rgba(13,19,27,.72) 55%); }
+.ligue-v2__progress-rank { display: flex; align-items: baseline; gap: 10px; margin-top: 18px; }
+.ligue-v2__progress-rank strong { font: 900 3.3rem/1 var(--titre); letter-spacing: -.07em; }
+.ligue-v2__progress-rank span { color: var(--accent); font: 800 .58rem var(--titre); letter-spacing: .16em; }
+.ligue-v2__chase-line { display: grid; grid-template-columns: 1fr 9px 1fr; gap: 6px; align-items: center; margin: 20px 0 16px; }
+.ligue-v2__chase-line span { height: 1px; background: linear-gradient(90deg,transparent,rgba(232,255,61,.32)); }
+.ligue-v2__chase-line span:last-child { transform: scaleX(-1); }
+.ligue-v2__chase-line i { width: 8px; height: 8px; border: 1px solid var(--accent); border-radius: 50%; box-shadow: 0 0 16px rgba(232,255,61,.24); }
+.ligue-v2__focus-top { display: flex; justify-content: space-between; gap: 12px; }
+.ligue-v2__week { color: var(--texte-faible); font-size: .62rem; }
+.ligue-v2__versus { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin: 22px 0 18px; }
+.ligue-v2__versus > div { display: grid; justify-items: center; gap: 3px; min-width: 0; }
+.ligue-v2__versus strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 .82rem var(--titre); }
+.ligue-v2__versus small { color: var(--texte-faible); font-size: .62rem; }
+.ligue-v2__mini-avatar { width: 52px; height: 52px; display: grid; place-items: center; border: 1px solid var(--accent-bordure); border-radius: 50%; background: var(--accent-fantome); color: var(--accent); font: 800 .7rem var(--titre); }
+.ligue-v2__mini-avatar--rival { border-color: var(--bordure-vive); background: var(--surface-2); color: var(--texte-doux); }
+.ligue-v2__vs { color: var(--texte-faible); font: 900 .65rem var(--titre); }
+.ligue-v2__rival-gap { text-align: center; color: var(--texte-doux); font-size: .72rem; }
+
+/* Classement */
+.ligue-v2__ranking-section { margin-top: 10px; }
+.ligue-v2__season-chip { padding: 6px 11px; border: 1px solid var(--bordure); border-radius: 999px; color: var(--texte-faible); font-size: .66rem; }
+.ligue-v2__ranking { border-top: 1px solid rgba(255,255,255,.065); }
+.ligue-v2__ranking-row { display: grid; grid-template-columns: 42px 38px minmax(0,1fr) auto; gap: 12px; align-items: center; min-height: 68px; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,.055); transition: background 160ms ease, transform 160ms ease; }
+.ligue-v2__ranking-row:hover { background: rgba(255,255,255,.022); transform: translateX(3px); }
+.ligue-v2__ranking-row.moi { margin: 6px -5px; padding-left: 15px; padding-right: 15px; border: 1px solid var(--accent-bordure); border-radius: 14px; background: rgba(232,255,61,.045); }
+.ligue-v2__ranking-rank { color: var(--texte-faible); font: 850 .9rem var(--titre); text-align: center; }
+.ligue-v2__ranking-row:nth-child(-n+3) .ligue-v2__ranking-rank { color: var(--accent); }
+.ligue-v2__ranking-avatar { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--bordure); font: 800 .58rem var(--titre); color: var(--texte-doux); }
+.ligue-v2__ranking-player { min-width: 0; }
+.ligue-v2__ranking-player strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 750 .83rem var(--titre); }
+.ligue-v2__ranking-player strong em { color: var(--accent); font: normal 800 .52rem var(--titre); letter-spacing: .12em; }
+.ligue-v2__ranking-player small { display: block; color: var(--texte-faible); font-size: .62rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ligue-v2__ranking-score { font: 800 .86rem var(--titre); }
+.ligue-v2__ranking-empty { padding: 34px 0; color: var(--texte-faible); border-top: 1px solid var(--bordure); }
+
+/* Défi */
+.ligue-v2__event-section { margin-top: 52px; }
+.ligue-v2__challenge { overflow: hidden; display: grid; grid-template-columns: minmax(0,1fr) minmax(230px,.65fr); gap: 22px; align-items: center; padding: 24px; border: 1px solid rgba(255,255,255,.075); border-radius: 14px 28px 14px 28px; background: radial-gradient(420px 180px at 0 50%,rgba(66,165,255,.055),transparent 72%), rgba(13,19,27,.72); }
+.ligue-v2__challenge-main, .ligue-v2__challenge--empty > div { display: flex; align-items: center; gap: 18px; }
+.ligue-v2__challenge-game, .ligue-v2__challenge-mark { width: 72px; height: 72px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid var(--bordure-vive); border-radius: 22px 10px 22px 10px; background: rgba(255,255,255,.03); color: var(--texte-doux); font: 850 .68rem var(--titre); text-align: center; padding: 7px; }
+.ligue-v2__challenge h3 { margin: 5px 0 7px; font-size: 1.35rem; }
+.ligue-v2__challenge p { margin: 0; color: var(--texte-faible); font-size: .72rem; }
+.ligue-v2__challenge-top { display: grid; gap: 5px; }
+.ligue-v2__challenge-top > span { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; padding: 7px 9px; border-bottom: 1px solid rgba(255,255,255,.05); font-size: .7rem; }
+.ligue-v2__challenge-top i { color: var(--texte-faible); font: normal 850 .68rem var(--titre); }
+.ligue-v2__challenge-top strong { font-family: var(--titre); }
+.ligue-v2__challenge-top em { font-style: normal; }
+.ligue-v2__challenge--empty { grid-template-columns: 1fr auto; }
+.ligue-v2__challenge-owner { color: var(--texte-faible); font-size: .68rem; }
+
+/* Récompenses */
+.ligue-v2__rewards { display: grid; grid-template-columns: minmax(0,.75fr) minmax(0,1.25fr); gap: 34px; align-items: center; margin: 54px 0 10px; padding: 30px 0 8px; border-top: 1px solid rgba(255,255,255,.065); }
+.ligue-v2__rewards h2 { margin: 6px 0 8px; font-size: 1.55rem; }
+.ligue-v2__rewards p { color: var(--texte-faible); font-size: .72rem; }
+.ligue-v2__reward-track { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 6px; }
+.ligue-v2__reward { min-height: 105px; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; padding: 10px; border: 1px solid var(--bordure); border-radius: 12px; color: var(--texte-faible); font: 700 .58rem var(--titre); }
+.ligue-v2__reward i { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--texte-faible); font-style: normal; }
+.ligue-v2__reward--lit { border-color: var(--accent-bordure); color: var(--texte); background: var(--accent-fantome); }
+.ligue-v2__reward--lit i { background: var(--accent); color: var(--sur-accent); }
+
+@media (max-width: 760px) {
+  .ligues-v2__hero { grid-template-columns: 1fr; gap: 20px; padding-top: 18px; }
+  .ligues-v2__hero-copy h1 { font-size: clamp(2.5rem,13vw,4rem); }
+  .ligues-v2__hero-actions { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .ligues-v2__action small { display: none; }
+  .ligues-v2__league-grid { grid-template-columns: 1fr; }
+  .ligues-v2__empty-state { grid-template-columns: 1fr; padding: 28px 4px; }
+  .ligues-v2__empty-mark { width: 82px; height: 92px; }
+  .ligue-v2__hero { grid-template-columns: 1fr; gap: 24px; padding: 22px 18px; border-radius: 26px 12px 26px 12px; }
+  .ligue-v2__identity { align-items: flex-start; gap: 14px; }
+  .ligue-v2__crest { width: 62px; height: 70px; }
+  .ligue-v2__identity h1 { font-size: clamp(2rem,10vw,3rem); }
+  .ligue-v2__hero-meta { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .ligue-v2__status, .ligue-v2__invite { min-width: 0; }
+  .ligue-v2__podium { padding-left: 0; padding-right: 0; }
+  .ligue-v2__podium-stage { min-height: 230px; gap: 5px; }
+  .ligue-v2__podium-player { padding: 14px 7px 12px; }
+  .ligue-v2__podium-player--1 { min-height: 215px; }
+  .ligue-v2__podium-player--2 { min-height: 178px; }
+  .ligue-v2__podium-player--3 { min-height: 155px; }
+  .ligue-v2__player-avatar { width: 46px; height: 46px; }
+  .ligue-v2__podium-player--1 .ligue-v2__player-avatar { width: 58px; height: 58px; }
+  .ligue-v2__podium-player > small { display: none; }
+  .ligue-v2__score { font-size: .7rem; }
+  .ligue-v2__duo-grid { grid-template-columns: 1fr; }
+  .ligue-v2__focus-card { min-height: auto; }
+  .ligue-v2__ranking-row { grid-template-columns: 30px 34px minmax(0,1fr) auto; gap: 8px; padding-left: 3px; padding-right: 3px; }
+  .ligue-v2__ranking-score { font-size: .72rem; }
+  .ligue-v2__challenge, .ligue-v2__challenge--empty { grid-template-columns: 1fr; }
+  .ligue-v2__challenge-main, .ligue-v2__challenge--empty > div { align-items: flex-start; }
+  .ligue-v2__rewards { grid-template-columns: 1fr; gap: 18px; }
+  .ligue-v2__reward-track { grid-template-columns: repeat(5,96px); overflow-x: auto; padding-bottom: 6px; }
+}
+
+@media (max-width: 460px) {
+  .ligues-v2__hero-actions { grid-template-columns: 1fr; }
+  .ligues-v2__tabs { width: 100%; }
+  .ligues-v2__tab { flex: 1; padding-inline: 8px; }
+  .ligues-v2__composer { padding: 12px; }
+  .ligues-v2__composer > div { padding: 22px 18px; }
+  .ligue-v2__identity { display: grid; }
+  .ligue-v2__hero-meta { grid-template-columns: 1fr; }
+  .ligue-v2__podium-stage { min-height: 200px; }
+  .ligue-v2__podium-player--1 { min-height: 190px; }
+  .ligue-v2__podium-player--2 { min-height: 164px; }
+  .ligue-v2__podium-player--3 { min-height: 145px; }
+  .ligue-v2__ranking-player small { max-width: 132px; }
+}
