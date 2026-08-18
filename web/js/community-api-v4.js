@@ -1,6 +1,14 @@
 /** Phase 11 — Community V4 data client. */
 import { MODE_DEMO, SUPABASE_ANON_KEY, SUPABASE_URL } from './config.js';
 
+if (typeof document !== 'undefined' && !document.getElementById('phase11-relic-compat')) {
+  const link = document.createElement('link');
+  link.id = 'phase11-relic-compat';
+  link.rel = 'stylesheet';
+  link.href = 'styles/pages/phase11-community-relic-compat.css';
+  document.head.append(link);
+}
+
 const BASE = SUPABASE_URL.trim().replace(/\/+$/, '').replace(/\/rest\/v1$/, '');
 const SESSION_KEY = 'clutch.session';
 
