@@ -1,5 +1,5 @@
-// Phase 4 — enforce reliable, high-resolution esports organization marks in onboarding.
-// If a known HQ asset fails, we fall back to the existing tag instead of showing a bad favicon.
+// Phase 6A — reliable, normalized esports organization marks in onboarding.
+// Known HQ assets use a single optical box; dark marks receive automatic contrast.
 const TEAM_LOGOS = {
   'G2 Esports': 'https://static.cdnlogo.com/logos/g/28/g2.svg',
   'Fnatic': 'https://static.cdnlogo.com/logos/f/23/fnatic.svg',
@@ -26,9 +26,12 @@ const TEAM_LOGOS = {
   'Team Liquid': 'https://commons.wikimedia.org/wiki/Special:FilePath/Team_Liquid_logo.svg',
 };
 
+const DARK_LOGOS = new Set(['G2 Esports', 'Karmine Corp']);
+
 function fallbackToTag(card, img) {
   img?.remove();
-  card.querySelector('.onboarding-v5__team-logo')?.classList.remove('has-image');
+  const holder = card.querySelector('.onboarding-v5__team-logo');
+  holder?.classList.remove('has-image', 'needs-contrast');
 }
 
 function patchCard(card) {
@@ -36,6 +39,10 @@ function patchCard(card) {
   if (!name) return;
   const holder = card.querySelector('.onboarding-v5__team-logo');
   if (!holder) return;
+
+  holder.classList.add('c-team-logo', 'c-team-logo--md');
+  holder.classList.toggle('needs-contrast', DARK_LOGOS.has(name));
+
   let img = holder.querySelector('img');
   const hq = TEAM_LOGOS[name];
 
@@ -48,7 +55,8 @@ function patchCard(card) {
   if (!img) {
     img = document.createElement('img');
     img.alt = `Logo ${name}`;
-    img.loading = 'eager';
+    img.loading = 'lazy';
+    img.decoding = 'async';
     img.referrerPolicy = 'no-referrer';
     holder.append(img);
   }
