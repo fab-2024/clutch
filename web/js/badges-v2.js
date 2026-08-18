@@ -88,8 +88,10 @@ export function descriptionBadgeAffiche(badge) { return badge?.secret && !badge?
 export function conditionBadgeAffiche(badge) { if (badge?.secret) return badge?.obtenu ? 'Condition de déblocage classifiée.' : '???'; return badge?.condition ?? ''; }
 
 /**
- * XP permanent : participation + réussite + collection. Le vieux score `note`
- * n'entre plus dans la progression : Frags et XP ont désormais des rôles nets.
+ * XP permanent : participation + réussite + collection + missions sociales.
+ * Le vieux score `note` n'entre plus dans la progression : Frags et XP ont
+ * désormais des rôles nets, et une Friend Quest terminée reste une source
+ * dérivable de carrière au même titre qu'un badge ou un Call réussi.
  */
 export function xpDetailleeV2({ badges = [], recap = {} } = {}) {
   const obtenus = badges.filter((b) => b.obtenu);
@@ -98,14 +100,16 @@ export function xpDetailleeV2({ badges = [], recap = {} } = {}) {
   const parReussite = n(recap.gagnes) * XP_PRONO_GAGNE;
   const parSaisons = n(recap.saisons_jouees) * XP_SAISON;
   const parCalls = n(recap.calls_gagnes) * XP_CALL;
+  const parQuetes = n(recap.xp_quetes);
   return {
-    total: parBadges + parActivite + parReussite + parSaisons + parCalls,
+    total: parBadges + parActivite + parReussite + parSaisons + parCalls + parQuetes,
     sources: [
       { cle: 'activite', libelle: 'Pronostics réglés', xp: parActivite, detail: `${n(recap.paris)} résultat(s)` },
       { cle: 'reussite', libelle: 'Pronostics réussis', xp: parReussite, detail: `${n(recap.gagnes)} victoire(s)` },
       { cle: 'badges', libelle: 'Badges décrochés', xp: parBadges, detail: `${obtenus.length} badge(s)` },
       { cle: 'saisons', libelle: 'Saisons jouées', xp: parSaisons, detail: `${n(recap.saisons_jouees)} saison(s)` },
       { cle: 'calls', libelle: 'Calls réussis', xp: parCalls, detail: `${n(recap.calls_gagnes)} Call(s)` },
+      { cle: 'quetes', libelle: 'Missions entre amis', xp: parQuetes, detail: 'XP social permanent' },
     ].filter((source) => source.xp > 0),
   };
 }
