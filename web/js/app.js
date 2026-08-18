@@ -34,7 +34,7 @@ const ROUTES = [
   { motif: /^\/matchs\/(.+)$/, vue: vueMatch, nav: 'matchs', mobile: 'matchs' },
 
   { motif: /^\/social$/, vue: (r) => vueSocial(r, 'ligues'), nav: 'social', desktop: 'ligues', mobile: 'social' },
-  { motif: /^\/social\/(ligues|faction|amis)$/, vue: vueSocial, nav: 'social', desktop: 'ligues', mobile: 'social' },
+  { motif: /^\/social\/(missions|ligues|faction|amis)$/, vue: vueSocial, nav: 'social', desktop: 'ligues', mobile: 'social' },
   { motif: /^\/amis$/, vue: (r) => vueSocial(r, 'amis'), nav: 'social', desktop: 'ligues', mobile: 'social' },
   { motif: /^\/ligues$/, vue: vueLigues, nav: 'ligues', mobile: 'social' },
   { motif: /^\/ligues\/(.+)$/, vue: vueLigue, nav: 'ligues', mobile: 'social' },
