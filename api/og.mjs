@@ -2,8 +2,8 @@ import { ImageResponse } from '@vercel/og';
 import { createElement as h } from 'react';
 import { loadPublicObject, publicPresentation } from '../server/public-data.mjs';
 
-export default async function handler(req) {
-  const url = new URL(req.url || '/', 'https://clutch.invalid');
+export async function GET(request) {
+  const url = new URL(request.url || '/', 'https://clutch.invalid');
   const kind = url.searchParams.get('kind');
   const ref = url.searchParams.get('id') || '';
 
