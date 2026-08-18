@@ -1,4 +1,4 @@
-import { contexte } from './app.js';
+import { contexte, majSolde } from './app.js';
 import { vueProfilPublic } from './views/profil-public.js';
 import { urlProfilPublic } from './public-profile-api.js';
 import { toast } from './ui.js';
@@ -34,8 +34,10 @@ async function rendreRoutePublique() {
   const token = ++generation;
   chargerStyles();
   // L'app principale ne connaît volontairement pas cette route : on laisse son
-  // rendu de fallback terminer, puis on remplace uniquement le contenu.
+  // fallback terminer, puis on reconstruit la chrome Clutch et le contenu public.
   await new Promise((resolve) => setTimeout(resolve, 0));
+  if (token !== generation || pseudo !== pseudoRoute()) return;
+  await majSolde().catch(() => null);
   if (token !== generation || pseudo !== pseudoRoute()) return;
   const racine = document.getElementById('contenu');
   if (!racine) return;
