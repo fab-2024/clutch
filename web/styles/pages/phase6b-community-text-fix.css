@@ -1,0 +1,77 @@
+/* Phase 6B — text/layout hardening after relic-first route switch. */
+
+/* Keep the relic label in its own readable zone above the progression card. */
+@media (min-width: 901px) {
+  .phase11-relic-name {
+    bottom: 30% !important;
+    width: min(82%, 470px) !important;
+    z-index: 13 !important;
+  }
+
+  .phase11-relic-name small {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--relic-core);
+    font-size: .54rem;
+    letter-spacing: .16em;
+  }
+
+  .phase11-relic-name strong {
+    font-size: clamp(2.8rem, 4.4vw, 4.2rem) !important;
+    line-height: .86 !important;
+  }
+
+  .phase11-relic-name span {
+    display: block;
+    max-width: 380px !important;
+    margin: 9px auto 0 !important;
+    color: #aeb5bf !important;
+    font-size: .62rem !important;
+    line-height: 1.4;
+  }
+
+  .phase11-progress {
+    margin-bottom: 16px !important;
+  }
+}
+
+/* Visitor copy was using inline elements, which glued the eyebrow and sentence. */
+.phase11-impact--visitor > div > small,
+.phase11-impact--visitor > div > strong,
+.phase11-impact--visitor > div > span {
+  display: block;
+}
+
+.phase11-impact--visitor > div > small {
+  margin-bottom: 7px;
+  color: var(--relic-core);
+  font-size: .50rem;
+  font-weight: 950;
+  letter-spacing: .15em;
+}
+
+.phase11-impact--visitor > div > strong {
+  color: #f2f4f5;
+  font-size: .76rem;
+  line-height: 1.35;
+}
+
+.phase11-impact--visitor > div > span {
+  margin-top: 7px;
+  color: #aeb5bf;
+  font-size: .54rem;
+  line-height: 1.5;
+}
+
+/* Progress copy should remain clearly separated from the large relic title. */
+.phase11-progress__headline small,
+.phase11-progress > p {
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 900px) {
+  .phase11-relic-name {
+    bottom: 7% !important;
+  }
+}
