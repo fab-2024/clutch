@@ -4,6 +4,13 @@
  */
 import { esc, ecusson } from './ui.js';
 
+const TEAM_LOGOS = {
+  'Movistar KOI': 'https://commons.wikimedia.org/wiki/Special:FilePath/Movistar_KOI_Logo.webp',
+  'Team BDS': 'https://gamepedia.cursecdn.com/lolesports_gamepedia_en/9/9e/Team_BDSlogo_square.png',
+};
+
+const TEAM_LOGOS_DARK = new Set(['Team BDS']);
+
 export function cx(...classes) {
   return classes.flat().filter(Boolean).join(' ');
 }
@@ -55,7 +62,25 @@ export function Tabs({ items = [], active = null, className = '' } = {}) {
 }
 
 export function TeamBadge({ tag, name, size = 'm', className = '' } = {}) {
+  const src = TEAM_LOGOS[name] || '';
+  if (src) {
+    const logoSize = size === 's' ? 'sm' : size === 'l' ? 'lg' : 'md';
+    return TeamLogo({ src, name, tag, size: logoSize, contrast: TEAM_LOGOS_DARK.has(name), className: cx('c-team-badge', className) });
+  }
   return `<span class="${esc(cx('c-team-badge', className))}">${ecusson(tag, name, size)}</span>`;
+}
+
+/**
+ * Normalized optical box for real organization marks.
+ * Use this instead of raw <img> tags whenever a licensed/source logo is shown.
+ */
+export function TeamLogo({ src = '', name = '', tag = '', size = 'md', contrast = false, className = '' } = {}) {
+  const safeSize = ['sm', 'md', 'lg'].includes(size) ? size : 'md';
+  const fallback = String(tag || initiales(name) || '?').slice(0, 4).toUpperCase();
+  const classes = cx('c-team-logo', `c-team-logo--${safeSize}`, contrast && 'needs-contrast', !src && 'c-team-logo--fallback', className);
+  const label = name ? `Logo ${name}` : `Équipe ${fallback}`;
+  if (!src) return `<span class="${esc(classes)}" role="img" aria-label="${esc(label)}"><b class="c-team-logo__fallback">${esc(fallback)}</b></span>`;
+  return `<span class="${esc(classes)}"><b class="c-team-logo__fallback" aria-hidden="true">${esc(fallback)}</b><img src="${esc(src)}" alt="${esc(label)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove();this.parentElement.classList.add('c-team-logo--fallback')" /></span>`;
 }
 
 export function EmptyState({ title = '', text = '', action = '' } = {}) {

@@ -33,20 +33,6 @@ export async function vueLigues(racine, force = null) {
           <h1>Joue pour la place.<br><span>Reste pour la rivalité.</span></h1>
           <p>${esc(saison?.nom ?? 'Saison en cours')} · les mêmes pronostics, mais enfin quelque chose à prouver à tes potes.</p>
         </div>
-        ${
-          contexte.utilisateur
-            ? `<div class="ligues-v2__hero-actions">
-                 <button class="ligues-v2__action ligues-v2__action--primary" data-open-league="create">
-                   <span class="ligues-v2__action-icon">＋</span>
-                   <span><strong>Créer</strong><small>une nouvelle ligue</small></span>
-                 </button>
-                 <button class="ligues-v2__action" data-open-league="join">
-                   <span class="ligues-v2__action-icon">⌁</span>
-                   <span><strong>Rejoindre</strong><small>avec un code</small></span>
-                 </button>
-               </div>`
-            : ''
-        }
       </header>
 
       <div class="ligues-v2__tabs" id="league-tabs" role="tablist"></div>
@@ -182,7 +168,11 @@ async function sectionMesLigues(zone) {
         <span class="ligues-v2__kicker">TES ARÈNES</span>
         <h2>${ligues.length} ligue${ligues.length > 1 ? 's' : ''}. ${ligues.length > 1 ? 'Autant de comptes à régler.' : 'Un seul classement qui compte vraiment.'}</h2>
       </div>
-      <span class="ligues-v2__count">${ligues.length}</span>
+      <div class="ligues-v2__section-tools" aria-label="Actions de ligue">
+        <span class="ligues-v2__count">${ligues.length}</span>
+        <button class="ligues-v2__mini-action" type="button" data-open-league="create">＋ Créer</button>
+        <button class="ligues-v2__mini-action" type="button" data-open-league="join">⌁ Code</button>
+      </div>
     </div>
     <div class="ligues-v2__league-grid">
       ${enrichies.map(carteLigue).join('')}
