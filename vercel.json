@@ -2,6 +2,17 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
+  "outputDirectory": "web",
+  "rewrites": [
+    {
+      "source": "/c/:token",
+      "destination": "/api/public-page?kind=challenge&id=:token"
+    },
+    {
+      "source": "/m/:id",
+      "destination": "/api/public-page?kind=match&id=:id"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -20,6 +31,5 @@
         }
       ]
     }
-  ],
-  "outputDirectory": "web"
+  ]
 }
