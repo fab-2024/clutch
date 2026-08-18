@@ -1,0 +1,82 @@
+/* Phase 11 — Safari-safe material baseline for relic-vessel-v3.js.
+   Keep locked preview silhouettes dark, but make the active relic readable. */
+.phase11-relic:not(.is-locked) .rv__glass{
+  fill:rgba(13,18,26,.68)!important;
+  stroke:rgba(222,232,244,.30)!important;
+  stroke-width:1.25!important;
+}
+.phase11-relic:not(.is-locked) .rv__glass-edge{
+  fill:none!important;
+  stroke:rgba(238,244,250,.58)!important;
+  stroke-width:1.35!important;
+  filter:drop-shadow(0 0 5px hsla(var(--team-hue),90%,68%,.22));
+}
+.phase11-relic:not(.is-locked) .rv__glass-inner{
+  fill:none!important;
+  stroke:hsla(var(--team-hue),78%,66%,.22)!important;
+  stroke-width:.8!important;
+}
+.phase11-relic:not(.is-locked) .rv__liquid{
+  fill:hsl(var(--team-hue),78%,52%)!important;
+  opacity:.94!important;
+  filter:drop-shadow(0 0 7px hsla(var(--team-hue),100%,62%,.72)) drop-shadow(0 0 18px hsla(var(--team-hue),100%,58%,.34));
+}
+.phase11-relic:not(.is-locked) .rv__core,
+.phase11-relic:not(.is-locked) .rv__energy-orb{
+  fill:hsl(var(--team-hue),94%,68%)!important;
+  opacity:.88!important;
+  filter:drop-shadow(0 0 10px hsla(var(--team-hue),100%,68%,.85));
+}
+.phase11-relic:not(.is-locked) .rv__metal-plate{
+  fill:var(--metal,#8f7130)!important;
+  stroke:#c7a95d!important;
+  stroke-width:.9!important;
+}
+.phase11-relic:not(.is-locked) .rv__metal-plate--dark{fill:#191b20!important;stroke:#756137!important}
+.phase11-relic:not(.is-locked) .rv__metal-wear{fill:#d4b86d!important;opacity:.58!important}
+.phase11-relic:not(.is-locked) .rv__metal-line,
+.phase11-relic:not(.is-locked) .rv__strap,
+.phase11-relic:not(.is-locked) .rv__brace,
+.phase11-relic:not(.is-locked) .rv__pipe-metal{
+  fill:none!important;
+  stroke:#9c7b36!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+}
+.phase11-relic:not(.is-locked) .rv__pipe-highlight{
+  fill:none!important;
+  stroke:rgba(238,205,112,.62)!important;
+  stroke-linecap:round!important;
+}
+.phase11-relic:not(.is-locked) .rv__rivet{fill:#d0b066!important;stroke:#332915!important;stroke-width:.7!important}
+.phase11-relic:not(.is-locked) .rv__sigil-plate,
+.phase11-relic:not(.is-locked) .rv__emblem-core{fill:#17191e!important;stroke:#b79345!important;stroke-width:1!important}
+.phase11-relic:not(.is-locked) .rv__sigil-mark,
+.phase11-relic:not(.is-locked) .rv__emblem-mark{fill:hsl(var(--team-hue),92%,69%)!important;filter:drop-shadow(0 0 7px hsla(var(--team-hue),100%,66%,.65))}
+.phase11-relic:not(.is-locked) .rv__emblem-ring,
+.phase11-relic:not(.is-locked) .rv__runes,
+.phase11-relic:not(.is-locked) .rv__crack,
+.phase11-relic:not(.is-locked) .rv__energy-stroke{
+  fill:none!important;
+  stroke:hsl(var(--team-hue),78%,67%)!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+}
+.phase11-relic:not(.is-locked) .rv__emblem-ring{stroke:#b8954b!important}
+.phase11-relic:not(.is-locked) .rv__runes{opacity:.50!important;filter:drop-shadow(0 0 5px hsla(var(--team-hue),100%,67%,.35))}
+.phase11-relic:not(.is-locked) .rv__crack{opacity:.46!important;stroke-width:1.15!important}
+.phase11-relic:not(.is-locked) .rv__energy-stroke{opacity:.72!important;stroke-width:2!important;filter:drop-shadow(0 0 6px hsla(var(--team-hue),100%,67%,.62))}
+.phase11-relic:not(.is-locked) .rv__bubble{fill:hsl(var(--team-hue),90%,78%)!important;opacity:.66!important}
+.phase11-relic:not(.is-locked) .rv__spec{fill:none!important;stroke:rgba(255,255,255,.34)!important;stroke-width:1.7!important;stroke-linecap:round!important}
+.phase11-relic:not(.is-locked) .rv__spec--wide{stroke-width:3.2!important;opacity:.44!important}
+.phase11-relic:not(.is-locked) .rv__ground{fill:rgba(0,0,0,.55)!important}
+.phase11-relic:not(.is-locked) .rv__ground-core{fill:hsla(var(--team-hue),85%,55%,.12)!important}
+.phase11-relic:not(.is-locked) .rv__age{opacity:.22!important}
+
+/* Critical state: increase readable light without washing out the object. */
+.phase11-hero--critical .phase11-relic:not(.is-locked){
+  filter:drop-shadow(0 22px 36px rgba(0,0,0,.42)) drop-shadow(0 0 18px hsla(var(--team-hue),100%,60%,.18));
+}
+.phase11-hero--critical .phase11-relic:not(.is-locked) .rv__liquid{
+  filter:drop-shadow(0 0 9px hsla(var(--team-hue),100%,68%,.85)) drop-shadow(0 0 24px hsla(var(--team-hue),100%,58%,.46));
+}
