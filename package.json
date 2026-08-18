@@ -1,0 +1,15 @@
+{
+  "name": "clutch",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node -e \"console.log('Clutch static build')\""
+  },
+  "dependencies": {
+    "@vercel/og": "0.11.1",
+    "react": "19.2.8"
+  }
+}
