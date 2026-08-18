@@ -69,13 +69,15 @@ function heroMatch(match, projection, monProno) {
   const debut = new Date(match.debut);
   const live = debut.getTime() <= Date.now();
   const heure = debut.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const cta = live ? 'Suivre le match' : monProno ? 'Voir mon pronostic' : 'Prendre position';
+  const question = live ? 'Le match est lancé.' : 'Ce soir, tu prends qui ?';
 
-  return `<section class="hub-hero" data-jeu="${esc(match.jeu)}">
+  return `<section class="hub-hero" data-jeu="${esc(match.jeu)}" data-live="${live}">
     <div class="hub-hero__aura" aria-hidden="true"></div>
     <div class="hub-hero__top"><div class="hub-hero__event"><span class="hub-game-dot"></span><span>${esc(nomJeu(match.jeu))}</span><i></i><span>${esc(match.evenement)}</span></div><span class="hub-hero__time${live ? ' hub-hero__time--live' : ''}">${live ? '<b></b> LIVE' : `${esc(quand(match.debut))} · ${esc(heure)}`}</span></div>
-    <div class="hub-hero__question"><span>Match du moment</span><strong>Ce soir, tu prends qui ?</strong></div>
+    <div class="hub-hero__question"><span>Match du moment</span><strong>${question}</strong></div>
     <div class="hub-duel">${camp(match.equipe_a, match.tag_a, match.elo_a)}<div class="hub-duel__centre"><span>BO${esc(String(match.format))}</span><strong>VS</strong>${favoriNom && probaFavori !== null ? `<small>${esc(favoriNom)} · ${probaFavori}% favori</small>` : '<small>Choisis ton camp</small>'}</div>${camp(match.equipe_b, match.tag_b, match.elo_b, true)}</div>
-    <div class="hub-hero__bottom">${resumeProno(match, monProno)}<a class="hub-cta" href="#/matchs/${encodeURIComponent(match.id)}"><span>${monProno ? 'Voir mon pronostic' : 'Prendre position'}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></a></div>
+    <div class="hub-hero__bottom">${resumeProno(match, monProno, live)}<a class="hub-cta" href="#/matchs/${encodeURIComponent(match.id)}"><span>${cta}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></a></div>
   </section>`;
 }
 
@@ -83,10 +85,14 @@ function camp(nom, tag, elo, droite = false) {
   return `<div class="hub-team${droite ? ' hub-team--right' : ''}">${TeamBadge({ tag, name: nom })}<div class="hub-team__txt"><strong>${esc(nom)}</strong><span>${esc(tag)} · Elo ${esc(String(elo))}</span></div></div>`;
 }
 
-function resumeProno(match, p) {
-  if (!p) return '<div class="hub-hero__hint"><span class="hub-pulse"></span> Ton choix n’est pas encore posé.</div>';
+function resumeProno(match, p, live = false) {
+  if (!p) {
+    return live
+      ? '<div class="hub-hero__hint"><span class="hub-pulse"></span> Match lancé · les prises de position sont closes.</div>'
+      : '<div class="hub-hero__hint"><span class="hub-pulse"></span> Ton choix n’est pas encore posé.</div>';
+  }
   const nom = p.choix === 'a' ? match.equipe_a : match.equipe_b;
-  const statut = p.statut === 'en_cours' ? 'En attente du résultat' : p.statut === 'gagne' ? `+${Math.abs(Number(p.delta_frags ?? 0))} Frags` : `−${Math.abs(Number(p.delta_frags ?? 0))} Frags`;
+  const statut = p.statut === 'en_cours' ? (live ? 'Match en cours' : 'En attente du résultat') : p.statut === 'gagne' ? `+${Math.abs(Number(p.delta_frags ?? 0))} Frags` : `−${Math.abs(Number(p.delta_frags ?? 0))} Frags`;
   return `<div class="hub-mybet"><span>Ton choix</span><strong>${esc(nom)}</strong><small>${esc(statut)} · aucun Frag engagé</small></div>`;
 }
 
