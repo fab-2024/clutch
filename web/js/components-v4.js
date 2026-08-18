@@ -58,6 +58,19 @@ export function TeamBadge({ tag, name, size = 'm', className = '' } = {}) {
   return `<span class="${esc(cx('c-team-badge', className))}">${ecusson(tag, name, size)}</span>`;
 }
 
+/**
+ * Normalized optical box for real organization marks.
+ * Use this instead of raw <img> tags whenever a licensed/source logo is shown.
+ */
+export function TeamLogo({ src = '', name = '', tag = '', size = 'md', contrast = false, className = '' } = {}) {
+  const safeSize = ['sm', 'md', 'lg'].includes(size) ? size : 'md';
+  const fallback = String(tag || initiales(name) || '?').slice(0, 4).toUpperCase();
+  const classes = cx('c-team-logo', `c-team-logo--${safeSize}`, contrast && 'needs-contrast', !src && 'c-team-logo--fallback', className);
+  const label = name ? `Logo ${name}` : `Équipe ${fallback}`;
+  if (!src) return `<span class="${esc(classes)}" role="img" aria-label="${esc(label)}"><b>${esc(fallback)}</b></span>`;
+  return `<span class="${esc(classes)}"><img src="${esc(src)}" alt="${esc(label)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" /></span>`;
+}
+
 export function EmptyState({ title = '', text = '', action = '' } = {}) {
   return `<div class="c-empty"><div><h3>${esc(title)}</h3><p>${esc(text)}</p>${action ? `<div style="margin-top:16px">${action}</div>` : ''}</div></div>`;
 }
