@@ -1,6 +1,7 @@
 import { esc, nomJeu } from './ui.js';
 import { CONVICTIONS } from './prediction.js';
 import { presentationResultat, equipeChoisie, tagChoisi } from './result-reveal.js';
+import { activerCarteResultat } from './result-card-motion.js';
 
 const CONTROL_ID = 'phase6-simulator-control';
 const HOST_ID = 'phase6-simulator-host';
@@ -50,7 +51,7 @@ function renduRang(presentation, resultat) {
   let detail = 'Rang maintenu';
   if (rang.monte) detail = `+${Math.abs(rang.delta)} place${Math.abs(rang.delta) > 1 ? 's' : ''}`;
   if (rang.descend) detail = `−${Math.abs(rang.delta)} place${Math.abs(rang.delta) > 1 ? 's' : ''}`;
-  return `<div class="phase6-stat phase6-stat--rank${rang.monte ? ' is-up' : rang.descend ? ' is-down' : ''}">
+  return `<div class="phase6-card-stat phase6-card-stat--rank${rang.monte ? ' is-up' : rang.descend ? ' is-down' : ''}">
     <small>Classement</small>
     <strong>${formatRang(resultat.rang_avant)} <i>→</i> ${formatRang(resultat.rang_apres)}</strong>
     <span>${detail}</span>
@@ -64,44 +65,59 @@ function renduReveal(resultat) {
   const tag = tagChoisi(resultat) || choisie;
   const delta = Number(resultat.delta_frags ?? 0);
   const score = `${Number(resultat.score_a)} — ${Number(resultat.score_b)}`;
+  const badge = p.gagne ? 'WIN' : 'MISS';
+  const symboleCoin = p.gagne ? '▲' : '◆';
 
   return `<section class="phase6-reveal phase6-reveal--${p.tone} phase6-reveal--simulation" role="dialog" aria-modal="true" aria-labelledby="phase6-sim-title">
     <div class="phase6-reveal__atmosphere" aria-hidden="true">
-      <i class="phase6-reveal__halo phase6-reveal__halo--1"></i>
-      <i class="phase6-reveal__halo phase6-reveal__halo--2"></i>
+      <i class="phase6-reveal__orb phase6-reveal__orb--a"></i>
+      <i class="phase6-reveal__orb phase6-reveal__orb--b"></i>
       <i class="phase6-reveal__beam"></i>
       <i class="phase6-reveal__grain"></i>
     </div>
-    <div class="phase6-reveal__shell">
-      <header class="phase6-reveal__topline">
-        <span>CLUTCH // SIMULATION</span>
-        <span>${esc(nomJeu(resultat.jeu))} · ${esc(resultat.evenement)}</span>
-      </header>
-      <main class="phase6-reveal__stage">
-        <div class="phase6-reveal__kicker">${esc(p.kicker)} · SIMULATION</div>
-        <h1 id="phase6-sim-title">${esc(p.headline)}</h1>
-        <div class="phase6-reveal__duel">
-          <div class="phase6-reveal__team is-picked${Number(resultat.score_a) > Number(resultat.score_b) ? ' is-winner' : ''}">
-            <span>${esc(resultat.tag_a)}</span><strong>${esc(resultat.equipe_a)}</strong>
-          </div>
-          <div class="phase6-reveal__score"><small>FINAL</small><strong>${esc(score)}</strong></div>
-          <div class="phase6-reveal__team phase6-reveal__team--right${Number(resultat.score_b) > Number(resultat.score_a) ? ' is-winner' : ''}">
-            <span>${esc(resultat.tag_b)}</span><strong>${esc(resultat.equipe_b)}</strong>
-          </div>
+
+    <div class="phase6-reveal__viewport">
+      <article class="phase6-card" data-phase6-card>
+        <i class="phase6-card__sheen" aria-hidden="true"></i>
+        <i class="phase6-card__scan" aria-hidden="true"></i>
+        <span class="phase6-card__corner phase6-card__corner--tl" aria-hidden="true"><b>C</b><em>${symboleCoin}</em></span>
+        <span class="phase6-card__corner phase6-card__corner--br" aria-hidden="true"><b>C</b><em>${symboleCoin}</em></span>
+
+        <div class="phase6-card__inner">
+          <header class="phase6-card__header">
+            <div class="phase6-card__eyebrow"><span>CLUTCH RESULT</span><b>${badge}</b></div>
+            <small>${esc(nomJeu(resultat.jeu))} · ${esc(resultat.evenement)}</small>
+          </header>
+
+          <main class="phase6-card__body">
+            <div class="phase6-card__kicker">${esc(p.kicker)} · SIMULATION</div>
+            <h1 id="phase6-sim-title">${esc(p.headline)}</h1>
+
+            <div class="phase6-card__duel">
+              <div class="phase6-card__team is-picked${Number(resultat.score_a) > Number(resultat.score_b) ? ' is-winner' : ''}"><span>${esc(resultat.tag_a)}</span><strong>${esc(resultat.equipe_a)}</strong></div>
+              <div class="phase6-card__score"><small>FINAL</small><strong>${esc(score)}</strong></div>
+              <div class="phase6-card__team phase6-card__team--right${Number(resultat.score_b) > Number(resultat.score_a) ? ' is-winner' : ''}"><span>${esc(resultat.tag_b)}</span><strong>${esc(resultat.equipe_b)}</strong></div>
+            </div>
+
+            <div class="phase6-card__pick"><span>TON CHOIX</span><strong>${esc(tag)}</strong><i>${esc(conviction.label)} · ${conviction.multiplicateur.toLocaleString('fr-FR')}×</i></div>
+
+            <div class="phase6-card__impact"><div><span>${delta >= 0 ? '+' : '−'}</span><strong>${Math.abs(delta)}</strong></div><em>FRAGS</em></div>
+
+            <div class="phase6-card__stats">
+              ${renduRang(p, resultat)}
+              <div class="phase6-card-stat phase6-card-stat--xp"><small>Progression</small><strong>+${p.xp} XP</strong><span>${p.gagne ? 'Prono validé' : 'Participation'}</span></div>
+            </div>
+
+            <p class="phase6-card__note">${p.perdu ? 'Le rating bouge. Ta progression, elle, continue.' : 'Ta vision. Ton instinct. C’est comme ça qu’on grimpe.'}</p>
+          </main>
+
+          <footer class="phase6-card__actions phase6-simulator__actions">
+            <button class="phase6-card__cta" type="button" data-phase6-sim-close>Fermer <span aria-hidden="true">›</span></button>
+            <button class="phase6-card__secondary" type="button" data-phase6-sim-switch="${p.gagne ? 'perdu' : 'gagne'}">Voir la ${p.gagne ? 'défaite' : 'victoire'}</button>
+            <small>Simulation locale · aucune donnée modifiée</small>
+          </footer>
         </div>
-        <div class="phase6-reveal__pick"><span>TON CHOIX</span><strong>${esc(tag)}</strong><i>${esc(conviction.label)} · ${conviction.multiplicateur.toLocaleString('fr-FR')}×</i></div>
-        <div class="phase6-reveal__impact"><span>${delta >= 0 ? '+' : '−'}</span><strong>${Math.abs(delta)}</strong><em>FRAGS</em></div>
-        <div class="phase6-reveal__stats">
-          ${renduRang(p, resultat)}
-          <div class="phase6-stat phase6-stat--xp"><small>Progression</small><strong>+${p.xp} XP</strong><span>XP de résultat${p.gagne ? ' · réussite incluse' : ''}</span></div>
-        </div>
-        ${p.perdu ? '<p class="phase6-reveal__loss-note">Le rating baisse, mais ta progression continue. Le prochain call est déjà une nouvelle occasion.</p>' : '<p class="phase6-reveal__win-note">Ton call est passé. Le classement a bougé avec toi.</p>'}
-      </main>
-      <footer class="phase6-reveal__actions phase6-simulator__actions">
-        <button class="phase6-reveal__cta" type="button" data-phase6-sim-close>Fermer la simulation</button>
-        <button class="phase6-reveal__secondary" type="button" data-phase6-sim-switch="${p.gagne ? 'perdu' : 'gagne'}">Voir la ${p.gagne ? 'défaite' : 'victoire'}</button>
-        <small>Aucune donnée, aucun Frag et aucun classement ne sont modifiés.</small>
-      </footer>
+      </article>
     </div>
   </section>`;
 }
@@ -119,6 +135,7 @@ function host() {
 function ouvrir(statut) {
   document.body.classList.add('phase6-simulation-open');
   host().innerHTML = renduReveal(resultatFictif(statut));
+  activerCarteResultat(host());
   requestAnimationFrame(() => host().querySelector('[data-phase6-sim-close]')?.focus());
 }
 
