@@ -1,6 +1,5 @@
 import { rendreFriendQuests } from './views/friend-quests.js';
 
-const CONTROL_ID='phase13-sim-control';
 const ROUTE='#/friend-quests-simulation';
 
 function disponible(){const h=location.hostname;return h.includes('agent-phase13-friend-quests')||h==='localhost'||h==='127.0.0.1';}
@@ -34,16 +33,10 @@ function render(){
   rendreFriendQuests(root,mock(),{simulation:true});
 }
 
-function control(){
-  if(!disponible()||document.getElementById(CONTROL_ID))return;
-  const a=document.createElement('aside'); a.id=CONTROL_ID;a.className='phase13-sim-control';
-  a.innerHTML='<button type="button" data-phase13-sim>⚡ Simuler les missions</button>';document.body.append(a);
-}
-
+// Phase 6A: the simulator remains available by typing the dev route directly,
+// but no simulator control is rendered inside presentation builds.
 if(disponible()){
-  control();
-  document.addEventListener('click',(e)=>{if(e.target.closest?.('[data-phase13-sim]')){location.hash=ROUTE;setTimeout(render,0);}});
   window.addEventListener('hashchange',()=>setTimeout(render,0));
-  new MutationObserver(()=>{control();if(location.hash===ROUTE&&!document.querySelector('.phase13-quests--simulation'))render();}).observe(document.body,{childList:true,subtree:true});
+  new MutationObserver(()=>{if(location.hash===ROUTE&&!document.querySelector('.phase13-quests--simulation'))render();}).observe(document.body,{childList:true,subtree:true});
   setTimeout(render,0);
 }
