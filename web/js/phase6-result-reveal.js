@@ -6,6 +6,7 @@
  */
 import { contexte } from './app.js';
 import * as economie from './economy-api.js';
+import { duelResultat } from './challenge-api.js';
 import { esc, nomJeu } from './ui.js';
 import { CONVICTIONS } from './prediction.js';
 import { presentationResultat, equipeChoisie, tagChoisi } from './result-reveal.js';
@@ -61,6 +62,16 @@ function renduRang(presentation, resultat) {
     <small>Classement</small>
     <strong>${formatRang(resultat.rang_avant)} <i>→</i> ${formatRang(resultat.rang_apres)}</strong>
     <span>${detail}</span>
+  </div>`;
+}
+
+function renduDuel(duel) {
+  if (!duel?.adversaire_pseudo || !['gagne', 'perdu'].includes(duel.mon_statut)) return '';
+  const moiGagne = duel.mon_statut === 'gagne';
+  return `<div class="phase6-card__rivalry${moiGagne ? ' is-win' : ' is-loss'}" data-phase6-rivalry>
+    <small>⚔ DUEL</small>
+    <strong>${moiGagne ? `Tu as battu ${esc(duel.adversaire_pseudo)}.` : `${esc(duel.adversaire_pseudo)} prend le duel.`}</strong>
+    <span>Rivalité · Toi ${Number(duel.score_moi || 0)} — ${Number(duel.score_adversaire || 0)} ${esc(duel.adversaire_pseudo)}</span>
   </div>`;
 }
 
@@ -127,6 +138,7 @@ function renduOverlay() {
               <div class="phase6-card-stat phase6-card-stat--xp"><small>Progression</small><strong>+${p.xp} XP</strong><span>${p.gagne ? 'Prono validé' : 'Participation'}</span></div>
             </div>
 
+            <div data-phase6-duel-slot>${renduDuel(state.duel)}</div>
             <p class="phase6-card__note">${p.perdu ? 'Le rating bouge. Ta progression, elle, continue.' : 'Ta vision. Ton instinct. C’est comme ça qu’on grimpe.'}</p>
           </main>
 
@@ -141,13 +153,27 @@ function renduOverlay() {
   </section>`;
 }
 
+async function chargerDuelPourReveal(resultat) {
+  if (!resultat?.match_id || !resultat?.id) return;
+  try {
+    const duel = await duelResultat(resultat.match_id);
+    if (!duel || state?.resultat?.id !== resultat.id) return;
+    state.duel = duel;
+    const slot = host().querySelector('[data-phase6-duel-slot]');
+    if (slot) slot.innerHTML = renduDuel(duel);
+  } catch {
+    // Le reveal reste indépendant : une rivalité indisponible ne le bloque jamais.
+  }
+}
+
 function ouvrir(resultat, { replay = false } = {}) {
   if (!resultat?.id) return;
   focusAvant = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  state = { resultat, replay, closing: false };
+  state = { resultat, replay, closing: false, duel: null };
   document.body.classList.add('phase6-reveal-open');
   host().innerHTML = renduOverlay();
   activerCarteResultat(host());
+  void chargerDuelPourReveal(resultat);
   requestAnimationFrame(() => host().querySelector('[data-phase6-continue]')?.focus());
 }
 
