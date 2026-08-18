@@ -62,6 +62,7 @@
     <link rel="stylesheet" href="styles/pages/phase8-result-integration.css" />
     <link rel="stylesheet" href="styles/pages/phase8-simulator.css" />
     <link rel="stylesheet" href="styles/pages/phase9-public-links.css" />
+    <link rel="stylesheet" href="styles/pages/phase10-leagues.css" />
   </head>
   <body class="ui-v4" data-screen="hub">
     <a class="saut-contenu" href="#contenu">Aller au contenu</a>
@@ -76,12 +77,8 @@
           if (location.hash !== '#/onboarding') return;
           try {
             const etat = JSON.parse(localStorage.getItem(cle) || '{}');
-            if (Number(etat.etape) !== 0) {
-              localStorage.setItem(cle, JSON.stringify({ ...etat, etape: 0 }));
-            }
-          } catch {
-            localStorage.setItem(cle, JSON.stringify({ etape: 0 }));
-          }
+            if (Number(etat.etape) !== 0) localStorage.setItem(cle, JSON.stringify({ ...etat, etape: 0 }));
+          } catch { localStorage.setItem(cle, JSON.stringify({ etape: 0 })); }
         };
         resetEntreeOnboarding();
         window.addEventListener('hashchange', resetEntreeOnboarding, true);
@@ -95,6 +92,9 @@
     <script type="module" src="js/phase9-public-links.js"></script>
     <script type="module" src="js/phase8-challenges.js"></script>
     <script type="module" src="js/phase8-simulator.js"></script>
+    <script type="module" src="js/phase10-leagues-router.js"></script>
+    <script type="module" src="js/phase10-league-invite.js"></script>
+    <script type="module" src="js/phase10-league-simulator.js"></script>
     <script type="module" src="js/onboarding-team-logo-fix.js"></script>
     <script type="module" src="js/settings-preset-bindings.js"></script>
     <script type="module" src="js/profile-polish.js"></script>

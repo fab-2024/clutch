@@ -5,6 +5,10 @@
   "outputDirectory": "web",
   "rewrites": [
     {
+      "source": "/l/:code",
+      "destination": "/api/public-page?kind=league&id=:code"
+    },
+    {
       "source": "/c/:token",
       "destination": "/api/public-page?kind=challenge&id=:token"
     },
@@ -17,18 +21,9 @@
     {
       "source": "/(.*)",
       "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        },
-        {
-          "key": "Permissions-Policy",
-          "value": "geolocation=(), microphone=(), camera=()"
-        }
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "geolocation=(), microphone=(), camera=()" }
       ]
     }
   ]
