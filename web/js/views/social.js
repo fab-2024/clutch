@@ -22,6 +22,9 @@ export async function vueSocial(racine, section = 'ligues') {
              ${s.cle === actif ? 'aria-current="page"' : ''}>
             <span>${s.libelle}</span>
           </a>`).join('')}
+        <a class="social-shell__tab social-shell__tab--duels" href="#/defis">
+          <span>⚔ Duels</span>
+        </a>
       </nav>
       <div class="social-shell__content" id="social-shell-content">
         <div class="chargement"><span class="spinner"></span></div>

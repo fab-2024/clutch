@@ -1,0 +1,58 @@
+/* Phase 8 preview-only visual simulator. */
+.phase8-sim-control {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(84px, calc(env(safe-area-inset-bottom) + 72px));
+  z-index: 1800;
+}
+.phase8-sim-control > button {
+  min-height: 44px;
+  padding: 0 15px 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--sur-accent);
+  border: 1px solid rgba(232,255,61,.42);
+  border-radius: var(--pill);
+  background: var(--accent);
+  box-shadow: 0 14px 40px rgba(0,0,0,.32), 0 0 28px rgba(232,255,61,.09);
+  font: inherit;
+  cursor: pointer;
+}
+.phase8-sim-control span {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(0,0,0,.1);
+}
+.phase8-sim-control strong {
+  font-size: .7rem;
+  font-weight: 950;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+.phase8-page--simulation::before {
+  content: 'SIMULATION';
+  position: fixed;
+  right: 8px;
+  top: 50%;
+  z-index: 10;
+  transform: rotate(90deg) translateY(-50%);
+  color: rgba(232,255,61,.16);
+  font-family: var(--font-display);
+  font-size: .62rem;
+  font-weight: 950;
+  letter-spacing: .25em;
+  pointer-events: none;
+}
+body:has(.phase8-page--simulation) .phase8-sim-control { opacity: .3; }
+
+@media (min-width:780px) { .phase8-sim-control { bottom: 24px; } }
+@media (max-width:420px) {
+  .phase8-sim-control { right: 12px; bottom: calc(env(safe-area-inset-bottom) + 78px); }
+  .phase8-sim-control > button { min-height: 42px; }
+  .phase8-sim-control strong { font-size: .64rem; }
+  .phase8-page--simulation::before { display:none; }
+}
