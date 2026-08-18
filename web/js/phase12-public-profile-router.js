@@ -33,15 +33,22 @@ async function rendreRoutePublique() {
   if (!pseudo) return;
   const token = ++generation;
   chargerStyles();
+
   // L'app principale ne connaît volontairement pas cette route : on laisse son
-  // fallback terminer, puis on reconstruit la chrome Clutch et le contenu public.
+  // fallback terminer, puis on prend immédiatement possession du contenu.
+  // IMPORTANT : poser le marqueur de chargement AVANT majSolde() empêche le
+  // MutationObserver ci-dessous de relancer ce rendu pendant les mutations du
+  // header/navigation, ce qui provoquait une boucle et laissait le 404 visible.
   await new Promise((resolve) => setTimeout(resolve, 0));
   if (token !== generation || pseudo !== pseudoRoute()) return;
-  await majSolde().catch(() => null);
-  if (token !== generation || pseudo !== pseudoRoute()) return;
+
   const racine = document.getElementById('contenu');
   if (!racine) return;
   document.body.dataset.screen = 'social';
+  racine.innerHTML = '<div class="phase12-loading"><span class="spinner"></span><strong>Lecture du profil…</strong></div>';
+
+  await majSolde().catch(() => null);
+  if (token !== generation || pseudo !== pseudoRoute()) return;
   await vueProfilPublic(racine, pseudo);
 }
 
