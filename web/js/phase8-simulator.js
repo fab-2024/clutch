@@ -7,7 +7,7 @@ let conviction = 'normal';
 
 function disponible() {
   const h = location.hostname;
-  return h.includes('agent-phase8-friend-challenges') || h === 'localhost' || h === '127.0.0.1' || new URLSearchParams(location.search).get('phase8sim') === '1';
+  return h.includes('agent-phase8-friend-challenges') || h === 'localhost' || h === '127.0.0.1';
 }
 
 function host() {
