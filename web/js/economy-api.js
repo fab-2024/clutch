@@ -94,3 +94,15 @@ export async function rivaliteFrags({ saisonId = null, ligueId = null } = {}) {
 export async function placerCallV2({ eventId, equipeId }) {
   return rpc('placer_call_v2', { p_event_id: eventId, p_equipe_id: equipeId });
 }
+
+export async function prochainResultatAReveler() {
+  return rpc('clutch_prochain_resultat_a_reveler');
+}
+
+export async function resultatMatch(matchId) {
+  return rpc('clutch_resultat_match_v1', { p_match_id: matchId });
+}
+
+export async function marquerResultatRevele(pronosticId) {
+  return rpc('clutch_marquer_resultat_revele', { p_pronostic_id: pronosticId });
+}
