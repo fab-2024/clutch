@@ -12,6 +12,7 @@ import { presentationResultat, equipeChoisie, tagChoisi } from './result-reveal.
 
 const HOST_ID = 'phase6-result-host';
 const ROUTES_SANS_REVEAL = /^#\/(onboarding|connexion(?:-login)?)(?:$|[/?#])/;
+const INTERVALLE_RESULTAT_MS = 60000;
 let state = null;
 let verificationEnCours = false;
 let verificationPlanifiee = false;
@@ -190,8 +191,6 @@ async function verifierResultat({ force = false } = {}) {
     const resultat = await economie.prochainResultatAReveler();
     if (resultat?.id && !state) ouvrir(resultat);
   } catch (error) {
-    // Phase 6 remains additive during rollout: a missing migration must never
-    // prevent the rest of Clutch from rendering.
     if (!String(error?.message || '').toLowerCase().includes('function')) {
       console.debug('[Clutch] reveal indisponible', error?.message || error);
     }
@@ -265,5 +264,9 @@ document.addEventListener('visibilitychange', () => {
 
 new MutationObserver(planifierVerification)
   .observe(document.body, { childList: true, subtree: true });
+
+setInterval(() => {
+  if (!document.hidden) void verifierResultat({ force: true });
+}, INTERVALLE_RESULTAT_MS);
 
 planifierVerification();
