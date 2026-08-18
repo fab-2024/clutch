@@ -7,12 +7,18 @@ const ROUTE_PUBLIC = /^#\/u\/([^/?#]+)$/i;
 let generation = 0;
 
 function chargerStyles() {
-  if (document.querySelector('link[data-phase12-profile-css]')) return;
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = 'styles/pages/phase12-public-profile.css';
-  link.dataset.phase12ProfileCss = '1';
-  document.head.appendChild(link);
+  const fichiers = [
+    ['phase12-profile-css', 'styles/pages/phase12-public-profile.css'],
+    ['phase12-profile-extras-css', 'styles/pages/phase12-profile-extras.css'],
+  ];
+  for (const [cle, href] of fichiers) {
+    if (document.querySelector(`link[data-${cle}]`)) continue;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    link.setAttribute(`data-${cle}`, '1');
+    document.head.appendChild(link);
+  }
 }
 
 function pseudoRoute() {
