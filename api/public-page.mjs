@@ -21,7 +21,8 @@ export default async function handler(req, res) {
   const card = kind && data ? publicPresentation(kind, data) : null;
   const status = card ? 200 : 404;
   const canonical = canonicalUrl(origin, kind, ref);
-  const ogImage = `${origin}/api/og?kind=${encodeURIComponent(kind || 'generic')}&id=${encodeURIComponent(ref)}`;
+  const version = card ? ogVersion(card) : 'missing';
+  const ogImage = `${origin}/api/og?kind=${encodeURIComponent(kind || 'generic')}&id=${encodeURIComponent(ref)}&v=${encodeURIComponent(version)}`;
 
   res.statusCode = status;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -113,6 +114,16 @@ function canonicalUrl(origin, kind, ref) {
   if (kind === 'challenge') return `${origin}/c/${encodeURIComponent(String(ref || ''))}`;
   if (kind === 'match') return `${origin}/m/${encodeURIComponent(String(ref || ''))}`;
   return origin;
+}
+
+function ogVersion(card) {
+  const raw = [card.kind, card.status, card.scoreA ?? '-', card.scoreB ?? '-', card.chosenTag ?? '-', card.conviction ?? '-'].join('|');
+  let hash = 2166136261;
+  for (let i = 0; i < raw.length; i += 1) {
+    hash ^= raw.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
 }
 
 function formatDate(value) {
