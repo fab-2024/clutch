@@ -2,8 +2,21 @@
 
 /* Keep the relic label in its own readable zone above the progression card. */
 @media (min-width: 901px) {
+  /*
+   * The renderer is visually taller than its nominal SVG box once scaled.
+   * Lift the whole relic so its foot never disappears behind the progress card.
+   */
+  .phase11-relic-stage {
+    min-height: 610px !important;
+  }
+
+  .phase11-relic {
+    height: 575px !important;
+    transform: translateY(-58px) !important;
+  }
+
   .phase11-relic-name {
-    bottom: 30% !important;
+    bottom: 29% !important;
     width: min(82%, 470px) !important;
     z-index: 13 !important;
   }
@@ -31,7 +44,7 @@
   }
 
   .phase11-progress {
-    margin-bottom: 16px !important;
+    margin-bottom: 12px !important;
   }
 }
 
