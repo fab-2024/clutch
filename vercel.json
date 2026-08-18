@@ -5,6 +5,10 @@
   "outputDirectory": "web",
   "rewrites": [
     {
+      "source": "/u/:pseudo",
+      "destination": "/api/profile-page?pseudo=:pseudo"
+    },
+    {
       "source": "/l/:code",
       "destination": "/api/public-page?kind=league&id=:code"
     },
