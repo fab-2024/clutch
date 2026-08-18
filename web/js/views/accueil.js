@@ -7,16 +7,19 @@ import { Button, ProgressBar, SectionHeading, TeamBadge } from '../components-v4
 import { formaterFrags, palierCommunaute } from '../core.js';
 import { evaluerBadgesV2 } from '../badges-v2.js';
 import { bombonne } from './bombonne.js';
+import { dashboardFriendQuests } from '../friend-quests-api.js';
+import { friendQuestCompact, revelerFriendQuest } from './friend-quests.js';
 
 export async function vueAccueil(racine) {
   const connecte = Boolean(contexte.utilisateur);
-  const [matchs, pronostics, badgesBruts, communautes, ligues, activite] = await Promise.all([
+  const [matchs, pronostics, badgesBruts, communautes, ligues, activite, quests] = await Promise.all([
     api.listerMatchs({ jeu: null, statut: 'a_venir', equipe: null }).catch(() => []),
     connecte ? economie.mesPronosticsClasses().catch(() => []) : Promise.resolve([]),
     connecte ? api.mesBadges().catch(() => null) : Promise.resolve(null),
     api.classementCommunautes().catch(() => []),
     connecte ? api.mesLigues().catch(() => []) : Promise.resolve([]),
     connecte ? api.activiteAmis().catch(() => []) : Promise.resolve([]),
+    connecte ? dashboardFriendQuests().catch(() => null) : Promise.resolve(null),
   ]);
 
   const badges = badgesBruts
@@ -25,15 +28,24 @@ export async function vueAccueil(racine) {
   const hero = [...matchs].sort((a, b) => new Date(a.debut) - new Date(b.debut))[0] ?? null;
   const projection = hero ? await economie.projectionMatchFrags(hero.id).catch(() => null) : null;
   const monProno = hero ? pronostics.find((p) => p.match_id === hero.id) ?? null : null;
+  const meilleureQuete = quests?.actives?.[0] ?? null;
 
   racine.innerHTML = `
     ${bandeauSaison()}
     ${intro()}
     ${heroMatch(hero, projection, monProno)}
+    ${friendQuestCompact(meilleureQuete)}
     ${objectifs(pronostics, ligues)}
     ${focusContextuel(communautes, badges)}
     ${flux(activite)}
   `;
+
+  racine.querySelectorAll('[data-phase13-rival]').forEach((el) => el.addEventListener('click', () => {
+    const pseudo = el.dataset.phase13Rival;
+    if (!pseudo) return;
+    try { localStorage.setItem('clutch:challenge:rival', JSON.stringify({ pseudo, creeLe: Date.now(), source: 'friend_quest' })); } catch { /* no-op */ }
+  }));
+  if (quests?.a_reveler) setTimeout(() => void revelerFriendQuest(quests.a_reveler), 220);
 }
 
 function intro() {
