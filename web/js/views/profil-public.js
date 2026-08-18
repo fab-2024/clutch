@@ -44,12 +44,16 @@ export function rendreProfilPublic(racine, profil, { simulation = false } = {}) 
   const rivalite = profil.viewer?.rivalite;
   const ligue = profil.viewer?.ligue_commune;
   const prestige = classePrestige(niveau.niveau);
+  const assezDeVerdicts = Number(recap.paris || 0) >= 5;
+  const rangPublic = classement.rang && assezDeVerdicts
+    ? `#${Number(classement.rang).toLocaleString('fr-FR')} CLUTCH`
+    : 'NON CLASSÉ';
 
   racine.innerHTML = `<div class="phase12-profile phase12-profile--${esc(prestige)}${simulation ? ' phase12-profile--simulation' : ''}">
     <section class="phase12-hero">
       <div class="phase12-hero__mesh" aria-hidden="true"></div>
       <header class="phase12-hero__top">
-        <div class="phase12-public-mark"><i></i><span>${simulation ? 'PROFILE SIMULATION' : 'PUBLIC PROFILE'}</span></div>
+        <div class="phase12-public-mark"><i></i><span>${simulation ? 'APERÇU PROFIL' : 'IDENTITÉ PUBLIQUE'}</span></div>
         <div class="phase12-actions">
           ${estMoi ? `<button type="button" class="phase12-action" data-phase12-privacy aria-pressed="${profil.profil_public !== false}">${profil.profil_public === false ? 'Privé' : 'Public'}</button>` : ''}
           <button type="button" class="phase12-action" data-phase12-share>Partager</button>
@@ -78,7 +82,7 @@ export function rendreProfilPublic(racine, profil, { simulation = false } = {}) 
           <small>${esc(classement.saison_nom || 'SAISON')}</small>
           <strong>${Number(classement.frags || 1000).toLocaleString('fr-FR')}</strong>
           <span>FRAGS</span>
-          <div class="phase12-rank">${classement.rang ? `#${Number(classement.rang).toLocaleString('fr-FR')} CLUTCH` : 'PLACEMENT'}</div>
+          <div class="phase12-rank">${rangPublic}</div>
           ${!estMoi ? '<button type="button" class="phase12-duel-btn" data-phase12-challenge>⚔ DÉFIER CE JOUEUR</button>' : '<a class="phase12-duel-btn" href="#/profil">MODIFIER MON PROFIL</a>'}
         </div>
       </div>
@@ -117,7 +121,7 @@ export function rendreProfilPublic(racine, profil, { simulation = false } = {}) 
     ${rivalite ? rivaliteSection(profil, rivalite) : ''}
 
     <section class="phase12-profile-footer">
-      <div><small>PROFILE SIGNATURE</small><strong>${esc(profil.pseudo)} · ${esc(signatureCourte(profil))}</strong></div>
+      <div><small>IDENTITÉ</small><strong>${esc(profil.pseudo)} · ${esc(niveau.titre)}</strong></div>
       <span>${Number(classement.frags || 1000).toLocaleString('fr-FR')} FRAGS · ${precision} %</span>
     </section>
   </div>`;
@@ -173,7 +177,8 @@ function formeItem(p) {
 }
 
 function factionItem(equipe) {
-  return `<a class="phase12-squad phase12-squad--faction" href="#/social/faction"><span>FACTION · ${esc(libelleJeu(equipe.jeu))}</span><strong>${esc(equipe.nom)}</strong><small>${esc(equipe.relique || 'Fiole')} · Forme ${roman(equipe.relique_niveau || 1)} · ${Number(equipe.supporters || 0).toLocaleString('fr-FR')} supporter${Number(equipe.supporters||0)>1?'s':''}</small></a>`;
+  const supporters = Number(equipe.supporters || 0);
+  return `<a class="phase12-squad phase12-squad--faction" href="#/social/faction"><span>FACTION · ${esc(libelleJeu(equipe.jeu))}</span><strong>${esc(equipe.nom)}</strong><small>${esc(equipe.relique || 'Fiole')} · Forme ${roman(equipe.relique_niveau || 1)} · ${supporters.toLocaleString('fr-FR')} supporter${supporters > 1 ? 's' : ''} relié${supporters > 1 ? 's' : ''} à la relique</small></a>`;
 }
 
 function rivaliteSection(profil, r) {
