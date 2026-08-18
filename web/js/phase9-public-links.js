@@ -1,4 +1,6 @@
 import { toast } from './ui.js';
+import './phase12-public-profile-router.js';
+import './phase12-profile-simulator.js';
 
 function challengeUrl(token) {
   return `${location.origin}/c/${encodeURIComponent(String(token || ''))}`;
