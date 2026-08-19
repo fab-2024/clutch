@@ -8,6 +8,7 @@ type ClutchProfile = {
   pseudo: string;
   email: string | null;
   equipe_favorite_id: string | null;
+  jeux_suivis: string[];
 };
 
 type AuthContextValue = {
@@ -33,12 +34,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     const { data, error } = await supabase
       .from('profils')
-      .select('id,pseudo,email,equipe_favorite_id')
+      .select('id,pseudo,email,equipe_favorite_id,jeux_suivis')
       .eq('id', id)
       .single();
 
     if (error) throw error;
-    setProfile(data as ClutchProfile);
+    setProfile({
+      ...(data as Omit<ClutchProfile, 'jeux_suivis'> & { jeux_suivis?: string[] | null }),
+      jeux_suivis: Array.isArray(data.jeux_suivis) ? data.jeux_suivis : [],
+    });
   }
 
   useEffect(() => {
