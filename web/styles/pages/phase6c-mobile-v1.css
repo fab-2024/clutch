@@ -245,6 +245,230 @@
   }
   .ui-v4 .hub-feed__item time { display: none; }
   .ui-v4 .hub-feed__item p { font-size: .69rem; }
+
+  /* ==============================
+     COMMUNAUTÉ / RELIQUE MOBILE V1
+     ============================== */
+  .ui-v4 .phase11-community {
+    width: 100%;
+    padding-bottom: 10px;
+  }
+
+  .ui-v4 .phase11-hero {
+    min-height: 0 !important;
+    padding: 16px 14px 18px;
+    border-radius: 24px;
+    overflow: hidden;
+  }
+
+  .ui-v4 .phase11-hero__halo {
+    top: 38%;
+    width: min(110vw, 520px);
+    opacity: .82;
+  }
+
+  .ui-v4 .phase11-identity {
+    align-items: center;
+    gap: 9px;
+  }
+
+  .ui-v4 .phase11-identity__team {
+    flex: 1 1 auto;
+    gap: 9px;
+  }
+
+  .ui-v4 .phase6b-faction-logo {
+    width: 43px;
+    height: 43px;
+    flex-basis: 43px;
+    padding: 7px;
+    border-radius: 13px 9px 13px 9px;
+  }
+
+  .ui-v4 .phase11-identity h1 {
+    max-width: 11ch;
+    margin-top: 4px;
+    font-size: clamp(1.75rem, 9.2vw, 2.65rem);
+    line-height: .9;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .ui-v4 .phase11-identity span { font-size: .54rem; }
+  .ui-v4 .phase11-identity > a {
+    padding: 8px 9px;
+    font-size: .53rem;
+  }
+
+  .ui-v4 .phase11-signal {
+    margin-top: 15px;
+    padding: 7px 9px;
+    font-size: .49rem;
+  }
+
+  /* The relic gets a dedicated stage. Title and progression are separate zones. */
+  .ui-v4 .phase11-relic-stage {
+    min-height: 470px;
+    margin: 2px auto 0;
+  }
+
+  .ui-v4 .phase11-relic-stage__ring--a { width: min(94vw, 390px); }
+  .ui-v4 .phase11-relic-stage__ring--b { width: min(72vw, 292px); }
+  .ui-v4 .phase11-relic-stage__spark { inset: 10% 5% 16%; }
+
+  .ui-v4 .phase11-relic {
+    width: 100%;
+    height: 390px;
+    transform: translateY(-24px);
+  }
+
+  .ui-v4 .phase11-relic .relic-vessel--v3,
+  .ui-v4 .phase11-relic .bombonne {
+    transform: scale(1.43);
+    transform-origin: center 50%;
+  }
+
+  .ui-v4 .phase11-relic__floor {
+    width: 64%;
+    left: 18%;
+    bottom: 11%;
+  }
+
+  .ui-v4 .phase6b-relic-pendant {
+    top: 12%;
+    right: 7%;
+    transform: scale(.82);
+    transform-origin: 50% 0;
+  }
+
+  .ui-v4 .phase11-relic-name {
+    bottom: 9px !important;
+    width: min(94%, 340px);
+    z-index: 14;
+  }
+
+  .ui-v4 .phase11-relic-name small {
+    display: block;
+    margin-bottom: 4px;
+    font-size: .48rem;
+  }
+
+  .ui-v4 .phase11-relic-name strong {
+    font-size: clamp(2.3rem, 12vw, 3.15rem);
+    line-height: .86;
+  }
+
+  .ui-v4 .phase11-relic-name span {
+    max-width: 30ch;
+    margin: 7px auto 0;
+    font-size: .58rem;
+    line-height: 1.35;
+  }
+
+  .ui-v4 .phase11-progress {
+    width: 100%;
+    margin: 2px auto 0;
+    padding: 13px 14px 12px;
+    box-sizing: border-box;
+  }
+
+  .ui-v4 .phase11-progress__headline strong { font-size: 1.2rem; }
+  .ui-v4 .phase11-progress__headline > b { font-size: 1.75rem; }
+  .ui-v4 .phase11-progress > p { font-size: .53rem; line-height: 1.35; }
+
+  .ui-v4 .phase11-next {
+    width: 100%;
+    margin-top: 10px;
+    padding: 8px 10px 8px 7px;
+    grid-template-columns: 68px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .ui-v4 .phase11-next__silhouette { height: 60px; }
+  .ui-v4 .phase11-next strong { font-size: .65rem; }
+  .ui-v4 .phase11-next span { font-size: .49rem; }
+  .ui-v4 .phase11-next > b { font-size: .56rem; }
+
+  .ui-v4 .phase11-impact,
+  .ui-v4 .phase11-impact--visitor {
+    width: 100%;
+    margin-top: 10px;
+    padding: 13px;
+    display: block;
+  }
+
+  .ui-v4 .phase11-impact__intro strong,
+  .ui-v4 .phase11-impact--visitor > div > strong {
+    font-size: .72rem;
+    line-height: 1.35;
+  }
+
+  .ui-v4 .phase11-impact__intro span,
+  .ui-v4 .phase11-impact--visitor > div > span {
+    font-size: .52rem;
+    line-height: 1.45;
+  }
+
+  .ui-v4 .phase11-impact dl {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    margin: 12px 0 0;
+  }
+
+  .ui-v4 .phase11-impact dl > div {
+    min-width: 0;
+    padding: 8px 5px;
+  }
+
+  .ui-v4 .phase11-impact button,
+  .ui-v4 .phase11-impact > a,
+  .ui-v4 .phase11-impact--visitor > a {
+    width: 100%;
+    min-height: 40px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .ui-v4 .phase11-subnav {
+    top: 58px;
+    margin-top: 9px;
+    padding: 5px;
+  }
+
+  .ui-v4 .phase11-subnav button {
+    min-height: 38px;
+    padding: 5px 3px;
+    font-size: .52rem;
+  }
+
+  .ui-v4 .phase11-section {
+    margin-top: 9px;
+    padding: 14px;
+    border-radius: 19px;
+  }
+
+  .ui-v4 .phase11-section header {
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .ui-v4 .phase11-section header h2 {
+    font-size: clamp(1.25rem, 7vw, 1.8rem);
+  }
+
+  .ui-v4 .phase11-section header > span { max-width: 12ch; }
+
+  .ui-v4 .phase11-war > article {
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    min-height: 60px;
+    padding: 8px;
+  }
+
+  .ui-v4 .phase11-war__gap { display: none; }
+  .ui-v4 .phase11-war__team strong { font-size: .65rem; }
+  .ui-v4 .phase11-war__team small { font-size: .47rem; }
 }
 
 @media (max-width: 430px) {
@@ -256,6 +480,13 @@
     flex-basis: 61px !important;
   }
   .ui-v4 .hub-team__txt strong { max-width: 112px; font-size: .87rem; }
+
+  .ui-v4 .phase11-hero { padding-inline: 12px; }
+  .ui-v4 .phase11-relic-stage { min-height: 450px; }
+  .ui-v4 .phase11-relic { height: 370px; }
+  .ui-v4 .phase11-relic .relic-vessel--v3,
+  .ui-v4 .phase11-relic .bombonne { transform: scale(1.36); }
+  .ui-v4 .phase6b-relic-pendant { right: 4%; transform: scale(.76); }
 }
 
 @media (max-width: 370px) {
@@ -273,4 +504,15 @@
   .ui-v4 .hub-team__txt strong { max-width: 96px; font-size: .8rem; }
   .ui-v4 .hub-duel__centre strong { font-size: 2rem; }
   .ui-v4 .hub-mission { flex-basis: 84vw; }
+
+  .ui-v4 .phase11-identity h1 { font-size: 1.65rem; }
+  .ui-v4 .phase6b-faction-logo { width: 39px; height: 39px; flex-basis: 39px; }
+  .ui-v4 .phase11-relic-stage { min-height: 420px; }
+  .ui-v4 .phase11-relic { height: 345px; transform: translateY(-20px); }
+  .ui-v4 .phase11-relic .relic-vessel--v3,
+  .ui-v4 .phase11-relic .bombonne { transform: scale(1.27); }
+  .ui-v4 .phase6b-relic-pendant { right: 1%; transform: scale(.69); }
+  .ui-v4 .phase11-relic-name strong { font-size: 2.25rem; }
+  .ui-v4 .phase11-next { grid-template-columns: 58px minmax(0,1fr); }
+  .ui-v4 .phase11-next > b { grid-column: 1 / -1; text-align: left; padding-left: 4px; }
 }
