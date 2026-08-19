@@ -1,22 +1,29 @@
 /* Phase 6B — text/layout hardening after relic-first route switch. */
 
-/* Keep the relic label in its own readable zone above the progression card. */
+/*
+ * Desktop structure: the relic stage and its progress card must never occupy
+ * the same grid row. The stage owns the object + title; progression lives on
+ * the next row. This removes the overlap class of bugs instead of nudging it.
+ */
 @media (min-width: 901px) {
-  /*
-   * The renderer is visually taller than its nominal SVG box once scaled.
-   * Lift the whole relic so its foot never disappears behind the progress card.
-   */
+  .phase11-hero {
+    min-height: 840px !important;
+    grid-template-rows: auto auto minmax(650px, 1fr) auto !important;
+  }
+
   .phase11-relic-stage {
-    min-height: 610px !important;
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+    min-height: 650px !important;
   }
 
   .phase11-relic {
-    height: 575px !important;
-    transform: translateY(-58px) !important;
+    height: 555px !important;
+    transform: translateY(-78px) !important;
   }
 
   .phase11-relic-name {
-    bottom: 29% !important;
+    bottom: 18px !important;
     width: min(82%, 470px) !important;
     z-index: 13 !important;
   }
@@ -30,7 +37,7 @@
   }
 
   .phase11-relic-name strong {
-    font-size: clamp(2.8rem, 4.4vw, 4.2rem) !important;
+    font-size: clamp(2.7rem, 4vw, 3.9rem) !important;
     line-height: .86 !important;
   }
 
@@ -44,8 +51,34 @@
   }
 
   .phase11-progress {
-    margin-bottom: 12px !important;
+    grid-column: 1 !important;
+    grid-row: 4 !important;
+    align-self: start !important;
+    width: min(88%, 680px) !important;
+    margin: 0 auto 18px !important;
   }
+
+  /* Keep the right rail entirely inside the visual relic stage. */
+  .phase11-next,
+  .phase11-impact {
+    grid-row: 3 !important;
+  }
+}
+
+/*
+ * The renderer positions the energy core relative to the liquid surface.
+ * At low progression it lands behind the Fiole's bottom metalwork. Lift the
+ * primary core into the glass while keeping its breathing animation.
+ */
+.phase11-relic:not(.is-mini) .rv__core--deep {
+  animation: phase6b-core-raised 2.65s ease-in-out infinite !important;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes phase6b-core-raised {
+  0%, 100% { transform: translateY(-42px) scale(.94); opacity: .88; }
+  50% { transform: translateY(-42px) scale(1.08); opacity: 1; }
 }
 
 /* Visitor copy was using inline elements, which glued the eyebrow and sentence. */
@@ -76,7 +109,6 @@
   line-height: 1.5;
 }
 
-/* Progress copy should remain clearly separated from the large relic title. */
 .phase11-progress__headline small,
 .phase11-progress > p {
   position: relative;
@@ -86,5 +118,13 @@
 @media (max-width: 900px) {
   .phase11-relic-name {
     bottom: 7% !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phase11-relic:not(.is-mini) .rv__core--deep {
+    animation: none !important;
+    transform: translateY(-42px) !important;
+    opacity: 1 !important;
   }
 }
