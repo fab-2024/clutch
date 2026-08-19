@@ -2,6 +2,14 @@
 // This decorates legacy match markup without touching prediction/economy logic.
 import { TeamBadge } from './components-v4.js';
 
+if (!document.querySelector('link[data-match-team-logos]')) {
+  const sheet = document.createElement('link');
+  sheet.rel = 'stylesheet';
+  sheet.href = 'styles/pages/match-team-logos.css';
+  sheet.dataset.matchTeamLogos = '1';
+  document.head.append(sheet);
+}
+
 const TEAM_TAGS = {
   'G2 Esports': 'G2',
   'Karmine Corp': 'KC',
