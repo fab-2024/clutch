@@ -4,12 +4,37 @@
  */
 import { esc, ecusson } from './ui.js';
 
+// Shared organization marks used across Hub, Match Arena and Match Center.
+// Every seeded team gets a real mark; TeamLogo still keeps a text fallback if a remote asset fails.
 const TEAM_LOGOS = {
+  'G2 Esports': 'https://static.cdnlogo.com/logos/g/28/g2.svg',
+  'Fnatic': 'https://static.cdnlogo.com/logos/f/23/fnatic.svg',
+  'Karmine Corp': 'https://commons.wikimedia.org/wiki/Special:FilePath/Karmine_Corp_logo.svg',
   'Movistar KOI': 'https://commons.wikimedia.org/wiki/Special:FilePath/Movistar_KOI_Logo.webp',
+  'Team Vitality': 'https://static.cdnlogo.com/logos/t/89/team-vitality.svg',
   'Team BDS': 'https://gamepedia.cursecdn.com/lolesports_gamepedia_en/9/9e/Team_BDSlogo_square.png',
+  'Team Heretics': 'https://teamheretics.com/en/modules/wim_esports/views/img/heretics-logo-png.webp',
+  'SK Gaming': 'https://commons.wikimedia.org/wiki/Special:FilePath/SK_Gaming_Logo_2022.svg',
+  'GiantX': 'https://giantx.gg/cdn/shop/files/logo_0620238f-1e58-435d-bcd2-aa131bba7992_600x.png?v=1772036626',
+  'Rogue': 'https://commons.wikimedia.org/wiki/Special:FilePath/Rogue_logo.svg',
+  'Natus Vincere': 'https://static.cdnlogo.com/logos/n/22/natus-vincere.svg',
+  'NAVI': 'https://static.cdnlogo.com/logos/n/22/natus-vincere.svg',
+  'Team Spirit': 'https://commons.wikimedia.org/wiki/Special:FilePath/Team_Spirit_new_em.svg',
+  'FaZe Clan': 'https://commons.wikimedia.org/wiki/Special:FilePath/FaZe_Clan_2025_svg.svg',
+  'MOUZ': 'https://commons.wikimedia.org/wiki/Special:FilePath/MOUZlogo2021.png',
+  'Team Falcons': 'https://esportsawards.com/wp-content/uploads/2024/09/Esports-Organisation-Guide-400x400-Team_Falcons.jpg',
+  'Astralis': 'https://commons.wikimedia.org/wiki/Special:FilePath/Astralis.svg',
+  'Virtus.pro': 'https://www.vhv.rs/dpng/d/303-3039148_virtus-pro-logo-png-transparent-png.png',
+  'Heroic': 'https://commons.wikimedia.org/wiki/Special:FilePath/Heroic_2023_logo.png',
+  'Team Liquid': 'https://commons.wikimedia.org/wiki/Special:FilePath/Team_Liquid_logo.svg',
+  'Paper Rex': 'https://commons.wikimedia.org/wiki/Special:FilePath/Paper_Rex_logo.svg',
+  'Sentinels': 'https://commons.wikimedia.org/wiki/Special:FilePath/Sentinels_logo.svg',
+  'DRX': 'https://commons.wikimedia.org/wiki/Special:FilePath/DRX_logo_2023.png',
+  'T1': 'https://commons.wikimedia.org/wiki/Special:FilePath/T1_esports_logo.svg',
+  'EDward Gaming': 'https://commons.wikimedia.org/wiki/Special:FilePath/Edward_Gaming_logo.png',
 };
 
-const TEAM_LOGOS_DARK = new Set(['Team BDS']);
+const TEAM_LOGOS_DARK = new Set(['G2 Esports', 'Karmine Corp', 'Rogue', 'T1']);
 
 export function cx(...classes) {
   return classes.flat().filter(Boolean).join(' ');
