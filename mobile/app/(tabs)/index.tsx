@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   ctaText: {
     color: '#080B0F',
     fontSize: 14,
-    fontWeight: '950',
+    fontWeight: '900',
     letterSpacing: 1,
   },
   ctaArrow: {
