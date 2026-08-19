@@ -1,0 +1,119 @@
+/* Real organization marks in Match Arena / Match Center.
+   Presentation only: prediction and rating logic stay untouched. */
+
+.ui-v4 .arena-team__logo .match-team-mark,
+.ui-v4 .match-center__team > .match-team-mark {
+  --team-logo-size: 92px;
+  margin-inline: auto;
+  padding: 13px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255,255,255,.09), transparent 62%),
+    rgba(11,15,21,.78);
+  box-shadow: 0 18px 34px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.ui-v4 .arena-team__logo .match-team-mark img,
+.ui-v4 .match-center__team > .match-team-mark img {
+  filter: drop-shadow(0 8px 15px rgba(0,0,0,.36));
+}
+
+.ui-v4 .arena-row__team .match-team-mark {
+  --team-logo-size: 36px;
+  flex: 0 0 36px;
+  padding: 5px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.025);
+  box-shadow: none;
+}
+
+.ui-v4 .arena-row__team--right .match-team-mark {
+  order: 3;
+}
+
+.ui-v4 .match-choice .match-team-mark--choice {
+  --team-logo-size: 58px;
+  margin-bottom: 14px;
+  padding: 8px;
+  border-radius: 15px;
+}
+
+.ui-v4 .arena-ticket__pick .match-team-mark--ticket,
+.ui-v4 .match-ticket .match-team-mark--ticket,
+.ui-v4 .match-my-pick .match-team-mark--pick {
+  --team-logo-size: 38px;
+  padding: 5px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.ui-v4 .arena-ticket__pick .match-team-mark--ticket,
+.ui-v4 .match-ticket__selected .match-team-mark--ticket {
+  margin-bottom: 8px;
+}
+
+.ui-v4 .match-ticket--locked > .match-team-mark--ticket {
+  margin: 10px 0 7px;
+}
+
+.ui-v4 .match-my-pick > div:first-child {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr);
+  column-gap: 9px;
+  align-items: center;
+}
+
+.ui-v4 .match-my-pick > div:first-child .match-team-mark--pick {
+  grid-row: 1 / span 2;
+}
+
+.ui-v4 .match-my-pick > div:first-child > span,
+.ui-v4 .match-my-pick > div:first-child > strong {
+  grid-column: 2;
+}
+
+@media (max-width: 899px) {
+  .ui-v4 .arena-team__logo .match-team-mark,
+  .ui-v4 .match-center__team > .match-team-mark {
+    --team-logo-size: 72px;
+    padding: 10px;
+    border-radius: 19px;
+  }
+
+  .ui-v4 .arena-row__team .match-team-mark {
+    --team-logo-size: 34px;
+    flex-basis: 34px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ui-v4 .arena-team__logo .match-team-mark,
+  .ui-v4 .match-center__team > .match-team-mark {
+    --team-logo-size: 58px;
+    padding: 7px;
+    border-radius: 16px;
+  }
+
+  .ui-v4 .arena-team__logo {
+    margin-bottom: 12px;
+  }
+
+  .ui-v4 .arena-row__team .match-team-mark {
+    --team-logo-size: 30px;
+    flex-basis: 30px;
+    padding: 4px;
+    border-radius: 9px;
+  }
+
+  .ui-v4 .match-choice .match-team-mark--choice {
+    --team-logo-size: 50px;
+    margin-bottom: 10px;
+  }
+
+  .ui-v4 .arena-ticket__pick .match-team-mark--ticket,
+  .ui-v4 .match-ticket .match-team-mark--ticket,
+  .ui-v4 .match-my-pick .match-team-mark--pick {
+    --team-logo-size: 34px;
+  }
+}
