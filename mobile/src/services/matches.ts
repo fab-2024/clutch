@@ -55,6 +55,7 @@ export async function loadArenaMatches() {
       .from('v_matchs')
       .select(MATCH_FIELDS)
       .eq('statut', 'a_venir')
+      .gte('debut', new Date().toISOString())
       .order('debut', { ascending: true })
       .limit(40),
     supabase
