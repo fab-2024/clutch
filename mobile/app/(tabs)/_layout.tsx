@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { colors } from '@/src/theme/tokens';
 
@@ -9,7 +9,11 @@ type TabIconProps = {
 };
 
 function TabIcon({ glyph, focused }: TabIconProps) {
-  return <Text style={[styles.icon, focused && styles.iconFocused]}>{glyph}</Text>;
+  return (
+    <View style={[styles.iconShell, focused && styles.iconShellFocused]}>
+      <Text style={[styles.icon, focused && styles.iconFocused]}>{glyph}</Text>
+    </View>
+  );
 }
 
 export default function TabsLayout() {
@@ -17,8 +21,9 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.volt,
-        tabBarInactiveTintColor: colors.textMuted,
+        tabBarActiveTintColor: colors.text,
+        tabBarInactiveTintColor: '#697580',
+        tabBarHideOnKeyboard: true,
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.label,
         tabBarItemStyle: styles.item,
@@ -41,7 +46,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="community"
         options={{
-          title: 'Communauté',
+          title: 'Faction',
           tabBarIcon: ({ focused }) => <TabIcon glyph="◉" focused={focused} />,
         }}
       />
@@ -65,26 +70,39 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 74,
-    paddingTop: 8,
-    paddingBottom: 10,
+    height: 76,
+    paddingTop: 7,
+    paddingBottom: 9,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: '#090D12',
+    borderTopColor: '#1D2730',
+    backgroundColor: '#080C10',
   },
   item: {
-    gap: 2,
+    gap: 1,
+  },
+  iconShell: {
+    width: 34,
+    height: 28,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconShellFocused: {
+    backgroundColor: '#1A2110',
+    borderWidth: 1,
+    borderColor: '#39471B',
   },
   icon: {
-    color: colors.textMuted,
-    fontSize: 20,
+    color: '#697580',
+    fontSize: 17,
     fontWeight: '800',
   },
   iconFocused: {
     color: colors.volt,
   },
   label: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.15,
   },
 });
