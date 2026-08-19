@@ -10,8 +10,9 @@ type TabIconProps = {
 
 function TabIcon({ glyph, focused }: TabIconProps) {
   return (
-    <View style={[styles.iconShell, focused && styles.iconShellFocused]}>
+    <View style={styles.iconWrap}>
       <Text style={[styles.icon, focused && styles.iconFocused]}>{glyph}</Text>
+      <View style={[styles.underline, focused && styles.underlineFocused]} />
     </View>
   );
 }
@@ -21,93 +22,74 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.text,
-        tabBarInactiveTintColor: '#697580',
+        tabBarActiveTintColor: colors.volt,
+        tabBarInactiveTintColor: '#6F7B89',
+        tabBarActiveBackgroundColor: '#151C11',
         tabBarHideOnKeyboard: true,
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.label,
         tabBarItemStyle: styles.item,
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Hub',
-          tabBarIcon: ({ focused }) => <TabIcon glyph="⌂" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="matches"
-        options={{
-          title: 'Matchs',
-          tabBarIcon: ({ focused }) => <TabIcon glyph="⚔" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="social"
-        options={{
-          title: 'Social',
-          tabBarIcon: ({ focused }) => <TabIcon glyph="◎" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="room"
-        options={{
-          title: 'Room',
-          tabBarIcon: ({ focused }) => <TabIcon glyph="◇" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Moi',
-          tabBarIcon: ({ focused }) => <TabIcon glyph="●" focused={focused} />,
-        }}
-      />
-
-      <Tabs.Screen
-        name="community"
-        options={{ href: null }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Hub', tabBarIcon: ({ focused }) => <TabIcon glyph="⌂" focused={focused} /> }} />
+      <Tabs.Screen name="matches" options={{ title: 'Matchs', tabBarIcon: ({ focused }) => <TabIcon glyph="▣" focused={focused} /> }} />
+      <Tabs.Screen name="social" options={{ title: 'Social', tabBarIcon: ({ focused }) => <TabIcon glyph="◎" focused={focused} /> }} />
+      <Tabs.Screen name="room" options={{ title: 'Room', tabBarIcon: ({ focused }) => <TabIcon glyph="◇" focused={focused} /> }} />
+      <Tabs.Screen name="profile" options={{ title: 'Moi', tabBarIcon: ({ focused }) => <TabIcon glyph="♙" focused={focused} /> }} />
+      <Tabs.Screen name="community" options={{ href: null }} />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
   tabBar: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
+    bottom: 10,
     height: 76,
-    paddingTop: 7,
-    paddingBottom: 9,
+    padding: 5,
     borderTopWidth: 1,
-    borderTopColor: '#1D2730',
-    backgroundColor: '#080C10',
+    borderWidth: 1,
+    borderColor: '#242C35',
+    borderRadius: 24,
+    backgroundColor: '#090D11',
+    overflow: 'hidden',
   },
   item: {
-    gap: 1,
+    minHeight: 64,
+    marginHorizontal: 2,
+    borderRadius: 18,
+    overflow: 'hidden',
+    paddingTop: 5,
   },
-  iconShell: {
-    width: 34,
-    height: 28,
-    borderRadius: 11,
+  iconWrap: {
+    height: 30,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  iconShellFocused: {
-    backgroundColor: '#1A2110',
-    borderWidth: 1,
-    borderColor: '#39471B',
+    gap: 3,
   },
   icon: {
-    color: '#697580',
-    fontSize: 17,
+    color: '#6F7B89',
+    fontSize: 21,
+    lineHeight: 22,
     fontWeight: '800',
   },
-  iconFocused: {
-    color: colors.volt,
+  iconFocused: { color: colors.volt },
+  underline: {
+    width: 0,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: 'transparent',
+  },
+  underlineFocused: {
+    width: 20,
+    backgroundColor: colors.volt,
   },
   label: {
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.15,
+    marginTop: 1,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.25,
   },
 });
