@@ -1,5 +1,8 @@
 // Phase 6A — reliable, normalized esports organization marks in onboarding.
 // Known HQ assets use a single optical box; dark marks receive automatic contrast.
+// This module is loaded globally, so it also boots the Match Arena logo decorator.
+import './match-team-logo-fix.js';
+
 const TEAM_LOGOS = {
   'G2 Esports': 'https://static.cdnlogo.com/logos/g/28/g2.svg',
   'Fnatic': 'https://static.cdnlogo.com/logos/f/23/fnatic.svg',
