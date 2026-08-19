@@ -1,12 +1,27 @@
-import { Stack } from 'expo-router';
+import { router, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { AuthProvider, useAuth } from '@/providers/AuthProvider';
 import { colors } from '@/src/theme/tokens';
 
 function RootNavigator() {
-  const { session, loading } = useAuth();
+  const { session, profile, loading } = useAuth();
+  const segments = useSegments();
+  const needsOnboarding = Boolean(
+    session && profile && (!profile.jeux_suivis.length || !profile.equipe_favorite_id),
+  );
+  const inOnboarding = segments[0] === 'onboarding';
+
+  useEffect(() => {
+    if (loading || !session || !profile) return;
+    if (needsOnboarding && !inOnboarding) {
+      router.replace('/onboarding');
+    } else if (!needsOnboarding && inOnboarding) {
+      router.replace('/(tabs)' as never);
+    }
+  }, [inOnboarding, loading, needsOnboarding, profile, session]);
 
   if (loading) {
     return (
@@ -26,6 +41,7 @@ function RootNavigator() {
     >
       <Stack.Protected guard={Boolean(session)}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="onboarding" />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
         <Stack.Screen name="login" />
