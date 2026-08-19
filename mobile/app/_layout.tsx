@@ -16,11 +16,7 @@ function RootNavigator() {
 
   useEffect(() => {
     if (loading || !session || !profile) return;
-    if (needsOnboarding && !inOnboarding) {
-      router.replace('/onboarding');
-    } else if (!needsOnboarding && inOnboarding) {
-      router.replace('/(tabs)' as never);
-    }
+    if (needsOnboarding && !inOnboarding) router.replace('/onboarding');
   }, [inOnboarding, loading, needsOnboarding, profile, session]);
 
   if (loading) {
