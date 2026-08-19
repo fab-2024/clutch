@@ -41,8 +41,9 @@ export default function MissionsScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
     >
       <View style={styles.intro}>
-        <View style={styles.introTop}><View><Text style={styles.eyebrow}>FRIEND QUESTS</Text><Text style={styles.title}>Quelqu’un compte sur ton prochain call.</Text></View><View style={styles.counter}><Text style={styles.counterValue}>{loading ? '—' : data.actives.length}</Text><Text style={styles.counterLabel}>/ 3</Text></View></View>
-        <Text style={styles.subtitle}>Missions courtes à deux. Ici tu gagnes de l’XP et des Volts — jamais des Frags gratuits.</Text>
+        <Text style={styles.eyebrow}>⚡ SOCIAL // MISSIONS</Text>
+        <Text style={styles.title}>QUELQU’UN COMPTE SUR TOI.</Text>
+        <Text style={styles.subtitle}>Des objectifs courts à deux. XP et Volts à la clé. Jamais de Frags gratuits.</Text>
       </View>
 
       {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text></View> : null}
@@ -50,7 +51,7 @@ export default function MissionsScreen() {
 
       {data.actives.length > 1 ? (
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>EN COURS</Text>
+          <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>EN COURS</Text><Text style={styles.sectionMeta}>{data.actives.length}/3</Text></View>
           {data.actives.slice(1, 3).map((quest) => <QuestCard key={quest.id} quest={quest} />)}
         </View>
       ) : null}
@@ -58,25 +59,32 @@ export default function MissionsScreen() {
       {data.duos.length ? (
         <View style={styles.section}>
           <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>DUO STREAKS</Text><Text style={styles.sectionMeta}>{data.duos.length}</Text></View>
-          <View style={styles.duoCard}>
-            {data.duos.slice(0, 6).map((duo, index) => (
-              <View key={`${duo.user_id ?? duo.pseudo}-${index}`} style={styles.duoRow}>
-                <View style={styles.avatar}><Text style={styles.avatarText}>{initials(duo.pseudo || 'Duo')}</Text></View>
-                <View style={styles.duoCopy}><Text style={styles.duoName}>{duo.pseudo || 'Duo'}</Text><Text style={styles.duoMeta}>{Number(duo.missions_terminees || 0)} mission(s) ensemble</Text></View>
-                <Text style={styles.streak}>🔥 {Number(duo.serie_semaines || 0)}</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.duoRail}>
+            {data.duos.slice(0, 8).map((duo, index) => (
+              <View key={`${duo.user_id ?? duo.pseudo}-${index}`} style={styles.duoCard}>
+                <View style={styles.duoAvatar}><Text style={styles.duoAvatarText}>{initials(duo.pseudo || 'Duo')}</Text></View>
+                <Text numberOfLines={1} style={styles.duoName}>{duo.pseudo || 'Duo'}</Text>
+                <Text style={styles.duoStreak}>🔥 {Number(duo.serie_semaines || 0)} sem.</Text>
+                <Text style={styles.duoMeta}>{Number(duo.missions_terminees || 0)} missions</Text>
               </View>
             ))}
-          </View>
+          </ScrollView>
         </View>
       ) : null}
 
       <View style={styles.section}>
-        <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>HISTORIQUE</Text><Text style={styles.sectionMeta}>{data.historique.length}</Text></View>
+        <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>DERNIÈRES MISSIONS</Text><Text style={styles.sectionMeta}>{data.historique.length}</Text></View>
         <View style={styles.historyCard}>
           {data.historique.length ? data.historique.slice(0, 6).map((quest) => {
             const meta = metaFor(quest);
-            return <View key={quest.id} style={styles.historyRow}><Text style={styles.historyIcon}>{meta.icon}</Text><View style={styles.historyCopy}><Text style={styles.historyTitle}>{meta.title}</Text><Text style={styles.historyMeta}>avec {quest.partenaire?.pseudo || 'un joueur'} · {quest.statut.toUpperCase()}</Text></View><Text style={styles.historyReward}>{quest.statut === 'terminee' ? reward(quest) : '—'}</Text></View>;
-          }) : <Text style={styles.emptyHistory}>Tes premières missions terminées apparaîtront ici.</Text>}
+            return (
+              <View key={quest.id} style={styles.historyRow}>
+                <Text style={styles.historyIcon}>{meta.icon}</Text>
+                <View style={styles.historyCopy}><Text style={styles.historyTitle}>{meta.title}</Text><Text style={styles.historyMeta}>avec {quest.partenaire?.pseudo || 'un joueur'}</Text></View>
+                <Text style={styles.historyReward}>{quest.statut === 'terminee' ? reward(quest) : quest.statut.toUpperCase()}</Text>
+              </View>
+            );
+          }) : <Text style={styles.emptyHistory}>Tes missions terminées laisseront leur trace ici.</Text>}
         </View>
       </View>
     </ScrollView>
@@ -89,11 +97,20 @@ function HeroQuest({ quest }: { quest: FriendQuest }) {
   return (
     <View style={styles.hero}>
       <View style={styles.heroGlow} />
-      <View style={styles.heroTop}><View style={styles.heroIcon}><Text style={styles.heroIconText}>{meta.icon}</Text></View><View style={styles.heroHeading}><Text style={styles.heroEyebrow}>{meta.eyebrow}</Text><Text style={styles.heroTitle}>{meta.title}</Text></View><View style={styles.partner}><Text style={styles.partnerLabel}>AVEC</Text><Text style={styles.partnerName}>{quest.partenaire?.pseudo || 'TON POTE'}</Text></View></View>
+      <Text style={styles.heroNumber}>0{Math.min(9, quest.progression + 1)}</Text>
+      <View style={styles.heroTop}>
+        <View style={styles.heroIcon}><Text style={styles.heroIconText}>{meta.icon}</Text></View>
+        <View style={styles.heroIdentity}><Text style={styles.heroEyebrow}>{meta.eyebrow}</Text><Text style={styles.partner}>AVEC {(quest.partenaire?.pseudo || 'TON POTE').toUpperCase()}</Text></View>
+      </View>
+      <Text style={styles.heroTitle}>{meta.title}</Text>
       <Text style={styles.heroDesc}>{description(quest)}</Text>
-      <View style={styles.status}><Text style={styles.statusText}>{quest.partenaire_fait ? `${quest.partenaire?.pseudo || 'Ton pote'} a avancé.` : 'Le prochain move compte.'}</Text><Text style={styles.statusYou}>{quest.moi_fait ? 'TA PART ✓' : 'À TOI'}</Text></View>
-      <View style={styles.progressRow}><View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${pct}%` }]} /></View><Text style={styles.progressText}>{quest.progression}/{quest.objectif}</Text></View>
-      <View style={styles.heroFooter}><View><Text style={styles.rewardLabel}>RÉCOMPENSE · CHACUN</Text><Text style={styles.rewardValue}>{reward(quest)}</Text><Text style={styles.time}>⏱ {timeLeft(quest.expire_le)}</Text></View><Pressable onPress={() => router.push('/(tabs)/matches')} style={({ pressed }) => [styles.cta, pressed && styles.pressed]}><Text style={styles.ctaText}>JOUER →</Text></Pressable></View>
+      <View style={styles.stateRow}><Text style={styles.stateCopy}>{quest.partenaire_fait ? `${quest.partenaire?.pseudo || 'Ton pote'} a déjà avancé.` : 'Le prochain move compte.'}</Text><Text style={styles.stateYou}>{quest.moi_fait ? 'TA PART ✓' : 'À TOI DE JOUER'}</Text></View>
+      <View style={styles.progressHeader}><Text style={styles.progressText}>{quest.progression} / {quest.objectif}</Text><Text style={styles.time}>⏱ {timeLeft(quest.expire_le)}</Text></View>
+      <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${pct}%` }]} /></View>
+      <View style={styles.heroFooter}>
+        <View><Text style={styles.rewardLabel}>RÉCOMPENSE · CHACUN</Text><Text style={styles.rewardValue}>{reward(quest)}</Text></View>
+        <Pressable onPress={() => router.push('/(tabs)/matches')} style={({ pressed }) => [styles.cta, pressed && styles.pressed]}><Text style={styles.ctaText}>JOUER</Text><Text style={styles.ctaArrow}>→</Text></Pressable>
+      </View>
     </View>
   );
 }
@@ -101,11 +118,25 @@ function HeroQuest({ quest }: { quest: FriendQuest }) {
 function QuestCard({ quest }: { quest: FriendQuest }) {
   const meta = metaFor(quest);
   const pct = Math.min(100, Math.round((quest.progression / Math.max(1, quest.objectif)) * 100));
-  return <View style={styles.card}><View style={styles.cardTop}><Text style={styles.cardIcon}>{meta.icon}</Text><View style={styles.cardCopy}><Text style={styles.cardEyebrow}>{meta.eyebrow}</Text><Text style={styles.cardTitle}>{meta.title}</Text></View><Text style={styles.cardTime}>{timeLeft(quest.expire_le)}</Text></View><Text style={styles.cardDesc}>{description(quest)}</Text><View style={styles.cardTrack}><View style={[styles.cardTrackFill, { width: `${pct}%` }]} /></View><Text style={styles.cardReward}>{quest.progression}/{quest.objectif} · {reward(quest)}</Text></View>;
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardTop}><Text style={styles.cardIcon}>{meta.icon}</Text><View style={styles.cardCopy}><Text style={styles.cardEyebrow}>{meta.eyebrow}</Text><Text style={styles.cardTitle}>{meta.title}</Text></View><Text style={styles.cardTime}>{timeLeft(quest.expire_le)}</Text></View>
+      <Text style={styles.cardDesc}>{description(quest)}</Text>
+      <View style={styles.cardTrack}><View style={[styles.cardTrackFill, { width: `${pct}%` }]} /></View>
+      <Text style={styles.cardReward}>{quest.progression}/{quest.objectif} · {reward(quest)}</Text>
+    </View>
+  );
 }
 
 function EmptyMissions() {
-  return <View style={styles.empty}><Text style={styles.emptyIcon}>⚔</Text><Text style={styles.emptyTitle}>Pas encore de mission active.</Text><Text style={styles.emptyText}>Ajoute un ami, rejoins une ligue ou termine un duel : Clutch générera ensuite des missions contextuelles.</Text><Pressable onPress={() => router.replace('/(tabs)/social/friends')} style={styles.emptyCta}><Text style={styles.emptyCtaText}>TROUVER UN RIVAL</Text></Pressable></View>;
+  return (
+    <View style={styles.empty}>
+      <Text style={styles.emptyEyebrow}>AUCUNE MISSION ACTIVE</Text>
+      <Text style={styles.emptyTitle}>TON PROCHAIN RIVAL N’EST PAS ENCORE LÀ.</Text>
+      <Text style={styles.emptyText}>Ajoute un ami, rejoins une ligue ou termine un duel. Clutch créera ensuite des missions contextuelles.</Text>
+      <Pressable onPress={() => router.replace('/(tabs)/social/friends')} style={styles.emptyCta}><Text style={styles.emptyCtaText}>TROUVER UN RIVAL</Text></Pressable>
+    </View>
+  );
 }
 
 function metaFor(q: FriendQuest) { return META[q.type] ?? META.duo_calls; }
@@ -126,21 +157,34 @@ function initials(value: string) { const parts = value.trim().split(/[\s._-]+/).
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  content: { width: '100%', maxWidth: 430, alignSelf: 'center', padding: spacing.md, paddingBottom: 120, gap: spacing.lg },
-  intro: { gap: 8, paddingTop: 6 }, introTop: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
-  eyebrow: { color: colors.volt, fontSize: 9, fontWeight: '900', letterSpacing: 1.3 },
-  title: { flex: 1, color: colors.text, fontSize: 29, lineHeight: 32, fontWeight: '900', letterSpacing: -1 },
-  subtitle: { color: colors.textMuted, fontSize: 12, lineHeight: 18 },
-  counter: { minWidth: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E', borderWidth: 1, borderColor: '#414D1E' }, counterValue: { color: colors.volt, fontSize: 20, fontWeight: '900' }, counterLabel: { color: colors.textMuted, fontSize: 8, fontWeight: '900' },
-  error: { padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' }, errorText: { color: '#FF9AA2', fontSize: 11 },
-  hero: { position: 'relative', overflow: 'hidden', padding: 18, borderRadius: 26, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#3A461D', gap: 15 }, heroGlow: { position: 'absolute', right: -45, top: -45, width: 180, height: 180, borderRadius: 90, backgroundColor: '#202B0D', opacity: 0.55 },
-  heroTop: { flexDirection: 'row', alignItems: 'center', gap: 10, zIndex: 2 }, heroIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E' }, heroIconText: { fontSize: 19 }, heroHeading: { flex: 1 }, heroEyebrow: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: 1 }, heroTitle: { marginTop: 2, color: colors.text, fontSize: 17, fontWeight: '900' }, partner: { alignItems: 'flex-end' }, partnerLabel: { color: colors.textMuted, fontSize: 7, fontWeight: '900' }, partnerName: { marginTop: 2, color: colors.text, fontSize: 10, fontWeight: '900' },
-  heroDesc: { zIndex: 2, color: colors.text, fontSize: 14, lineHeight: 20, fontWeight: '700' }, status: { zIndex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 11, borderRadius: radius.md, backgroundColor: '#0D141A' }, statusText: { flex: 1, color: colors.textMuted, fontSize: 10 }, statusYou: { color: colors.volt, fontSize: 8, fontWeight: '900' },
-  progressRow: { zIndex: 2, flexDirection: 'row', alignItems: 'center', gap: 10 }, progressTrack: { flex: 1, height: 8, borderRadius: 999, overflow: 'hidden', backgroundColor: '#182028' }, progressFill: { height: '100%', borderRadius: 999, backgroundColor: colors.volt }, progressText: { color: colors.text, fontSize: 12, fontWeight: '900' },
-  heroFooter: { zIndex: 2, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }, rewardLabel: { color: colors.textMuted, fontSize: 7, fontWeight: '900', letterSpacing: 0.8 }, rewardValue: { marginTop: 4, color: colors.text, fontSize: 13, fontWeight: '900' }, time: { marginTop: 4, color: colors.textMuted, fontSize: 9 }, cta: { minHeight: 44, paddingHorizontal: 17, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, ctaText: { color: '#090B0D', fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
+  content: { width: '100%', maxWidth: 430, alignSelf: 'center', padding: spacing.md, paddingBottom: 128, gap: 22 },
+  intro: { gap: 8, paddingTop: 4 },
+  eyebrow: { color: colors.volt, fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
+  title: { maxWidth: 360, color: colors.text, fontSize: 35, lineHeight: 35, fontWeight: '900', letterSpacing: -1.6 },
+  subtitle: { maxWidth: 360, color: colors.textMuted, fontSize: 13, lineHeight: 19 },
+  error: { padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' },
+  errorText: { color: '#FF9AA2', fontSize: 11 },
+  skeleton: { height: 330, borderRadius: 30, backgroundColor: '#10161D' },
+  hero: { position: 'relative', overflow: 'hidden', minHeight: 330, padding: 20, borderRadius: 30, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#48541E', gap: 14 },
+  heroGlow: { position: 'absolute', right: -70, top: 5, width: 240, height: 240, borderRadius: 120, backgroundColor: '#2B3510', opacity: 0.52 },
+  heroNumber: { position: 'absolute', right: 14, bottom: -18, color: '#111A12', fontSize: 128, lineHeight: 128, fontWeight: '900', letterSpacing: -10 },
+  heroTop: { zIndex: 2, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  heroIcon: { width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
+  heroIconText: { fontSize: 20 },
+  heroIdentity: { gap: 3 }, heroEyebrow: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: 1.2 }, partner: { color: colors.textMuted, fontSize: 9, fontWeight: '900', letterSpacing: 0.6 },
+  heroTitle: { zIndex: 2, maxWidth: 310, color: colors.text, fontSize: 31, lineHeight: 31, fontWeight: '900', letterSpacing: -1.3 },
+  heroDesc: { zIndex: 2, maxWidth: 330, color: colors.text, fontSize: 14, lineHeight: 20, fontWeight: '700' },
+  stateRow: { zIndex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#222B32' },
+  stateCopy: { flex: 1, color: colors.textMuted, fontSize: 10 }, stateYou: { color: colors.volt, fontSize: 8, fontWeight: '900' },
+  progressHeader: { zIndex: 2, flexDirection: 'row', justifyContent: 'space-between' }, progressText: { color: colors.text, fontSize: 12, fontWeight: '900' }, time: { color: colors.textMuted, fontSize: 9 },
+  progressTrack: { zIndex: 2, height: 8, borderRadius: 999, overflow: 'hidden', backgroundColor: '#182028' }, progressFill: { height: '100%', borderRadius: 999, backgroundColor: colors.volt },
+  heroFooter: { zIndex: 2, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, marginTop: 2 },
+  rewardLabel: { color: colors.textMuted, fontSize: 7, fontWeight: '900', letterSpacing: 0.8 }, rewardValue: { marginTop: 4, color: colors.text, fontSize: 13, fontWeight: '900' },
+  cta: { minHeight: 46, minWidth: 112, paddingHorizontal: 16, borderRadius: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: colors.volt }, ctaText: { color: '#080A0C', fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }, ctaArrow: { color: '#080A0C', fontSize: 16, fontWeight: '900' },
   section: { gap: 9 }, sectionHeading: { flexDirection: 'row', justifyContent: 'space-between' }, sectionLabel: { color: colors.textMuted, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 }, sectionMeta: { color: colors.textMuted, fontSize: 9, fontWeight: '900' },
-  card: { padding: 14, borderRadius: radius.lg, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, gap: 10 }, cardTop: { flexDirection: 'row', alignItems: 'center', gap: 9 }, cardIcon: { fontSize: 16 }, cardCopy: { flex: 1 }, cardEyebrow: { color: colors.volt, fontSize: 7, fontWeight: '900' }, cardTitle: { color: colors.text, fontSize: 13, fontWeight: '900' }, cardTime: { color: colors.textMuted, fontSize: 8 }, cardDesc: { color: colors.textMuted, fontSize: 10, lineHeight: 15 }, cardTrack: { height: 5, borderRadius: 999, overflow: 'hidden', backgroundColor: '#182028' }, cardTrackFill: { height: '100%', backgroundColor: colors.volt }, cardReward: { color: colors.textMuted, fontSize: 9, fontWeight: '800' },
-  duoCard: { paddingHorizontal: 13, borderRadius: radius.lg, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, duoRow: { minHeight: 58, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderBottomColor: '#182028' }, avatar: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceElevated }, avatarText: { color: colors.text, fontSize: 8, fontWeight: '900' }, duoCopy: { flex: 1 }, duoName: { color: colors.text, fontSize: 11, fontWeight: '900' }, duoMeta: { marginTop: 2, color: colors.textMuted, fontSize: 8 }, streak: { color: colors.volt, fontSize: 10, fontWeight: '900' },
-  historyCard: { paddingHorizontal: 13, borderRadius: radius.lg, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, historyRow: { minHeight: 58, flexDirection: 'row', alignItems: 'center', gap: 9, borderBottomWidth: 1, borderBottomColor: '#182028' }, historyIcon: { fontSize: 15 }, historyCopy: { flex: 1 }, historyTitle: { color: colors.text, fontSize: 10, fontWeight: '900' }, historyMeta: { marginTop: 2, color: colors.textMuted, fontSize: 8 }, historyReward: { maxWidth: 90, color: colors.volt, fontSize: 8, fontWeight: '900', textAlign: 'right' }, emptyHistory: { paddingVertical: 18, color: colors.textMuted, fontSize: 10 },
-  empty: { alignItems: 'center', padding: 26, borderRadius: radius.lg, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, gap: 8 }, emptyIcon: { fontSize: 24 }, emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '900', textAlign: 'center' }, emptyText: { color: colors.textMuted, fontSize: 11, lineHeight: 16, textAlign: 'center' }, emptyCta: { marginTop: 4, minHeight: 42, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.volt }, emptyCtaText: { color: '#080A0C', fontSize: 9, fontWeight: '900' }, skeleton: { height: 300, borderRadius: 26, backgroundColor: '#10161D' }, pressed: { opacity: 0.75 },
+  card: { padding: 15, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, gap: 10 }, cardTop: { flexDirection: 'row', alignItems: 'center', gap: 9 }, cardIcon: { fontSize: 17 }, cardCopy: { flex: 1 }, cardEyebrow: { color: colors.volt, fontSize: 7, fontWeight: '900' }, cardTitle: { color: colors.text, fontSize: 14, fontWeight: '900' }, cardTime: { color: colors.textMuted, fontSize: 8 }, cardDesc: { color: colors.textMuted, fontSize: 11, lineHeight: 16 }, cardTrack: { height: 5, borderRadius: 999, overflow: 'hidden', backgroundColor: '#182028' }, cardTrackFill: { height: '100%', backgroundColor: colors.volt }, cardReward: { color: colors.text, fontSize: 9, fontWeight: '800' },
+  duoRail: { gap: 10, paddingRight: spacing.md }, duoCard: { width: 126, minHeight: 142, padding: 13, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, duoAvatar: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E' }, duoAvatarText: { color: colors.volt, fontSize: 9, fontWeight: '900' }, duoName: { marginTop: 11, color: colors.text, fontSize: 12, fontWeight: '900' }, duoStreak: { marginTop: 'auto', color: colors.text, fontSize: 10, fontWeight: '900' }, duoMeta: { marginTop: 2, color: colors.textMuted, fontSize: 8 },
+  historyCard: { overflow: 'hidden', borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, historyRow: { minHeight: 62, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 13, borderBottomWidth: 1, borderBottomColor: '#192129' }, historyIcon: { fontSize: 16 }, historyCopy: { flex: 1 }, historyTitle: { color: colors.text, fontSize: 11, fontWeight: '900' }, historyMeta: { marginTop: 3, color: colors.textMuted, fontSize: 8 }, historyReward: { maxWidth: 92, color: colors.volt, fontSize: 8, fontWeight: '900', textAlign: 'right' }, emptyHistory: { padding: 18, color: colors.textMuted, fontSize: 11 },
+  empty: { minHeight: 270, justifyContent: 'center', padding: 24, borderRadius: 30, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: colors.border, gap: 10 }, emptyEyebrow: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: 1.2 }, emptyTitle: { maxWidth: 320, color: colors.text, fontSize: 29, lineHeight: 30, fontWeight: '900', letterSpacing: -1.2 }, emptyText: { maxWidth: 330, color: colors.textMuted, fontSize: 12, lineHeight: 18 }, emptyCta: { alignSelf: 'flex-start', marginTop: 6, minHeight: 44, paddingHorizontal: 16, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, emptyCtaText: { color: '#080A0C', fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
+  pressed: { opacity: 0.75 },
 });
