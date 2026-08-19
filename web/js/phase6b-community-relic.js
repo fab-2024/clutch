@@ -27,7 +27,8 @@ const TEAM_MARKS = {
   'Team Liquid': 'https://commons.wikimedia.org/wiki/Special:FilePath/Team_Liquid_logo.svg',
 };
 
-const HIGH_CONTRAST = new Set(['G2 Esports', 'Rogue', 'T1']);
+// Marks whose source artwork is black/dark and becomes unreadable on Clutch's dark surfaces.
+const HIGH_CONTRAST = new Set(['G2 Esports', 'Karmine Corp', 'Rogue', 'T1']);
 let decorateFrame = 0;
 
 function safeTag(identity) {
