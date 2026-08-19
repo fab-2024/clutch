@@ -28,6 +28,7 @@ const TEAM_MARKS = {
 };
 
 const HIGH_CONTRAST = new Set(['G2 Esports', 'Rogue', 'T1']);
+let decorateFrame = 0;
 
 function safeTag(identity) {
   const direct = identity?.querySelector('.ecusson')?.textContent?.trim();
@@ -40,25 +41,31 @@ function safeTag(identity) {
 function logoNode(className, name, tag, src) {
   const span = document.createElement('span');
   span.className = className;
+
   const img = document.createElement('img');
-  img.alt = '';
+  img.alt = `Logo ${name || tag}`;
   img.loading = 'eager';
   img.decoding = 'async';
   img.referrerPolicy = 'no-referrer';
   img.src = src || '';
+
   if (HIGH_CONTRAST.has(name)) {
     img.style.filter = 'grayscale(1) brightness(0) invert(1) drop-shadow(0 2px 5px rgba(0,0,0,.34))';
   }
+
   const fallback = document.createElement('b');
   fallback.textContent = tag;
   span.append(img, fallback);
+
   if (!src) span.classList.add('is-fallback');
   img.addEventListener('error', () => span.classList.add('is-fallback'), { once: true });
+  img.addEventListener('load', () => span.classList.remove('is-fallback'), { once: true });
   return span;
 }
 
 function decorateHero(hero) {
   if (!hero || hero.dataset.phase6bRelic === '1') return;
+
   const identity = hero.querySelector('.phase11-identity__team');
   const stageRelic = hero.querySelector('.phase11-relic-stage > .phase11-relic');
   if (!identity || !stageRelic) return;
@@ -66,9 +73,6 @@ function decorateHero(hero) {
   const name = identity.querySelector('h1')?.textContent?.trim() || '';
   const tag = safeTag(identity);
   const src = TEAM_MARKS[name] || '';
-
-  hero.dataset.phase6bRelic = '1';
-  hero.classList.add('phase6b-relic-hero');
 
   if (!identity.querySelector('.phase6b-faction-logo')) {
     const mark = logoNode('phase6b-faction-logo', name, tag, src);
@@ -80,6 +84,7 @@ function decorateHero(hero) {
     const pendant = document.createElement('span');
     pendant.className = 'phase6b-relic-pendant';
     pendant.setAttribute('aria-hidden', 'true');
+
     const chain = document.createElement('span');
     chain.className = 'phase6b-relic-pendant__chain';
     const seal = logoNode('phase6b-relic-pendant__seal', name, tag, src);
@@ -88,20 +93,36 @@ function decorateHero(hero) {
   }
 
   const progressLabel = hero.querySelector('.phase11-progress__headline small');
-  if (progressLabel) progressLabel.textContent = 'SUPPORTERS RELIÉS';
+  if (progressLabel && progressLabel.textContent.trim() !== 'SATURATION') {
+    progressLabel.textContent = 'SUPPORTERS RELIÉS';
+  }
 
   const progressText = hero.querySelector('.phase11-progress > p');
   if (progressText) progressText.dataset.phase6bCopy = '1';
+
+  hero.dataset.phase6bRelic = '1';
+  hero.classList.add('phase6b-relic-hero');
 }
 
 function decorate() {
   document.querySelectorAll('.phase11-community .phase11-hero').forEach(decorateHero);
 }
 
-const root = document.getElementById('contenu');
-if (root) {
-  new MutationObserver(() => requestAnimationFrame(decorate)).observe(root, { childList: true, subtree: true });
+function scheduleDecorate() {
+  if (decorateFrame) cancelAnimationFrame(decorateFrame);
+  decorateFrame = requestAnimationFrame(() => {
+    decorateFrame = 0;
+    decorate();
+  });
 }
-window.addEventListener('hashchange', () => requestAnimationFrame(decorate));
-window.addEventListener('DOMContentLoaded', () => requestAnimationFrame(decorate));
-decorate();
+
+// The router replaces #contenu itself on every navigation. Observe the stable
+// document body instead of the disposable route container.
+const observerRoot = document.body || document.documentElement;
+if (observerRoot) {
+  new MutationObserver(scheduleDecorate).observe(observerRoot, { childList: true, subtree: true });
+}
+
+window.addEventListener('hashchange', scheduleDecorate);
+window.addEventListener('DOMContentLoaded', scheduleDecorate);
+scheduleDecorate();
