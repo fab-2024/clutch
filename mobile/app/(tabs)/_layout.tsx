@@ -44,10 +44,10 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="community"
+        name="social"
         options={{
-          title: 'Faction',
-          tabBarIcon: ({ focused }) => <TabIcon glyph="◉" focused={focused} />,
+          title: 'Social',
+          tabBarIcon: ({ focused }) => <TabIcon glyph="◎" focused={focused} />,
         }}
       />
       <Tabs.Screen
@@ -60,9 +60,14 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profil',
+          title: 'Moi',
           tabBarIcon: ({ focused }) => <TabIcon glyph="●" focused={focused} />,
         }}
+      />
+
+      <Tabs.Screen
+        name="community"
+        options={{ href: null }}
       />
     </Tabs>
   );
