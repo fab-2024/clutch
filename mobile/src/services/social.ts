@@ -9,6 +9,19 @@ export type LeagueSummary = {
   nb_membres: number;
 };
 
+export type GlobalRankRow = {
+  rang: number;
+  id: string;
+  pseudo: string;
+  frags: number;
+  pic_frags: number;
+  pronostics_regles: number;
+  pronostics_gagnes: number;
+  taux_reussite: number | null;
+  provisoire: boolean;
+  moi: boolean;
+};
+
 export type QuestPartner = { id?: string; pseudo?: string };
 export type QuestMatch = { id?: string; tag_a?: string; tag_b?: string; equipe_a?: string; equipe_b?: string };
 export type QuestLeague = { id?: string; nom?: string };
@@ -102,10 +115,27 @@ export async function loadLeagues(): Promise<LeagueSummary[]> {
     .order('cree_le', { ascending: false });
 
   if (error) throw error;
-  return (data ?? []).map((row) => ({
-    ...row,
-    nb_membres: Number(row.nb_membres ?? 0),
-  })) as LeagueSummary[];
+  return (data ?? []).map((row) => ({ ...row, nb_membres: Number(row.nb_membres ?? 0) })) as LeagueSummary[];
+}
+
+export async function loadGlobalRanking(): Promise<GlobalRankRow[]> {
+  const seasonId = await activeSeasonId();
+  if (!seasonId) return [];
+  const { data, error } = await supabase.rpc('clutch_classement_frags', { p_saison_id: seasonId });
+  if (error) throw error;
+  return Array.isArray(data)
+    ? data.map((row) => ({
+        ...row,
+        rang: Number(row.rang ?? 0),
+        frags: Number(row.frags ?? 0),
+        pic_frags: Number(row.pic_frags ?? 0),
+        pronostics_regles: Number(row.pronostics_regles ?? 0),
+        pronostics_gagnes: Number(row.pronostics_gagnes ?? 0),
+        taux_reussite: row.taux_reussite == null ? null : Number(row.taux_reussite),
+        provisoire: Boolean(row.provisoire),
+        moi: Boolean(row.moi),
+      })) as GlobalRankRow[]
+    : [];
 }
 
 export async function createLeague(name: string) {
@@ -123,7 +153,6 @@ export async function joinLeague(code: string) {
 export async function loadFriendQuests(): Promise<FriendQuestsData> {
   const { data, error } = await supabase.rpc('clutch_friend_quests_dashboard_v1');
   if (error) throw error;
-
   const payload = (data ?? {}) as Partial<FriendQuestsData>;
   return {
     actives: normalizeQuests(payload.actives),
@@ -137,7 +166,6 @@ export async function loadFriends(): Promise<FriendsData> {
   const seasonId = await activeSeasonId();
   const { data, error } = await supabase.rpc('clutch_mes_amis', { p_saison_id: seasonId });
   if (error) throw error;
-
   const payload = (data ?? {}) as Partial<FriendsData>;
   return {
     amis: normalizeFriendRows(payload.amis),
@@ -159,10 +187,7 @@ export async function requestFriend(userId: string) {
 }
 
 export async function answerFriendRequest(userId: string, accept: boolean) {
-  const { data, error } = await supabase.rpc('clutch_repondre_demande', {
-    p_user: userId,
-    p_accepter: accept,
-  });
+  const { data, error } = await supabase.rpc('clutch_repondre_demande', { p_user: userId, p_accepter: accept });
   if (error) throw error;
   return data;
 }
@@ -176,7 +201,6 @@ export async function removeFriend(userId: string) {
 export async function loadDuels(limit = 30): Promise<DuelRow[]> {
   const { data, error } = await supabase.rpc('clutch_mes_defis_match', { p_limite: limit });
   if (error) throw error;
-
   if (Array.isArray(data)) return data as DuelRow[];
   if (data && typeof data === 'object') {
     const payload = data as { defis?: DuelRow[]; duels?: DuelRow[]; items?: DuelRow[] };
