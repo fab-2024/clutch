@@ -91,6 +91,10 @@ export default function MatchCenterScreen() {
     );
   }
 
+  function returnToArena() {
+    router.replace('/(tabs)/matches');
+  }
+
   return (
     <Screen>
       <ScrollView
@@ -101,7 +105,7 @@ export default function MatchCenterScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topBar}>
-          <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
+          <Pressable onPress={returnToArena} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
             <Text style={styles.backArrow}>←</Text>
             <Text style={styles.backText}>ARENA</Text>
           </Pressable>
