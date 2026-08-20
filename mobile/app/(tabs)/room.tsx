@@ -1,4 +1,4 @@
-import { PlaceholderScreen } from '@/components/PlaceholderScreen';
+import { PlaceholderScreen } from '@/src/components/ui/PlaceholderScreen';
 
 export default function RoomScreen() {
   return (

@@ -2,8 +2,8 @@ import { router, Slot, usePathname } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ClutchHeader } from '@/components/ClutchHeader';
-import { colors, radius, spacing } from '@/src/theme/tokens';
+import { ClutchHeader } from '@/src/components/layout/ClutchHeader';
+import { colors, radius, spacing } from '@/src/theme';
 
 const SECTIONS = [
   { key: 'missions', label: 'Missions', glyph: '⚡', href: '/(tabs)/social/missions', wide: false },

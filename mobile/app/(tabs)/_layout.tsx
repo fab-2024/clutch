@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '@/src/theme/tokens';
+import { colors } from '@/src/theme';
 
 type TabIconProps = {
   glyph: string;

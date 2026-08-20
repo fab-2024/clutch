@@ -3,8 +3,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-import { AuthProvider, useAuth } from '@/providers/AuthProvider';
-import { colors } from '@/src/theme/tokens';
+import { AuthProvider, useAuth } from '@/src/providers/AuthProvider';
+import { colors } from '@/src/theme';
 
 function RootNavigator() {
   const { session, profile, loading } = useAuth();
