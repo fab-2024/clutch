@@ -12,6 +12,7 @@ declare
     'public.clutch_chercher_joueurs(text)',
     'public.clutch_admin_demarrer_match_v1(text)',
     'public.clutch_admin_reporter_match_v1(text,timestamp with time zone)',
+    'public.clutch_assurer_mon_profil_v1()',
     'public.clutch_classement_frags(text)',
     'public.clutch_communaute_dashboard_v4()',
     'public.clutch_definir_jeux_suivis(text[])',
@@ -187,6 +188,16 @@ begin
       and not tg.tgisinternal
   ) then
     raise exception 'Match lifecycle trigger is missing or disabled';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_proc p
+    where p.oid = 'public.clutch_assurer_mon_profil_v1()'::regprocedure
+      and p.prosecdef
+      and coalesce(p.proconfig, '{}'::text[]) @> array['search_path=""']
+  ) then
+    raise exception 'Auth profile recovery RPC is not hardened';
   end if;
 
   raise notice 'p0_mobile_contracts_ok';

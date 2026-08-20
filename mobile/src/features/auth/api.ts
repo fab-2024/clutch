@@ -1,8 +1,15 @@
-import type { Session } from '@supabase/supabase-js';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 import { supabase } from '@/src/lib/supabase';
 
 import type { ClutchProfile } from './types';
+
+export class ClutchProfileMissingError extends Error {
+  constructor() {
+    super('Le profil Clutch associé à cette session reste introuvable.');
+    this.name = 'ClutchProfileMissingError';
+  }
+}
 
 export async function getCurrentSession(): Promise<Session | null> {
   const { data, error } = await supabase.auth.getSession();
@@ -10,16 +17,16 @@ export async function getCurrentSession(): Promise<Session | null> {
   return data.session;
 }
 
-export function subscribeToAuthStateChange(listener: (session: Session | null) => void) {
+export function subscribeToAuthStateChange(listener: (event: AuthChangeEvent, session: Session | null) => void) {
   let active = true;
   const pendingListeners = new Set<ReturnType<typeof setTimeout>>();
   const {
     data: { subscription },
-  } = supabase.auth.onAuthStateChange((_event, session) => {
+  } = supabase.auth.onAuthStateChange((event, session) => {
     // A Supabase request made from inside this callback can deadlock the client.
     const pendingListener = setTimeout(() => {
       pendingListeners.delete(pendingListener);
-      if (active) listener(session);
+      if (active) listener(event, session);
     }, 0);
     pendingListeners.add(pendingListener);
   });
@@ -35,13 +42,27 @@ export function subscribeToAuthStateChange(listener: (session: Session | null) =
 }
 
 export async function loadClutchProfile(userId: string): Promise<ClutchProfile> {
+  const first = await fetchClutchProfile(userId);
+  if (first) return first;
+
+  const { data: repaired, error: repairError } = await supabase.rpc('clutch_assurer_mon_profil_v1');
+  if (repairError) throw repairError;
+  if (repaired !== true) throw new ClutchProfileMissingError();
+
+  const recovered = await fetchClutchProfile(userId);
+  if (!recovered) throw new ClutchProfileMissingError();
+  return recovered;
+}
+
+async function fetchClutchProfile(userId: string): Promise<ClutchProfile | null> {
   const { data, error } = await supabase
     .from('profils')
     .select('id,pseudo,email,est_admin,equipe_favorite_id,jeux_suivis')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+  if (!data) return null;
   return {
     ...(data as Omit<ClutchProfile, 'jeux_suivis'> & { jeux_suivis?: string[] | null }),
     est_admin: Boolean(data.est_admin),

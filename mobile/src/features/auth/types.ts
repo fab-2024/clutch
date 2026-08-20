@@ -9,9 +9,19 @@ export type ClutchProfile = {
   jeux_suivis: string[];
 };
 
+export type AuthStatus = 'loading' | 'signed_out' | 'ready' | 'profile_missing' | 'error';
+
+export type AuthFailure = {
+  scope: 'session' | 'profile';
+  message: string;
+};
+
 export type AuthContextValue = {
   session: Session | null;
   profile: ClutchProfile | null;
+  status: AuthStatus;
+  error: AuthFailure | null;
   loading: boolean;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: () => Promise<ClutchProfile | null>;
+  retry: () => Promise<void>;
 };

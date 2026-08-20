@@ -17,6 +17,8 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
   const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'joueur';
 
@@ -39,6 +41,19 @@ export default function ProfileScreen() {
   const hue = data?.favoriteTeam ? teamHue(data.favoriteTeam.tag, data.favoriteTeam.nom) : 76;
   const teamColor = `hsl(${hue}, 68%, 55%)`;
   const obtained = data?.badges.filter((badge) => badge.obtained) ?? [];
+
+  async function leaveSession() {
+    if (signingOut) return;
+    setSigningOut(true);
+    setSignOutError(null);
+    try {
+      await signOut();
+    } catch {
+      setSignOutError('Déconnexion impossible. Vérifie ta connexion puis réessaie.');
+    } finally {
+      setSigningOut(false);
+    }
+  }
 
   return (
     <Screen>
@@ -110,8 +125,9 @@ export default function ProfileScreen() {
 
         <View style={styles.accountCard}>
           <View style={styles.accountCopy}><Text style={styles.accountLabel}>COMPTE</Text><Text numberOfLines={1} style={styles.accountEmail}>{session?.user.email}</Text></View>
-          <Pressable onPress={() => void signOut().catch((caught) => console.error('Déconnexion impossible', caught))} style={({ pressed }) => [styles.logout, pressed && styles.pressed]}><Text style={styles.logoutText}>SE DÉCONNECTER</Text></Pressable>
+          <Pressable accessibilityLabel="Se déconnecter" accessibilityRole="button" disabled={signingOut} onPress={() => void leaveSession()} style={({ pressed }) => [styles.logout, signingOut && styles.disabled, pressed && styles.pressed]}><Text style={styles.logoutText}>{signingOut ? 'DÉCONNEXION…' : 'SE DÉCONNECTER'}</Text></Pressable>
         </View>
+        {signOutError ? <Text style={styles.accountError}>{signOutError}</Text> : null}
       </ScrollView>
     </Screen>
   );
@@ -177,5 +193,5 @@ const styles = StyleSheet.create({
   arsenalRail: { gap: 10, paddingHorizontal: spacing.md }, arsenalCard: { width: 132, minHeight: 170, padding: 14, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, arsenalMedal: { width: 58, height: 58, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1.2, backgroundColor: '#0D1319' }, arsenalGlyph: { fontSize: 21, fontWeight: '900' }, arsenalName: { marginTop: 17, color: colors.text, fontSize: 13, fontWeight: '900' }, arsenalRarity: { marginTop: 'auto', fontSize: 7, fontWeight: '900', letterSpacing: 0.8 }, arsenalEmpty: { width: 250, minHeight: 150, justifyContent: 'center', padding: 18, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, arsenalEmptyTitle: { color: colors.text, fontSize: 19, fontWeight: '900' }, arsenalEmptyText: { marginTop: 7, color: colors.textMuted, fontSize: 10, lineHeight: 15 },
   verdicts: { marginHorizontal: spacing.md, overflow: 'hidden', borderRadius: 23, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, verdictRow: { minHeight: 68, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 13, borderBottomWidth: 1, borderBottomColor: '#192129' }, verdictMark: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1 }, verdictMarkWin: { backgroundColor: '#0E1C14', borderColor: '#23583A' }, verdictMarkLoss: { backgroundColor: '#1A1012', borderColor: '#5A2730' }, verdictLetter: { fontSize: 12, fontWeight: '900' }, verdictWin: { color: colors.success }, verdictLoss: { color: colors.danger }, verdictCopy: { flex: 1, minWidth: 0 }, verdictTitle: { color: colors.text, fontSize: 11, fontWeight: '900' }, verdictMeta: { marginTop: 3, color: colors.textMuted, fontSize: 8 }, delta: { fontSize: 11, fontWeight: '900' },
   emptyCard: { marginHorizontal: spacing.md, minHeight: 150, justifyContent: 'center', padding: 20, borderRadius: 25, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, gap: 8 }, emptyEyebrow: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: 1 }, emptyTitle: { maxWidth: 320, color: colors.text, fontSize: 20, lineHeight: 22, fontWeight: '900' }, emptyText: { color: colors.textMuted, fontSize: 10, lineHeight: 16 }, inlineAction: { marginTop: 5, color: colors.volt, fontSize: 9, fontWeight: '900' },
-  accountCard: { marginHorizontal: spacing.md, minHeight: 82, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, accountCopy: { flex: 1, minWidth: 0 }, accountLabel: { color: colors.textMuted, fontSize: 7, fontWeight: '900', letterSpacing: 1 }, accountEmail: { marginTop: 5, color: colors.text, fontSize: 11, fontWeight: '800' }, logout: { minHeight: 39, paddingHorizontal: 12, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171015', borderWidth: 1, borderColor: '#43252F' }, logoutText: { color: '#FF8B96', fontSize: 7, fontWeight: '900' }, pressed: { opacity: 0.74 },
+  accountCard: { marginHorizontal: spacing.md, minHeight: 82, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, accountCopy: { flex: 1, minWidth: 0 }, accountLabel: { color: colors.textMuted, fontSize: 7, fontWeight: '900', letterSpacing: 1 }, accountEmail: { marginTop: 5, color: colors.text, fontSize: 11, fontWeight: '800' }, logout: { minHeight: 39, paddingHorizontal: 12, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171015', borderWidth: 1, borderColor: '#43252F' }, logoutText: { color: '#FF8B96', fontSize: 7, fontWeight: '900' }, accountError: { marginHorizontal: spacing.md, marginTop: -14, color: '#FF9AA2', fontSize: 10, lineHeight: 15 }, disabled: { opacity: 0.48 }, pressed: { opacity: 0.74 },
 });

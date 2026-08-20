@@ -3,21 +3,25 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import AuthRecoveryScreen from '@/src/features/auth/components/AuthRecoveryScreen';
 import { AuthProvider, useAuth } from '@/src/providers/AuthProvider';
 import { colors } from '@/src/theme';
 
 function RootNavigator() {
-  const { session, profile, loading } = useAuth();
+  const { session, profile, status } = useAuth();
   const segments = useSegments();
+  const loading = status === 'loading';
+  const userId = session?.user.id;
+  const profileId = profile?.id;
   const needsOnboarding = Boolean(
     session && profile && (!profile.jeux_suivis.length || !profile.equipe_favorite_id),
   );
   const inOnboarding = segments[0] === 'onboarding';
 
   useEffect(() => {
-    if (loading || !session || !profile) return;
+    if (loading || !userId || !profileId) return;
     if (needsOnboarding && !inOnboarding) router.replace('/onboarding');
-  }, [inOnboarding, loading, needsOnboarding, profile, session]);
+  }, [inOnboarding, loading, needsOnboarding, profileId, userId]);
 
   if (loading) {
     return (
@@ -26,6 +30,10 @@ function RootNavigator() {
         <Text style={styles.loadingText}>Chargement de Clutch…</Text>
       </View>
     );
+  }
+
+  if (status === 'error' || status === 'profile_missing') {
+    return <AuthRecoveryScreen />;
   }
 
   return (
