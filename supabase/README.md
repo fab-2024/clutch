@@ -11,6 +11,7 @@ lisibles de l'évolution du produit.
 - `migrations/20260820075558_legacy_public_baseline.sql` reconstruit le schéma public final issu des anciens scripts.
 - Les petits fichiers antérieurs à la baseline sont des marqueurs sans SQL. Ils alignent les versions déjà présentes dans l'historique distant sans publier les migrations privées ni rejouer leurs backfills de production.
 - `migrations/20260820080332_restore_mobile_schema_contracts.sql` rétablit les colonnes, droits Data API et RPC nécessaires au mobile.
+- Les migrations suivantes durcissent les privilèges existants sans élargir la surface Data API.
 - `seed.sql` contient uniquement les données de démonstration locales issues de l'ancien `04_donnees.sql`.
 - `11_verification.sql` reste un diagnostic manuel et n'est pas une migration.
 
@@ -27,6 +28,7 @@ supabase start
 supabase db reset
 supabase db lint --local --schema public --level warning --fail-on error
 supabase db query --local --file supabase/tests/p0_mobile_contracts.sql
+supabase db query --local --file supabase/tests/security_hardening_contracts.sql
 supabase db advisors --local --type all --level warn --fail-on error
 ```
 
@@ -36,6 +38,8 @@ Le bloc de vérification de la migration P0 fait échouer le reset si les colonn
 mobiles ou les permissions Amis ne correspondent pas au contrat attendu.
 Le test séparé vérifie également les vues `security_invoker`, la RLS et les
 privilèges de colonnes de `profils`.
+Le contrat de durcissement vérifie les RPC anonymes, les fonctions de trigger,
+les `search_path` fixes et les privilèges par défaut du propriétaire de migration.
 
 ## Nouvelle modification de schéma
 

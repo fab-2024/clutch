@@ -10,7 +10,7 @@
     "db:start": "supabase start",
     "db:reset": "supabase db reset",
     "db:lint": "supabase db lint --local --schema public --level warning --fail-on error",
-    "db:verify": "supabase db query --local --file supabase/tests/p0_mobile_contracts.sql",
+    "db:verify": "supabase db query --local --file supabase/tests/p0_mobile_contracts.sql && supabase db query --local --file supabase/tests/security_hardening_contracts.sql",
     "db:advisors": "supabase db advisors --local --type all --level warn --fail-on error",
     "mobile:architecture": "node scripts/check-mobile.mjs",
     "mobile:typecheck": "npm --prefix mobile run typecheck"
