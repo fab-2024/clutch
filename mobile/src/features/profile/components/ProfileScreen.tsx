@@ -11,7 +11,12 @@ import { teamHue } from '@/src/utils/teams';
 import { loadProfileData } from '../api';
 import type { ProfileBadge, ProfileData, RecentPrediction } from '../types';
 
-export default function ProfileScreen() {
+type ProfileScreenProps = {
+  profilePseudo?: string;
+  publicView?: boolean;
+};
+
+export default function ProfileScreen({ profilePseudo, publicView = false }: ProfileScreenProps) {
   const { profile, session } = useAuth();
   const [data, setData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -20,7 +25,8 @@ export default function ProfileScreen() {
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
 
-  const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'joueur';
+  const ownPseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'joueur';
+  const pseudo = profilePseudo?.trim() || ownPseudo;
 
   const load = useCallback(async (refresh = false) => {
     refresh ? setRefreshing(true) : setLoading(true);
@@ -62,7 +68,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
       >
-        <ProfileHeader publicProfile={data?.publicProfile !== false} />
+        <ProfileHeader publicProfile={data?.publicProfile !== false} publicView={publicView} />
 
         {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text><Pressable onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
 
@@ -123,20 +129,28 @@ export default function ProfileScreen() {
           {!loading && !data?.recent.length ? <View style={styles.emptyCard}><Text style={styles.emptyEyebrow}>AUCUN VERDICT</Text><Text style={styles.emptyTitle}>Ton historique commence avec ton premier call.</Text><Pressable onPress={() => router.push('/(tabs)/matches')}><Text style={styles.inlineAction}>ENTRER DANS L’ARENA →</Text></Pressable></View> : null}
         </View>
 
-        <View style={styles.accountCard}>
-          <View style={styles.accountCopy}><Text style={styles.accountLabel}>COMPTE</Text><Text numberOfLines={1} style={styles.accountEmail}>{session?.user.email}</Text></View>
-          <Pressable accessibilityLabel="Se déconnecter" accessibilityRole="button" disabled={signingOut} onPress={() => void leaveSession()} style={({ pressed }) => [styles.logout, signingOut && styles.disabled, pressed && styles.pressed]}><Text style={styles.logoutText}>{signingOut ? 'DÉCONNEXION…' : 'SE DÉCONNECTER'}</Text></Pressable>
-        </View>
-        {signOutError ? <Text style={styles.accountError}>{signOutError}</Text> : null}
+        {!publicView ? (
+          <>
+            <View style={styles.accountCard}>
+              <View style={styles.accountCopy}><Text style={styles.accountLabel}>COMPTE</Text><Text numberOfLines={1} style={styles.accountEmail}>{session?.user.email}</Text></View>
+              <Pressable accessibilityLabel="Se déconnecter" accessibilityRole="button" disabled={signingOut} onPress={() => void leaveSession()} style={({ pressed }) => [styles.logout, signingOut && styles.disabled, pressed && styles.pressed]}><Text style={styles.logoutText}>{signingOut ? 'DÉCONNEXION…' : 'SE DÉCONNECTER'}</Text></Pressable>
+            </View>
+            {signOutError ? <Text style={styles.accountError}>{signOutError}</Text> : null}
+          </>
+        ) : null}
       </ScrollView>
     </Screen>
   );
 }
 
-function ProfileHeader({ publicProfile }: { publicProfile: boolean }) {
+function ProfileHeader({ publicProfile, publicView }: { publicProfile: boolean; publicView: boolean }) {
   return (
     <View style={styles.header}>
-      <View style={styles.brandRow}><View style={styles.logoBox}><Text style={styles.logoGlyph}>C</Text></View><View style={styles.wordmarkRow}><Text style={styles.wordmark}>CLUTCH</Text><View style={styles.dot} /></View></View>
+      {publicView ? (
+        <Pressable accessibilityLabel="Revenir au Social" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><Text style={styles.backText}>← SOCIAL</Text></Pressable>
+      ) : (
+        <View style={styles.brandRow}><View style={styles.logoBox}><Text style={styles.logoGlyph}>C</Text></View><View style={styles.wordmarkRow}><Text style={styles.wordmark}>CLUTCH</Text><View style={styles.dot} /></View></View>
+      )}
       <View style={styles.visibility}><View style={[styles.visibilityDot, !publicProfile && styles.visibilityDotPrivate]} /><Text style={styles.visibilityText}>{publicProfile ? 'PUBLIC' : 'PRIVÉ'}</Text></View>
     </View>
   );
@@ -181,7 +195,7 @@ function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').for
 
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: 430, alignSelf: 'center', paddingBottom: 128, gap: 22 },
-  header: { minHeight: 78, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 }, logoBox: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, logoGlyph: { color: '#06090C', fontSize: 25, lineHeight: 28, fontWeight: '900', letterSpacing: -2 }, wordmarkRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 }, wordmark: { color: colors.text, fontSize: 17, fontWeight: '900', letterSpacing: 3.1 }, dot: { width: 5, height: 5, marginBottom: 3, borderRadius: 3, backgroundColor: colors.volt }, visibility: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { color: colors.text, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 },
+  header: { minHeight: 78, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 }, logoBox: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, logoGlyph: { color: '#06090C', fontSize: 25, lineHeight: 28, fontWeight: '900', letterSpacing: -2 }, wordmarkRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 }, wordmark: { color: colors.text, fontSize: 17, fontWeight: '900', letterSpacing: 3.1 }, dot: { width: 5, height: 5, marginBottom: 3, borderRadius: 3, backgroundColor: colors.volt }, back: { minHeight: 38, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { color: colors.text, fontSize: 8, fontWeight: '900', letterSpacing: 0.9 }, visibility: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { color: colors.text, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 },
   error: { marginHorizontal: spacing.md, padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', flexDirection: 'row', gap: 10, justifyContent: 'space-between' }, errorText: { flex: 1, color: '#FF9AA2', fontSize: 11 }, retry: { color: colors.volt, fontSize: 8, fontWeight: '900' },
   hero: { position: 'relative', overflow: 'hidden', marginHorizontal: spacing.md, minHeight: 370, padding: 20, borderRadius: 31, backgroundColor: '#0A0F14', borderWidth: 1, gap: 18 }, heroGlow: { position: 'absolute', right: -120, top: -80, width: 310, height: 310, borderRadius: 155, opacity: 0.15 }, watermark: { position: 'absolute', right: -14, top: 80, fontSize: 86, lineHeight: 90, fontWeight: '900', opacity: 0.09, letterSpacing: -5 }, heroEyebrow: { zIndex: 2, color: colors.volt, fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
   identityRow: { zIndex: 2, flexDirection: 'row', alignItems: 'center', gap: 15 }, emblemOuter: { width: 94, height: 94, borderRadius: 30, alignItems: 'center', justifyContent: 'center', backgroundColor: '#121812', borderWidth: 1, borderColor: '#48541E' }, emblem: { width: 68, height: 68, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, emblemCut: { position: 'absolute', right: -2, width: 27, height: 38, borderTopLeftRadius: 20, borderBottomLeftRadius: 20, backgroundColor: '#121812' }, emblemLevel: { marginLeft: -6, color: '#080A0C', fontSize: 22, fontWeight: '900' }, identityCopy: { flex: 1, minWidth: 0 }, levelLine: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 0.9 }, pseudo: { marginTop: 4, color: colors.text, fontSize: 34, lineHeight: 36, fontWeight: '900', letterSpacing: -1.5 }, profileTitle: { marginTop: 4, color: colors.volt, fontSize: 11, fontWeight: '900' },

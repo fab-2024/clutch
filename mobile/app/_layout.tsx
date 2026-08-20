@@ -46,6 +46,7 @@ function RootNavigator() {
       <Stack.Protected guard={Boolean(session)}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="match/[id]" />
+        <Stack.Screen name="player/[pseudo]" />
         <Stack.Screen name="admin/matches" />
         <Stack.Screen name="onboarding" />
       </Stack.Protected>

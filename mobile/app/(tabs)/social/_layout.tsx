@@ -6,11 +6,12 @@ import { ClutchHeader } from '@/src/components/layout/ClutchHeader';
 import { colors, radius, spacing } from '@/src/theme';
 
 const SECTIONS = [
-  { key: 'missions', label: 'Missions', glyph: '⚡', href: '/(tabs)/social/missions', wide: false },
-  { key: 'leagues', label: 'Ligues', glyph: '', href: '/(tabs)/social/leagues', wide: false },
-  { key: 'faction', label: 'Faction', glyph: '', href: '/(tabs)/social/faction', wide: false },
-  { key: 'friends', label: 'Amis', glyph: '', href: '/(tabs)/social/friends', wide: true },
-  { key: 'duels', label: 'Duels', glyph: '⚔', href: '/(tabs)/social/duels', wide: true },
+  { key: 'home', label: 'Accueil', glyph: '⌂', href: '/(tabs)/social' },
+  { key: 'missions', label: 'Missions', glyph: '⚡', href: '/(tabs)/social/missions' },
+  { key: 'leagues', label: 'Ligues', glyph: '', href: '/(tabs)/social/leagues' },
+  { key: 'faction', label: 'Faction', glyph: '', href: '/(tabs)/social/faction' },
+  { key: 'friends', label: 'Amis', glyph: '', href: '/(tabs)/social/friends' },
+  { key: 'duels', label: 'Duels', glyph: '⚔', href: '/(tabs)/social/duels' },
 ] as const;
 
 export default function SocialLayout() {
@@ -26,14 +27,15 @@ export default function SocialLayout() {
       <View style={styles.navOuter}>
         <View style={styles.navCard}>
           {SECTIONS.map((item) => {
-            const active = pathname.includes(`/social/${item.key}`) || (item.key === 'leagues' && pathname.endsWith('/social'));
+            const active = item.key === 'home'
+              ? pathname.endsWith('/social')
+              : pathname.includes(`/social/${item.key}`);
             return (
               <Pressable
                 key={item.key}
                 onPress={() => router.replace(item.href as never)}
                 style={({ pressed }) => [
                   styles.navItem,
-                  item.wide && styles.navItemWide,
                   active && styles.navItemActive,
                   pressed && styles.pressed,
                 ]}
@@ -88,9 +90,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8,
-  },
-  navItemWide: {
-    flexBasis: '48%',
   },
   navItemActive: {
     backgroundColor: colors.volt,
