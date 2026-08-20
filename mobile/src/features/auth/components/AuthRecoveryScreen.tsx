@@ -15,15 +15,15 @@ export default function AuthRecoveryScreen() {
   const missingProfile = status === 'profile_missing';
   const sessionFailure = error?.scope === 'session';
   const title = missingProfile
-    ? 'TON PROFIL MANQUE À L’APPEL.'
+    ? 'ON RÉPARE TON PROFIL.'
     : sessionFailure
-      ? 'CONNEXION INTERROMPUE.'
-      : 'SYNCHRONISATION IMPOSSIBLE.';
+      ? 'RECONNECTONS CLUTCH.'
+      : 'TON COMPTE NE RÉPOND PAS.';
   const copy = missingProfile
-    ? 'Ta session est valide, mais Clutch n’a pas réussi à restaurer ton profil automatiquement.'
+    ? 'Ton compte est bien connecté. Il reste seulement à récupérer ton profil Clutch.'
     : sessionFailure
-      ? 'Clutch ne peut pas vérifier la session enregistrée. Tes données restent intactes.'
-      : 'La session fonctionne, mais les données de ton profil ne répondent pas encore.';
+      ? 'La session enregistrée ne répond plus. Une nouvelle tentative suffit généralement.'
+      : 'Tes données sont toujours là, mais elles sont momentanément indisponibles.';
 
   async function retryAuth() {
     if (busyAction) return;
@@ -65,10 +65,10 @@ export default function AuthRecoveryScreen() {
         </View>
 
         <View style={styles.copy}>
-          <Text style={styles.eyebrow}>AUTH // MODE RÉCUPÉRATION</Text>
+          <Text style={styles.eyebrow}>CONNEXION</Text>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.body}>{copy}</Text>
-          <Text style={styles.detail}>{actionError ?? error?.message}</Text>
+          {actionError ? <Text style={styles.detail}>{actionError}</Text> : null}
         </View>
 
         <View style={styles.actions}>
@@ -94,8 +94,6 @@ export default function AuthRecoveryScreen() {
             </Pressable>
           ) : null}
         </View>
-
-        <Text style={styles.hint}>Aucune donnée locale n’a été supprimée.</Text>
       </View>
     </Screen>
   );
@@ -115,7 +113,7 @@ const styles = StyleSheet.create({
   eyebrow: { color: colors.volt, fontSize: 10, fontWeight: '900', letterSpacing: 1.7 },
   title: { maxWidth: 390, color: colors.text, fontSize: 39, lineHeight: 40, fontWeight: '900', letterSpacing: -1.6 },
   body: { maxWidth: 380, color: colors.textMuted, fontSize: 14, lineHeight: 21 },
-  detail: { minHeight: 18, color: '#FF9AA2', fontSize: 11, lineHeight: 17 },
+  detail: { color: '#FF9AA2', fontSize: 11, lineHeight: 17 },
   actions: { gap: spacing.sm },
   primary: { minHeight: 56, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
   primaryText: { color: '#080B0F', fontSize: 12, fontWeight: '900', letterSpacing: 0.9 },
@@ -123,5 +121,4 @@ const styles = StyleSheet.create({
   secondaryText: { color: colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
   disabled: { opacity: 0.48 },
   pressed: { opacity: 0.78 },
-  hint: { color: colors.textMuted, fontSize: 10, textAlign: 'center' },
 });

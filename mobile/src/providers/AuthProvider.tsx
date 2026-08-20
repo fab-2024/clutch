@@ -157,7 +157,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const profileReady = Boolean(profileRef.current) && statusRef.current === 'ready';
       const profileLoading = sameUser && statusRef.current === 'loading';
 
-      if (sameUser && (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') && (profileReady || profileLoading)) {
+      if (
+        sameUser
+        && (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN' || event === 'USER_UPDATED')
+        && (profileReady || profileLoading)
+      ) {
         updateSessionOnly(nextSession);
         return;
       }

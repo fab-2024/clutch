@@ -4,6 +4,8 @@ import { supabase } from '@/src/lib/supabase';
 
 import type { ClutchProfile } from './types';
 
+const authCodeExchanges = new Map<string, Promise<Session>>();
+
 export class ClutchProfileMissingError extends Error {
   constructor() {
     super('Le profil Clutch associé à cette session reste introuvable.');
@@ -76,6 +78,65 @@ export async function signInWithPassword(email: string, password: string) {
     email: email.trim(),
     password,
   });
+  if (error) throw error;
+}
+
+export async function signUpWithPassword({
+  email,
+  password,
+  pseudo,
+  emailRedirectTo,
+}: {
+  email: string;
+  password: string;
+  pseudo: string;
+  emailRedirectTo: string;
+}) {
+  const { data, error } = await supabase.auth.signUp({
+    email: email.trim(),
+    password,
+    options: {
+      data: { pseudo: pseudo.trim() },
+      emailRedirectTo,
+    },
+  });
+  if (error) throw error;
+  return { confirmationRequired: !data.session };
+}
+
+export async function sendPasswordResetEmail(email: string, redirectTo: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+  if (error) throw error;
+}
+
+export async function exchangeAuthCodeForSession(code: string): Promise<Session> {
+  const normalizedCode = code.trim();
+  const pendingExchange = authCodeExchanges.get(normalizedCode);
+  if (pendingExchange) return pendingExchange;
+
+  const exchange = (async () => {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(normalizedCode);
+    if (error) throw error;
+    return data.session;
+  })();
+
+  authCodeExchanges.set(normalizedCode, exchange);
+  try {
+    const session = await exchange;
+    setTimeout(() => {
+      if (authCodeExchanges.get(normalizedCode) === exchange) {
+        authCodeExchanges.delete(normalizedCode);
+      }
+    }, 60_000);
+    return session;
+  } catch (error) {
+    authCodeExchanges.delete(normalizedCode);
+    throw error;
+  }
+}
+
+export async function updatePassword(password: string) {
+  const { error } = await supabase.auth.updateUser({ password });
   if (error) throw error;
 }
 

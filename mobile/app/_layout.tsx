@@ -17,11 +17,12 @@ function RootNavigator() {
     session && profile && (!profile.jeux_suivis.length || !profile.equipe_favorite_id),
   );
   const inOnboarding = segments[0] === 'onboarding';
+  const inAuthFlow = segments[0] === 'auth';
 
   useEffect(() => {
     if (loading || !userId || !profileId) return;
-    if (needsOnboarding && !inOnboarding) router.replace('/onboarding');
-  }, [inOnboarding, loading, needsOnboarding, profileId, userId]);
+    if (needsOnboarding && !inOnboarding && !inAuthFlow) router.replace('/onboarding');
+  }, [inAuthFlow, inOnboarding, loading, needsOnboarding, profileId, userId]);
 
   if (loading) {
     return (
@@ -55,6 +56,9 @@ function RootNavigator() {
       <Stack.Protected guard={!session}>
         <Stack.Screen name="login" />
       </Stack.Protected>
+      <Stack.Screen name="auth/forgot-password" />
+      <Stack.Screen name="auth/callback" />
+      <Stack.Screen name="auth/update-password" />
     </Stack>
   );
 }

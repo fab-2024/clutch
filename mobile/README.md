@@ -9,9 +9,24 @@ comme référence pendant la migration.
 ```bash
 cd mobile
 npm install
+cp .env.example .env
 npm run typecheck
 npm start
 ```
+
+Renseigner l'URL et la clé publique du projet dans `.env`. Pour que les emails
+de confirmation et de récupération reviennent dans l'application, ajouter dans
+**Supabase > Authentication > URL Configuration > Redirect URLs** :
+
+```text
+http://localhost:8081/**
+clutch://**
+```
+
+Pour une version web déployée, ajouter également son origine à la liste et la
+définir dans `EXPO_PUBLIC_AUTH_REDIRECT_ORIGIN` (sans slash final). Les liens
+PKCE doivent être ouverts sur le même appareil et dans le même navigateur que
+celui depuis lequel l'email a été demandé.
 
 La fondation utilise Expo SDK 57. Pour le développement produit sur appareil,
 préférer un development build compatible plutôt que de figer l'application sur
