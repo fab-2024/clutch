@@ -23,15 +23,39 @@ export async function loadHubData(userId: string): Promise<HubData> {
 
   if (seasonError) throw seasonError;
 
-  const { data: match, error: matchError } = await supabase
-    .from('v_matchs')
-    .select('id,debut,jeu,equipe_a,tag_a,equipe_b,tag_b,evenement,format,statut')
-    .gte('debut', new Date().toISOString())
-    .order('debut', { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const now = new Date().toISOString();
+  const matchFields = 'id,debut,jeu,equipe_a,tag_a,equipe_b,tag_b,evenement,format,statut';
+  const [inProgressResult, startedResult, upcomingResult] = await Promise.all([
+    supabase
+      .from('v_matchs')
+      .select(matchFields)
+      .eq('statut', 'en_cours')
+      .order('debut', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('v_matchs')
+      .select(matchFields)
+      .eq('statut', 'a_venir')
+      .lte('debut', now)
+      .order('debut', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('v_matchs')
+      .select(matchFields)
+      .eq('statut', 'a_venir')
+      .gt('debut', now)
+      .order('debut', { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
-  if (matchError) throw matchError;
+  if (inProgressResult.error) throw inProgressResult.error;
+  if (startedResult.error) throw startedResult.error;
+  if (upcomingResult.error) throw upcomingResult.error;
+
+  const match = inProgressResult.data ?? startedResult.data ?? upcomingResult.data;
 
   let frags: FragsState | null = null;
   let streak = 0;

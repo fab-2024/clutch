@@ -11,12 +11,26 @@ const MATCH_FIELDS =
   'id,saison_id,debut,jeu,equipe_a,tag_a,equipe_b,tag_b,evenement,format,statut,score_a,score_b';
 
 export async function loadArenaMatches() {
-  const [upcomingResult, finishedResult] = await Promise.all([
+  const now = new Date().toISOString();
+  const [inProgressResult, startedResult, upcomingResult, finishedResult] = await Promise.all([
+    supabase
+      .from('v_matchs')
+      .select(MATCH_FIELDS)
+      .eq('statut', 'en_cours')
+      .order('debut', { ascending: false })
+      .limit(20),
     supabase
       .from('v_matchs')
       .select(MATCH_FIELDS)
       .eq('statut', 'a_venir')
-      .gte('debut', new Date().toISOString())
+      .lte('debut', now)
+      .order('debut', { ascending: false })
+      .limit(20),
+    supabase
+      .from('v_matchs')
+      .select(MATCH_FIELDS)
+      .eq('statut', 'a_venir')
+      .gt('debut', now)
       .order('debut', { ascending: true })
       .limit(40),
     supabase
@@ -27,11 +41,19 @@ export async function loadArenaMatches() {
       .limit(40),
   ]);
 
+  if (inProgressResult.error) throw inProgressResult.error;
+  if (startedResult.error) throw startedResult.error;
   if (upcomingResult.error) throw upcomingResult.error;
   if (finishedResult.error) throw finishedResult.error;
 
+  const live = [
+    ...(inProgressResult.data ?? []),
+    ...(startedResult.data ?? []),
+  ] as ArenaMatch[];
+  live.sort((a, b) => new Date(b.debut).getTime() - new Date(a.debut).getTime());
+
   return {
-    upcoming: (upcomingResult.data ?? []) as ArenaMatch[],
+    upcoming: [...live, ...((upcomingResult.data ?? []) as ArenaMatch[])],
     finished: (finishedResult.data ?? []) as ArenaMatch[],
   };
 }
@@ -46,7 +68,7 @@ export async function loadMatchCenter(matchId: string): Promise<MatchCenterData>
   if (matchError) throw matchError;
   const typedMatch = match as ArenaMatch;
 
-  const projectionPromise = typedMatch.statut === 'termine'
+  const projectionPromise = typedMatch.statut === 'termine' || typedMatch.statut === 'annule'
     ? Promise.resolve({ data: null, error: null })
     : supabase.rpc('clutch_projection_match_frags', { p_match_id: matchId });
 

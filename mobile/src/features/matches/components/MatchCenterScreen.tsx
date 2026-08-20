@@ -16,7 +16,7 @@ import { colors, radius, spacing } from '@/src/theme';
 
 import { loadMatchCenter, submitRankedPrediction } from '../api';
 import type { MatchCenterData, ProjectionChoice } from '../types';
-import { gameLabel } from '../utils';
+import { gameLabel, matchPhase, predictionIsOpen } from '../utils';
 
 export default function MatchCenterScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
@@ -51,9 +51,8 @@ export default function MatchCenterScreen() {
   const match = data?.match ?? null;
   const projection = data?.projection ?? null;
   const prediction = data?.prediction ?? null;
-  const open = Boolean(
-    match && match.statut === 'a_venir' && new Date(match.debut).getTime() > Date.now(),
-  );
+  const phase = match ? matchPhase(match) : null;
+  const open = Boolean(match && predictionIsOpen(match));
 
   const choiceA = useMemo(
     () => projection?.choix?.find((choice) => choice.cle === 'a') ?? null,
@@ -149,7 +148,7 @@ export default function MatchCenterScreen() {
                 <View style={styles.boPill}><Text style={styles.boText}>BO{match.format}</Text></View>
               </View>
 
-              <Text style={styles.dateText}>{formatMatchDate(match.debut, match.statut)}</Text>
+              <Text style={[styles.dateText, phase === 'live' && styles.dateLive]}>{formatMatchDate(match)}</Text>
 
               <View style={styles.duel}>
                 <HeroTeam
@@ -160,8 +159,8 @@ export default function MatchCenterScreen() {
                   winner={match.statut === 'termine' && Number(match.score_a) > Number(match.score_b)}
                 />
                 <View style={styles.duelCenter}>
-                  <Text style={styles.vsLabel}>{match.statut === 'termine' ? 'FINAL' : 'VERSUS'}</Text>
-                  <Text style={styles.vs}>{match.statut === 'termine' ? '—' : 'VS'}</Text>
+                  <Text style={styles.vsLabel}>{phase === 'finished' ? 'FINAL' : phase === 'cancelled' ? 'ANNULÉ' : phase === 'live' ? 'LIVE' : 'VERSUS'}</Text>
+                  <Text style={styles.vs}>{phase === 'finished' || phase === 'cancelled' ? '—' : 'VS'}</Text>
                   <Text style={styles.kickoff}>{formatTime(match.debut)}</Text>
                 </View>
                 <HeroTeam
@@ -173,7 +172,7 @@ export default function MatchCenterScreen() {
                 />
               </View>
 
-              {choiceA && choiceB && match.statut !== 'termine' ? (
+              {choiceA && choiceB && phase !== 'finished' && phase !== 'cancelled' ? (
                 <ProbabilityBar a={choiceA} b={choiceB} tagA={match.tag_a} tagB={match.tag_b} />
               ) : null}
             </View>
@@ -279,6 +278,9 @@ function PredictionZone({
   if (match.statut === 'termine') {
     return <ClosedState eyebrow="VERDICT" title="Le match est terminé." copy="Le résultat est figé. Ton historique conserve le delta Frags associé." />;
   }
+  if (match.statut === 'annule') {
+    return <ClosedState eyebrow="MATCH ANNULÉ" title="Cette affiche ne sera pas jouée." copy="Le pronostic éventuel est annulé sans modifier ton rating." />;
+  }
   if (!open) {
     return <ClosedState eyebrow="PRONOSTICS FERMÉS" title="Le match a commencé." copy="Après le coup d’envoi, aucun nouveau pronostic classé n’est accepté." />;
   }
@@ -339,6 +341,7 @@ function LockedPrediction({ data }: { data: MatchCenterData }) {
   const team = prediction.choix === 'a' ? match.equipe_a : match.equipe_b;
   const tag = prediction.choix === 'a' ? match.tag_a : match.tag_b;
   const settled = prediction.statut === 'gagne' || prediction.statut === 'perdu';
+  const cancelled = prediction.statut === 'annule';
 
   return (
     <View style={styles.lockedCard}>
@@ -365,7 +368,9 @@ function LockedPrediction({ data }: { data: MatchCenterData }) {
             ? `+${Math.abs(Number(prediction.delta_frags ?? 0))} FRAGS`
             : prediction.statut === 'perdu'
               ? `−${Math.abs(Number(prediction.delta_frags ?? 0))} FRAGS`
-              : 'EN ATTENTE DU RÉSULTAT'}
+              : cancelled
+                ? 'PRONOSTIC ANNULÉ'
+                : 'EN ATTENTE DU RÉSULTAT'}
         </Text>
       </View>
     </View>
@@ -442,9 +447,12 @@ function LoadingCard() {
   );
 }
 
-function formatMatchDate(value: string, status: string) {
-  if (status === 'termine') return 'MATCH TERMINÉ';
-  const date = new Date(value);
+function formatMatchDate(match: MatchCenterData['match']) {
+  const phase = matchPhase(match);
+  if (phase === 'finished') return 'MATCH TERMINÉ';
+  if (phase === 'cancelled') return 'MATCH ANNULÉ';
+  if (phase === 'live') return 'LIVE · PRONOSTICS FERMÉS';
+  const date = new Date(match.debut);
   return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
 }
 
@@ -470,6 +478,7 @@ const styles = StyleSheet.create({
   boPill: { paddingHorizontal: 9, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: colors.surfaceElevated },
   boText: { color: colors.textMuted, fontSize: 8, fontWeight: '900' },
   dateText: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 1.1 },
+  dateLive: { color: '#56ADFF' },
   duel: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.sm },
   heroTeam: { width: '36%', alignItems: 'center', gap: 7 },
   heroTeamMark: { width: 74, height: 74, borderRadius: 23, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 7 },

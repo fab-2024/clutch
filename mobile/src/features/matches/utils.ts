@@ -10,3 +10,16 @@ export function gameKey(game: string) {
   const label = gameLabel(game);
   return label === 'LoL' || label === 'VALORANT' || label === 'CS2' ? label : 'Autres';
 }
+
+export type MatchPhase = 'upcoming' | 'live' | 'finished' | 'cancelled';
+
+export function matchPhase(match: { statut: string; debut: string }, now = Date.now()): MatchPhase {
+  if (match.statut === 'termine') return 'finished';
+  if (match.statut === 'annule') return 'cancelled';
+  if (match.statut === 'en_cours') return 'live';
+  return new Date(match.debut).getTime() <= now ? 'live' : 'upcoming';
+}
+
+export function predictionIsOpen(match: { statut: string; debut: string }, now = Date.now()) {
+  return match.statut === 'a_venir' && new Date(match.debut).getTime() > now;
+}

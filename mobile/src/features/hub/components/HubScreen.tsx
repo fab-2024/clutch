@@ -76,7 +76,7 @@ export default function HomeScreen() {
 }
 
 function MatchHero({ match }: { match: NonNullable<HubData['nextMatch']> }) {
-  const live = new Date(match.debut).getTime() <= Date.now();
+  const live = match.statut === 'en_cours' || new Date(match.debut).getTime() <= Date.now();
   return (
     <Pressable onPress={() => router.push('/(tabs)/matches')} style={({ pressed }) => [styles.matchCard, pressed && styles.pressed]}>
       <View style={styles.blueField} />

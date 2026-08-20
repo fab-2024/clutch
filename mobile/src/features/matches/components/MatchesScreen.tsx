@@ -11,11 +11,12 @@ import {
 
 import { ClutchHeader } from '@/src/components/layout/ClutchHeader';
 import { Screen } from '@/src/components/layout/Screen';
+import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, radius, spacing } from '@/src/theme';
 
 import { loadArenaMatches } from '../api';
 import type { ArenaMatch } from '../types';
-import { gameKey, gameLabel } from '../utils';
+import { gameKey, gameLabel, matchPhase } from '../utils';
 
 type StatusFilter = 'upcoming' | 'finished';
 type GameFilter = 'Tous' | 'LoL' | 'VALORANT' | 'CS2';
@@ -23,6 +24,7 @@ type GameFilter = 'Tous' | 'LoL' | 'VALORANT' | 'CS2';
 const GAME_FILTERS: GameFilter[] = ['Tous', 'LoL', 'VALORANT', 'CS2'];
 
 export default function MatchesScreen() {
+  const { profile } = useAuth();
   const [upcoming, setUpcoming] = useState<ArenaMatch[]>([]);
   const [finished, setFinished] = useState<ArenaMatch[]>([]);
   const [status, setStatus] = useState<StatusFilter>('upcoming');
@@ -72,6 +74,17 @@ export default function MatchesScreen() {
           <Text style={styles.eyebrow}>MATCH ARENA</Text>
           <Text style={styles.heroTitle}>CHOISIS{`\n`}TON CAMP.</Text>
           <Text style={styles.subtitle}>Un choix, un risque lisible, puis le match décide de ton rating.</Text>
+          {profile?.est_admin ? (
+            <Pressable
+              accessibilityLabel="Administrer les matchs"
+              accessibilityRole="button"
+              onPress={() => router.push('/admin/matches' as never)}
+              style={({ pressed }) => [styles.adminEntry, pressed && styles.pressed]}
+            >
+              <View><Text style={styles.adminEntryLabel}>ADMIN MATCHS</Text><Text style={styles.adminEntryCopy}>Calendrier · live · résultats</Text></View>
+              <Text style={styles.adminEntryArrow}>→</Text>
+            </Pressable>
+          ) : null}
         </View>
 
         <View style={styles.filterPanel}>
@@ -142,7 +155,7 @@ export default function MatchesScreen() {
 }
 
 function ArenaHero({ match, finished }: { match: ArenaMatch; finished: boolean }) {
-  const live = !finished && new Date(match.debut).getTime() <= Date.now();
+  const live = matchPhase(match) === 'live';
   return (
     <Pressable onPress={() => openMatch(match.id)} style={({ pressed }) => [styles.arenaCard, pressed && styles.pressed]}>
       <View style={styles.blueField} />
@@ -210,11 +223,13 @@ function GroupedMatches({ matches }: { matches: ArenaMatch[] }) {
 }
 
 function MatchRow({ match }: { match: ArenaMatch }) {
-  const finished = match.statut === 'termine';
+  const phase = matchPhase(match);
+  const finished = phase === 'finished';
+  const live = phase === 'live';
   return (
     <Pressable onPress={() => openMatch(match.id)} style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}>
       <View style={styles.rowWhen}>
-        <Text style={styles.rowTime}>{finished ? 'FINAL' : formatTime(match.debut)}</Text>
+        <Text style={[styles.rowTime, live && styles.rowTimeLive]}>{finished ? 'FINAL' : live ? 'LIVE' : formatTime(match.debut)}</Text>
         <Text style={styles.rowGame}>{gameLabel(match.jeu)}</Text>
       </View>
       <View style={styles.rowMain}>
@@ -247,7 +262,7 @@ function openMatch(id: string) {
 function groupMatches(matches: ArenaMatch[]) {
   const groups: { label: string; matches: ArenaMatch[] }[] = [];
   for (const match of matches) {
-    const label = temporalLabel(match.debut, match.statut === 'termine');
+    const label = temporalLabel(match);
     const existing = groups.find((group) => group.label === label);
     if (existing) existing.matches.push(match);
     else groups.push({ label, matches: [match] });
@@ -255,9 +270,11 @@ function groupMatches(matches: ArenaMatch[]) {
   return groups;
 }
 
-function temporalLabel(value: string, finished: boolean) {
-  const date = new Date(value);
-  if (finished) return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
+function temporalLabel(match: ArenaMatch) {
+  const date = new Date(match.debut);
+  const phase = matchPhase(match);
+  if (phase === 'live') return 'EN DIRECT';
+  if (phase === 'finished') return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
   const now = new Date();
   if (sameDay(date, now)) return "AUJOURD'HUI";
   const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
@@ -285,6 +302,10 @@ const styles = StyleSheet.create({
   eyebrow: { color: colors.volt, fontSize: 11, fontWeight: '900', letterSpacing: 3.1, marginBottom: 10 },
   heroTitle: { color: '#F4F6F7', fontSize: 57, lineHeight: 48, fontWeight: '900', letterSpacing: -4.1 },
   subtitle: { maxWidth: 385, marginTop: 14, color: '#8994A1', fontSize: 15, lineHeight: 23 },
+  adminEntry: { minHeight: 62, marginTop: 16, paddingHorizontal: 15, borderRadius: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#11170E', borderWidth: 1, borderColor: '#414D1E' },
+  adminEntryLabel: { color: colors.volt, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 },
+  adminEntryCopy: { marginTop: 4, color: colors.textMuted, fontSize: 10, fontWeight: '700' },
+  adminEntryArrow: { color: colors.volt, fontSize: 18, fontWeight: '900' },
   filterPanel: { marginHorizontal: spacing.md, padding: 9, borderRadius: 17, backgroundColor: '#080C10', borderWidth: 1, borderColor: '#232A32', gap: 8 },
   gameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
   gameFilter: { flex: 1, minHeight: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
@@ -347,6 +368,7 @@ const styles = StyleSheet.create({
   matchRow: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: '#182029' },
   rowWhen: { width: 55 },
   rowTime: { color: colors.text, fontSize: 11, fontWeight: '900' },
+  rowTimeLive: { color: '#56ADFF' },
   rowGame: { marginTop: 3, color: colors.textMuted, fontSize: 8, fontWeight: '800' },
   rowMain: { flex: 1, minWidth: 0 },
   rowEvent: { color: colors.textMuted, fontSize: 8, fontWeight: '700' },

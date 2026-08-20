@@ -10,6 +10,8 @@ declare
   v_authenticated_functions constant text[] := array[
     'public.classement_communautes()',
     'public.clutch_chercher_joueurs(text)',
+    'public.clutch_admin_demarrer_match_v1(text)',
+    'public.clutch_admin_reporter_match_v1(text,timestamp with time zone)',
     'public.clutch_classement_frags(text)',
     'public.clutch_communaute_dashboard_v4()',
     'public.clutch_definir_jeux_suivis(text[])',
@@ -158,6 +160,33 @@ begin
 
   if v_missing is not null then
     raise exception 'security_invoker is missing on mobile views: %', v_missing;
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    join pg_namespace n on n.oid = t.relnamespace
+    where n.nspname = 'public'
+      and t.relname = 'matchs'
+      and c.conname = 'matchs_resultat_termine_coherent'
+      and c.convalidated
+  ) then
+    raise exception 'Validated match result constraint is missing';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_trigger tg
+    join pg_class t on t.oid = tg.tgrelid
+    join pg_namespace n on n.oid = t.relnamespace
+    where n.nspname = 'public'
+      and t.relname = 'matchs'
+      and tg.tgname = 'clutch_guard_match_lifecycle_v1'
+      and tg.tgenabled <> 'D'
+      and not tg.tgisinternal
+  ) then
+    raise exception 'Match lifecycle trigger is missing or disabled';
   end if;
 
   raise notice 'p0_mobile_contracts_ok';

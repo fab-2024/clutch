@@ -6,6 +6,8 @@ declare
   v_function text;
   v_bad text;
   v_anon_denied constant text[] := array[
+    'public.clutch_admin_demarrer_match_v1(text)',
+    'public.clutch_admin_reporter_match_v1(text,timestamp with time zone)',
     'public.clutch_boutique()',
     'public.clutch_est_colistier(uuid)',
     'public.creer_profil_a_inscription()',

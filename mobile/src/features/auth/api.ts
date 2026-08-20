@@ -37,13 +37,14 @@ export function subscribeToAuthStateChange(listener: (session: Session | null) =
 export async function loadClutchProfile(userId: string): Promise<ClutchProfile> {
   const { data, error } = await supabase
     .from('profils')
-    .select('id,pseudo,email,equipe_favorite_id,jeux_suivis')
+    .select('id,pseudo,email,est_admin,equipe_favorite_id,jeux_suivis')
     .eq('id', userId)
     .single();
 
   if (error) throw error;
   return {
     ...(data as Omit<ClutchProfile, 'jeux_suivis'> & { jeux_suivis?: string[] | null }),
+    est_admin: Boolean(data.est_admin),
     jeux_suivis: Array.isArray(data.jeux_suivis) ? data.jeux_suivis : [],
   };
 }

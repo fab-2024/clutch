@@ -4,6 +4,7 @@ export type ClutchProfile = {
   id: string;
   pseudo: string;
   email: string | null;
+  est_admin: boolean;
   equipe_favorite_id: string | null;
   jeux_suivis: string[];
 };

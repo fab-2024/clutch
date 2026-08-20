@@ -9,7 +9,7 @@ export type ArenaMatch = {
   tag_b: string;
   evenement: string;
   format: number;
-  statut: string;
+  statut: 'a_venir' | 'en_cours' | 'termine' | 'annule';
   score_a: number | null;
   score_b: number | null;
 };
