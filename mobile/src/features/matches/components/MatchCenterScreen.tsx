@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -25,6 +26,7 @@ export default function MatchCenterScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [webConfirmationOpen, setWebConfirmationOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async (refresh = false) => {
@@ -66,29 +68,40 @@ export default function MatchCenterScreen() {
   async function confirmPrediction() {
     if (!match || !selected || !selectedChoice || submitting) return;
     const team = selected === 'a' ? match.equipe_a : match.equipe_b;
+    const confirmation = `${team}\n+${Math.abs(selectedChoice.gain)} Frags si correct · −${Math.abs(selectedChoice.perte)} si faux.`;
+
+    if (Platform.OS === 'web') {
+      setWebConfirmationOpen(true);
+      return;
+    }
 
     Alert.alert(
       'Verrouiller ce pronostic ?',
-      `${team}\n+${Math.abs(selectedChoice.gain)} Frags si correct · −${Math.abs(selectedChoice.perte)} si faux.`,
+      confirmation,
       [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Verrouiller',
-          onPress: async () => {
-            setSubmitting(true);
-            try {
-              await submitRankedPrediction(match.id, selected);
-              setSelected(null);
-              await load();
-            } catch (caught) {
-              Alert.alert('Pronostic impossible', caught instanceof Error ? caught.message : 'Réessaie dans un instant.');
-            } finally {
-              setSubmitting(false);
-            }
-          },
+          onPress: () => void lockPrediction(match.id, selected),
         },
       ],
     );
+  }
+
+  async function lockPrediction(targetMatchId: string, choice: 'a' | 'b') {
+    setWebConfirmationOpen(false);
+    setSubmitting(true);
+    try {
+      await submitRankedPrediction(targetMatchId, choice);
+      setSelected(null);
+      await load();
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : 'Réessaie dans un instant.';
+      if (Platform.OS === 'web') globalThis.alert(`Pronostic impossible\n\n${message}`);
+      else Alert.alert('Pronostic impossible', message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function returnToArena() {
@@ -172,7 +185,10 @@ export default function MatchCenterScreen() {
                 data={data!}
                 open={open}
                 selected={selected}
-                onSelect={setSelected}
+                onSelect={(choice) => {
+                  setSelected(choice);
+                  setWebConfirmationOpen(false);
+                }}
               />
             )}
 
@@ -198,14 +214,38 @@ export default function MatchCenterScreen() {
                     : 'Rating établi.'} Aucun Frag n’est engagé ni dépensé.
                 </Text>
 
-                <Pressable
-                  disabled={submitting}
-                  onPress={() => void confirmPrediction()}
-                  style={({ pressed }) => [styles.confirmButton, pressed && styles.confirmPressed, submitting && styles.disabled]}
-                >
-                  <Text style={styles.confirmText}>{submitting ? 'VERROUILLAGE…' : 'VERROUILLER MON PRONOSTIC'}</Text>
-                  <Text style={styles.confirmArrow}>→</Text>
-                </Pressable>
+                {Platform.OS === 'web' && webConfirmationOpen && selected ? (
+                  <View style={styles.webConfirmation}>
+                    <Text style={styles.webConfirmationTitle}>CONFIRMER CE PRONOSTIC ?</Text>
+                    <Text style={styles.webConfirmationCopy}>
+                      {selected === 'a' ? match.equipe_a : match.equipe_b} · +{Math.abs(selectedChoice.gain)} si correct · −{Math.abs(selectedChoice.perte)} si faux.
+                    </Text>
+                    <View style={styles.webConfirmationActions}>
+                      <Pressable
+                        onPress={() => setWebConfirmationOpen(false)}
+                        style={({ pressed }) => [styles.webCancelButton, pressed && styles.confirmPressed]}
+                      >
+                        <Text style={styles.webCancelText}>ANNULER</Text>
+                      </Pressable>
+                      <Pressable
+                        disabled={submitting}
+                        onPress={() => void lockPrediction(match.id, selected)}
+                        style={({ pressed }) => [styles.webLockButton, pressed && styles.confirmPressed, submitting && styles.disabled]}
+                      >
+                        <Text style={styles.webLockText}>{submitting ? 'VERROUILLAGE…' : 'VERROUILLER'}</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : (
+                  <Pressable
+                    disabled={submitting}
+                    onPress={() => void confirmPrediction()}
+                    style={({ pressed }) => [styles.confirmButton, pressed && styles.confirmPressed, submitting && styles.disabled]}
+                  >
+                    <Text style={styles.confirmText}>{submitting ? 'VERROUILLAGE…' : 'VERROUILLER MON PRONOSTIC'}</Text>
+                    <Text style={styles.confirmArrow}>→</Text>
+                  </Pressable>
+                )}
               </View>
             ) : null}
 
@@ -486,6 +526,14 @@ const styles = StyleSheet.create({
   confirmPressed: { opacity: .85 },
   confirmText: { color: '#080B0F', fontSize: 10, fontWeight: '900', letterSpacing: .8 },
   confirmArrow: { color: '#080B0F', fontSize: 19, fontWeight: '900' },
+  webConfirmation: { padding: spacing.md, borderRadius: radius.md, backgroundColor: '#0A0E0A', borderWidth: 1, borderColor: '#4A5B23', gap: spacing.sm },
+  webConfirmationTitle: { color: colors.text, fontSize: 11, fontWeight: '900', letterSpacing: .7 },
+  webConfirmationCopy: { color: colors.textMuted, fontSize: 10, lineHeight: 16 },
+  webConfirmationActions: { flexDirection: 'row', gap: spacing.sm },
+  webCancelButton: { flex: 1, minHeight: 42, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+  webCancelText: { color: colors.textMuted, fontSize: 9, fontWeight: '900', letterSpacing: .7 },
+  webLockButton: { flex: 1, minHeight: 42, borderRadius: radius.sm, backgroundColor: colors.volt, alignItems: 'center', justifyContent: 'center' },
+  webLockText: { color: '#080B0F', fontSize: 9, fontWeight: '900', letterSpacing: .7 },
   disabled: { opacity: .5 },
   lockedCard: { padding: spacing.lg, borderRadius: radius.lg, backgroundColor: '#101510', borderWidth: 1, borderColor: '#3A4722', gap: spacing.md },
   lockedHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },

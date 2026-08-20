@@ -89,7 +89,7 @@ export default function ProfileScreen() {
           <Pressable onPress={() => router.push('/(tabs)/social/faction')} style={({ pressed }) => [styles.factionCard, pressed && styles.pressed]}>
             <View style={[styles.factionGlow, { backgroundColor: teamColor }]} />
             <View style={[styles.teamMark, { borderColor: teamColor }]}><Text style={[styles.teamMarkText, { color: teamColor }]}>{data.favoriteTeam.tag}</Text></View>
-            <View style={styles.factionCopy}><Text style={styles.factionEyebrow}>RELIQUE · FORME {roman(data.favoriteTeam.relique_niveau)}</Text><Text style={styles.factionName}>{data.favoriteTeam.nom}</Text><Text style={styles.factionMeta}>{data.favoriteTeam.relique} · {formatNumber(data.favoriteTeam.supporters)} supporters</Text></View>
+            <View style={styles.factionCopy}><Text style={styles.factionEyebrow}>RELIQUE · FORME {roman(data.favoriteTeam.relique_niveau)}</Text><Text style={styles.factionName}>{data.favoriteTeam.nom}</Text><Text style={styles.factionMeta}>{data.favoriteTeam.relique} · {formatNumber(data.favoriteTeam.supporters)} supporter{data.favoriteTeam.supporters > 1 ? 's' : ''}</Text></View>
             <Text style={styles.arrow}>→</Text>
           </Pressable>
         ) : (
