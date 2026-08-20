@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { Screen } from '@/src/components/layout/Screen';
+import { createDuel } from '@/src/features/social/duels/api';
 import { colors, radius, spacing } from '@/src/theme';
 
 import { loadMatchCenter, submitRankedPrediction } from '../api';
@@ -19,15 +20,18 @@ import type { MatchCenterData, ProjectionChoice } from '../types';
 import { gameLabel, matchPhase, predictionIsOpen } from '../utils';
 
 export default function MatchCenterScreen() {
-  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  const params = useLocalSearchParams<{ id?: string | string[]; duel?: string | string[] }>();
   const matchId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const duelToken = Array.isArray(params.duel) ? params.duel[0] : params.duel;
   const [data, setData] = useState<MatchCenterData | null>(null);
   const [selected, setSelected] = useState<'a' | 'b' | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [duelBusy, setDuelBusy] = useState(false);
   const [webConfirmationOpen, setWebConfirmationOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [duelError, setDuelError] = useState<string | null>(null);
 
   const load = useCallback(async (refresh = false) => {
     if (!matchId) return;
@@ -94,6 +98,9 @@ export default function MatchCenterScreen() {
       await submitRankedPrediction(targetMatchId, choice);
       setSelected(null);
       await load();
+      if (duelToken) {
+        router.replace({ pathname: '/duel/[token]', params: { token: duelToken } });
+      }
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'Réessaie dans un instant.';
       if (Platform.OS === 'web') globalThis.alert(`Pronostic impossible\n\n${message}`);
@@ -103,7 +110,22 @@ export default function MatchCenterScreen() {
     }
   }
 
+  async function launchDuel() {
+    if (!match || duelBusy) return;
+    setDuelBusy(true); setDuelError(null);
+    try {
+      const created = await createDuel(match.id);
+      router.push({ pathname: '/duel/[token]', params: { token: created.token } });
+    } catch (caught) {
+      setDuelError(caught instanceof Error ? caught.message : 'Impossible de créer ce duel.');
+    } finally { setDuelBusy(false); }
+  }
+
   function returnToArena() {
+    if (duelToken) {
+      router.replace({ pathname: '/duel/[token]', params: { token: duelToken } });
+      return;
+    }
     router.replace('/(tabs)/matches');
   }
 
@@ -119,7 +141,7 @@ export default function MatchCenterScreen() {
         <View style={styles.topBar}>
           <Pressable onPress={returnToArena} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
             <Text style={styles.backArrow}>←</Text>
-            <Text style={styles.backText}>ARENA</Text>
+            <Text style={styles.backText}>{duelToken ? 'DUEL' : 'ARENA'}</Text>
           </Pressable>
           <Text style={styles.brand}>CLUTCH</Text>
         </View>
@@ -190,6 +212,27 @@ export default function MatchCenterScreen() {
                 }}
               />
             )}
+
+            {prediction && duelToken ? (
+              <View style={styles.duelAction}>
+                <View style={styles.duelActionCopy}>
+                  <Text style={styles.duelActionEyebrow}>INVITATION EN ATTENTE</Text>
+                  <Text style={styles.duelActionTitle}>Ton camp est verrouillé.</Text>
+                  <Text style={styles.duelActionText}>Retourne au face-à-face pour rejoindre le rival.</Text>
+                </View>
+                <Pressable accessibilityRole="button" onPress={returnToArena} style={({ pressed }) => [styles.duelActionButton, pressed && styles.confirmPressed]}><Text style={styles.duelActionButtonText}>REJOINDRE LE DUEL →</Text></Pressable>
+              </View>
+            ) : prediction && open && prediction.statut === 'en_cours' ? (
+              <View style={styles.duelAction}>
+                <View style={styles.duelActionCopy}>
+                  <Text style={styles.duelActionEyebrow}>FACE-À-FACE</Text>
+                  <Text style={styles.duelActionTitle}>Quelqu’un assume le camp opposé ?</Text>
+                  <Text style={styles.duelActionText}>Crée une invitation liée à ce pronostic et partage-la à ton rival.</Text>
+                </View>
+                {duelError ? <Text style={styles.duelActionError}>{duelError}</Text> : null}
+                <Pressable accessibilityRole="button" disabled={duelBusy} onPress={() => void launchDuel()} style={({ pressed }) => [styles.duelActionButton, (pressed || duelBusy) && styles.confirmPressed]}><Text style={styles.duelActionButtonText}>{duelBusy ? 'CRÉATION…' : 'DÉFIER UN RIVAL →'}</Text></Pressable>
+              </View>
+            ) : null}
 
             {selectedChoice && !prediction ? (
               <View style={styles.ticket}>
@@ -558,6 +601,14 @@ const styles = StyleSheet.create({
   verdictValue: { flex: 1, textAlign: 'right', color: colors.text, fontSize: 10, fontWeight: '900' },
   verdictWin: { color: colors.success },
   verdictLoss: { color: colors.danger },
+  duelAction: { padding: spacing.lg, borderRadius: radius.lg, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#414D1E', gap: spacing.md },
+  duelActionCopy: { gap: 6 },
+  duelActionEyebrow: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: 1.3 },
+  duelActionTitle: { color: colors.text, fontSize: 19, lineHeight: 22, fontWeight: '900' },
+  duelActionText: { color: colors.textMuted, fontSize: 11, lineHeight: 17 },
+  duelActionError: { color: '#FF9AA3', fontSize: 10, lineHeight: 15 },
+  duelActionButton: { minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.volt },
+  duelActionButtonText: { color: '#080B0F', fontSize: 9, fontWeight: '900', letterSpacing: .8 },
   closedCard: { padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, gap: 8 },
   closedEyebrow: { color: colors.textMuted, fontSize: 9, fontWeight: '900', letterSpacing: 1.4 },
   closedTitle: { color: colors.text, fontSize: 20, lineHeight: 24, fontWeight: '900' },

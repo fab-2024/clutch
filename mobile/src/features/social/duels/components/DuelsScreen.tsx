@@ -1,16 +1,17 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { colors, radius, spacing } from '@/src/theme';
 
 import { loadDuels } from '../api';
-import type { DuelRow } from '../types';
+import type { DuelRow, DuelStatus } from '../types';
 
 export default function DuelsScreen() {
   const [duels, setDuels] = useState<DuelRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async (refresh = false) => {
@@ -23,9 +24,23 @@ export default function DuelsScreen() {
 
   useEffect(() => { void load(); }, [load]);
 
-  const active = duels.filter((duel) => duel.statut === 'en_attente' || duel.statut === 'accepte');
+  const active = duels.filter((duel) => {
+    const status = effectiveStatus(duel);
+    return status === 'en_attente' || status === 'accepte';
+  });
   const finished = duels.filter((duel) => duel.statut === 'termine');
   const featured = active[0] ?? duels[0] ?? null;
+
+  function openDuel(token: string) {
+    router.push({ pathname: '/duel/[token]', params: { token } });
+  }
+
+  function openInvitation() {
+    const token = extractToken(inviteCode);
+    if (!token) return;
+    setInviteCode('');
+    openDuel(token);
+  }
 
   return (
     <ScrollView
@@ -42,12 +57,28 @@ export default function DuelsScreen() {
 
       {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text></View> : null}
 
-      {loading ? <View style={styles.skeleton} /> : featured ? <DuelHero duel={featured} /> : <EmptyDuelHero />}
+      {loading ? <View style={styles.skeleton} /> : featured ? <DuelHero duel={featured} onOpen={() => openDuel(featured.token)} /> : <EmptyDuelHero />}
 
-      <Pressable onPress={() => router.push('/(tabs)/matches')} style={({ pressed }) => [styles.newDuel, pressed && styles.pressed]}>
+      <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/matches')} style={({ pressed }) => [styles.newDuel, pressed && styles.pressed]}>
         <View><Text style={styles.newDuelEyebrow}>NOUVEAU DUEL</Text><Text style={styles.newDuelTitle}>Choisis ton match.</Text><Text style={styles.newDuelCopy}>Pose ton call puis invite un rival sur le camp opposé.</Text></View>
         <View style={styles.newDuelArrow}><Text style={styles.newDuelArrowText}>→</Text></View>
       </Pressable>
+
+      <View style={styles.inviteCard}>
+        <View style={styles.inviteCopy}><Text style={styles.inviteEyebrow}>REJOINDRE UN RIVAL</Text><Text style={styles.inviteTitle}>Tu as reçu un code ?</Text></View>
+        <TextInput
+          accessibilityLabel="Code ou lien d’invitation au duel"
+          autoCapitalize="none"
+          autoCorrect={false}
+          onChangeText={setInviteCode}
+          onSubmitEditing={openInvitation}
+          placeholder="Colle le code ou le lien"
+          placeholderTextColor="#596570"
+          value={inviteCode}
+          style={styles.inviteInput}
+        />
+        <Pressable accessibilityRole="button" disabled={!extractToken(inviteCode)} onPress={openInvitation} style={({ pressed }) => [styles.inviteButton, !extractToken(inviteCode) && styles.disabled, pressed && styles.pressed]}><Text style={styles.inviteButtonText}>OUVRIR L’INVITATION</Text></Pressable>
+      </View>
 
       <View style={styles.stats}>
         <View style={styles.stat}><Text style={styles.statValue}>{active.length}</Text><Text style={styles.statLabel}>ACTIFS</Text></View>
@@ -59,13 +90,13 @@ export default function DuelsScreen() {
 
       <View style={styles.section}>
         <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>TES RIVALITÉS</Text><Text style={styles.sectionMeta}>{duels.length}</Text></View>
-        {loading ? <View style={styles.listSkeleton} /> : duels.length ? duels.map((duel) => <DuelCard key={duel.token} duel={duel} />) : <View style={styles.emptyList}><Text style={styles.emptyListText}>Ton premier duel apparaîtra ici après un challenge.</Text></View>}
+        {loading ? <View style={styles.listSkeleton} /> : duels.length ? duels.map((duel) => <DuelCard key={duel.token} duel={duel} onOpen={() => openDuel(duel.token)} />) : <View style={styles.emptyList}><Text style={styles.emptyListText}>Ton premier duel apparaîtra ici après un challenge.</Text></View>}
       </View>
     </ScrollView>
   );
 }
 
-function DuelHero({ duel }: { duel: DuelRow }) {
+function DuelHero({ duel, onOpen }: { duel: DuelRow; onOpen: () => void }) {
   const creator = duel.moi_role === 'createur';
   const rival = creator ? (duel.accepteur_pseudo || 'EN ATTENTE') : (duel.createur_pseudo || 'RIVAL');
   const mine = creator ? 'TOI' : (duel.accepteur_pseudo || 'TOI');
@@ -73,9 +104,9 @@ function DuelHero({ duel }: { duel: DuelRow }) {
   const myTag = myChoice === 'a' ? (duel.tag_a || duel.equipe_a || 'A') : myChoice === 'b' ? (duel.tag_b || duel.equipe_b || 'B') : '—';
   const rivalTag = myChoice === 'a' ? (duel.tag_b || duel.equipe_b || 'B') : myChoice === 'b' ? (duel.tag_a || duel.equipe_a || 'A') : '?';
   return (
-    <View style={styles.hero}>
+    <Pressable accessibilityRole="button" onPress={onOpen} style={({ pressed }) => [styles.hero, pressed && styles.pressed]}>
       <View style={styles.heroBlue} /><View style={styles.heroRed} />
-      <View style={styles.heroTop}><Text style={styles.heroMeta}>{gameLabel(duel.jeu)} · {duel.evenement || 'MATCH'}</Text><Status status={duel.statut} /></View>
+      <View style={styles.heroTop}><Text style={styles.heroMeta}>{gameLabel(duel.jeu)} · {duel.evenement || 'MATCH'}</Text><Status status={effectiveStatus(duel)} /></View>
       <Text style={styles.heroKicker}>{duel.statut === 'termine' ? 'VERDICT FINAL' : 'FACE-À-FACE'}</Text>
       <View style={styles.faceoff}>
         <Player side="left" pseudo={mine} tag={myTag} />
@@ -83,7 +114,7 @@ function DuelHero({ duel }: { duel: DuelRow }) {
         <Player side="right" pseudo={rival} tag={rivalTag} />
       </View>
       <Text style={styles.heroDate}>{formatDate(duel.debut)}</Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -107,31 +138,33 @@ function EmptyDuelHero() {
   );
 }
 
-function DuelCard({ duel }: { duel: DuelRow }) {
+function DuelCard({ duel, onOpen }: { duel: DuelRow; onOpen: () => void }) {
   const creator = duel.moi_role === 'createur';
   const rival = creator ? (duel.accepteur_pseudo || 'En attente') : (duel.createur_pseudo || 'Rival');
   const myChoice = creator ? duel.createur_choix : duel.accepteur_choix;
   const myTag = myChoice === 'a' ? (duel.tag_a || duel.equipe_a || 'A') : myChoice === 'b' ? (duel.tag_b || duel.equipe_b || 'B') : '—';
   return (
-    <View style={styles.card}>
+    <Pressable accessibilityRole="button" onPress={onOpen} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
       <View style={styles.cardMain}>
         <Text style={styles.cardEyebrow}>{gameLabel(duel.jeu)} · {duel.evenement || 'MATCH'}</Text>
         <Text style={styles.cardTitle}>{myTag} <Text style={styles.cardVs}>VS</Text> {rival}</Text>
         <Text style={styles.cardDate}>{formatDate(duel.debut)}</Text>
       </View>
-      <Status status={duel.statut} />
-    </View>
+      <Status status={effectiveStatus(duel)} />
+    </Pressable>
   );
 }
 
-function Status({ status }: { status: string }) {
-  const label = status === 'termine' ? 'TERMINÉ' : status === 'accepte' ? 'VERROUILLÉ' : status === 'annule' ? 'ANNULÉ' : 'EN ATTENTE';
+function Status({ status }: { status: DuelStatus }) {
+  const label = status === 'termine' ? 'TERMINÉ' : status === 'accepte' ? 'VERROUILLÉ' : status === 'annule' ? 'ANNULÉ' : status === 'expire' ? 'EXPIRÉ' : 'EN ATTENTE';
   const active = status === 'en_attente' || status === 'accepte';
   return <View style={[styles.status, active && styles.statusActive]}><View style={[styles.statusDot, active && styles.statusDotActive]} /><Text style={[styles.statusText, active && styles.statusTextActive]}>{label}</Text></View>;
 }
 
 function gameLabel(value?: string) { const game = String(value || '').toLowerCase(); if (game.includes('lol')) return 'LOL'; if (game.includes('valorant')) return 'VAL'; if (game.includes('cs')) return 'CS2'; return 'ESPORT'; }
 function formatDate(value?: string) { if (!value) return 'Date à venir'; const date = new Date(value); if (!Number.isFinite(date.getTime())) return 'Date à venir'; return date.toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+function effectiveStatus(duel: DuelRow): DuelStatus { return duel.statut === 'en_attente' && duel.debut && new Date(duel.debut).getTime() <= Date.now() ? 'expire' : duel.statut; }
+function extractToken(value: string) { const cleaned = value.trim().split(/[?#]/)[0].replace(/\/+$/, ''); const token = cleaned.split('/').pop()?.toLowerCase() || ''; return /^[a-f0-9]{12,64}$/.test(token) ? token : ''; }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
@@ -145,9 +178,10 @@ const styles = StyleSheet.create({
   vsBlock: { width: 54, alignItems: 'center' }, vs: { color: colors.text, fontSize: 39, lineHeight: 42, fontWeight: '900', letterSpacing: -2 }, vsLine: { width: 26, height: 3, marginTop: 6, backgroundColor: colors.volt }, heroDate: { zIndex: 2, marginTop: 28, color: colors.textMuted, fontSize: 9, textAlign: 'center' },
   status: { minHeight: 28, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 9, borderRadius: 999, backgroundColor: '#11161C', borderWidth: 1, borderColor: '#242D35' }, statusActive: { backgroundColor: '#171E0E', borderColor: '#3D491D' }, statusDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#596570' }, statusDotActive: { backgroundColor: colors.volt }, statusText: { color: colors.textMuted, fontSize: 6, fontWeight: '900', letterSpacing: 0.5 }, statusTextActive: { color: colors.volt },
   newDuel: { minHeight: 105, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 17, borderRadius: 25, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#414D1E' }, newDuelEyebrow: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: 1.1 }, newDuelTitle: { marginTop: 4, color: colors.text, fontSize: 18, fontWeight: '900' }, newDuelCopy: { marginTop: 4, maxWidth: 275, color: colors.textMuted, fontSize: 10, lineHeight: 15 }, newDuelArrow: { marginLeft: 'auto', width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, newDuelArrowText: { color: '#080A0C', fontSize: 17, fontWeight: '900' },
+  inviteCard: { padding: 16, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, gap: 10 }, inviteCopy: { gap: 4 }, inviteEyebrow: { color: colors.textMuted, fontSize: 7, fontWeight: '900', letterSpacing: 1.1 }, inviteTitle: { color: colors.text, fontSize: 17, fontWeight: '900' }, inviteInput: { minHeight: 48, paddingHorizontal: 13, borderRadius: 14, backgroundColor: '#070B0F', borderWidth: 1, borderColor: '#263039', color: colors.text, fontSize: 12, fontWeight: '700' }, inviteButton: { minHeight: 43, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: colors.volt }, inviteButtonText: { color: '#080A0C', fontSize: 8, fontWeight: '900', letterSpacing: .8 },
   stats: { minHeight: 82, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 16, borderRadius: 23, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, stat: { minWidth: 70, alignItems: 'center' }, statValue: { color: colors.text, fontSize: 23, fontWeight: '900' }, statLabel: { marginTop: 3, color: colors.textMuted, fontSize: 7, fontWeight: '900', letterSpacing: 0.9 }, divider: { width: 1, height: 36, backgroundColor: colors.border },
   section: { gap: 9 }, sectionHeading: { flexDirection: 'row', justifyContent: 'space-between' }, sectionLabel: { color: colors.textMuted, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 }, sectionMeta: { color: colors.textMuted, fontSize: 9, fontWeight: '900' },
   card: { minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 13, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, cardMain: { flex: 1, minWidth: 0 }, cardEyebrow: { color: colors.textMuted, fontSize: 7, fontWeight: '900', letterSpacing: 0.8 }, cardTitle: { marginTop: 4, color: colors.text, fontSize: 14, fontWeight: '900' }, cardVs: { color: colors.volt }, cardDate: { marginTop: 4, color: colors.textMuted, fontSize: 8 },
   emptyHero: { minHeight: 250, justifyContent: 'center', padding: 24, borderRadius: 30, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: colors.border, gap: 10 }, emptyEyebrow: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: 1.2 }, emptyTitle: { maxWidth: 320, color: colors.text, fontSize: 29, lineHeight: 30, fontWeight: '900', letterSpacing: -1.2 }, emptyText: { maxWidth: 330, color: colors.textMuted, fontSize: 12, lineHeight: 18 },
-  emptyList: { padding: 18, borderRadius: 20, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, emptyListText: { color: colors.textMuted, fontSize: 11 }, listSkeleton: { height: 170, borderRadius: 24, backgroundColor: '#10161D' }, pressed: { opacity: 0.75 },
+  emptyList: { padding: 18, borderRadius: 20, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, emptyListText: { color: colors.textMuted, fontSize: 11 }, listSkeleton: { height: 170, borderRadius: 24, backgroundColor: '#10161D' }, disabled: { opacity: 0.45 }, pressed: { opacity: 0.75 },
 });
