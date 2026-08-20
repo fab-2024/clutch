@@ -47,6 +47,7 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="match/[id]" />
         <Stack.Screen name="player/[pseudo]" />
+        <Stack.Screen name="settings/profile" />
         <Stack.Screen name="admin/matches" />
         <Stack.Screen name="onboarding" />
       </Stack.Protected>

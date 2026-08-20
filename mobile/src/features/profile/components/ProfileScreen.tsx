@@ -34,7 +34,7 @@ export default function ProfileScreen({ profilePseudo, publicView = false }: Pro
     try { setData(await loadProfileData(pseudo)); }
     catch (caught) { setError(caught instanceof Error ? caught.message : 'Impossible de charger le profil.'); }
     finally { setLoading(false); setRefreshing(false); }
-  }, [pseudo]);
+  }, [profile?.equipe_favorite_id, profile?.profil_public, pseudo]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -71,6 +71,14 @@ export default function ProfileScreen({ profilePseudo, publicView = false }: Pro
         <ProfileHeader publicProfile={data?.publicProfile !== false} publicView={publicView} />
 
         {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text><Pressable onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
+
+        {!publicView ? (
+          <Pressable accessibilityLabel="Modifier les paramètres du profil" accessibilityRole="button" onPress={() => router.push('/settings/profile')} style={({ pressed }) => [styles.settingsEntry, pressed && styles.pressed]}>
+            <View style={styles.settingsMark}><Text style={styles.settingsGlyph}>⚙</Text></View>
+            <View style={styles.settingsCopy}><Text style={styles.settingsLabel}>PARAMÈTRES</Text><Text style={styles.settingsTitle}>Jeux, faction et visibilité</Text></View>
+            <Text style={styles.settingsArrow}>→</Text>
+          </Pressable>
+        ) : null}
 
         <View style={[styles.hero, { borderColor: `${teamColor}66` }]}>
           <View style={[styles.heroGlow, { backgroundColor: teamColor }]} />
@@ -197,6 +205,7 @@ const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: 430, alignSelf: 'center', paddingBottom: 128, gap: 22 },
   header: { minHeight: 78, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 }, logoBox: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, logoGlyph: { color: '#06090C', fontSize: 25, lineHeight: 28, fontWeight: '900', letterSpacing: -2 }, wordmarkRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 }, wordmark: { color: colors.text, fontSize: 17, fontWeight: '900', letterSpacing: 3.1 }, dot: { width: 5, height: 5, marginBottom: 3, borderRadius: 3, backgroundColor: colors.volt }, back: { minHeight: 38, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { color: colors.text, fontSize: 8, fontWeight: '900', letterSpacing: 0.9 }, visibility: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { color: colors.text, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 },
   error: { marginHorizontal: spacing.md, padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', flexDirection: 'row', gap: 10, justifyContent: 'space-between' }, errorText: { flex: 1, color: '#FF9AA2', fontSize: 11 }, retry: { color: colors.volt, fontSize: 8, fontWeight: '900' },
+  settingsEntry: { minHeight: 76, marginHorizontal: spacing.md, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 21, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, settingsMark: { width: 43, height: 43, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E', borderWidth: 1, borderColor: '#3A461D' }, settingsGlyph: { color: colors.volt, fontSize: 16, fontWeight: '900' }, settingsCopy: { flex: 1 }, settingsLabel: { color: colors.volt, fontSize: 7, fontWeight: '900', letterSpacing: 1 }, settingsTitle: { marginTop: 4, color: colors.text, fontSize: 13, fontWeight: '900' }, settingsArrow: { color: colors.volt, fontSize: 17, fontWeight: '900' },
   hero: { position: 'relative', overflow: 'hidden', marginHorizontal: spacing.md, minHeight: 370, padding: 20, borderRadius: 31, backgroundColor: '#0A0F14', borderWidth: 1, gap: 18 }, heroGlow: { position: 'absolute', right: -120, top: -80, width: 310, height: 310, borderRadius: 155, opacity: 0.15 }, watermark: { position: 'absolute', right: -14, top: 80, fontSize: 86, lineHeight: 90, fontWeight: '900', opacity: 0.09, letterSpacing: -5 }, heroEyebrow: { zIndex: 2, color: colors.volt, fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
   identityRow: { zIndex: 2, flexDirection: 'row', alignItems: 'center', gap: 15 }, emblemOuter: { width: 94, height: 94, borderRadius: 30, alignItems: 'center', justifyContent: 'center', backgroundColor: '#121812', borderWidth: 1, borderColor: '#48541E' }, emblem: { width: 68, height: 68, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, emblemCut: { position: 'absolute', right: -2, width: 27, height: 38, borderTopLeftRadius: 20, borderBottomLeftRadius: 20, backgroundColor: '#121812' }, emblemLevel: { marginLeft: -6, color: '#080A0C', fontSize: 22, fontWeight: '900' }, identityCopy: { flex: 1, minWidth: 0 }, levelLine: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 0.9 }, pseudo: { marginTop: 4, color: colors.text, fontSize: 34, lineHeight: 36, fontWeight: '900', letterSpacing: -1.5 }, profileTitle: { marginTop: 4, color: colors.volt, fontSize: 11, fontWeight: '900' },
   badgeStrip: { zIndex: 2, minHeight: 64, flexDirection: 'row', gap: 10, alignItems: 'center' }, badgeToken: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0D1319', borderWidth: 1.2 }, badgeGlyph: { fontSize: 19, fontWeight: '900' }, emptyBadge: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0C1116', borderWidth: 1, borderColor: '#25303A', borderStyle: 'dashed' }, emptyBadgeText: { color: '#596570', fontSize: 18, fontWeight: '700' },

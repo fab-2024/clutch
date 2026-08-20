@@ -14,21 +14,9 @@ import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, radius, spacing } from '@/src/theme';
 
 import { loadTeamOrganizations, saveOnboarding } from '../api';
+import { GAMES } from '../constants';
 import type { GameId, TeamOrganization } from '../types';
 import { teamIdForOrganization } from '../utils';
-
-const GAMES: Array<{
-  id: GameId;
-  short: string;
-  name: string;
-  code: string;
-  accent: string;
-  copy: string;
-}> = [
-  { id: 'lol', short: 'LOL', name: 'League of Legends', code: 'L', accent: '#D8B35A', copy: 'LEC · Worlds · rivalités européennes' },
-  { id: 'valorant', short: 'VAL', name: 'VALORANT', code: 'V', accent: '#FF5B70', copy: 'VCT · Masters · Champions' },
-  { id: 'cs2', short: 'CS2', name: 'Counter-Strike 2', code: 'C', accent: '#55A7FF', copy: 'Majors · BLAST · ESL' },
-];
 
 type Step = 0 | 1 | 2;
 

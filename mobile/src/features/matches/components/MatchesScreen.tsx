@@ -19,16 +19,16 @@ import type { ArenaMatch } from '../types';
 import { gameKey, gameLabel, matchPhase } from '../utils';
 
 type StatusFilter = 'upcoming' | 'finished';
-type GameFilter = 'Tous' | 'LoL' | 'VALORANT' | 'CS2';
+type GameFilter = 'Pour toi' | 'LoL' | 'VALORANT' | 'CS2';
 
-const GAME_FILTERS: GameFilter[] = ['Tous', 'LoL', 'VALORANT', 'CS2'];
+const GAME_FILTERS: GameFilter[] = ['Pour toi', 'LoL', 'VALORANT', 'CS2'];
 
 export default function MatchesScreen() {
   const { profile } = useAuth();
   const [upcoming, setUpcoming] = useState<ArenaMatch[]>([]);
   const [finished, setFinished] = useState<ArenaMatch[]>([]);
   const [status, setStatus] = useState<StatusFilter>('upcoming');
-  const [game, setGame] = useState<GameFilter>('Tous');
+  const [game, setGame] = useState<GameFilter>('Pour toi');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,13 +52,17 @@ export default function MatchesScreen() {
 
   const source = status === 'upcoming' ? upcoming : finished;
   const filtered = useMemo(
-    () => source.filter((match) => game === 'Tous' || gameKey(match.jeu) === game),
-    [source, game],
+    () => source.filter((match) => game === 'Pour toi'
+      ? followedGame(profile?.jeux_suivis ?? [], match.jeu)
+      : gameKey(match.jeu) === game),
+    [game, profile?.jeux_suivis, source],
   );
   const featured = filtered[0] ?? null;
   const rest = featured ? filtered.slice(1) : [];
   const fallbackFinished = status === 'upcoming' && filtered.length === 0
-    ? finished.filter((match) => game === 'Tous' || gameKey(match.jeu) === game).slice(0, 4)
+    ? finished.filter((match) => game === 'Pour toi'
+      ? followedGame(profile?.jeux_suivis ?? [], match.jeu)
+      : gameKey(match.jeu) === game).slice(0, 4)
     : [];
 
   return (
@@ -152,6 +156,15 @@ export default function MatchesScreen() {
       </ScrollView>
     </Screen>
   );
+}
+
+function followedGame(followed: string[], game: string) {
+  if (!followed.length) return true;
+  const key = gameKey(game);
+  if (key === 'LoL') return followed.includes('lol');
+  if (key === 'VALORANT') return followed.includes('valorant');
+  if (key === 'CS2') return followed.includes('cs2');
+  return false;
 }
 
 function ArenaHero({ match, finished }: { match: ArenaMatch; finished: boolean }) {

@@ -1,4 +1,5 @@
 import { supabase } from '@/src/lib/supabase';
+import type { GameId } from '@/src/features/onboarding/types';
 
 import { evaluateBadges, resolveBadgeSelection } from './badges';
 import { calculateProfileXp, levelFromXp } from './progression';
@@ -52,6 +53,27 @@ export async function loadProfileData(pseudo: string): Promise<ProfileData> {
     arsenalBadges,
     level: levelFromXp(xp),
   };
+}
+
+export async function saveProfileSettings(
+  userId: string,
+  games: GameId[],
+  teamId: string,
+  publicProfile: boolean,
+) {
+  const { data, error } = await supabase
+    .from('profils')
+    .update({
+      jeux_suivis: games,
+      equipe_favorite_id: teamId,
+      profil_public: publicProfile,
+    })
+    .eq('id', userId)
+    .select('jeux_suivis,equipe_favorite_id,profil_public')
+    .single();
+
+  if (error) throw error;
+  return data;
 }
 
 function normalizeRanking(value?: Partial<ProfileRanking> | null): ProfileRanking {

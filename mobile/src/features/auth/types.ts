@@ -7,6 +7,7 @@ export type ClutchProfile = {
   est_admin: boolean;
   equipe_favorite_id: string | null;
   jeux_suivis: string[];
+  profil_public: boolean;
 };
 
 export type AuthStatus = 'loading' | 'signed_out' | 'ready' | 'profile_missing' | 'error';

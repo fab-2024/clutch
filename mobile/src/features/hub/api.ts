@@ -13,7 +13,7 @@ type CommunityRow = {
   moi?: boolean;
 };
 
-export async function loadHubData(userId: string): Promise<HubData> {
+export async function loadHubData(userId: string, followedGames: string[] = []): Promise<HubData> {
   const { data: season, error: seasonError } = await supabase
     .from('v_saisons')
     .select('id,nom,statut')
@@ -25,11 +25,13 @@ export async function loadHubData(userId: string): Promise<HubData> {
 
   const now = new Date().toISOString();
   const matchFields = 'id,debut,jeu,equipe_a,tag_a,equipe_b,tag_b,evenement,format,statut';
+  const games = followedGames.length ? followedGames : ['lol', 'cs2', 'valorant'];
   const [inProgressResult, startedResult, upcomingResult] = await Promise.all([
     supabase
       .from('v_matchs')
       .select(matchFields)
       .eq('statut', 'en_cours')
+      .in('jeu', games)
       .order('debut', { ascending: false })
       .limit(1)
       .maybeSingle(),
@@ -37,6 +39,7 @@ export async function loadHubData(userId: string): Promise<HubData> {
       .from('v_matchs')
       .select(matchFields)
       .eq('statut', 'a_venir')
+      .in('jeu', games)
       .lte('debut', now)
       .order('debut', { ascending: false })
       .limit(1)
@@ -45,6 +48,7 @@ export async function loadHubData(userId: string): Promise<HubData> {
       .from('v_matchs')
       .select(matchFields)
       .eq('statut', 'a_venir')
+      .in('jeu', games)
       .gt('debut', now)
       .order('debut', { ascending: true })
       .limit(1)

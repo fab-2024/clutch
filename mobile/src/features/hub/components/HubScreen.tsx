@@ -22,7 +22,7 @@ const EMPTY_HUB: HubData = {
 };
 
 export default function HomeScreen() {
-  const { session } = useAuth();
+  const { profile, session } = useAuth();
   const [hub, setHub] = useState<HubData>(EMPTY_HUB);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -32,10 +32,10 @@ export default function HomeScreen() {
     if (!session?.user.id) return;
     refresh ? setRefreshing(true) : setLoading(true);
     setError(null);
-    try { setHub(await loadHubData(session.user.id)); }
+    try { setHub(await loadHubData(session.user.id, profile?.jeux_suivis ?? [])); }
     catch (caught) { setError(caught instanceof Error ? caught.message : 'Impossible de charger le Hub.'); }
     finally { setLoading(false); setRefreshing(false); }
-  }, [session?.user.id]);
+  }, [profile?.equipe_favorite_id, profile?.jeux_suivis, session?.user.id]);
 
   useEffect(() => { void load(); }, [load]);
 
