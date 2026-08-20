@@ -13,7 +13,9 @@ create table if not exists profils (
   pseudo    text not null,
   email     text,
   est_admin boolean not null default false,
-  cree_le   timestamptz not null default now()
+  cree_le   timestamptz not null default now(),
+  est_fondateur boolean not null default false,
+  titre_profil text
 );
 
 -- ---------------------------------------------------------------- Saisons

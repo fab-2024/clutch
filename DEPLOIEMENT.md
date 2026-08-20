@@ -13,7 +13,11 @@ Trois étapes :
 
 ## Avant de commencer
 
-Tu n'as **rien à installer**. Il te faut seulement :
+Le déploiement web reste simple, mais la base est désormais gérée comme du
+code : il faut installer le CLI Supabase et un moteur compatible Docker pour
+la reconstruire et la vérifier localement avant un déploiement distant.
+
+Il te faut également :
 
 - une adresse e-mail
 - un compte GitHub (gratuit) — c'est là que vit le code
@@ -36,34 +40,29 @@ Tu n'as **rien à installer**. Il te faut seulement :
    - *Region* : `West EU (Ireland)` ou `Central EU (Frankfurt)` — le plus proche de tes joueurs
 3. **Create new project**, puis patiente 2 minutes le temps de la mise en route
 
-### 1.2 Créer les tables
+### 1.2 Créer le schéma
 
-Dans le menu de gauche : **SQL Editor** → **New query**.
+Ne copie plus les fichiers SQL numérotés dans le SQL Editor : ils constituent
+désormais une archive historique. Le schéma exécutable et son ordre vivent dans
+`supabase/migrations/`.
 
-Tu vas exécuter neuf fichiers, **dans cet ordre**. Pour chacun : ouvre le
-fichier, copie tout son contenu, colle-le dans l'éditeur, clique sur **Run**.
-Attends le message vert avant de passer au suivant.
+Pour un environnement local ou de test, installe le CLI Supabase et un moteur
+compatible Docker, puis lance depuis la racine du dépôt :
 
-| Ordre | Fichier | Ce qu'il fait |
-|---|---|---|
-| 1 | `supabase/01_schema.sql` | Crée les tables : profils, équipes, matchs, paris, ligues |
-| 2 | `supabase/02_fonctions.sql` | Installe le moteur de cotes et la logique des paris |
-| 3 | `supabase/03_securite.sql` | Verrouille tout : personne ne peut se créditer des Frags |
-| 4 | `supabase/04_donnees.sql` | Remplit les équipes et un calendrier de départ |
-| 5 | `supabase/05_xs.sql` | Ajoute la prime en série, l'équipe préférée, le call de la saison et la rivalité |
-| 6 | `supabase/06_analyse.sql` | Ajoute le prono par défaut, le défi de ligue et le profil d'analyste |
-| 7 | `supabase/07_correctif_rls.sql` | **Indispensable** : corrige une récursion dans les règles de sécurité qui rendait toute la base illisible |
-| 8 | `supabase/08_palier2.sql` | Ajoute la note à vie, les classements enrichis et le récapitulatif des badges |
-| 9 | `supabase/09_admin_competition.sql` | Permet de créer tournois, équipes et matchs depuis l'admin, et d'annuler un match en remboursant |
-| 10 | `supabase/10_communautes.sql` | Ajoute le classement des communautés (l'écran « Communauté » et sa jauge d'élixir) |
+```bash
+supabase start
+supabase db reset
+supabase db lint --local --schema public --level warning --fail-on error
+```
 
-> `05_xs.sql` et `06_analyse.sql` sont **rejouables** : les relancer ne casse
-> rien. Ce sont les fichiers à réexécuter après chaque mise à jour du dépôt qui
-> touche à ces mécaniques.
+La commande `db reset` reconstruit le schéma depuis une base vide et charge les
+données de démonstration de `supabase/seed.sql`. Elle ne doit jamais être lancée
+avec `--linked` contre la production.
 
-> Si une erreur rouge apparaît, ne passe pas au fichier suivant. Copie le message
-> d'erreur et cherche à quelle ligne il correspond — le plus souvent, c'est qu'un
-> fichier précédent n'a pas été exécuté en entier.
+Pour raccorder le projet distant historique, suis la procédure d'adoption unique
+documentée dans [`supabase/README.md`](supabase/README.md). La baseline y est
+marquée comme déjà appliquée avant le dry-run ; elle n'est jamais exécutée sur
+une base qui contient déjà les tables Clutch.
 
 ### 1.3 Activer la connexion par e-mail
 

@@ -1,0 +1,6 @@
+-- Production migration history marker.
+--
+-- The final public schema for this historical version is included in
+-- 20260820075558_legacy_public_baseline.sql. This marker intentionally
+-- contains no executable SQL; keep its version and name immutable.
+-- Production-only badge rules remain intentionally outside the public repository.
