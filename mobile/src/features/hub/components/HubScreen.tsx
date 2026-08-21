@@ -169,6 +169,11 @@ export function HubExperience({
 function MatchHero({ match, prediction }: { match: HubMatch; prediction: HubPrediction | null }) {
   const live = isLive(match);
   const predictionTag = prediction?.choice === 'a' ? match.tag_a : prediction?.choice === 'b' ? match.tag_b : null;
+  const actionHint = predictionTag
+    ? 'Le verdict fera évoluer ton rating Frags.'
+    : live
+      ? 'Le score et ton éventuel call restent accessibles.'
+      : 'Le gain et le risque exacts s’affichent avant validation.';
 
   return (
     <Pressable
@@ -210,6 +215,7 @@ function MatchHero({ match, prediction }: { match: HubMatch; prediction: HubPred
 
       <View style={[styles.matchAction, predictionTag && styles.matchActionLocked]}>
         <Text style={[styles.matchActionText, predictionTag && styles.matchActionTextLocked]}>{predictionTag ? `TON CALL · ${predictionTag}` : matchActionLabel(match, prediction)}</Text>
+        <Text style={[styles.matchActionHint, predictionTag && styles.matchActionHintLocked]}>{actionHint}</Text>
       </View>
     </Pressable>
   );
@@ -231,7 +237,21 @@ function CorePanel({ hub, loading }: { hub: HubData; loading: boolean }) {
   const accuracy = settled ? `${Math.round((wins / settled) * 100)} %` : '—';
   const remaining = hub.frags?.placements_restants ?? 0;
   const provisional = Boolean(hub.frags?.provisoire);
-  const status = !hub.seasonId ? 'EN ATTENTE' : provisional ? `${remaining} PLACEMENT${remaining > 1 ? 'S' : ''}` : 'RATING CLASSÉ';
+  const placementTarget = Math.max(1, settled + remaining);
+  const placementProgress = !hub.seasonId ? 0 : provisional ? settled / placementTarget : 1;
+  const status = !hub.seasonId ? 'EN ATTENTE' : provisional ? 'RANG EN PLACEMENT' : 'RATING CLASSÉ';
+  const guideTitle = loading
+    ? 'SYNCHRONISATION DU RATING'
+    : !hub.seasonId
+      ? 'PROCHAINE SAISON EN ATTENTE'
+      : provisional
+        ? `${remaining} CALL${remaining > 1 ? 'S' : ''} AVANT TON RANG`
+        : 'TON RANG EST ACTIF';
+  const guideCopy = !hub.seasonId
+    ? 'La prochaine saison activera tes calls classés.'
+    : provisional
+      ? `Encore ${remaining} verdict${remaining > 1 ? 's' : ''} classé${remaining > 1 ? 's' : ''} pour révéler ton rang de saison.`
+      : 'Chaque verdict fait désormais monter ou descendre ce rating.';
 
   return (
     <Pressable accessibilityLabel="Ouvrir mon rating" accessibilityRole="button" onPress={() => router.push('/(tabs)/profile')} style={({ pressed }) => [styles.coreCard, pressed && styles.pressed]}>
@@ -239,10 +259,25 @@ function CorePanel({ hub, loading }: { hub: HubData; loading: boolean }) {
       <View style={styles.coreTop}>
         <View style={styles.coreVisual}><ClutchCore compact size={130} /></View>
         <View style={styles.coreCopy}>
-          <Text style={styles.coreKicker}>CLUTCH CORE · {hub.seasonName?.toUpperCase() || 'INTERSAISON'}</Text>
-          <Text style={styles.coreRating}>{loading ? '—' : formatNumber(hub.frags?.frags ?? 0)}</Text>
+          <Text style={styles.coreKicker}>TON RATING FRAGS · {hub.seasonName?.toUpperCase() || 'INTERSAISON'}</Text>
+          <View style={styles.coreRatingRow}>
+            <Text style={styles.coreRating}>{loading ? '—' : formatNumber(hub.frags?.frags ?? 0)}</Text>
+            <Text style={styles.coreRatingUnit}>FRAGS</Text>
+          </View>
           <View style={styles.coreStatus}><View style={styles.coreStatusDot} /><Text style={styles.coreStatusText}>{status}</Text></View>
           <Text style={styles.corePeak}>PIC · {loading ? '—' : formatNumber(hub.frags?.pic_frags ?? 0)} FRAGS</Text>
+        </View>
+      </View>
+      <View style={styles.coreGuide}>
+        <View style={styles.coreGuideTop}>
+          <View style={styles.coreGuideCopy}>
+            <Text style={styles.coreGuideTitle}>{guideTitle}</Text>
+            <Text style={styles.coreGuideText}>{loading ? 'Lecture de ta saison en cours…' : guideCopy}</Text>
+          </View>
+          {provisional && !loading ? <Text style={styles.coreGuideCount}>{settled}/{placementTarget}</Text> : null}
+        </View>
+        <View style={styles.coreGuideTrack}>
+          <View style={[styles.coreGuideFill, { width: `${Math.round(placementProgress * 100)}%` }]} />
         </View>
       </View>
       <View style={styles.coreMetrics}>
@@ -292,12 +327,19 @@ function SectionHead({ kicker, title }: { kicker: string; title: string }) {
 function DailyMission({ calls, loading }: { calls: number; loading: boolean }) {
   const completed = Math.min(calls, DAILY_CALL_GOAL);
   const progress = loading ? 0 : Math.round((completed / DAILY_CALL_GOAL) * 100);
+  const remaining = Math.max(0, DAILY_CALL_GOAL - completed);
+  const title = remaining === 0
+    ? 'RYTHME VALIDÉ.'
+    : remaining === 1
+      ? 'PLUS QU’UN CALL.'
+      : `${remaining} CALLS À POSER.`;
   return (
     <Pressable accessibilityLabel={`Rythme du jour, ${completed} appels sur ${DAILY_CALL_GOAL}`} accessibilityRole="button" onPress={() => router.push('/(tabs)/matches')} style={({ pressed }) => [styles.missionCard, pressed && styles.pressed]}>
       <View style={styles.missionIcon}><Text style={styles.missionIconText}>◎</Text></View>
       <View style={styles.missionCopy}>
-        <View style={styles.missionTop}><Text style={styles.missionKicker}>RYTHME DU JOUR</Text><Text style={styles.missionCount}>{loading ? '—' : `${completed} / ${DAILY_CALL_GOAL}`}</Text></View>
-        <Text style={styles.missionTitle}>POSE {DAILY_CALL_GOAL} CALLS.</Text>
+        <View style={styles.missionTop}><Text style={styles.missionKicker}>MISSION UNIQUE · AUJOURD’HUI</Text><Text style={styles.missionCount}>{loading ? '—' : `${completed} / ${DAILY_CALL_GOAL}`}</Text></View>
+        <Text style={styles.missionTitle}>{loading ? 'LECTURE DU RYTHME…' : title}</Text>
+        <Text style={styles.missionHint}>{remaining === 0 ? 'Ton historique du jour est lancé.' : 'Chaque call nourrit ton historique et ton rating.'}</Text>
         <View style={styles.missionTrack}><View style={[styles.missionProgress, { width: `${progress}%` }]} /></View>
       </View>
       <Text style={styles.missionArrow}>→</Text>
@@ -391,20 +433,32 @@ const styles = StyleSheet.create({
   bo: { color: colors.textSubtle, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.1 },
   vs: { marginTop: 7, color: colors.text, fontFamily: fonts.display, fontSize: 36, lineHeight: 37, letterSpacing: -1 },
   vsLine: { marginTop: 4, width: 24, height: 3, borderRadius: 2, backgroundColor: colors.volt },
-  matchAction: { zIndex: 2, width: 222, minHeight: 47, marginTop: 19, paddingHorizontal: 16, alignSelf: 'center', borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt, boxShadow: '0 8px 18px rgba(224,255,59,.18)' },
+  matchAction: { zIndex: 2, width: 258, minHeight: 54, marginTop: 17, paddingHorizontal: 14, paddingVertical: 8, alignSelf: 'center', borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt, boxShadow: '0 8px 18px rgba(224,255,59,.18)' },
   matchActionLocked: { backgroundColor: 'rgba(8,12,15,.88)', borderWidth: 1, borderColor: '#51601F' },
   matchActionText: { color: '#07090B', fontFamily: fonts.bold, fontSize: 9, letterSpacing: .7 },
   matchActionTextLocked: { color: colors.text },
-  coreCard: { position: 'relative', minHeight: 230, marginHorizontal: spacing.md, padding: 14, overflow: 'hidden', borderRadius: 25, borderWidth: 1, borderColor: '#303B27' },
+  matchActionHint: { marginTop: 3, color: '#3D4715', fontFamily: fonts.medium, fontSize: 8, textAlign: 'center' },
+  matchActionHintLocked: { color: colors.textMuted },
+  coreCard: { position: 'relative', minHeight: 292, marginHorizontal: spacing.md, padding: 14, overflow: 'hidden', borderRadius: 25, borderWidth: 1, borderColor: '#303B27' },
   coreTop: { minHeight: 136, flexDirection: 'row', alignItems: 'center' },
   coreVisual: { width: 138, alignItems: 'center', justifyContent: 'center' },
   coreCopy: { flex: 1, minWidth: 0, paddingLeft: 5 },
   coreKicker: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .8 },
-  coreRating: { marginTop: 7, color: colors.text, fontFamily: fonts.display, fontSize: 45, lineHeight: 45, letterSpacing: -.4 },
+  coreRatingRow: { marginTop: 7, flexDirection: 'row', alignItems: 'flex-end', gap: 5 },
+  coreRating: { color: colors.text, fontFamily: fonts.display, fontSize: 45, lineHeight: 45, letterSpacing: -.4 },
+  coreRatingUnit: { marginBottom: 5, color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .7 },
   coreStatus: { alignSelf: 'flex-start', minHeight: 24, marginTop: 7, paddingHorizontal: 8, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#151B0F', borderWidth: 1, borderColor: '#3F4A20' },
   coreStatusDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.volt },
   coreStatusText: { color: '#D4E09E', fontFamily: fonts.bold, fontSize: 8, letterSpacing: .6 },
   corePeak: { marginTop: 8, color: colors.textMuted, fontFamily: fonts.medium, fontSize: 8, letterSpacing: .4 },
+  coreGuide: { minHeight: 65, marginTop: 4, padding: 10, borderRadius: 15, backgroundColor: '#0A0F0C', borderWidth: 1, borderColor: '#2E3822' },
+  coreGuideTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  coreGuideCopy: { flex: 1, minWidth: 0 },
+  coreGuideTitle: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .7 },
+  coreGuideText: { marginTop: 4, color: colors.textMuted, fontFamily: fonts.body, fontSize: 9, lineHeight: 13 },
+  coreGuideCount: { color: colors.text, fontFamily: fonts.display, fontSize: 18 },
+  coreGuideTrack: { height: 4, marginTop: 8, overflow: 'hidden', borderRadius: 2, backgroundColor: '#20281D' },
+  coreGuideFill: { height: '100%', borderRadius: 2, backgroundColor: colors.volt },
   coreMetrics: { minHeight: 62, marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#212A24', flexDirection: 'row', alignItems: 'center' },
   coreMetric: { flex: 1, alignItems: 'center' },
   coreMetricValue: { color: colors.text, fontFamily: fonts.display, fontSize: 21 },
@@ -428,15 +482,16 @@ const styles = StyleSheet.create({
   upNextFooter: { zIndex: 1, marginTop: 'auto', paddingTop: 9, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.09)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   upNextFormat: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .7 },
   upNextArrow: { color: colors.volt, fontFamily: fonts.display, fontSize: 17 },
-  missionCard: { minHeight: 100, marginHorizontal: spacing.md, padding: 14, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#0B1014', borderWidth: 1, borderColor: '#303A22' },
+  missionCard: { minHeight: 112, marginHorizontal: spacing.md, padding: 14, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#0B1014', borderWidth: 1, borderColor: '#303A22' },
   missionIcon: { width: 51, height: 51, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E', borderWidth: 1, borderColor: '#46531E' },
   missionIconText: { color: colors.volt, fontFamily: fonts.display, fontSize: 29, lineHeight: 31 },
   missionCopy: { flex: 1, minWidth: 0 },
   missionTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   missionKicker: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .8 },
   missionCount: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8 },
-  missionTitle: { marginTop: 5, color: colors.text, fontFamily: fonts.display, fontSize: 21, lineHeight: 22 },
-  missionTrack: { height: 5, marginTop: 10, overflow: 'hidden', borderRadius: 3, backgroundColor: '#20272B' },
+  missionTitle: { marginTop: 5, color: colors.text, fontFamily: fonts.display, fontSize: 20, lineHeight: 21 },
+  missionHint: { marginTop: 3, color: colors.textMuted, fontFamily: fonts.body, fontSize: 8, lineHeight: 12 },
+  missionTrack: { height: 5, marginTop: 8, overflow: 'hidden', borderRadius: 3, backgroundColor: '#20272B' },
   missionProgress: { height: '100%', borderRadius: 3, backgroundColor: colors.volt, boxShadow: '0 0 7px rgba(224,255,59,.35)' },
   missionArrow: { color: colors.volt, fontFamily: fonts.display, fontSize: 19 },
   emptyHero: { position: 'relative', minHeight: 310, marginHorizontal: spacing.md, padding: 20, overflow: 'hidden', justifyContent: 'flex-end', borderRadius: 28, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#2B343E' },

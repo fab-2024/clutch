@@ -11,15 +11,18 @@ import { teamHue } from '@/src/utils/teams';
 import { loadProfileData } from '../api';
 import type { ProfileBadge, ProfileData, RecentPrediction } from '../types';
 
+const PLACEMENT_GOAL = 5;
+
 type ProfileScreenProps = {
+  previewData?: ProfileData;
   profilePseudo?: string;
   publicView?: boolean;
 };
 
-export default function ProfileScreen({ profilePseudo, publicView = false }: ProfileScreenProps) {
+export default function ProfileScreen({ previewData, profilePseudo, publicView = false }: ProfileScreenProps) {
   const { profile, session } = useAuth();
-  const [data, setData] = useState<ProfileData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<ProfileData | null>(previewData ?? null);
+  const [loading, setLoading] = useState(!previewData);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
@@ -29,12 +32,18 @@ export default function ProfileScreen({ profilePseudo, publicView = false }: Pro
   const pseudo = profilePseudo?.trim() || ownPseudo;
 
   const load = useCallback(async (refresh = false) => {
+    if (previewData) {
+      setData(previewData);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     refresh ? setRefreshing(true) : setLoading(true);
     setError(null);
     try { setData(await loadProfileData(pseudo)); }
     catch (caught) { setError(caught instanceof Error ? caught.message : 'Impossible de charger le profil.'); }
     finally { setLoading(false); setRefreshing(false); }
-  }, [profile?.equipe_favorite_id, profile?.profil_public, pseudo]);
+  }, [previewData, profile?.equipe_favorite_id, profile?.profil_public, pseudo]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -47,6 +56,10 @@ export default function ProfileScreen({ profilePseudo, publicView = false }: Pro
   const hue = data?.favoriteTeam ? teamHue(data.favoriteTeam.tag, data.favoriteTeam.nom) : 76;
   const teamColor = `hsl(${hue}, 68%, 55%)`;
   const obtained = data?.badges.filter((badge) => badge.obtained) ?? [];
+  const settledCalls = data?.ranking.pronostics_regles ?? 0;
+  const unranked = !loading && settledCalls === 0;
+  const provisional = !loading && settledCalls > 0 && settledCalls < PLACEMENT_GOAL;
+  const placementsRemaining = Math.max(0, PLACEMENT_GOAL - settledCalls);
 
   async function leaveSession() {
     if (signingOut) return;
@@ -96,7 +109,12 @@ export default function ProfileScreen({ profilePseudo, publicView = false }: Pro
 
           <View style={styles.badgeStrip}>
             {(loading ? [] : data?.pinnedBadges ?? []).map((badge) => <BadgeToken key={badge.key} badge={badge} />)}
-            {!loading && Array.from({ length: Math.max(0, 4 - (data?.pinnedBadges.length ?? 0)) }).map((_, index) => <View key={`empty-${index}`} style={styles.emptyBadge}><Text style={styles.emptyBadgeText}>+</Text></View>)}
+            {!loading && Array.from({ length: Math.max(0, 4 - (data?.pinnedBadges.length ?? 0)) }).map((_, index) => (
+              <View accessibilityLabel="Emplacement de badge vide" key={`empty-${index}`} style={styles.emptyBadge}>
+                <Text style={styles.emptyBadgeText}>+</Text>
+                <Text style={styles.emptyBadgeLabel}>BADGE</Text>
+              </View>
+            ))}
           </View>
 
           <View style={styles.xpBlock}>
@@ -106,11 +124,19 @@ export default function ProfileScreen({ profilePseudo, publicView = false }: Pro
           </View>
         </View>
 
+        {!loading && (unranked || provisional) ? (
+          <RankingStateCard
+            placementsRemaining={placementsRemaining}
+            publicView={publicView}
+            unranked={unranked}
+          />
+        ) : null}
+
         <View style={styles.statsGrid}>
-          <Stat label="RATING" value={loading ? '—' : formatNumber(data?.ranking.frags ?? 0)} detail="FRAGS" featured />
-          <Stat label="RANG" value={loading ? '—' : data?.ranking.rang ? `#${data.ranking.rang}` : '—'} detail="SAISON" />
-          <Stat label="RÉUSSITE" value={loading ? '—' : `${accuracy}%`} detail={`${data?.ranking.pronostics_gagnes ?? 0}/${data?.ranking.pronostics_regles ?? 0}`} />
-          <Stat label="SÉRIE" value={loading ? '—' : `${data?.currentStreak ?? 0}`} detail="VICTOIRES" />
+          <Stat label="RATING" value={loading ? '—' : formatNumber(data?.ranking.frags ?? 0)} detail={unranked ? 'BASE DE DÉPART' : 'FRAGS'} featured />
+          <Stat compact={unranked || provisional} label="RANG" value={loading ? '—' : unranked ? 'NON CLASSÉ' : provisional ? 'PLACEMENT' : data?.ranking.rang ? `#${data.ranking.rang}` : '—'} detail={unranked ? 'FAIS TON 1ER CALL' : provisional ? `${placementsRemaining} RESTANT${placementsRemaining > 1 ? 'S' : ''}` : 'SAISON'} />
+          <Stat label="RÉUSSITE" value={loading ? '—' : unranked ? '—' : `${accuracy}%`} detail={unranked ? 'AUCUN VERDICT' : `${data?.ranking.pronostics_gagnes ?? 0}/${settledCalls}`} />
+          <Stat label="SÉRIE" value={loading ? '—' : unranked ? '—' : `${data?.currentStreak ?? 0}`} detail={unranked ? 'NON COMMENCÉE' : 'VICTOIRES'} />
         </View>
 
         <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>FACTION</Text><Text style={styles.sectionTitle}>TA COULEUR DANS CLUTCH.</Text></View></View>
@@ -178,8 +204,31 @@ function ArsenalCard({ badge }: { badge: ProfileBadge }) {
   return <View style={styles.arsenalCard}><View style={[styles.arsenalMedal, { borderColor: tone }]}><Text style={[styles.arsenalGlyph, { color: tone }]}>{familyGlyph(badge.family)}</Text></View><Text numberOfLines={2} style={styles.arsenalName}>{badge.name}</Text><Text style={[styles.arsenalRarity, { color: tone }]}>{badge.rarity.toUpperCase()}</Text></View>;
 }
 
-function Stat({ label, value, detail, featured = false }: { label: string; value: string; detail: string; featured?: boolean }) {
-  return <View style={[styles.stat, featured && styles.statFeatured]}><Text style={styles.statLabel}>{label}</Text><Text style={[styles.statValue, featured && styles.statValueFeatured]}>{value}</Text><Text style={styles.statDetail}>{detail}</Text></View>;
+function RankingStateCard({ placementsRemaining, publicView, unranked }: { placementsRemaining: number; publicView: boolean; unranked: boolean }) {
+  const title = publicView
+    ? 'RANG EN CONSTRUCTION.'
+    : unranked
+      ? 'FAIS TON PREMIER CALL.'
+      : `ENCORE ${placementsRemaining} VERDICT${placementsRemaining > 1 ? 'S' : ''}.`;
+  const copy = unranked
+    ? 'Cinq verdicts classés révèlent le rang de saison. Le risque exact est toujours visible avant de choisir.'
+    : `${PLACEMENT_GOAL - placementsRemaining}/${PLACEMENT_GOAL} placements terminés. Le rang apparaîtra une fois la série complétée.`;
+
+  return (
+    <View style={styles.rankingState}>
+      <View style={styles.rankingStateStep}><Text style={styles.rankingStateStepValue}>{PLACEMENT_GOAL - placementsRemaining}/{PLACEMENT_GOAL}</Text><Text style={styles.rankingStateStepLabel}>PLACEMENTS</Text></View>
+      <View style={styles.rankingStateCopy}>
+        <Text style={styles.rankingStateEyebrow}>OBJECTIF DE SAISON</Text>
+        <Text style={styles.rankingStateTitle}>{title}</Text>
+        <Text style={styles.rankingStateText}>{copy}</Text>
+        {!publicView ? <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/matches')}><Text style={styles.rankingStateAction}>VOIR LES MATCHS OUVERTS →</Text></Pressable> : null}
+      </View>
+    </View>
+  );
+}
+
+function Stat({ compact = false, label, value, detail, featured = false }: { compact?: boolean; label: string; value: string; detail: string; featured?: boolean }) {
+  return <View style={[styles.stat, featured && styles.statFeatured]}><Text style={styles.statLabel}>{label}</Text><Text style={[styles.statValue, compact && styles.statValueCompact, featured && styles.statValueFeatured]}>{value}</Text><Text style={styles.statDetail}>{detail}</Text></View>;
 }
 
 function VerdictRow({ item }: { item: RecentPrediction }) {
@@ -187,11 +236,11 @@ function VerdictRow({ item }: { item: RecentPrediction }) {
   const choice = item.choix === 'a' ? item.tag_a : item.tag_b;
   const delta = Math.abs(Number(item.delta_frags ?? 0));
   return (
-    <View style={styles.verdictRow}>
+    <Pressable accessibilityLabel={`Ouvrir le verdict ${choice}, ${item.evenement}`} accessibilityRole="button" onPress={() => router.push({ pathname: '/match/[id]', params: { id: item.match_id } })} style={({ pressed }) => [styles.verdictRow, pressed && styles.pressed]}>
       <View style={[styles.verdictMark, won ? styles.verdictMarkWin : styles.verdictMarkLoss]}><Text style={[styles.verdictLetter, won ? styles.verdictWin : styles.verdictLoss]}>{won ? 'W' : 'L'}</Text></View>
       <View style={styles.verdictCopy}><Text style={styles.verdictTitle}>{choice} · {item.evenement}</Text><Text style={styles.verdictMeta}>{gameName(item.jeu)} · {item.tag_a} vs {item.tag_b}</Text></View>
-      <Text style={[styles.delta, won ? styles.verdictWin : styles.verdictLoss]}>{won ? '+' : '−'}{formatNumber(delta)}</Text>
-    </View>
+      <Text style={[styles.delta, won ? styles.verdictWin : styles.verdictLoss]}>{won ? '+' : '−'}{formatNumber(delta)} FRAGS</Text>
+    </Pressable>
   );
 }
 
@@ -208,9 +257,10 @@ const styles = StyleSheet.create({
   settingsEntry: { minHeight: 76, marginHorizontal: spacing.md, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 21, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, settingsMark: { width: 43, height: 43, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E', borderWidth: 1, borderColor: '#3A461D' }, settingsGlyph: { color: colors.volt, fontSize: 16, fontWeight: '900' }, settingsCopy: { flex: 1 }, settingsLabel: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: 1 }, settingsTitle: { marginTop: 4, color: colors.text, fontSize: 13, fontWeight: '900' }, settingsArrow: { color: colors.volt, fontSize: 17, fontWeight: '900' },
   hero: { position: 'relative', overflow: 'hidden', marginHorizontal: spacing.md, minHeight: 370, padding: 20, borderRadius: 31, backgroundColor: '#0A0F14', borderWidth: 1, gap: 18 }, heroGlow: { position: 'absolute', right: -120, top: -80, width: 310, height: 310, borderRadius: 155, opacity: 0.15 }, watermark: { position: 'absolute', right: -14, top: 80, fontSize: 86, lineHeight: 90, fontWeight: '900', opacity: 0.09, letterSpacing: -5 }, heroEyebrow: { zIndex: 2, color: colors.volt, fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
   identityRow: { zIndex: 2, flexDirection: 'row', alignItems: 'center', gap: 15 }, emblemOuter: { width: 94, height: 94, borderRadius: 30, alignItems: 'center', justifyContent: 'center', backgroundColor: '#121812', borderWidth: 1, borderColor: '#48541E' }, emblem: { width: 68, height: 68, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, emblemCut: { position: 'absolute', right: -2, width: 27, height: 38, borderTopLeftRadius: 20, borderBottomLeftRadius: 20, backgroundColor: '#121812' }, emblemLevel: { marginLeft: -6, color: '#080A0C', fontSize: 22, fontWeight: '900' }, identityCopy: { flex: 1, minWidth: 0 }, levelLine: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 0.9 }, pseudo: { marginTop: 4, color: colors.text, fontSize: 34, lineHeight: 36, fontWeight: '900', letterSpacing: -1.5 }, profileTitle: { marginTop: 4, color: colors.volt, fontSize: 11, fontWeight: '900' },
-  badgeStrip: { zIndex: 2, minHeight: 64, flexDirection: 'row', gap: 10, alignItems: 'center' }, badgeToken: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0D1319', borderWidth: 1.2 }, badgeGlyph: { fontSize: 19, fontWeight: '900' }, emptyBadge: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0C1116', borderWidth: 1, borderColor: '#25303A', borderStyle: 'dashed' }, emptyBadgeText: { color: '#596570', fontSize: 18, fontWeight: '700' },
+  badgeStrip: { zIndex: 2, minHeight: 64, flexDirection: 'row', gap: 10, alignItems: 'center' }, badgeToken: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0D1319', borderWidth: 1.2 }, badgeGlyph: { fontSize: 19, fontWeight: '900' }, emptyBadge: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0C1116', borderWidth: 1, borderColor: '#25303A', borderStyle: 'dashed' }, emptyBadgeText: { color: '#66727D', fontSize: 16, lineHeight: 17, fontWeight: '700' }, emptyBadgeLabel: { marginTop: 2, color: '#596570', fontSize: 6, fontWeight: '900', letterSpacing: .55 },
   xpBlock: { zIndex: 2, marginTop: 'auto', padding: 14, borderRadius: 18, backgroundColor: '#080D11', borderWidth: 1, borderColor: '#202A32', gap: 8 }, xpTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, xpLabel: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 }, xpValue: { color: colors.text, fontSize: 12, fontWeight: '900' }, track: { height: 7, borderRadius: 999, overflow: 'hidden', backgroundColor: '#182028' }, trackFill: { height: '100%', borderRadius: 999, backgroundColor: colors.volt }, xpHint: { color: colors.textMuted, fontSize: 8 },
-  statsGrid: { marginHorizontal: spacing.md, flexDirection: 'row', flexWrap: 'wrap', gap: 9 }, stat: { flexBasis: '48.5%', minHeight: 102, padding: 14, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, statFeatured: { backgroundColor: '#11170E', borderColor: '#414D1E' }, statLabel: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 1 }, statValue: { marginTop: 10, color: colors.text, fontSize: 25, fontWeight: '900', letterSpacing: -1 }, statValueFeatured: { color: colors.volt }, statDetail: { marginTop: 'auto', color: colors.textMuted, fontSize: 8, fontWeight: '900' },
+  rankingState: { minHeight: 140, marginHorizontal: spacing.md, padding: 14, borderRadius: 24, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#414D1E' }, rankingStateStep: { width: 76, height: 82, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A0E0A', borderWidth: 1, borderColor: '#4A5822' }, rankingStateStepValue: { color: colors.volt, fontSize: 24, lineHeight: 26, fontWeight: '900' }, rankingStateStepLabel: { marginTop: 4, color: colors.textMuted, fontSize: 7, fontWeight: '900', letterSpacing: .4 }, rankingStateCopy: { flex: 1, minWidth: 0 }, rankingStateEyebrow: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: .9 }, rankingStateTitle: { marginTop: 5, color: colors.text, fontSize: 20, lineHeight: 21, fontWeight: '900' }, rankingStateText: { marginTop: 5, color: colors.textMuted, fontSize: 9, lineHeight: 14 }, rankingStateAction: { marginTop: 8, color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: .45 },
+  statsGrid: { marginHorizontal: spacing.md, flexDirection: 'row', flexWrap: 'wrap', gap: 9 }, stat: { flexBasis: '48.5%', minHeight: 102, padding: 14, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, statFeatured: { backgroundColor: '#11170E', borderColor: '#414D1E' }, statLabel: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 1 }, statValue: { marginTop: 10, color: colors.text, fontSize: 25, fontWeight: '900', letterSpacing: -1 }, statValueCompact: { fontSize: 18, letterSpacing: -.5 }, statValueFeatured: { color: colors.volt }, statDetail: { marginTop: 'auto', color: colors.textMuted, fontSize: 8, fontWeight: '900' },
   sectionHeading: { marginHorizontal: spacing.md, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }, sectionEyebrow: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: 1.3 }, sectionTitle: { marginTop: 4, maxWidth: 290, color: colors.text, fontSize: 24, lineHeight: 25, fontWeight: '900', letterSpacing: -0.9 }, sectionCount: { maxWidth: 105, color: colors.textMuted, fontSize: 8, fontWeight: '900', textAlign: 'right' },
   factionCard: { position: 'relative', overflow: 'hidden', minHeight: 110, marginHorizontal: spacing.md, padding: 15, borderRadius: 25, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, factionGlow: { position: 'absolute', left: -60, width: 180, height: 180, borderRadius: 90, opacity: 0.12 }, teamMark: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#090E12', borderWidth: 1 }, teamMarkText: { fontSize: 13, fontWeight: '900' }, factionCopy: { flex: 1 }, factionEyebrow: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 }, factionName: { marginTop: 4, color: colors.text, fontSize: 17, fontWeight: '900' }, factionMeta: { marginTop: 4, color: colors.textMuted, fontSize: 9 }, arrow: { color: colors.volt, fontSize: 18, fontWeight: '900' },
   arsenalRail: { gap: 10, paddingHorizontal: spacing.md }, arsenalCard: { width: 132, minHeight: 170, padding: 14, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, arsenalMedal: { width: 58, height: 58, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1.2, backgroundColor: '#0D1319' }, arsenalGlyph: { fontSize: 21, fontWeight: '900' }, arsenalName: { marginTop: 17, color: colors.text, fontSize: 13, fontWeight: '900' }, arsenalRarity: { marginTop: 'auto', fontSize: 8, fontWeight: '900', letterSpacing: 0.8 }, arsenalEmpty: { width: 250, minHeight: 150, justifyContent: 'center', padding: 18, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, arsenalEmptyTitle: { color: colors.text, fontSize: 19, fontWeight: '900' }, arsenalEmptyText: { marginTop: 7, color: colors.textMuted, fontSize: 10, lineHeight: 15 },

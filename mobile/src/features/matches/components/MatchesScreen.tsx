@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Image,
@@ -122,17 +122,31 @@ export function MatchesExperience({
   upcoming,
 }: MatchesExperienceProps) {
   const reduceMotion = useReducedMotion();
+  const params = useLocalSearchParams<{ view?: string | string[] }>();
+  const requestedView = Array.isArray(params.view) ? params.view[0] : params.view;
   const [status, setStatus] = useState<StatusFilter>('upcoming');
   const [game, setGame] = useState<GameFilter>('followed');
-  const [callsOnly, setCallsOnly] = useState(false);
+  const [callsOnly, setCallsOnly] = useState(requestedView === 'calls');
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
 
+  useEffect(() => {
+    if (requestedView === 'calls') setCallsOnly(true);
+  }, [requestedView]);
+
   const source = status === 'upcoming' ? upcoming : finished;
+  const scopedMatches = useMemo(
+    () => filterMatches(source, game, followedGames, false, query),
+    [followedGames, game, query, source],
+  );
+  const callCount = useMemo(
+    () => scopedMatches.filter((match) => Boolean(match.prediction)).length,
+    [scopedMatches],
+  );
   const filtered = useMemo(
-    () => filterMatches(source, game, followedGames, callsOnly, query),
-    [callsOnly, followedGames, game, query, source],
+    () => callsOnly ? scopedMatches.filter((match) => Boolean(match.prediction)) : scopedMatches,
+    [callsOnly, scopedMatches],
   );
   const calendarDays = useMemo(() => buildCalendarDays(status, filtered), [filtered, status]);
   const defaultDayKey = useMemo(
@@ -195,6 +209,7 @@ export function MatchesExperience({
 
         <Animated.View entering={entrance(90)}>
           <ArenaFilters
+            callCount={callCount}
             callsOnly={callsOnly}
             game={game}
             isAdmin={isAdmin}
@@ -216,7 +231,8 @@ export function MatchesExperience({
           <MatchSkeleton />
         ) : visibleMatches.length ? (
           <Animated.View entering={entrance(150)} style={styles.matchesSection}>
-            <SectionHead count={visibleMatches.length} date={activeDate} status={status} />
+            {callsOnly ? <CallsRecap matches={filtered} status={status} /> : null}
+            <SectionHead callsOnly={callsOnly} count={visibleMatches.length} date={activeDate} status={status} />
             {liveMatches.length ? (
               <View style={styles.liveStack}>
                 {liveMatches.map((match) => <LiveMatchCard key={match.id} match={match} />)}
@@ -343,6 +359,7 @@ function ScheduleHero({
 }
 
 type ArenaFiltersProps = {
+  callCount: number;
   callsOnly: boolean;
   game: GameFilter;
   isAdmin: boolean;
@@ -352,7 +369,7 @@ type ArenaFiltersProps = {
   status: StatusFilter;
 };
 
-function ArenaFilters({ callsOnly, game, isAdmin, onCallsOnlyChange, onGameChange, onStatusChange, status }: ArenaFiltersProps) {
+function ArenaFilters({ callCount, callsOnly, game, isAdmin, onCallsOnlyChange, onGameChange, onStatusChange, status }: ArenaFiltersProps) {
   return (
     <View style={styles.filterPanel}>
       <View style={styles.gameRow}>
@@ -391,7 +408,10 @@ function ArenaFilters({ callsOnly, game, isAdmin, onCallsOnlyChange, onGameChang
         </View>
         <Pressable accessibilityRole="button" accessibilityState={{ selected: callsOnly }} onPress={() => onCallsOnlyChange(!callsOnly)} style={[styles.callsButton, callsOnly && styles.callsButtonActive]}>
           <View style={[styles.callsDot, callsOnly && styles.callsDotActive]} />
-          <Text style={[styles.callsText, callsOnly && styles.callsTextActive]}>MES CALLS</Text>
+          <View style={styles.callsButtonCopy}>
+            <Text style={[styles.callsText, callsOnly && styles.callsTextActive]}>MES CALLS</Text>
+            <Text style={[styles.callsCount, callsOnly && styles.callsCountActive]}>{callCount} {status === 'upcoming' ? 'EN COURS' : callCount > 1 ? 'VERDICTS' : 'VERDICT'}</Text>
+          </View>
         </Pressable>
       </View>
 
@@ -405,11 +425,55 @@ function ArenaFilters({ callsOnly, game, isAdmin, onCallsOnlyChange, onGameChang
   );
 }
 
-function SectionHead({ count, date, status }: { count: number; date: Date; status: StatusFilter }) {
+function CallsRecap({ matches, status }: { matches: ArenaMatch[]; status: StatusFilter }) {
+  const live = matches.filter((match) => matchPhase(match) === 'live').length;
+  const settled = matches.filter((match) => match.prediction?.statut === 'gagne' || match.prediction?.statut === 'perdu');
+  const wins = settled.filter((match) => match.prediction?.statut === 'gagne').length;
+  const accuracy = settled.length ? `${Math.round((wins / settled.length) * 100)}%` : '—';
+  const delta = settled.reduce((total, match) => total + Number(match.prediction?.delta_frags ?? 0), 0);
+
+  return (
+    <View style={styles.callsRecap}>
+      <View style={styles.callsRecapTop}>
+        <View style={styles.callsRecapCopy}>
+          <Text style={styles.callsRecapEyebrow}>MES CALLS // {status === 'upcoming' ? 'EN COURS' : 'RÉSULTATS'}</Text>
+          <Text style={styles.callsRecapTitle}>{status === 'upcoming' ? 'TES CHOIX, AU MÊME ENDROIT.' : 'TES VERDICTS, EN UN COUP D’ŒIL.'}</Text>
+        </View>
+        <View style={styles.callsRecapMark}><Text style={styles.callsRecapMarkText}>C</Text></View>
+      </View>
+      <View style={styles.callsRecapMetrics}>
+        {status === 'upcoming' ? (
+          <>
+            <CallsRecapMetric label="CALLS" value={String(matches.length)} />
+            <CallsRecapMetric label="EN LIVE" value={String(live)} />
+            <CallsRecapMetric label="EN ATTENTE" value={String(Math.max(0, matches.length - live))} />
+          </>
+        ) : (
+          <>
+            <CallsRecapMetric label="VERDICTS" value={String(settled.length)} />
+            <CallsRecapMetric label="RÉUSSITE" value={accuracy} />
+            <CallsRecapMetric featured label="BILAN" value={signedFrags(delta)} />
+          </>
+        )}
+      </View>
+      <View style={styles.callsLoop}>
+        <Text style={styles.callsLoopStep}>CALL</Text><Text style={styles.callsLoopArrow}>→</Text>
+        <Text style={styles.callsLoopStep}>VERDICT</Text><Text style={styles.callsLoopArrow}>→</Text>
+        <Text style={styles.callsLoopStepFeatured}>RATING FRAGS</Text>
+      </View>
+    </View>
+  );
+}
+
+function CallsRecapMetric({ featured = false, label, value }: { featured?: boolean; label: string; value: string }) {
+  return <View style={styles.callsRecapMetric}><Text style={[styles.callsRecapMetricValue, featured && styles.callsRecapMetricFeatured]}>{value}</Text><Text style={styles.callsRecapMetricLabel}>{label}</Text></View>;
+}
+
+function SectionHead({ callsOnly, count, date, status }: { callsOnly: boolean; count: number; date: Date; status: StatusFilter }) {
   return (
     <View style={styles.sectionHead}>
       <View>
-        <Text style={styles.sectionEyebrow}>{status === 'upcoming' ? 'PROGRAMME DU JOUR' : 'VERDICTS DU JOUR'}</Text>
+        <Text style={styles.sectionEyebrow}>{callsOnly ? status === 'upcoming' ? 'TES CALLS À VENIR' : 'TES VERDICTS' : status === 'upcoming' ? 'PROGRAMME DU JOUR' : 'VERDICTS DU JOUR'}</Text>
         <Text style={styles.sectionTitle}>{formatSectionDate(date)}</Text>
       </View>
       <View style={styles.countPill}><Text style={styles.countText}>{count} MATCH{count > 1 ? 'S' : ''}</Text></View>
@@ -591,57 +655,65 @@ function predictionVerdict(match: ArenaMatch) {
   return `${delta >= 0 ? '+' : '−'}${Math.abs(delta)} FRAGS`;
 }
 
+function signedFrags(value: number) {
+  const amount = Math.round(Number(value) || 0);
+  return `${amount >= 0 ? '+' : '−'}${Math.abs(amount)}`;
+}
+
 function openMatch(id: string) {
   router.push({ pathname: '/match/[id]', params: { id } });
 }
 
 const styles = StyleSheet.create({
-  content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 18 },
-  scheduleHero: { position: 'relative', minHeight: 306, marginHorizontal: spacing.md, overflow: 'hidden', borderRadius: 30, backgroundColor: '#101820', borderWidth: 1, borderColor: '#2B3540', padding: 18 },
+  content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 14 },
+  scheduleHero: { position: 'relative', minHeight: 232, marginHorizontal: spacing.md, overflow: 'hidden', borderRadius: 27, backgroundColor: '#101820', borderWidth: 1, borderColor: '#2B3540', padding: 14 },
   scheduleBackdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, width: '100%', height: '100%' },
-  scheduleTop: { zIndex: 2, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-  arenaMark: { minHeight: 34, paddingHorizontal: 12, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: 'rgba(5,9,12,.48)', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' },
+  scheduleTop: { zIndex: 2, minHeight: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  arenaMark: { minHeight: 31, paddingHorizontal: 10, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: 'rgba(5,9,12,.48)', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' },
   arenaMarkDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt },
   arenaMarkText: { color: '#F4F7F8', fontFamily: fonts.bold, fontSize: 9, letterSpacing: 1.3 },
-  searchField: { flex: 1, height: 42, paddingHorizontal: 12, borderRadius: 21, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(5,9,12,.74)', borderWidth: 1, borderColor: 'rgba(255,255,255,.26)' },
+  searchField: { flex: 1, height: 36, paddingHorizontal: 11, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(5,9,12,.74)', borderWidth: 1, borderColor: 'rgba(255,255,255,.26)' },
   searchInput: { flex: 1, color: '#FFFFFF', fontFamily: fonts.medium, fontSize: 12 },
   scheduleActions: { flexDirection: 'row', gap: 8 },
-  iconButton: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,9,12,.52)', borderWidth: 1, borderColor: 'rgba(255,255,255,.17)' },
-  scheduleCopy: { zIndex: 2, marginTop: 'auto', marginBottom: 14, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 },
-  scheduleTitle: { maxWidth: 275, color: '#F8FAFA', fontFamily: fonts.display, fontSize: 33, lineHeight: 34, letterSpacing: -.8 },
+  iconButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,9,12,.52)', borderWidth: 1, borderColor: 'rgba(255,255,255,.17)' },
+  scheduleCopy: { zIndex: 2, marginTop: 'auto', marginBottom: 10, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 },
+  scheduleTitle: { maxWidth: 275, color: '#F8FAFA', fontFamily: fonts.display, fontSize: 28, lineHeight: 29, letterSpacing: -.7 },
   scheduleMonth: { marginBottom: 3, color: 'rgba(255,255,255,.76)', fontFamily: fonts.bold, fontSize: 9, letterSpacing: 1 },
   daysRow: { zIndex: 2, flexDirection: 'row', gap: 5 },
-  dayButton: { flex: 1, minWidth: 0, height: 72, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(234,244,216,.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,.09)' },
+  dayButton: { flex: 1, minWidth: 0, height: 55, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(234,244,216,.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,.09)' },
   dayButtonActive: { backgroundColor: '#F5F6F0', borderColor: '#FFFFFF' },
   dayButtonPressed: { transform: [{ scale: .96 }] },
   dayName: { color: 'rgba(255,255,255,.72)', fontFamily: fonts.bold, fontSize: 8, letterSpacing: .4 },
-  dayNumber: { marginTop: 6, color: '#FFFFFF', fontFamily: fonts.bold, fontSize: 14 },
+  dayNumber: { marginTop: 3, color: '#FFFFFF', fontFamily: fonts.bold, fontSize: 13 },
   dayTextActive: { color: '#0A0E11' },
-  dayMatchDot: { width: 4, height: 4, marginTop: 6, borderRadius: 2, backgroundColor: 'transparent' },
+  dayMatchDot: { width: 4, height: 4, marginTop: 3, borderRadius: 2, backgroundColor: 'transparent' },
   dayMatchDotVisible: { backgroundColor: colors.volt },
   dayMatchDotActive: { backgroundColor: '#0A0E11' },
-  filterPanel: { marginHorizontal: spacing.md, padding: 9, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222B34', gap: 9 },
+  filterPanel: { marginHorizontal: spacing.md, padding: 7, borderRadius: 20, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222B34', gap: 7 },
   gameRow: { flexDirection: 'row', gap: 5 },
-  gameFilter: { flex: 1, minHeight: 58, borderRadius: 16, alignItems: 'center', justifyContent: 'center', gap: 5 },
+  gameFilter: { flex: 1, minHeight: 40, paddingHorizontal: 5, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
   gameFilterActive: { backgroundColor: '#151B10', borderWidth: 1, borderColor: '#47531F' },
-  gameIcon: { width: 27, height: 27, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#151B21' },
+  gameIcon: { width: 23, height: 23, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: '#151B21' },
   gameIconActive: { backgroundColor: colors.volt },
-  allGamesGlyph: { color: '#8B96A2', fontFamily: fonts.display, fontSize: 16 },
+  allGamesGlyph: { color: '#8B96A2', fontFamily: fonts.display, fontSize: 14 },
   allGamesGlyphActive: { color: '#070A0E' },
   gameFilterText: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .5 },
   gameFilterTextActive: { color: '#F4F6F7' },
-  modeRow: { flexDirection: 'row', gap: 7 },
+  modeRow: { minHeight: 42, flexDirection: 'row', gap: 7 },
   statusSwitch: { flex: 1, minHeight: 40, padding: 3, borderRadius: 14, flexDirection: 'row', backgroundColor: '#070B0F', borderWidth: 1, borderColor: '#202832' },
   statusButton: { flex: 1, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   statusButtonActive: { backgroundColor: '#202830' },
   statusText: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .5 },
   statusTextActive: { color: '#F5F7F8' },
-  callsButton: { minWidth: 104, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#070B0F', borderWidth: 1, borderColor: '#202832' },
+  callsButton: { minWidth: 118, paddingHorizontal: 9, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: '#070B0F', borderWidth: 1, borderColor: '#202832' },
   callsButtonActive: { backgroundColor: '#161D0F', borderColor: '#4B5820' },
   callsDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#4B5661' },
   callsDotActive: { backgroundColor: colors.volt },
+  callsButtonCopy: { minWidth: 0 },
   callsText: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .4 },
   callsTextActive: { color: colors.volt },
+  callsCount: { marginTop: 2, color: '#596570', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .3 },
+  callsCountActive: { color: '#AEBB73' },
   adminLink: { minHeight: 34, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#202832' },
   adminLinkText: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .8 },
   adminLinkArrow: { color: colors.volt, fontSize: 14 },
@@ -649,6 +721,22 @@ const styles = StyleSheet.create({
   errorText: { flex: 1, color: '#FF9AA2', fontFamily: fonts.body, fontSize: 11 },
   retry: { color: colors.volt, fontFamily: fonts.bold, fontSize: 9 },
   matchesSection: { marginHorizontal: spacing.md, gap: 12 },
+  callsRecap: { padding: 14, borderRadius: 22, backgroundColor: '#10160E', borderWidth: 1, borderColor: '#3E4A1E', gap: 12 },
+  callsRecapTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  callsRecapCopy: { flex: 1, minWidth: 0 },
+  callsRecapEyebrow: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1 },
+  callsRecapTitle: { marginTop: 5, color: colors.text, fontFamily: fonts.display, fontSize: 21, lineHeight: 21 },
+  callsRecapMark: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
+  callsRecapMarkText: { color: '#070A0E', fontFamily: fonts.display, fontSize: 18 },
+  callsRecapMetrics: { minHeight: 52, flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#2C361B' },
+  callsRecapMetric: { flex: 1, alignItems: 'center' },
+  callsRecapMetricValue: { color: colors.text, fontFamily: fonts.display, fontSize: 19 },
+  callsRecapMetricFeatured: { color: colors.volt },
+  callsRecapMetricLabel: { marginTop: 2, color: colors.textMuted, fontFamily: fonts.bold, fontSize: 7, letterSpacing: .5 },
+  callsLoop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  callsLoopStep: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .5 },
+  callsLoopStepFeatured: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .5 },
+  callsLoopArrow: { color: '#4C5830', fontFamily: fonts.bold, fontSize: 10 },
   sectionHead: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 },
   sectionEyebrow: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.4 },
   sectionTitle: { marginTop: 4, color: colors.text, fontFamily: fonts.display, fontSize: 25, letterSpacing: -.4 },

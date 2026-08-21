@@ -14,20 +14,27 @@ import {
 import { Screen } from '@/src/components/layout/Screen';
 import { createDuel } from '@/src/features/social/duels/api';
 import { useAuth } from '@/src/providers/AuthProvider';
+import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors, radius, spacing } from '@/src/theme';
 
 import { loadMatchCenter, submitRankedPrediction } from '../api';
 import type { ArenaMatch, MatchCenterData, MatchProjection, ProjectionChoice } from '../types';
 import { gameLabel, matchPhase, predictionIsOpen } from '../utils';
 
-export default function MatchCenterScreen() {
+type MatchCenterScreenProps = {
+  previewData?: MatchCenterData;
+};
+
+export default function MatchCenterScreen({ previewData }: MatchCenterScreenProps) {
   const { session } = useAuth();
+  const { refresh: refreshEconomy } = useEconomy();
   const params = useLocalSearchParams<{ id?: string | string[]; duel?: string | string[] }>();
-  const matchId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const routeMatchId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const matchId = previewData?.match.id ?? routeMatchId;
   const duelToken = Array.isArray(params.duel) ? params.duel[0] : params.duel;
-  const [data, setData] = useState<MatchCenterData | null>(null);
+  const [data, setData] = useState<MatchCenterData | null>(previewData ?? null);
   const [selected, setSelected] = useState<'a' | 'b' | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!previewData);
   const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [duelBusy, setDuelBusy] = useState(false);
@@ -38,6 +45,12 @@ export default function MatchCenterScreen() {
   const loadRequestRef = useRef(0);
 
   const load = useCallback(async (refresh = false) => {
+    if (previewData) {
+      setData(previewData);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     if (!matchId || !session?.user.id) {
       setLoading(false);
       setRefreshing(false);
@@ -50,6 +63,9 @@ export default function MatchCenterScreen() {
       const nextData = await loadMatchCenter(matchId, session.user.id);
       if (requestId !== loadRequestRef.current) return;
       setData(nextData);
+      if (nextData.prediction?.statut === 'gagne' || nextData.prediction?.statut === 'perdu') {
+        void refreshEconomy();
+      }
     } catch (caught) {
       if (requestId !== loadRequestRef.current) return;
       console.error(caught);
@@ -60,16 +76,16 @@ export default function MatchCenterScreen() {
         setRefreshing(false);
       }
     }
-  }, [matchId, session?.user.id]);
+  }, [matchId, previewData, refreshEconomy, session?.user.id]);
 
   useEffect(() => {
-    setData(null);
+    setData(previewData ?? null);
     setSelected(null);
     setSubmitError(null);
     setWebConfirmationOpen(false);
     void load();
     return () => { loadRequestRef.current += 1; };
-  }, [load]);
+  }, [load, previewData]);
 
   const match = data?.match ?? null;
   const projection = data?.projection ?? null;
@@ -423,12 +439,28 @@ function LockedPrediction({ data }: { data: MatchCenterData }) {
   const tag = prediction.choix === 'a' ? match.tag_a : match.tag_b;
   const settled = prediction.statut === 'gagne' || prediction.statut === 'perdu';
   const cancelled = prediction.statut === 'annule';
+  const won = prediction.statut === 'gagne';
+  const lost = prediction.statut === 'perdu';
+  const resolved = settled || cancelled;
+  const delta = Math.abs(Number(prediction.delta_frags ?? 0));
+  const eyebrow = won
+    ? 'CALL VALIDÉ'
+    : lost
+      ? 'CALL MANQUÉ'
+      : cancelled
+        ? 'CALL ANNULÉ'
+        : 'TON CHOIX EST VERROUILLÉ';
+  const outcomeCopy = cancelled
+    ? 'Le match a été annulé : ton rating Frags reste inchangé.'
+    : settled
+      ? 'Ton rating de saison a été mis à jour et ce verdict rejoint maintenant ton historique.'
+      : 'Après le résultat, Clutch tranche le call puis applique automatiquement le delta à ton rating.';
 
   return (
-    <View style={styles.lockedCard}>
+    <View style={[styles.lockedCard, won && styles.lockedCardWin, lost && styles.lockedCardLoss]}>
       <View style={styles.lockedHeader}>
         <View>
-          <Text style={styles.lockedEyebrow}>TON CHOIX EST VERROUILLÉ</Text>
+          <Text style={[styles.lockedEyebrow, lost && styles.lockedEyebrowLoss]}>{eyebrow}</Text>
           <Text style={styles.lockedTeam}>{team}</Text>
         </View>
         <View style={styles.lockedBadge}><Text style={styles.lockedBadgeText}>{tag}</Text></View>
@@ -442,18 +474,52 @@ function LockedPrediction({ data }: { data: MatchCenterData }) {
         <Text style={styles.verdictLabel}>{settled ? 'VERDICT' : 'STATUT'}</Text>
         <Text style={[
           styles.verdictValue,
-          prediction.statut === 'gagne' && styles.verdictWin,
-          prediction.statut === 'perdu' && styles.verdictLoss,
+          won && styles.verdictWin,
+          lost && styles.verdictLoss,
         ]}>
-          {prediction.statut === 'gagne'
-            ? `+${Math.abs(Number(prediction.delta_frags ?? 0))} FRAGS`
-            : prediction.statut === 'perdu'
-              ? `−${Math.abs(Number(prediction.delta_frags ?? 0))} FRAGS`
+          {won
+            ? `+${delta} FRAGS`
+            : lost
+              ? `−${delta} FRAGS`
               : cancelled
                 ? 'PRONOSTIC ANNULÉ'
                 : 'EN ATTENTE DU RÉSULTAT'}
         </Text>
       </View>
+      <Text style={styles.lockedOutcomeCopy}>{outcomeCopy}</Text>
+
+      <View style={styles.callTimeline}>
+        <TimelineStep complete label="CALL" meta="VERROUILLÉ" />
+        <Text style={styles.timelineArrow}>→</Text>
+        <TimelineStep complete={resolved} label="VERDICT" meta={cancelled ? 'ANNULÉ' : settled ? 'TERMINÉ' : 'À VENIR'} />
+        <Text style={styles.timelineArrow}>→</Text>
+        <TimelineStep complete={settled} label="RATING" meta={cancelled ? 'INCHANGÉ' : settled ? 'MIS À JOUR' : 'APRÈS MATCH'} />
+      </View>
+
+      <View style={styles.lockedActions}>
+        {settled ? (
+          <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/profile')} style={({ pressed }) => [styles.lockedPrimaryAction, pressed && styles.confirmPressed]}>
+            <Text style={styles.lockedPrimaryText}>VOIR MON PROFIL</Text>
+          </Pressable>
+        ) : null}
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push({ pathname: '/(tabs)/matches', params: { view: 'calls' } })}
+          style={({ pressed }) => [settled ? styles.lockedSecondaryAction : styles.lockedPrimaryAction, pressed && styles.confirmPressed]}
+        >
+          <Text style={settled ? styles.lockedSecondaryText : styles.lockedPrimaryText}>{settled ? 'PROCHAIN CALL' : 'SUIVRE DANS MES CALLS'}</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function TimelineStep({ complete, label, meta }: { complete: boolean; label: string; meta: string }) {
+  return (
+    <View style={styles.timelineStep}>
+      <View style={[styles.timelineDot, complete && styles.timelineDotComplete]}><Text style={[styles.timelineDotText, complete && styles.timelineDotTextComplete]}>{complete ? '✓' : '·'}</Text></View>
+      <Text style={[styles.timelineLabel, complete && styles.timelineLabelComplete]}>{label}</Text>
+      <Text numberOfLines={1} style={styles.timelineMeta}>{meta}</Text>
     </View>
   );
 }
@@ -681,8 +747,11 @@ const styles = StyleSheet.create({
   webLockText: { color: '#080B0F', fontSize: 9, fontWeight: '900', letterSpacing: .7 },
   disabled: { opacity: .5 },
   lockedCard: { padding: spacing.lg, borderRadius: radius.lg, backgroundColor: '#101510', borderWidth: 1, borderColor: '#3A4722', gap: spacing.md },
+  lockedCardWin: { borderColor: '#315D3D', backgroundColor: '#0D1711' },
+  lockedCardLoss: { borderColor: '#5A2B32', backgroundColor: '#171012' },
   lockedHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
   lockedEyebrow: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: 1.3 },
+  lockedEyebrowLoss: { color: '#FF8C97' },
   lockedTeam: { marginTop: 5, color: colors.text, fontSize: 22, fontWeight: '900' },
   lockedBadge: { minWidth: 46, height: 46, paddingHorizontal: 7, borderRadius: 14, backgroundColor: colors.volt, alignItems: 'center', justifyContent: 'center' },
   lockedBadgeText: { color: '#080B0F', fontSize: 11, fontWeight: '900' },
@@ -694,6 +763,22 @@ const styles = StyleSheet.create({
   verdictValue: { flex: 1, textAlign: 'right', color: colors.text, fontSize: 10, fontWeight: '900' },
   verdictWin: { color: colors.success },
   verdictLoss: { color: colors.danger },
+  lockedOutcomeCopy: { color: colors.textMuted, fontSize: 10, lineHeight: 16 },
+  callTimeline: { minHeight: 72, paddingHorizontal: 8, borderRadius: radius.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#090D0A', borderWidth: 1, borderColor: '#2D3720' },
+  timelineStep: { flex: 1, minWidth: 0, alignItems: 'center' },
+  timelineDot: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171D18', borderWidth: 1, borderColor: '#303A32' },
+  timelineDotComplete: { backgroundColor: colors.volt, borderColor: colors.volt },
+  timelineDotText: { color: colors.textMuted, fontSize: 10, fontWeight: '900' },
+  timelineDotTextComplete: { color: '#080B0F' },
+  timelineLabel: { marginTop: 4, color: colors.textMuted, fontSize: 7, fontWeight: '900', letterSpacing: .55 },
+  timelineLabelComplete: { color: colors.text },
+  timelineMeta: { marginTop: 2, maxWidth: 78, color: '#667168', fontSize: 6, fontWeight: '800', textAlign: 'center' },
+  timelineArrow: { marginHorizontal: -2, color: '#45502B', fontSize: 11, fontWeight: '900' },
+  lockedActions: { flexDirection: 'row', gap: spacing.sm },
+  lockedPrimaryAction: { flex: 1, minHeight: 46, paddingHorizontal: 10, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
+  lockedPrimaryText: { color: '#080B0F', fontSize: 8, fontWeight: '900', letterSpacing: .65, textAlign: 'center' },
+  lockedSecondaryAction: { flex: 1, minHeight: 46, paddingHorizontal: 10, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A0F0B', borderWidth: 1, borderColor: '#3B4725' },
+  lockedSecondaryText: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: .65, textAlign: 'center' },
   duelAction: { padding: spacing.lg, borderRadius: radius.lg, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#414D1E', gap: spacing.md },
   duelActionCopy: { gap: 6 },
   duelActionEyebrow: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: 1.3 },

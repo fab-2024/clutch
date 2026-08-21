@@ -252,6 +252,14 @@ function FactionRelicHero({ faction, me }: { faction: CommunityFaction | null; m
   const progress = faction ? factionProgress(faction.membres, faction.niveau_atteint) : null;
   const pct = progress ? Math.round(progress.progress * 100) : 0;
   const title = faction ? 'PORTE TES COULEURS.' : 'CHOISIS TES COULEURS.';
+  const actionTitle = progress?.max
+    ? 'LA RELIQUE A ATTEINT SA FORME ULTIME.'
+    : `RALLIER ${formatNumber(progress?.remaining ?? 0)} SUPPORTER${(progress?.remaining ?? 0) > 1 ? 'S' : ''}.`;
+  const actionCopy = progress?.max
+    ? 'La puissance collective continue désormais d’alimenter le classement de la faction.'
+    : progress?.next
+      ? `À ${formatNumber(progress.objective)} membres, la relique mute en ${progress.next.name}. Chaque membre présent reçoit alors +${formatNumber(progress.next.reward)} Volts.`
+      : '';
 
   return (
     <View style={styles.factionHero}>
@@ -345,7 +353,12 @@ function FactionRelicHero({ faction, me }: { faction: CommunityFaction | null; m
           <Text style={styles.factionName}>{faction?.nom.toUpperCase() ?? 'AUCUNE FACTION'}</Text>
           <Text style={styles.factionMeta}>{faction ? `${gameLabel(faction.jeu)} · ${formatNumber(faction.membres)} MEMBRE${faction.membres > 1 ? 'S' : ''}` : 'UNE RELIQUE ATTEND TES COULEURS'}</Text>
         </View>
-        {faction ? <Text style={styles.factionGrowth}>{signed(faction.croissance_7j)} · 7J</Text> : null}
+        {faction ? (
+          <View style={styles.factionGrowthBlock}>
+            <Text style={styles.factionGrowth}>{signed(faction.croissance_7j)}</Text>
+            <Text style={styles.factionGrowthLabel}>SUPPORTERS · 7J</Text>
+          </View>
+        ) : null}
       </View>
 
       {faction && progress ? (
@@ -355,13 +368,24 @@ function FactionRelicHero({ faction, me }: { faction: CommunityFaction | null; m
             <Text numberOfLines={1} style={styles.relicPhrase}>{progress.current.phrase}</Text>
           </View>
           <View style={styles.progressHeadline}>
-            <Text style={styles.progressLabel}>CHARGE COLLECTIVE</Text>
+            <Text style={styles.progressLabel}>SUPPORTERS DE LA FACTION</Text>
             <Text style={styles.progressValue}>{formatNumber(faction.membres)} / {formatNumber(progress.objective)}</Text>
           </View>
           <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${progress.max ? 100 : pct}%` }]} /></View>
           <View style={styles.progressFoot}>
             <Text style={styles.progressNext}>{progress.max ? 'FORME TERMINALE' : `PROCHAINE MUTATION · ${progress.next?.name.toUpperCase() ?? 'OCÉAN SATURÉ'}`}</Text>
-            {me ? <Text style={styles.progressImpact}>{me.pronos_7j} CALL{me.pronos_7j > 1 ? 'S' : ''} · 7J</Text> : null}
+            {me ? <Text style={styles.progressImpact}>TOI · {me.pronos_7j} CALL{me.pronos_7j > 1 ? 'S' : ''} · 7J</Text> : null}
+          </View>
+          <View style={styles.mutationGuide}>
+            <View style={styles.mutationPreview}>
+              <Text style={styles.mutationCode}>{progress.next?.code ?? '∞'}</Text>
+              <Text numberOfLines={1} style={styles.mutationName}>{progress.next?.name.toUpperCase() ?? 'OCÉAN'}</Text>
+            </View>
+            <View style={styles.mutationCopy}>
+              <Text style={styles.mutationEyebrow}>{progress.max ? 'ÉTAT ACTUEL' : 'À FAIRE MAINTENANT'}</Text>
+              <Text style={styles.mutationTitle}>{actionTitle}</Text>
+              <Text style={styles.mutationText}>{actionCopy}</Text>
+            </View>
           </View>
         </View>
       ) : null}
@@ -409,7 +433,7 @@ function FactionWar({ factions, mine }: { factions: CommunityFaction[]; mine: Co
               </View>
               <View style={styles.warScore}>
                 <Text style={styles.warMembers}>{formatNumber(faction.membres)}</Text>
-                <Text style={[styles.warGrowth, faction.croissance_7j > 0 && styles.warGrowthPositive]}>{signed(faction.croissance_7j)} · 7J</Text>
+                <Text style={[styles.warGrowth, faction.croissance_7j > 0 && styles.warGrowthPositive]}>{signed(faction.croissance_7j)} EN 7 J</Text>
               </View>
             </View>
           );
@@ -516,7 +540,7 @@ const styles = StyleSheet.create({
   error: { minHeight: 48, padding: 12, borderRadius: radius.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' },
   errorText: { flex: 1, color: '#FF9AA2', fontFamily: fonts.body, fontSize: 11 },
   retry: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8 },
-  factionHero: { position: 'relative', minHeight: 610, overflow: 'hidden', padding: 17, borderRadius: 30, backgroundColor: '#0B100D', borderWidth: 1, borderColor: '#495720' },
+  factionHero: { position: 'relative', minHeight: 730, overflow: 'hidden', padding: 17, borderRadius: 30, backgroundColor: '#0B100D', borderWidth: 1, borderColor: '#495720' },
   heroAura: { position: 'absolute', width: 330, height: 330, left: 48, top: 112, borderRadius: 165, backgroundColor: 'rgba(77,53,24,.07)', boxShadow: '0 0 84px rgba(182,116,42,.07)' },
   heroAuraCold: { position: 'absolute', width: 230, height: 300, left: -70, top: 130, borderRadius: 150, backgroundColor: 'rgba(32,91,104,.045)', boxShadow: '0 0 70px rgba(54,134,151,.06)' },
   heroGridLineA: { position: 'absolute', width: 520, height: 1, left: -60, top: 280, backgroundColor: 'rgba(232,255,61,.08)', transform: [{ rotate: '18deg' }] },
@@ -546,7 +570,9 @@ const styles = StyleSheet.create({
   factionIdentityCopy: { flex: 1, minWidth: 0 },
   factionName: { color: '#F6F7F5', fontFamily: fonts.bold, fontSize: 13, letterSpacing: .25 },
   factionMeta: { marginTop: 4, color: '#8E998F', fontFamily: fonts.medium, fontSize: 8, letterSpacing: .25 },
-  factionGrowth: { color: colors.volt, fontFamily: fonts.bold, fontSize: 9 },
+  factionGrowthBlock: { alignItems: 'flex-end' },
+  factionGrowth: { color: colors.volt, fontFamily: fonts.display, fontSize: 17, lineHeight: 18 },
+  factionGrowthLabel: { marginTop: 2, color: colors.textMuted, fontFamily: fonts.bold, fontSize: 7, letterSpacing: .35 },
   progressBlock: { zIndex: 3, marginTop: 11 },
   relicState: { marginBottom: 9, flexDirection: 'row', alignItems: 'center', gap: 8 },
   relicForm: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1 },
@@ -559,6 +585,14 @@ const styles = StyleSheet.create({
   progressFoot: { marginTop: 6, flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
   progressNext: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .4 },
   progressImpact: { color: colors.textSubtle, fontFamily: fonts.bold, fontSize: 8 },
+  mutationGuide: { minHeight: 96, marginTop: 13, padding: 10, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: 'rgba(6,9,9,.78)', borderWidth: 1, borderColor: '#3E4A21' },
+  mutationPreview: { width: 58, height: 68, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#151B10', borderWidth: 1, borderColor: '#4B5921' },
+  mutationCode: { color: colors.volt, fontFamily: fonts.display, fontSize: 25, lineHeight: 26 },
+  mutationName: { maxWidth: 48, marginTop: 3, color: '#AEB981', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .35 },
+  mutationCopy: { flex: 1, minWidth: 0 },
+  mutationEyebrow: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .9 },
+  mutationTitle: { marginTop: 4, color: '#F3F5F1', fontFamily: fonts.display, fontSize: 18, lineHeight: 18 },
+  mutationText: { marginTop: 4, color: '#8F9991', fontFamily: fonts.body, fontSize: 8, lineHeight: 12 },
   heroFooter: { zIndex: 3, minHeight: 42, marginTop: 'auto', paddingTop: 10, borderTopWidth: 1, borderTopColor: '#34401C', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   heroFooterText: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1 },
   heroFooterArrow: { color: colors.volt, fontSize: 17 },
@@ -613,7 +647,7 @@ const styles = StyleSheet.create({
   emptyMark: { color: colors.volt, fontSize: 24 },
   emptyTitle: { maxWidth: 320, marginTop: 12, color: '#F2F4F4', fontFamily: fonts.display, fontSize: 28, lineHeight: 27 },
   emptyText: { maxWidth: 330, marginTop: 9, color: '#7A858E', fontFamily: fonts.body, fontSize: 10, lineHeight: 16 },
-  heroSkeleton: { minHeight: 610, padding: 18, borderRadius: 30, justifyContent: 'space-between', backgroundColor: '#0D1311', borderWidth: 1, borderColor: '#29321A' },
+  heroSkeleton: { minHeight: 730, padding: 18, borderRadius: 30, justifyContent: 'space-between', backgroundColor: '#0D1311', borderWidth: 1, borderColor: '#29321A' },
   skeletonTitle: { width: 220, height: 65, borderRadius: 17, backgroundColor: '#172016' },
   skeletonRelic: { width: 230, height: 230, alignSelf: 'center', borderRadius: 115, backgroundColor: '#151C18' },
   skeletonLine: { width: '100%', height: 58, borderRadius: 16, backgroundColor: '#151C18' },
