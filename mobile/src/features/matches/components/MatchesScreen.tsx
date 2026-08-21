@@ -1,34 +1,70 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Image,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
+  type ImageSourcePropType,
 } from 'react-native';
+import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 import { ClutchHeader } from '@/src/components/layout/ClutchHeader';
 import { Screen } from '@/src/components/layout/Screen';
+import GameLogo from '@/src/features/onboarding/components/GameLogo';
+import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
+import type { GameId } from '@/src/features/onboarding/types';
 import { useAuth } from '@/src/providers/AuthProvider';
-import { colors, radius, spacing } from '@/src/theme';
+import { colors, fonts, radius, spacing } from '@/src/theme';
 
 import { loadArenaMatches } from '../api';
 import type { ArenaMatch } from '../types';
 import { gameKey, gameLabel, matchPhase, predictionIsOpen } from '../utils';
 
 type StatusFilter = 'upcoming' | 'finished';
-type GameFilter = 'Pour toi' | 'LoL' | 'VALORANT' | 'CS2';
+type GameFilter = 'followed' | GameId;
 
-const GAME_FILTERS: GameFilter[] = ['Pour toi', 'LoL', 'VALORANT', 'CS2'];
+type MatchesExperienceProps = {
+  error: string | null;
+  finished: ArenaMatch[];
+  followedGames: string[];
+  isAdmin: boolean;
+  loading: boolean;
+  onRefresh: () => void;
+  onRetry: () => void;
+  refreshing: boolean;
+  upcoming: ArenaMatch[];
+};
+
+const GAME_FILTERS: { id: GameFilter; label: string }[] = [
+  { id: 'followed', label: 'POUR TOI' },
+  { id: 'lol', label: 'LOL' },
+  { id: 'valorant', label: 'VAL' },
+  { id: 'cs2', label: 'CS2' },
+];
+
+const GAME_BACKGROUNDS: Record<GameId, ImageSourcePropType> = {
+  lol: require('../../../../assets/onboarding/lol-characters.jpg'),
+  valorant: require('../../../../assets/onboarding/valorant-characters.jpg'),
+  cs2: require('../../../../assets/onboarding/cs2-operators.jpg'),
+};
+
+const GAME_ACCENTS: Record<GameId, string> = {
+  lol: '#72C7F4',
+  valorant: '#FF6170',
+  cs2: '#F2A34B',
+};
 
 export default function MatchesScreen() {
   const { profile, session } = useAuth();
   const [upcoming, setUpcoming] = useState<ArenaMatch[]>([]);
   const [finished, setFinished] = useState<ArenaMatch[]>([]);
-  const [status, setStatus] = useState<StatusFilter>('upcoming');
-  const [game, setGame] = useState<GameFilter>('Pour toi');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,304 +93,484 @@ export default function MatchesScreen() {
 
   useEffect(() => { void load(); }, [load]);
 
+  return (
+    <MatchesExperience
+      error={error}
+      finished={finished}
+      followedGames={profile?.jeux_suivis ?? []}
+      isAdmin={Boolean(profile?.est_admin)}
+      loading={loading}
+      onRefresh={() => void load(true)}
+      onRetry={() => void load()}
+      refreshing={refreshing}
+      upcoming={upcoming}
+    />
+  );
+}
+
+export function MatchesExperience({
+  error,
+  finished,
+  followedGames,
+  isAdmin,
+  loading,
+  onRefresh,
+  onRetry,
+  refreshing,
+  upcoming,
+}: MatchesExperienceProps) {
+  const reduceMotion = useReducedMotion();
+  const [status, setStatus] = useState<StatusFilter>('upcoming');
+  const [game, setGame] = useState<GameFilter>('followed');
+  const [callsOnly, setCallsOnly] = useState(false);
+  const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
+
   const source = status === 'upcoming' ? upcoming : finished;
   const filtered = useMemo(
-    () => filterMatches(source, game, profile?.jeux_suivis ?? []),
-    [game, profile?.jeux_suivis, source],
+    () => filterMatches(source, game, followedGames, callsOnly, query),
+    [callsOnly, followedGames, game, query, source],
   );
-  const upcomingForGame = useMemo(
-    () => filterMatches(upcoming, game, profile?.jeux_suivis ?? []),
-    [game, profile?.jeux_suivis, upcoming],
+  const calendarDays = useMemo(() => buildCalendarDays(status, filtered), [filtered, status]);
+  const defaultDayKey = useMemo(
+    () => findDefaultDayKey(calendarDays, filtered, status),
+    [calendarDays, filtered, status],
   );
-  const featured = filtered[0] ?? null;
-  const rest = featured ? filtered.slice(1) : [];
-  const fallbackFinished = status === 'upcoming' && filtered.length === 0
-    ? filterMatches(finished, game, profile?.jeux_suivis ?? []).slice(0, 4)
-    : [];
-  const liveCount = upcomingForGame.filter((match) => matchPhase(match) === 'live').length;
-  const openCount = upcomingForGame.filter((match) => predictionIsOpen(match)).length;
-  const calledCount = upcomingForGame.filter((match) => Boolean(match.prediction)).length;
+  const activeDayKey = selectedDayKey && calendarDays.some((day) => dateKey(day) === selectedDayKey)
+    ? selectedDayKey
+    : defaultDayKey;
+  const visibleMatches = useMemo(
+    () => filtered.filter((match) => dateKey(new Date(match.debut)) === activeDayKey),
+    [activeDayKey, filtered],
+  );
+  const visualGame = game === 'followed'
+    ? toGameId(visibleMatches[0]?.jeu ?? filtered[0]?.jeu) ?? 'lol'
+    : game;
+  const liveMatches = visibleMatches.filter((match) => matchPhase(match) === 'live');
+  const standardMatches = visibleMatches.filter((match) => matchPhase(match) !== 'live');
+  const activeDate = calendarDays.find((day) => dateKey(day) === activeDayKey) ?? calendarDays[0];
+  const entrance = (delay: number) => reduceMotion ? undefined : FadeInDown.delay(delay).duration(380);
+
+  function changeStatus(nextStatus: StatusFilter) {
+    setStatus(nextStatus);
+    setSelectedDayKey(null);
+  }
+
+  function changeGame(nextGame: GameFilter) {
+    setGame(nextGame);
+    setSelectedDayKey(null);
+  }
 
   return (
     <Screen>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
       >
         <ClutchHeader />
 
-        <View style={styles.heroCopy}>
-          <Text style={styles.eyebrow}>MATCH ARENA</Text>
-          <Text style={styles.heroTitle}>CHOISIS{`\n`}TON CAMP.</Text>
-          <Text style={styles.subtitle}>Un choix, un risque lisible, puis le match décide de ton rating.</Text>
-          {profile?.est_admin ? (
-            <Pressable
-              accessibilityLabel="Administrer les matchs"
-              accessibilityRole="button"
-              onPress={() => router.push('/admin/matches' as never)}
-              style={({ pressed }) => [styles.adminEntry, pressed && styles.pressed]}
-            >
-              <View><Text style={styles.adminEntryLabel}>ADMIN MATCHS</Text><Text style={styles.adminEntryCopy}>Calendrier · live · résultats</Text></View>
-              <Text style={styles.adminEntryArrow}>→</Text>
-            </Pressable>
-          ) : null}
-        </View>
+        <Animated.View entering={entrance(30)}>
+          <ScheduleHero
+            activeDayKey={activeDayKey}
+            calendarDays={calendarDays}
+            matches={filtered}
+            monthLabel={formatMonth(activeDate)}
+            query={query}
+            searchOpen={searchOpen}
+            status={status}
+            visualGame={visualGame}
+            onQueryChange={setQuery}
+            onSelectDay={setSelectedDayKey}
+            onToggleHistory={() => changeStatus(status === 'upcoming' ? 'finished' : 'upcoming')}
+            onToggleSearch={() => {
+              setSearchOpen((current) => !current);
+              if (searchOpen) setQuery('');
+            }}
+          />
+        </Animated.View>
 
-        <View style={styles.arenaSummary}>
-          <ArenaMetric label="LIVE" value={loading ? '—' : String(liveCount)} accent={liveCount > 0} />
-          <View style={styles.arenaMetricDivider} />
-          <ArenaMetric label="OUVERTS" value={loading ? '—' : String(openCount)} />
-          <View style={styles.arenaMetricDivider} />
-          <ArenaMetric label="MES CALLS" value={loading ? '—' : String(calledCount)} />
-        </View>
-
-        <View style={styles.filterPanel}>
-          <View style={styles.gameRow}>
-            {GAME_FILTERS.map((filter) => (
-              <Pressable
-                accessibilityLabel={`Filtrer sur ${filter}`}
-                accessibilityRole="button"
-                accessibilityState={{ selected: game === filter }}
-                key={filter}
-                onPress={() => setGame(filter)}
-                style={[styles.gameFilter, game === filter && styles.gameFilterActive]}
-              >
-                <Text style={[styles.gameFilterText, game === filter && styles.gameFilterTextActive]}>{filter}</Text>
-              </Pressable>
-            ))}
-          </View>
-
-          <View style={styles.statusRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: status === 'upcoming' }}
-              onPress={() => setStatus('upcoming')}
-              style={[styles.statusButton, status === 'upcoming' && styles.statusButtonActive]}
-            >
-              <Text style={[styles.statusText, status === 'upcoming' && styles.statusTextActive]}>À venir</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: status === 'finished' }}
-              onPress={() => setStatus('finished')}
-              style={[styles.statusButton, status === 'finished' && styles.statusButtonActive]}
-            >
-              <Text style={[styles.statusText, status === 'finished' && styles.statusTextActive]}>Historique</Text>
-            </Pressable>
-          </View>
-        </View>
+        <Animated.View entering={entrance(90)}>
+          <ArenaFilters
+            callsOnly={callsOnly}
+            game={game}
+            isAdmin={isAdmin}
+            status={status}
+            onCallsOnlyChange={setCallsOnly}
+            onGameChange={changeGame}
+            onStatusChange={changeStatus}
+          />
+        </Animated.View>
 
         {error ? (
           <View style={styles.errorCard}>
             <Text style={styles.errorText}>{error}</Text>
-            <Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable>
+            <Pressable accessibilityRole="button" onPress={onRetry}><Text style={styles.retry}>RÉESSAYER</Text></Pressable>
           </View>
         ) : null}
 
-        {loading ? <MatchSkeleton /> : featured ? <ArenaHero match={featured} finished={status === 'finished'} /> : <EmptyArena status={status} />}
-
-        {fallbackFinished.length ? (
-          <View style={styles.section}>
-            <View style={styles.sectionHead}>
-              <View>
-                <Text style={styles.sectionEyebrow}>DERNIERS VERDICTS</Text>
-                <Text style={styles.sectionTitle}>En attendant la prochaine affiche.</Text>
+        {loading ? (
+          <MatchSkeleton />
+        ) : visibleMatches.length ? (
+          <Animated.View entering={entrance(150)} style={styles.matchesSection}>
+            <SectionHead count={visibleMatches.length} date={activeDate} status={status} />
+            {liveMatches.length ? (
+              <View style={styles.liveStack}>
+                {liveMatches.map((match) => <LiveMatchCard key={match.id} match={match} />)}
               </View>
-              <Pressable onPress={() => setStatus('finished')}><Text style={styles.link}>TOUT VOIR →</Text></Pressable>
-            </View>
-            <View style={styles.list}>{fallbackFinished.map((match) => <MatchRow key={match.id} match={match} />)}</View>
-          </View>
-        ) : null}
-
-        {rest.length ? (
-          <View style={styles.section}>
-            <View style={styles.sectionHead}>
-              <View>
-                <Text style={styles.sectionEyebrow}>{status === 'upcoming' ? 'À SUIVRE' : 'HISTORIQUE'}</Text>
-                <Text style={styles.sectionTitle}>{status === 'upcoming' ? 'Le reste du calendrier.' : 'Chaque verdict laisse une trace.'}</Text>
+            ) : null}
+            {standardMatches.length ? (
+              <View style={styles.matchList}>
+                {standardMatches.map((match) => <MatchRow key={match.id} match={match} />)}
               </View>
-            </View>
-            <GroupedMatches matches={rest} />
-          </View>
-        ) : null}
+            ) : null}
+          </Animated.View>
+        ) : (
+          <EmptyArena callsOnly={callsOnly} query={query} status={status} />
+        )}
       </ScrollView>
     </Screen>
   );
 }
 
-function ArenaMetric({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+type ScheduleHeroProps = {
+  activeDayKey: string;
+  calendarDays: Date[];
+  matches: ArenaMatch[];
+  monthLabel: string;
+  onQueryChange: (value: string) => void;
+  onSelectDay: (value: string) => void;
+  onToggleHistory: () => void;
+  onToggleSearch: () => void;
+  query: string;
+  searchOpen: boolean;
+  status: StatusFilter;
+  visualGame: GameId;
+};
+
+function ScheduleHero({
+  activeDayKey,
+  calendarDays,
+  matches,
+  monthLabel,
+  onQueryChange,
+  onSelectDay,
+  onToggleHistory,
+  onToggleSearch,
+  query,
+  searchOpen,
+  status,
+  visualGame,
+}: ScheduleHeroProps) {
   return (
-    <View style={styles.arenaMetric}>
-      <Text style={[styles.arenaMetricValue, accent && styles.arenaMetricValueLive]}>{value}</Text>
-      <Text style={styles.arenaMetricLabel}>{label}</Text>
+    <View style={styles.scheduleHero}>
+      <Animated.View entering={FadeIn.duration(260)} key={visualGame} style={StyleSheet.absoluteFill}>
+        <Image resizeMode="cover" source={GAME_BACKGROUNDS[visualGame]} style={styles.scheduleBackdrop} />
+      </Animated.View>
+      <LinearGradient colors={['rgba(3,7,10,.14)', 'rgba(3,7,10,.52)', 'rgba(3,7,10,.97)']} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[`${GAME_ACCENTS[visualGame]}33`, 'transparent', 'rgba(232,255,61,.09)']} end={{ x: 1, y: .8 }} start={{ x: 0, y: .2 }} style={StyleSheet.absoluteFill} />
+
+      <View style={styles.scheduleTop}>
+        {searchOpen ? (
+          <View style={styles.searchField}>
+            <SearchIcon color="#F5F7F8" size={17} />
+            <TextInput
+              autoFocus
+              onChangeText={onQueryChange}
+              placeholder="Équipe ou compétition"
+              placeholderTextColor="rgba(255,255,255,.58)"
+              style={styles.searchInput}
+              value={query}
+            />
+          </View>
+        ) : (
+          <View style={styles.arenaMark}>
+            <View style={styles.arenaMarkDot} />
+            <Text style={styles.arenaMarkText}>CLUTCH ARENA</Text>
+          </View>
+        )}
+        <View style={styles.scheduleActions}>
+          <Pressable
+            accessibilityLabel={searchOpen ? 'Fermer la recherche' : 'Rechercher un match'}
+            accessibilityRole="button"
+            onPress={onToggleSearch}
+            style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+          >
+            {searchOpen ? <CloseIcon color="#F5F7F8" size={17} /> : <SearchIcon color="#F5F7F8" size={18} />}
+          </Pressable>
+          <Pressable
+            accessibilityLabel={status === 'upcoming' ? 'Afficher les résultats' : 'Afficher les prochains matchs'}
+            accessibilityRole="button"
+            onPress={onToggleHistory}
+            style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+          >
+            <CalendarIcon color="#F5F7F8" size={18} />
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={styles.scheduleCopy}>
+        <Text style={styles.scheduleTitle}>{status === 'upcoming' ? 'PROCHAINS MATCHS' : 'SCORES & RÉSULTATS'}</Text>
+        <Text style={styles.scheduleMonth}>{monthLabel}</Text>
+      </View>
+
+      <View style={styles.daysRow}>
+        {calendarDays.map((day) => {
+          const key = dateKey(day);
+          const active = key === activeDayKey;
+          const hasMatch = matches.some((match) => dateKey(new Date(match.debut)) === key);
+          return (
+            <Pressable
+              accessibilityLabel={formatFullDate(day)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              key={key}
+              onPress={() => onSelectDay(key)}
+              style={({ pressed }) => [styles.dayButton, active && styles.dayButtonActive, pressed && styles.dayButtonPressed]}
+            >
+              <Text style={[styles.dayName, active && styles.dayTextActive]}>{formatWeekday(day)}</Text>
+              <Text style={[styles.dayNumber, active && styles.dayTextActive]}>{day.getDate()}</Text>
+              <View style={[styles.dayMatchDot, hasMatch && styles.dayMatchDotVisible, active && hasMatch && styles.dayMatchDotActive]} />
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
-function filterMatches(matches: ArenaMatch[], game: GameFilter, followed: string[]) {
-  return matches.filter((match) => game === 'Pour toi'
-    ? followedGame(followed, match.jeu)
-    : gameKey(match.jeu) === game);
-}
+type ArenaFiltersProps = {
+  callsOnly: boolean;
+  game: GameFilter;
+  isAdmin: boolean;
+  onCallsOnlyChange: (value: boolean) => void;
+  onGameChange: (value: GameFilter) => void;
+  onStatusChange: (value: StatusFilter) => void;
+  status: StatusFilter;
+};
 
-function followedGame(followed: string[], game: string) {
-  if (!followed.length) return true;
-  const key = gameKey(game);
-  if (key === 'LoL') return followed.includes('lol');
-  if (key === 'VALORANT') return followed.includes('valorant');
-  if (key === 'CS2') return followed.includes('cs2');
-  return false;
-}
-
-function ArenaHero({ match, finished }: { match: ArenaMatch; finished: boolean }) {
-  const live = matchPhase(match) === 'live';
-  const callTag = predictionTag(match);
-  const verdict = predictionVerdict(match);
+function ArenaFilters({ callsOnly, game, isAdmin, onCallsOnlyChange, onGameChange, onStatusChange, status }: ArenaFiltersProps) {
   return (
-    <Pressable
-      accessibilityHint="Ouvre le Match Center"
-      accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}`}
-      accessibilityRole="button"
-      onPress={() => openMatch(match.id)}
-      style={({ pressed }) => [styles.arenaCard, pressed && styles.pressed]}
-    >
-      <View style={styles.blueField} />
-      <View style={styles.purpleField} />
-      <View style={styles.centerLine} />
+    <View style={styles.filterPanel}>
+      <View style={styles.gameRow}>
+        {GAME_FILTERS.map((filter) => {
+          const active = game === filter.id;
+          return (
+            <Pressable
+              accessibilityLabel={`Filtrer sur ${filter.label}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              key={filter.id}
+              onPress={() => onGameChange(filter.id)}
+              style={({ pressed }) => [styles.gameFilter, active && styles.gameFilterActive, pressed && styles.pressed]}
+            >
+              <View style={[styles.gameIcon, active && styles.gameIconActive]}>
+                {filter.id === 'followed' ? (
+                  <Text style={[styles.allGamesGlyph, active && styles.allGamesGlyphActive]}>C</Text>
+                ) : (
+                  <GameLogo color={active ? '#070A0E' : '#8B96A2'} game={filter.id} size={17} />
+                )}
+              </View>
+              <Text style={[styles.gameFilterText, active && styles.gameFilterTextActive]}>{filter.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
-      <View style={styles.arenaTop}>
-        <View style={styles.eventRow}>
-          <View style={styles.gameDot} />
-          <Text numberOfLines={1} style={styles.eventText}>{gameLabel(match.jeu).toUpperCase()} · {match.evenement}</Text>
+      <View style={styles.modeRow}>
+        <View style={styles.statusSwitch}>
+          <Pressable accessibilityRole="button" accessibilityState={{ selected: status === 'upcoming' }} onPress={() => onStatusChange('upcoming')} style={[styles.statusButton, status === 'upcoming' && styles.statusButtonActive]}>
+            <Text style={[styles.statusText, status === 'upcoming' && styles.statusTextActive]}>À VENIR</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityState={{ selected: status === 'finished' }} onPress={() => onStatusChange('finished')} style={[styles.statusButton, status === 'finished' && styles.statusButtonActive]}>
+            <Text style={[styles.statusText, status === 'finished' && styles.statusTextActive]}>RÉSULTATS</Text>
+          </Pressable>
         </View>
-        <View style={[styles.livePill, finished && styles.finalPill]}>
-          <View style={[styles.liveDot, finished && styles.finalDot]} />
-          <Text style={[styles.liveText, finished && styles.finalText]}>{finished ? 'FINAL' : live ? 'LIVE' : formatTime(match.debut)}</Text>
-        </View>
+        <Pressable accessibilityRole="button" accessibilityState={{ selected: callsOnly }} onPress={() => onCallsOnlyChange(!callsOnly)} style={[styles.callsButton, callsOnly && styles.callsButtonActive]}>
+          <View style={[styles.callsDot, callsOnly && styles.callsDotActive]} />
+          <Text style={[styles.callsText, callsOnly && styles.callsTextActive]}>MES CALLS</Text>
+        </Pressable>
       </View>
 
-      <View style={styles.cardHeadline}>
-        <Text style={styles.cardKicker}>{finished ? 'VERDICT' : 'MATCH DU MOMENT'}</Text>
-        <Text style={styles.cardTitle}>{finished ? 'LE SCORE EST TOMBÉ' : live ? 'LE MATCH EST LANCÉ' : callTag ? 'TON CALL EST POSÉ' : 'PRENDS POSITION'}</Text>
-      </View>
+      {isAdmin ? (
+        <Pressable accessibilityRole="button" onPress={() => router.push('/admin/matches' as never)} style={styles.adminLink}>
+          <Text style={styles.adminLinkText}>ADMINISTRER LE CALENDRIER</Text>
+          <Text style={styles.adminLinkArrow}>→</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
 
-      <View style={styles.duel}>
-        <TeamBlock tag={match.tag_a} name={match.equipe_a} />
-        <View style={styles.vsBlock}>
-          <Text style={styles.bo}>BO{match.format}</Text>
-          <Text style={styles.vs}>{finished ? `${match.score_a ?? 0}–${match.score_b ?? 0}` : 'VS'}</Text>
-          <View style={styles.vsLine} />
-        </View>
-        <TeamBlock tag={match.tag_b} name={match.equipe_b} />
+function SectionHead({ count, date, status }: { count: number; date: Date; status: StatusFilter }) {
+  return (
+    <View style={styles.sectionHead}>
+      <View>
+        <Text style={styles.sectionEyebrow}>{status === 'upcoming' ? 'PROGRAMME DU JOUR' : 'VERDICTS DU JOUR'}</Text>
+        <Text style={styles.sectionTitle}>{formatSectionDate(date)}</Text>
       </View>
+      <View style={styles.countPill}><Text style={styles.countText}>{count} MATCH{count > 1 ? 'S' : ''}</Text></View>
+    </View>
+  );
+}
 
-      <View style={styles.cardFooter}>
-        <Text style={[styles.cardFooterText, (callTag || verdict) && styles.cardFooterCall]}>{verdict || (callTag ? `TON CALL · ${callTag}${live ? ' · LIVE' : ''}` : finished ? 'OUVRIR LE VERDICT' : live ? 'PRISES DE POSITION CLOSES' : 'OUVRIR LE MATCH CENTER')}</Text>
-        <Text style={styles.cardFooterArrow}>→</Text>
+function LiveMatchCard({ match }: { match: ArenaMatch }) {
+  const game = toGameId(match.jeu) ?? 'lol';
+  const callTag = predictionTag(match);
+  return (
+    <Pressable accessibilityHint="Ouvre le Match Center" accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}, en direct`} accessibilityRole="button" onPress={() => openMatch(match.id)} style={({ pressed }) => [styles.liveCard, pressed && styles.pressed]}>
+      <Image resizeMode="cover" source={GAME_BACKGROUNDS[game]} style={styles.liveBackdrop} />
+      <LinearGradient colors={['rgba(3,6,9,.25)', 'rgba(3,6,9,.73)', 'rgba(3,6,9,.98)']} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
+      <View style={styles.liveTop}>
+        <Text numberOfLines={1} style={styles.liveEvent}>{gameLabel(match.jeu).toUpperCase()} · {match.evenement}</Text>
+        <View style={styles.livePill}><View style={styles.liveDot} /><Text style={styles.liveText}>LIVE</Text></View>
       </View>
+      <View style={styles.liveDuel}>
+        <LiveTeam accent="#66B3FF" name={match.equipe_a} tag={match.tag_a} />
+        <View style={styles.liveScore}><Text style={styles.liveBo}>BO{match.format}</Text><Text style={styles.liveScoreText}>{match.score_a ?? 0}–{match.score_b ?? 0}</Text></View>
+        <LiveTeam accent="#FF6C7C" name={match.equipe_b} tag={match.tag_b} />
+      </View>
+      <View style={styles.liveFooter}><Text style={[styles.liveFooterText, callTag && styles.liveFooterCall]}>{callTag ? `TON CALL · ${callTag}` : 'SUIVRE LE MATCH'}</Text><Text style={styles.liveFooterArrow}>→</Text></View>
     </Pressable>
   );
 }
 
-function TeamBlock({ tag, name }: { tag: string; name: string }) {
-  return (
-    <View style={styles.team}>
-      <View style={styles.teamDiamondOuter}>
-        <View style={styles.teamDiamondInner}>
-          <Text adjustsFontSizeToFit numberOfLines={1} style={styles.teamTag}>{tag}</Text>
-        </View>
-      </View>
-      <Text numberOfLines={2} style={styles.teamName}>{name}</Text>
-    </View>
-  );
-}
-
-function GroupedMatches({ matches }: { matches: ArenaMatch[] }) {
-  return (
-    <View style={styles.groups}>
-      {groupMatches(matches).map((group) => (
-        <View key={group.label} style={styles.dayGroup}>
-          <View style={styles.dayLabelRow}><Text style={styles.dayLabel}>{group.label}</Text><View style={styles.dayLine} /></View>
-          <View style={styles.list}>{group.matches.map((match) => <MatchRow key={match.id} match={match} />)}</View>
-        </View>
-      ))}
-    </View>
-  );
+function LiveTeam({ accent, name, tag }: { accent: string; name: string; tag: string }) {
+  return <View style={styles.liveTeam}><TeamLogo accent={accent} name={name} size={56} tag={tag} /><Text numberOfLines={1} style={styles.liveTeamTag}>{tag}</Text></View>;
 }
 
 function MatchRow({ match }: { match: ArenaMatch }) {
   const phase = matchPhase(match);
   const finished = phase === 'finished';
-  const live = phase === 'live';
   const callTag = predictionTag(match);
   const verdict = predictionVerdict(match);
+  const open = predictionIsOpen(match);
+  const state = verdict || (callTag ? `CALL · ${callTag}` : finished ? 'FINAL' : open ? 'OUVERT' : 'CLOS');
   return (
-    <Pressable
-      accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}${callTag ? `, ton call ${callTag}` : ''}`}
-      accessibilityRole="button"
-      onPress={() => openMatch(match.id)}
-      style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}
-    >
-      <View style={styles.rowWhen}>
-        <Text style={[styles.rowTime, live && styles.rowTimeLive]}>{finished ? 'FINAL' : live ? 'LIVE' : formatTime(match.debut)}</Text>
-        <Text style={styles.rowGame}>{gameLabel(match.jeu)}</Text>
-      </View>
-      <View style={styles.rowMain}>
-        <Text numberOfLines={1} style={styles.rowEvent}>{match.evenement} · BO{match.format}</Text>
-        <Text style={styles.rowTeams}>{match.tag_a}  {finished ? `${match.score_a ?? 0} — ${match.score_b ?? 0}` : 'VS'}  {match.tag_b}</Text>
-      </View>
-      <View style={styles.rowTrailing}>
-        {verdict ? <Text style={[styles.rowCall, Number(match.prediction?.delta_frags ?? 0) >= 0 ? styles.rowCallWin : styles.rowCallLoss]}>{verdict}</Text> : callTag ? <Text style={styles.rowCall}>CALL · {callTag}</Text> : null}
-        <Text style={styles.rowArrow}>›</Text>
-      </View>
+    <Pressable accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}${callTag ? `, ton call ${callTag}` : ''}`} accessibilityRole="button" onPress={() => openMatch(match.id)} style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}>
+      <View style={styles.rowWhen}><Text style={styles.rowTime}>{finished ? 'FINAL' : formatTime(match.debut)}</Text><Text style={styles.rowGame}>{gameLabel(match.jeu)}</Text></View>
+      <View style={styles.rowLogos}><TeamLogo accent="#5BABFF" name={match.equipe_a} size={34} tag={match.tag_a} /><View style={styles.rowLogoOverlap}><TeamLogo accent="#FF6375" name={match.equipe_b} size={34} tag={match.tag_b} /></View></View>
+      <View style={styles.rowMain}><Text numberOfLines={1} style={styles.rowEvent}>{match.evenement} · BO{match.format}</Text><Text numberOfLines={1} style={styles.rowTeams}>{match.tag_a}  {finished ? `${match.score_a ?? 0} — ${match.score_b ?? 0}` : 'VS'}  {match.tag_b}</Text></View>
+      <View style={styles.rowTrailing}><Text style={[styles.rowState, (callTag || open) && styles.rowStateAccent, verdict && Number(match.prediction?.delta_frags ?? 0) < 0 && styles.rowStateLoss]}>{state}</Text><Text style={styles.rowArrow}>›</Text></View>
     </Pressable>
   );
 }
 
-function EmptyArena({ status }: { status: StatusFilter }) {
+function EmptyArena({ callsOnly, query, status }: { callsOnly: boolean; query: string; status: StatusFilter }) {
+  const filtered = Boolean(query.trim()) || callsOnly;
   return (
     <View style={styles.emptyCard}>
-      <Text style={styles.emptyEyebrow}>{status === 'upcoming' ? 'CALENDRIER' : 'HISTORIQUE'}</Text>
-      <Text style={styles.emptyTitle}>{status === 'upcoming' ? 'LE CALME AVANT LA PROCHAINE AFFICHE.' : 'AUCUN VERDICT POUR CE FILTRE.'}</Text>
-      <Text style={styles.emptyCopy}>{status === 'upcoming' ? 'Dès qu’un nouveau match arrive, l’Arena se réactive ici.' : 'Change de jeu ou reviens après les prochains résultats.'}</Text>
+      <Text style={styles.emptyEyebrow}>{filtered ? 'FILTRE ACTIF' : status === 'upcoming' ? 'CALENDRIER' : 'HISTORIQUE'}</Text>
+      <Text style={styles.emptyTitle}>{filtered ? 'AUCUN MATCH NE CORRESPOND.' : status === 'upcoming' ? 'JOURNÉE SANS AFFICHE.' : 'AUCUN VERDICT CE JOUR-LÀ.'}</Text>
+      <Text style={styles.emptyCopy}>{filtered ? 'Change de jeu, de date ou désactive Mes calls.' : 'Choisis une autre date dans le calendrier.'}</Text>
     </View>
   );
 }
 
 function MatchSkeleton() {
-  return <View style={styles.skeleton}><View style={styles.skeletonLine} /><View style={styles.skeletonBig} /><View style={styles.skeletonLine} /></View>;
+  return <View style={styles.skeleton}><View style={styles.skeletonHead} /><View style={styles.skeletonRow} /><View style={styles.skeletonRow} /></View>;
 }
 
-function openMatch(id: string) {
-  router.push({ pathname: '/match/[id]', params: { id } });
+function SearchIcon({ color, size }: { color: string; size: number }) {
+  return <Svg height={size} viewBox="0 0 24 24" width={size}><Circle cx="10.8" cy="10.8" fill="none" r="6.8" stroke={color} strokeWidth="2" /><Path d="m16 16 4.4 4.4" fill="none" stroke={color} strokeLinecap="round" strokeWidth="2" /></Svg>;
 }
 
-function groupMatches(matches: ArenaMatch[]) {
-  const groups: { label: string; matches: ArenaMatch[] }[] = [];
-  for (const match of matches) {
-    const label = temporalLabel(match);
-    const existing = groups.find((group) => group.label === label);
-    if (existing) existing.matches.push(match);
-    else groups.push({ label, matches: [match] });
+function CalendarIcon({ color, size }: { color: string; size: number }) {
+  return <Svg height={size} viewBox="0 0 24 24" width={size}><Path d="M6.5 3v3M17.5 3v3M4 9h16M5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5Z" fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" /></Svg>;
+}
+
+function CloseIcon({ color, size }: { color: string; size: number }) {
+  return <Svg height={size} viewBox="0 0 24 24" width={size}><Path d="m6 6 12 12M18 6 6 18" fill="none" stroke={color} strokeLinecap="round" strokeWidth="2" /></Svg>;
+}
+
+function filterMatches(matches: ArenaMatch[], game: GameFilter, followed: string[], callsOnly: boolean, query: string) {
+  const normalizedQuery = query.trim().toLocaleLowerCase('fr-FR');
+  return matches.filter((match) => {
+    const matchesGame = game === 'followed' ? followedGame(followed, match.jeu) : toGameId(match.jeu) === game;
+    if (!matchesGame || (callsOnly && !match.prediction)) return false;
+    if (!normalizedQuery) return true;
+    return [match.equipe_a, match.tag_a, match.equipe_b, match.tag_b, match.evenement, match.jeu]
+      .some((value) => value.toLocaleLowerCase('fr-FR').includes(normalizedQuery));
+  });
+}
+
+function followedGame(followed: string[], game: string) {
+  if (!followed.length) return true;
+  const key = toGameId(game);
+  return key ? followed.includes(key) : false;
+}
+
+function toGameId(game?: string | null): GameId | null {
+  if (!game) return null;
+  const key = gameKey(game);
+  if (key === 'LoL') return 'lol';
+  if (key === 'VALORANT') return 'valorant';
+  if (key === 'CS2') return 'cs2';
+  return null;
+}
+
+function buildCalendarDays(status: StatusFilter, matches: ArenaMatch[]) {
+  const today = startOfDay(new Date());
+  const validDates = matches.map((match) => startOfDay(new Date(match.debut))).filter((date) => !Number.isNaN(date.getTime()));
+  if (status === 'upcoming') {
+    const earliest = validDates.reduce<Date | null>((current, date) => !current || date < current ? date : current, null);
+    const start = earliest && earliest > addDays(today, 6) ? earliest : today;
+    return Array.from({ length: 7 }, (_, index) => addDays(start, index));
   }
-  return groups;
+  const latest = validDates.reduce<Date | null>((current, date) => !current || date > current ? date : current, null);
+  const end = latest && latest < addDays(today, -6) ? latest : today;
+  return Array.from({ length: 7 }, (_, index) => addDays(end, index - 6));
 }
 
-function temporalLabel(match: ArenaMatch) {
-  const date = new Date(match.debut);
-  const phase = matchPhase(match);
-  if (phase === 'live') return 'EN DIRECT';
-  if (phase === 'finished') return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
-  const now = new Date();
-  if (sameDay(date, now)) return "AUJOURD'HUI";
-  const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
-  if (sameDay(date, tomorrow)) return 'DEMAIN';
+function findDefaultDayKey(days: Date[], matches: ArenaMatch[], status: StatusFilter) {
+  const dayKeys = new Set(matches.map((match) => dateKey(new Date(match.debut))));
+  if (status === 'upcoming') {
+    const live = matches.find((match) => matchPhase(match) === 'live');
+    const liveKey = live ? dateKey(new Date(live.debut)) : null;
+    if (liveKey && days.some((day) => dateKey(day) === liveKey)) return liveKey;
+    const first = days.find((day) => dayKeys.has(dateKey(day)));
+    return dateKey(first ?? days[0]);
+  }
+  const reversed = [...days].reverse();
+  const last = reversed.find((day) => dayKeys.has(dateKey(day)));
+  return dateKey(last ?? reversed[0]);
+}
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function addDays(date: Date, amount: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + amount);
+  return next;
+}
+
+function dateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatWeekday(date: Date) {
+  return date.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').slice(0, 3).toUpperCase();
+}
+
+function formatMonth(date: Date) {
+  return date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }).replace('.', '').toUpperCase();
+}
+
+function formatFullDate(date: Date) {
+  return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+function formatSectionDate(date: Date) {
+  const today = startOfDay(new Date());
+  if (dateKey(date) === dateKey(today)) return "AUJOURD'HUI";
+  if (dateKey(date) === dateKey(addDays(today, 1))) return 'DEMAIN';
   return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
-}
-
-function sameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 function formatTime(value: string) {
@@ -373,103 +589,108 @@ function predictionVerdict(match: ArenaMatch) {
   return `${delta >= 0 ? '+' : '−'}${Math.abs(delta)} FRAGS`;
 }
 
+function openMatch(id: string) {
+  router.push({ pathname: '/match/[id]', params: { id } });
+}
+
 const styles = StyleSheet.create({
-  content: {
-    width: '100%',
-    maxWidth: 430,
-    alignSelf: 'center',
-    paddingBottom: 124,
-    gap: 20,
-  },
-  heroCopy: { paddingHorizontal: spacing.md, paddingTop: 4 },
-  eyebrow: { color: colors.volt, fontSize: 11, fontWeight: '900', letterSpacing: 3.1, marginBottom: 10 },
-  heroTitle: { color: '#F4F6F7', fontSize: 57, lineHeight: 48, fontWeight: '900', letterSpacing: -4.1 },
-  subtitle: { maxWidth: 385, marginTop: 14, color: '#8994A1', fontSize: 15, lineHeight: 23 },
-  adminEntry: { minHeight: 62, marginTop: 16, paddingHorizontal: 15, borderRadius: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#11170E', borderWidth: 1, borderColor: '#414D1E' },
-  adminEntryLabel: { color: colors.volt, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 },
-  adminEntryCopy: { marginTop: 4, color: colors.textMuted, fontSize: 10, fontWeight: '700' },
-  adminEntryArrow: { color: colors.volt, fontSize: 18, fontWeight: '900' },
-  arenaSummary: { minHeight: 72, marginHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', borderRadius: 18, backgroundColor: '#090E13', borderWidth: 1, borderColor: colors.border },
-  arenaMetric: { flex: 1, alignItems: 'center' },
-  arenaMetricValue: { color: colors.text, fontSize: 18, fontWeight: '900' },
-  arenaMetricValueLive: { color: '#56ADFF' },
-  arenaMetricLabel: { marginTop: 4, color: colors.textMuted, fontSize: 7, fontWeight: '900', letterSpacing: 1 },
-  arenaMetricDivider: { width: 1, height: 30, backgroundColor: colors.border },
-  filterPanel: { marginHorizontal: spacing.md, padding: 9, borderRadius: 17, backgroundColor: '#080C10', borderWidth: 1, borderColor: '#232A32', gap: 8 },
-  gameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
-  gameFilter: { flex: 1, minHeight: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  gameFilterActive: { backgroundColor: '#141A0F', borderWidth: 1, borderColor: '#46541C' },
-  gameFilterText: { color: '#6F7A88', fontSize: 11, fontWeight: '900', letterSpacing: 0.45 },
-  gameFilterTextActive: { color: colors.text },
-  statusRow: { flexDirection: 'row', gap: 8 },
-  statusButton: { flex: 1, minHeight: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#252D35' },
-  statusButtonActive: { backgroundColor: colors.volt, borderColor: colors.volt },
-  statusText: { color: '#7D8793', fontSize: 12, fontWeight: '900' },
-  statusTextActive: { color: '#080A0C' },
+  content: { width: '100%', maxWidth: 430, alignSelf: 'center', paddingBottom: 124, gap: 18 },
+  scheduleHero: { position: 'relative', minHeight: 306, marginHorizontal: spacing.md, overflow: 'hidden', borderRadius: 30, backgroundColor: '#101820', borderWidth: 1, borderColor: '#2B3540', padding: 18 },
+  scheduleBackdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, width: '100%', height: '100%' },
+  scheduleTop: { zIndex: 2, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  arenaMark: { minHeight: 34, paddingHorizontal: 12, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: 'rgba(5,9,12,.48)', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' },
+  arenaMarkDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt },
+  arenaMarkText: { color: '#F4F7F8', fontFamily: fonts.bold, fontSize: 9, letterSpacing: 1.3 },
+  searchField: { flex: 1, height: 42, paddingHorizontal: 12, borderRadius: 21, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(5,9,12,.74)', borderWidth: 1, borderColor: 'rgba(255,255,255,.26)' },
+  searchInput: { flex: 1, color: '#FFFFFF', fontFamily: fonts.medium, fontSize: 12 },
+  scheduleActions: { flexDirection: 'row', gap: 8 },
+  iconButton: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,9,12,.52)', borderWidth: 1, borderColor: 'rgba(255,255,255,.17)' },
+  scheduleCopy: { zIndex: 2, marginTop: 'auto', marginBottom: 14, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 },
+  scheduleTitle: { maxWidth: 275, color: '#F8FAFA', fontFamily: fonts.display, fontSize: 33, lineHeight: 34, letterSpacing: -.8 },
+  scheduleMonth: { marginBottom: 3, color: 'rgba(255,255,255,.76)', fontFamily: fonts.bold, fontSize: 9, letterSpacing: 1 },
+  daysRow: { zIndex: 2, flexDirection: 'row', gap: 5 },
+  dayButton: { flex: 1, minWidth: 0, height: 72, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(234,244,216,.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,.09)' },
+  dayButtonActive: { backgroundColor: '#F5F6F0', borderColor: '#FFFFFF' },
+  dayButtonPressed: { transform: [{ scale: .96 }] },
+  dayName: { color: 'rgba(255,255,255,.72)', fontFamily: fonts.bold, fontSize: 8, letterSpacing: .4 },
+  dayNumber: { marginTop: 6, color: '#FFFFFF', fontFamily: fonts.bold, fontSize: 14 },
+  dayTextActive: { color: '#0A0E11' },
+  dayMatchDot: { width: 4, height: 4, marginTop: 6, borderRadius: 2, backgroundColor: 'transparent' },
+  dayMatchDotVisible: { backgroundColor: colors.volt },
+  dayMatchDotActive: { backgroundColor: '#0A0E11' },
+  filterPanel: { marginHorizontal: spacing.md, padding: 9, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222B34', gap: 9 },
+  gameRow: { flexDirection: 'row', gap: 5 },
+  gameFilter: { flex: 1, minHeight: 58, borderRadius: 16, alignItems: 'center', justifyContent: 'center', gap: 5 },
+  gameFilterActive: { backgroundColor: '#151B10', borderWidth: 1, borderColor: '#47531F' },
+  gameIcon: { width: 27, height: 27, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#151B21' },
+  gameIconActive: { backgroundColor: colors.volt },
+  allGamesGlyph: { color: '#8B96A2', fontFamily: fonts.display, fontSize: 16 },
+  allGamesGlyphActive: { color: '#070A0E' },
+  gameFilterText: { color: '#707B87', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .55 },
+  gameFilterTextActive: { color: '#F4F6F7' },
+  modeRow: { flexDirection: 'row', gap: 7 },
+  statusSwitch: { flex: 1, minHeight: 40, padding: 3, borderRadius: 14, flexDirection: 'row', backgroundColor: '#070B0F', borderWidth: 1, borderColor: '#202832' },
+  statusButton: { flex: 1, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  statusButtonActive: { backgroundColor: '#202830' },
+  statusText: { color: '#68737F', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .55 },
+  statusTextActive: { color: '#F5F7F8' },
+  callsButton: { minWidth: 104, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#070B0F', borderWidth: 1, borderColor: '#202832' },
+  callsButtonActive: { backgroundColor: '#161D0F', borderColor: '#4B5820' },
+  callsDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#4B5661' },
+  callsDotActive: { backgroundColor: colors.volt },
+  callsText: { color: '#75808C', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .45 },
+  callsTextActive: { color: colors.volt },
+  adminLink: { minHeight: 34, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#202832' },
+  adminLinkText: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 7, letterSpacing: .8 },
+  adminLinkArrow: { color: colors.volt, fontSize: 14 },
   errorCard: { marginHorizontal: spacing.md, padding: 13, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
-  errorText: { flex: 1, color: '#FF9AA2', fontSize: 11 },
-  retry: { color: colors.volt, fontSize: 9, fontWeight: '900' },
-  arenaCard: { position: 'relative', minHeight: 475, marginHorizontal: spacing.md, overflow: 'hidden', borderRadius: 28, backgroundColor: '#10151B', borderWidth: 1, borderColor: '#39414A', padding: 18 },
-  blueField: { position: 'absolute', left: -50, top: 90, bottom: 0, width: '64%', backgroundColor: 'rgba(16,62,111,0.38)', transform: [{ skewX: '-8deg' }] },
-  purpleField: { position: 'absolute', right: -50, top: 90, bottom: 0, width: '64%', backgroundColor: 'rgba(101,37,99,0.34)', transform: [{ skewX: '8deg' }] },
-  centerLine: { position: 'absolute', top: 115, bottom: 70, left: '50%', width: 1, backgroundColor: 'rgba(232,255,61,0.12)' },
-  arenaTop: { zIndex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  eventRow: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 7 },
-  gameDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#D79B37' },
-  eventText: { flex: 1, color: '#AAB3BE', fontSize: 10, fontWeight: '800', letterSpacing: 1.25 },
-  livePill: { minHeight: 32, paddingHorizontal: 12, borderRadius: 17, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#10151D', borderWidth: 1, borderColor: '#26313C' },
-  finalPill: { borderColor: '#3B4651' },
-  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#4DA5FF' },
-  finalDot: { backgroundColor: colors.volt },
-  liveText: { color: '#56ADFF', fontSize: 10, fontWeight: '900', letterSpacing: 1.4 },
-  finalText: { color: colors.volt },
-  cardHeadline: { zIndex: 2, alignItems: 'center', marginTop: 42 },
-  cardKicker: { color: '#788391', fontSize: 10, fontWeight: '900', letterSpacing: 2.6 },
-  cardTitle: { marginTop: 8, color: '#F6F7F7', fontSize: 39, lineHeight: 40, fontWeight: '900', letterSpacing: -2.6, textAlign: 'center' },
-  duel: { zIndex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 54 },
-  team: { flex: 1, alignItems: 'center', gap: 19 },
-  teamDiamondOuter: { width: 82, height: 82, transform: [{ rotate: '45deg' }], alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(12,17,23,0.92)', borderWidth: 2, borderColor: '#6E7B89' },
-  teamDiamondInner: { width: 62, height: 62, alignItems: 'center', justifyContent: 'center', backgroundColor: '#7447B0', borderWidth: 2, borderColor: '#AF87E6' },
-  teamTag: { transform: [{ rotate: '-45deg' }], color: '#FFFFFF', fontSize: 17, fontWeight: '900' },
-  teamName: { minHeight: 47, color: '#F4F6F8', fontSize: 23, lineHeight: 23, fontWeight: '900', letterSpacing: -1.2, textAlign: 'center' },
-  vsBlock: { width: 72, alignItems: 'center' },
-  bo: { color: '#838D9A', fontSize: 9, fontWeight: '900', letterSpacing: 2 },
-  vs: { marginTop: 12, color: '#F4F6F8', fontSize: 42, lineHeight: 45, fontWeight: '900', letterSpacing: -2.5 },
-  vsLine: { marginTop: 6, width: 28, height: 3, borderRadius: 999, backgroundColor: colors.volt },
-  cardFooter: { zIndex: 2, marginTop: 'auto', minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)' },
-  cardFooterText: { flex: 1, color: '#9EA8B4', fontSize: 9, fontWeight: '900', letterSpacing: 1.3 },
-  cardFooterCall: { color: colors.volt },
-  cardFooterArrow: { color: colors.volt, fontSize: 18, fontWeight: '900' },
-  emptyCard: { marginHorizontal: spacing.md, minHeight: 260, justifyContent: 'center', padding: 25, borderRadius: 28, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#252E37' },
-  emptyEyebrow: { color: colors.volt, fontSize: 10, fontWeight: '900', letterSpacing: 2 },
-  emptyTitle: { marginTop: 11, color: colors.text, fontSize: 28, lineHeight: 29, fontWeight: '900', letterSpacing: -1.5 },
-  emptyCopy: { marginTop: 12, color: colors.textMuted, fontSize: 13, lineHeight: 19 },
-  section: { marginHorizontal: spacing.md, gap: 12 },
-  sectionHead: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 },
-  sectionEyebrow: { color: colors.textMuted, fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
-  sectionTitle: { marginTop: 4, color: colors.text, fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
-  link: { color: colors.volt, fontSize: 8, fontWeight: '900' },
-  groups: { gap: 18 },
-  dayGroup: { gap: 8 },
-  dayLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
-  dayLabel: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 1.2 },
-  dayLine: { flex: 1, height: 1, backgroundColor: colors.border },
-  list: { overflow: 'hidden', borderRadius: 18, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border },
-  matchRow: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: '#182029' },
-  rowWhen: { width: 55 },
-  rowTime: { color: colors.text, fontSize: 11, fontWeight: '900' },
-  rowTimeLive: { color: '#56ADFF' },
-  rowGame: { marginTop: 3, color: colors.textMuted, fontSize: 8, fontWeight: '800' },
+  errorText: { flex: 1, color: '#FF9AA2', fontFamily: fonts.body, fontSize: 11 },
+  retry: { color: colors.volt, fontFamily: fonts.bold, fontSize: 9 },
+  matchesSection: { marginHorizontal: spacing.md, gap: 12 },
+  sectionHead: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 },
+  sectionEyebrow: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.4 },
+  sectionTitle: { marginTop: 4, color: colors.text, fontFamily: fonts.display, fontSize: 25, letterSpacing: -.4 },
+  countPill: { minHeight: 27, paddingHorizontal: 10, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#11171D', borderWidth: 1, borderColor: '#29323B' },
+  countText: { color: '#8994A0', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .7 },
+  liveStack: { gap: 10 },
+  liveCard: { minHeight: 226, overflow: 'hidden', borderRadius: 26, backgroundColor: '#111820', borderWidth: 1, borderColor: '#394550', padding: 15 },
+  liveBackdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, width: '100%', height: '100%' },
+  liveTop: { zIndex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  liveEvent: { flex: 1, color: 'rgba(255,255,255,.76)', fontFamily: fonts.bold, fontSize: 8, letterSpacing: .7 },
+  livePill: { minHeight: 28, paddingHorizontal: 10, borderRadius: 15, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(4,8,11,.68)', borderWidth: 1, borderColor: 'rgba(102,179,255,.48)' },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#66B3FF' },
+  liveText: { color: '#72BAFF', fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1 },
+  liveDuel: { zIndex: 2, marginTop: 25, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 28 },
+  liveTeam: { width: 74, alignItems: 'center', gap: 7 },
+  liveTeamTag: { color: '#FFFFFF', fontFamily: fonts.bold, fontSize: 12 },
+  liveScore: { alignItems: 'center' },
+  liveBo: { color: 'rgba(255,255,255,.58)', fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1 },
+  liveScoreText: { marginTop: 5, color: '#FFFFFF', fontFamily: fonts.display, fontSize: 35, letterSpacing: -1 },
+  liveFooter: { zIndex: 2, minHeight: 38, marginTop: 'auto', paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.13)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  liveFooterText: { color: '#D5DBDF', fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1 },
+  liveFooterCall: { color: colors.volt },
+  liveFooterArrow: { color: colors.volt, fontSize: 17 },
+  matchList: { overflow: 'hidden', borderRadius: 20, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222B34' },
+  matchRow: { minHeight: 88, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 9, borderBottomWidth: 1, borderBottomColor: '#192129' },
+  rowWhen: { width: 43 },
+  rowTime: { color: '#F3F6F7', fontFamily: fonts.bold, fontSize: 10 },
+  rowGame: { marginTop: 4, color: colors.textMuted, fontFamily: fonts.medium, fontSize: 8 },
+  rowLogos: { width: 52, flexDirection: 'row', alignItems: 'center' },
+  rowLogoOverlap: { marginLeft: -15 },
   rowMain: { flex: 1, minWidth: 0 },
-  rowEvent: { color: colors.textMuted, fontSize: 8, fontWeight: '700' },
-  rowTeams: { marginTop: 6, color: colors.text, fontSize: 13, fontWeight: '900' },
-  rowTrailing: { alignItems: 'flex-end', gap: 3 },
-  rowCall: { color: colors.volt, fontSize: 7, fontWeight: '900', letterSpacing: .4 },
-  rowCallWin: { color: colors.success },
-  rowCallLoss: { color: colors.danger },
-  rowArrow: { color: colors.volt, fontSize: 18 },
-  skeleton: { minHeight: 430, marginHorizontal: spacing.md, padding: 20, justifyContent: 'space-between', borderRadius: 28, backgroundColor: '#0D1218', borderWidth: 1, borderColor: colors.border },
-  skeletonLine: { width: '60%', height: 12, borderRadius: 6, backgroundColor: '#171E26' },
-  skeletonBig: { width: '80%', height: 160, borderRadius: 28, alignSelf: 'center', backgroundColor: '#151C24' },
-  pressed: { opacity: 0.78 },
+  rowEvent: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 8 },
+  rowTeams: { marginTop: 6, color: colors.text, fontFamily: fonts.bold, fontSize: 12 },
+  rowTrailing: { minWidth: 58, alignItems: 'flex-end', gap: 2 },
+  rowState: { color: '#7E8995', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .25 },
+  rowStateAccent: { color: colors.volt },
+  rowStateLoss: { color: colors.danger },
+  rowArrow: { color: colors.volt, fontSize: 16 },
+  emptyCard: { minHeight: 210, marginHorizontal: spacing.md, justifyContent: 'center', padding: 24, borderRadius: 26, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#252E37' },
+  emptyEyebrow: { color: colors.volt, fontFamily: fonts.bold, fontSize: 9, letterSpacing: 1.7 },
+  emptyTitle: { marginTop: 10, color: colors.text, fontFamily: fonts.display, fontSize: 29, lineHeight: 29, letterSpacing: -.7 },
+  emptyCopy: { marginTop: 10, color: colors.textMuted, fontFamily: fonts.body, fontSize: 12, lineHeight: 18 },
+  skeleton: { marginHorizontal: spacing.md, gap: 10 },
+  skeletonHead: { width: 180, height: 30, borderRadius: 12, backgroundColor: '#131A21' },
+  skeletonRow: { height: 88, borderRadius: 20, backgroundColor: '#10161C', borderWidth: 1, borderColor: '#202832' },
+  pressed: { opacity: .76 },
 });
