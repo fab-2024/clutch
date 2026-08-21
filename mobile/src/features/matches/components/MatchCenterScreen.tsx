@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -13,13 +13,15 @@ import {
 
 import { Screen } from '@/src/components/layout/Screen';
 import { createDuel } from '@/src/features/social/duels/api';
+import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, radius, spacing } from '@/src/theme';
 
 import { loadMatchCenter, submitRankedPrediction } from '../api';
-import type { MatchCenterData, ProjectionChoice } from '../types';
+import type { ArenaMatch, MatchCenterData, MatchProjection, ProjectionChoice } from '../types';
 import { gameLabel, matchPhase, predictionIsOpen } from '../utils';
 
 export default function MatchCenterScreen() {
+  const { session } = useAuth();
   const params = useLocalSearchParams<{ id?: string | string[]; duel?: string | string[] }>();
   const matchId = Array.isArray(params.id) ? params.id[0] : params.id;
   const duelToken = Array.isArray(params.duel) ? params.duel[0] : params.duel;
@@ -31,25 +33,42 @@ export default function MatchCenterScreen() {
   const [duelBusy, setDuelBusy] = useState(false);
   const [webConfirmationOpen, setWebConfirmationOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [duelError, setDuelError] = useState<string | null>(null);
+  const loadRequestRef = useRef(0);
 
   const load = useCallback(async (refresh = false) => {
-    if (!matchId) return;
+    if (!matchId || !session?.user.id) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+    const requestId = ++loadRequestRef.current;
     refresh ? setRefreshing(true) : setLoading(true);
     setError(null);
     try {
-      setData(await loadMatchCenter(matchId));
+      const nextData = await loadMatchCenter(matchId, session.user.id);
+      if (requestId !== loadRequestRef.current) return;
+      setData(nextData);
     } catch (caught) {
+      if (requestId !== loadRequestRef.current) return;
       console.error(caught);
       setError(caught instanceof Error ? caught.message : 'Impossible de charger le Match Center.');
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (requestId === loadRequestRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
-  }, [matchId]);
+  }, [matchId, session?.user.id]);
 
   useEffect(() => {
+    setData(null);
+    setSelected(null);
+    setSubmitError(null);
+    setWebConfirmationOpen(false);
     void load();
+    return () => { loadRequestRef.current += 1; };
   }, [load]);
 
   const match = data?.match ?? null;
@@ -94,6 +113,7 @@ export default function MatchCenterScreen() {
   async function lockPrediction(targetMatchId: string, choice: 'a' | 'b') {
     setWebConfirmationOpen(false);
     setSubmitting(true);
+    setSubmitError(null);
     try {
       await submitRankedPrediction(targetMatchId, choice);
       setSelected(null);
@@ -103,8 +123,8 @@ export default function MatchCenterScreen() {
       }
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'Réessaie dans un instant.';
-      if (Platform.OS === 'web') globalThis.alert(`Pronostic impossible\n\n${message}`);
-      else Alert.alert('Pronostic impossible', message);
+      setSubmitError(message);
+      if (Platform.OS !== 'web') Alert.alert('Pronostic impossible', message);
     } finally {
       setSubmitting(false);
     }
@@ -139,7 +159,7 @@ export default function MatchCenterScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topBar}>
-          <Pressable onPress={returnToArena} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
+          <Pressable accessibilityLabel={`Retour ${duelToken ? 'au duel' : 'à l’Arena'}`} accessibilityRole="button" onPress={returnToArena} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
             <Text style={styles.backArrow}>←</Text>
             <Text style={styles.backText}>{duelToken ? 'DUEL' : 'ARENA'}</Text>
           </Pressable>
@@ -152,7 +172,7 @@ export default function MatchCenterScreen() {
           <View style={styles.errorCard}>
             <Text style={styles.errorTitle}>Match Center indisponible</Text>
             <Text style={styles.errorCopy}>{error}</Text>
-            <Pressable onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable>
+            <Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable>
           </View>
         ) : null}
 
@@ -197,6 +217,8 @@ export default function MatchCenterScreen() {
               {choiceA && choiceB && phase !== 'finished' && phase !== 'cancelled' ? (
                 <ProbabilityBar a={choiceA} b={choiceB} tagA={match.tag_a} tagB={match.tag_b} />
               ) : null}
+
+              {projection && phase !== 'finished' && phase !== 'cancelled' ? <ProjectionMeta projection={projection} /> : null}
             </View>
 
             {prediction ? (
@@ -208,6 +230,7 @@ export default function MatchCenterScreen() {
                 selected={selected}
                 onSelect={(choice) => {
                   setSelected(choice);
+                  setSubmitError(null);
                   setWebConfirmationOpen(false);
                 }}
               />
@@ -256,6 +279,8 @@ export default function MatchCenterScreen() {
                     : 'Rating établi.'} Aucun Frag n’est engagé ni dépensé.
                 </Text>
 
+                {submitError ? <View style={styles.submitError}><Text style={styles.submitErrorTitle}>PRONOSTIC NON ENREGISTRÉ</Text><Text style={styles.submitErrorCopy}>{submitError}</Text></View> : null}
+
                 {Platform.OS === 'web' && webConfirmationOpen && selected ? (
                   <View style={styles.webConfirmation}>
                     <Text style={styles.webConfirmationTitle}>CONFIRMER CE PRONOSTIC ?</Text>
@@ -264,12 +289,14 @@ export default function MatchCenterScreen() {
                     </Text>
                     <View style={styles.webConfirmationActions}>
                       <Pressable
+                        accessibilityRole="button"
                         onPress={() => setWebConfirmationOpen(false)}
                         style={({ pressed }) => [styles.webCancelButton, pressed && styles.confirmPressed]}
                       >
                         <Text style={styles.webCancelText}>ANNULER</Text>
                       </Pressable>
                       <Pressable
+                        accessibilityRole="button"
                         disabled={submitting}
                         onPress={() => void lockPrediction(match.id, selected)}
                         style={({ pressed }) => [styles.webLockButton, pressed && styles.confirmPressed, submitting && styles.disabled]}
@@ -280,6 +307,7 @@ export default function MatchCenterScreen() {
                   </View>
                 ) : (
                   <Pressable
+                    accessibilityRole="button"
                     disabled={submitting}
                     onPress={() => void confirmPrediction()}
                     style={({ pressed }) => [styles.confirmButton, pressed && styles.confirmPressed, submitting && styles.disabled]}
@@ -298,6 +326,8 @@ export default function MatchCenterScreen() {
                 Correct : tu gagnes des Frags. Faux : tu en perds. La probabilité du modèle est figée pour tous les joueurs avant ton choix.
               </Text>
             </View>
+
+            {data?.related.length ? <RelatedMatches matches={data.related} /> : null}
           </>
         ) : null}
       </ScrollView>
@@ -348,6 +378,7 @@ function PredictionZone({
 }
 
 function ChoiceCard({
+  choice,
   team,
   tag,
   projection,
@@ -362,7 +393,14 @@ function ChoiceCard({
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.choice, selected && styles.choiceSelected, pressed && styles.pressed]}>
+    <Pressable
+      accessibilityLabel={`Choisir ${team}, ${Math.round(Number(projection.proba) * 100)} pour cent, gain ${Math.abs(projection.gain)} Frags, perte ${Math.abs(projection.perte)} Frags`}
+      accessibilityHint={`Camp ${choice.toUpperCase()}`}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={({ pressed }) => [styles.choice, selected && styles.choiceSelected, pressed && styles.pressed]}
+    >
       <View style={[styles.choiceMark, selected && styles.choiceMarkSelected]}>
         <Text style={[styles.choiceTag, selected && styles.choiceTagSelected]}>{tag}</Text>
       </View>
@@ -458,6 +496,50 @@ function ProbabilityBar({ a, b, tagA, tagB }: { a: ProjectionChoice; b: Projecti
   );
 }
 
+function ProjectionMeta({ projection }: { projection: MatchProjection }) {
+  const source = String(projection.source || 'modèle').replace(/_/g, ' ').toUpperCase();
+  const frozenAt = projection.figee_le
+    ? new Date(projection.figee_le).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }).replace('.', '').toUpperCase()
+    : null;
+  return (
+    <View style={styles.projectionMeta}>
+      <Text style={styles.projectionMetaText}>{source}</Text>
+      {frozenAt ? <><Text style={styles.projectionMetaDot}>·</Text><Text style={styles.projectionMetaText}>FIGÉ {frozenAt}</Text></> : null}
+      {projection.k ? <><Text style={styles.projectionMetaDot}>·</Text><Text style={styles.projectionMetaText}>K={projection.k}</Text></> : null}
+    </View>
+  );
+}
+
+function RelatedMatches({ matches }: { matches: ArenaMatch[] }) {
+  return (
+    <View style={styles.relatedSection}>
+      <View>
+        <Text style={styles.relatedEyebrow}>PROCHAINS MATCHS</Text>
+        <Text style={styles.relatedTitle}>Continue dans la même Arena.</Text>
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relatedRail}>
+        {matches.map((match) => (
+          <Pressable
+            accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}`}
+            accessibilityRole="button"
+            key={match.id}
+            onPress={() => router.replace({ pathname: '/match/[id]', params: { id: match.id } })}
+            style={({ pressed }) => [styles.relatedCard, pressed && styles.pressed]}
+          >
+            <View style={styles.relatedTop}>
+              <Text style={styles.relatedWhen}>{formatRelatedDate(match.debut)}</Text>
+              <Text style={styles.relatedGame}>{gameLabel(match.jeu)}</Text>
+            </View>
+            <Text numberOfLines={1} style={styles.relatedEvent}>{match.evenement}</Text>
+            <Text style={styles.relatedDuel}>{match.tag_a} <Text style={styles.relatedVs}>VS</Text> {match.tag_b}</Text>
+            <View style={styles.relatedFooter}><Text style={styles.relatedFormat}>BO{match.format}</Text><Text style={styles.relatedArrow}>→</Text></View>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
 function ClosedState({ eyebrow, title, copy }: { eyebrow: string; title: string; copy: string }) {
   return (
     <View style={styles.closedCard}>
@@ -503,6 +585,11 @@ function formatTime(value: string) {
   return new Date(value).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
+function formatRelatedDate(value: string) {
+  const date = new Date(value);
+  return `${date.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').toUpperCase()} · ${formatTime(value)}`;
+}
+
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: 430, alignSelf: 'center', paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: 60, gap: spacing.lg },
   topBar: { minHeight: 42, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -541,6 +628,9 @@ const styles = StyleSheet.create({
   probabilityStrong: { color: colors.text, fontWeight: '900' },
   probabilityTrack: { height: 6, overflow: 'hidden', borderRadius: radius.pill, backgroundColor: '#242B34' },
   probabilityFill: { height: '100%', borderRadius: radius.pill, backgroundColor: colors.volt },
+  projectionMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 5 },
+  projectionMetaText: { color: '#687482', fontSize: 7, fontWeight: '900', letterSpacing: .7 },
+  projectionMetaDot: { color: '#46515D', fontSize: 8 },
   market: { padding: spacing.lg, borderRadius: radius.lg, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: colors.border, gap: 8 },
   marketEyebrow: { color: colors.volt, fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
   marketTitle: { color: colors.text, fontSize: 23, lineHeight: 27, fontWeight: '900', letterSpacing: -.5 },
@@ -574,6 +664,9 @@ const styles = StyleSheet.create({
   riskLoss: { color: colors.danger },
   riskUnit: { color: colors.textMuted, fontSize: 7, fontWeight: '800' },
   ticketHint: { color: colors.textMuted, fontSize: 10, lineHeight: 16 },
+  submitError: { padding: spacing.sm, borderRadius: radius.sm, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', gap: 4 },
+  submitErrorTitle: { color: '#FF9AA3', fontSize: 8, fontWeight: '900', letterSpacing: .7 },
+  submitErrorCopy: { color: '#D78891', fontSize: 10, lineHeight: 15 },
   confirmButton: { minHeight: 54, paddingHorizontal: spacing.md, borderRadius: radius.md, backgroundColor: colors.volt, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   confirmPressed: { opacity: .85 },
   confirmText: { color: '#080B0F', fontSize: 10, fontWeight: '900', letterSpacing: .8 },
@@ -617,6 +710,20 @@ const styles = StyleSheet.create({
   infoEyebrow: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 1.3 },
   infoTitle: { color: colors.text, fontSize: 17, fontWeight: '900' },
   infoCopy: { color: colors.textMuted, fontSize: 11, lineHeight: 17 },
+  relatedSection: { gap: 12 },
+  relatedEyebrow: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 1.3 },
+  relatedTitle: { marginTop: 4, color: colors.text, fontSize: 19, fontWeight: '900', letterSpacing: -.4 },
+  relatedRail: { gap: spacing.sm },
+  relatedCard: { width: 210, minHeight: 145, padding: 14, borderRadius: 18, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: colors.border },
+  relatedTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  relatedWhen: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: .5 },
+  relatedGame: { color: colors.textMuted, fontSize: 8, fontWeight: '900' },
+  relatedEvent: { marginTop: 10, color: colors.textMuted, fontSize: 9, fontWeight: '700' },
+  relatedDuel: { marginTop: 10, color: colors.text, fontSize: 19, fontWeight: '900', letterSpacing: -.5 },
+  relatedVs: { color: colors.textMuted, fontSize: 8, fontWeight: '900' },
+  relatedFooter: { marginTop: 'auto', paddingTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#1D252D' },
+  relatedFormat: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: .7 },
+  relatedArrow: { color: colors.volt, fontSize: 16, fontWeight: '900' },
   errorCard: { padding: spacing.lg, borderRadius: radius.lg, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#48242A', gap: 8 },
   errorTitle: { color: colors.text, fontSize: 17, fontWeight: '900' },
   errorCopy: { color: '#FF9AA3', fontSize: 11, lineHeight: 17 },

@@ -20,6 +20,11 @@ export type HubMatch = {
   statut: string;
 };
 
+export type HubPrediction = {
+  matchId: string;
+  choice: 'a' | 'b';
+};
+
 export type HubFaction = {
   equipeId: string;
   nom: string;
@@ -36,6 +41,8 @@ export type HubData = {
   frags: FragsState | null;
   streak: number;
   nextMatch: HubMatch | null;
+  upNext: HubMatch[];
+  nextMatchPrediction: HubPrediction | null;
   predictionsToday: number;
   leagueCount: number;
   faction: HubFaction | null;

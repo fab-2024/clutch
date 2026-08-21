@@ -12,6 +12,14 @@ export type ArenaMatch = {
   statut: 'a_venir' | 'en_cours' | 'termine' | 'annule';
   score_a: number | null;
   score_b: number | null;
+  prediction: ArenaPrediction | null;
+};
+
+export type ArenaPrediction = {
+  match_id: string;
+  choix: 'a' | 'b';
+  statut: string;
+  delta_frags: number | null;
 };
 
 export type ProjectionChoice = {
@@ -22,9 +30,12 @@ export type ProjectionChoice = {
 };
 
 export type MatchProjection = {
+  match_id?: string;
   choix: ProjectionChoice[];
   placements_restants?: number;
   k?: number;
+  source?: string;
+  figee_le?: string;
 };
 
 export type RankedPrediction = {
@@ -42,4 +53,5 @@ export type MatchCenterData = {
   match: ArenaMatch;
   projection: MatchProjection | null;
   prediction: RankedPrediction | null;
+  related: ArenaMatch[];
 };

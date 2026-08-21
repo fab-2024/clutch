@@ -16,7 +16,7 @@ import { colors, radius, spacing } from '@/src/theme';
 
 import { loadArenaMatches } from '../api';
 import type { ArenaMatch } from '../types';
-import { gameKey, gameLabel, matchPhase } from '../utils';
+import { gameKey, gameLabel, matchPhase, predictionIsOpen } from '../utils';
 
 type StatusFilter = 'upcoming' | 'finished';
 type GameFilter = 'Pour toi' | 'LoL' | 'VALORANT' | 'CS2';
@@ -24,7 +24,7 @@ type GameFilter = 'Pour toi' | 'LoL' | 'VALORANT' | 'CS2';
 const GAME_FILTERS: GameFilter[] = ['Pour toi', 'LoL', 'VALORANT', 'CS2'];
 
 export default function MatchesScreen() {
-  const { profile } = useAuth();
+  const { profile, session } = useAuth();
   const [upcoming, setUpcoming] = useState<ArenaMatch[]>([]);
   const [finished, setFinished] = useState<ArenaMatch[]>([]);
   const [status, setStatus] = useState<StatusFilter>('upcoming');
@@ -34,10 +34,17 @@ export default function MatchesScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async (refresh = false) => {
+    if (!session?.user.id) {
+      setUpcoming([]);
+      setFinished([]);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     refresh ? setRefreshing(true) : setLoading(true);
     setError(null);
     try {
-      const data = await loadArenaMatches();
+      const data = await loadArenaMatches(session.user.id);
       setUpcoming(data.upcoming);
       setFinished(data.finished);
     } catch (caught) {
@@ -46,24 +53,27 @@ export default function MatchesScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [session?.user.id]);
 
   useEffect(() => { void load(); }, [load]);
 
   const source = status === 'upcoming' ? upcoming : finished;
   const filtered = useMemo(
-    () => source.filter((match) => game === 'Pour toi'
-      ? followedGame(profile?.jeux_suivis ?? [], match.jeu)
-      : gameKey(match.jeu) === game),
+    () => filterMatches(source, game, profile?.jeux_suivis ?? []),
     [game, profile?.jeux_suivis, source],
+  );
+  const upcomingForGame = useMemo(
+    () => filterMatches(upcoming, game, profile?.jeux_suivis ?? []),
+    [game, profile?.jeux_suivis, upcoming],
   );
   const featured = filtered[0] ?? null;
   const rest = featured ? filtered.slice(1) : [];
   const fallbackFinished = status === 'upcoming' && filtered.length === 0
-    ? finished.filter((match) => game === 'Pour toi'
-      ? followedGame(profile?.jeux_suivis ?? [], match.jeu)
-      : gameKey(match.jeu) === game).slice(0, 4)
+    ? filterMatches(finished, game, profile?.jeux_suivis ?? []).slice(0, 4)
     : [];
+  const liveCount = upcomingForGame.filter((match) => matchPhase(match) === 'live').length;
+  const openCount = upcomingForGame.filter((match) => predictionIsOpen(match)).length;
+  const calledCount = upcomingForGame.filter((match) => Boolean(match.prediction)).length;
 
   return (
     <Screen>
@@ -91,10 +101,21 @@ export default function MatchesScreen() {
           ) : null}
         </View>
 
+        <View style={styles.arenaSummary}>
+          <ArenaMetric label="LIVE" value={loading ? '—' : String(liveCount)} accent={liveCount > 0} />
+          <View style={styles.arenaMetricDivider} />
+          <ArenaMetric label="OUVERTS" value={loading ? '—' : String(openCount)} />
+          <View style={styles.arenaMetricDivider} />
+          <ArenaMetric label="MES CALLS" value={loading ? '—' : String(calledCount)} />
+        </View>
+
         <View style={styles.filterPanel}>
           <View style={styles.gameRow}>
             {GAME_FILTERS.map((filter) => (
               <Pressable
+                accessibilityLabel={`Filtrer sur ${filter}`}
+                accessibilityRole="button"
+                accessibilityState={{ selected: game === filter }}
                 key={filter}
                 onPress={() => setGame(filter)}
                 style={[styles.gameFilter, game === filter && styles.gameFilterActive]}
@@ -106,12 +127,16 @@ export default function MatchesScreen() {
 
           <View style={styles.statusRow}>
             <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: status === 'upcoming' }}
               onPress={() => setStatus('upcoming')}
               style={[styles.statusButton, status === 'upcoming' && styles.statusButtonActive]}
             >
               <Text style={[styles.statusText, status === 'upcoming' && styles.statusTextActive]}>À venir</Text>
             </Pressable>
             <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: status === 'finished' }}
               onPress={() => setStatus('finished')}
               style={[styles.statusButton, status === 'finished' && styles.statusButtonActive]}
             >
@@ -123,7 +148,7 @@ export default function MatchesScreen() {
         {error ? (
           <View style={styles.errorCard}>
             <Text style={styles.errorText}>{error}</Text>
-            <Pressable onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable>
+            <Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable>
           </View>
         ) : null}
 
@@ -158,6 +183,21 @@ export default function MatchesScreen() {
   );
 }
 
+function ArenaMetric({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <View style={styles.arenaMetric}>
+      <Text style={[styles.arenaMetricValue, accent && styles.arenaMetricValueLive]}>{value}</Text>
+      <Text style={styles.arenaMetricLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function filterMatches(matches: ArenaMatch[], game: GameFilter, followed: string[]) {
+  return matches.filter((match) => game === 'Pour toi'
+    ? followedGame(followed, match.jeu)
+    : gameKey(match.jeu) === game);
+}
+
 function followedGame(followed: string[], game: string) {
   if (!followed.length) return true;
   const key = gameKey(game);
@@ -169,8 +209,16 @@ function followedGame(followed: string[], game: string) {
 
 function ArenaHero({ match, finished }: { match: ArenaMatch; finished: boolean }) {
   const live = matchPhase(match) === 'live';
+  const callTag = predictionTag(match);
+  const verdict = predictionVerdict(match);
   return (
-    <Pressable onPress={() => openMatch(match.id)} style={({ pressed }) => [styles.arenaCard, pressed && styles.pressed]}>
+    <Pressable
+      accessibilityHint="Ouvre le Match Center"
+      accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}`}
+      accessibilityRole="button"
+      onPress={() => openMatch(match.id)}
+      style={({ pressed }) => [styles.arenaCard, pressed && styles.pressed]}
+    >
       <View style={styles.blueField} />
       <View style={styles.purpleField} />
       <View style={styles.centerLine} />
@@ -188,7 +236,7 @@ function ArenaHero({ match, finished }: { match: ArenaMatch; finished: boolean }
 
       <View style={styles.cardHeadline}>
         <Text style={styles.cardKicker}>{finished ? 'VERDICT' : 'MATCH DU MOMENT'}</Text>
-        <Text style={styles.cardTitle}>{finished ? 'LE SCORE EST TOMBÉ' : live ? 'LE MATCH EST LANCÉ' : 'PRENDS POSITION'}</Text>
+        <Text style={styles.cardTitle}>{finished ? 'LE SCORE EST TOMBÉ' : live ? 'LE MATCH EST LANCÉ' : callTag ? 'TON CALL EST POSÉ' : 'PRENDS POSITION'}</Text>
       </View>
 
       <View style={styles.duel}>
@@ -202,7 +250,7 @@ function ArenaHero({ match, finished }: { match: ArenaMatch; finished: boolean }
       </View>
 
       <View style={styles.cardFooter}>
-        <Text style={styles.cardFooterText}>{finished ? 'OUVRIR LE VERDICT' : live ? 'PRISES DE POSITION CLOSES' : 'OUVRIR LE MATCH CENTER'}</Text>
+        <Text style={[styles.cardFooterText, (callTag || verdict) && styles.cardFooterCall]}>{verdict || (callTag ? `TON CALL · ${callTag}${live ? ' · LIVE' : ''}` : finished ? 'OUVRIR LE VERDICT' : live ? 'PRISES DE POSITION CLOSES' : 'OUVRIR LE MATCH CENTER')}</Text>
         <Text style={styles.cardFooterArrow}>→</Text>
       </View>
     </Pressable>
@@ -239,8 +287,15 @@ function MatchRow({ match }: { match: ArenaMatch }) {
   const phase = matchPhase(match);
   const finished = phase === 'finished';
   const live = phase === 'live';
+  const callTag = predictionTag(match);
+  const verdict = predictionVerdict(match);
   return (
-    <Pressable onPress={() => openMatch(match.id)} style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}>
+    <Pressable
+      accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}${callTag ? `, ton call ${callTag}` : ''}`}
+      accessibilityRole="button"
+      onPress={() => openMatch(match.id)}
+      style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}
+    >
       <View style={styles.rowWhen}>
         <Text style={[styles.rowTime, live && styles.rowTimeLive]}>{finished ? 'FINAL' : live ? 'LIVE' : formatTime(match.debut)}</Text>
         <Text style={styles.rowGame}>{gameLabel(match.jeu)}</Text>
@@ -249,7 +304,10 @@ function MatchRow({ match }: { match: ArenaMatch }) {
         <Text numberOfLines={1} style={styles.rowEvent}>{match.evenement} · BO{match.format}</Text>
         <Text style={styles.rowTeams}>{match.tag_a}  {finished ? `${match.score_a ?? 0} — ${match.score_b ?? 0}` : 'VS'}  {match.tag_b}</Text>
       </View>
-      <Text style={styles.rowArrow}>›</Text>
+      <View style={styles.rowTrailing}>
+        {verdict ? <Text style={[styles.rowCall, Number(match.prediction?.delta_frags ?? 0) >= 0 ? styles.rowCallWin : styles.rowCallLoss]}>{verdict}</Text> : callTag ? <Text style={styles.rowCall}>CALL · {callTag}</Text> : null}
+        <Text style={styles.rowArrow}>›</Text>
+      </View>
     </Pressable>
   );
 }
@@ -303,6 +361,18 @@ function formatTime(value: string) {
   return new Date(value).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
+function predictionTag(match: ArenaMatch) {
+  if (!match.prediction) return null;
+  return match.prediction.choix === 'a' ? match.tag_a : match.tag_b;
+}
+
+function predictionVerdict(match: ArenaMatch) {
+  const prediction = match.prediction;
+  if (!prediction || (prediction.statut !== 'gagne' && prediction.statut !== 'perdu')) return null;
+  const delta = Number(prediction.delta_frags ?? 0);
+  return `${delta >= 0 ? '+' : '−'}${Math.abs(delta)} FRAGS`;
+}
+
 const styles = StyleSheet.create({
   content: {
     width: '100%',
@@ -319,6 +389,12 @@ const styles = StyleSheet.create({
   adminEntryLabel: { color: colors.volt, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 },
   adminEntryCopy: { marginTop: 4, color: colors.textMuted, fontSize: 10, fontWeight: '700' },
   adminEntryArrow: { color: colors.volt, fontSize: 18, fontWeight: '900' },
+  arenaSummary: { minHeight: 72, marginHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', borderRadius: 18, backgroundColor: '#090E13', borderWidth: 1, borderColor: colors.border },
+  arenaMetric: { flex: 1, alignItems: 'center' },
+  arenaMetricValue: { color: colors.text, fontSize: 18, fontWeight: '900' },
+  arenaMetricValueLive: { color: '#56ADFF' },
+  arenaMetricLabel: { marginTop: 4, color: colors.textMuted, fontSize: 7, fontWeight: '900', letterSpacing: 1 },
+  arenaMetricDivider: { width: 1, height: 30, backgroundColor: colors.border },
   filterPanel: { marginHorizontal: spacing.md, padding: 9, borderRadius: 17, backgroundColor: '#080C10', borderWidth: 1, borderColor: '#232A32', gap: 8 },
   gameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
   gameFilter: { flex: 1, minHeight: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
@@ -361,7 +437,8 @@ const styles = StyleSheet.create({
   vs: { marginTop: 12, color: '#F4F6F8', fontSize: 42, lineHeight: 45, fontWeight: '900', letterSpacing: -2.5 },
   vsLine: { marginTop: 6, width: 28, height: 3, borderRadius: 999, backgroundColor: colors.volt },
   cardFooter: { zIndex: 2, marginTop: 'auto', minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)' },
-  cardFooterText: { color: '#9EA8B4', fontSize: 9, fontWeight: '900', letterSpacing: 1.3 },
+  cardFooterText: { flex: 1, color: '#9EA8B4', fontSize: 9, fontWeight: '900', letterSpacing: 1.3 },
+  cardFooterCall: { color: colors.volt },
   cardFooterArrow: { color: colors.volt, fontSize: 18, fontWeight: '900' },
   emptyCard: { marginHorizontal: spacing.md, minHeight: 260, justifyContent: 'center', padding: 25, borderRadius: 28, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#252E37' },
   emptyEyebrow: { color: colors.volt, fontSize: 10, fontWeight: '900', letterSpacing: 2 },
@@ -386,6 +463,10 @@ const styles = StyleSheet.create({
   rowMain: { flex: 1, minWidth: 0 },
   rowEvent: { color: colors.textMuted, fontSize: 8, fontWeight: '700' },
   rowTeams: { marginTop: 6, color: colors.text, fontSize: 13, fontWeight: '900' },
+  rowTrailing: { alignItems: 'flex-end', gap: 3 },
+  rowCall: { color: colors.volt, fontSize: 7, fontWeight: '900', letterSpacing: .4 },
+  rowCallWin: { color: colors.success },
+  rowCallLoss: { color: colors.danger },
   rowArrow: { color: colors.volt, fontSize: 18 },
   skeleton: { minHeight: 430, marginHorizontal: spacing.md, padding: 20, justifyContent: 'space-between', borderRadius: 28, backgroundColor: '#0D1218', borderWidth: 1, borderColor: colors.border },
   skeletonLine: { width: '60%', height: 12, borderRadius: 6, backgroundColor: '#171E26' },
