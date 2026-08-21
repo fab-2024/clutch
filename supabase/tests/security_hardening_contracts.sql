@@ -11,6 +11,9 @@ declare
     'public.clutch_assurer_mon_profil_v1()',
     'public.clutch_boutique()',
     'public.clutch_est_colistier(uuid)',
+    'public.clutch_marquer_resultat_revele(uuid)',
+    'public.clutch_prochain_resultat_a_reveler()',
+    'public.clutch_resultat_match_v1(text)',
     'public.creer_profil_a_inscription()',
     'public.verrouiller_champs_sensibles()'
   ];

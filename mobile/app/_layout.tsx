@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import AuthRecoveryScreen from '@/src/features/auth/components/AuthRecoveryScreen';
+import ResultRevealGate from '@/src/features/matches/components/ResultRevealGate';
 import { AuthProvider, useAuth } from '@/src/providers/AuthProvider';
 import { EconomyProvider } from '@/src/providers/EconomyProvider';
 import { colors, typography } from '@/src/theme';
@@ -46,28 +47,32 @@ function RootNavigator() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: colors.background },
-      }}
-    >
-      <Stack.Protected guard={Boolean(session)}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="match/[id]" />
-        <Stack.Screen name="duel/[token]" />
-        <Stack.Screen name="player/[pseudo]" />
-        <Stack.Screen name="settings/profile" />
-        <Stack.Screen name="admin/matches" />
-        <Stack.Screen name="onboarding" />
-      </Stack.Protected>
-      <Stack.Protected guard={!session}>
-        <Stack.Screen name="login" />
-      </Stack.Protected>
-      <Stack.Screen name="auth/forgot-password" />
-      <Stack.Screen name="auth/callback" />
-      <Stack.Screen name="auth/update-password" />
-    </Stack>
+    <>
+      <ResultRevealGate />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.background },
+        }}
+      >
+        <Stack.Protected guard={Boolean(session)}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="match/[id]" />
+          <Stack.Screen name="result/[id]" options={{ animation: 'fade', presentation: 'fullScreenModal' }} />
+          <Stack.Screen name="duel/[token]" />
+          <Stack.Screen name="player/[pseudo]" />
+          <Stack.Screen name="settings/profile" />
+          <Stack.Screen name="admin/matches" />
+          <Stack.Screen name="onboarding" />
+        </Stack.Protected>
+        <Stack.Protected guard={!session}>
+          <Stack.Screen name="login" />
+        </Stack.Protected>
+        <Stack.Screen name="auth/forgot-password" />
+        <Stack.Screen name="auth/callback" />
+        <Stack.Screen name="auth/update-password" />
+      </Stack>
+    </>
   );
 }
 

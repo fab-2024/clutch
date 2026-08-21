@@ -55,12 +55,12 @@ Une tranche n'est terminée que si :
 
 ### 1.1 Révélation après-match
 
-- [ ] Consommer les RPC de résultat déjà présents dans le backend.
-- [ ] Afficher score officiel, choix, verdict et source.
-- [ ] Afficher Frags et classement avant/après.
-- [ ] Déduire et célébrer la promotion ou rétrogradation de grade.
-- [ ] Marquer la révélation comme vue une seule fois.
-- [ ] Proposer le prochain call sans impasse.
+- [x] Consommer les RPC de résultat déjà présents dans le backend.
+- [x] Afficher score officiel, choix, verdict et source.
+- [x] Afficher Frags et classement avant/après.
+- [x] Déduire et célébrer la promotion ou rétrogradation de grade.
+- [x] Marquer la révélation comme vue une seule fois.
+- [x] Proposer le prochain call sans impasse.
 
 Critère d'acceptation : un résultat réglé apparaît une fois au retour du joueur,
 reste consultable depuis l'historique et ne peut jamais créditer deux fois.

@@ -246,7 +246,7 @@ function VerdictRow({ item }: { item: RecentPrediction }) {
   const choice = item.choix === 'a' ? item.tag_a : item.tag_b;
   const delta = Math.abs(Number(item.delta_frags ?? 0));
   return (
-    <Pressable accessibilityLabel={`Ouvrir le verdict ${choice}, ${item.evenement}, ${won ? 'plus' : 'moins'} ${formatNumber(delta)} Frags`} accessibilityRole="button" onPress={() => router.push({ pathname: '/match/[id]', params: { id: item.match_id } })} style={({ pressed }) => [styles.verdictRow, pressed && styles.pressed]}>
+    <Pressable accessibilityLabel={`Ouvrir le verdict ${choice}, ${item.evenement}, ${won ? 'plus' : 'moins'} ${formatNumber(delta)} Frags`} accessibilityRole="button" onPress={() => router.push({ pathname: '/result/[id]', params: { id: item.match_id } })} style={({ pressed }) => [styles.verdictRow, pressed && styles.pressed]}>
       <View style={[styles.verdictMark, won ? styles.verdictMarkWin : styles.verdictMarkLoss]}><Text style={[styles.verdictLetter, won ? styles.verdictWin : styles.verdictLoss]}>{won ? 'W' : 'L'}</Text></View>
       <View style={styles.verdictCopy}><Text style={styles.verdictTitle}>{choice} · {item.evenement}</Text><Text style={styles.verdictMeta}>{gameName(item.jeu)} · {item.tag_a} vs {item.tag_b}</Text></View>
       <View style={styles.deltaRow}>

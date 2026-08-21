@@ -5,6 +5,7 @@ import type {
   ArenaPrediction,
   MatchCenterData,
   MatchProjection,
+  MatchResultReveal,
   RankedPrediction,
 } from './types';
 
@@ -158,6 +159,28 @@ export async function submitRankedPrediction(matchId: string, choice: 'a' | 'b')
   return data;
 }
 
+export async function loadNextUnseenMatchResult(): Promise<MatchResultReveal | null> {
+  const { data, error } = await supabase.rpc('clutch_prochain_resultat_a_reveler');
+  if (error) throw error;
+  return data ? normalizeMatchResult(data) : null;
+}
+
+export async function loadMatchResultReveal(matchId: string): Promise<MatchResultReveal | null> {
+  const { data, error } = await supabase.rpc('clutch_resultat_match_v1', {
+    p_match_id: matchId,
+  });
+  if (error) throw error;
+  return data ? normalizeMatchResult(data) : null;
+}
+
+export async function markMatchResultRevealed(predictionId: string) {
+  const { data, error } = await supabase.rpc('clutch_marquer_resultat_revele', {
+    p_pronostic_id: predictionId,
+  });
+  if (error) throw error;
+  return data;
+}
+
 function withPrediction(
   match: Omit<ArenaMatch, 'prediction'>,
   predictions: Map<string, ArenaPrediction>,
@@ -166,4 +189,71 @@ function withPrediction(
     ...match,
     prediction: predictions.get(match.id) ?? null,
   };
+}
+
+function normalizeMatchResult(value: unknown): MatchResultReveal {
+  if (!value || typeof value !== 'object') throw new Error('Résultat Clutch invalide.');
+  const row = value as Record<string, unknown>;
+  const id = requiredString(row.id, 'résultat');
+  const matchId = requiredString(row.match_id, 'match');
+  const status = row.statut === 'gagne' || row.statut === 'perdu' ? row.statut : null;
+  const choice = row.choix === 'a' || row.choix === 'b' ? row.choix : null;
+  if (!status || !choice) throw new Error('Verdict Clutch invalide.');
+
+  return {
+    id,
+    match_id: matchId,
+    saison_id: requiredString(row.saison_id, 'saison'),
+    statut: status,
+    choix: choice,
+    proba_figee: finiteNumber(row.proba_figee),
+    delta_frags: finiteNumber(row.delta_frags),
+    frags_avant: finiteNumber(row.frags_avant),
+    frags_apres: finiteNumber(row.frags_apres),
+    rang_avant: optionalNumber(row.rang_avant),
+    rang_apres: optionalNumber(row.rang_apres),
+    verdicts_avant: nonNegativeInteger(row.verdicts_avant),
+    verdicts_apres: nonNegativeInteger(row.verdicts_apres),
+    regle_le: requiredString(row.regle_le, 'date de résolution'),
+    revele_le: typeof row.revele_le === 'string' ? row.revele_le : null,
+    equipe_a: requiredString(row.equipe_a, 'équipe A'),
+    equipe_b: requiredString(row.equipe_b, 'équipe B'),
+    tag_a: requiredString(row.tag_a, 'tag A'),
+    tag_b: requiredString(row.tag_b, 'tag B'),
+    score_a: finiteNumber(row.score_a),
+    score_b: finiteNumber(row.score_b),
+    jeu: requiredString(row.jeu, 'jeu'),
+    evenement: requiredString(row.evenement, 'évènement'),
+    format: nonNegativeInteger(row.format),
+    debut: requiredString(row.debut, 'date du match'),
+    source_resultat: typeof row.source_resultat === 'string'
+      ? row.source_resultat
+      : 'validation_clutch',
+    source_resultat_label: typeof row.source_resultat_label === 'string'
+      ? row.source_resultat_label
+      : 'Validation Clutch',
+    restants: Math.max(1, nonNegativeInteger(row.restants)),
+  };
+}
+
+function requiredString(value: unknown, field: string) {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error(`Champ ${field} absent du résultat Clutch.`);
+  }
+  return value;
+}
+
+function finiteNumber(value: unknown) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) throw new Error('Valeur numérique invalide dans le résultat Clutch.');
+  return parsed;
+}
+
+function optionalNumber(value: unknown) {
+  if (value == null) return null;
+  return finiteNumber(value);
+}
+
+function nonNegativeInteger(value: unknown) {
+  return Math.max(0, Math.trunc(finiteNumber(value)));
 }

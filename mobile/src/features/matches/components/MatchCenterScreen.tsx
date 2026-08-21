@@ -500,8 +500,8 @@ function LockedPrediction({ data }: { data: MatchCenterData }) {
 
       <View style={styles.lockedActions}>
         {settled ? (
-          <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/profile')} style={({ pressed }) => [styles.lockedPrimaryAction, pressed && styles.confirmPressed]}>
-            <Text style={styles.lockedPrimaryText}>VOIR MON PROFIL</Text>
+          <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/result/[id]', params: { id: match.id } })} style={({ pressed }) => [styles.lockedPrimaryAction, pressed && styles.confirmPressed]}>
+            <Text style={styles.lockedPrimaryText}>REVOIR LE VERDICT</Text>
           </Pressable>
         ) : null}
         <Pressable
