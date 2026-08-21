@@ -1,8 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -23,65 +21,22 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
-import { loadDuels } from '@/src/features/social/duels/api';
-import type { DuelRow, DuelStatus } from '@/src/features/social/duels/types';
 import { loadCommunityData } from '@/src/features/social/faction/api';
-import type { CommunityData, CommunityFaction, CommunityMe } from '@/src/features/social/faction/types';
+import type {
+  CommunityActivity,
+  CommunityData,
+  CommunityFaction,
+  CommunityMe,
+} from '@/src/features/social/faction/types';
 import { factionProgress, gameLabel } from '@/src/features/social/faction/utils';
-import { loadFriends } from '@/src/features/social/friends/api';
-import type { FriendsData } from '@/src/features/social/friends/types';
-import { loadLeagues } from '@/src/features/social/leagues/api';
-import type { LeagueSummary } from '@/src/features/social/leagues/types';
-import { loadFriendQuests } from '@/src/features/social/missions/api';
-import type { FriendQuest, FriendQuestsData } from '@/src/features/social/missions/types';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, fonts, radius, spacing } from '@/src/theme';
 
-const EMPTY_FRIENDS: FriendsData = { amis: [], recues: [], envoyees: [] };
-const EMPTY_MISSIONS: FriendQuestsData = { actives: [], historique: [], duos: [], a_reveler: null };
 const EMPTY_COMMUNITY: CommunityData = { factions: [], moi: null };
 const RELIC_SOURCE = require('../../../../assets/social/faction-relic-v5.png');
 
-export type SocialSnapshot = {
-  community: CommunityData;
-  duels: DuelRow[];
-  friends: FriendsData;
-  leagues: LeagueSummary[];
-  missions: FriendQuestsData;
-};
-
-type SocialDomain = keyof SocialSnapshot;
-export type SocialAvailability = Record<SocialDomain, boolean>;
-type SocialRoute =
-  | '/(tabs)/social/friends'
-  | '/(tabs)/social/missions'
-  | '/(tabs)/social/leagues'
-  | '/(tabs)/social/duels'
-  | '/(tabs)/social/faction'
-  | '/(tabs)/matches';
-
-type SocialAction = {
-  eyebrow: string;
-  glyph: string;
-  href: SocialRoute;
-  id: string;
-  meta: string;
-  title: string;
-};
-
-type PriorityAction = {
-  action: string;
-  eyebrow: string;
-  glyph: string;
-  href: SocialRoute;
-  meta: string;
-  sourceId: string | null;
-  title: string;
-};
-
 type SocialHomeExperienceProps = {
-  availability: SocialAvailability;
-  data: SocialSnapshot;
+  data: CommunityData;
   error: string | null;
   favoriteTeamId?: string | null;
   loading: boolean;
@@ -89,28 +44,6 @@ type SocialHomeExperienceProps = {
   onRetry: () => void;
   refreshing: boolean;
 };
-
-const EMPTY: SocialSnapshot = {
-  community: EMPTY_COMMUNITY,
-  duels: [],
-  friends: EMPTY_FRIENDS,
-  leagues: [],
-  missions: EMPTY_MISSIONS,
-};
-
-const ALL_AVAILABLE: SocialAvailability = {
-  community: true,
-  duels: true,
-  friends: true,
-  leagues: true,
-  missions: true,
-};
-
-const STARTER_STEPS: Array<{ href: SocialRoute; meta: string; number: string; title: string }> = [
-  { number: '01', title: 'Trouve un joueur', meta: 'Un pseudo suffit pour ouvrir ton cercle.', href: '/(tabs)/social/friends' },
-  { number: '02', title: 'Porte tes couleurs', meta: 'Choisis la faction qui te représente.', href: '/(tabs)/social/faction' },
-  { number: '03', title: 'Provoque un duel', meta: 'Pose ton call puis défie le camp opposé.', href: '/(tabs)/matches' },
-];
 
 type RelicBubbleSpec = {
   bottom: number;
@@ -131,8 +64,7 @@ const RELIC_BUBBLES: RelicBubbleSpec[] = [
 
 export default function SocialHomeScreen() {
   const { profile } = useAuth();
-  const [data, setData] = useState<SocialSnapshot>(EMPTY);
-  const [availability, setAvailability] = useState<SocialAvailability>(ALL_AVAILABLE);
+  const [data, setData] = useState<CommunityData>(EMPTY_COMMUNITY);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -143,42 +75,19 @@ export default function SocialHomeScreen() {
     refresh ? setRefreshing(true) : setLoading(true);
     setError(null);
 
-    const [friends, leagues, missions, duels, community] = await Promise.allSettled([
-      loadFriends(),
-      loadLeagues(),
-      loadFriendQuests(),
-      loadDuels(12),
-      loadCommunityData(),
-    ]);
-
-    if (requestId !== requestRef.current) return;
-
-    const nextAvailability = {
-      friends: friends.status === 'fulfilled',
-      leagues: leagues.status === 'fulfilled',
-      missions: missions.status === 'fulfilled',
-      duels: duels.status === 'fulfilled',
-      community: community.status === 'fulfilled',
-    };
-    const failed = Object.values(nextAvailability).filter((available) => !available).length;
-
-    setAvailability(nextAvailability);
-    setData({
-      friends: friends.status === 'fulfilled' ? friends.value : EMPTY_FRIENDS,
-      leagues: leagues.status === 'fulfilled' ? leagues.value : [],
-      missions: missions.status === 'fulfilled' ? missions.value : EMPTY_MISSIONS,
-      duels: duels.status === 'fulfilled' ? duels.value : [],
-      community: community.status === 'fulfilled' ? community.value : EMPTY_COMMUNITY,
-    });
-    setError(
-      failed === 5
-        ? 'Impossible de charger ton QG Social.'
-        : failed
-          ? `${failed} espace${failed > 1 ? 's sont' : ' est'} momentanément indisponible${failed > 1 ? 's' : ''}.`
-          : null,
-    );
-    setLoading(false);
-    setRefreshing(false);
+    try {
+      const community = await loadCommunityData();
+      if (requestId === requestRef.current) setData(community);
+    } catch (caught) {
+      if (requestId === requestRef.current) {
+        setError(caught instanceof Error ? caught.message : 'Impossible de charger les factions.');
+      }
+    } finally {
+      if (requestId === requestRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -188,7 +97,6 @@ export default function SocialHomeScreen() {
 
   return (
     <SocialHomeExperience
-      availability={availability}
       data={data}
       error={error}
       favoriteTeamId={profile?.equipe_favorite_id}
@@ -201,7 +109,6 @@ export default function SocialHomeScreen() {
 }
 
 export function SocialHomeExperience({
-  availability,
   data,
   error,
   favoriteTeamId,
@@ -211,16 +118,20 @@ export function SocialHomeExperience({
   refreshing,
 }: SocialHomeExperienceProps) {
   const reduceMotion = useReducedMotion();
-  const activeDuels = useMemo(() => data.duels.filter((duel) => isActiveDuel(duel)), [data.duels]);
-  const faction = useMemo(
-    () => data.community.factions.find((item) => item.moi)
-      ?? data.community.factions.find((item) => item.equipe_id === favoriteTeamId)
-      ?? null,
-    [data.community.factions, favoriteTeamId],
+  const rankedFactions = useMemo(
+    () => [...data.factions].sort((a, b) => (
+      b.membres - a.membres
+      || b.croissance_7j - a.croissance_7j
+      || a.nom.localeCompare(b.nom)
+    )),
+    [data.factions],
   );
-  const priority = getPriority(data, activeDuels);
-  const actions = buildActions(data, activeDuels);
-  const secondarySignals = actions.filter((action) => action.id !== priority.sourceId).slice(0, 3);
+  const faction = useMemo(
+    () => rankedFactions.find((item) => item.moi)
+      ?? rankedFactions.find((item) => item.equipe_id === favoriteTeamId)
+      ?? null,
+    [favoriteTeamId, rankedFactions],
+  );
   const entrance = (delay: number) => reduceMotion ? undefined : FadeInDown.delay(delay).duration(380);
 
   return (
@@ -238,42 +149,22 @@ export function SocialHomeExperience({
       ) : null}
 
       <Animated.View entering={entrance(20)}>
-        {loading ? (
-          <FactionHeroSkeleton />
-        ) : (
-          <FactionRelicHero
-            faction={faction}
-            me={data.community.moi}
-          />
-        )}
+        {loading ? <FactionHeroSkeleton /> : <FactionRelicHero faction={faction} me={data.moi} />}
       </Animated.View>
 
-      <Animated.View entering={entrance(90)}>
-        <PriorityCard priority={priority} />
-      </Animated.View>
+      {!loading && rankedFactions.length ? (
+        <Animated.View entering={entrance(90)}>
+          <FactionWar factions={rankedFactions} mine={faction} />
+        </Animated.View>
+      ) : null}
 
-      <Animated.View entering={entrance(150)} style={styles.metrics}>
-        <SocialMetric available={availability.friends} href="/(tabs)/social/friends" label="AMIS" loading={loading} value={data.friends.amis.length} featured />
-        <SocialMetric available={availability.missions} href="/(tabs)/social/missions" label="MISSIONS" loading={loading} value={data.missions.actives.length} />
-        <SocialMetric available={availability.leagues} href="/(tabs)/social/leagues" label="LIGUES" loading={loading} value={data.leagues.length} />
-        <SocialMetric available={availability.duels} href="/(tabs)/social/duels" label="DUELS" loading={loading} value={activeDuels.length} />
-      </Animated.View>
+      {!loading && data.moi && faction ? (
+        <Animated.View entering={entrance(150)}>
+          <FactionMemberRanking faction={faction} me={data.moi} />
+        </Animated.View>
+      ) : null}
 
-      <Animated.View entering={entrance(210)} style={styles.section}>
-        <SectionHead meta={secondarySignals.length ? `${secondarySignals.length} ACTIF${secondarySignals.length > 1 ? 'S' : ''}` : 'QG SYNCHRONISÉ'} title="SIGNAUX DU CERCLE" />
-        {secondarySignals.length ? (
-          <View style={styles.signalList}>
-            {secondarySignals.map((action) => <SignalRow action={action} key={action.id} />)}
-          </View>
-        ) : (
-          <View style={styles.quietCard}>
-            <View style={styles.quietPulse}><View style={styles.quietPulseCore} /></View>
-            <View style={styles.quietCopy}><Text style={styles.quietTitle}>TON QG EST À JOUR.</Text><Text style={styles.quietMeta}>Les nouvelles demandes, missions et rivalités apparaîtront ici.</Text></View>
-          </View>
-        )}
-      </Animated.View>
-
-      {!loading && allDomainsAvailable(availability) && !hasSocialFootprint(data) ? <StarterPath /> : null}
+      {!loading && !rankedFactions.length ? <EmptyFactions /> : null}
     </ScrollView>
   );
 }
@@ -361,7 +252,6 @@ function FactionRelicHero({ faction, me }: { faction: CommunityFaction | null; m
   const progress = faction ? factionProgress(faction.membres, faction.niveau_atteint) : null;
   const pct = progress ? Math.round(progress.progress * 100) : 0;
   const title = faction ? 'PORTE TES COULEURS.' : 'CHOISIS TES COULEURS.';
-  const action = faction ? 'OUVRIR MA FACTION' : 'DÉCOUVRIR LES FACTIONS';
 
   return (
     <View style={styles.factionHero}>
@@ -476,75 +366,124 @@ function FactionRelicHero({ faction, me }: { faction: CommunityFaction | null; m
         </View>
       ) : null}
 
-      <Pressable
-        accessibilityLabel={faction ? `Ouvrir ma faction ${faction.nom}` : 'Découvrir les factions'}
-        accessibilityRole="button"
-        onPress={() => router.replace('/(tabs)/social/faction')}
-        style={({ pressed }) => [styles.heroAction, pressed && styles.pressed]}
-      >
-        <Text style={styles.heroActionText}>{action}</Text>
-        <Text style={styles.heroActionArrow}>→</Text>
-      </Pressable>
+      <View style={styles.heroFooter}>
+        <Text style={styles.heroFooterText}>LA GUERRE DES FACTIONS</Text>
+        <Text style={styles.heroFooterArrow}>↓</Text>
+      </View>
     </View>
   );
 }
 
-function PriorityCard({ priority }: { priority: PriorityAction }) {
+function FactionWar({ factions, mine }: { factions: CommunityFaction[]; mine: CommunityFaction | null }) {
+  const mineRank = mine ? factions.findIndex((item) => item.equipe_id === mine.equipe_id) + 1 : 0;
+  const visible = factions.slice(0, 6);
+  const rows = mine && mineRank > 6 ? [...visible.slice(0, 5), mine] : visible;
+
   return (
-    <Pressable
-      accessibilityLabel={`${priority.eyebrow}. ${priority.title}`}
-      accessibilityRole="button"
-      onPress={() => router.replace(priority.href as never)}
-      style={({ pressed }) => [styles.priorityCard, pressed && styles.pressed]}
-    >
-      <View style={styles.priorityGlyph}><Text style={styles.priorityGlyphText}>{priority.glyph}</Text></View>
-      <View style={styles.priorityCopy}>
-        <Text style={styles.priorityEyebrow}>À TON TOUR · {priority.eyebrow}</Text>
-        <Text numberOfLines={2} style={styles.priorityTitle}>{priority.title}</Text>
-        <Text numberOfLines={1} style={styles.priorityMeta}>{priority.meta}</Text>
+    <View style={styles.warSection}>
+      <View style={styles.sectionHeading}>
+        <View style={styles.sectionHeadingCopy}>
+          <Text style={styles.sectionEyebrow}>LA GUERRE DES FACTIONS</Text>
+          <Text style={styles.sectionTitle}>QUI DOMINE LE TERRAIN ?</Text>
+        </View>
+        <View style={styles.livePill}><View style={styles.liveDot} /><Text style={styles.liveText}>24 H</Text></View>
       </View>
-      <View style={styles.priorityAction}><Text style={styles.priorityActionText}>{priority.action}</Text><Text style={styles.priorityArrow}>→</Text></View>
-    </Pressable>
+      <Text style={styles.sectionIntro}>La puissance suit le nombre de supporters. L’élan montre les renforts gagnés cette semaine.</Text>
+
+      <View style={styles.warCard}>
+        {rows.map((faction) => {
+          const rank = factions.findIndex((item) => item.equipe_id === faction.equipe_id) + 1;
+          const selected = faction.equipe_id === mine?.equipe_id;
+          return (
+            <View key={faction.equipe_id} style={[styles.warRow, selected && styles.warRowMine]}>
+              <Text style={[styles.warRank, rank <= 3 && styles.warRankTop]}>#{rank}</Text>
+              <View style={styles.warLogo}>
+                <TeamLogo accent={selected ? colors.volt : '#66727D'} name={faction.nom} size={34} tag={faction.tag} uri={faction.logo} />
+              </View>
+              <View style={styles.warTeam}>
+                <View style={styles.warNameLine}>
+                  <Text numberOfLines={1} style={styles.warName}>{faction.nom}</Text>
+                  {selected ? <View style={styles.minePill}><Text style={styles.minePillText}>MA FACTION</Text></View> : null}
+                </View>
+                <Text style={styles.warMeta}>{gameLabel(faction.jeu)} · {factionProgress(faction.membres, faction.niveau_atteint).current.name}</Text>
+              </View>
+              <View style={styles.warScore}>
+                <Text style={styles.warMembers}>{formatNumber(faction.membres)}</Text>
+                <Text style={[styles.warGrowth, faction.croissance_7j > 0 && styles.warGrowthPositive]}>{signed(faction.croissance_7j)} · 7J</Text>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    </View>
   );
 }
 
-function SocialMetric({ available, featured = false, href, label, loading, value }: { available: boolean; featured?: boolean; href: SocialRoute; label: string; loading: boolean; value: number }) {
-  return (
-    <Pressable accessibilityLabel={`${label.toLowerCase()} : ${metric(loading, available, value)}`} accessibilityRole="button" onPress={() => router.replace(href as never)} style={({ pressed }) => [styles.metric, featured && styles.metricFeatured, pressed && styles.pressed]}>
-      <Text style={[styles.metricValue, featured && styles.metricValueFeatured]}>{metric(loading, available, value)}</Text>
-      <Text style={styles.metricLabel}>{label}</Text>
-    </Pressable>
-  );
-}
+function FactionMemberRanking({ faction, me }: { faction: CommunityFaction; me: CommunityMe }) {
+  const ranking = me.top_activite.length ? me.top_activite : [fallbackActivity(me)];
+  const placement = me.rang_activite && me.total_activite
+    ? `#${me.rang_activite} SUR ${me.total_activite}`
+    : 'EN PLACEMENT';
 
-function SectionHead({ meta, title }: { meta: string; title: string }) {
-  return <View style={styles.sectionHead}><Text style={styles.sectionTitle}>{title}</Text><Text style={styles.sectionMeta}>{meta}</Text></View>;
-}
-
-function SignalRow({ action }: { action: SocialAction }) {
   return (
-    <Pressable accessibilityLabel={`${action.eyebrow}. ${action.title}`} accessibilityRole="button" onPress={() => router.replace(action.href as never)} style={({ pressed }) => [styles.signalRow, pressed && styles.pressed]}>
-      <View style={styles.signalGlyph}><Text style={styles.signalGlyphText}>{action.glyph}</Text></View>
-      <View style={styles.signalCopy}><Text style={styles.signalEyebrow}>{action.eyebrow}</Text><Text numberOfLines={1} style={styles.signalTitle}>{action.title}</Text><Text style={styles.signalMeta}>{action.meta}</Text></View>
-      <Text style={styles.signalArrow}>›</Text>
-    </Pressable>
-  );
-}
+    <View style={styles.memberSection}>
+      <View style={styles.sectionHeading}>
+        <View style={styles.sectionHeadingCopy}>
+          <Text style={styles.sectionEyebrow}>DANS TA FACTION</Text>
+          <Text style={styles.sectionTitle}>TON CLASSEMENT {faction.tag}</Text>
+        </View>
+        <Text style={styles.memberPlacement}>{placement}</Text>
+      </View>
 
-function StarterPath() {
-  return (
-    <View style={styles.starter}>
-      <Text style={styles.starterEyebrow}>LANCER TON QG</Text>
-      <Text style={styles.starterTitle}>TROIS MOVES. UNE PREMIÈRE RIVALITÉ.</Text>
-      <View style={styles.starterList}>
-        {STARTER_STEPS.map((step) => (
-          <Pressable accessibilityRole="button" key={step.number} onPress={() => router.replace(step.href as never)} style={({ pressed }) => [styles.starterRow, pressed && styles.pressed]}>
-            <Text style={styles.starterNumber}>{step.number}</Text>
-            <View style={styles.starterCopy}><Text style={styles.starterStep}>{step.title}</Text><Text style={styles.starterMeta}>{step.meta}</Text></View>
-            <Text style={styles.starterArrow}>→</Text>
-          </Pressable>
+      <View style={styles.memberSummary}>
+        <View style={styles.memberRankBlock}>
+          <Text style={styles.memberRankValue}>{me.rang_activite ? `#${me.rang_activite}` : '—'}</Text>
+          <Text style={styles.memberRankLabel}>RANG INTERNE</Text>
+        </View>
+        <View style={styles.memberDivider} />
+        <MemberStat label="CALLS · 7J" value={String(me.pronos_7j)} />
+        <MemberStat label="VALIDÉS" value={String(me.gagnes_7j)} />
+        <MemberStat label="FRAGS · 7J" value={signed(me.delta_frags_7j)} featured />
+      </View>
+
+      <View style={styles.memberList}>
+        {ranking.slice(0, 5).map((person) => (
+          <FactionMemberRow key={person.user_id} person={person} mine={person.user_id === me.user_id} />
         ))}
       </View>
+    </View>
+  );
+}
+
+function MemberStat({ featured = false, label, value }: { featured?: boolean; label: string; value: string }) {
+  return (
+    <View style={styles.memberStat}>
+      <Text style={[styles.memberStatValue, featured && styles.memberStatValueFeatured]}>{value}</Text>
+      <Text style={styles.memberStatLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function FactionMemberRow({ mine, person }: { mine: boolean; person: CommunityActivity }) {
+  return (
+    <View style={[styles.memberRow, mine && styles.memberRowMine]}>
+      <Text style={[styles.memberRowRank, mine && styles.memberRowRankMine]}>#{person.rang}</Text>
+      <View style={styles.memberAvatar}><Text style={styles.memberAvatarText}>{initials(person.pseudo)}</Text></View>
+      <View style={styles.memberCopy}>
+        <Text numberOfLines={1} style={styles.memberName}>{person.pseudo}{mine ? ' · TOI' : ''}</Text>
+        <Text style={styles.memberMeta}>{person.pronos_7j} call{person.pronos_7j > 1 ? 's' : ''} · {person.gagnes_7j} validé{person.gagnes_7j > 1 ? 's' : ''}</Text>
+      </View>
+      <Text style={styles.memberPrecision}>{person.pronos_7j ? `${Math.round((person.gagnes_7j / person.pronos_7j) * 100)}%` : '—'}</Text>
+    </View>
+  );
+}
+
+function EmptyFactions() {
+  return (
+    <View style={styles.emptyCard}>
+      <Text style={styles.emptyMark}>✦</Text>
+      <Text style={styles.emptyTitle}>LA GUERRE N’A PAS ENCORE COMMENCÉ.</Text>
+      <Text style={styles.emptyText}>Les factions et leur classement apparaîtront ici dès que les premières équipes seront actives.</Text>
     </View>
   );
 }
@@ -553,42 +492,27 @@ function FactionHeroSkeleton() {
   return <View style={styles.heroSkeleton}><View style={styles.skeletonTitle} /><View style={styles.skeletonRelic} /><View style={styles.skeletonLine} /></View>;
 }
 
-function getPriority(data: SocialSnapshot, activeDuels: DuelRow[]): PriorityAction {
-  const incoming = data.friends.recues[0];
-  const revealable = data.missions.a_reveler;
-  const duel = activeDuels.find((item) => effectiveDuelStatus(item) === 'accepte') ?? activeDuels[0];
-  const mission = data.missions.actives[0];
-  if (incoming) return { sourceId: `friend-${incoming.id}`, glyph: '◎', eyebrow: 'DEMANDE EN ATTENTE', title: `${incoming.pseudo} veut rejoindre ton cercle.`, meta: 'Réponds maintenant pour débloquer vos prochains moves.', action: 'RÉPONDRE', href: '/(tabs)/social/friends' };
-  if (revealable) return { sourceId: `reveal-${revealable.id}`, glyph: '⚡', eyebrow: 'MISSION À RÉVÉLER', title: 'Un résultat social attend ton verdict.', meta: questPartnerLabel(revealable), action: 'DÉCOUVRIR', href: '/(tabs)/social/missions' };
-  if (duel) return { sourceId: `duel-${duel.token}`, glyph: '⚔', eyebrow: effectiveDuelStatus(duel) === 'accepte' ? 'DUEL VERROUILLÉ' : 'RIVALITÉ OUVERTE', title: `Ton face-à-face avec ${duelRival(duel)} est lancé.`, meta: duelMatchLabel(duel), action: 'VOIR', href: '/(tabs)/social/duels' };
-  if (mission) return { sourceId: `mission-${mission.id}`, glyph: '⚡', eyebrow: 'MISSION ACTIVE', title: 'Quelqu’un compte sur ton prochain call.', meta: questPartnerLabel(mission), action: 'CONTINUER', href: '/(tabs)/social/missions' };
-  return { sourceId: null, glyph: '◎', eyebrow: 'PROCHAIN MOVE', title: 'Agrandis ton cercle pour créer de nouvelles rivalités.', meta: 'Trouve un joueur et lance votre premier défi.', action: 'TROUVER', href: '/(tabs)/social/friends' };
+function fallbackActivity(me: CommunityMe): CommunityActivity {
+  return {
+    user_id: me.user_id,
+    pseudo: me.pseudo,
+    pronos_7j: me.pronos_7j,
+    gagnes_7j: me.gagnes_7j,
+    rang: me.rang_activite ?? 1,
+  };
 }
 
-function buildActions(data: SocialSnapshot, activeDuels: DuelRow[]): SocialAction[] {
-  const actions: SocialAction[] = [];
-  data.friends.recues.slice(0, 2).forEach((friend) => actions.push({ id: `friend-${friend.id}`, glyph: '◎', eyebrow: 'DEMANDE', title: `${friend.pseudo} veut rejoindre ton cercle.`, meta: 'Accepter ou refuser', href: '/(tabs)/social/friends' }));
-  if (data.missions.a_reveler) actions.push({ id: `reveal-${data.missions.a_reveler.id}`, glyph: '⚡', eyebrow: 'À RÉVÉLER', title: 'Le résultat de ta mission est prêt.', meta: questPartnerLabel(data.missions.a_reveler), href: '/(tabs)/social/missions' });
-  data.missions.actives.slice(0, 1).forEach((quest) => actions.push({ id: `mission-${quest.id}`, glyph: '⚡', eyebrow: 'MISSION', title: questTitle(quest), meta: `${quest.progression}/${quest.objectif} · ${questPartnerLabel(quest)}`, href: '/(tabs)/social/missions' }));
-  activeDuels.slice(0, 2).forEach((duel) => actions.push({ id: `duel-${duel.token}`, glyph: '⚔', eyebrow: effectiveDuelStatus(duel) === 'accepte' ? 'DUEL VERROUILLÉ' : 'DUEL EN ATTENTE', title: `Face à ${duelRival(duel)}`, meta: duelMatchLabel(duel), href: '/(tabs)/social/duels' }));
-  return actions;
-}
-
-function metric(loading: boolean, available: boolean, value: number) { return loading ? '—' : available ? value : '!'; }
-function effectiveDuelStatus(duel: DuelRow): DuelStatus { return duel.statut === 'en_attente' && duel.debut && new Date(duel.debut).getTime() <= Date.now() ? 'expire' : duel.statut; }
-function isActiveDuel(duel: DuelRow) { const status = effectiveDuelStatus(duel); return status === 'en_attente' || status === 'accepte'; }
-function duelRival(duel: DuelRow) { return duel.moi_role === 'createur' ? (duel.accepteur_pseudo || 'un rival') : (duel.createur_pseudo || 'ton rival'); }
-function duelMatchLabel(duel: DuelRow) { return `${duel.tag_a || duel.equipe_a || 'A'} vs ${duel.tag_b || duel.equipe_b || 'B'}`; }
-function questPartnerLabel(quest: FriendQuest) { return quest.partenaire?.pseudo ? `Avec ${quest.partenaire.pseudo}` : 'Mission à deux'; }
-function questTitle(quest: FriendQuest) { if (quest.type === 'duel') return 'Termine votre duel.'; if (quest.type === 'revenge') return 'La revanche est ouverte.'; if (quest.type === 'league_push') return 'Poussez votre ligue ensemble.'; return 'Ton prochain call compte.'; }
-function allDomainsAvailable(availability: SocialAvailability) { return Object.values(availability).every(Boolean); }
-function hasSocialFootprint(data: SocialSnapshot) { return Boolean(data.friends.amis.length || data.friends.recues.length || data.friends.envoyees.length || data.leagues.length || data.missions.actives.length || data.missions.historique.length || data.duels.length || data.community.moi); }
 function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(value); }
 function signed(value: number) { return `${value >= 0 ? '+' : '−'}${formatNumber(Math.abs(value))}`; }
+function initials(value: string) {
+  const parts = value.trim().split(/[\s._-]+/).filter(Boolean);
+  if (!parts.length) return '?';
+  return parts.length > 1 ? `${parts[0][0]}${parts[1][0]}`.toUpperCase() : parts[0].slice(0, 2).toUpperCase();
+}
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  content: { width: '100%', maxWidth: 430, alignSelf: 'center', paddingHorizontal: spacing.md, paddingTop: 10, paddingBottom: 128, gap: 18 },
+  content: { width: '100%', maxWidth: 430, alignSelf: 'center', paddingHorizontal: spacing.md, paddingTop: 10, paddingBottom: 128, gap: 22 },
   error: { minHeight: 48, padding: 12, borderRadius: radius.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' },
   errorText: { flex: 1, color: '#FF9AA2', fontFamily: fonts.body, fontSize: 11 },
   retry: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8 },
@@ -635,54 +559,60 @@ const styles = StyleSheet.create({
   progressFoot: { marginTop: 6, flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
   progressNext: { color: '#68736D', fontFamily: fonts.bold, fontSize: 6, letterSpacing: .45 },
   progressImpact: { color: '#8E998F', fontFamily: fonts.bold, fontSize: 6 },
-  heroAction: { zIndex: 3, minHeight: 42, marginTop: 'auto', paddingTop: 10, borderTopWidth: 1, borderTopColor: '#34401C', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  heroActionText: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1 },
-  heroActionArrow: { color: colors.volt, fontSize: 17 },
-  priorityCard: { minHeight: 118, padding: 14, borderRadius: 24, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: '#0E1412', borderWidth: 1, borderColor: '#3D4920' },
-  priorityGlyph: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: '#19220F', borderWidth: 1, borderColor: '#4C5922' },
-  priorityGlyphText: { color: colors.volt, fontSize: 19, fontWeight: '900' },
-  priorityCopy: { flex: 1, minWidth: 0 },
-  priorityEyebrow: { color: colors.volt, fontFamily: fonts.bold, fontSize: 7, letterSpacing: .75 },
-  priorityTitle: { marginTop: 4, color: '#F4F6F5', fontFamily: fonts.bold, fontSize: 13, lineHeight: 16 },
-  priorityMeta: { marginTop: 4, color: '#88938F', fontFamily: fonts.body, fontSize: 8 },
-  priorityAction: { minWidth: 59, minHeight: 38, paddingHorizontal: 8, borderRadius: 13, alignItems: 'center', justifyContent: 'center', gap: 1, backgroundColor: colors.volt },
-  priorityActionText: { color: '#080B0C', fontFamily: fonts.bold, fontSize: 6, letterSpacing: .3 },
-  priorityArrow: { color: '#080B0C', fontSize: 14, lineHeight: 14 },
-  metrics: { flexDirection: 'row', gap: 7 },
-  metric: { flex: 1, minHeight: 76, padding: 9, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222B34' },
-  metricFeatured: { backgroundColor: '#141B10', borderColor: '#424F1D' },
-  metricValue: { color: '#F2F4F5', fontFamily: fonts.display, fontSize: 23, letterSpacing: -.4 },
-  metricValueFeatured: { color: colors.volt },
-  metricLabel: { marginTop: 4, color: '#78838D', fontFamily: fonts.bold, fontSize: 6, letterSpacing: .65 },
-  section: { gap: 9 },
-  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-  sectionTitle: { color: '#A7B0B7', fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.2 },
-  sectionMeta: { color: '#59646E', fontFamily: fonts.bold, fontSize: 6, letterSpacing: .55 },
-  signalList: { overflow: 'hidden', borderRadius: 21, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222B34' },
-  signalRow: { minHeight: 78, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderBottomColor: '#192129' },
-  signalGlyph: { width: 39, height: 39, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: '#151D10', borderWidth: 1, borderColor: '#38431D' },
-  signalGlyphText: { color: colors.volt, fontSize: 15 },
-  signalCopy: { flex: 1, minWidth: 0 },
-  signalEyebrow: { color: colors.volt, fontFamily: fonts.bold, fontSize: 6, letterSpacing: .8 },
-  signalTitle: { marginTop: 3, color: '#F1F4F5', fontFamily: fonts.bold, fontSize: 11 },
-  signalMeta: { marginTop: 4, color: '#76818B', fontFamily: fonts.body, fontSize: 8 },
-  signalArrow: { color: colors.volt, fontSize: 16 },
-  quietCard: { minHeight: 92, padding: 14, borderRadius: 21, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222B34' },
-  quietPulse: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#3F4B1E', backgroundColor: '#141B10' },
-  quietPulseCore: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.volt, boxShadow: '0 0 10px rgba(232,255,61,.5)' },
-  quietCopy: { flex: 1 },
-  quietTitle: { color: '#F2F4F5', fontFamily: fonts.bold, fontSize: 10, letterSpacing: .5 },
-  quietMeta: { marginTop: 5, color: '#78838C', fontFamily: fonts.body, fontSize: 9, lineHeight: 13 },
-  starter: { overflow: 'hidden', padding: 17, borderRadius: 26, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#28323B' },
-  starterEyebrow: { color: colors.volt, fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1.1 },
-  starterTitle: { maxWidth: 330, marginTop: 7, color: colors.text, fontFamily: fonts.display, fontSize: 26, lineHeight: 25, letterSpacing: -.6 },
-  starterList: { marginTop: 15, borderTopWidth: 1, borderTopColor: '#222B32' },
-  starterRow: { minHeight: 69, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderBottomColor: '#192129' },
-  starterNumber: { width: 26, color: colors.volt, fontFamily: fonts.bold, fontSize: 8 },
-  starterCopy: { flex: 1, minWidth: 0 },
-  starterStep: { color: colors.text, fontFamily: fonts.bold, fontSize: 11 },
-  starterMeta: { marginTop: 4, color: colors.textMuted, fontFamily: fonts.body, fontSize: 8, lineHeight: 12 },
-  starterArrow: { color: colors.volt, fontSize: 15 },
+  heroFooter: { zIndex: 3, minHeight: 42, marginTop: 'auto', paddingTop: 10, borderTopWidth: 1, borderTopColor: '#34401C', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  heroFooterText: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1 },
+  heroFooterArrow: { color: colors.volt, fontSize: 17 },
+  warSection: { gap: 11 },
+  sectionHeading: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
+  sectionHeadingCopy: { flex: 1, minWidth: 0 },
+  sectionEyebrow: { color: colors.volt, fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1.35 },
+  sectionTitle: { marginTop: 5, color: '#F3F5F5', fontFamily: fonts.display, fontSize: 27, lineHeight: 27, letterSpacing: -.5 },
+  sectionIntro: { maxWidth: 360, color: '#7D8891', fontFamily: fonts.body, fontSize: 9, lineHeight: 14 },
+  livePill: { minHeight: 28, paddingHorizontal: 9, borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#3B471D' },
+  liveDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.volt },
+  liveText: { color: colors.volt, fontFamily: fonts.bold, fontSize: 6, letterSpacing: .6 },
+  warCard: { overflow: 'hidden', borderRadius: 25, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#242D35' },
+  warRow: { minHeight: 76, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 9, borderBottomWidth: 1, borderBottomColor: '#1A2229' },
+  warRowMine: { backgroundColor: '#141B10', borderBottomColor: '#34401B' },
+  warRank: { width: 27, color: '#65717B', fontFamily: fonts.bold, fontSize: 9 },
+  warRankTop: { color: colors.volt },
+  warLogo: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#070A0D', borderWidth: 1, borderColor: '#283139' },
+  warTeam: { flex: 1, minWidth: 0 },
+  warNameLine: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  warName: { flexShrink: 1, color: '#F0F2F3', fontFamily: fonts.bold, fontSize: 10 },
+  minePill: { paddingHorizontal: 5, paddingVertical: 3, borderRadius: 7, backgroundColor: colors.volt },
+  minePillText: { color: '#080A0C', fontFamily: fonts.bold, fontSize: 5, letterSpacing: .35 },
+  warMeta: { marginTop: 4, color: '#6F7A83', fontFamily: fonts.medium, fontSize: 6 },
+  warScore: { alignItems: 'flex-end' },
+  warMembers: { color: '#F0F2F3', fontFamily: fonts.display, fontSize: 17 },
+  warGrowth: { marginTop: 2, color: '#68737D', fontFamily: fonts.bold, fontSize: 6 },
+  warGrowthPositive: { color: colors.volt },
+  memberSection: { gap: 11 },
+  memberPlacement: { color: colors.volt, fontFamily: fonts.bold, fontSize: 7, letterSpacing: .65 },
+  memberSummary: { minHeight: 105, padding: 13, borderRadius: 24, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#10160E', borderWidth: 1, borderColor: '#3C481D' },
+  memberRankBlock: { minWidth: 68 },
+  memberRankValue: { color: colors.volt, fontFamily: fonts.display, fontSize: 31, lineHeight: 31 },
+  memberRankLabel: { marginTop: 4, color: '#7B877E', fontFamily: fonts.bold, fontSize: 5, letterSpacing: .65 },
+  memberDivider: { width: 1, height: 56, backgroundColor: '#38431D' },
+  memberStat: { flex: 1, minWidth: 0, alignItems: 'center' },
+  memberStatValue: { color: '#F1F3F2', fontFamily: fonts.display, fontSize: 18 },
+  memberStatValueFeatured: { color: colors.volt },
+  memberStatLabel: { marginTop: 4, color: '#707B75', fontFamily: fonts.bold, fontSize: 5, textAlign: 'center' },
+  memberList: { overflow: 'hidden', borderRadius: 22, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#242D35' },
+  memberRow: { minHeight: 66, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 9, borderBottomWidth: 1, borderBottomColor: '#192129' },
+  memberRowMine: { backgroundColor: '#141B10' },
+  memberRowRank: { width: 27, color: '#65717B', fontFamily: fonts.bold, fontSize: 8 },
+  memberRowRankMine: { color: colors.volt },
+  memberAvatar: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E', borderWidth: 1, borderColor: '#38431D' },
+  memberAvatarText: { color: colors.volt, fontFamily: fonts.bold, fontSize: 7 },
+  memberCopy: { flex: 1, minWidth: 0 },
+  memberName: { color: '#F0F2F3', fontFamily: fonts.bold, fontSize: 10 },
+  memberMeta: { marginTop: 3, color: '#707B84', fontFamily: fonts.body, fontSize: 7 },
+  memberPrecision: { color: '#AAB3B9', fontFamily: fonts.bold, fontSize: 9 },
+  emptyCard: { minHeight: 190, padding: 22, borderRadius: 28, justifyContent: 'center', backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#252E36' },
+  emptyMark: { color: colors.volt, fontSize: 24 },
+  emptyTitle: { maxWidth: 320, marginTop: 12, color: '#F2F4F4', fontFamily: fonts.display, fontSize: 28, lineHeight: 27 },
+  emptyText: { maxWidth: 330, marginTop: 9, color: '#7A858E', fontFamily: fonts.body, fontSize: 10, lineHeight: 16 },
   heroSkeleton: { minHeight: 610, padding: 18, borderRadius: 30, justifyContent: 'space-between', backgroundColor: '#0D1311', borderWidth: 1, borderColor: '#29321A' },
   skeletonTitle: { width: 220, height: 65, borderRadius: 17, backgroundColor: '#172016' },
   skeletonRelic: { width: 230, height: 230, alignSelf: 'center', borderRadius: 115, backgroundColor: '#151C18' },

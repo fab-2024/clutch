@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, spacing } from '@/src/theme';
 
 type SocialSectionKey = 'faction' | 'circle' | 'challenges';
-type SocialSubsectionKey = 'friends' | 'leagues' | 'missions' | 'duels';
+type SocialSubsectionKey = 'friends' | 'requests' | 'leagues' | 'missions' | 'duels';
 
 const SECTIONS: Array<{
   glyph: string;
@@ -24,7 +24,8 @@ const SUBSECTIONS: Partial<Record<SocialSectionKey, Array<{
 }>>> = {
   circle: [
     { key: 'friends', label: 'AMIS', href: '/(tabs)/social/friends' },
-    { key: 'leagues', label: 'LIGUES', href: '/(tabs)/social/leagues' },
+    { key: 'requests', label: 'DEMANDES', href: '/(tabs)/social/requests' },
+    { key: 'leagues', label: 'LIGUE', href: '/(tabs)/social/leagues' },
   ],
   challenges: [
     { key: 'missions', label: 'MISSIONS', href: '/(tabs)/social/missions' },
@@ -83,13 +84,14 @@ export default function SocialSectionNav({ activeOverride }: { activeOverride?: 
 }
 
 function sectionFromPath(pathname: string): SocialSectionKey {
-  if (pathname.includes('/social/friends') || pathname.includes('/social/leagues')) return 'circle';
+  if (pathname.includes('/social/friends') || pathname.includes('/social/requests') || pathname.includes('/social/leagues')) return 'circle';
   if (pathname.includes('/social/missions') || pathname.includes('/social/duels')) return 'challenges';
   return 'faction';
 }
 
 function subsectionFromPath(pathname: string): SocialSubsectionKey | null {
   if (pathname.includes('/social/friends')) return 'friends';
+  if (pathname.includes('/social/requests')) return 'requests';
   if (pathname.includes('/social/leagues')) return 'leagues';
   if (pathname.includes('/social/missions')) return 'missions';
   if (pathname.includes('/social/duels')) return 'duels';

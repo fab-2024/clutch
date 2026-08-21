@@ -3,113 +3,41 @@ import { View } from 'react-native';
 
 import { ClutchHeader } from '@/src/components/layout/ClutchHeader';
 import { Screen } from '@/src/components/layout/Screen';
-import type { CommunityData } from '@/src/features/social/faction/types';
+import type { CommunityData, CommunityFaction } from '@/src/features/social/faction/types';
 
+import { SocialHomeExperience } from './SocialHomeScreen';
 import SocialSectionNav from './SocialSectionNav';
-import {
-  SocialHomeExperience,
-  type SocialAvailability,
-  type SocialSnapshot,
-} from './SocialHomeScreen';
 
 const PREVIEW_COMMUNITY: CommunityData = {
   factions: [
-    {
-      equipe_id: 'preview-kc',
-      nom: 'Karmine Corp',
-      tag: 'KC',
-      jeu: 'lol',
-      logo: null,
-      membres: 1,
-      niveau_atteint: 1,
-      croissance_24h: 1,
-      croissance_7j: 1,
-      moi: true,
-      dernier_evenement_id: null,
-      dernier_evenement_niveau: null,
-      dernier_evenement_nom: null,
-      dernier_evenement_le: null,
-      dernier_evenement_recompense_volts: 0,
-    },
+    previewFaction('g2', 'G2 Esports', 'G2', 286, 18),
+    previewFaction('fnc', 'Fnatic', 'FNC', 244, 12),
+    previewFaction('kc', 'Karmine Corp', 'KC', 218, 21, true),
+    previewFaction('bds', 'Team BDS', 'BDS', 175, 8),
+    previewFaction('th', 'Team Heretics', 'TH', 142, 5),
+    previewFaction('sk', 'SK Gaming', 'SK', 119, 3),
   ],
   moi: {
     user_id: 'preview-user',
     pseudo: 'Pierre-Louis',
-    equipe_id: 'preview-kc',
+    equipe_id: 'kc',
     membre_depuis: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
-    pronos_depuis: 1,
-    mutations_vecues: 0,
-    pronos_7j: 1,
-    gagnes_7j: 1,
-    delta_frags_7j: 3,
-    rang_activite: 1,
-    total_activite: 1,
-    top_activite: [],
+    pronos_depuis: 84,
+    mutations_vecues: 3,
+    pronos_7j: 12,
+    gagnes_7j: 8,
+    delta_frags_7j: 36,
+    rang_activite: 4,
+    total_activite: 218,
+    top_activite: [
+      { user_id: 'member-1', pseudo: 'Aiden', pronos_7j: 19, gagnes_7j: 14, rang: 1 },
+      { user_id: 'member-2', pseudo: 'Kayo', pronos_7j: 17, gagnes_7j: 12, rang: 2 },
+      { user_id: 'member-3', pseudo: 'Nova', pronos_7j: 14, gagnes_7j: 10, rang: 3 },
+      { user_id: 'preview-user', pseudo: 'Pierre-Louis', pronos_7j: 12, gagnes_7j: 8, rang: 4 },
+      { user_id: 'member-5', pseudo: 'Ryu', pronos_7j: 11, gagnes_7j: 7, rang: 5 },
+    ],
     archives: [],
   },
-};
-
-const PREVIEW_DATA: SocialSnapshot = {
-  community: PREVIEW_COMMUNITY,
-  friends: {
-    amis: [
-      { id: 'friend-aiden', pseudo: 'Aiden', solde: 1842 },
-      { id: 'friend-kayo', pseudo: 'Kayo', solde: 1756 },
-      { id: 'friend-nova', pseudo: 'Nova', solde: 1623 },
-      { id: 'friend-ryu', pseudo: 'Ryu', solde: 1438 },
-    ],
-    recues: [{ id: 'friend-luna', pseudo: 'Luna', solde: 1510 }],
-    envoyees: [],
-  },
-  leagues: [
-    { id: 'league-nightshift', nom: 'Nightshift', code: 'NS-24', createur_id: 'preview-user', cree_le: new Date().toISOString(), nb_membres: 12 },
-    { id: 'league-clutch', nom: 'Clutch Friends', code: 'CF-08', createur_id: 'friend-aiden', cree_le: new Date().toISOString(), nb_membres: 8 },
-  ],
-  missions: {
-    actives: [
-      {
-        id: 'mission-duo',
-        type: 'prediction',
-        statut: 'active',
-        progression: 2,
-        objectif: 3,
-        recompense_xp: 250,
-        recompense_volts: 0,
-        expire_le: new Date(Date.now() + 23 * 60 * 60 * 1000).toISOString(),
-        partenaire: { id: 'friend-aiden', pseudo: 'Aiden' },
-      },
-    ],
-    historique: [],
-    duos: [{ user_id: 'friend-aiden', pseudo: 'Aiden', missions_terminees: 7, serie_semaines: 3 }],
-    a_reveler: null,
-  },
-  duels: [
-    {
-      token: 'preview-duel',
-      match_id: 'preview-match',
-      statut: 'accepte',
-      moi_role: 'createur',
-      createur_pseudo: 'Pierre-Louis',
-      accepteur_pseudo: 'Vexa',
-      createur_choix: 'a',
-      accepteur_choix: 'b',
-      equipe_a: 'G2 Esports',
-      equipe_b: 'Fnatic',
-      tag_a: 'G2',
-      tag_b: 'FNC',
-      jeu: 'lol',
-      evenement: 'LEC Summer',
-      debut: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
-    },
-  ],
-};
-
-const PREVIEW_AVAILABILITY: SocialAvailability = {
-  community: true,
-  duels: true,
-  friends: true,
-  leagues: true,
-  missions: true,
 };
 
 export default function SocialHomePreviewScreen() {
@@ -120,10 +48,9 @@ export default function SocialHomePreviewScreen() {
         <ClutchHeader />
         <SocialSectionNav activeOverride="faction" />
         <SocialHomeExperience
-          availability={PREVIEW_AVAILABILITY}
-          data={PREVIEW_DATA}
+          data={PREVIEW_COMMUNITY}
           error={null}
-          favoriteTeamId="preview-kc"
+          favoriteTeamId="kc"
           loading={false}
           refreshing={false}
           onRefresh={noop}
@@ -132,6 +59,33 @@ export default function SocialHomePreviewScreen() {
       </View>
     </Screen>
   );
+}
+
+function previewFaction(
+  equipe_id: string,
+  nom: string,
+  tag: string,
+  membres: number,
+  croissance_7j: number,
+  moi = false,
+): CommunityFaction {
+  return {
+    equipe_id,
+    nom,
+    tag,
+    jeu: 'lol',
+    logo: null,
+    membres,
+    niveau_atteint: membres >= 100 ? 4 : membres >= 50 ? 3 : membres >= 10 ? 2 : 1,
+    croissance_24h: Math.max(1, Math.round(croissance_7j / 3)),
+    croissance_7j,
+    moi,
+    dernier_evenement_id: null,
+    dernier_evenement_niveau: null,
+    dernier_evenement_nom: null,
+    dernier_evenement_le: null,
+    dernier_evenement_recompense_volts: 0,
+  };
 }
 
 function noop() {}
