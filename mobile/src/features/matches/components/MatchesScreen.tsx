@@ -139,8 +139,14 @@ export function MatchesExperience({
   upcoming,
 }: MatchesExperienceProps) {
   const reduceMotion = useReducedMotion();
-  const params = useLocalSearchParams<{ view?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    view?: string | string[];
+    duelRivalId?: string | string[];
+    duelRivalPseudo?: string | string[];
+  }>();
   const requestedView = Array.isArray(params.view) ? params.view[0] : params.view;
+  const duelRivalId = Array.isArray(params.duelRivalId) ? params.duelRivalId[0] : params.duelRivalId;
+  const duelRivalPseudo = Array.isArray(params.duelRivalPseudo) ? params.duelRivalPseudo[0] : params.duelRivalPseudo;
   const [status, setStatus] = useState<StatusFilter>('upcoming');
   const [game, setGame] = useState<GameFilter>('followed');
   const [callsOnly, setCallsOnly] = useState(requestedView === 'calls');
@@ -201,6 +207,16 @@ export function MatchesExperience({
       >
         <ClutchHeader economy={headerEconomy} />
 
+        {duelRivalId ? (
+          <View style={styles.targetedDuelBanner}>
+            <View style={styles.targetedDuelCopy}>
+              <Text style={styles.targetedDuelEyebrow}>DUEL CIBLÉ · MARCHÉ CLASSÉ</Text>
+              <Text style={styles.targetedDuelTitle}>Choisis le match pour défier {duelRivalPseudo || 'ton rival'}.</Text>
+            </View>
+            <Pressable accessibilityLabel="Annuler le duel ciblé" accessibilityRole="button" onPress={() => router.replace('/(tabs)/matches')} style={({ pressed }) => [styles.targetedDuelClose, pressed && styles.pressed]}><Text style={styles.targetedDuelCloseText}>×</Text></Pressable>
+          </View>
+        ) : null}
+
         <Animated.View entering={entrance(30)}>
           <ScheduleHero
             activeDayKey={activeDayKey}
@@ -252,12 +268,12 @@ export function MatchesExperience({
             <SectionHead callsOnly={callsOnly} count={visibleMatches.length} date={activeDate} status={status} />
             {liveMatches.length ? (
               <View style={styles.liveStack}>
-                {liveMatches.map((match) => <LiveMatchCard key={match.id} match={match} />)}
+                {liveMatches.map((match) => <LiveMatchCard key={match.id} match={match} rivalId={duelRivalId} rivalPseudo={duelRivalPseudo} />)}
               </View>
             ) : null}
             {standardMatches.length ? (
               <View style={styles.matchList}>
-                {standardMatches.map((match) => <MatchRow key={match.id} match={match} />)}
+                {standardMatches.map((match) => <MatchRow key={match.id} match={match} rivalId={duelRivalId} rivalPseudo={duelRivalPseudo} />)}
               </View>
             ) : null}
           </Animated.View>
@@ -461,11 +477,11 @@ function SectionHead({ callsOnly, count, date, status }: { callsOnly: boolean; c
   );
 }
 
-function LiveMatchCard({ match }: { match: ArenaMatch }) {
+function LiveMatchCard({ match, rivalId, rivalPseudo }: { match: ArenaMatch; rivalId?: string; rivalPseudo?: string }) {
   const game = toGameId(match.jeu) ?? 'lol';
   const callTag = predictionTag(match);
   return (
-    <Pressable accessibilityHint="Ouvre le Match Center" accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}, en direct`} accessibilityRole="button" onPress={() => openMatch(match.id)} style={({ pressed }) => [styles.liveCard, pressed && styles.pressed]}>
+    <Pressable accessibilityHint="Ouvre le Match Center" accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}, en direct`} accessibilityRole="button" onPress={() => openMatch(match.id, rivalId, rivalPseudo)} style={({ pressed }) => [styles.liveCard, pressed && styles.pressed]}>
       <Image resizeMode="cover" source={GAME_BACKGROUNDS[game]} style={styles.liveBackdrop} />
       <LinearGradient colors={['rgba(3,6,9,.25)', 'rgba(3,6,9,.73)', 'rgba(3,6,9,.98)']} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
       <View style={styles.liveTop}>
@@ -486,7 +502,7 @@ function LiveTeam({ accent, name, tag }: { accent: string; name: string; tag: st
   return <View style={styles.liveTeam}><TeamLogo accent={accent} name={name} size={56} tag={tag} /><Text numberOfLines={1} style={styles.liveTeamTag}>{tag}</Text></View>;
 }
 
-function MatchRow({ match }: { match: ArenaMatch }) {
+function MatchRow({ match, rivalId, rivalPseudo }: { match: ArenaMatch; rivalId?: string; rivalPseudo?: string }) {
   const phase = matchPhase(match);
   const finished = phase === 'finished';
   const callTag = predictionTag(match);
@@ -494,7 +510,7 @@ function MatchRow({ match }: { match: ArenaMatch }) {
   const open = predictionIsOpen(match);
   const state = verdict || (callTag ? `CALL · ${callTag}` : finished ? 'FINAL' : open ? 'OUVERT' : 'CLOS');
   return (
-    <Pressable accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}${callTag ? `, ton call ${callTag}` : ''}`} accessibilityRole="button" onPress={() => openMatch(match.id)} style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}>
+    <Pressable accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}${callTag ? `, ton call ${callTag}` : ''}`} accessibilityRole="button" onPress={() => openMatch(match.id, rivalId, rivalPseudo)} style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}>
       <View style={styles.rowWhen}><Text style={styles.rowTime}>{finished ? 'FINAL' : formatTime(match.debut)}</Text><Text style={styles.rowGame}>{gameLabel(match.jeu)}</Text></View>
       <View style={styles.rowLogos}><TeamLogo accent="#5BABFF" name={match.equipe_a} size={34} tag={match.tag_a} /><View style={styles.rowLogoOverlap}><TeamLogo accent="#FF6375" name={match.equipe_b} size={34} tag={match.tag_b} /></View></View>
       <View style={styles.rowMain}><Text numberOfLines={1} style={styles.rowEvent}>{match.evenement} · BO{match.format}</Text><Text numberOfLines={1} style={styles.rowTeams}>{match.tag_a}  {finished ? `${match.score_a ?? 0} — ${match.score_b ?? 0}` : 'VS'}  {match.tag_b}</Text></View>
@@ -635,12 +651,16 @@ function predictionVerdict(match: ArenaMatch) {
   return `${delta >= 0 ? '+' : '−'}${Math.abs(delta)} FRAGS`;
 }
 
-function openMatch(id: string) {
-  router.push({ pathname: '/match/[id]', params: { id } });
+function openMatch(id: string, rivalId?: string, rivalPseudo?: string) {
+  router.push({
+    pathname: '/match/[id]',
+    params: rivalId ? { id, duelRivalId: rivalId, duelRivalPseudo: rivalPseudo ?? '' } : { id },
+  });
 }
 
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 14 },
+  targetedDuelBanner: { minHeight: 84, marginHorizontal: spacing.md, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 20, backgroundColor: '#171E10', borderWidth: 1, borderColor: '#4A5720' }, targetedDuelCopy: { flex: 1, minWidth: 0 }, targetedDuelEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .75 }, targetedDuelTitle: { ...typography.bodyStrong, marginTop: 5, color: colors.text }, targetedDuelClose: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#0D120C', borderWidth: 1, borderColor: '#35401B' }, targetedDuelCloseText: { color: colors.textMuted, fontSize: 23, lineHeight: 24 },
   scheduleHero: { position: 'relative', minHeight: 244, marginHorizontal: spacing.md, overflow: 'hidden', borderRadius: 27, backgroundColor: '#101820', borderWidth: 1, borderColor: '#2B3540', padding: 14 },
   scheduleBackdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, width: '100%', height: '100%' },
   scheduleTop: { zIndex: 2, minHeight: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },

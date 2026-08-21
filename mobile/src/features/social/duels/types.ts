@@ -5,7 +5,13 @@ export type DuelRow = {
   token: string;
   match_id: string;
   statut: DuelStatus;
-  moi_role?: 'createur' | 'accepteur';
+  moi_role?: 'createur' | 'accepteur' | 'cible';
+  cible_id?: string | null;
+  cible_pseudo?: string | null;
+  ciblee?: boolean;
+  marche?: 'match_winner';
+  marche_libelle?: string;
+  marche_classe?: boolean;
   createur_pseudo?: string;
   accepteur_pseudo?: string | null;
   createur_choix?: DuelChoice;
@@ -23,6 +29,9 @@ export type DuelMutation = {
   token: string;
   statut: DuelStatus;
   match_id?: string;
+  cible_id?: string | null;
+  marche?: 'match_winner';
+  marche_classe?: boolean;
 };
 
 export type DuelInvitation = {
@@ -43,13 +52,18 @@ export type DuelInvitation = {
   createur_choix: DuelChoice;
   createur_conviction: number | null;
   createur_multiplicateur: number | null;
+  marche: 'match_winner';
+  marche_libelle: string;
+  marche_classe: boolean;
+  ciblee: boolean;
+  cible_pseudo: string | null;
   choix_oppose: DuelChoice;
   equipe_opposee: string;
   tag_oppose: string;
   accepteur_pseudo: string | null;
   accepteur_choix: DuelChoice | null;
   accepteur_conviction: number | null;
-  moi_role: 'createur' | 'accepteur' | 'visiteur';
+  moi_role: 'createur' | 'accepteur' | 'cible' | 'visiteur';
   mon_prono: {
     id: string;
     choix: DuelChoice;

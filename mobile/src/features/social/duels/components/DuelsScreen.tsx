@@ -52,7 +52,7 @@ export default function DuelsScreen() {
       <View style={styles.intro}>
         <Text style={styles.eyebrow}>⚔ SOCIAL // DUELS</Text>
         <Text style={styles.title}>UN CALL. DEUX JOUEURS.</Text>
-        <Text style={styles.subtitle}>Aucune mise supplémentaire. Le duel transforme deux pronostics réels en rivalité.</Text>
+        <Text style={styles.subtitle}>Le même marché classé « vainqueur de la série », deux camps opposés et aucune mise supplémentaire.</Text>
       </View>
 
       {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text></View> : null}
@@ -60,7 +60,7 @@ export default function DuelsScreen() {
       {loading ? <View style={styles.skeleton} /> : featured ? <DuelHero duel={featured} onOpen={() => openDuel(featured.token)} /> : <EmptyDuelHero />}
 
       <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/matches')} style={({ pressed }) => [styles.newDuel, pressed && styles.pressed]}>
-        <View><Text style={styles.newDuelEyebrow}>NOUVEAU DUEL</Text><Text style={styles.newDuelTitle}>Choisis ton match.</Text><Text style={styles.newDuelCopy}>Pose ton call puis invite un rival sur le camp opposé.</Text></View>
+        <View><Text style={styles.newDuelEyebrow}>NOUVEAU DUEL CLASSÉ</Text><Text style={styles.newDuelTitle}>Choisis ton match.</Text><Text style={styles.newDuelCopy}>Pose ton call puis cible un ami du Cercle ou partage une invitation ouverte.</Text></View>
         <View style={styles.newDuelArrow}><Text style={styles.newDuelArrowText}>→</Text></View>
       </Pressable>
 
@@ -98,16 +98,17 @@ export default function DuelsScreen() {
 
 function DuelHero({ duel, onOpen }: { duel: DuelRow; onOpen: () => void }) {
   const creator = duel.moi_role === 'createur';
+  const targeted = duel.moi_role === 'cible';
   const rival = creator ? (duel.accepteur_pseudo || 'EN ATTENTE') : (duel.createur_pseudo || 'RIVAL');
   const mine = creator ? 'TOI' : (duel.accepteur_pseudo || 'TOI');
-  const myChoice = creator ? duel.createur_choix : duel.accepteur_choix;
+  const myChoice = creator ? duel.createur_choix : targeted ? opposite(duel.createur_choix) : duel.accepteur_choix;
   const myTag = myChoice === 'a' ? (duel.tag_a || duel.equipe_a || 'A') : myChoice === 'b' ? (duel.tag_b || duel.equipe_b || 'B') : '—';
   const rivalTag = myChoice === 'a' ? (duel.tag_b || duel.equipe_b || 'B') : myChoice === 'b' ? (duel.tag_a || duel.equipe_a || 'A') : '?';
   return (
     <Pressable accessibilityRole="button" onPress={onOpen} style={({ pressed }) => [styles.hero, pressed && styles.pressed]}>
       <View style={styles.heroBlue} /><View style={styles.heroRed} />
-      <View style={styles.heroTop}><Text style={styles.heroMeta}>{gameLabel(duel.jeu)} · {duel.evenement || 'MATCH'}</Text><Status status={effectiveStatus(duel)} /></View>
-      <Text style={styles.heroKicker}>{duel.statut === 'termine' ? 'VERDICT FINAL' : 'FACE-À-FACE'}</Text>
+      <View style={styles.heroTop}><Text style={styles.heroMeta}>{gameLabel(duel.jeu)} · CLASSÉ · {duel.evenement || 'MATCH'}</Text><Status status={effectiveStatus(duel)} /></View>
+      <Text style={styles.heroKicker}>{duel.statut === 'termine' ? 'VERDICT FINAL' : targeted ? 'DUEL REÇU' : 'FACE-À-FACE'}</Text>
       <View style={styles.faceoff}>
         <Player side="left" pseudo={mine} tag={myTag} />
         <View style={styles.vsBlock}><Text style={styles.vs}>VS</Text><View style={styles.vsLine} /></View>
@@ -140,13 +141,14 @@ function EmptyDuelHero() {
 
 function DuelCard({ duel, onOpen }: { duel: DuelRow; onOpen: () => void }) {
   const creator = duel.moi_role === 'createur';
+  const targeted = duel.moi_role === 'cible';
   const rival = creator ? (duel.accepteur_pseudo || 'En attente') : (duel.createur_pseudo || 'Rival');
-  const myChoice = creator ? duel.createur_choix : duel.accepteur_choix;
+  const myChoice = creator ? duel.createur_choix : targeted ? opposite(duel.createur_choix) : duel.accepteur_choix;
   const myTag = myChoice === 'a' ? (duel.tag_a || duel.equipe_a || 'A') : myChoice === 'b' ? (duel.tag_b || duel.equipe_b || 'B') : '—';
   return (
     <Pressable accessibilityRole="button" onPress={onOpen} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
       <View style={styles.cardMain}>
-        <Text style={styles.cardEyebrow}>{gameLabel(duel.jeu)} · {duel.evenement || 'MATCH'}</Text>
+        <Text style={styles.cardEyebrow}>{targeted ? 'REÇU' : 'CLASSÉ'} · {gameLabel(duel.jeu)} · {duel.evenement || 'MATCH'}</Text>
         <Text style={styles.cardTitle}>{myTag} <Text style={styles.cardVs}>VS</Text> {rival}</Text>
         <Text style={styles.cardDate}>{formatDate(duel.debut)}</Text>
       </View>
@@ -164,6 +166,7 @@ function Status({ status }: { status: DuelStatus }) {
 function gameLabel(value?: string) { const game = String(value || '').toLowerCase(); if (game.includes('lol')) return 'LOL'; if (game.includes('valorant')) return 'VAL'; if (game.includes('cs')) return 'CS2'; return 'ESPORT'; }
 function formatDate(value?: string) { if (!value) return 'Date à venir'; const date = new Date(value); if (!Number.isFinite(date.getTime())) return 'Date à venir'; return date.toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
 function effectiveStatus(duel: DuelRow): DuelStatus { return duel.statut === 'en_attente' && duel.debut && new Date(duel.debut).getTime() <= Date.now() ? 'expire' : duel.statut; }
+function opposite(choice?: 'a' | 'b') { return choice === 'a' ? 'b' : choice === 'b' ? 'a' : undefined; }
 function extractToken(value: string) { const cleaned = value.trim().split(/[?#]/)[0].replace(/\/+$/, ''); const token = cleaned.split('/').pop()?.toLowerCase() || ''; return /^[a-f0-9]{12,64}$/.test(token) ? token : ''; }
 
 const styles = StyleSheet.create({

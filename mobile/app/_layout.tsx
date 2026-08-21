@@ -12,6 +12,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import AuthRecoveryScreen from '@/src/features/auth/components/AuthRecoveryScreen';
 import ResultRevealGate from '@/src/features/matches/components/ResultRevealGate';
+import { NotificationBridge } from '@/src/features/notifications';
 import { AuthProvider, useAuth } from '@/src/providers/AuthProvider';
 import { EconomyProvider } from '@/src/providers/EconomyProvider';
 import { colors, typography } from '@/src/theme';
@@ -48,6 +49,7 @@ function RootNavigator() {
 
   return (
     <>
+      <NotificationBridge userId={userId} />
       <ResultRevealGate />
       <Stack
         screenOptions={{

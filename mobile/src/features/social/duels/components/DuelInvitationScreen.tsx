@@ -59,7 +59,7 @@ export default function DuelInvitationScreen() {
 
   const canAccept = Boolean(
     duel?.statut === 'en_attente'
-      && duel.moi_role === 'visiteur'
+      && (duel.moi_role === 'cible' || (!duel.ciblee && duel.moi_role === 'visiteur'))
       && duel.mon_prono?.choix === duel.choix_oppose,
   );
   const wrongCamp = Boolean(
@@ -145,11 +145,12 @@ export default function DuelInvitationScreen() {
                 <Text style={styles.meta}>{gameLabel(duel.jeu)} · {duel.evenement} · BO{duel.format}</Text>
                 <Status status={duel.statut} />
               </View>
+              <View style={styles.marketPill}><View style={styles.marketDot} /><Text style={styles.marketText}>CLASSÉ · {duel.marche_libelle.toUpperCase()}</Text></View>
               <Text style={styles.kicker}>{duel.statut === 'termine' ? 'VERDICT DU DUEL' : 'INVITATION AU FACE-À-FACE'}</Text>
               <View style={styles.faceoff}>
                 <Fighter pseudo={duel.createur_pseudo} tag={choiceTag(duel, duel.createur_choix)} role="CHALLENGER" />
                 <View style={styles.vsBlock}><Text style={styles.vs}>VS</Text><View style={styles.vsLine} /></View>
-                <Fighter pseudo={duel.accepteur_pseudo || 'PLACE LIBRE'} tag={duel.tag_oppose} role="RIVAL" right />
+                <Fighter pseudo={duel.accepteur_pseudo || duel.cible_pseudo || 'PLACE LIBRE'} tag={duel.tag_oppose} role={duel.cible_pseudo && !duel.accepteur_pseudo ? 'CIBLÉ' : 'RIVAL'} right />
               </View>
               <Text style={styles.date}>{formatDate(duel.debut)}</Text>
               {duel.statut === 'termine' && duel.score_a != null && duel.score_b != null ? (
@@ -180,8 +181,8 @@ export default function DuelInvitationScreen() {
 
             <View style={styles.rules}>
               <Text style={styles.rulesEyebrow}>RÈGLE DU DUEL</Text>
-              <Text style={styles.rulesTitle}>Deux pronostics réels. Deux camps opposés.</Text>
-              <Text style={styles.rulesCopy}>Aucune mise supplémentaire : le résultat du match règle automatiquement le face-à-face et alimente vos missions sociales.</Text>
+              <Text style={styles.rulesTitle}>Le même marché classé. Deux camps opposés.</Text>
+              <Text style={styles.rulesCopy}>Chaque joueur conserve son vrai call « vainqueur de la série ». Le duel ne crée ni mise ni score caché : le verdict officiel règle les deux en même temps.</Text>
             </View>
           </>
         ) : null}
@@ -205,12 +206,13 @@ function ActionPanel({ duel, canAccept, wrongCamp, busy, invitationUrl, onAccept
   if (duel.statut === 'annule') return <ClosedPanel title="INVITATION ANNULÉE" copy="Ce face-à-face n’est plus disponible." />;
   if (duel.statut === 'termine') return <ClosedPanel title="DUEL TERMINÉ" copy="Le verdict est définitif et reste dans l’historique des deux joueurs." />;
   if (duel.statut === 'accepte') return <ClosedPanel title="DUEL VERROUILLÉ" copy={`${duel.createur_pseudo} et ${duel.accepteur_pseudo || 'son rival'} attendent maintenant le résultat du match.`} />;
+  if (duel.ciblee && duel.moi_role === 'visiteur') return <ClosedPanel title="DUEL CIBLÉ" copy={`Cette invitation est réservée à ${duel.cible_pseudo || 'un autre joueur du Cercle'}.`} />;
 
   if (duel.moi_role === 'createur') {
     return (
       <View style={styles.actionPanel}>
         <Text style={styles.actionEyebrow}>TON INVITATION EST OUVERTE</Text>
-        <Text style={styles.actionTitle}>Envoie le camp {duel.tag_oppose} à ton rival.</Text>
+        <Text style={styles.actionTitle}>{duel.cible_pseudo ? `${duel.cible_pseudo} a reçu ton défi.` : `Envoie le camp ${duel.tag_oppose} à ton rival.`}</Text>
         <Text numberOfLines={1} style={styles.inviteUrl}>{invitationUrl}</Text>
         <Pressable accessibilityRole="button" disabled={Boolean(busy)} onPress={onShare} style={({ pressed }) => [styles.primary, (pressed || busy) && styles.pressed]}><Text style={styles.primaryText}>{busy === 'share' ? 'PRÉPARATION…' : 'PARTAGER L’INVITATION'}</Text></Pressable>
         <Pressable accessibilityRole="button" disabled={Boolean(busy)} onPress={onCancel} style={({ pressed }) => [styles.danger, (pressed || busy) && styles.pressed]}><Text style={styles.dangerText}>{busy === 'cancel' ? 'ANNULATION…' : 'ANNULER LE DUEL'}</Text></Pressable>
@@ -265,6 +267,7 @@ const styles = StyleSheet.create({
   notice: { padding: 13, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' }, noticeSuccess: { backgroundColor: '#0D1A13', borderColor: '#214C32' }, noticeText: { ...typography.body, color: '#FF9AA2' }, noticeSuccessText: { color: colors.success },
   hero: { position: 'relative', overflow: 'hidden', minHeight: 372, padding: 19, borderRadius: 30, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#303A44' }, blueGlow: { position: 'absolute', left: -80, bottom: -65, width: 280, height: 280, borderRadius: 140, backgroundColor: '#123A67', opacity: 0.55 }, redGlow: { position: 'absolute', right: -80, bottom: -65, width: 280, height: 280, borderRadius: 140, backgroundColor: '#5B173C', opacity: 0.5 },
   heroTop: { zIndex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }, meta: { ...typography.label, flex: 1, color: colors.textMuted, letterSpacing: .35 }, kicker: { ...typography.eyebrow, zIndex: 2, marginTop: 31, color: colors.textMuted, letterSpacing: 1.4, textAlign: 'center' },
+  marketPill: { zIndex: 2, alignSelf: 'flex-start', minHeight: 28, marginTop: 13, paddingHorizontal: 9, flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 14, backgroundColor: '#17200F', borderWidth: 1, borderColor: '#44511E' }, marketDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.volt }, marketText: { ...typography.label, color: colors.volt, letterSpacing: .35 },
   faceoff: { zIndex: 2, marginTop: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, fighter: { width: '38%', alignItems: 'flex-start' }, fighterRight: { alignItems: 'flex-end' }, fighterMark: { width: 78, height: 78, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: '#101C27', borderWidth: 1, borderColor: '#315B7A' }, fighterMarkRight: { backgroundColor: '#23121D', borderColor: '#78345A' }, fighterTag: { ...typography.metricSmall, color: colors.text }, fighterName: { ...typography.cardTitle, width: '100%', marginTop: 10, color: colors.text }, fighterRole: { ...typography.eyebrow, marginTop: 3, color: colors.textMuted, letterSpacing: .4 },
   vsBlock: { width: 54, alignItems: 'center' }, vs: { ...typography.metricLarge, color: colors.text, fontSize: 39, lineHeight: 42 }, vsLine: { width: 26, height: 3, marginTop: 6, backgroundColor: colors.volt }, date: { ...typography.caption, zIndex: 2, marginTop: 28, color: colors.textMuted, textAlign: 'center' }, matchScore: { ...typography.cardTitle, zIndex: 2, marginTop: 13, color: colors.text, textAlign: 'center' },
   status: { minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 9, borderRadius: 999, backgroundColor: '#11161C', borderWidth: 1, borderColor: '#242D35' }, statusActive: { backgroundColor: '#171E0E', borderColor: '#3D491D' }, statusDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#596570' }, statusDotActive: { backgroundColor: colors.volt }, statusText: { ...typography.label, color: colors.textMuted, letterSpacing: .2 }, statusTextActive: { color: colors.volt },

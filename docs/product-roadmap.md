@@ -109,17 +109,21 @@ entièrement explicable après résolution.
 
 ### 2.3 Cercle et duels
 
-- [ ] Consolider le classement hebdomadaire du Cercle.
-- [ ] Relier les duels au marché classé existant.
-- [ ] Créer une carte de performance partageable.
-- [ ] Ne pas ajouter de Club, fil public ou messagerie complexe.
+- [x] Consolider le classement hebdomadaire du Cercle.
+- [x] Relier les duels au marché classé existant.
+- [x] Créer une carte de performance partageable.
+- [x] Ne pas ajouter de Club, fil public ou messagerie complexe.
 
 ### 2.4 Notifications utiles
 
-- [ ] Enregistrer préférences, fuseau et jetons de notification.
+- [x] Enregistrer préférences, fuseau et jetons de notification.
 - [ ] Notifier verrouillage imminent, début du match et verdict.
 - [ ] Notifier promotion, mutation et duel reçu.
-- [ ] Éviter tout rappel sans événement concret.
+- [x] Éviter tout rappel sans événement concret.
+
+Le planificateur, la file idempotente et le relais Expo sont déployés ; le
+cycle cron répond en production. Les deux types de livraison restent ouverts
+jusqu'à leur validation sur une build native EAS avec un vrai appareil.
 
 ## Lot 3 — Usage des Volts
 

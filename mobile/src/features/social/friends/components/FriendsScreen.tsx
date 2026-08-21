@@ -1,6 +1,7 @@
+import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import {
   answerFriendRequest,
@@ -9,10 +10,10 @@ import {
   requestFriend,
   searchPlayers,
 } from '../api';
-import type { FriendRow, FriendsData, PlayerSearchRow } from '../types';
+import type { CircleWeeklyData, CircleWeeklyRow, FriendRow, FriendsData, PlayerSearchRow } from '../types';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
-const EMPTY: FriendsData = { amis: [], recues: [], envoyees: [] };
+const EMPTY: FriendsData = { amis: [], recues: [], envoyees: [], weekly: null };
 type CircleView = 'friends' | 'requests';
 
 export default function FriendsScreen() {
@@ -34,6 +35,7 @@ function CirclePeopleScreen({ view }: { view: CircleView }) {
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
   const searchRequest = useRef(0);
 
   const load = useCallback(async (refresh = false) => {
@@ -95,7 +97,31 @@ function CirclePeopleScreen({ view }: { view: CircleView }) {
     router.push({ pathname: '/player/[pseudo]', params: { pseudo } });
   }
 
-  const topFriend = data.amis[0] ?? null;
+  function challengePlayer(player: CircleWeeklyRow) {
+    router.push({
+      pathname: '/(tabs)/matches',
+      params: { duelRivalId: player.id, duelRivalPseudo: player.pseudo },
+    });
+  }
+
+  async function sharePerformance() {
+    const me = data.weekly?.moi;
+    if (!me) return;
+    const precision = me.precision_pct == null ? '—' : `${Math.round(me.precision_pct)}%`;
+    const message = `Ma semaine Clutch : #${me.rang}/${me.participants} dans mon Cercle · ${signed(me.frags_hebdo)} Frags · ${me.victoires}/${me.calls} calls · ${precision} de réussite.`;
+    const url = Linking.createURL('/(tabs)/social/friends');
+    try {
+      if (Platform.OS === 'web' && globalThis.navigator?.clipboard) {
+        await globalThis.navigator.clipboard.writeText(`${message} ${url}`);
+        setShareMessage('CARTE COPIÉE · PRÊTE À ÊTRE PARTAGÉE.');
+      } else {
+        await Share.share({ message: `${message} ${url}`, url });
+        setShareMessage('CARTE PRÊTE À ÊTRE PARTAGÉE.');
+      }
+    } catch {
+      setShareMessage(message);
+    }
+  }
 
   return (
     <ScrollView
@@ -114,12 +140,10 @@ function CirclePeopleScreen({ view }: { view: CircleView }) {
 
       {view === 'friends' ? (
         <>
-          <View style={styles.hero}>
-            <Text style={styles.heroCount}>{loading ? '—' : data.amis.length}</Text>
-            <Text style={styles.heroLabel}>JOUEURS DANS TON CERCLE</Text>
-            <View style={styles.heroLine} />
-            <Text style={styles.heroCopy}>{topFriend ? `${topFriend.pseudo} est actuellement ton premier point de comparaison.` : 'Ton premier rival peut commencer par une simple recherche.'}</Text>
-          </View>
+          {loading ? <View style={styles.weeklySkeleton} /> : <WeeklyPerformanceCard weekly={data.weekly} onShare={() => void sharePerformance()} />}
+          {shareMessage ? <Text style={styles.shareMessage}>{shareMessage}</Text> : null}
+
+          <WeeklyRanking weekly={data.weekly} onChallenge={challengePlayer} onOpen={openProfile} />
 
           <View style={styles.searchShell}>
             <Text style={styles.searchEyebrow}>TROUVER UN JOUEUR</Text>
@@ -203,6 +227,77 @@ function CirclePeopleScreen({ view }: { view: CircleView }) {
   );
 }
 
+function WeeklyPerformanceCard({ weekly, onShare }: { weekly: CircleWeeklyData | null; onShare: () => void }) {
+  const me = weekly?.moi;
+  if (!me) {
+    return (
+      <View style={styles.weeklyEmpty}>
+        <Text style={styles.weeklyEyebrow}>CERCLE // SEMAINE EN COURS</Text>
+        <Text style={styles.weeklyEmptyTitle}>LE CLASSEMENT DÉMARRE AVEC TON PREMIER VERDICT.</Text>
+        <Text style={styles.weeklyEmptyCopy}>Tes calls réglés et ceux de tes amis apparaîtront ici, du lundi au dimanche.</Text>
+      </View>
+    );
+  }
+
+  const precision = me.precision_pct == null ? '—' : `${Math.round(me.precision_pct)}%`;
+  return (
+    <View style={styles.performanceCard}>
+      <View style={styles.performanceGlow} />
+      <View style={styles.performanceTop}>
+        <View><Text style={styles.weeklyEyebrow}>CARTE DE PERFORMANCE</Text><Text style={styles.weeklyPeriod}>{weekLabel(weekly)}</Text></View>
+        <View style={styles.weekPill}><Text style={styles.weekPillText}>{weekly?.semaine || 'SEMAINE'}</Text></View>
+      </View>
+      <View style={styles.performanceRankRow}>
+        <Text style={styles.performanceRank}>#{me.rang}</Text>
+        <Text style={styles.performanceOf}>/ {me.participants}{'\n'}DANS TON CERCLE</Text>
+      </View>
+      <View style={styles.performanceStats}>
+        <WeeklyStat label="FRAGS" value={signed(me.frags_hebdo)} accent />
+        <View style={styles.performanceDivider} />
+        <WeeklyStat label="CALLS" value={`${me.victoires}/${me.calls}`} />
+        <View style={styles.performanceDivider} />
+        <WeeklyStat label="PRÉCISION" value={precision} />
+      </View>
+      <Pressable accessibilityRole="button" onPress={onShare} style={({ pressed }) => [styles.shareButton, pressed && styles.pressed]}>
+        <Text style={styles.shareButtonText}>PARTAGER MA CARTE</Text><Text style={styles.shareButtonArrow}>↗</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function WeeklyStat({ accent = false, label, value }: { accent?: boolean; label: string; value: string }) {
+  return <View style={styles.weeklyStat}><Text style={[styles.weeklyStatValue, accent && styles.weeklyStatValueAccent]}>{value}</Text><Text style={styles.weeklyStatLabel}>{label}</Text></View>;
+}
+
+function WeeklyRanking({ weekly, onChallenge, onOpen }: {
+  weekly: CircleWeeklyData | null;
+  onChallenge: (player: CircleWeeklyRow) => void;
+  onOpen: (pseudo: string) => void;
+}) {
+  if (!weekly?.classement.length) return null;
+  return (
+    <View style={styles.weeklySection}>
+      <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>CLASSEMENT DE LA SEMAINE</Text><Text style={styles.sectionMeta}>{weekly.classement.length}</Text></View>
+      <View style={styles.weeklyList}>
+        {weekly.classement.map((player) => (
+          <View key={player.id} style={[styles.weeklyRow, player.moi && styles.weeklyRowMine]}>
+            <Text style={[styles.weeklyRank, player.rang <= 3 && styles.weeklyRankTop]}>{String(player.rang).padStart(2, '0')}</Text>
+            <Pressable accessibilityRole="button" onPress={() => onOpen(player.pseudo)} style={({ pressed }) => [styles.weeklyIdentity, pressed && styles.pressed]}>
+              <View style={styles.avatarSmall}><Text style={styles.avatarSmallText}>{initials(player.pseudo)}</Text></View>
+              <View style={styles.weeklyPlayerCopy}>
+                <Text numberOfLines={1} style={styles.weeklyPlayerName}>{player.moi ? 'TOI' : player.pseudo}</Text>
+                <Text style={styles.weeklyPlayerMeta}>{player.victoires}/{player.calls} calls · {player.precision_pct == null ? '—' : `${Math.round(player.precision_pct)}%`}</Text>
+              </View>
+            </Pressable>
+            <Text style={[styles.weeklyDelta, player.frags_hebdo < 0 && styles.weeklyDeltaLoss]}>{signed(player.frags_hebdo)}</Text>
+            {!player.moi ? <Pressable accessibilityLabel={`Défier ${player.pseudo}`} accessibilityRole="button" onPress={() => onChallenge(player)} style={({ pressed }) => [styles.challengeButton, pressed && styles.pressed]}><Text style={styles.challengeButtonText}>⚔</Text></Pressable> : null}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 function FriendCard({ friend, rank, disabled, confirming, onOpen, onRemove }: { friend: FriendRow; rank: number; disabled: boolean; confirming: boolean; onOpen: () => void; onRemove: () => void }) {
   const bets = Number(friend.paris ?? 0);
   const wins = Number(friend.gagnes ?? 0);
@@ -277,12 +372,46 @@ function EmptyRequests({ text }: { text: string }) {
 
 function initials(value: string) { const p = value.trim().split(/[\s._-]+/).filter(Boolean); return p.length > 1 ? `${p[0][0]}${p[1][0]}`.toUpperCase() : (p[0] || '?').slice(0, 2).toUpperCase(); }
 function format(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
+function signed(value: number) { const amount = Number(value || 0); return `${amount > 0 ? '+' : amount < 0 ? '−' : ''}${Math.abs(amount)}`; }
+function weekLabel(weekly: CircleWeeklyData | null) {
+  if (!weekly?.debut || !weekly.fin) return 'SEMAINE EN COURS';
+  const start = new Date(weekly.debut);
+  const end = new Date(new Date(weekly.fin).getTime() - 1);
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) return 'SEMAINE EN COURS';
+  return `${start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} — ${end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`.toUpperCase();
+}
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', padding: spacing.md, paddingBottom: layout.tabBarContentInset, gap: 22 },
   intro: { gap: 8, paddingTop: 4 }, eyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.1 }, title: { ...typography.displayMedium, maxWidth: 365, color: colors.text }, subtitle: { ...typography.body, maxWidth: 365, color: colors.textMuted },
   error: { padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' }, errorText: { ...typography.body, color: '#FF9AA2' },
+  weeklySkeleton: { height: 330, borderRadius: 29, backgroundColor: '#10161D' },
+  weeklyEmpty: { minHeight: 220, justifyContent: 'center', padding: 21, borderRadius: 29, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: colors.border, gap: 9 },
+  weeklyEmptyTitle: { ...typography.displaySmall, maxWidth: 330, color: colors.text },
+  weeklyEmptyCopy: { ...typography.body, maxWidth: 330, color: colors.textMuted },
+  performanceCard: { position: 'relative', overflow: 'hidden', minHeight: 330, padding: 19, borderRadius: 29, backgroundColor: '#0C120C', borderWidth: 1, borderColor: '#46531F' },
+  performanceGlow: { position: 'absolute', right: -75, top: -85, width: 230, height: 230, borderRadius: 115, backgroundColor: '#71851E', opacity: .22 },
+  performanceTop: { zIndex: 2, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
+  weeklyEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1 },
+  weeklyPeriod: { ...typography.caption, marginTop: 4, color: '#A9B28E' },
+  weekPill: { minHeight: 29, paddingHorizontal: 9, alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: '#18200F', borderWidth: 1, borderColor: '#46531F' },
+  weekPillText: { ...typography.label, color: '#C8D59A', letterSpacing: .25 },
+  performanceRankRow: { zIndex: 2, marginTop: 22, flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
+  performanceRank: { ...typography.metricLarge, color: colors.text, fontSize: 78, lineHeight: 76, letterSpacing: -4 },
+  performanceOf: { ...typography.eyebrow, marginBottom: 8, color: '#A9B28E', lineHeight: 15, letterSpacing: .7 },
+  performanceStats: { zIndex: 2, minHeight: 72, marginTop: 17, paddingHorizontal: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', borderRadius: 18, backgroundColor: 'rgba(5,9,7,.58)', borderWidth: 1, borderColor: '#303A1C' },
+  weeklyStat: { minWidth: 72, alignItems: 'center' }, weeklyStatValue: { ...typography.metricSmall, color: colors.text }, weeklyStatValueAccent: { color: colors.volt }, weeklyStatLabel: { ...typography.eyebrow, marginTop: 3, color: colors.textMuted, letterSpacing: .45 },
+  performanceDivider: { width: 1, height: 34, backgroundColor: '#35401F' },
+  shareButton: { zIndex: 2, minHeight: 48, marginTop: 13, paddingHorizontal: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 14, backgroundColor: colors.volt },
+  shareButtonText: { ...typography.action, color: '#080A0C', letterSpacing: .45 }, shareButtonArrow: { color: '#080A0C', fontSize: 18, fontWeight: '900' },
+  shareMessage: { ...typography.label, marginTop: -12, color: colors.volt, letterSpacing: .35 },
+  weeklySection: { gap: 9 }, weeklyList: { overflow: 'hidden', borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border },
+  weeklyRow: { minHeight: 76, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 9, borderBottomWidth: 1, borderBottomColor: '#192129' },
+  weeklyRowMine: { backgroundColor: '#12190E' }, weeklyRank: { ...typography.label, width: 23, color: '#68737D' }, weeklyRankTop: { color: colors.volt },
+  weeklyIdentity: { flex: 1, minWidth: 0, minHeight: 74, flexDirection: 'row', alignItems: 'center', gap: 9 }, weeklyPlayerCopy: { flex: 1, minWidth: 0 }, weeklyPlayerName: { ...typography.bodyStrong, color: colors.text }, weeklyPlayerMeta: { ...typography.caption, marginTop: 3, color: colors.textMuted },
+  weeklyDelta: { ...typography.bodyStrong, minWidth: 32, color: colors.volt, textAlign: 'right' }, weeklyDeltaLoss: { color: '#FF8E99' },
+  challengeButton: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#1A220F', borderWidth: 1, borderColor: '#48551F' }, challengeButtonText: { color: colors.volt, fontSize: 17 },
   hero: { minHeight: 184, padding: 20, borderRadius: 29, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#252E36' }, heroCount: { ...typography.metricLarge, color: colors.text, fontSize: 58, lineHeight: 60, letterSpacing: -3 }, heroLabel: { ...typography.eyebrow, marginTop: 4, color: colors.volt, letterSpacing: .9 }, heroLine: { width: 42, height: 3, marginVertical: 13, backgroundColor: colors.volt }, heroCopy: { ...typography.body, maxWidth: 310, color: colors.textMuted },
   section: { gap: 9 }, sectionHeading: { flexDirection: 'row', justifyContent: 'space-between' }, sectionLabel: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .9 }, sectionMeta: { ...typography.label, color: colors.textMuted },
   searchShell: { padding: 17, borderRadius: 25, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, gap: 9 }, searchEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .8 }, searchTitle: { ...typography.cardTitle, color: colors.text }, searchInput: { ...typography.bodyStrong, minHeight: 52, paddingHorizontal: 14, borderRadius: 15, backgroundColor: '#070B0F', borderWidth: 1, borderColor: '#263039', color: colors.text }, searchState: { ...typography.caption, paddingVertical: 5, color: colors.textMuted, textAlign: 'center' }, searchError: { ...typography.body, color: '#FF9AA2' },

@@ -29,10 +29,17 @@ type MatchCenterScreenProps = {
 export default function MatchCenterScreen({ previewData }: MatchCenterScreenProps) {
   const { session } = useAuth();
   const { refresh: refreshEconomy } = useEconomy();
-  const params = useLocalSearchParams<{ id?: string | string[]; duel?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    id?: string | string[];
+    duel?: string | string[];
+    duelRivalId?: string | string[];
+    duelRivalPseudo?: string | string[];
+  }>();
   const routeMatchId = Array.isArray(params.id) ? params.id[0] : params.id;
   const matchId = previewData?.match.id ?? routeMatchId;
   const duelToken = Array.isArray(params.duel) ? params.duel[0] : params.duel;
+  const duelRivalId = Array.isArray(params.duelRivalId) ? params.duelRivalId[0] : params.duelRivalId;
+  const duelRivalPseudo = Array.isArray(params.duelRivalPseudo) ? params.duelRivalPseudo[0] : params.duelRivalPseudo;
   const [data, setData] = useState<MatchCenterData | null>(previewData ?? null);
   const [selected, setSelected] = useState<'a' | 'b' | null>(null);
   const [loading, setLoading] = useState(!previewData);
@@ -151,7 +158,7 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
     if (!match || duelBusy) return;
     setDuelBusy(true); setDuelError(null);
     try {
-      const created = await createDuel(match.id);
+      const created = await createDuel(match.id, duelRivalId);
       router.push({ pathname: '/duel/[token]', params: { token: created.token } });
     } catch (caught) {
       setDuelError(caught instanceof Error ? caught.message : 'Impossible de créer ce duel.');
@@ -267,12 +274,12 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
             ) : prediction && open && prediction.statut === 'en_cours' ? (
               <View style={styles.duelAction}>
                 <View style={styles.duelActionCopy}>
-                  <Text style={styles.duelActionEyebrow}>FACE-À-FACE</Text>
-                  <Text style={styles.duelActionTitle}>Quelqu’un assume le camp opposé ?</Text>
-                  <Text style={styles.duelActionText}>Crée une invitation liée à ce pronostic et partage-la à ton rival.</Text>
+                  <Text style={styles.duelActionEyebrow}>{duelRivalId ? 'DUEL CIBLÉ · MARCHÉ CLASSÉ' : 'FACE-À-FACE · MARCHÉ CLASSÉ'}</Text>
+                  <Text style={styles.duelActionTitle}>{duelRivalId ? `Défie ${duelRivalPseudo || 'ton rival'} sur ce call.` : 'Quelqu’un assume le camp opposé ?'}</Text>
+                  <Text style={styles.duelActionText}>{duelRivalId ? 'L’invitation apparaîtra dans son Cercle et déclenchera une alerte s’il l’a autorisée.' : 'Crée une invitation liée à ce vrai pronostic et partage-la à ton rival.'}</Text>
                 </View>
                 {duelError ? <Text style={styles.duelActionError}>{duelError}</Text> : null}
-                <Pressable accessibilityRole="button" disabled={duelBusy} onPress={() => void launchDuel()} style={({ pressed }) => [styles.duelActionButton, (pressed || duelBusy) && styles.confirmPressed]}><Text style={styles.duelActionButtonText}>{duelBusy ? 'CRÉATION…' : 'DÉFIER UN RIVAL →'}</Text></Pressable>
+                <Pressable accessibilityRole="button" disabled={duelBusy} onPress={() => void launchDuel()} style={({ pressed }) => [styles.duelActionButton, (pressed || duelBusy) && styles.confirmPressed]}><Text style={styles.duelActionButtonText}>{duelBusy ? 'CRÉATION…' : duelRivalId ? `DÉFIER ${(duelRivalPseudo || 'CE RIVAL').toUpperCase()} →` : 'DÉFIER UN RIVAL →'}</Text></Pressable>
               </View>
             ) : null}
 

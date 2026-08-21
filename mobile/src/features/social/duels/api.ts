@@ -15,9 +15,10 @@ export async function loadDuels(limit = 30): Promise<DuelRow[]> {
   return [];
 }
 
-export async function createDuel(matchId: string): Promise<DuelMutation> {
+export async function createDuel(matchId: string, rivalId?: string | null): Promise<DuelMutation> {
   const { data, error } = await supabase.rpc('clutch_creer_defi_match', {
     p_match_id: matchId,
+    p_cible_id: rivalId ?? null,
   });
   if (error) throw error;
   return requirePayload<DuelMutation>(data, 'Le duel n’a pas pu être créé.');
