@@ -45,7 +45,7 @@ export default function SocialHomePreviewScreen() {
   return (
     <Screen>
       <View style={{ flex: 1 }}>
-        <ClutchHeader />
+        <ClutchHeader economy={{ frags: 1842, volts: 680 }} />
         <SocialSectionNav activeOverride="faction" />
         <SocialHomeExperience
           data={PREVIEW_COMMUNITY}

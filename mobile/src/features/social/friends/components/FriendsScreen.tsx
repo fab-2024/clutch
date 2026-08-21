@@ -10,7 +10,7 @@ import {
   searchPlayers,
 } from '../api';
 import type { FriendRow, FriendsData, PlayerSearchRow } from '../types';
-import { colors, radius, spacing } from '@/src/theme';
+import { colors, layout, radius, spacing } from '@/src/theme';
 
 const EMPTY: FriendsData = { amis: [], recues: [], envoyees: [] };
 type CircleView = 'friends' | 'requests';
@@ -280,7 +280,7 @@ function format(value: number) { return new Intl.NumberFormat('fr-FR').format(Nu
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  content: { width: '100%', maxWidth: 430, alignSelf: 'center', padding: spacing.md, paddingBottom: 128, gap: 22 },
+  content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', padding: spacing.md, paddingBottom: layout.tabBarContentInset, gap: 22 },
   intro: { gap: 8, paddingTop: 4 }, eyebrow: { color: colors.volt, fontSize: 9, fontWeight: '900', letterSpacing: 1.5 }, title: { maxWidth: 365, color: colors.text, fontSize: 35, lineHeight: 35, fontWeight: '900', letterSpacing: -1.6 }, subtitle: { maxWidth: 365, color: colors.textMuted, fontSize: 13, lineHeight: 19 },
   error: { padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' }, errorText: { color: '#FF9AA2', fontSize: 11 },
   hero: { minHeight: 165, padding: 20, borderRadius: 29, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#252E36' }, heroCount: { color: colors.text, fontSize: 58, lineHeight: 60, fontWeight: '900', letterSpacing: -3 }, heroLabel: { marginTop: 4, color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: 1.2 }, heroLine: { width: 42, height: 3, marginVertical: 13, backgroundColor: colors.volt }, heroCopy: { maxWidth: 310, color: colors.textMuted, fontSize: 12, lineHeight: 18 },

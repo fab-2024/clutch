@@ -5,8 +5,13 @@ export const colors = {
   border: '#202833',
   text: '#F4F7FA',
   textMuted: '#8893A0',
+  textSubtle: '#A5AFB9',
   volt: '#E8FF3D',
   success: '#45D483',
   danger: '#FF5D68',
   info: '#66A8FF',
+  live: '#FF6575',
+  liveText: '#FF9AA5',
+  liveSurface: 'rgba(34,10,16,.86)',
+  liveBorder: 'rgba(255,101,117,.48)',
 } as const;

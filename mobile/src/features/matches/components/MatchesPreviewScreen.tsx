@@ -101,6 +101,7 @@ export default function MatchesPreviewScreen() {
       error={null}
       finished={PREVIEW_FINISHED}
       followedGames={['lol', 'valorant', 'cs2']}
+      headerEconomy={{ frags: 1842, volts: 680 }}
       isAdmin={false}
       loading={false}
       refreshing={false}

@@ -1,7 +1,7 @@
 import { router, usePathname } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, fonts, spacing } from '@/src/theme';
+import { colors, fonts, layout, spacing } from '@/src/theme';
 
 type SocialSectionKey = 'faction' | 'circle' | 'challenges';
 type SocialSubsectionKey = 'friends' | 'requests' | 'leagues' | 'missions' | 'duels';
@@ -101,7 +101,7 @@ function subsectionFromPath(pathname: string): SocialSubsectionKey | null {
 const styles = StyleSheet.create({
   outer: {
     width: '100%',
-    maxWidth: 430,
+    maxWidth: layout.contentMaxWidth,
     alignSelf: 'center',
     paddingHorizontal: spacing.md,
     paddingTop: 10,
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   label: {
     color: '#78838E',
     fontFamily: fonts.bold,
-    fontSize: 7,
+    fontSize: 8,
     letterSpacing: .5,
   },
   labelActive: { color: '#F5F7F8' },
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   subItemActive: { backgroundColor: '#181F11' },
-  subLabel: { color: '#66717C', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .8 },
+  subLabel: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .7 },
   subLabelActive: { color: colors.volt },
   pressed: { opacity: .72 },
 });

@@ -10,7 +10,7 @@ import {
 
 import { Screen } from '@/src/components/layout/Screen';
 import { useAuth } from '@/src/providers/AuthProvider';
-import { colors, radius, spacing } from '@/src/theme';
+import { colors, layout, radius, spacing } from '@/src/theme';
 import { teamHue } from '@/src/utils/teams';
 
 import { loadCommunityData } from '../api';
@@ -554,11 +554,11 @@ function initials(value: string) {
 const styles = StyleSheet.create({
   content: {
     width: '100%',
-    maxWidth: 430,
+    maxWidth: layout.contentMaxWidth,
     alignSelf: 'center',
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
-    paddingBottom: 120,
+    paddingBottom: layout.tabBarContentInset,
     gap: spacing.xl,
   },
   header: { gap: 8, paddingTop: 4 },

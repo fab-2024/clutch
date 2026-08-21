@@ -21,7 +21,7 @@ import GameLogo from '@/src/features/onboarding/components/GameLogo';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import type { GameId } from '@/src/features/onboarding/types';
 import { useAuth } from '@/src/providers/AuthProvider';
-import { colors, fonts, radius, spacing } from '@/src/theme';
+import { colors, fonts, layout, radius, spacing } from '@/src/theme';
 
 import { loadArenaMatches } from '../api';
 import type { ArenaMatch } from '../types';
@@ -34,6 +34,7 @@ type MatchesExperienceProps = {
   error: string | null;
   finished: ArenaMatch[];
   followedGames: string[];
+  headerEconomy?: { frags: number; volts: number };
   isAdmin: boolean;
   loading: boolean;
   onRefresh: () => void;
@@ -112,6 +113,7 @@ export function MatchesExperience({
   error,
   finished,
   followedGames,
+  headerEconomy,
   isAdmin,
   loading,
   onRefresh,
@@ -169,7 +171,7 @@ export function MatchesExperience({
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
       >
-        <ClutchHeader />
+        <ClutchHeader economy={headerEconomy} />
 
         <Animated.View entering={entrance(30)}>
           <ScheduleHero
@@ -594,7 +596,7 @@ function openMatch(id: string) {
 }
 
 const styles = StyleSheet.create({
-  content: { width: '100%', maxWidth: 430, alignSelf: 'center', paddingBottom: 124, gap: 18 },
+  content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 18 },
   scheduleHero: { position: 'relative', minHeight: 306, marginHorizontal: spacing.md, overflow: 'hidden', borderRadius: 30, backgroundColor: '#101820', borderWidth: 1, borderColor: '#2B3540', padding: 18 },
   scheduleBackdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, width: '100%', height: '100%' },
   scheduleTop: { zIndex: 2, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
@@ -626,22 +628,22 @@ const styles = StyleSheet.create({
   gameIconActive: { backgroundColor: colors.volt },
   allGamesGlyph: { color: '#8B96A2', fontFamily: fonts.display, fontSize: 16 },
   allGamesGlyphActive: { color: '#070A0E' },
-  gameFilterText: { color: '#707B87', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .55 },
+  gameFilterText: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .5 },
   gameFilterTextActive: { color: '#F4F6F7' },
   modeRow: { flexDirection: 'row', gap: 7 },
   statusSwitch: { flex: 1, minHeight: 40, padding: 3, borderRadius: 14, flexDirection: 'row', backgroundColor: '#070B0F', borderWidth: 1, borderColor: '#202832' },
   statusButton: { flex: 1, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   statusButtonActive: { backgroundColor: '#202830' },
-  statusText: { color: '#68737F', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .55 },
+  statusText: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .5 },
   statusTextActive: { color: '#F5F7F8' },
   callsButton: { minWidth: 104, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#070B0F', borderWidth: 1, borderColor: '#202832' },
   callsButtonActive: { backgroundColor: '#161D0F', borderColor: '#4B5820' },
   callsDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#4B5661' },
   callsDotActive: { backgroundColor: colors.volt },
-  callsText: { color: '#75808C', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .45 },
+  callsText: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .4 },
   callsTextActive: { color: colors.volt },
   adminLink: { minHeight: 34, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#202832' },
-  adminLinkText: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 7, letterSpacing: .8 },
+  adminLinkText: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .8 },
   adminLinkArrow: { color: colors.volt, fontSize: 14 },
   errorCard: { marginHorizontal: spacing.md, padding: 13, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
   errorText: { flex: 1, color: '#FF9AA2', fontFamily: fonts.body, fontSize: 11 },
@@ -651,15 +653,15 @@ const styles = StyleSheet.create({
   sectionEyebrow: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.4 },
   sectionTitle: { marginTop: 4, color: colors.text, fontFamily: fonts.display, fontSize: 25, letterSpacing: -.4 },
   countPill: { minHeight: 27, paddingHorizontal: 10, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#11171D', borderWidth: 1, borderColor: '#29323B' },
-  countText: { color: '#8994A0', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .7 },
+  countText: { color: colors.textSubtle, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .7 },
   liveStack: { gap: 10 },
   liveCard: { minHeight: 226, overflow: 'hidden', borderRadius: 26, backgroundColor: '#111820', borderWidth: 1, borderColor: '#394550', padding: 15 },
   liveBackdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, width: '100%', height: '100%' },
   liveTop: { zIndex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   liveEvent: { flex: 1, color: 'rgba(255,255,255,.76)', fontFamily: fonts.bold, fontSize: 8, letterSpacing: .7 },
-  livePill: { minHeight: 28, paddingHorizontal: 10, borderRadius: 15, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(4,8,11,.68)', borderWidth: 1, borderColor: 'rgba(102,179,255,.48)' },
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#66B3FF' },
-  liveText: { color: '#72BAFF', fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1 },
+  livePill: { minHeight: 28, paddingHorizontal: 10, borderRadius: 15, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.liveSurface, borderWidth: 1, borderColor: colors.liveBorder },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.live },
+  liveText: { color: colors.liveText, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1 },
   liveDuel: { zIndex: 2, marginTop: 25, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 28 },
   liveTeam: { width: 74, alignItems: 'center', gap: 7 },
   liveTeamTag: { color: '#FFFFFF', fontFamily: fonts.bold, fontSize: 12 },
@@ -681,7 +683,7 @@ const styles = StyleSheet.create({
   rowEvent: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 8 },
   rowTeams: { marginTop: 6, color: colors.text, fontFamily: fonts.bold, fontSize: 12 },
   rowTrailing: { minWidth: 58, alignItems: 'flex-end', gap: 2 },
-  rowState: { color: '#7E8995', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .25 },
+  rowState: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .25 },
   rowStateAccent: { color: colors.volt },
   rowStateLoss: { color: colors.danger },
   rowArrow: { color: colors.volt, fontSize: 16 },

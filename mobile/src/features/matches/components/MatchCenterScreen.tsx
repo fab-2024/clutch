@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
   boPill: { paddingHorizontal: 9, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: colors.surfaceElevated },
   boText: { color: colors.textMuted, fontSize: 8, fontWeight: '900' },
   dateText: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 1.1 },
-  dateLive: { color: '#56ADFF' },
+  dateLive: { color: colors.liveText },
   duel: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.sm },
   heroTeam: { width: '36%', alignItems: 'center', gap: 7 },
   heroTeamMark: { width: 74, height: 74, borderRadius: 23, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 7 },

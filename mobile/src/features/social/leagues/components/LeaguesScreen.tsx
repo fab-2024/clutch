@@ -3,7 +3,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, Vie
 
 import { createLeague, joinLeague, loadLeagues } from '../api';
 import type { LeagueSummary } from '../types';
-import { colors, radius, spacing } from '@/src/theme';
+import { colors, layout, radius, spacing } from '@/src/theme';
 
 export default function LeaguesScreen() {
   const [leagues, setLeagues] = useState<LeagueSummary[]>([]);
@@ -117,7 +117,7 @@ function LeagueCard({ league, index }: { league: LeagueSummary; index: number })
 function Skeleton() { return <View style={styles.skeleton}>{[0, 1, 2].map((item) => <View key={item} style={styles.skeletonRow} />)}</View>; }
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  content: { width: '100%', maxWidth: 430, alignSelf: 'center', padding: spacing.md, paddingBottom: 125, gap: 16 },
+  content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', padding: spacing.md, paddingBottom: layout.tabBarContentInset, gap: 16 },
   privateHero: { position: 'relative', overflow: 'hidden', minHeight: 235, padding: 20, borderRadius: 29, justifyContent: 'center', backgroundColor: '#0E1510', borderWidth: 1, borderColor: '#3D491D' },
   privateEyebrow: { color: colors.volt, fontSize: 8, fontWeight: '900', letterSpacing: 1.4 },
   privateTitle: { maxWidth: 330, marginTop: 10, color: colors.text, fontSize: 31, lineHeight: 31, fontWeight: '900', letterSpacing: -1.5 },

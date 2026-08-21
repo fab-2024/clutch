@@ -18,7 +18,7 @@ import { Screen } from '@/src/components/layout/Screen';
 import ClutchCore from '@/src/components/visual/ClutchCore';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { useAuth } from '@/src/providers/AuthProvider';
-import { colors, fonts, radius, spacing } from '@/src/theme';
+import { colors, fonts, layout, radius, spacing } from '@/src/theme';
 
 import { loadHubData } from '../api';
 import type { HubData, HubMatch, HubPrediction } from '../types';
@@ -89,6 +89,7 @@ export default function HomeScreen() {
 
 type HubExperienceProps = {
   error: string | null;
+  headerEconomy?: { frags: number; volts: number };
   hub: HubData;
   loading: boolean;
   profileName?: string | null;
@@ -99,6 +100,7 @@ type HubExperienceProps = {
 
 export function HubExperience({
   error,
+  headerEconomy,
   hub,
   loading,
   profileName,
@@ -116,7 +118,7 @@ export function HubExperience({
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
       >
-        <ClutchHeader />
+        <ClutchHeader economy={headerEconomy} />
 
         <Animated.View entering={entrance(30)} style={styles.intro}>
           <View style={styles.introTop}>
@@ -353,7 +355,7 @@ function gameName(game: string) {
 }
 
 const styles = StyleSheet.create({
-  content: { width: '100%', maxWidth: 430, alignSelf: 'center', paddingBottom: 125, gap: 18 },
+  content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 18 },
   intro: { marginHorizontal: spacing.md, paddingTop: 3 },
   introTop: { minHeight: 26, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   kickerRow: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -361,7 +363,7 @@ const styles = StyleSheet.create({
   kicker: { flex: 1, color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.5 },
   seasonChip: { maxWidth: 142, minHeight: 25, paddingHorizontal: 9, flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, backgroundColor: '#11170F', borderWidth: 1, borderColor: '#344018' },
   seasonChipDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.volt },
-  seasonChipText: { flexShrink: 1, color: '#B9C47E', fontFamily: fonts.bold, fontSize: 6, letterSpacing: .8 },
+  seasonChipText: { flexShrink: 1, color: '#CDD79A', fontFamily: fonts.bold, fontSize: 8, letterSpacing: .7 },
   pageTitle: { marginTop: 11, color: colors.text, fontFamily: fonts.display, fontSize: 48, lineHeight: 43, letterSpacing: -1 },
   errorCard: { marginHorizontal: spacing.md, padding: 13, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   errorText: { flex: 1, color: '#FF9AA2', fontFamily: fonts.body, fontSize: 11 },
@@ -371,22 +373,22 @@ const styles = StyleSheet.create({
   matchTop: { zIndex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   eventRow: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 7 },
   eventDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt, boxShadow: '0 0 7px rgba(224,255,59,.6)' },
-  eventText: { flex: 1, color: '#D2D8DD', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .7 },
+  eventText: { flex: 1, color: '#D2D8DD', fontFamily: fonts.bold, fontSize: 8, letterSpacing: .7 },
   statePill: { minHeight: 29, paddingHorizontal: 10, borderRadius: 15, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(5,8,11,.76)', borderWidth: 1, borderColor: '#3C4853' },
   stateDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.volt },
-  stateText: { color: colors.volt, fontFamily: fonts.bold, fontSize: 7, letterSpacing: .8 },
-  livePill: { borderColor: '#743341', backgroundColor: 'rgba(30,9,14,.78)' },
-  liveDot: { backgroundColor: '#FF5B70' },
-  liveText: { color: '#FF8796' },
+  stateText: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .8 },
+  livePill: { borderColor: colors.liveBorder, backgroundColor: colors.liveSurface },
+  liveDot: { backgroundColor: colors.live },
+  liveText: { color: colors.liveText },
   matchPrompt: { zIndex: 2, alignItems: 'center', marginTop: 14 },
-  matchPromptKicker: { color: '#B7C0C8', fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1.6 },
+  matchPromptKicker: { color: '#C3CBD1', fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.4 },
   matchPromptTitle: { maxWidth: 320, marginTop: 4, color: colors.text, fontFamily: fonts.display, fontSize: 27, lineHeight: 27, letterSpacing: -.4, textAlign: 'center' },
   duel: { zIndex: 2, marginTop: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 7 },
   team: { flex: 1, minWidth: 0, alignItems: 'center' },
-  teamTag: { marginTop: 6, fontFamily: fonts.bold, fontSize: 7, letterSpacing: .8 },
+  teamTag: { marginTop: 6, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .8 },
   teamName: { minHeight: 27, marginTop: 2, color: colors.text, fontFamily: fonts.bold, fontSize: 10, lineHeight: 13, textAlign: 'center' },
   vsBlock: { width: 58, alignItems: 'center' },
-  bo: { color: '#8B96A1', fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1.2 },
+  bo: { color: colors.textSubtle, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.1 },
   vs: { marginTop: 7, color: colors.text, fontFamily: fonts.display, fontSize: 36, lineHeight: 37, letterSpacing: -1 },
   vsLine: { marginTop: 4, width: 24, height: 3, borderRadius: 2, backgroundColor: colors.volt },
   matchAction: { zIndex: 2, width: 222, minHeight: 47, marginTop: 19, paddingHorizontal: 16, alignSelf: 'center', borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt, boxShadow: '0 8px 18px rgba(224,255,59,.18)' },
@@ -397,52 +399,52 @@ const styles = StyleSheet.create({
   coreTop: { minHeight: 136, flexDirection: 'row', alignItems: 'center' },
   coreVisual: { width: 138, alignItems: 'center', justifyContent: 'center' },
   coreCopy: { flex: 1, minWidth: 0, paddingLeft: 5 },
-  coreKicker: { color: colors.volt, fontFamily: fonts.bold, fontSize: 7, letterSpacing: .8 },
+  coreKicker: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .8 },
   coreRating: { marginTop: 7, color: colors.text, fontFamily: fonts.display, fontSize: 45, lineHeight: 45, letterSpacing: -.4 },
   coreStatus: { alignSelf: 'flex-start', minHeight: 24, marginTop: 7, paddingHorizontal: 8, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#151B0F', borderWidth: 1, borderColor: '#3F4A20' },
   coreStatusDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.volt },
-  coreStatusText: { color: '#CAD88D', fontFamily: fonts.bold, fontSize: 6, letterSpacing: .7 },
-  corePeak: { marginTop: 8, color: '#6F7A83', fontFamily: fonts.medium, fontSize: 7, letterSpacing: .5 },
+  coreStatusText: { color: '#D4E09E', fontFamily: fonts.bold, fontSize: 8, letterSpacing: .6 },
+  corePeak: { marginTop: 8, color: colors.textMuted, fontFamily: fonts.medium, fontSize: 8, letterSpacing: .4 },
   coreMetrics: { minHeight: 62, marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#212A24', flexDirection: 'row', alignItems: 'center' },
   coreMetric: { flex: 1, alignItems: 'center' },
   coreMetricValue: { color: colors.text, fontFamily: fonts.display, fontSize: 21 },
-  coreMetricLabel: { marginTop: 2, color: '#7D888F', fontFamily: fonts.bold, fontSize: 6, letterSpacing: .8 },
+  coreMetricLabel: { marginTop: 2, color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .7 },
   coreMetricDivider: { width: 1, height: 28, backgroundColor: '#2A342B' },
   upNextSection: { gap: 10 },
   sectionHead: { marginHorizontal: spacing.md, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 },
-  sectionKicker: { color: colors.volt, fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1.2 },
+  sectionKicker: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.1 },
   sectionTitle: { marginTop: 3, color: colors.text, fontFamily: fonts.display, fontSize: 24, lineHeight: 25 },
-  sectionLink: { color: colors.volt, fontFamily: fonts.bold, fontSize: 7, letterSpacing: .5 },
+  sectionLink: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .5 },
   upNextRail: { paddingHorizontal: spacing.md, gap: 10 },
   upNextCard: { position: 'relative', width: 232, minHeight: 154, padding: 13, overflow: 'hidden', borderRadius: 21, backgroundColor: '#090D11', borderWidth: 1, borderColor: '#2B363F' },
   upNextBackdrop: { position: 'absolute', inset: 0, width: '100%', height: '100%' },
   upNextTop: { zIndex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  upNextWhen: { color: colors.volt, fontFamily: fonts.bold, fontSize: 7, letterSpacing: .6 },
-  upNextGame: { color: '#9FA8AF', fontFamily: fonts.bold, fontSize: 7 },
+  upNextWhen: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .6 },
+  upNextGame: { color: colors.textSubtle, fontFamily: fonts.bold, fontSize: 8 },
   upNextEvent: { zIndex: 1, marginTop: 9, color: '#B2BAC1', fontFamily: fonts.medium, fontSize: 8 },
   upNextDuel: { zIndex: 1, marginTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 7 },
   upNextTag: { flex: 1, color: colors.text, fontFamily: fonts.display, fontSize: 24, textAlign: 'center' },
-  upNextVs: { color: '#8A949D', fontFamily: fonts.bold, fontSize: 7 },
+  upNextVs: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8 },
   upNextFooter: { zIndex: 1, marginTop: 'auto', paddingTop: 9, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.09)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  upNextFormat: { color: '#89949D', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .8 },
+  upNextFormat: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .7 },
   upNextArrow: { color: colors.volt, fontFamily: fonts.display, fontSize: 17 },
   missionCard: { minHeight: 100, marginHorizontal: spacing.md, padding: 14, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#0B1014', borderWidth: 1, borderColor: '#303A22' },
   missionIcon: { width: 51, height: 51, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E', borderWidth: 1, borderColor: '#46531E' },
   missionIconText: { color: colors.volt, fontFamily: fonts.display, fontSize: 29, lineHeight: 31 },
   missionCopy: { flex: 1, minWidth: 0 },
   missionTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  missionKicker: { color: '#8E9A81', fontFamily: fonts.bold, fontSize: 6, letterSpacing: .9 },
-  missionCount: { color: colors.volt, fontFamily: fonts.bold, fontSize: 7 },
+  missionKicker: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .8 },
+  missionCount: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8 },
   missionTitle: { marginTop: 5, color: colors.text, fontFamily: fonts.display, fontSize: 21, lineHeight: 22 },
   missionTrack: { height: 5, marginTop: 10, overflow: 'hidden', borderRadius: 3, backgroundColor: '#20272B' },
   missionProgress: { height: '100%', borderRadius: 3, backgroundColor: colors.volt, boxShadow: '0 0 7px rgba(224,255,59,.35)' },
   missionArrow: { color: colors.volt, fontFamily: fonts.display, fontSize: 19 },
   emptyHero: { position: 'relative', minHeight: 310, marginHorizontal: spacing.md, padding: 20, overflow: 'hidden', justifyContent: 'flex-end', borderRadius: 28, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#2B343E' },
-  emptyKicker: { zIndex: 1, color: colors.volt, fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1.4 },
+  emptyKicker: { zIndex: 1, color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.3 },
   emptyTitle: { zIndex: 1, marginTop: 8, color: colors.text, fontFamily: fonts.display, fontSize: 33, lineHeight: 31 },
   emptyCopy: { zIndex: 1, maxWidth: 330, marginTop: 9, color: '#A2ABB2', fontFamily: fonts.body, fontSize: 10, lineHeight: 15 },
   emptyButton: { zIndex: 1, alignSelf: 'flex-start', minHeight: 40, marginTop: 15, paddingHorizontal: 14, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  emptyButtonText: { color: '#080A0C', fontFamily: fonts.bold, fontSize: 7, letterSpacing: .8 },
+  emptyButtonText: { color: '#080A0C', fontFamily: fonts.bold, fontSize: 8, letterSpacing: .8 },
   skeleton: { minHeight: 398, marginHorizontal: spacing.md, padding: 18, justifyContent: 'space-between', borderRadius: 28, backgroundColor: '#0D1218', borderWidth: 1, borderColor: colors.border },
   skeletonLine: { width: '60%', height: 10, borderRadius: 5, backgroundColor: '#171E26' },
   skeletonBig: { width: '72%', height: 150, borderRadius: 28, alignSelf: 'center', backgroundColor: '#151C24' },

@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '@/src/theme';
+import { colors, layout } from '@/src/theme';
 
 type TabIconProps = {
   glyph: string;
@@ -34,7 +34,16 @@ export default function TabsLayout() {
       <Tabs.Screen name="index" options={{ title: 'Hub', tabBarIcon: ({ focused }) => <TabIcon glyph="⌂" focused={focused} /> }} />
       <Tabs.Screen name="matches" options={{ title: 'Matchs', tabBarIcon: ({ focused }) => <TabIcon glyph="▣" focused={focused} /> }} />
       <Tabs.Screen name="social" options={{ title: 'Social', tabBarIcon: ({ focused }) => <TabIcon glyph="◎" focused={focused} /> }} />
-      <Tabs.Screen name="room" options={{ title: 'Room', tabBarIcon: ({ focused }) => <TabIcon glyph="◇" focused={focused} /> }} />
+      <Tabs.Screen
+        name="room"
+        options={{
+          title: 'Room',
+          tabBarAccessibilityLabel: 'Room, bientôt disponible',
+          tabBarLabel: 'Room · bientôt',
+          tabBarLabelStyle: [styles.label, styles.roomLabel],
+          tabBarIcon: ({ focused }) => <TabIcon glyph="◇" focused={focused} />,
+        }}
+      />
       <Tabs.Screen name="profile" options={{ title: 'Moi', tabBarIcon: ({ focused }) => <TabIcon glyph="♙" focused={focused} /> }} />
       <Tabs.Screen name="community" options={{ href: null }} />
     </Tabs>
@@ -46,8 +55,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 14,
     right: 14,
-    bottom: 10,
-    height: 76,
+    bottom: layout.tabBarBottom,
+    height: layout.tabBarHeight,
     padding: 5,
     borderTopWidth: 1,
     borderWidth: 1,
@@ -91,5 +100,9 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 0.25,
+  },
+  roomLabel: {
+    fontSize: 8,
+    letterSpacing: 0,
   },
 });

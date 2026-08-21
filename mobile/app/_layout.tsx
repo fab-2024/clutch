@@ -12,6 +12,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import AuthRecoveryScreen from '@/src/features/auth/components/AuthRecoveryScreen';
 import { AuthProvider, useAuth } from '@/src/providers/AuthProvider';
+import { EconomyProvider } from '@/src/providers/EconomyProvider';
 import { colors } from '@/src/theme';
 
 function RootNavigator() {
@@ -90,8 +91,10 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <StatusBar style="light" />
-      <RootNavigator />
+      <EconomyProvider>
+        <StatusBar style="light" />
+        <RootNavigator />
+      </EconomyProvider>
     </AuthProvider>
   );
 }

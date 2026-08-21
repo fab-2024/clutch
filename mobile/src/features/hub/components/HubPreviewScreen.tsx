@@ -40,6 +40,7 @@ export default function HubPreviewScreen() {
   return (
     <HubExperience
       error={null}
+      headerEconomy={{ frags: 1842, volts: 680 }}
       hub={PREVIEW_HUB}
       loading={false}
       profileName="Pierre-Louis"

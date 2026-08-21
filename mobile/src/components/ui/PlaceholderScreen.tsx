@@ -4,15 +4,16 @@ import { Screen } from '@/src/components/layout/Screen';
 import { colors, spacing } from '@/src/theme';
 
 type Props = {
+  bottomInset?: number;
   eyebrow: string;
   title: string;
   description: string;
 };
 
-export function PlaceholderScreen({ eyebrow, title, description }: Props) {
+export function PlaceholderScreen({ bottomInset = 0, eyebrow, title, description }: Props) {
   return (
     <Screen>
-      <View style={styles.content}>
+      <View style={[styles.content, bottomInset ? { paddingBottom: bottomInset } : null]}>
         <Text style={styles.eyebrow}>{eyebrow}</Text>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.description}>{description}</Text>
