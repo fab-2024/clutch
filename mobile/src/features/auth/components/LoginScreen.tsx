@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import ClutchCore from '@/src/components/visual/ClutchCore';
 import { errorFeedback, impactFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
-import { colors, fonts, radius, spacing } from '@/src/theme';
+import { colors, radius, spacing, typography } from '@/src/theme';
 
 import { signInWithPassword, signUpWithPassword } from '../api';
 import { authErrorMessage } from '../messages';
@@ -92,25 +92,25 @@ export default function LoginScreen() {
     >
       <View style={styles.authContent}>
         <View style={styles.modeSwitch}>
-          <ModeButton active={mode === 'signin'} label="CONNEXION" onPress={() => selectMode('signin')} />
-          <ModeButton active={mode === 'signup'} label="CRÉER UN COMPTE" onPress={() => selectMode('signup')} />
+          <ModeButton active={mode === 'signin'} label="Connexion" onPress={() => selectMode('signin')} />
+          <ModeButton active={mode === 'signup'} label="Créer un compte" onPress={() => selectMode('signup')} />
         </View>
 
         {confirmationSent ? (
           <View style={styles.successCard}>
-            <Text style={styles.successEyebrow}>EMAIL ENVOYÉ</Text>
+            <Text style={styles.successEyebrow}>E-mail envoyé</Text>
             <Text style={styles.successTitle}>Confirme ton inscription.</Text>
             <Text style={styles.successCopy}>
               Ouvre le lien reçu à {email.trim()}. Il te ramènera dans Clutch pour terminer ton profil.
             </Text>
             <Pressable accessibilityRole="button" onPress={() => selectMode('signin')}>
-              <Text style={styles.inlineAction}>REVENIR À LA CONNEXION →</Text>
+              <Text style={styles.inlineAction}>Revenir à la connexion →</Text>
             </Pressable>
           </View>
         ) : (
           <View style={styles.form}>
             {mode === 'signup' ? (
-              <AuthField label="PSEUDO">
+              <AuthField label="Pseudo">
                 <TextInput
                   accessibilityLabel="Pseudo"
                   autoCapitalize="none"
@@ -127,7 +127,7 @@ export default function LoginScreen() {
               </AuthField>
             ) : null}
 
-            <AuthField label="EMAIL">
+            <AuthField label="E-mail">
               <TextInput
                 accessibilityLabel="Adresse email"
                 autoCapitalize="none"
@@ -144,8 +144,8 @@ export default function LoginScreen() {
             </AuthField>
 
             <AuthField
-              action={passwordVisible ? 'MASQUER' : 'AFFICHER'}
-              label="MOT DE PASSE"
+              action={passwordVisible ? 'Masquer' : 'Afficher'}
+              label="Mot de passe"
               onAction={() => { selectionFeedback(); setPasswordVisible((visible) => !visible); }}
             >
               <TextInput
@@ -165,7 +165,7 @@ export default function LoginScreen() {
             </AuthField>
 
             {mode === 'signup' ? (
-              <AuthField label="CONFIRMER LE MOT DE PASSE">
+              <AuthField label="Confirmer le mot de passe">
                 <TextInput
                   accessibilityLabel="Confirmation du mot de passe"
                   autoCapitalize="none"
@@ -189,7 +189,7 @@ export default function LoginScreen() {
                 onPress={() => { selectionFeedback(); router.push('/auth/forgot-password'); }}
                 style={styles.forgotButton}
               >
-                <Text style={styles.forgotText}>MOT DE PASSE OUBLIÉ ?</Text>
+                <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
               </Pressable>
             ) : null}
 
@@ -210,8 +210,8 @@ export default function LoginScreen() {
               <LinearGradient colors={['#F4FF9A', colors.volt, '#BED31C']} end={{ x: 1, y: 1 }} start={{ x: 0, y: 0 }} style={styles.button}>
                 <Text style={styles.buttonText}>
                   {loading
-                    ? (mode === 'signin' ? 'CONNEXION…' : 'CRÉATION…')
-                    : (mode === 'signin' ? 'ENTRER DANS CLUTCH' : 'CRÉER MON COMPTE')}
+                    ? (mode === 'signin' ? 'Connexion…' : 'Création…')
+                    : (mode === 'signin' ? 'Entrer dans Clutch' : 'Créer mon compte')}
                 </Text>
                 <Text style={styles.buttonArrow}>→</Text>
               </LinearGradient>
@@ -220,9 +220,9 @@ export default function LoginScreen() {
         )}
 
         <View style={styles.trustRow}>
-          <TrustItem label="LIVE DATA" />
-          <TrustItem label="SANS MISE" />
-          <TrustItem label="COMPTE PRIVÉ" />
+          <TrustItem label="Données live" />
+          <TrustItem label="Sans mise" />
+          <TrustItem label="Compte privé" />
         </View>
       </View>
     </AuthShell>
@@ -282,31 +282,31 @@ const styles = StyleSheet.create({
   modeSwitch: { flexDirection: 'row', padding: 4, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   modeButton: { flex: 1, minHeight: 42, paddingHorizontal: 8, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   modeButtonActive: { backgroundColor: colors.volt },
-  modeText: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 0.8 },
+  modeText: { ...typography.action, color: colors.textMuted, letterSpacing: 0.3 },
   modeTextActive: { color: '#080B0F' },
   form: { gap: spacing.md },
   field: { gap: spacing.xs },
   labelRow: { minHeight: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  label: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.4 },
-  fieldAction: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 0.8 },
-  input: { minHeight: 54, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: '#090D12', color: colors.text, paddingHorizontal: spacing.md, fontFamily: fonts.medium, fontSize: 14 },
+  label: { ...typography.label, color: colors.textMuted, letterSpacing: .35 },
+  fieldAction: { ...typography.action, color: colors.volt, letterSpacing: 0.3 },
+  input: { ...typography.bodyStrong, minHeight: 54, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: '#090D12', color: colors.text, paddingHorizontal: spacing.md },
   inputFocused: { borderColor: '#71851E', backgroundColor: '#0D120D', boxShadow: '0 0 10px rgba(224,255,59,.12)' },
   forgotButton: { alignSelf: 'flex-end', minHeight: 30, justifyContent: 'center' },
-  forgotText: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 0.9 },
-  error: { color: '#FF8B8B', fontFamily: fonts.medium, fontSize: 11, lineHeight: 17 },
+  forgotText: { ...typography.action, color: colors.volt, letterSpacing: 0.3 },
+  error: { ...typography.body, color: '#FF8B8B' },
   buttonFrame: { minHeight: 58, marginTop: spacing.xs, borderRadius: 18, overflow: 'hidden', boxShadow: '0 8px 15px rgba(224,255,59,.22)' },
   button: { flex: 1, minHeight: 58, paddingHorizontal: 18, borderRadius: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  buttonText: { color: '#080B0F', fontFamily: fonts.bold, fontSize: 10, letterSpacing: 0.8 },
-  buttonArrow: { color: '#080B0F', fontFamily: fonts.display, fontSize: 22 },
+  buttonText: { ...typography.action, color: '#080B0F', letterSpacing: 0.3 },
+  buttonArrow: { color: '#080B0F', fontSize: 22 },
   successCard: { padding: spacing.lg, gap: spacing.sm, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: '#45551E' },
-  successEyebrow: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.4 },
-  successTitle: { color: colors.text, fontFamily: fonts.displayBold, fontSize: 28, lineHeight: 30 },
-  successCopy: { color: colors.textMuted, fontFamily: fonts.body, fontSize: 12, lineHeight: 19 },
-  inlineAction: { marginTop: spacing.sm, color: colors.volt, fontFamily: fonts.bold, fontSize: 9, letterSpacing: 0.8 },
+  successEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .8 },
+  successTitle: { ...typography.cardTitle, color: colors.text },
+  successCopy: { ...typography.body, color: colors.textMuted },
+  inlineAction: { ...typography.action, marginTop: spacing.sm, color: colors.volt, letterSpacing: 0.3 },
   trustRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, paddingTop: 2 },
   trustItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   trustDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.volt },
-  trustText: { color: '#6E7A84', fontFamily: fonts.bold, fontSize: 6, letterSpacing: 0.7 },
+  trustText: { ...typography.caption, color: '#6E7A84' },
   disabled: { opacity: 0.45 },
   pressed: { opacity: 0.8 },
 });

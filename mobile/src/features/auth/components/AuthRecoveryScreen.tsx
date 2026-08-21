@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Screen } from '@/src/components/layout/Screen';
 import { useAuth } from '@/src/providers/AuthProvider';
-import { colors, radius, spacing } from '@/src/theme';
+import { colors, fonts, radius, spacing, typography } from '@/src/theme';
 
 import { signOut } from '../api';
 
@@ -79,7 +79,7 @@ export default function AuthRecoveryScreen() {
             onPress={() => void retryAuth()}
             style={({ pressed }) => [styles.primary, busyAction && styles.disabled, pressed && styles.pressed]}
           >
-            <Text style={styles.primaryText}>{busyAction === 'retry' ? 'SYNCHRONISATION…' : 'RÉESSAYER'}</Text>
+            <Text style={styles.primaryText}>{busyAction === 'retry' ? 'Synchronisation…' : 'Réessayer'}</Text>
           </Pressable>
 
           {session ? (
@@ -90,7 +90,7 @@ export default function AuthRecoveryScreen() {
               onPress={() => void leaveSession()}
               style={({ pressed }) => [styles.secondary, busyAction && styles.disabled, pressed && styles.pressed]}
             >
-              <Text style={styles.secondaryText}>{busyAction === 'signout' ? 'DÉCONNEXION…' : 'SE DÉCONNECTER'}</Text>
+              <Text style={styles.secondaryText}>{busyAction === 'signout' ? 'Déconnexion…' : 'Se déconnecter'}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -103,22 +103,22 @@ const styles = StyleSheet.create({
   shell: { flex: 1, width: '100%', maxWidth: 430, alignSelf: 'center', justifyContent: 'center', padding: spacing.lg, gap: spacing.xl },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   logo: { width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  logoText: { color: '#06090C', fontSize: 24, lineHeight: 27, fontWeight: '900', letterSpacing: -2 },
-  brand: { color: colors.text, fontSize: 18, fontWeight: '900', letterSpacing: 3 },
+  logoText: { color: '#06090C', fontFamily: fonts.display, fontSize: 24, lineHeight: 27, letterSpacing: -2 },
+  brand: { color: colors.text, fontFamily: fonts.bold, fontSize: 18, letterSpacing: 3 },
   brandDot: { color: colors.volt },
   signal: { position: 'relative', width: 104, height: 104, alignItems: 'center', justifyContent: 'center' },
   signalRing: { position: 'absolute', width: 104, height: 104, borderRadius: 52, borderWidth: 1, borderColor: '#46551E' },
   signalDot: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.volt },
   copy: { gap: spacing.sm },
-  eyebrow: { color: colors.volt, fontSize: 10, fontWeight: '900', letterSpacing: 1.7 },
-  title: { maxWidth: 390, color: colors.text, fontSize: 39, lineHeight: 40, fontWeight: '900', letterSpacing: -1.6 },
-  body: { maxWidth: 380, color: colors.textMuted, fontSize: 14, lineHeight: 21 },
-  detail: { color: '#FF9AA2', fontSize: 11, lineHeight: 17 },
+  eyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.3 },
+  title: { ...typography.displayMedium, maxWidth: 390, color: colors.text },
+  body: { ...typography.body, maxWidth: 380, color: colors.textMuted, fontSize: 14, lineHeight: 21 },
+  detail: { ...typography.body, color: '#FF9AA2' },
   actions: { gap: spacing.sm },
   primary: { minHeight: 56, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  primaryText: { color: '#080B0F', fontSize: 12, fontWeight: '900', letterSpacing: 0.9 },
+  primaryText: { ...typography.action, color: '#080B0F', letterSpacing: .3 },
   secondary: { minHeight: 50, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  secondaryText: { color: colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
+  secondaryText: { ...typography.action, color: colors.text, letterSpacing: .3 },
   disabled: { opacity: 0.48 },
   pressed: { opacity: 0.78 },
 });

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useAuth } from '@/src/providers/AuthProvider';
-import { colors, radius, spacing } from '@/src/theme';
+import { colors, radius, spacing, typography } from '@/src/theme';
 
 import { exchangeAuthCodeForSession, updatePassword } from '../api';
 import { authErrorMessage } from '../messages';
@@ -71,7 +71,7 @@ export default function UpdatePasswordScreen() {
         <View style={styles.errorCard}>
           <Text style={styles.error}>{error}</Text>
           <Pressable accessibilityRole="button" onPress={() => router.replace('/auth/forgot-password')} style={styles.secondaryButton}>
-            <Text style={styles.secondaryText}>DEMANDER UN NOUVEAU LIEN</Text>
+            <Text style={styles.secondaryText}>Demander un nouveau lien</Text>
           </Pressable>
         </View>
       ) : !linkReady ? (
@@ -90,16 +90,16 @@ export default function UpdatePasswordScreen() {
             onPress={enterClutch}
             style={[styles.primaryButton, status === 'loading' && styles.disabled]}
           >
-            <Text style={styles.primaryText}>{status === 'loading' ? 'PRÉPARATION…' : 'REVENIR DANS CLUTCH'}</Text>
+            <Text style={styles.primaryText}>{status === 'loading' ? 'Préparation…' : 'Revenir dans Clutch'}</Text>
           </Pressable>
         </View>
       ) : (
         <View style={styles.form}>
           <View style={styles.field}>
             <View style={styles.labelRow}>
-              <Text style={styles.label}>NOUVEAU MOT DE PASSE</Text>
+              <Text style={styles.label}>Nouveau mot de passe</Text>
               <Pressable accessibilityRole="button" onPress={() => setPasswordVisible((visible) => !visible)}>
-                <Text style={styles.showText}>{passwordVisible ? 'MASQUER' : 'AFFICHER'}</Text>
+                <Text style={styles.showText}>{passwordVisible ? 'Masquer' : 'Afficher'}</Text>
               </Pressable>
             </View>
             <TextInput
@@ -115,7 +115,7 @@ export default function UpdatePasswordScreen() {
             />
           </View>
           <View style={styles.field}>
-            <Text style={styles.label}>CONFIRMER LE MOT DE PASSE</Text>
+            <Text style={styles.label}>Confirmer le mot de passe</Text>
             <TextInput
               accessibilityLabel="Confirmation du nouveau mot de passe"
               autoCapitalize="none"
@@ -137,7 +137,7 @@ export default function UpdatePasswordScreen() {
             onPress={() => void savePassword()}
             style={({ pressed }) => [styles.primaryButton, !canSubmit && styles.disabled, pressed && styles.pressed]}
           >
-            <Text style={styles.primaryText}>{saving ? 'MISE À JOUR…' : 'ENREGISTRER LE MOT DE PASSE'}</Text>
+            <Text style={styles.primaryText}>{saving ? 'Mise à jour…' : 'Enregistrer le mot de passe'}</Text>
           </Pressable>
         </View>
       )}
@@ -153,22 +153,22 @@ const styles = StyleSheet.create({
   form: { gap: spacing.md },
   field: { gap: spacing.xs },
   labelRow: { minHeight: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  label: { color: colors.textMuted, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 },
-  showText: { color: colors.volt, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
-  input: { minHeight: 54, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, color: colors.text, paddingHorizontal: spacing.md, fontSize: 16 },
-  error: { color: '#FF8B8B', fontSize: 12, lineHeight: 18 },
+  label: { ...typography.label, color: colors.textMuted, letterSpacing: .35 },
+  showText: { ...typography.action, color: colors.volt, letterSpacing: .3 },
+  input: { ...typography.bodyStrong, minHeight: 54, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, color: colors.text, paddingHorizontal: spacing.md, fontSize: 16, lineHeight: 21 },
+  error: { ...typography.body, color: '#FF8B8B' },
   errorCard: { padding: spacing.lg, gap: spacing.md, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: '#6D353B' },
   loadingCard: { padding: spacing.xl, gap: spacing.md, alignItems: 'center', borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  loadingText: { color: colors.textMuted, fontSize: 12 },
+  loadingText: { ...typography.body, color: colors.textMuted },
   successCard: { padding: spacing.lg, gap: spacing.md, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: '#45551E' },
   successMark: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
   successMarkText: { color: '#080B0F', fontSize: 22, fontWeight: '900' },
-  successTitle: { color: colors.text, fontSize: 25, fontWeight: '900' },
-  successCopy: { color: colors.textMuted, fontSize: 13, lineHeight: 20 },
+  successTitle: { ...typography.sectionTitle, color: colors.text },
+  successCopy: { ...typography.body, color: colors.textMuted },
   primaryButton: { minHeight: 56, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  primaryText: { color: '#080B0F', fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
+  primaryText: { ...typography.action, color: '#080B0F', letterSpacing: .3 },
   secondaryButton: { minHeight: 52, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
-  secondaryText: { color: colors.text, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
+  secondaryText: { ...typography.action, color: colors.text, letterSpacing: .3 },
   disabled: { opacity: 0.45 },
   pressed: { opacity: 0.8 },
 });

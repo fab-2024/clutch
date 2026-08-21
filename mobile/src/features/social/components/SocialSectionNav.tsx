@@ -1,7 +1,7 @@
 import { router, usePathname } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, fonts, layout, spacing } from '@/src/theme';
+import { colors, layout, spacing, typography } from '@/src/theme';
 
 type SocialSectionKey = 'faction' | 'circle' | 'challenges';
 type SocialSubsectionKey = 'friends' | 'requests' | 'leagues' | 'missions' | 'duels';
@@ -12,9 +12,9 @@ const SECTIONS: Array<{
   key: SocialSectionKey;
   label: string;
 }> = [
-  { key: 'faction', label: 'FACTION', glyph: '✦', href: '/(tabs)/social' },
-  { key: 'circle', label: 'CERCLE', glyph: '◎', href: '/(tabs)/social/friends' },
-  { key: 'challenges', label: 'DÉFIS', glyph: '⚡', href: '/(tabs)/social/missions' },
+  { key: 'faction', label: 'Faction', glyph: '✦', href: '/(tabs)/social' },
+  { key: 'circle', label: 'Cercle', glyph: '◎', href: '/(tabs)/social/friends' },
+  { key: 'challenges', label: 'Défis', glyph: '⚡', href: '/(tabs)/social/missions' },
 ];
 
 const SUBSECTIONS: Partial<Record<SocialSectionKey, Array<{
@@ -23,13 +23,13 @@ const SUBSECTIONS: Partial<Record<SocialSectionKey, Array<{
   label: string;
 }>>> = {
   circle: [
-    { key: 'friends', label: 'AMIS', href: '/(tabs)/social/friends' },
-    { key: 'requests', label: 'DEMANDES', href: '/(tabs)/social/requests' },
-    { key: 'leagues', label: 'LIGUE', href: '/(tabs)/social/leagues' },
+    { key: 'friends', label: 'Amis', href: '/(tabs)/social/friends' },
+    { key: 'requests', label: 'Demandes', href: '/(tabs)/social/requests' },
+    { key: 'leagues', label: 'Ligue', href: '/(tabs)/social/leagues' },
   ],
   challenges: [
-    { key: 'missions', label: 'MISSIONS', href: '/(tabs)/social/missions' },
-    { key: 'duels', label: 'DUELS', href: '/(tabs)/social/duels' },
+    { key: 'missions', label: 'Missions', href: '/(tabs)/social/missions' },
+    { key: 'duels', label: 'Duels', href: '/(tabs)/social/duels' },
   ],
 };
 
@@ -137,10 +137,9 @@ const styles = StyleSheet.create({
   },
   glyphActive: { color: colors.volt },
   label: {
+    ...typography.label,
     color: '#78838E',
-    fontFamily: fonts.bold,
-    fontSize: 8,
-    letterSpacing: .5,
+    letterSpacing: .25,
   },
   labelActive: { color: '#F5F7F8' },
   subRail: {
@@ -162,7 +161,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   subItemActive: { backgroundColor: '#181F11' },
-  subLabel: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: .7 },
+  subLabel: { ...typography.label, color: colors.textMuted, letterSpacing: .35 },
   subLabelActive: { color: colors.volt },
   pressed: { opacity: .72 },
 });

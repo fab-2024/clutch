@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Screen } from '@/src/components/layout/Screen';
-import { colors, spacing } from '@/src/theme';
+import { colors, spacing, typography } from '@/src/theme';
 
 type Props = {
   bottomInset?: number;
@@ -29,19 +29,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   eyebrow: {
+    ...typography.eyebrow,
     marginBottom: spacing.sm,
     color: colors.volt,
-    fontSize: 11,
-    fontWeight: '900',
     letterSpacing: 2,
   },
   title: {
+    ...typography.displayMedium,
     color: colors.text,
-    fontSize: 34,
-    fontWeight: '900',
-    letterSpacing: -1,
   },
   description: {
+    ...typography.body,
     marginTop: spacing.sm,
     color: colors.textMuted,
     fontSize: 16,

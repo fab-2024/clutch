@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import type { PlayerEconomy } from '@/src/features/economy/types';
 import { useEconomy } from '@/src/providers/EconomyProvider';
-import { colors, fonts } from '@/src/theme';
+import { colors, fonts, typography } from '@/src/theme';
 
 type Props = {
   economy?: Pick<PlayerEconomy, 'frags' | 'volts'>;
@@ -153,19 +153,15 @@ const styles = StyleSheet.create({
   voltsMarkText: { color: '#080A0C' },
   balanceCopy: { minWidth: 0 },
   balanceLabel: {
+    ...typography.eyebrow,
     color: colors.textMuted,
-    fontFamily: fonts.bold,
-    fontSize: 8,
-    lineHeight: 9,
     letterSpacing: 0.6,
   },
   balanceValue: {
+    ...typography.bodyStrong,
     maxWidth: 52,
-    marginTop: 2,
+    marginTop: 1,
     color: colors.text,
-    fontFamily: fonts.bold,
-    fontSize: 12,
-    lineHeight: 13,
     fontVariant: ['tabular-nums'],
   },
   walletDivider: {

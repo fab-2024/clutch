@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, fonts, spacing } from '@/src/theme';
+import { colors, fonts, spacing, typography } from '@/src/theme';
 
 type AuthShellProps = PropsWithChildren<{
   eyebrow: string;
@@ -68,7 +68,7 @@ export default function AuthShell({
                   onPress={onBack}
                   style={({ pressed }) => [styles.back, pressed && styles.pressed]}
                 >
-                  <Text style={styles.backText}>← {backLabel.toUpperCase()}</Text>
+                  <Text style={styles.backText}>← {backLabel}</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -106,12 +106,12 @@ const styles = StyleSheet.create({
   brand: { color: colors.text, fontFamily: fonts.bold, fontSize: 15, letterSpacing: 3 },
   brandDot: { color: colors.volt },
   back: { minHeight: 42, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center' },
-  backText: { color: colors.textMuted, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1 },
+  backText: { ...typography.action, color: colors.textMuted, letterSpacing: .3 },
   visual: { height: 160, alignItems: 'center', justifyContent: 'center', marginVertical: -5 },
   hero: { gap: 7 },
-  eyebrow: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.7 },
-  title: { maxWidth: 370, color: colors.text, fontFamily: fonts.display, fontSize: 48, lineHeight: 45, letterSpacing: -1.1, textTransform: 'uppercase' },
-  subtitle: { maxWidth: 390, color: '#98A2AC', fontFamily: fonts.body, fontSize: 12, lineHeight: 18 },
+  eyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.3 },
+  title: { ...typography.displayLarge, maxWidth: 370, color: colors.text },
+  subtitle: { ...typography.body, maxWidth: 390, color: '#98A2AC' },
   panel: { overflow: 'hidden', padding: 14, borderRadius: 26, backgroundColor: 'rgba(9,13,17,.76)', borderWidth: 1, borderColor: '#273029' },
   footer: { alignItems: 'center' },
   pressed: { opacity: 0.75 },

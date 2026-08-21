@@ -13,7 +13,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import AuthRecoveryScreen from '@/src/features/auth/components/AuthRecoveryScreen';
 import { AuthProvider, useAuth } from '@/src/providers/AuthProvider';
 import { EconomyProvider } from '@/src/providers/EconomyProvider';
-import { colors } from '@/src/theme';
+import { colors, typography } from '@/src/theme';
 
 function RootNavigator() {
   const { session, profile, status } = useAuth();
@@ -107,5 +107,5 @@ const styles = StyleSheet.create({
     gap: 12,
     backgroundColor: colors.background,
   },
-  loadingText: { color: colors.textMuted, fontSize: 13 },
+  loadingText: { ...typography.body, color: colors.textMuted },
 });

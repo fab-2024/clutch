@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '@/src/providers/AuthProvider';
-import { colors, radius, spacing } from '@/src/theme';
+import { colors, radius, spacing, typography } from '@/src/theme';
 
 import { exchangeAuthCodeForSession } from '../api';
 import { authErrorMessage } from '../messages';
@@ -49,7 +49,7 @@ export default function AuthCallbackScreen() {
           <>
             <Text style={styles.error}>{error}</Text>
             <Pressable accessibilityRole="button" onPress={() => router.replace('/login')} style={styles.button}>
-              <Text style={styles.buttonText}>REVENIR À LA CONNEXION</Text>
+              <Text style={styles.buttonText}>Revenir à la connexion</Text>
             </Pressable>
           </>
         ) : (
@@ -71,9 +71,9 @@ function firstParam(value?: string | string[]) {
 const styles = StyleSheet.create({
   card: { padding: spacing.lg, gap: spacing.md, alignItems: 'center', borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   errorCard: { alignItems: 'stretch', borderColor: '#6D353B' },
-  cardTitle: { color: colors.text, fontSize: 20, fontWeight: '900', textAlign: 'center' },
-  copy: { color: colors.textMuted, fontSize: 13, lineHeight: 20, textAlign: 'center' },
-  error: { color: '#FF9AA2', fontSize: 13, lineHeight: 20 },
+  cardTitle: { ...typography.cardTitle, color: colors.text, textAlign: 'center' },
+  copy: { ...typography.body, color: colors.textMuted, textAlign: 'center' },
+  error: { ...typography.body, color: '#FF9AA2' },
   button: { minHeight: 52, marginTop: spacing.sm, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  buttonText: { color: '#080B0F', fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
+  buttonText: { ...typography.action, color: '#080B0F', letterSpacing: .3 },
 });

@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout } from '@/src/theme';
+import { colors, layout, typography } from '@/src/theme';
 
 type TabIconProps = {
   glyph: string;
@@ -96,13 +96,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.volt,
   },
   label: {
+    ...typography.label,
     marginTop: 1,
-    fontSize: 10,
-    fontWeight: '900',
     letterSpacing: 0.25,
   },
   roomLabel: {
-    fontSize: 8,
+    fontSize: 10,
     letterSpacing: 0,
   },
 });

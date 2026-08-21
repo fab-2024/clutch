@@ -8,6 +8,11 @@
 - `docs/` : décisions et règles transverses.
 - `scripts/` : contrôles automatisés du dépôt.
 
+Les règles produit partagées sont définies dans
+[`product-contracts.md`](./product-contracts.md). Leur ordre de livraison et
+leurs critères d'acceptation sont suivis dans
+[`product-roadmap.md`](./product-roadmap.md).
+
 ## Architecture mobile
 
 ```text

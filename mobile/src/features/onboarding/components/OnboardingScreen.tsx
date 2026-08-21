@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { errorFeedback, impactFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
-import { colors, fonts, spacing } from '@/src/theme';
+import { colors, fonts, spacing, typography } from '@/src/theme';
 
 import { loadTeamOrganizations, saveOnboarding } from '../api';
 import { GAMES } from '../constants';
@@ -236,7 +236,7 @@ function GamesStep({
           onPress={onNext}
           style={({ pressed }) => [styles.nextButton, (!selected.length || loading) && styles.disabled, pressed && styles.pressed]}
         >
-          {loading ? <ActivityIndicator color="#080A0C" /> : <Text style={styles.nextText}>CONTINUER →</Text>}
+          {loading ? <ActivityIndicator color="#080A0C" /> : <Text style={styles.nextText}>Continuer →</Text>}
         </Pressable>
       </View>
     </View>
@@ -298,7 +298,7 @@ function TeamsStep({
                   <View key={game} style={[styles.gameDot, organization.games.includes(game) && styles.gameDotActive]} />
                 ))}
               </View>
-              {active ? <View style={styles.selectedPill}><Text style={styles.selectedPillText}>TA FACTION</Text></View> : null}
+              {active ? <View style={styles.selectedPill}><Text style={styles.selectedPillText}>Ta faction</Text></View> : null}
             </Pressable>
           );
         })}
@@ -307,7 +307,7 @@ function TeamsStep({
       {error ? <Text accessibilityLiveRegion="polite" style={styles.errorText}>{error}</Text> : null}
 
       <View style={styles.bottomActions}>
-        <Pressable accessibilityRole="button" onPress={onBack} style={styles.backButton}><Text style={styles.backText}>← RETOUR</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={onBack} style={styles.backButton}><Text style={styles.backText}>← Retour</Text></Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ disabled: !selected || saving, busy: saving }}
@@ -315,7 +315,7 @@ function TeamsStep({
           onPress={onFinish}
           style={({ pressed }) => [styles.nextButton, (!selected || saving) && styles.disabled, pressed && styles.pressed]}
         >
-          {saving ? <ActivityIndicator color="#080A0C" /> : <Text style={styles.nextText}>ENTRER DANS CLUTCH →</Text>}
+          {saving ? <ActivityIndicator color="#080A0C" /> : <Text style={styles.nextText}>Entrer dans Clutch →</Text>}
         </Pressable>
       </View>
     </View>
@@ -338,23 +338,23 @@ const styles = StyleSheet.create({
   progress: { flex: 1, flexDirection: 'row', justifyContent: 'center', gap: 5 },
   progressBar: { width: 27, height: 3, borderRadius: 3, backgroundColor: '#242C33' },
   progressBarActive: { backgroundColor: colors.volt },
-  stepLabel: { color: '#65717D', fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1 },
+  stepLabel: { ...typography.label, color: '#65717D', letterSpacing: .5 },
 
-  kicker: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.5 },
+  kicker: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.2 },
   stepBody: { flex: 1, paddingTop: 28, paddingBottom: 16, gap: 24 },
   stepHeadline: { gap: 8 },
-  stepTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 47, lineHeight: 44, letterSpacing: -1 },
-  stepText: { maxWidth: 360, color: '#89939D', fontFamily: fonts.body, fontSize: 11, lineHeight: 17 },
+  stepTitle: { ...typography.displayLarge, color: colors.text },
+  stepText: { ...typography.body, maxWidth: 360, color: '#89939D' },
   gamesGrid: { gap: 10 },
-  gameCard: { position: 'relative', minHeight: 108, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', gap: 13, padding: 13, borderRadius: 21, backgroundColor: '#090D12', borderWidth: 1, borderColor: '#273039' },
+  gameCard: { position: 'relative', minHeight: 126, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', gap: 13, padding: 13, borderRadius: 21, backgroundColor: '#090D12', borderWidth: 1, borderColor: '#273039' },
   gameCardActive: { borderColor: colors.volt, boxShadow: '0 0 18px rgba(224,255,59,.12)' },
   gameBackdrop: { width: '100%', height: '100%', opacity: .82, pointerEvents: 'none' },
   nonInteractive: { pointerEvents: 'none' },
   gameMark: { width: 58, height: 58, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,8,11,.72)', zIndex: 1 },
   gameCopy: { flex: 1, minWidth: 0, zIndex: 1 },
-  gameShort: { color: colors.text, fontFamily: fonts.bold, fontSize: 13 },
-  gameName: { marginTop: 2, color: '#A4ADB6', fontFamily: fonts.medium, fontSize: 9 },
-  gameDetail: { marginTop: 7, color: '#69747E', fontFamily: fonts.body, fontSize: 7 },
+  gameShort: { ...typography.bodyStrong, color: colors.text },
+  gameName: { ...typography.label, marginTop: 2, color: '#A4ADB6' },
+  gameDetail: { ...typography.body, marginTop: 5, color: '#83909B' },
   check: { width: 30, height: 30, zIndex: 1, borderRadius: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#52606C', backgroundColor: 'rgba(5,8,11,.68)' },
   checkActive: { backgroundColor: colors.volt, borderColor: colors.volt },
   checkText: { color: '#71808C', fontFamily: fonts.bold, fontSize: 14 },
@@ -362,22 +362,22 @@ const styles = StyleSheet.create({
 
   teamsScroll: { flex: 1, marginHorizontal: -2 },
   teamsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, padding: 2, paddingBottom: 12 },
-  teamCard: { position: 'relative', width: '31.6%', minHeight: 132, overflow: 'hidden', alignItems: 'center', padding: 10, borderRadius: 19, backgroundColor: '#090D12', borderWidth: 1, borderColor: '#1D252D' },
+  teamCard: { position: 'relative', width: '31.6%', minHeight: 146, overflow: 'hidden', alignItems: 'center', padding: 10, borderRadius: 19, backgroundColor: '#090D12', borderWidth: 1, borderColor: '#1D252D' },
   teamCardActive: { backgroundColor: '#0E130C', borderColor: colors.volt },
   teamAura: { position: 'absolute', width: 90, height: 90, top: -48, right: -42, borderRadius: 45, opacity: 0.12, pointerEvents: 'none' },
-  teamName: { width: '100%', marginTop: 9, color: colors.text, fontFamily: fonts.bold, fontSize: 8, lineHeight: 11, textAlign: 'center' },
+  teamName: { ...typography.label, width: '100%', marginTop: 9, color: colors.text, textAlign: 'center' },
   gameDots: { flexDirection: 'row', gap: 4, marginTop: 7 },
   gameDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#252E36' },
   gameDotActive: { backgroundColor: colors.volt },
-  selectedPill: { position: 'absolute', top: 7, right: 7, paddingHorizontal: 5, paddingVertical: 3, borderRadius: 999, backgroundColor: colors.volt },
-  selectedPillText: { color: '#080A0C', fontFamily: fonts.bold, fontSize: 5 },
+  selectedPill: { position: 'absolute', top: 7, right: 7, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 999, backgroundColor: colors.volt },
+  selectedPillText: { ...typography.label, color: '#080A0C', fontSize: 10, lineHeight: 12 },
 
   bottomActions: { marginTop: 'auto', flexDirection: 'row', alignItems: 'center', gap: 10 },
   backButton: { minHeight: 54, paddingHorizontal: 5, justifyContent: 'center' },
-  backText: { color: '#747F89', fontFamily: fonts.bold, fontSize: 8, letterSpacing: .8 },
+  backText: { ...typography.action, color: '#747F89', letterSpacing: .3 },
   nextButton: { flex: 1, minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  nextText: { color: '#080A0C', fontFamily: fonts.bold, fontSize: 8, letterSpacing: .9 },
+  nextText: { ...typography.action, color: '#080A0C', letterSpacing: .3 },
   disabled: { opacity: .35 },
-  errorText: { color: '#FF7C87', fontFamily: fonts.medium, fontSize: 9, lineHeight: 14 },
+  errorText: { ...typography.body, color: '#FF7C87' },
   pressed: { opacity: .77 },
 });
