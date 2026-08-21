@@ -35,7 +35,7 @@ Une tranche n'est terminée que si :
 - [x] Porter le texte courant à 13 px minimum et les labels à 10 px minimum sur
   Hub, Matchs, l'entrée Social, Moi, l'onboarding et l'authentification.
 - [x] Réduire les capitales dans les contrôles fonctionnels migrés.
-- [ ] Migrer les écrans Social secondaires, Match Center, paramètres et admin.
+- [x] Migrer les écrans Social secondaires, Match Center, paramètres et admin.
 - [ ] Vérifier contraste, troncature et taille dynamique sur les cinq onglets.
 
 ### 0.3 Identité des monnaies
@@ -150,7 +150,6 @@ Indicateurs à suivre :
 
 ## Prochaine tranche recommandée
 
-La prochaine intervention de code est le lot **0.2 Typographie et lisibilité**.
-Elle doit commencer par les tokens partagés, puis migrer successivement Hub,
-Matchs, Social, Moi et les écrans d'authentification. Aucun écran ne doit être
-redessiné pendant cette passe : seule la hiérarchie de lecture évolue.
+Finaliser le lot **0.2 Typographie et lisibilité** par un contrôle visuel natif
+des cinq onglets (contraste, troncature et taille dynamique), puis ouvrir le lot
+**0.3 Identité des monnaies** sans redessiner les parcours validés.
