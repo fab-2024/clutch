@@ -24,8 +24,9 @@ import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
 import { loadArenaMatches } from '../api';
-import type { ArenaMatch } from '../types';
+import type { ArenaMatch, MyCallsDashboard } from '../types';
 import { gameKey, gameLabel, matchPhase, predictionIsOpen } from '../utils';
+import { MyCallsPanel } from './MyCallsPanel';
 
 type StatusFilter = 'upcoming' | 'finished';
 type GameFilter = 'followed' | GameId;
@@ -41,6 +42,17 @@ type MatchesExperienceProps = {
   onRetry: () => void;
   refreshing: boolean;
   upcoming: ArenaMatch[];
+  calls: MyCallsDashboard;
+};
+
+const EMPTY_CALLS: MyCallsDashboard = {
+  saison_id: null,
+  saison_nom: null,
+  compteurs: { ouverts: 0, verrouilles: 0, reussis: 0, manques: 0 },
+  ouverts: [],
+  verrouilles: [],
+  reussis: [],
+  manques: [],
 };
 
 const GAME_FILTERS: { id: GameFilter; label: string }[] = [
@@ -66,6 +78,7 @@ export default function MatchesScreen() {
   const { profile, session } = useAuth();
   const [upcoming, setUpcoming] = useState<ArenaMatch[]>([]);
   const [finished, setFinished] = useState<ArenaMatch[]>([]);
+  const [calls, setCalls] = useState<MyCallsDashboard>(EMPTY_CALLS);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +87,7 @@ export default function MatchesScreen() {
     if (!session?.user.id) {
       setUpcoming([]);
       setFinished([]);
+      setCalls(EMPTY_CALLS);
       setLoading(false);
       setRefreshing(false);
       return;
@@ -84,6 +98,7 @@ export default function MatchesScreen() {
       const data = await loadArenaMatches(session.user.id);
       setUpcoming(data.upcoming);
       setFinished(data.finished);
+      setCalls(data.calls);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Impossible de charger les matchs.');
     } finally {
@@ -97,6 +112,7 @@ export default function MatchesScreen() {
   return (
     <MatchesExperience
       error={error}
+      calls={calls}
       finished={finished}
       followedGames={profile?.jeux_suivis ?? []}
       isAdmin={Boolean(profile?.est_admin)}
@@ -110,6 +126,7 @@ export default function MatchesScreen() {
 }
 
 export function MatchesExperience({
+  calls,
   error,
   finished,
   followedGames,
@@ -140,10 +157,7 @@ export function MatchesExperience({
     () => filterMatches(source, game, followedGames, false, query),
     [followedGames, game, query, source],
   );
-  const callCount = useMemo(
-    () => scopedMatches.filter((match) => Boolean(match.prediction)).length,
-    [scopedMatches],
-  );
+  const callCount = calls.compteurs.verrouilles;
   const filtered = useMemo(
     () => callsOnly ? scopedMatches.filter((match) => Boolean(match.prediction)) : scopedMatches,
     [callsOnly, scopedMatches],
@@ -229,9 +243,12 @@ export function MatchesExperience({
 
         {loading ? (
           <MatchSkeleton />
+        ) : callsOnly ? (
+          <Animated.View entering={entrance(150)}>
+            <MyCallsPanel dashboard={calls} followedGames={followedGames} game={game} query={query} />
+          </Animated.View>
         ) : visibleMatches.length ? (
           <Animated.View entering={entrance(150)} style={styles.matchesSection}>
-            {callsOnly ? <CallsRecap matches={filtered} status={status} /> : null}
             <SectionHead callsOnly={callsOnly} count={visibleMatches.length} date={activeDate} status={status} />
             {liveMatches.length ? (
               <View style={styles.liveStack}>
@@ -398,19 +415,26 @@ function ArenaFilters({ callCount, callsOnly, game, isAdmin, onCallsOnlyChange, 
       </View>
 
       <View style={styles.modeRow}>
-        <View style={styles.statusSwitch}>
-          <Pressable accessibilityRole="button" accessibilityState={{ selected: status === 'upcoming' }} onPress={() => onStatusChange('upcoming')} style={[styles.statusButton, status === 'upcoming' && styles.statusButtonActive]}>
-            <Text style={[styles.statusText, status === 'upcoming' && styles.statusTextActive]}>À VENIR</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" accessibilityState={{ selected: status === 'finished' }} onPress={() => onStatusChange('finished')} style={[styles.statusButton, status === 'finished' && styles.statusButtonActive]}>
-            <Text style={[styles.statusText, status === 'finished' && styles.statusTextActive]}>RÉSULTATS</Text>
-          </Pressable>
-        </View>
+        {callsOnly ? (
+          <View style={styles.callsModeInfo}>
+            <Text style={styles.callsModeInfoText}>CYCLE DU CALL</Text>
+            <Text style={styles.callsModeInfoMeta}>4 ÉTATS TRANSPARENTS</Text>
+          </View>
+        ) : (
+          <View style={styles.statusSwitch}>
+            <Pressable accessibilityRole="button" accessibilityState={{ selected: status === 'upcoming' }} onPress={() => onStatusChange('upcoming')} style={[styles.statusButton, status === 'upcoming' && styles.statusButtonActive]}>
+              <Text style={[styles.statusText, status === 'upcoming' && styles.statusTextActive]}>À VENIR</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityState={{ selected: status === 'finished' }} onPress={() => onStatusChange('finished')} style={[styles.statusButton, status === 'finished' && styles.statusButtonActive]}>
+              <Text style={[styles.statusText, status === 'finished' && styles.statusTextActive]}>RÉSULTATS</Text>
+            </Pressable>
+          </View>
+        )}
         <Pressable accessibilityRole="button" accessibilityState={{ selected: callsOnly }} onPress={() => onCallsOnlyChange(!callsOnly)} style={[styles.callsButton, callsOnly && styles.callsButtonActive]}>
           <View style={[styles.callsDot, callsOnly && styles.callsDotActive]} />
           <View style={styles.callsButtonCopy}>
             <Text style={[styles.callsText, callsOnly && styles.callsTextActive]}>MES CALLS</Text>
-            <Text style={[styles.callsCount, callsOnly && styles.callsCountActive]}>{callCount} {status === 'upcoming' ? 'EN COURS' : callCount > 1 ? 'VERDICTS' : 'VERDICT'}</Text>
+            <Text style={[styles.callsCount, callsOnly && styles.callsCountActive]}>{callsOnly ? 'OUVERT' : `${callCount} VERROUILLÉ${callCount > 1 ? 'S' : ''}`}</Text>
           </View>
         </Pressable>
       </View>
@@ -423,50 +447,6 @@ function ArenaFilters({ callCount, callsOnly, game, isAdmin, onCallsOnlyChange, 
       ) : null}
     </View>
   );
-}
-
-function CallsRecap({ matches, status }: { matches: ArenaMatch[]; status: StatusFilter }) {
-  const live = matches.filter((match) => matchPhase(match) === 'live').length;
-  const settled = matches.filter((match) => match.prediction?.statut === 'gagne' || match.prediction?.statut === 'perdu');
-  const wins = settled.filter((match) => match.prediction?.statut === 'gagne').length;
-  const accuracy = settled.length ? `${Math.round((wins / settled.length) * 100)}%` : '—';
-  const delta = settled.reduce((total, match) => total + Number(match.prediction?.delta_frags ?? 0), 0);
-
-  return (
-    <View style={styles.callsRecap}>
-      <View style={styles.callsRecapTop}>
-        <View style={styles.callsRecapCopy}>
-          <Text style={styles.callsRecapEyebrow}>MES CALLS // {status === 'upcoming' ? 'EN COURS' : 'RÉSULTATS'}</Text>
-          <Text style={styles.callsRecapTitle}>{status === 'upcoming' ? 'TES CHOIX, AU MÊME ENDROIT.' : 'TES VERDICTS, EN UN COUP D’ŒIL.'}</Text>
-        </View>
-        <View style={styles.callsRecapMark}><Text style={styles.callsRecapMarkText}>C</Text></View>
-      </View>
-      <View style={styles.callsRecapMetrics}>
-        {status === 'upcoming' ? (
-          <>
-            <CallsRecapMetric label="CALLS" value={String(matches.length)} />
-            <CallsRecapMetric label="EN LIVE" value={String(live)} />
-            <CallsRecapMetric label="EN ATTENTE" value={String(Math.max(0, matches.length - live))} />
-          </>
-        ) : (
-          <>
-            <CallsRecapMetric label="VERDICTS" value={String(settled.length)} />
-            <CallsRecapMetric label="RÉUSSITE" value={accuracy} />
-            <CallsRecapMetric featured label="BILAN" value={signedFrags(delta)} />
-          </>
-        )}
-      </View>
-      <View style={styles.callsLoop}>
-        <Text style={styles.callsLoopStep}>CALL</Text><Text style={styles.callsLoopArrow}>→</Text>
-        <Text style={styles.callsLoopStep}>VERDICT</Text><Text style={styles.callsLoopArrow}>→</Text>
-        <Text style={styles.callsLoopStepFeatured}>RATING FRAGS</Text>
-      </View>
-    </View>
-  );
-}
-
-function CallsRecapMetric({ featured = false, label, value }: { featured?: boolean; label: string; value: string }) {
-  return <View style={styles.callsRecapMetric}><Text style={[styles.callsRecapMetricValue, featured && styles.callsRecapMetricFeatured]}>{value}</Text><Text style={styles.callsRecapMetricLabel}>{label}</Text></View>;
 }
 
 function SectionHead({ callsOnly, count, date, status }: { callsOnly: boolean; count: number; date: Date; status: StatusFilter }) {
@@ -655,11 +635,6 @@ function predictionVerdict(match: ArenaMatch) {
   return `${delta >= 0 ? '+' : '−'}${Math.abs(delta)} FRAGS`;
 }
 
-function signedFrags(value: number) {
-  const amount = Math.round(Number(value) || 0);
-  return `${amount >= 0 ? '+' : '−'}${Math.abs(amount)}`;
-}
-
 function openMatch(id: string) {
   router.push({ pathname: '/match/[id]', params: { id } });
 }
@@ -700,6 +675,9 @@ const styles = StyleSheet.create({
   gameFilterText: { ...typography.label, color: colors.textMuted, letterSpacing: .25 },
   gameFilterTextActive: { color: '#F4F6F7' },
   modeRow: { minHeight: 46, flexDirection: 'row', gap: 7 },
+  callsModeInfo: { flex: 1, minHeight: 44, paddingHorizontal: 12, borderRadius: 14, justifyContent: 'center', backgroundColor: '#070B0F', borderWidth: 1, borderColor: '#28321C' },
+  callsModeInfoText: { ...typography.label, color: colors.volt, letterSpacing: .35 },
+  callsModeInfoMeta: { ...typography.caption, marginTop: 1, color: '#78845D' },
   statusSwitch: { flex: 1, minHeight: 44, padding: 3, borderRadius: 14, flexDirection: 'row', backgroundColor: '#070B0F', borderWidth: 1, borderColor: '#202832' },
   statusButton: { flex: 1, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   statusButtonActive: { backgroundColor: '#202830' },
@@ -721,22 +699,6 @@ const styles = StyleSheet.create({
   errorText: { ...typography.body, flex: 1, color: '#FF9AA2' },
   retry: { ...typography.action, color: colors.volt },
   matchesSection: { marginHorizontal: spacing.md, gap: 12 },
-  callsRecap: { padding: 14, borderRadius: 22, backgroundColor: '#10160E', borderWidth: 1, borderColor: '#3E4A1E', gap: 12 },
-  callsRecapTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  callsRecapCopy: { flex: 1, minWidth: 0 },
-  callsRecapEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .8 },
-  callsRecapTitle: { ...typography.cardTitle, marginTop: 5, color: colors.text },
-  callsRecapMark: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  callsRecapMarkText: { color: '#070A0E', fontFamily: fonts.display, fontSize: 18 },
-  callsRecapMetrics: { minHeight: 52, flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#2C361B' },
-  callsRecapMetric: { flex: 1, alignItems: 'center' },
-  callsRecapMetricValue: { ...typography.metricSmall, color: colors.text },
-  callsRecapMetricFeatured: { color: colors.volt },
-  callsRecapMetricLabel: { ...typography.eyebrow, marginTop: 2, color: colors.textMuted, letterSpacing: .35 },
-  callsLoop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
-  callsLoopStep: { ...typography.label, color: colors.textMuted, letterSpacing: .25 },
-  callsLoopStepFeatured: { ...typography.label, color: colors.volt, letterSpacing: .25 },
-  callsLoopArrow: { color: '#4C5830', fontFamily: fonts.bold, fontSize: 10 },
   sectionHead: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 },
   sectionEyebrow: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: 1.1 },
   sectionTitle: { ...typography.sectionTitle, marginTop: 4, color: colors.text },

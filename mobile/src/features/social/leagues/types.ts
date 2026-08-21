@@ -8,7 +8,7 @@ export type LeagueSummary = {
 };
 
 export type GlobalRankRow = {
-  rang: number;
+  rang: number | null;
   id: string;
   pseudo: string;
   frags: number;

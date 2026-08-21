@@ -1,4 +1,5 @@
 import { supabase } from '@/src/lib/supabase';
+import { normalizeGradeState, normalizeGradeSummary } from '@/src/features/ranking/grades';
 
 import type {
   FragsState,
@@ -123,7 +124,21 @@ export async function loadHubData(userId: string, followedGames: string[] = []):
     if (predictionsResult.error) throw predictionsResult.error;
     if (predictionResult.error) throw predictionResult.error;
 
-    frags = fragsResult.data as FragsState;
+    const rawFrags = (fragsResult.data ?? {}) as Partial<FragsState>;
+    frags = {
+      frags: Number(rawFrags.frags ?? 1000),
+      pic_frags: Number(rawFrags.pic_frags ?? 1000),
+      pronostics_regles: Number(rawFrags.pronostics_regles ?? 0),
+      pronostics_gagnes: Number(rawFrags.pronostics_gagnes ?? 0),
+      placements_restants: Number(rawFrags.placements_restants ?? 5),
+      provisoire: rawFrags.provisoire !== false,
+      grade: normalizeGradeState(rawFrags.grade),
+      rang: rawFrags.rang == null ? null : Number(rawFrags.rang),
+      percentile: rawFrags.percentile == null ? null : Number(rawFrags.percentile),
+      joueurs_classes: Number(rawFrags.joueurs_classes ?? 0),
+      meilleur_grade: normalizeGradeSummary(rawFrags.meilleur_grade),
+      meilleur_rang: rawFrags.meilleur_rang == null ? null : Number(rawFrags.meilleur_rang),
+    };
     streak = Number(participationResult.data?.serie_prime ?? 0);
     predictionsToday = Number(predictionsResult.count ?? 0);
 

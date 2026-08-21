@@ -1,3 +1,5 @@
+import type { SeasonalGradeState, SeasonalGradeSummary } from '@/src/features/ranking/grades';
+
 export type FragsState = {
   frags: number;
   pic_frags: number;
@@ -5,6 +7,12 @@ export type FragsState = {
   pronostics_gagnes: number;
   placements_restants: number;
   provisoire: boolean;
+  grade: SeasonalGradeState;
+  rang: number | null;
+  percentile: number | null;
+  joueurs_classes: number;
+  meilleur_grade: SeasonalGradeSummary | null;
+  meilleur_rang: number | null;
 };
 
 export type HubMatch = {

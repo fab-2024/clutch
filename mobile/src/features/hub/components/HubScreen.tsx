@@ -239,20 +239,23 @@ function CorePanel({ hub, loading }: { hub: HubData; loading: boolean }) {
   const remaining = hub.frags?.placements_restants ?? 0;
   const provisional = Boolean(hub.frags?.provisoire);
   const placementTarget = Math.max(1, settled + remaining);
-  const placementProgress = !hub.seasonId ? 0 : provisional ? settled / placementTarget : 1;
-  const status = !hub.seasonId ? 'EN ATTENTE' : provisional ? 'RANG EN PLACEMENT' : 'RATING CLASSÉ';
+  const grade = hub.frags?.grade;
+  const placementProgress = !hub.seasonId ? 0 : grade?.progression ?? (provisional ? settled / placementTarget : 1);
+  const status = !hub.seasonId ? 'EN ATTENTE' : provisional ? 'GRADE EN PLACEMENT' : `GRADE · ${grade?.libelle?.toUpperCase() ?? 'CLASSÉ'}`;
   const guideTitle = loading
     ? 'SYNCHRONISATION DU RATING'
     : !hub.seasonId
       ? 'PROCHAINE SAISON EN ATTENTE'
       : provisional
-        ? `${remaining} CALL${remaining > 1 ? 'S' : ''} AVANT TON RANG`
-        : 'TON RANG EST ACTIF';
+        ? `${remaining} CALL${remaining > 1 ? 'S' : ''} AVANT TON GRADE`
+        : `${hub.frags?.rang ? `RANG #${hub.frags.rang}` : 'RANG ACTIF'} · PERCENTILE ${formatDecimal(hub.frags?.percentile)}`;
   const guideCopy = !hub.seasonId
     ? 'La prochaine saison activera tes calls classés.'
     : provisional
-      ? `Encore ${remaining} verdict${remaining > 1 ? 's' : ''} classé${remaining > 1 ? 's' : ''} pour révéler ton rang de saison.`
-      : 'Chaque verdict fait désormais monter ou descendre ce rating.';
+      ? `Encore ${remaining} verdict${remaining > 1 ? 's' : ''} classé${remaining > 1 ? 's' : ''} pour révéler ton grade et ton rang de saison.`
+      : grade?.prochain_libelle
+        ? `${Math.max(0, Number(grade.prochain_minimum ?? hub.frags?.frags ?? 0) - Number(hub.frags?.frags ?? 0))} Frags avant ${grade.prochain_libelle}.`
+        : 'Palier saisonnier maximal atteint.';
 
   return (
     <Pressable accessibilityLabel="Ouvrir mon rating" accessibilityRole="button" onPress={() => router.push('/(tabs)/profile')} style={({ pressed }) => [styles.coreCard, pressed && styles.pressed]}>
@@ -269,7 +272,7 @@ function CorePanel({ hub, loading }: { hub: HubData; loading: boolean }) {
             </View>
           </View>
           <View style={styles.coreStatus}><View style={styles.coreStatusDot} /><Text style={styles.coreStatusText}>{status}</Text></View>
-          <Text style={styles.corePeak}>PIC · {loading ? '—' : formatNumber(hub.frags?.pic_frags ?? 0)} FRAGS</Text>
+          <Text style={styles.corePeak}>{loading ? 'RECORD · —' : `RECORD · ${hub.frags?.meilleur_grade?.libelle?.toUpperCase() ?? 'PLACEMENT'}${hub.frags?.meilleur_rang ? ` · #${hub.frags.meilleur_rang}` : ''}`}</Text>
         </View>
       </View>
       <View style={styles.coreGuide}>
@@ -278,18 +281,18 @@ function CorePanel({ hub, loading }: { hub: HubData; loading: boolean }) {
             <Text style={styles.coreGuideTitle}>{guideTitle}</Text>
             <Text style={styles.coreGuideText}>{loading ? 'Lecture de ta saison en cours…' : guideCopy}</Text>
           </View>
-          {provisional && !loading ? <Text style={styles.coreGuideCount}>{settled}/{placementTarget}</Text> : null}
+          {!loading ? <Text style={styles.coreGuideCount}>{provisional ? `${settled}/${placementTarget}` : `${Math.round(placementProgress * 100)}%`}</Text> : null}
         </View>
         <View style={styles.coreGuideTrack}>
           <View style={[styles.coreGuideFill, { width: `${Math.round(placementProgress * 100)}%` }]} />
         </View>
       </View>
       <View style={styles.coreMetrics}>
-        <CoreMetric label="SÉRIE" value={loading ? '—' : `${hub.streak} J`} />
+        <CoreMetric label="RANG" value={loading ? '—' : provisional ? '—' : hub.frags?.rang ? `#${hub.frags.rang}` : '—'} />
         <View style={styles.coreMetricDivider} />
         <CoreMetric label="PRÉCISION" value={loading ? '—' : accuracy} />
         <View style={styles.coreMetricDivider} />
-        <CoreMetric label="LIGUES" value={loading ? '—' : String(hub.leagueCount)} />
+        <CoreMetric label="PERCENTILE" value={loading || provisional ? '—' : formatDecimal(hub.frags?.percentile)} />
       </View>
     </Pressable>
   );
@@ -297,6 +300,11 @@ function CorePanel({ hub, loading }: { hub: HubData; loading: boolean }) {
 
 function CoreMetric({ label, value }: { label: string; value: string }) {
   return <View style={styles.coreMetric}><Text style={styles.coreMetricValue}>{value}</Text><Text style={styles.coreMetricLabel}>{label}</Text></View>;
+}
+
+function formatDecimal(value?: number | null) {
+  if (value == null || !Number.isFinite(value)) return '—';
+  return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(value);
 }
 
 function UpNext({ matches }: { matches: HubMatch[] }) {

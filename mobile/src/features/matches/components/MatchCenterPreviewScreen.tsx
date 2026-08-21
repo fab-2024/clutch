@@ -41,6 +41,30 @@ const PREVIEW_MATCH_CENTER: MatchCenterData = {
     k_frags: 40,
     delta_frags: 18,
   },
+  callContext: {
+    match_id: 'preview-final-kc-fnc',
+    participants: 128,
+    ferme_le: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    verrouille_le: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+    distribution: { total: 128, a: 78, b: 50, a_pct: 60.9, b_pct: 39.1 },
+    regle_resolution: {
+      cle: 'vainqueur_match',
+      libelle: 'Vainqueur de la série',
+      detail: 'Le call est réussi si l’équipe choisie remporte le score final de la série.',
+    },
+    prediction: {
+      id: 'preview-prediction',
+      match_id: 'preview-final-kc-fnc',
+      choix: 'a',
+      statut: 'gagne',
+      proba_figee: 0.61,
+      proba_scoring: 0.61,
+      k_frags: 40,
+      delta_frags: 18,
+    },
+    source_resultat: 'validation_clutch',
+    source_resultat_label: 'Validation Clutch',
+  },
   related: [],
 };
 

@@ -21,7 +21,7 @@ export async function loadGlobalRanking(): Promise<GlobalRankRow[]> {
   return Array.isArray(data)
     ? data.map((row) => ({
         ...row,
-        rang: Number(row.rang ?? 0),
+        rang: row.rang == null ? null : Number(row.rang),
         frags: Number(row.frags ?? 0),
         pic_frags: Number(row.pic_frags ?? 0),
         pronostics_regles: Number(row.pronostics_regles ?? 0),

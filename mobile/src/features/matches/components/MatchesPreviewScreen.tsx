@@ -1,6 +1,6 @@
 import { Redirect } from 'expo-router';
 
-import type { ArenaMatch, ArenaPrediction } from '../types';
+import type { ArenaMatch, ArenaPrediction, MyCallItem, MyCallsDashboard, MyCallState } from '../types';
 import { MatchesExperience } from './MatchesScreen';
 
 const NOW = new Date();
@@ -94,10 +94,24 @@ const PREVIEW_FINISHED: ArenaMatch[] = [
   }),
 ];
 
+const PREVIEW_CALLS: MyCallsDashboard = {
+  saison_id: 'preview-season',
+  saison_nom: 'Saison Zéro',
+  compteurs: { ouverts: 2, verrouilles: 2, reussis: 1, manques: 1 },
+  ouverts: [callItem(PREVIEW_UPCOMING[2], 'ouvert'), callItem(PREVIEW_UPCOMING[3], 'ouvert')],
+  verrouilles: [
+    callItem(PREVIEW_UPCOMING[0], 'verrouille', 'a', { a: 61, b: 39 }),
+    callItem(PREVIEW_UPCOMING[1], 'verrouille', 'a', { a: 44, b: 56 }),
+  ],
+  reussis: [callItem(PREVIEW_FINISHED[0], 'reussi', 'a', { a: 67, b: 33 }, 18)],
+  manques: [callItem(PREVIEW_FINISHED[1], 'manque', 'a', { a: 72, b: 28 }, -14)],
+};
+
 export default function MatchesPreviewScreen() {
   if (!__DEV__) return <Redirect href="/" />;
   return (
     <MatchesExperience
+      calls={PREVIEW_CALLS}
       error={null}
       finished={PREVIEW_FINISHED}
       followedGames={['lol', 'valorant', 'cs2']}
@@ -110,6 +124,50 @@ export default function MatchesPreviewScreen() {
       onRetry={noop}
     />
   );
+}
+
+function callItem(
+  match: ArenaMatch,
+  state: MyCallState,
+  choice: 'a' | 'b' | null = null,
+  split?: { a: number; b: number },
+  delta: number | null = null,
+): MyCallItem {
+  const now = new Date().toISOString();
+  const resolved = state === 'reussi' || state === 'manque';
+  return {
+    id: `call-${match.id}`,
+    pronostic_id: choice ? `prediction-${match.id}` : null,
+    match_id: match.id,
+    saison_id: match.saison_id,
+    etat: state,
+    jeu: match.jeu,
+    evenement: match.evenement,
+    format: match.format,
+    debut: match.debut,
+    statut_match: match.statut,
+    equipe_a: match.equipe_a,
+    tag_a: match.tag_a,
+    equipe_b: match.equipe_b,
+    tag_b: match.tag_b,
+    score_a: match.score_a,
+    score_b: match.score_b,
+    choix: choice,
+    statut: state === 'verrouille' ? 'en_cours' : state === 'reussi' ? 'gagne' : state === 'manque' ? 'perdu' : null,
+    delta_frags: delta,
+    verrouille_le: choice ? now : null,
+    ferme_le: match.debut,
+    regle_le: resolved ? now : null,
+    participants: split ? 128 : 127,
+    distribution: split ? { total: 128, a: Math.round(split.a * 1.28), b: Math.round(split.b * 1.28), a_pct: split.a, b_pct: split.b } : null,
+    regle_resolution: {
+      cle: 'vainqueur_match',
+      libelle: 'Vainqueur de la série',
+      detail: 'Le call est réussi si l’équipe choisie remporte le score final de la série.',
+    },
+    source_resultat: resolved ? 'validation_clutch' : null,
+    source_resultat_label: resolved ? 'Validation Clutch' : null,
+  };
 }
 
 type PreviewMatchInput = {

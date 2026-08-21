@@ -67,22 +67,22 @@ reste consultable depuis l'historique et ne peut jamais créditer deux fois.
 
 ### 1.2 Mes Calls et transparence
 
-- [ ] Séparer Ouverts, Verrouillés, Réussis et Manqués.
-- [ ] Afficher l'heure de verrouillage et la règle de résolution.
-- [ ] Afficher le nombre de participants.
-- [ ] Révéler la répartition seulement après validation du joueur.
-- [ ] Afficher la source du résultat dans les verdicts.
+- [x] Séparer Ouverts, Verrouillés, Réussis et Manqués.
+- [x] Afficher l'heure de verrouillage et la règle de résolution.
+- [x] Afficher le nombre de participants.
+- [x] Révéler la répartition seulement après validation du joueur.
+- [x] Afficher la source du résultat dans les verdicts.
 
 Critère d'acceptation : chaque call est compréhensible avant validation et
 entièrement explicable après résolution.
 
 ### 1.3 Grade et classement
 
-- [ ] Centraliser les seuils des cinq grades côté serveur.
-- [ ] Masquer grade et classement pendant les cinq placements.
-- [ ] Exposer grade, progression, rang exact et percentile.
-- [ ] Conserver meilleur grade et meilleur rang de chaque saison.
-- [ ] Renommer les prestiges XP qui entrent en conflit.
+- [x] Centraliser les seuils des cinq grades côté serveur.
+- [x] Masquer grade et classement pendant les cinq placements.
+- [x] Exposer grade, progression, rang exact et percentile.
+- [x] Conserver meilleur grade et meilleur rang de chaque saison.
+- [x] Renommer les prestiges XP qui entrent en conflit.
 
 ### 1.4 Fiabilité opérationnelle
 

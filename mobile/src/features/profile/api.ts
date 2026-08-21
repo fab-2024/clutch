@@ -1,5 +1,6 @@
 import { supabase } from '@/src/lib/supabase';
 import type { GameId } from '@/src/features/onboarding/types';
+import { normalizeGradeState, normalizeGradeSummary } from '@/src/features/ranking/grades';
 
 import { evaluateBadges, resolveBadgeSelection } from './badges';
 import { calculateProfileXp, levelFromXp } from './progression';
@@ -13,11 +14,16 @@ import type {
 import { toNumber } from './utils';
 
 export async function loadProfileData(pseudo: string): Promise<ProfileData> {
-  const { data, error } = await supabase.rpc('clutch_profil_public_v1', { p_pseudo: pseudo });
-  if (error) throw error;
-  if (!data) throw new Error('Profil Clutch introuvable.');
+  const [profileResult, progressionResult] = await Promise.all([
+    supabase.rpc('clutch_profil_public_v1', { p_pseudo: pseudo }),
+    supabase.rpc('clutch_progression_profil_v1', { p_pseudo: pseudo }),
+  ]);
+  if (profileResult.error) throw profileResult.error;
+  if (progressionResult.error) throw progressionResult.error;
+  if (!profileResult.data || !progressionResult.data) throw new Error('Profil Clutch introuvable.');
 
-  const raw = data as RawProfile;
+  const raw = profileResult.data as RawProfile;
+  const progression = progressionResult.data as Partial<ProfileRanking>;
   const recap = raw.recap ?? {};
   const founder = Boolean(raw.est_fondateur);
   const badges = evaluateBadges(recap, founder);
@@ -35,7 +41,7 @@ export async function loadProfileData(pseudo: string): Promise<ProfileData> {
     profileTitle: raw.titre_profil ?? null,
     founder,
     publicProfile: raw.profil_public !== false,
-    ranking: normalizeRanking(raw.classement),
+    ranking: normalizeRanking({ ...raw.classement, ...progression }),
     recap,
     currentStreak: toNumber(raw.serie_actuelle),
     favoriteTeam: raw.equipe_favorite ? normalizeTeam(raw.equipe_favorite) : null,
@@ -77,14 +83,23 @@ export async function saveProfileSettings(
 }
 
 function normalizeRanking(value?: Partial<ProfileRanking> | null): ProfileRanking {
+  const settled = toNumber(value?.pronostics_regles);
+  const placementTarget = normalizeGradeState(value?.grade).objectif_placements;
   return {
     saison_id: value?.saison_id ?? null,
     saison_nom: value?.saison_nom ?? null,
     frags: toNumber(value?.frags ?? 1000),
     rang: value?.rang == null ? null : toNumber(value.rang),
-    pronostics_regles: toNumber(value?.pronostics_regles),
+    pronostics_regles: settled,
     pronostics_gagnes: toNumber(value?.pronostics_gagnes),
     pic_frags: toNumber(value?.pic_frags ?? 1000),
+    placements_restants: toNumber(value?.placements_restants ?? Math.max(0, placementTarget - settled)),
+    provisoire: value?.provisoire ?? settled < placementTarget,
+    grade: normalizeGradeState(value?.grade),
+    percentile: value?.percentile == null ? null : toNumber(value.percentile),
+    joueurs_classes: toNumber(value?.joueurs_classes),
+    meilleur_grade: normalizeGradeSummary(value?.meilleur_grade),
+    meilleur_rang: value?.meilleur_rang == null ? null : toNumber(value.meilleur_rang),
   };
 }
 

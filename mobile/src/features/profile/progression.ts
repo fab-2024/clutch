@@ -44,26 +44,26 @@ export function levelFromXp(xp: number): LevelState {
             ? 'Analyste'
             : level >= 5
               ? 'Habitué'
-              : 'Recrue';
+              : 'Nouveau talent';
 
   const prestige = level >= 50
-    ? 'clutch'
+    ? 'legende'
     : level >= 35
-      ? 'master'
+      ? 'icone'
       : level >= 20
-        ? 'elite'
+        ? 'veteran'
         : level >= 10
-          ? 'challenger'
+          ? 'analyste'
           : level >= 5
-            ? 'initie'
-            : 'recrue';
+            ? 'explorateur'
+            : 'starter';
   const prestigeLabel = {
-    recrue: 'Recrue',
-    initie: 'Initié',
-    challenger: 'Challenger',
-    elite: 'Elite',
-    master: 'Master',
-    clutch: 'CLUTCH',
+    starter: 'Starter',
+    explorateur: 'Explorateur',
+    analyste: 'Analyste',
+    veteran: 'Vétéran',
+    icone: 'Icône',
+    legende: 'Légende',
   }[prestige];
 
   return {

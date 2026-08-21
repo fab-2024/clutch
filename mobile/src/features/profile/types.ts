@@ -1,3 +1,5 @@
+import type { SeasonalGradeState, SeasonalGradeSummary } from '@/src/features/ranking/grades';
+
 export type ProfileRanking = {
   saison_id: string | null;
   saison_nom: string | null;
@@ -6,6 +8,13 @@ export type ProfileRanking = {
   pronostics_regles: number;
   pronostics_gagnes: number;
   pic_frags: number;
+  placements_restants: number;
+  provisoire: boolean;
+  grade: SeasonalGradeState;
+  percentile: number | null;
+  joueurs_classes: number;
+  meilleur_grade: SeasonalGradeSummary | null;
+  meilleur_rang: number | null;
 };
 
 export type ProfileTeam = {
@@ -53,7 +62,7 @@ export type LevelState = {
   xp: number;
   level: number;
   title: string;
-  prestige: 'recrue' | 'initie' | 'challenger' | 'elite' | 'master' | 'clutch';
+  prestige: 'starter' | 'explorateur' | 'analyste' | 'veteran' | 'icone' | 'legende';
   prestigeLabel: string;
   progress: number;
   remaining: number;

@@ -28,7 +28,7 @@ import {
   loadNextUnseenMatchResult,
   markMatchResultRevealed,
 } from '../api';
-import { gradeTransition, PLACEMENT_TARGET, type GradeTransition } from '../grades';
+import { gradeAccent, gradeTransition, type GradeTransition } from '../grades';
 import type { MatchResultReveal } from '../types';
 import { gameLabel } from '../utils';
 
@@ -101,12 +101,10 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
     return () => cancelAnimation(revealProgress);
   }, [reduceMotion, result, revealProgress]);
 
-  const transition = useMemo(() => result ? gradeTransition(
-    result.frags_avant,
-    result.frags_apres,
-    result.verdicts_avant,
-    result.verdicts_apres,
-  ) : null, [result]);
+  const transition = useMemo(
+    () => result ? gradeTransition(result.grade_avant, result.grade_apres) : null,
+    [result],
+  );
 
   const auraStyle = useAnimatedStyle(() => ({
     opacity: 0.12 + revealProgress.value * 0.22,
@@ -157,6 +155,7 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
   const choiceName = result.choix === 'a' ? result.equipe_a : result.equipe_b;
   const remaining = Math.max(0, result.restants - 1);
   const replay = Boolean(result.revele_le);
+  const placementTarget = result.objectif_placements;
   const entrance = (delay: number) => reduceMotion ? undefined : FadeInDown.delay(delay).duration(460);
 
   return (
@@ -211,19 +210,19 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
 
         {transition ? (
           <Animated.View entering={entrance(310)} style={styles.rankingCard}>
-            <GradeHeadline transition={transition} verdictsAfter={result.verdicts_apres} />
+            <GradeHeadline placementTarget={placementTarget} transition={transition} verdictsAfter={result.verdicts_apres} />
             <View style={styles.rankFlow}>
-              <RankMetric grade={transition.before?.label ?? 'Non classé'} label="AVANT" rank={result.verdicts_avant >= PLACEMENT_TARGET ? result.rang_avant : null} />
+              <RankMetric grade={transition.before?.libelle ?? 'Non classé'} label="AVANT" rank={result.rang_avant} />
               <View style={styles.rankDivider} />
-              <RankMetric accent={transition.after?.accent ?? colors.volt} grade={transition.after?.label ?? `${result.verdicts_apres}/${PLACEMENT_TARGET} placements`} label="APRÈS" rank={result.verdicts_apres >= PLACEMENT_TARGET ? result.rang_apres : null} />
+              <RankMetric accent={gradeAccent(transition.after)} grade={transition.after?.libelle ?? `${result.verdicts_apres}/${placementTarget} placements`} label="APRÈS" rank={result.rang_apres} />
             </View>
-            {transition.kind === 'placement' ? <PlacementProgress complete={result.verdicts_apres} /> : null}
+            {transition.kind === 'placement' ? <PlacementProgress complete={result.verdicts_apres} target={placementTarget} /> : null}
           </Animated.View>
         ) : null}
 
         <Animated.View entering={entrance(390)} style={styles.proofCard}>
           <View style={styles.proofIcon}><Text style={styles.proofGlyph}>✓</Text></View>
-          <View style={styles.proofCopy}><Text style={styles.proofLabel}>SOURCE DU VERDICT</Text><Text style={styles.proofTitle}>{result.source_resultat_label}</Text><Text style={styles.proofMeta}>{formatResolutionDate(result.regle_le)} · score figé côté serveur</Text></View>
+          <View style={styles.proofCopy}><Text style={styles.proofLabel}>SOURCE DU VERDICT</Text><Text style={styles.proofTitle}>{result.source_resultat_label}</Text><Text style={styles.proofMeta}>{formatResolutionDate(result.regle_le)} · {result.regle_resolution.libelle.toLowerCase()}</Text></View>
         </Animated.View>
 
         {error ? <View style={styles.errorCard}><Text style={styles.errorText}>{error}</Text></View> : null}
@@ -258,17 +257,17 @@ function Metric({ accent, label, value }: { accent?: string; label: string; valu
   return <View style={styles.metric}><Text style={styles.metricLabel}>{label}</Text><Text style={[styles.metricValue, accent ? { color: accent } : null]}>{value}</Text><View style={styles.metricUnit}><CurrencyIcon color={accent ?? colors.textMuted} kind="frags" size={12} /><Text style={styles.metricUnitText}>FRAGS</Text></View></View>;
 }
 
-function GradeHeadline({ transition, verdictsAfter }: { transition: GradeTransition; verdictsAfter: number }) {
+function GradeHeadline({ placementTarget, transition, verdictsAfter }: { placementTarget: number; transition: GradeTransition; verdictsAfter: number }) {
   const content = transition.kind === 'promotion'
-    ? { eyebrow: 'PROMOTION', title: `${transition.before?.label} → ${transition.after?.label}`, copy: 'Ton call te fait franchir un nouveau seuil.' }
+    ? { eyebrow: 'PROMOTION', title: `${transition.before?.libelle} → ${transition.after?.libelle}`, copy: 'Ton call te fait franchir un nouveau seuil.' }
     : transition.kind === 'demotion'
-      ? { eyebrow: 'RÉTROGRADATION', title: `${transition.before?.label} → ${transition.after?.label}`, copy: 'Le grade suit ton rating. Le prochain call peut relancer la remontée.' }
+      ? { eyebrow: 'RÉTROGRADATION', title: `${transition.before?.libelle} → ${transition.after?.libelle}`, copy: 'Le grade suit ton rating. Le prochain call peut relancer la remontée.' }
       : transition.kind === 'reveal'
-        ? { eyebrow: 'GRADE RÉVÉLÉ', title: transition.after?.label ?? 'Classé', copy: 'Tes cinq placements sont terminés : ton rang devient visible.' }
+        ? { eyebrow: 'GRADE RÉVÉLÉ', title: transition.after?.libelle ?? 'Classé', copy: `Tes ${placementTarget} placements sont terminés : ton rang devient visible.` }
         : transition.kind === 'placement'
-          ? { eyebrow: 'PLACEMENT', title: `${verdictsAfter}/${PLACEMENT_TARGET} verdicts`, copy: `${Math.max(0, PLACEMENT_TARGET - verdictsAfter)} avant la révélation de ton grade.` }
-          : { eyebrow: 'GRADE MAINTENU', title: transition.after?.label ?? 'Classé', copy: 'Ton rating évolue, ton grade reste dans le même palier.' };
-  const accent = transition.kind === 'demotion' ? colors.danger : transition.after?.accent ?? colors.volt;
+          ? { eyebrow: 'PLACEMENT', title: `${verdictsAfter}/${placementTarget} verdicts`, copy: `${Math.max(0, placementTarget - verdictsAfter)} avant la révélation de ton grade.` }
+          : { eyebrow: 'GRADE MAINTENU', title: transition.after?.libelle ?? 'Classé', copy: 'Ton rating évolue, ton grade reste dans le même palier.' };
+  const accent = transition.kind === 'demotion' ? colors.danger : gradeAccent(transition.after);
   return <View style={styles.gradeHeader}><View style={[styles.gradeMark, { borderColor: accent, backgroundColor: `${accent}16` }]}><Text style={[styles.gradeGlyph, { color: accent }]}>◆</Text></View><View style={styles.gradeCopy}><Text style={[styles.gradeEyebrow, { color: accent }]}>{content.eyebrow}</Text><Text style={styles.gradeTitle}>{content.title}</Text><Text style={styles.gradeText}>{content.copy}</Text></View></View>;
 }
 
@@ -276,8 +275,9 @@ function RankMetric({ accent, grade, label, rank }: { accent?: string; grade: st
   return <View style={styles.rankMetric}><Text style={styles.rankLabel}>{label}</Text><Text style={[styles.rankValue, accent ? { color: accent } : null]}>{rank == null ? '—' : `#${formatNumber(rank)}`}</Text><Text numberOfLines={1} style={styles.rankGrade}>{grade.toUpperCase()}</Text></View>;
 }
 
-function PlacementProgress({ complete }: { complete: number }) {
-  return <View style={styles.placement}><View style={styles.placementTrack}>{Array.from({ length: PLACEMENT_TARGET }).map((_, index) => <View key={index} style={[styles.placementStep, index < complete && styles.placementStepComplete]} />)}</View><Text style={styles.placementText}>{Math.max(0, PLACEMENT_TARGET - complete)} RESTANT{PLACEMENT_TARGET - complete > 1 ? 'S' : ''}</Text></View>;
+function PlacementProgress({ complete, target }: { complete: number; target: number }) {
+  const remaining = Math.max(0, target - complete);
+  return <View style={styles.placement}><View style={styles.placementTrack}>{Array.from({ length: target }).map((_, index) => <View key={index} style={[styles.placementStep, index < complete && styles.placementStepComplete]} />)}</View><Text style={styles.placementText}>{remaining} RESTANT{remaining > 1 ? 'S' : ''}</Text></View>;
 }
 
 function RevealState({ action, copy, onPress, title }: { action?: string; copy: string; onPress?: () => void; title: string }) {

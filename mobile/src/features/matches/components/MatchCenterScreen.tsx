@@ -61,7 +61,7 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
     refresh ? setRefreshing(true) : setLoading(true);
     setError(null);
     try {
-      const nextData = await loadMatchCenter(matchId, session.user.id);
+      const nextData = await loadMatchCenter(matchId);
       if (requestId !== loadRequestRef.current) return;
       setData(nextData);
       if (nextData.prediction?.statut === 'gagne' || nextData.prediction?.statut === 'perdu') {
@@ -237,6 +237,8 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
 
               {projection && phase !== 'finished' && phase !== 'cancelled' ? <ProjectionMeta projection={projection} /> : null}
             </View>
+
+            <CallContract data={data!} />
 
             {prediction ? (
               <LockedPrediction data={data!} />
@@ -578,6 +580,54 @@ function ProjectionMeta({ projection }: { projection: MatchProjection }) {
   );
 }
 
+function CallContract({ data }: { data: MatchCenterData }) {
+  const { callContext, match, prediction } = data;
+  const distribution = callContext.distribution;
+  const resolved = prediction?.statut === 'gagne' || prediction?.statut === 'perdu';
+  const lockedAt = callContext.verrouille_le
+    ? formatDateTime(callContext.verrouille_le)
+    : null;
+  const closesAt = formatDateTime(callContext.ferme_le);
+  const width = `${Math.max(2, Math.min(98, distribution?.a_pct ?? 50))}%` as `${number}%`;
+
+  return (
+    <View style={styles.contractCard}>
+      <View style={styles.contractHeader}>
+        <View>
+          <Text style={styles.contractEyebrow}>CONTRAT DU CALL</Text>
+          <Text style={styles.contractTitle}>{callContext.regle_resolution.libelle}</Text>
+        </View>
+        <View style={styles.contractPeople}><Text style={styles.contractPeopleValue}>{callContext.participants}</Text><Text style={styles.contractPeopleLabel}>JOUEUR{callContext.participants > 1 ? 'S' : ''}</Text></View>
+      </View>
+      <Text style={styles.contractCopy}>{callContext.regle_resolution.detail}</Text>
+      <View style={styles.contractTiming}>
+        <Text style={styles.contractTimingLabel}>{lockedAt ? 'CHOIX VERROUILLÉ' : 'FERMETURE DU CALL'}</Text>
+        <Text style={styles.contractTimingValue}>{lockedAt ?? closesAt}</Text>
+      </View>
+
+      {distribution ? (
+        <View style={styles.contractDistribution}>
+          <View style={styles.contractDistributionTop}>
+            <Text style={styles.contractDistributionLabel}>RÉPARTITION RÉVÉLÉE</Text>
+            <Text style={styles.contractDistributionTotal}>{distribution.total} CALL{distribution.total > 1 ? 'S' : ''}</Text>
+          </View>
+          <View style={styles.contractDistributionValues}>
+            <Text style={styles.contractDistributionA}>{match.tag_a} {Math.round(distribution.a_pct)}%</Text>
+            <Text style={styles.contractDistributionB}>{Math.round(distribution.b_pct)}% {match.tag_b}</Text>
+          </View>
+          <View style={styles.contractDistributionTrack}><View style={[styles.contractDistributionFill, { width }]} /></View>
+        </View>
+      ) : (
+        <View style={styles.contractHidden}><Text style={styles.contractHiddenGlyph}>◌</Text><Text style={styles.contractHiddenText}>La répartition restera masquée jusqu’à ce que tu valides ton choix.</Text></View>
+      )}
+
+      {resolved ? (
+        <View style={styles.contractSource}><Text style={styles.contractSourceLabel}>SOURCE DU VERDICT</Text><Text style={styles.contractSourceValue}>{callContext.source_resultat_label ?? 'Validation Clutch'}</Text></View>
+      ) : null}
+    </View>
+  );
+}
+
 function RelatedMatches({ matches }: { matches: ArenaMatch[] }) {
   return (
     <View style={styles.relatedSection}>
@@ -656,6 +706,15 @@ function formatTime(value: string) {
   return new Date(value).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString('fr-FR', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).replace('.', '').toUpperCase();
+}
+
 function formatRelatedDate(value: string) {
   const date = new Date(value);
   return `${date.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').toUpperCase()} · ${formatTime(value)}`;
@@ -702,6 +761,32 @@ const styles = StyleSheet.create({
   projectionMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 5 },
   projectionMetaText: { ...typography.caption, color: '#7D8995', letterSpacing: .25 },
   projectionMetaDot: { ...typography.caption, color: '#56616C' },
+  contractCard: { padding: spacing.md, borderRadius: radius.lg, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#2B3540', gap: spacing.sm },
+  contractHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  contractEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .8 },
+  contractTitle: { ...typography.cardTitle, marginTop: 4, color: colors.text },
+  contractPeople: { minWidth: 58, minHeight: 48, paddingHorizontal: 8, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: '#151C11', borderWidth: 1, borderColor: '#414D1E' },
+  contractPeopleValue: { ...typography.bodyStrong, color: colors.volt },
+  contractPeopleLabel: { ...typography.label, marginTop: 1, color: colors.textMuted, fontSize: 9 },
+  contractCopy: { ...typography.body, color: colors.textMuted },
+  contractTiming: { minHeight: 39, paddingHorizontal: 10, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, backgroundColor: '#080C10' },
+  contractTimingLabel: { ...typography.label, color: '#73808B', letterSpacing: .35 },
+  contractTimingValue: { ...typography.caption, color: colors.text },
+  contractHidden: { minHeight: 43, paddingHorizontal: 10, borderRadius: 13, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#252E37' },
+  contractHiddenGlyph: { color: '#73808B', fontSize: 17 },
+  contractHiddenText: { ...typography.caption, flex: 1, color: colors.textMuted },
+  contractDistribution: { padding: 10, borderRadius: 14, gap: 7, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#29333C' },
+  contractDistributionTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+  contractDistributionLabel: { ...typography.label, color: colors.volt, letterSpacing: .35 },
+  contractDistributionTotal: { ...typography.label, color: '#73808B' },
+  contractDistributionValues: { flexDirection: 'row', justifyContent: 'space-between' },
+  contractDistributionA: { ...typography.bodyStrong, color: '#65B7FF' },
+  contractDistributionB: { ...typography.bodyStrong, color: '#FF6C7C' },
+  contractDistributionTrack: { height: 6, borderRadius: 3, overflow: 'hidden', backgroundColor: '#FF6C7C' },
+  contractDistributionFill: { height: '100%', backgroundColor: '#65B7FF' },
+  contractSource: { minHeight: 40, paddingHorizontal: 10, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, backgroundColor: '#080C10' },
+  contractSourceLabel: { ...typography.label, color: '#73808B', letterSpacing: .35 },
+  contractSourceValue: { ...typography.caption, color: colors.text },
   market: { padding: spacing.lg, borderRadius: radius.lg, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: colors.border, gap: 8 },
   marketEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.1 },
   marketTitle: { ...typography.sectionTitle, color: colors.text },

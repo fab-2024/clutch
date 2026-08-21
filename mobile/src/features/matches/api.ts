@@ -1,11 +1,18 @@
 import { supabase } from '@/src/lib/supabase';
+import { normalizeGradeState } from '@/src/features/ranking/grades';
 
 import type {
   ArenaMatch,
   ArenaPrediction,
+  CallDistribution,
+  CallResolutionRule,
+  MatchCallContext,
   MatchCenterData,
   MatchProjection,
   MatchResultReveal,
+  MyCallItem,
+  MyCallsDashboard,
+  MyCallState,
   RankedPrediction,
 } from './types';
 
@@ -20,6 +27,7 @@ export async function loadArenaMatches(userId: string) {
     upcomingResult,
     finishedResult,
     predictionsResult,
+    callsResult,
   ] = await Promise.all([
     supabase
       .from('v_matchs')
@@ -53,6 +61,7 @@ export async function loadArenaMatches(userId: string) {
       .eq('user_id', userId)
       .order('cree_le', { ascending: false })
       .limit(200),
+    supabase.rpc('clutch_mes_calls_v1', { p_saison_id: null }),
   ]);
 
   if (inProgressResult.error) throw inProgressResult.error;
@@ -60,6 +69,7 @@ export async function loadArenaMatches(userId: string) {
   if (upcomingResult.error) throw upcomingResult.error;
   if (finishedResult.error) throw finishedResult.error;
   if (predictionsResult.error) throw predictionsResult.error;
+  if (callsResult.error) throw callsResult.error;
 
   const predictions = new Map(
     ((predictionsResult.data ?? []) as ArenaPrediction[]).map((prediction) => [
@@ -86,10 +96,11 @@ export async function loadArenaMatches(userId: string) {
       match as Omit<ArenaMatch, 'prediction'>,
       predictions,
     )),
+    calls: normalizeCallsDashboard(callsResult.data),
   };
 }
 
-export async function loadMatchCenter(matchId: string, userId: string): Promise<MatchCenterData> {
+export async function loadMatchCenter(matchId: string): Promise<MatchCenterData> {
   const { data: match, error: matchError } = await supabase
     .from('v_matchs')
     .select(MATCH_FIELDS)
@@ -103,12 +114,7 @@ export async function loadMatchCenter(matchId: string, userId: string): Promise<
     ? Promise.resolve({ data: null, error: null })
     : supabase.rpc('clutch_projection_match_frags', { p_match_id: matchId });
 
-  const predictionPromise = supabase
-    .from('pronostics_classes')
-    .select('id,match_id,choix,statut,proba_figee,proba_scoring,k_frags,delta_frags')
-    .eq('user_id', userId)
-    .eq('match_id', matchId)
-    .maybeSingle();
+  const callContextPromise = supabase.rpc('clutch_call_context_v1', { p_match_id: matchId });
 
   const now = new Date().toISOString();
   const relatedAfter = new Date(typedMatch.debut).getTime() > Date.now()
@@ -124,24 +130,27 @@ export async function loadMatchCenter(matchId: string, userId: string): Promise<
     .order('debut', { ascending: true })
     .limit(3);
 
-  const [projectionResult, predictionResult, relatedResult] = await Promise.all([
+  const [projectionResult, callContextResult, relatedResult] = await Promise.all([
     projectionPromise,
-    predictionPromise,
+    callContextPromise,
     relatedPromise,
   ]);
 
   if (projectionResult.error) {
     console.warn('Projection Frags indisponible', projectionResult.error);
   }
-  if (predictionResult.error) throw predictionResult.error;
+  if (callContextResult.error) throw callContextResult.error;
   if (relatedResult.error) throw relatedResult.error;
 
+  const callContext = normalizeCallContext(callContextResult.data, matchId, typedMatch.debut);
+
   return {
-    match: typedMatch,
+    match: { ...typedMatch, prediction: callContext.prediction },
     projection: projectionResult.error
       ? null
       : (projectionResult.data as MatchProjection | null),
-    prediction: (predictionResult.data as RankedPrediction | null) ?? null,
+    prediction: callContext.prediction,
+    callContext,
     related: (relatedResult.data ?? []).map((item) => ({
       ...item,
       prediction: null,
@@ -214,6 +223,9 @@ function normalizeMatchResult(value: unknown): MatchResultReveal {
     rang_apres: optionalNumber(row.rang_apres),
     verdicts_avant: nonNegativeInteger(row.verdicts_avant),
     verdicts_apres: nonNegativeInteger(row.verdicts_apres),
+    grade_avant: normalizeGradeState(row.grade_avant),
+    grade_apres: normalizeGradeState(row.grade_apres),
+    objectif_placements: positiveInteger(row.objectif_placements, 5),
     regle_le: requiredString(row.regle_le, 'date de résolution'),
     revele_le: typeof row.revele_le === 'string' ? row.revele_le : null,
     equipe_a: requiredString(row.equipe_a, 'équipe A'),
@@ -232,8 +244,140 @@ function normalizeMatchResult(value: unknown): MatchResultReveal {
     source_resultat_label: typeof row.source_resultat_label === 'string'
       ? row.source_resultat_label
       : 'Validation Clutch',
+    regle_resolution: normalizeResolutionRule(row.regle_resolution),
     restants: Math.max(1, nonNegativeInteger(row.restants)),
   };
+}
+
+function normalizeCallsDashboard(value: unknown): MyCallsDashboard {
+  const row = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  const counters = row.compteurs && typeof row.compteurs === 'object'
+    ? row.compteurs as Record<string, unknown>
+    : {};
+  return {
+    saison_id: stringOrNull(row.saison_id),
+    saison_nom: stringOrNull(row.saison_nom),
+    compteurs: {
+      ouverts: nonNegativeInteger(counters.ouverts),
+      verrouilles: nonNegativeInteger(counters.verrouilles),
+      reussis: nonNegativeInteger(counters.reussis),
+      manques: nonNegativeInteger(counters.manques),
+    },
+    ouverts: normalizeCallItems(row.ouverts, 'ouvert'),
+    verrouilles: normalizeCallItems(row.verrouilles, 'verrouille'),
+    reussis: normalizeCallItems(row.reussis, 'reussi'),
+    manques: normalizeCallItems(row.manques, 'manque'),
+  };
+}
+
+function normalizeCallItems(value: unknown, expectedState: MyCallState) {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => normalizeCallItem(item, expectedState));
+}
+
+function normalizeCallItem(value: unknown, expectedState: MyCallState): MyCallItem {
+  const row = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  const matchStatus = row.statut_match === 'en_cours'
+    || row.statut_match === 'termine'
+    || row.statut_match === 'annule'
+    ? row.statut_match
+    : 'a_venir';
+  return {
+    id: requiredString(row.id, 'call'),
+    pronostic_id: stringOrNull(row.pronostic_id),
+    match_id: requiredString(row.match_id, 'match'),
+    saison_id: requiredString(row.saison_id, 'saison'),
+    etat: isCallState(row.etat) ? row.etat : expectedState,
+    jeu: requiredString(row.jeu, 'jeu'),
+    evenement: requiredString(row.evenement, 'évènement'),
+    format: positiveInteger(row.format, 1),
+    debut: requiredString(row.debut, 'date du match'),
+    statut_match: matchStatus,
+    equipe_a: requiredString(row.equipe_a, 'équipe A'),
+    tag_a: requiredString(row.tag_a, 'tag A'),
+    equipe_b: requiredString(row.equipe_b, 'équipe B'),
+    tag_b: requiredString(row.tag_b, 'tag B'),
+    score_a: optionalNumber(row.score_a),
+    score_b: optionalNumber(row.score_b),
+    choix: row.choix === 'a' || row.choix === 'b' ? row.choix : null,
+    statut: stringOrNull(row.statut),
+    delta_frags: optionalNumber(row.delta_frags),
+    verrouille_le: stringOrNull(row.verrouille_le),
+    ferme_le: requiredString(row.ferme_le, 'fermeture'),
+    regle_le: stringOrNull(row.regle_le),
+    participants: nonNegativeInteger(row.participants),
+    distribution: normalizeDistribution(row.distribution),
+    regle_resolution: normalizeResolutionRule(row.regle_resolution),
+    source_resultat: stringOrNull(row.source_resultat),
+    source_resultat_label: stringOrNull(row.source_resultat_label),
+  };
+}
+
+function normalizeCallContext(value: unknown, matchId: string, closesAt: string): MatchCallContext {
+  const row = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  const prediction = row.prediction && typeof row.prediction === 'object'
+    ? normalizeRankedPrediction(row.prediction)
+    : null;
+  return {
+    match_id: typeof row.match_id === 'string' ? row.match_id : matchId,
+    participants: nonNegativeInteger(row.participants),
+    ferme_le: typeof row.ferme_le === 'string' ? row.ferme_le : closesAt,
+    verrouille_le: stringOrNull(row.verrouille_le),
+    distribution: normalizeDistribution(row.distribution),
+    regle_resolution: normalizeResolutionRule(row.regle_resolution),
+    prediction,
+    source_resultat: stringOrNull(row.source_resultat),
+    source_resultat_label: stringOrNull(row.source_resultat_label),
+  };
+}
+
+function normalizeRankedPrediction(value: unknown): RankedPrediction {
+  const row = value as Record<string, unknown>;
+  const choice = row.choix === 'a' || row.choix === 'b' ? row.choix : null;
+  if (!choice) throw new Error('Choix du call invalide.');
+  return {
+    id: requiredString(row.id, 'pronostic'),
+    match_id: requiredString(row.match_id, 'match'),
+    choix: choice,
+    statut: requiredString(row.statut, 'statut'),
+    proba_figee: finiteNumber(row.proba_figee),
+    proba_scoring: finiteNumber(row.proba_scoring),
+    k_frags: nonNegativeInteger(row.k_frags),
+    delta_frags: optionalNumber(row.delta_frags),
+    conviction: stringOrNull(row.conviction) ?? undefined,
+    multiplicateur_conviction: row.multiplicateur_conviction == null
+      ? undefined
+      : finiteNumber(row.multiplicateur_conviction),
+    cree_le: stringOrNull(row.cree_le) ?? undefined,
+    regle_le: stringOrNull(row.regle_le),
+  };
+}
+
+function normalizeDistribution(value: unknown): CallDistribution | null {
+  if (!value || typeof value !== 'object') return null;
+  const row = value as Record<string, unknown>;
+  return {
+    total: nonNegativeInteger(row.total),
+    a: nonNegativeInteger(row.a),
+    b: nonNegativeInteger(row.b),
+    a_pct: finiteNumber(row.a_pct),
+    b_pct: finiteNumber(row.b_pct),
+  };
+}
+
+function normalizeResolutionRule(value: unknown): CallResolutionRule {
+  const row = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  return {
+    cle: 'vainqueur_match',
+    libelle: typeof row.libelle === 'string' ? row.libelle : 'Vainqueur de la série',
+    detail: typeof row.detail === 'string'
+      ? row.detail
+      : 'Le call est réussi si l’équipe choisie remporte le score final de la série.',
+  };
+}
+
+function isCallState(value: unknown): value is MyCallState {
+  return value === 'ouvert' || value === 'verrouille' || value === 'reussi' || value === 'manque';
 }
 
 function requiredString(value: unknown, field: string) {
@@ -252,6 +396,15 @@ function finiteNumber(value: unknown) {
 function optionalNumber(value: unknown) {
   if (value == null) return null;
   return finiteNumber(value);
+}
+
+function positiveInteger(value: unknown, fallback: number) {
+  const parsed = Math.trunc(Number(value));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function stringOrNull(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value : null;
 }
 
 function nonNegativeInteger(value: unknown) {
