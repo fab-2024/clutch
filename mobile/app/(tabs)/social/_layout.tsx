@@ -33,6 +33,9 @@ export default function SocialLayout() {
             return (
               <Pressable
                 key={item.key}
+                accessibilityRole="button"
+                accessibilityLabel={`Ouvrir ${item.label.toLowerCase()}`}
+                accessibilityState={{ selected: active }}
                 onPress={() => router.replace(item.href as never)}
                 style={({ pressed }) => [
                   styles.navItem,
