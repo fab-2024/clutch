@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
 import type { PlayerEconomy } from '@/src/features/economy/types';
 import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors, fonts, typography } from '@/src/theme';
@@ -30,29 +31,27 @@ export function ClutchHeader({ economy }: Props = {}) {
         accessibilityLabel={`${formatBalance(displayedFrags)} Frags, ${formatBalance(displayedVolts)} Volts`}
         style={styles.wallet}
       >
-        <Balance label="FRAGS" mark="F" tone="frags" value={displayedFrags} />
+        <Balance kind="frags" label="FRAGS" value={displayedFrags} />
         <View style={styles.walletDivider} />
-        <Balance label="VOLTS" mark="V" tone="volts" value={displayedVolts} />
+        <Balance kind="volts" label="VOLTS" value={displayedVolts} />
       </View>
     </View>
   );
 }
 
 function Balance({
+  kind,
   label,
-  mark,
-  tone,
   value,
 }: {
+  kind: CurrencyKind;
   label: string;
-  mark: string;
-  tone: 'frags' | 'volts';
   value: number | null;
 }) {
   return (
     <View style={styles.balance}>
-      <View style={[styles.balanceMark, tone === 'volts' ? styles.voltsMark : styles.fragsMark]}>
-        <Text style={[styles.balanceMarkText, tone === 'volts' && styles.voltsMarkText]}>{mark}</Text>
+      <View style={[styles.balanceMark, kind === 'volts' ? styles.voltsMark : styles.fragsMark]}>
+        <CurrencyIcon color={kind === 'volts' ? '#080A0C' : colors.frag} kind={kind} size={14} />
       </View>
       <View style={styles.balanceCopy}>
         <Text style={styles.balanceLabel}>{label}</Text>
@@ -145,12 +144,6 @@ const styles = StyleSheet.create({
   },
   fragsMark: { backgroundColor: '#13243A', borderWidth: 1, borderColor: '#315A86' },
   voltsMark: { backgroundColor: colors.volt },
-  balanceMarkText: {
-    color: '#87C4FF',
-    fontFamily: fonts.bold,
-    fontSize: 10,
-  },
-  voltsMarkText: { color: '#080A0C' },
   balanceCopy: { minWidth: 0 },
   balanceLabel: {
     ...typography.eyebrow,

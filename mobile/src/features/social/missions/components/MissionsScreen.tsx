@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
 import { loadFriendQuests } from '../api';
@@ -110,9 +111,29 @@ function HeroQuest({ quest }: { quest: FriendQuest }) {
       <View style={styles.progressHeader}><Text style={styles.progressText}>{quest.progression} / {quest.objectif}</Text><Text style={styles.time}>⏱ {timeLeft(quest.expire_le)}</Text></View>
       <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${pct}%` }]} /></View>
       <View style={styles.heroFooter}>
-        <View><Text style={styles.rewardLabel}>RÉCOMPENSE · CHACUN</Text><Text style={styles.rewardValue}>{reward(quest)}</Text></View>
+        <View><Text style={styles.rewardLabel}>RÉCOMPENSE · CHACUN</Text><MissionReward quest={quest} /></View>
         <Pressable onPress={() => router.push('/(tabs)/matches')} style={({ pressed }) => [styles.cta, pressed && styles.pressed]}><Text style={styles.ctaText}>JOUER</Text><Text style={styles.ctaArrow}>→</Text></Pressable>
       </View>
+    </View>
+  );
+}
+
+function MissionReward({ quest }: { quest: FriendQuest }) {
+  const hasXp = quest.recompense_xp > 0;
+  const hasVolts = quest.recompense_volts > 0;
+
+  if (!hasXp && !hasVolts) return <Text style={styles.rewardAmount}>XP social</Text>;
+
+  return (
+    <View accessible accessibilityLabel={reward(quest)} style={styles.rewardValueRow}>
+      {hasXp ? <Text style={styles.rewardAmount}>+{quest.recompense_xp} XP</Text> : null}
+      {hasXp && hasVolts ? <Text style={styles.rewardSeparator}>·</Text> : null}
+      {hasVolts ? (
+        <View style={styles.voltReward}>
+          <CurrencyIcon color={colors.volt} kind="volts" size={14} />
+          <Text style={styles.rewardAmount}>+{quest.recompense_volts}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -181,7 +202,7 @@ const styles = StyleSheet.create({
   progressHeader: { zIndex: 2, flexDirection: 'row', justifyContent: 'space-between' }, progressText: { ...typography.bodyStrong, color: colors.text }, time: { ...typography.caption, color: colors.textMuted },
   progressTrack: { zIndex: 2, height: 8, borderRadius: 999, overflow: 'hidden', backgroundColor: '#182028' }, progressFill: { height: '100%', borderRadius: 999, backgroundColor: colors.volt },
   heroFooter: { zIndex: 2, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, marginTop: 2 },
-  rewardLabel: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .4 }, rewardValue: { ...typography.bodyStrong, marginTop: 4, color: colors.text },
+  rewardLabel: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .4 }, rewardValueRow: { marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 6 }, rewardAmount: { ...typography.bodyStrong, color: colors.text }, rewardSeparator: { ...typography.label, color: colors.textMuted }, voltReward: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   cta: { minHeight: 48, minWidth: 112, paddingHorizontal: 16, borderRadius: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: colors.volt }, ctaText: { ...typography.action, color: '#080A0C', letterSpacing: .4 }, ctaArrow: { color: '#080A0C', fontSize: 16, fontWeight: '900' },
   section: { gap: 9 }, sectionHeading: { flexDirection: 'row', justifyContent: 'space-between' }, sectionLabel: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .8 }, sectionMeta: { ...typography.label, color: colors.textMuted },
   card: { padding: 15, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, gap: 10 }, cardTop: { flexDirection: 'row', alignItems: 'center', gap: 9 }, cardIcon: { fontSize: 17 }, cardCopy: { flex: 1 }, cardEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .35 }, cardTitle: { ...typography.cardTitle, color: colors.text }, cardTime: { ...typography.caption, color: colors.textMuted }, cardDesc: { ...typography.body, color: colors.textMuted }, cardTrack: { height: 5, borderRadius: 999, overflow: 'hidden', backgroundColor: '#182028' }, cardTrackFill: { height: '100%', backgroundColor: colors.volt }, cardReward: { ...typography.label, color: colors.text },

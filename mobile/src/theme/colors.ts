@@ -6,6 +6,7 @@ export const colors = {
   text: '#F4F7FA',
   textMuted: '#8893A0',
   textSubtle: '#A5AFB9',
+  frag: '#7CC4FF',
   volt: '#E8FF3D',
   success: '#45D483',
   danger: '#FF5D68',

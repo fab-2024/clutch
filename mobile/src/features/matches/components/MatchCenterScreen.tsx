@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { Screen } from '@/src/components/layout/Screen';
+import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { createDuel } from '@/src/features/social/duels/api';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
@@ -426,6 +427,7 @@ function ChoiceCard({
         <Text style={styles.choiceGain}>+{Math.abs(projection.gain)}</Text>
         <Text style={styles.choiceSlash}>/</Text>
         <Text style={styles.choiceLoss}>−{Math.abs(projection.perte)}</Text>
+        <CurrencyIcon kind="frags" size={12} />
         <Text style={styles.choiceFrags}> FRAGS</Text>
       </View>
     </Pressable>
@@ -621,7 +623,10 @@ function RiskCell({ label, value, positive = false }: { label: string; value: st
     <View style={styles.riskCell}>
       <Text style={styles.riskLabel}>{label}</Text>
       <Text style={[styles.riskValue, positive ? styles.riskGain : styles.riskLoss]}>{value}</Text>
-      <Text style={styles.riskUnit}>FRAGS</Text>
+      <View style={styles.riskUnitRow}>
+        <CurrencyIcon kind="frags" size={11} />
+        <Text style={styles.riskUnit}>FRAGS</Text>
+      </View>
     </View>
   );
 }
@@ -710,9 +715,9 @@ const styles = StyleSheet.create({
   choiceTagSelected: { color: '#080B0F' },
   choiceTeam: { ...typography.bodyStrong, minHeight: 38, color: colors.text },
   choiceProbability: { ...typography.metricSmall, color: colors.text },
-  choiceRisk: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap' },
+  choiceRisk: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 2 },
   choiceGain: { ...typography.action, color: colors.success },
-  choiceSlash: { ...typography.label, marginHorizontal: 4, color: colors.textMuted },
+  choiceSlash: { ...typography.label, marginHorizontal: 2, color: colors.textMuted },
   choiceLoss: { ...typography.action, color: colors.danger },
   choiceFrags: { ...typography.caption, color: colors.textMuted },
   ticket: { padding: spacing.lg, borderRadius: 26, backgroundColor: '#101510', borderWidth: 1, borderColor: '#3A4722', gap: spacing.md },
@@ -728,6 +733,7 @@ const styles = StyleSheet.create({
   riskValue: { ...typography.metricSmall, marginTop: 3 },
   riskGain: { color: colors.success },
   riskLoss: { color: colors.danger },
+  riskUnitRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   riskUnit: { ...typography.caption, color: colors.textMuted },
   ticketHint: { ...typography.body, color: colors.textMuted },
   submitError: { padding: spacing.sm, borderRadius: radius.sm, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', gap: 4 },

@@ -15,6 +15,7 @@ import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated'
 
 import { ClutchHeader } from '@/src/components/layout/ClutchHeader';
 import { Screen } from '@/src/components/layout/Screen';
+import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import ClutchCore from '@/src/components/visual/ClutchCore';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { useAuth } from '@/src/providers/AuthProvider';
@@ -262,7 +263,10 @@ function CorePanel({ hub, loading }: { hub: HubData; loading: boolean }) {
           <Text style={styles.coreKicker}>TON RATING FRAGS · {hub.seasonName?.toUpperCase() || 'INTERSAISON'}</Text>
           <View style={styles.coreRatingRow}>
             <Text style={styles.coreRating}>{loading ? '—' : formatNumber(hub.frags?.frags ?? 0)}</Text>
-            <Text style={styles.coreRatingUnit}>FRAGS</Text>
+            <View style={styles.coreRatingUnitRow}>
+              <CurrencyIcon kind="frags" size={13} />
+              <Text style={styles.coreRatingUnit}>FRAGS</Text>
+            </View>
           </View>
           <View style={styles.coreStatus}><View style={styles.coreStatusDot} /><Text style={styles.coreStatusText}>{status}</Text></View>
           <Text style={styles.corePeak}>PIC · {loading ? '—' : formatNumber(hub.frags?.pic_frags ?? 0)} FRAGS</Text>
@@ -446,7 +450,8 @@ const styles = StyleSheet.create({
   coreKicker: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 },
   coreRatingRow: { marginTop: 7, flexDirection: 'row', alignItems: 'flex-end', gap: 5 },
   coreRating: { ...typography.metricLarge, color: colors.text },
-  coreRatingUnit: { ...typography.eyebrow, marginBottom: 5, color: colors.textMuted, letterSpacing: .5 },
+  coreRatingUnitRow: { marginBottom: 4, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  coreRatingUnit: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .5 },
   coreStatus: { alignSelf: 'flex-start', minHeight: 24, marginTop: 7, paddingHorizontal: 8, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#151B0F', borderWidth: 1, borderColor: '#3F4A20' },
   coreStatusDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.volt },
   coreStatusText: { ...typography.label, color: '#D4E09E', letterSpacing: .35 },

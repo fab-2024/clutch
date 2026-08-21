@@ -40,9 +40,9 @@ Une tranche n'est terminée que si :
 
 ### 0.3 Identité des monnaies
 
-- [ ] Créer un symbole Frag plat reconnaissable sans couleur.
-- [ ] Créer un symbole Volt circulaire sans éclair.
-- [ ] Remplacer les lettres temporaires du header par les symboles plats.
+- [x] Créer un symbole Frag plat reconnaissable sans couleur.
+- [x] Créer un symbole Volt circulaire sans éclair.
+- [x] Remplacer les lettres temporaires du header par les symboles plats.
 - [ ] Préparer séparément les variantes 3D de récompense.
 
 ### 0.4 Naming en parallèle
