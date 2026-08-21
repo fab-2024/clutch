@@ -60,6 +60,9 @@ const PREVIEW_RESULT: MatchResultReveal = {
   debut: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
   source_resultat: 'validation_clutch',
   source_resultat_label: 'Validation Clutch',
+  identifiant_resultat_externe: 'clutch:preview-final-kc-fnc:2-1',
+  revision_resultat: 1,
+  resultat_corrige: false,
   regle_resolution: {
     cle: 'vainqueur_match',
     libelle: 'Vainqueur de la série',

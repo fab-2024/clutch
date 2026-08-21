@@ -14,6 +14,14 @@ export type ArenaMatch = {
   statut: 'a_venir' | 'en_cours' | 'termine' | 'annule';
   score_a: number | null;
   score_b: number | null;
+  resultat_source?: string | null;
+  resultat_source_label?: string | null;
+  resultat_identifiant_externe?: string | null;
+  resultat_recu_le?: string | null;
+  resultat_regle_le?: string | null;
+  resultat_maj_le?: string | null;
+  resultat_revision?: number;
+  resultat_motif_correction?: string | null;
   prediction: ArenaPrediction | null;
 };
 
@@ -99,6 +107,9 @@ export type MyCallItem = {
   regle_resolution: CallResolutionRule;
   source_resultat: string | null;
   source_resultat_label: string | null;
+  identifiant_resultat_externe: string | null;
+  revision_resultat: number;
+  resultat_corrige: boolean;
 };
 
 export type MyCallsDashboard = {
@@ -126,6 +137,9 @@ export type MatchCallContext = {
   prediction: RankedPrediction | null;
   source_resultat: string | null;
   source_resultat_label: string | null;
+  identifiant_resultat_externe: string | null;
+  revision_resultat: number;
+  resultat_corrige: boolean;
 };
 
 export type MatchResultReveal = {
@@ -159,6 +173,9 @@ export type MatchResultReveal = {
   debut: string;
   source_resultat: string;
   source_resultat_label: string;
+  identifiant_resultat_externe: string;
+  revision_resultat: number;
+  resultat_corrige: boolean;
   regle_resolution: CallResolutionRule;
   restants: number;
 };

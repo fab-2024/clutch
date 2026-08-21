@@ -17,7 +17,7 @@ import type {
 } from './types';
 
 const MATCH_FIELDS =
-  'id,saison_id,debut,jeu,equipe_a,tag_a,equipe_b,tag_b,evenement,format,statut,score_a,score_b';
+  'id,saison_id,debut,jeu,equipe_a,tag_a,equipe_b,tag_b,evenement,format,statut,score_a,score_b,resultat_source,resultat_source_label,resultat_identifiant_externe,resultat_recu_le,resultat_regle_le,resultat_maj_le,resultat_revision,resultat_motif_correction';
 
 export async function loadArenaMatches(userId: string) {
   const now = new Date().toISOString();
@@ -244,6 +244,12 @@ function normalizeMatchResult(value: unknown): MatchResultReveal {
     source_resultat_label: typeof row.source_resultat_label === 'string'
       ? row.source_resultat_label
       : 'Validation Clutch',
+    identifiant_resultat_externe: requiredString(
+      row.identifiant_resultat_externe,
+      'référence externe',
+    ),
+    revision_resultat: positiveInteger(row.revision_resultat, 1),
+    resultat_corrige: row.resultat_corrige === true,
     regle_resolution: normalizeResolutionRule(row.regle_resolution),
     restants: Math.max(1, nonNegativeInteger(row.restants)),
   };
@@ -310,6 +316,9 @@ function normalizeCallItem(value: unknown, expectedState: MyCallState): MyCallIt
     regle_resolution: normalizeResolutionRule(row.regle_resolution),
     source_resultat: stringOrNull(row.source_resultat),
     source_resultat_label: stringOrNull(row.source_resultat_label),
+    identifiant_resultat_externe: stringOrNull(row.identifiant_resultat_externe),
+    revision_resultat: nonNegativeInteger(row.revision_resultat),
+    resultat_corrige: row.resultat_corrige === true,
   };
 }
 
@@ -328,6 +337,9 @@ function normalizeCallContext(value: unknown, matchId: string, closesAt: string)
     prediction,
     source_resultat: stringOrNull(row.source_resultat),
     source_resultat_label: stringOrNull(row.source_resultat_label),
+    identifiant_resultat_externe: stringOrNull(row.identifiant_resultat_externe),
+    revision_resultat: nonNegativeInteger(row.revision_resultat),
+    resultat_corrige: row.resultat_corrige === true,
   };
 }
 

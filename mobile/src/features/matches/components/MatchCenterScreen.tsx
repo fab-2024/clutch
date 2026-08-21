@@ -622,7 +622,13 @@ function CallContract({ data }: { data: MatchCenterData }) {
       )}
 
       {resolved ? (
-        <View style={styles.contractSource}><Text style={styles.contractSourceLabel}>SOURCE DU VERDICT</Text><Text style={styles.contractSourceValue}>{callContext.source_resultat_label ?? 'Validation Clutch'}</Text></View>
+        <View style={styles.contractSource}>
+          <Text style={styles.contractSourceLabel}>{callContext.resultat_corrige ? `CORRIGÉ · RÉVISION ${callContext.revision_resultat}` : 'SOURCE DU VERDICT'}</Text>
+          <View style={styles.contractSourceCopy}>
+            <Text style={styles.contractSourceValue}>{callContext.source_resultat_label ?? 'Validation Clutch'}</Text>
+            {callContext.identifiant_resultat_externe ? <Text numberOfLines={1} style={styles.contractSourceReference}>RÉF. {callContext.identifiant_resultat_externe}</Text> : null}
+          </View>
+        </View>
       ) : null}
     </View>
   );
@@ -786,7 +792,9 @@ const styles = StyleSheet.create({
   contractDistributionFill: { height: '100%', backgroundColor: '#65B7FF' },
   contractSource: { minHeight: 40, paddingHorizontal: 10, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, backgroundColor: '#080C10' },
   contractSourceLabel: { ...typography.label, color: '#73808B', letterSpacing: .35 },
+  contractSourceCopy: { flex: 1, minWidth: 0, alignItems: 'flex-end' },
   contractSourceValue: { ...typography.caption, color: colors.text },
+  contractSourceReference: { ...typography.eyebrow, maxWidth: '100%', marginTop: 2, color: colors.textSubtle, letterSpacing: .2 },
   market: { padding: spacing.lg, borderRadius: radius.lg, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: colors.border, gap: 8 },
   marketEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.1 },
   marketTitle: { ...typography.sectionTitle, color: colors.text },

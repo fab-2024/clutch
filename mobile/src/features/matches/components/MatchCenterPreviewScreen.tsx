@@ -64,6 +64,9 @@ const PREVIEW_MATCH_CENTER: MatchCenterData = {
     },
     source_resultat: 'validation_clutch',
     source_resultat_label: 'Validation Clutch',
+    identifiant_resultat_externe: 'clutch:preview-final-kc-fnc:2-1',
+    revision_resultat: 1,
+    resultat_corrige: false,
   },
   related: [],
 };

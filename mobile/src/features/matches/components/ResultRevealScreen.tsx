@@ -222,7 +222,12 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
 
         <Animated.View entering={entrance(390)} style={styles.proofCard}>
           <View style={styles.proofIcon}><Text style={styles.proofGlyph}>✓</Text></View>
-          <View style={styles.proofCopy}><Text style={styles.proofLabel}>SOURCE DU VERDICT</Text><Text style={styles.proofTitle}>{result.source_resultat_label}</Text><Text style={styles.proofMeta}>{formatResolutionDate(result.regle_le)} · {result.regle_resolution.libelle.toLowerCase()}</Text></View>
+          <View style={styles.proofCopy}>
+            <Text style={styles.proofLabel}>{result.resultat_corrige ? `RÉSULTAT CORRIGÉ · RÉVISION ${result.revision_resultat}` : 'SOURCE DU VERDICT'}</Text>
+            <Text style={styles.proofTitle}>{result.source_resultat_label}</Text>
+            <Text style={styles.proofMeta}>{formatResolutionDate(result.regle_le)} · {result.regle_resolution.libelle.toLowerCase()}</Text>
+            <Text numberOfLines={1} style={styles.proofReference}>RÉF. {result.identifiant_resultat_externe}</Text>
+          </View>
         </Animated.View>
 
         {error ? <View style={styles.errorCard}><Text style={styles.errorText}>{error}</Text></View> : null}
@@ -370,6 +375,7 @@ const styles = StyleSheet.create({
   proofLabel: { ...typography.eyebrow, color: colors.volt, letterSpacing: .6 },
   proofTitle: { ...typography.bodyStrong, marginTop: 3, color: colors.text },
   proofMeta: { ...typography.caption, marginTop: 3, color: colors.textMuted },
+  proofReference: { ...typography.eyebrow, marginTop: 4, color: colors.textSubtle, letterSpacing: .35 },
   errorCard: { padding: 12, borderRadius: radius.md, backgroundColor: '#1B1013', borderWidth: 1, borderColor: '#55252E' },
   errorText: { ...typography.body, color: '#FFA0A8', textAlign: 'center' },
   actions: { gap: 9, paddingTop: 3 },

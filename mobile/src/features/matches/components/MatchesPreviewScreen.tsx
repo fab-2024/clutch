@@ -167,6 +167,9 @@ function callItem(
     },
     source_resultat: resolved ? 'validation_clutch' : null,
     source_resultat_label: resolved ? 'Validation Clutch' : null,
+    identifiant_resultat_externe: resolved ? `clutch:${match.id}:${match.score_a}-${match.score_b}` : null,
+    revision_resultat: resolved ? 1 : 0,
+    resultat_corrige: false,
   };
 }
 

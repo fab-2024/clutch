@@ -86,10 +86,10 @@ entièrement explicable après résolution.
 
 ### 1.4 Fiabilité opérationnelle
 
-- [ ] Enregistrer source et identifiant externe du résultat.
-- [ ] Documenter annulation, report, correction et égalité invalide.
-- [ ] Ajouter une piste d'audit aux corrections administratives.
-- [ ] Tester résolution simultanée, rejeu et concurrence.
+- [x] Enregistrer source et identifiant externe du résultat.
+- [x] Documenter annulation, report, correction et égalité invalide.
+- [x] Ajouter une piste d'audit aux corrections administratives.
+- [x] Tester résolution simultanée, rejeu et concurrence.
 
 ## Lot 2 — Rétention et expertise
 

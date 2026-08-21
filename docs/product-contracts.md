@@ -125,8 +125,11 @@ Le serveur est l'unique autorité. Une résolution doit être atomique et
 idempotente : rejouer le même résultat ne peut pas attribuer deux fois des
 Frags, de l'XP, des Volts ou de la charge.
 
-La source du résultat doit être traçable. Une correction administrative doit
-laisser un historique et recalculer les conséquences de manière déterministe.
+La source et son identifiant externe doivent être traçables. Une correction
+administrative doit laisser un historique immuable et recalculer les
+conséquences de manière déterministe. Les procédures d'annulation, de report,
+de correction et de score invalide sont définies dans
+[le runbook des résultats](./match-result-operations.md).
 
 Le backend possède déjà les snapshots `frags_avant`, `frags_apres`,
 `rang_avant`, `rang_apres` et le mécanisme `revele_le`. La V1 doit les exposer

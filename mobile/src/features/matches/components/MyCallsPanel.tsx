@@ -147,8 +147,9 @@ function CallCard({ call }: { call: MyCallItem }) {
       {resolved ? (
         <View style={styles.verdict}>
           <View>
-            <Text style={styles.verdictLabel}>SOURCE DU VERDICT</Text>
+            <Text style={styles.verdictLabel}>{call.resultat_corrige ? `CORRIGÉ · RÉVISION ${call.revision_resultat}` : 'SOURCE DU VERDICT'}</Text>
             <Text style={styles.verdictSource}>{call.source_resultat_label ?? 'Validation Clutch'}</Text>
+            {call.identifiant_resultat_externe ? <Text numberOfLines={1} style={styles.verdictReference}>RÉF. {call.identifiant_resultat_externe}</Text> : null}
           </View>
           <View style={styles.deltaRow}>
             <CurrencyIcon color={won ? colors.success : colors.danger} kind="frags" size={13} />
@@ -295,6 +296,7 @@ const styles = StyleSheet.create({
   verdict: { minHeight: 52, padding: 10, borderRadius: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#080C10', borderWidth: 1, borderColor: '#202932' },
   verdictLabel: { ...typography.label, color: colors.textMuted, letterSpacing: .35 },
   verdictSource: { ...typography.caption, marginTop: 3, color: colors.text },
+  verdictReference: { ...typography.eyebrow, maxWidth: 215, marginTop: 3, color: colors.textSubtle, letterSpacing: .25 },
   deltaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   delta: { ...typography.bodyStrong },
   actionRow: { minHeight: 30, paddingTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#202932' },

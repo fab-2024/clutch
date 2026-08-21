@@ -10,7 +10,10 @@ declare
   v_authenticated_functions constant text[] := array[
     'public.classement_communautes()',
     'public.clutch_chercher_joueurs(text)',
+    'public.clutch_admin_corriger_resultat_v1(text,integer,integer,text,text,text,text,timestamp with time zone)',
     'public.clutch_admin_demarrer_match_v1(text)',
+    'public.clutch_admin_historique_match_v1(text,integer)',
+    'public.clutch_admin_regler_match_v1(text,integer,integer,text,text,text,timestamp with time zone)',
     'public.clutch_admin_reporter_match_v1(text,timestamp with time zone)',
     'public.clutch_assurer_mon_profil_v1()',
     'public.clutch_classement_frags(text)',
@@ -19,6 +22,8 @@ declare
     'public.clutch_demander_ami(uuid)',
     'public.clutch_etat_frags(text)',
     'public.clutch_friend_quests_dashboard_v1()',
+    'public.clutch_call_context_v1(text)',
+    'public.clutch_mes_calls_v1(text)',
     'public.clutch_mes_amis(text)',
     'public.clutch_mes_defis_match(integer)',
     'public.clutch_mes_ligues()',
@@ -76,6 +81,30 @@ begin
 
   if v_missing is not null then
     raise exception 'Missing mobile profile columns: %', v_missing;
+  end if;
+
+  select string_agg(column_name, ', ' order by column_name)
+  into v_missing
+  from (values
+    ('resultat_source'),
+    ('resultat_source_label'),
+    ('resultat_identifiant_externe'),
+    ('resultat_recu_le'),
+    ('resultat_regle_le'),
+    ('resultat_maj_le'),
+    ('resultat_revision'),
+    ('resultat_motif_correction')
+  ) expected(column_name)
+  where not exists (
+    select 1
+    from information_schema.columns c
+    where c.table_schema = 'public'
+      and c.table_name = 'matchs'
+      and c.column_name = expected.column_name
+  );
+
+  if v_missing is not null then
+    raise exception 'Missing match result provenance columns: %', v_missing;
   end if;
 
   if exists (
@@ -191,6 +220,28 @@ begin
       and not tg.tgisinternal
   ) then
     raise exception 'Match lifecycle trigger is missing or disabled';
+  end if;
+
+  if to_regclass('private.clutch_match_operations_audit') is null then
+    raise exception 'Private match operations audit is missing';
+  end if;
+
+  if has_table_privilege('anon', 'private.clutch_match_operations_audit', 'SELECT')
+     or has_table_privilege('authenticated', 'private.clutch_match_operations_audit', 'SELECT')
+     or has_table_privilege('service_role', 'private.clutch_match_operations_audit', 'SELECT')
+  then
+    raise exception 'Private match operations audit is directly readable';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_trigger tg
+    where tg.tgrelid = 'private.clutch_match_operations_audit'::regclass
+      and tg.tgname = 'clutch_match_audit_immutable_v1'
+      and tg.tgenabled <> 'D'
+      and not tg.tgisinternal
+  ) then
+    raise exception 'Immutable match audit trigger is missing or disabled';
   end if;
 
   if not exists (

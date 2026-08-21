@@ -17,15 +17,23 @@ import { colors, radius, spacing, typography } from '@/src/theme';
 
 import {
   cancelAdminMatch,
+  correctAdminMatchResult,
   createAdminMatch,
   loadAdminMatchData,
+  loadAdminMatchHistory,
   rescheduleAdminMatch,
   settleAdminMatch,
   startAdminMatch,
 } from '../api';
-import type { AdminEvent, AdminMatch, AdminMatchData } from '../types';
+import type { AdminEvent, AdminMatch, AdminMatchAudit, AdminMatchData } from '../types';
 
 const EMPTY_DATA: AdminMatchData = { matches: [], seasons: [], events: [], teams: [] };
+const RESULT_SOURCES = [
+  { id: 'grid', label: 'GRID' },
+  { id: 'pandascore', label: 'PandaScore' },
+  { id: 'liquipedia', label: 'Liquipedia' },
+  { id: 'validation_clutch', label: 'Validation Clutch' },
+] as const;
 
 export default function AdminMatchesScreen() {
   const { profile, loading: authLoading } = useAuth();
@@ -51,8 +59,20 @@ export default function AdminMatchesScreen() {
 
   useEffect(() => { void load(); }, [load]);
 
-  const liveCount = data.matches.filter((match) => matchPhase(match) === 'live').length;
-  const attentionCount = data.matches.filter((match) => match.statut === 'a_venir' && new Date(match.debut).getTime() <= Date.now()).length;
+  const openMatches = useMemo(
+    () => [...data.matches]
+      .filter((match) => match.statut === 'a_venir' || match.statut === 'en_cours')
+      .sort((a, b) => new Date(a.debut).getTime() - new Date(b.debut).getTime()),
+    [data.matches],
+  );
+  const closedMatches = useMemo(
+    () => data.matches
+      .filter((match) => match.statut === 'termine' || match.statut === 'annule')
+      .slice(0, 20),
+    [data.matches],
+  );
+  const liveCount = openMatches.filter((match) => matchPhase(match) === 'live').length;
+  const attentionCount = openMatches.filter((match) => match.statut === 'a_venir' && new Date(match.debut).getTime() <= Date.now()).length;
 
   if (authLoading || !profile) return <Screen><View style={styles.center}><Text style={styles.muted}>Vérification des droits…</Text></View></Screen>;
   if (!isAdmin) return <Screen><View style={styles.center}><Text style={styles.deniedTitle}>ACCÈS REFUSÉ.</Text><Text style={styles.muted}>Cette zone est réservée aux administrateurs Clutch.</Text></View></Screen>;
@@ -76,7 +96,7 @@ export default function AdminMatchesScreen() {
         </View>
 
         <View style={styles.stats}>
-          <AdminStat label="OUVERTS" value={data.matches.length} />
+          <AdminStat label="OUVERTS" value={openMatches.length} />
           <AdminStat label="LIVE" value={liveCount} accent />
           <AdminStat label="À TRAITER" value={attentionCount} warning={attentionCount > 0} />
         </View>
@@ -87,16 +107,28 @@ export default function AdminMatchesScreen() {
 
         <View style={styles.sectionHead}>
           <View><Text style={styles.sectionEyebrow}>CYCLE OUVERT</Text><Text style={styles.sectionTitle}>Matchs à piloter.</Text></View>
-          <Text style={styles.sectionCount}>{data.matches.length}</Text>
+          <Text style={styles.sectionCount}>{openMatches.length}</Text>
         </View>
 
-        {loading ? <StateCard title="SYNCHRONISATION…" copy="Lecture du calendrier et des droits administrateur." /> : data.matches.length ? (
+        {loading ? <StateCard title="SYNCHRONISATION…" copy="Lecture du calendrier et des droits administrateur." /> : openMatches.length ? (
           <View style={styles.matchList}>
-            {data.matches.map((match) => <AdminMatchCard key={match.id} match={match} onChanged={() => load()} />)}
+            {openMatches.map((match) => <AdminMatchCard key={match.id} match={match} onChanged={() => load()} />)}
           </View>
         ) : (
           <StateCard title="AUCUN MATCH OUVERT." copy="Crée la prochaine affiche pour réactiver l’Arena." />
         )}
+
+        {closedMatches.length ? (
+          <>
+            <View style={styles.sectionHead}>
+              <View><Text style={styles.sectionEyebrow}>HISTORIQUE RÉCENT</Text><Text style={styles.sectionTitle}>Résultats et corrections.</Text></View>
+              <Text style={styles.sectionCount}>{closedMatches.length}</Text>
+            </View>
+            <View style={styles.matchList}>
+              {closedMatches.map((match) => <AdminMatchCard key={match.id} match={match} onChanged={() => load()} />)}
+            </View>
+          </>
+        ) : null}
       </ScrollView>
     </Screen>
   );
@@ -180,7 +212,7 @@ function CreateMatchPanel({ data, disabled, onCreated }: { data: AdminMatchData;
   );
 }
 
-function ChoiceRail<T extends { id: string }>({ items, selected, label, onSelect }: { items: T[]; selected: string; label: (item: T) => string; onSelect: (item: T) => void }) {
+function ChoiceRail<T extends { id: string }>({ items, selected, label, onSelect }: { items: readonly T[]; selected: string; label: (item: T) => string; onSelect: (item: T) => void }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.choiceRail}>
       {items.map((item) => <Pressable accessibilityLabel={label(item)} accessibilityRole="button" accessibilityState={{ selected: selected === item.id }} key={item.id} onPress={() => onSelect(item)} style={[styles.choice, selected === item.id && styles.choiceActive]}><Text numberOfLines={1} style={[styles.choiceText, selected === item.id && styles.choiceTextActive]}>{label(item)}</Text></Pressable>)}
@@ -190,17 +222,31 @@ function ChoiceRail<T extends { id: string }>({ items, selected, label, onSelect
 
 function FieldLabel({ children }: { children: string }) { return <Text style={styles.fieldLabel}>{children.toUpperCase()}</Text>; }
 
-type ActionMode = 'idle' | 'score' | 'reschedule' | 'cancel';
+type ActionMode = 'idle' | 'score' | 'correction' | 'reschedule' | 'cancel' | 'history';
 
 function AdminMatchCard({ match, onChanged }: { match: AdminMatch; onChanged: () => Promise<void> }) {
   const phase = matchPhase(match);
   const [mode, setMode] = useState<ActionMode>('idle');
   const [scoreA, setScoreA] = useState('');
   const [scoreB, setScoreB] = useState('');
+  const [source, setSource] = useState('validation_clutch');
+  const [externalId, setExternalId] = useState('');
   const [newDate, setNewDate] = useState(defaultDateInput);
   const [reason, setReason] = useState('Match annulé par l’organisation');
+  const [correctionReason, setCorrectionReason] = useState('Correction après vérification de la source officielle');
+  const [history, setHistory] = useState<AdminMatchAudit[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const sourceLabel = RESULT_SOURCES.find((item) => item.id === source)?.label ?? 'Validation Clutch';
+  const terminal = match.statut === 'termine' || match.statut === 'annule';
+  const statusLabel = match.statut === 'termine'
+    ? `FINAL · V${Math.max(1, match.resultat_revision)}`
+    : match.statut === 'annule'
+      ? 'ANNULÉ'
+      : phase === 'live'
+        ? 'LIVE'
+        : 'À VENIR';
 
   async function run(action: () => Promise<unknown>) {
     if (busy) return;
@@ -216,31 +262,157 @@ function AdminMatchCard({ match, onChanged }: { match: AdminMatch; onChanged: ()
       setError(`Score BO${match.format} invalide : le vainqueur doit atteindre ${expected}.`);
       return;
     }
-    void run(() => settleAdminMatch(match.id, a, b));
+    if (!externalId.trim()) {
+      setError('Ajoute la référence fournie par la source officielle.');
+      return;
+    }
+    if (mode === 'correction' && correctionReason.trim().length < 10) {
+      setError('Explique la correction en au moins 10 caractères.');
+      return;
+    }
+    void run(() => mode === 'correction'
+      ? correctAdminMatchResult({
+        matchId: match.id,
+        scoreA: a,
+        scoreB: b,
+        source,
+        sourceLabel,
+        externalId: externalId.trim(),
+        reason: correctionReason.trim(),
+      })
+      : settleAdminMatch({
+        matchId: match.id,
+        scoreA: a,
+        scoreB: b,
+        source,
+        sourceLabel,
+        externalId: externalId.trim(),
+      }));
+  }
+
+  function openCorrection() {
+    if (mode === 'correction') {
+      setMode('idle');
+      return;
+    }
+    setScoreA(String(match.score_a ?? ''));
+    setScoreB(String(match.score_b ?? ''));
+    setSource(RESULT_SOURCES.some((item) => item.id === match.resultat_source)
+      ? match.resultat_source!
+      : 'validation_clutch');
+    setExternalId(match.resultat_identifiant_externe ?? '');
+    setMode('correction');
+    setError(null);
+  }
+
+  async function openHistory() {
+    if (mode === 'history') {
+      setMode('idle');
+      return;
+    }
+    setMode('history');
+    setHistoryLoading(true);
+    setError(null);
+    try {
+      const data = await loadAdminMatchHistory(match.id);
+      setHistory(data.operations ?? []);
+    } catch (caught) {
+      setError(messageFrom(caught, 'Journal d’opérations indisponible.'));
+    } finally {
+      setHistoryLoading(false);
+    }
   }
 
   return (
-    <View style={[styles.matchCard, phase === 'live' && styles.matchCardLive]}>
+    <View style={[styles.matchCard, phase === 'live' && styles.matchCardLive, terminal && styles.matchCardTerminal]}>
       <View style={styles.matchTop}>
         <View style={styles.matchMeta}><Text style={styles.matchGame}>{gameLabel(match.jeu)} · BO{match.format}</Text><Text numberOfLines={1} style={styles.matchEvent}>{match.evenement}</Text></View>
-        <View style={[styles.statusPill, phase === 'live' && styles.statusPillLive]}><View style={[styles.statusDot, phase === 'live' && styles.statusDotLive]} /><Text style={[styles.statusText, phase === 'live' && styles.statusTextLive]}>{phase === 'live' ? 'LIVE' : 'À VENIR'}</Text></View>
+        <View style={[styles.statusPill, phase === 'live' && styles.statusPillLive, terminal && styles.statusPillTerminal]}><View style={[styles.statusDot, phase === 'live' && styles.statusDotLive, terminal && styles.statusDotTerminal]} /><Text style={[styles.statusText, phase === 'live' && styles.statusTextLive, terminal && styles.statusTextTerminal]}>{statusLabel}</Text></View>
       </View>
       <Text style={styles.matchTeams}>{match.tag_a} <Text style={styles.matchVs}>VS</Text> {match.tag_b}</Text>
       <Text style={styles.matchNames}>{match.equipe_a} · {match.equipe_b}</Text>
       <Text style={styles.matchDate}>{formatDateTime(match.debut)}</Text>
       {match.statut === 'a_venir' && phase === 'live' ? <Text style={styles.attention}>STATUT À RÉGULARISER · le coup d’envoi est passé</Text> : null}
+      {match.statut === 'termine' ? <ResultReceipt match={match} /> : null}
+      {match.statut === 'annule' ? <Text style={styles.cancelReceipt}>MOTIF · {match.motif_annulation ?? 'Non renseigné'}</Text> : null}
 
       <View style={styles.actionRow}>
         {match.statut === 'a_venir' && phase === 'live' ? <ActionButton label="DÉMARRER" onPress={() => void run(() => startAdminMatch(match.id))} /> : null}
-        {phase === 'live' ? <ActionButton label="RÉGLER" primary onPress={() => setMode(mode === 'score' ? 'idle' : 'score')} /> : null}
+        {match.statut === 'en_cours' ? <ActionButton label="RÉGLER" primary onPress={() => setMode(mode === 'score' ? 'idle' : 'score')} /> : null}
         {match.statut === 'a_venir' ? <ActionButton label="REPORTER" onPress={() => setMode(mode === 'reschedule' ? 'idle' : 'reschedule')} /> : null}
-        <ActionButton label="ANNULER" danger onPress={() => setMode(mode === 'cancel' ? 'idle' : 'cancel')} />
+        {match.statut === 'termine' ? <ActionButton label="CORRIGER" danger onPress={openCorrection} /> : null}
+        {!terminal ? <ActionButton label="ANNULER" danger onPress={() => setMode(mode === 'cancel' ? 'idle' : 'cancel')} /> : null}
+        <ActionButton label="JOURNAL" onPress={() => void openHistory()} />
       </View>
 
-      {mode === 'score' ? <View style={styles.inlinePanel}><Text style={styles.inlineTitle}>SCORE FINAL</Text><View style={styles.scoreRow}><TextInput value={scoreA} onChangeText={setScoreA} keyboardType="number-pad" placeholder={match.tag_a} placeholderTextColor="#53606D" style={styles.scoreInput} /><Text style={styles.scoreDash}>—</Text><TextInput value={scoreB} onChangeText={setScoreB} keyboardType="number-pad" placeholder={match.tag_b} placeholderTextColor="#53606D" style={styles.scoreInput} /></View><ConfirmButton busy={busy} label="FIGER LE RÉSULTAT" onPress={settle} /></View> : null}
-      {mode === 'reschedule' ? <View style={styles.inlinePanel}><Text style={styles.inlineTitle}>NOUVEAU COUP D’ENVOI</Text><TextInput value={newDate} onChangeText={setNewDate} autoCapitalize="none" style={styles.input} /><ConfirmButton busy={busy} label="CONFIRMER LE REPORT" onPress={() => { try { const iso = parseFutureDate(newDate); void run(() => rescheduleAdminMatch(match.id, iso)); } catch (caught) { setError(messageFrom(caught, 'Date invalide.')); } }} /></View> : null}
-      {mode === 'cancel' ? <View style={styles.inlinePanel}><Text style={styles.inlineTitle}>MOTIF D’ANNULATION</Text><TextInput value={reason} onChangeText={setReason} maxLength={120} style={styles.input} /><ConfirmButton busy={busy} danger label="ANNULER DÉFINITIVEMENT" onPress={() => void run(() => cancelAdminMatch(match.id, reason))} /></View> : null}
+      {mode === 'score' || mode === 'correction' ? (
+        <View style={styles.inlinePanel}>
+          <Text style={styles.inlineTitle}>{mode === 'correction' ? 'CORRECTION DU RÉSULTAT' : 'RÉSULTAT OFFICIEL'}</Text>
+          <View style={styles.scoreRow}>
+            <TextInput accessibilityLabel={`Score ${match.tag_a}`} value={scoreA} onChangeText={setScoreA} keyboardType="number-pad" placeholder={match.tag_a} placeholderTextColor="#53606D" style={styles.scoreInput} />
+            <Text style={styles.scoreDash}>—</Text>
+            <TextInput accessibilityLabel={`Score ${match.tag_b}`} value={scoreB} onChangeText={setScoreB} keyboardType="number-pad" placeholder={match.tag_b} placeholderTextColor="#53606D" style={styles.scoreInput} />
+          </View>
+          <ResultSourceFields externalId={externalId} onExternalIdChange={setExternalId} onSourceChange={setSource} source={source} />
+          {mode === 'correction' ? (
+            <>
+              <FieldLabel>Motif obligatoire</FieldLabel>
+              <TextInput accessibilityLabel="Motif de la correction" value={correctionReason} onChangeText={setCorrectionReason} maxLength={240} multiline style={[styles.input, styles.reasonInput]} />
+            </>
+          ) : null}
+          <ConfirmButton busy={busy} danger={mode === 'correction'} label={mode === 'correction' ? 'APPLIQUER LA CORRECTION' : 'FIGER LE RÉSULTAT'} onPress={settle} />
+        </View>
+      ) : null}
+      {mode === 'reschedule' ? <View style={styles.inlinePanel}><Text style={styles.inlineTitle}>NOUVEAU COUP D’ENVOI</Text><TextInput accessibilityLabel="Nouvelle date et heure du match" value={newDate} onChangeText={setNewDate} autoCapitalize="none" style={styles.input} /><ConfirmButton busy={busy} label="CONFIRMER LE REPORT" onPress={() => { try { const iso = parseFutureDate(newDate); void run(() => rescheduleAdminMatch(match.id, iso)); } catch (caught) { setError(messageFrom(caught, 'Date invalide.')); } }} /></View> : null}
+      {mode === 'cancel' ? <View style={styles.inlinePanel}><Text style={styles.inlineTitle}>MOTIF D’ANNULATION</Text><TextInput accessibilityLabel="Motif de l’annulation" value={reason} onChangeText={setReason} maxLength={120} style={styles.input} /><ConfirmButton busy={busy} danger label="ANNULER DÉFINITIVEMENT" onPress={() => void run(() => cancelAdminMatch(match.id, reason))} /></View> : null}
+      {mode === 'history' ? <AuditTrail loading={historyLoading} operations={history} /> : null}
       {error ? <Text style={styles.formError}>{error}</Text> : null}
+    </View>
+  );
+}
+
+function ResultSourceFields({ externalId, onExternalIdChange, onSourceChange, source }: { externalId: string; onExternalIdChange: (value: string) => void; onSourceChange: (value: string) => void; source: string }) {
+  return (
+    <>
+      <FieldLabel>Source officielle</FieldLabel>
+      <ChoiceRail items={RESULT_SOURCES} selected={source} label={(item) => item.label} onSelect={(item) => onSourceChange(item.id)} />
+      <FieldLabel>Référence externe</FieldLabel>
+      <TextInput accessibilityLabel="Identifiant externe du résultat" value={externalId} onChangeText={onExternalIdChange} maxLength={180} autoCapitalize="none" autoCorrect={false} placeholder="Ex. match-893742/result-final" placeholderTextColor="#53606D" style={styles.input} />
+      <Text style={styles.sourceHint}>La référence doit venir du fournisseur choisi et rend le rejeu idempotent.</Text>
+    </>
+  );
+}
+
+function ResultReceipt({ match }: { match: AdminMatch }) {
+  return (
+    <View style={styles.resultReceipt}>
+      <View style={styles.resultReceiptTop}>
+        <Text style={styles.resultReceiptLabel}>{match.resultat_revision > 1 ? `CORRIGÉ · RÉVISION ${match.resultat_revision}` : 'PROVENANCE DU RÉSULTAT'}</Text>
+        <Text style={styles.resultReceiptScore}>{match.score_a}–{match.score_b}</Text>
+      </View>
+      <Text style={styles.resultReceiptSource}>{match.resultat_source_label ?? match.resultat_source ?? 'Source inconnue'}</Text>
+      <Text numberOfLines={1} style={styles.resultReceiptReference}>RÉF. {match.resultat_identifiant_externe ?? 'absente'}</Text>
+      {match.resultat_motif_correction ? <Text style={styles.resultReceiptReason}>{match.resultat_motif_correction}</Text> : null}
+    </View>
+  );
+}
+
+function AuditTrail({ loading, operations }: { loading: boolean; operations: AdminMatchAudit[] }) {
+  if (loading) return <View style={styles.auditPanel}><Text style={styles.auditEmpty}>LECTURE DU JOURNAL…</Text></View>;
+  return (
+    <View style={styles.auditPanel}>
+      <Text style={styles.inlineTitle}>JOURNAL IMMUABLE</Text>
+      {operations.length ? operations.map((operation) => (
+        <View key={operation.id} style={styles.auditRow}>
+          <View style={styles.auditMarker} />
+          <View style={styles.auditCopy}>
+            <Text style={styles.auditAction}>{auditActionLabel(operation.action)} · V{operation.revision}</Text>
+            <Text style={styles.auditMeta}>{formatDateTime(operation.cree_le)} · {operation.acteur_pseudo ?? 'SYSTÈME'}</Text>
+            {operation.identifiant_externe ? <Text numberOfLines={1} style={styles.auditReference}>RÉF. {operation.identifiant_externe}</Text> : null}
+            {operation.motif ? <Text style={styles.auditReason}>{operation.motif}</Text> : null}
+          </View>
+        </View>
+      )) : <Text style={styles.auditEmpty}>AUCUNE OPÉRATION ENREGISTRÉE.</Text>}
     </View>
   );
 }
@@ -255,6 +427,18 @@ function ConfirmButton({ label, onPress, busy, danger = false }: { label: string
 
 function StateCard({ title, copy, action, onPress }: { title: string; copy: string; action?: string; onPress?: () => void }) {
   return <View style={styles.stateCard}><Text style={styles.stateTitle}>{title}</Text><Text style={styles.stateCopy}>{copy}</Text>{action && onPress ? <Pressable accessibilityLabel={action} accessibilityRole="button" onPress={onPress}><Text style={styles.stateAction}>{action}</Text></Pressable> : null}</View>;
+}
+
+function auditActionLabel(action: AdminMatchAudit['action']) {
+  const labels: Record<AdminMatchAudit['action'], string> = {
+    import_historique: 'IMPORT HISTORIQUE',
+    demarrage: 'DÉMARRAGE',
+    report: 'REPORT',
+    annulation: 'ANNULATION',
+    resultat_initial: 'RÉSULTAT INITIAL',
+    correction_resultat: 'CORRECTION',
+  };
+  return labels[action];
 }
 
 function defaultDateInput() {
@@ -330,21 +514,33 @@ const styles = StyleSheet.create({
   matchList: { gap: 11 },
   matchCard: { padding: 15, borderRadius: 23, gap: 9, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border },
   matchCardLive: { borderColor: '#294C64', backgroundColor: '#0B1218' },
+  matchCardTerminal: { borderColor: '#313A2C', backgroundColor: '#0A0F0D' },
   matchTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   matchMeta: { flex: 1, minWidth: 0 },
   matchGame: { ...typography.eyebrow, color: colors.volt, letterSpacing: .4 },
   matchEvent: { ...typography.caption, marginTop: 3, color: colors.textMuted },
   statusPill: { minHeight: 32, paddingHorizontal: 9, borderRadius: 999, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#11161C', borderWidth: 1, borderColor: '#29323B' },
   statusPillLive: { backgroundColor: '#0E1A23', borderColor: '#2C5B7A' },
+  statusPillTerminal: { backgroundColor: '#13180F', borderColor: '#3B4727' },
   statusDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#77828E' },
   statusDotLive: { backgroundColor: '#56ADFF' },
+  statusDotTerminal: { backgroundColor: colors.volt },
   statusText: { ...typography.label, color: colors.textMuted },
   statusTextLive: { color: '#56ADFF' },
+  statusTextTerminal: { color: colors.volt },
   matchTeams: { ...typography.metric, color: colors.text },
   matchVs: { ...typography.body, color: colors.textMuted },
   matchNames: { ...typography.caption, color: colors.textMuted },
   matchDate: { ...typography.label, color: colors.text, letterSpacing: .3 },
   attention: { ...typography.label, color: '#FFB467', letterSpacing: .2 },
+  resultReceipt: { padding: 11, borderRadius: 14, gap: 3, backgroundColor: '#0F150E', borderWidth: 1, borderColor: '#34421E' },
+  resultReceiptTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  resultReceiptLabel: { ...typography.eyebrow, flex: 1, color: colors.volt, letterSpacing: .45 },
+  resultReceiptScore: { ...typography.metricSmall, color: colors.text },
+  resultReceiptSource: { ...typography.bodyStrong, color: colors.text },
+  resultReceiptReference: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .2 },
+  resultReceiptReason: { ...typography.caption, marginTop: 3, color: '#C3B39F' },
+  cancelReceipt: { ...typography.caption, padding: 10, borderRadius: 12, color: '#D9A3A8', backgroundColor: '#171012', borderWidth: 1, borderColor: '#4A252B' },
   actionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingTop: 5, borderTopWidth: 1, borderTopColor: colors.border },
   actionButton: { minHeight: 40, paddingHorizontal: 10, borderRadius: 11, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#303A43' },
   actionPrimary: { backgroundColor: colors.volt, borderColor: colors.volt },
@@ -354,6 +550,8 @@ const styles = StyleSheet.create({
   actionTextDanger: { color: '#FF8E99' },
   inlinePanel: { padding: 12, borderRadius: 15, gap: 9, backgroundColor: '#080C10', borderWidth: 1, borderColor: '#263039' },
   inlineTitle: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .5 },
+  sourceHint: { ...typography.caption, color: colors.textSubtle },
+  reasonInput: { minHeight: 78, paddingTop: 12, textAlignVertical: 'top' },
   scoreRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   scoreInput: { ...typography.metricSmall, flex: 1, minHeight: 52, borderRadius: 12, color: colors.text, textAlign: 'center', backgroundColor: '#0C1217', borderWidth: 1, borderColor: '#2B3741' },
   scoreDash: { ...typography.metricSmall, color: colors.textMuted },
@@ -361,6 +559,15 @@ const styles = StyleSheet.create({
   confirmDanger: { backgroundColor: '#2B1116', borderWidth: 1, borderColor: '#6A2E38' },
   confirmText: { ...typography.action, color: '#080B0F', letterSpacing: .3 },
   confirmTextDanger: { color: '#FF9AA3' },
+  auditPanel: { padding: 12, borderRadius: 15, gap: 10, backgroundColor: '#080C10', borderWidth: 1, borderColor: '#263039' },
+  auditRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#1D252C' },
+  auditMarker: { width: 7, height: 7, marginTop: 4, borderRadius: 4, backgroundColor: colors.volt },
+  auditCopy: { flex: 1, minWidth: 0 },
+  auditAction: { ...typography.label, color: colors.text },
+  auditMeta: { ...typography.caption, marginTop: 2, color: colors.textMuted },
+  auditReference: { ...typography.eyebrow, marginTop: 3, color: colors.textSubtle, letterSpacing: .2 },
+  auditReason: { ...typography.caption, marginTop: 3, color: '#C3B39F' },
+  auditEmpty: { ...typography.label, color: colors.textMuted },
   stateCard: { minHeight: 130, justifyContent: 'center', padding: 18, borderRadius: radius.lg, gap: 7, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border },
   stateTitle: { ...typography.cardTitle, color: colors.text },
   stateCopy: { ...typography.body, color: colors.textMuted },

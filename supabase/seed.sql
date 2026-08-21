@@ -55,13 +55,35 @@ insert into equipes (id, jeu, nom, tag, elo) values
   ('val-edg', 'valorant', 'EDward Gaming', 'EDG', 1607)
 on conflict (id) do nothing;
 
+insert into matchs (
+  id,
+  event_id,
+  saison_id,
+  jeu,
+  equipe_a_id,
+  equipe_b_id,
+  format,
+  debut,
+  statut,
+  score_a,
+  score_b,
+  resultat_source,
+  resultat_source_label,
+  resultat_identifiant_externe,
+  resultat_recu_le,
+  resultat_regle_le,
+  resultat_maj_le,
+  resultat_revision
+) values
+  ('m-fini-5', 'vct-emea', 'saison-ete-2026', 'valorant', 'val-kc', 'val-g2', 3, now() + interval '-74.00 hours', 'termine', 1, 2, 'seed_clutch', 'Données de démonstration', 'seed:m-fini-5', now() + interval '-72.00 hours', now() + interval '-72.00 hours', now() + interval '-72.00 hours', 1),
+  ('m-fini-4', 'esl-pro', 'saison-ete-2026', 'cs2', 'cs-faze', 'cs-astralis', 3, now() + interval '-70.00 hours', 'termine', 2, 0, 'seed_clutch', 'Données de démonstration', 'seed:m-fini-4', now() + interval '-68.00 hours', now() + interval '-68.00 hours', now() + interval '-68.00 hours', 1),
+  ('m-fini-3', 'lec-summer', 'saison-ete-2026', 'lol', 'lol-vit', 'lol-sk', 3, now() + interval '-48.00 hours', 'termine', 2, 1, 'seed_clutch', 'Données de démonstration', 'seed:m-fini-3', now() + interval '-46.00 hours', now() + interval '-46.00 hours', now() + interval '-46.00 hours', 1),
+  ('m-fini-2', 'vct-masters', 'saison-ete-2026', 'valorant', 'val-prx', 'val-sen', 3, now() + interval '-44.00 hours', 'termine', 2, 1, 'seed_clutch', 'Données de démonstration', 'seed:m-fini-2', now() + interval '-42.00 hours', now() + interval '-42.00 hours', now() + interval '-42.00 hours', 1),
+  ('m-fini-1', 'blast-bounty', 'saison-ete-2026', 'cs2', 'cs-navi', 'cs-g2', 3, now() + interval '-26.00 hours', 'termine', 2, 1, 'seed_clutch', 'Données de démonstration', 'seed:m-fini-1', now() + interval '-24.00 hours', now() + interval '-24.00 hours', now() + interval '-24.00 hours', 1),
+  ('m-fini-0', 'lec-summer', 'saison-ete-2026', 'lol', 'lol-kc', 'lol-bds', 3, now() + interval '-20.00 hours', 'termine', 2, 0, 'seed_clutch', 'Données de démonstration', 'seed:m-fini-0', now() + interval '-18.00 hours', now() + interval '-18.00 hours', now() + interval '-18.00 hours', 1)
+on conflict (id) do nothing;
+
 insert into matchs (id, event_id, saison_id, jeu, equipe_a_id, equipe_b_id, format, debut, statut, score_a, score_b) values
-  ('m-fini-5', 'vct-emea', 'saison-ete-2026', 'valorant', 'val-kc', 'val-g2', 3, now() + interval '-74.00 hours', 'termine', 1, 2),
-  ('m-fini-4', 'esl-pro', 'saison-ete-2026', 'cs2', 'cs-faze', 'cs-astralis', 3, now() + interval '-70.00 hours', 'termine', 2, 0),
-  ('m-fini-3', 'lec-summer', 'saison-ete-2026', 'lol', 'lol-vit', 'lol-sk', 3, now() + interval '-48.00 hours', 'termine', 2, 1),
-  ('m-fini-2', 'vct-masters', 'saison-ete-2026', 'valorant', 'val-prx', 'val-sen', 3, now() + interval '-44.00 hours', 'termine', 2, 1),
-  ('m-fini-1', 'blast-bounty', 'saison-ete-2026', 'cs2', 'cs-navi', 'cs-g2', 3, now() + interval '-26.00 hours', 'termine', 2, 1),
-  ('m-fini-0', 'lec-summer', 'saison-ete-2026', 'lol', 'lol-kc', 'lol-bds', 3, now() + interval '-20.00 hours', 'termine', 2, 0),
   ('m-2', 'blast-bounty', 'saison-ete-2026', 'cs2', 'cs-vit', 'cs-navi', 3, now() + interval '2.00 hours', 'a_venir', null, null),
   ('m-0', 'lec-summer', 'saison-ete-2026', 'lol', 'lol-g2', 'lol-kc', 3, now() + interval '3.20 hours', 'a_venir', null, null),
   ('m-1', 'lec-summer', 'saison-ete-2026', 'lol', 'lol-fnc', 'lol-vit', 3, now() + interval '5.48 hours', 'a_venir', null, null),
@@ -86,4 +108,3 @@ on conflict (id) do nothing;
 -- ils servent uniquement à remplir l onglet Résultats au premier lancement.
 --
 -- Pour ouvrir une nouvelle saison plus tard, voir la fin de 03_securite.sql.
-
