@@ -1,27 +1,35 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { errorFeedback, impactFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
-import { colors, radius, spacing } from '@/src/theme';
+import { colors, fonts, spacing } from '@/src/theme';
 
 import { loadTeamOrganizations, saveOnboarding } from '../api';
 import { GAMES } from '../constants';
+import { GAME_BACKGROUNDS } from '../gameBackgrounds';
 import type { GameId, TeamOrganization } from '../types';
 import { teamIdForOrganization } from '../utils';
+import GameLogo from './GameLogo';
+import TeamLogo from './TeamLogo';
 
-type Step = 0 | 1 | 2;
+type Step = 0 | 1;
 
 export default function OnboardingScreen() {
   const { session, profile, refreshProfile } = useAuth();
+  const reduceMotion = useReducedMotion();
   const initialGames = useMemo(
     () => GAMES.map((game) => game.id).filter((id) => profile?.jeux_suivis?.includes(id)),
     [profile?.jeux_suivis],
@@ -53,8 +61,10 @@ export default function OnboardingScreen() {
       } else {
         setSelectedTeam(null);
       }
-      setStep(2);
+      impactFeedback();
+      setStep(1);
     } catch (caught) {
+      errorFeedback();
       setError(caught instanceof Error ? caught.message : 'Impossible de charger les factions.');
     } finally {
       setLoadingTeams(false);
@@ -72,8 +82,10 @@ export default function OnboardingScreen() {
     try {
       await saveOnboarding(games, teamId, session.user.id);
       await refreshProfile();
+      successFeedback();
       router.replace('/(tabs)' as never);
     } catch (caught) {
+      errorFeedback();
       setError(caught instanceof Error ? caught.message : 'Impossible de finaliser ton entrée dans Clutch.');
     } finally {
       setSaving(false);
@@ -81,37 +93,57 @@ export default function OnboardingScreen() {
   }
 
   function toggleGame(id: GameId) {
+    selectionFeedback();
     setGames((current) => current.includes(id) ? current.filter((game) => game !== id) : [...current, id]);
     setSelectedTeam(null);
   }
 
+  function moveToStep(next: Step) {
+    selectionFeedback();
+    setError(null);
+    setStep(next);
+  }
+
   return (
     <SafeAreaView style={styles.root}>
+      <LinearGradient
+        colors={['#05080B', '#0B110E', '#05080B']}
+        end={{ x: 1, y: 1 }}
+        start={{ x: 0, y: 0 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.ambientLayer}>
+        <View style={styles.ambientVolt} />
+        <View style={styles.ambientBlue} />
+      </View>
       <View style={styles.shell}>
         <OnboardingTop step={step} />
 
-        {step === 0 ? (
-          <WelcomeStep onNext={() => setStep(1)} />
-        ) : step === 1 ? (
-          <GamesStep
-            selected={games}
-            loading={loadingTeams}
-            onBack={() => setStep(0)}
-            onToggle={toggleGame}
-            onNext={() => void goToTeams()}
-          />
-        ) : (
-          <TeamsStep
-            games={games}
-            organizations={organizations}
-            selected={selectedTeam}
-            saving={saving}
-            error={error}
-            onBack={() => setStep(1)}
-            onSelect={setSelectedTeam}
-            onFinish={() => void finish()}
-          />
-        )}
+        <Animated.View
+          key={step}
+          entering={reduceMotion ? undefined : FadeInDown.duration(420)}
+          style={styles.stepFrame}
+        >
+          {step === 0 ? (
+            <GamesStep
+              selected={games}
+              loading={loadingTeams}
+              onToggle={toggleGame}
+              onNext={() => void goToTeams()}
+            />
+          ) : (
+            <TeamsStep
+              games={games}
+              organizations={organizations}
+              selected={selectedTeam}
+              saving={saving}
+              error={error}
+              onBack={() => moveToStep(0)}
+              onSelect={(key) => { selectionFeedback(); setSelectedTeam(key); }}
+              onFinish={() => void finish()}
+            />
+          )}
+        </Animated.View>
       </View>
     </SafeAreaView>
   );
@@ -125,52 +157,9 @@ function OnboardingTop({ step }: { step: Step }) {
         <Text style={styles.brand}>CLUTCH<Text style={styles.brandDot}>.</Text></Text>
       </View>
       <View style={styles.progress}>
-        {[0, 1, 2].map((index) => <View key={index} style={[styles.progressBar, index <= step && styles.progressBarActive]} />)}
+        {[0, 1].map((index) => <View key={index} style={[styles.progressBar, index <= step && styles.progressBarActive]} />)}
       </View>
-      <Text style={styles.stepLabel}>0{step + 1} / 03</Text>
-    </View>
-  );
-}
-
-function WelcomeStep({ onNext }: { onNext: () => void }) {
-  return (
-    <View style={styles.welcome}>
-      <View style={styles.impactStage}>
-        <View style={styles.impactRingOuter} />
-        <View style={styles.impactRingInner} />
-        <View style={styles.impactSlashLeft} />
-        <View style={styles.impactSlashRight} />
-        <Text style={styles.impactC}>C</Text>
-      </View>
-
-      <View style={styles.heroCopy}>
-        <Text style={styles.kicker}>LE PRONO ESPORT ENTRE POTES</Text>
-        <Text style={styles.heroTitle}>BIENVENUE{`\n`}DANS CLUTCH.</Text>
-        <Text style={styles.heroText}>
-          Prends position sur les matchs qui comptent, grimpe au rating et construis ton identité avec ta faction.
-        </Text>
-      </View>
-
-      <View style={styles.promiseRow}>
-        <Promise number="01" title="PRENDS POSITION" copy="Un camp. Un verdict." />
-        <Promise number="02" title="GRIMPE" copy="Ton rating garde la trace." />
-        <Promise number="03" title="REPRÉSENTE" copy="Ta faction évolue avec toi." />
-      </View>
-
-      <Pressable onPress={onNext} style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}>
-        <Text style={styles.primaryButtonText}>COMMENCER</Text>
-        <Text style={styles.primaryButtonArrow}>→</Text>
-      </Pressable>
-    </View>
-  );
-}
-
-function Promise({ number, title, copy }: { number: string; title: string; copy: string }) {
-  return (
-    <View style={styles.promise}>
-      <Text style={styles.promiseNumber}>{number}</Text>
-      <Text style={styles.promiseTitle}>{title}</Text>
-      <Text style={styles.promiseCopy}>{copy}</Text>
+      <Text style={styles.stepLabel}>0{step + 1} / 02</Text>
     </View>
   );
 }
@@ -178,13 +167,11 @@ function Promise({ number, title, copy }: { number: string; title: string; copy:
 function GamesStep({
   selected,
   loading,
-  onBack,
   onToggle,
   onNext,
 }: {
   selected: GameId[];
   loading: boolean;
-  onBack: () => void;
   onToggle: (id: GameId) => void;
   onNext: () => void;
 }) {
@@ -202,11 +189,31 @@ function GamesStep({
           return (
             <Pressable
               key={game.id}
+              accessibilityLabel={`${game.name}${active ? ', sélectionné' : ''}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
               onPress={() => onToggle(game.id)}
               style={({ pressed }) => [styles.gameCard, active && styles.gameCardActive, pressed && styles.pressed]}
             >
+              <Image
+                resizeMode="cover"
+                source={GAME_BACKGROUNDS[game.id]}
+                style={[StyleSheet.absoluteFill, styles.gameBackdrop]}
+              />
+              <LinearGradient
+                colors={['rgba(4,7,10,.94)', 'rgba(4,7,10,.62)', 'rgba(4,7,10,.18)']}
+                end={{ x: 0.94, y: 0.5 }}
+                start={{ x: 0, y: 0 }}
+                style={[StyleSheet.absoluteFill, styles.nonInteractive]}
+              />
+              <LinearGradient
+                colors={active ? [`${game.accent}24`, 'transparent', `${game.accent}16`] : ['transparent', 'transparent', 'rgba(0,0,0,.18)']}
+                end={{ x: 1, y: 1 }}
+                start={{ x: 0, y: 0 }}
+                style={[StyleSheet.absoluteFill, styles.nonInteractive]}
+              />
               <View style={[styles.gameMark, { borderColor: game.accent }, active && { backgroundColor: `${game.accent}22` }]}>
-                <Text style={[styles.gameCode, { color: game.accent }]}>{game.code}</Text>
+                <GameLogo color={game.accent} game={game.id} size={34} />
               </View>
               <View style={styles.gameCopy}>
                 <Text style={styles.gameShort}>{game.short}</Text>
@@ -222,8 +229,9 @@ function GamesStep({
       </View>
 
       <View style={styles.bottomActions}>
-        <Pressable onPress={onBack} style={styles.backButton}><Text style={styles.backText}>← RETOUR</Text></Pressable>
         <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !selected.length || loading, busy: loading }}
           disabled={!selected.length || loading}
           onPress={onNext}
           style={({ pressed }) => [styles.nextButton, (!selected.length || loading) && styles.disabled, pressed && styles.pressed]}
@@ -270,12 +278,20 @@ function TeamsStep({
           return (
             <Pressable
               key={organization.key}
+              accessibilityLabel={`${organization.name}${active ? ', ta faction' : ''}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
               onPress={() => onSelect(organization.key)}
               style={({ pressed }) => [styles.teamCard, active && styles.teamCardActive, pressed && styles.pressed]}
             >
-              <View style={[styles.teamLogo, { borderColor: accent }, active && { backgroundColor: `hsla(${hue}, 68%, 58%, .16)` }]}>
-                <Text adjustsFontSizeToFit numberOfLines={1} style={[styles.teamTag, { color: accent }]}>{organization.tag}</Text>
-              </View>
+              <View style={[styles.teamAura, { backgroundColor: accent }]} />
+              <TeamLogo
+                accent={accent}
+                name={organization.name}
+                size={59}
+                tag={organization.tag}
+                uri={organization.logo}
+              />
               <Text numberOfLines={1} style={styles.teamName}>{organization.name}</Text>
               <View style={styles.gameDots}>
                 {games.map((game) => (
@@ -288,11 +304,13 @@ function TeamsStep({
         })}
       </ScrollView>
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? <Text accessibilityLiveRegion="polite" style={styles.errorText}>{error}</Text> : null}
 
       <View style={styles.bottomActions}>
-        <Pressable onPress={onBack} style={styles.backButton}><Text style={styles.backText}>← RETOUR</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={onBack} style={styles.backButton}><Text style={styles.backText}>← RETOUR</Text></Pressable>
         <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !selected || saving, busy: saving }}
           disabled={!selected || saving}
           onPress={onFinish}
           style={({ pressed }) => [styles.nextButton, (!selected || saving) && styles.disabled, pressed && styles.pressed]}
@@ -305,76 +323,61 @@ function TeamsStep({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#05080B' },
+  root: { flex: 1, overflow: 'hidden', backgroundColor: '#05080B' },
+  ambientLayer: { position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' },
+  ambientVolt: { position: 'absolute', top: -100, right: -140, width: 330, height: 330, borderRadius: 165, backgroundColor: '#BBD21F', opacity: 0.11 },
+  ambientBlue: { position: 'absolute', bottom: -170, left: -150, width: 350, height: 350, borderRadius: 175, backgroundColor: '#16496F', opacity: 0.1 },
   shell: { flex: 1, width: '100%', maxWidth: 430, alignSelf: 'center', paddingHorizontal: spacing.md },
+  stepFrame: { flex: 1 },
   top: { minHeight: 70, flexDirection: 'row', alignItems: 'center', gap: 12 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  logo: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  logoText: { color: '#07090B', fontSize: 20, fontWeight: '900', letterSpacing: -1.5 },
-  brand: { color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 2.3 },
+  logo: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt, boxShadow: '0 0 10px rgba(224,255,59,.24)' },
+  logoText: { color: '#07090B', fontFamily: fonts.display, fontSize: 22, lineHeight: 25, letterSpacing: -1 },
+  brand: { color: colors.text, fontFamily: fonts.bold, fontSize: 12, letterSpacing: 2.3 },
   brandDot: { color: colors.volt },
   progress: { flex: 1, flexDirection: 'row', justifyContent: 'center', gap: 5 },
   progressBar: { width: 27, height: 3, borderRadius: 3, backgroundColor: '#242C33' },
   progressBarActive: { backgroundColor: colors.volt },
-  stepLabel: { color: '#65717D', fontSize: 8, fontWeight: '900', letterSpacing: 1 },
+  stepLabel: { color: '#65717D', fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1 },
 
-  welcome: { flex: 1, paddingBottom: 18 },
-  impactStage: { height: 250, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  impactRingOuter: { position: 'absolute', width: 230, height: 230, borderRadius: 115, borderWidth: 1, borderColor: '#252E35' },
-  impactRingInner: { position: 'absolute', width: 156, height: 156, borderRadius: 78, borderWidth: 1, borderColor: '#394321' },
-  impactSlashLeft: { position: 'absolute', width: 190, height: 1, backgroundColor: '#344019', transform: [{ rotate: '42deg' }] },
-  impactSlashRight: { position: 'absolute', width: 190, height: 1, backgroundColor: '#202931', transform: [{ rotate: '-42deg' }] },
-  impactC: { color: colors.volt, fontSize: 112, lineHeight: 122, fontWeight: '900', letterSpacing: -12 },
-  heroCopy: { gap: 9 },
-  kicker: { color: colors.volt, fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
-  heroTitle: { color: colors.text, fontSize: 43, lineHeight: 43, fontWeight: '900', letterSpacing: -2 },
-  heroText: { maxWidth: 360, color: '#929BA5', fontSize: 13, lineHeight: 19 },
-  promiseRow: { flexDirection: 'row', gap: 8, marginTop: 22 },
-  promise: { flex: 1, minHeight: 96, padding: 11, borderRadius: 16, backgroundColor: '#090D11', borderWidth: 1, borderColor: '#1E262D' },
-  promiseNumber: { color: colors.volt, fontSize: 8, fontWeight: '900' },
-  promiseTitle: { marginTop: 12, color: colors.text, fontSize: 9, fontWeight: '900', letterSpacing: .4 },
-  promiseCopy: { marginTop: 5, color: '#6D7883', fontSize: 8, lineHeight: 12 },
-  primaryButton: { minHeight: 58, marginTop: 'auto', borderRadius: 18, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.volt },
-  primaryButtonText: { color: '#07090B', fontSize: 11, fontWeight: '900', letterSpacing: 1.2 },
-  primaryButtonArrow: { color: '#07090B', fontSize: 20, fontWeight: '900' },
-
+  kicker: { color: colors.volt, fontFamily: fonts.bold, fontSize: 8, letterSpacing: 1.5 },
   stepBody: { flex: 1, paddingTop: 28, paddingBottom: 16, gap: 24 },
   stepHeadline: { gap: 8 },
-  stepTitle: { color: colors.text, fontSize: 41, lineHeight: 41, fontWeight: '900', letterSpacing: -1.8 },
-  stepText: { maxWidth: 360, color: '#89939D', fontSize: 12, lineHeight: 18 },
+  stepTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 47, lineHeight: 44, letterSpacing: -1 },
+  stepText: { maxWidth: 360, color: '#89939D', fontFamily: fonts.body, fontSize: 11, lineHeight: 17 },
   gamesGrid: { gap: 10 },
-  gameCard: { minHeight: 98, flexDirection: 'row', alignItems: 'center', gap: 13, padding: 13, borderRadius: 21, backgroundColor: '#090D12', borderWidth: 1, borderColor: '#1D252D' },
-  gameCardActive: { backgroundColor: '#0D120C', borderColor: '#4B5920' },
-  gameMark: { width: 58, height: 58, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0B1015' },
-  gameCode: { fontSize: 24, fontWeight: '900' },
-  gameCopy: { flex: 1, minWidth: 0 },
-  gameShort: { color: colors.text, fontSize: 14, fontWeight: '900' },
-  gameName: { marginTop: 2, color: '#A4ADB6', fontSize: 10, fontWeight: '700' },
-  gameDetail: { marginTop: 7, color: '#69747E', fontSize: 8 },
-  check: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#303A43' },
+  gameCard: { position: 'relative', minHeight: 108, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', gap: 13, padding: 13, borderRadius: 21, backgroundColor: '#090D12', borderWidth: 1, borderColor: '#273039' },
+  gameCardActive: { borderColor: colors.volt, boxShadow: '0 0 18px rgba(224,255,59,.12)' },
+  gameBackdrop: { width: '100%', height: '100%', opacity: .82, pointerEvents: 'none' },
+  nonInteractive: { pointerEvents: 'none' },
+  gameMark: { width: 58, height: 58, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,8,11,.72)', zIndex: 1 },
+  gameCopy: { flex: 1, minWidth: 0, zIndex: 1 },
+  gameShort: { color: colors.text, fontFamily: fonts.bold, fontSize: 13 },
+  gameName: { marginTop: 2, color: '#A4ADB6', fontFamily: fonts.medium, fontSize: 9 },
+  gameDetail: { marginTop: 7, color: '#69747E', fontFamily: fonts.body, fontSize: 7 },
+  check: { width: 30, height: 30, zIndex: 1, borderRadius: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#52606C', backgroundColor: 'rgba(5,8,11,.68)' },
   checkActive: { backgroundColor: colors.volt, borderColor: colors.volt },
-  checkText: { color: '#71808C', fontSize: 15, fontWeight: '900' },
+  checkText: { color: '#71808C', fontFamily: fonts.bold, fontSize: 14 },
   checkTextActive: { color: '#080A0C' },
 
   teamsScroll: { flex: 1, marginHorizontal: -2 },
   teamsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, padding: 2, paddingBottom: 12 },
-  teamCard: { position: 'relative', width: '31.6%', minHeight: 126, alignItems: 'center', padding: 10, borderRadius: 19, backgroundColor: '#090D12', borderWidth: 1, borderColor: '#1D252D' },
+  teamCard: { position: 'relative', width: '31.6%', minHeight: 132, overflow: 'hidden', alignItems: 'center', padding: 10, borderRadius: 19, backgroundColor: '#090D12', borderWidth: 1, borderColor: '#1D252D' },
   teamCardActive: { backgroundColor: '#0E130C', borderColor: colors.volt },
-  teamLogo: { width: 55, height: 55, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0C1116' },
-  teamTag: { maxWidth: 46, fontSize: 12, fontWeight: '900' },
-  teamName: { width: '100%', marginTop: 9, color: colors.text, fontSize: 9, lineHeight: 12, fontWeight: '900', textAlign: 'center' },
+  teamAura: { position: 'absolute', width: 90, height: 90, top: -48, right: -42, borderRadius: 45, opacity: 0.12, pointerEvents: 'none' },
+  teamName: { width: '100%', marginTop: 9, color: colors.text, fontFamily: fonts.bold, fontSize: 8, lineHeight: 11, textAlign: 'center' },
   gameDots: { flexDirection: 'row', gap: 4, marginTop: 7 },
   gameDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#252E36' },
   gameDotActive: { backgroundColor: colors.volt },
   selectedPill: { position: 'absolute', top: 7, right: 7, paddingHorizontal: 5, paddingVertical: 3, borderRadius: 999, backgroundColor: colors.volt },
-  selectedPillText: { color: '#080A0C', fontSize: 5, fontWeight: '900' },
+  selectedPillText: { color: '#080A0C', fontFamily: fonts.bold, fontSize: 5 },
 
   bottomActions: { marginTop: 'auto', flexDirection: 'row', alignItems: 'center', gap: 10 },
   backButton: { minHeight: 54, paddingHorizontal: 5, justifyContent: 'center' },
-  backText: { color: '#747F89', fontSize: 9, fontWeight: '900', letterSpacing: .8 },
+  backText: { color: '#747F89', fontFamily: fonts.bold, fontSize: 8, letterSpacing: .8 },
   nextButton: { flex: 1, minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  nextText: { color: '#080A0C', fontSize: 9, fontWeight: '900', letterSpacing: .9 },
+  nextText: { color: '#080A0C', fontFamily: fonts.bold, fontSize: 8, letterSpacing: .9 },
   disabled: { opacity: .35 },
-  errorText: { color: '#FF7C87', fontSize: 10, lineHeight: 14 },
+  errorText: { color: '#FF7C87', fontFamily: fonts.medium, fontSize: 9, lineHeight: 14 },
   pressed: { opacity: .77 },
 });

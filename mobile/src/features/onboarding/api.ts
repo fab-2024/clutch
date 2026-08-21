@@ -24,7 +24,7 @@ export async function loadTeamOrganizations(games: GameId[]): Promise<TeamOrgani
 
   const { data, error } = await supabase
     .from('equipes')
-    .select('id,nom,tag,jeu')
+    .select('id,nom,tag,jeu,logo')
     .in('jeu', games)
     .order('nom', { ascending: true });
 
@@ -42,6 +42,7 @@ export async function loadTeamOrganizations(games: GameId[]): Promise<TeamOrgani
         key,
         name: DISPLAY_NAMES[key] ?? team.nom,
         tag: team.tag,
+        logo: team.logo,
         games: [team.jeu],
         teams: [team],
       });
@@ -49,6 +50,7 @@ export async function loadTeamOrganizations(games: GameId[]): Promise<TeamOrgani
     }
 
     existing.teams.push(team);
+    if (!existing.logo && team.logo) existing.logo = team.logo;
     if (!existing.games.includes(team.jeu)) existing.games.push(team.jeu);
   }
 
