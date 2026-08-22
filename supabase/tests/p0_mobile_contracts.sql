@@ -16,14 +16,19 @@ declare
     'public.clutch_admin_regler_match_v1(text,integer,integer,text,text,text,timestamp with time zone)',
     'public.clutch_admin_reporter_match_v1(text,timestamp with time zone)',
     'public.clutch_assurer_mon_profil_v1()',
+    'public.clutch_acheter_cosmetique_v1(text)',
+    'public.clutch_boutique_cosmetique_v1()',
     'public.clutch_classement_frags(text)',
     'public.clutch_communaute_dashboard_v4()',
+    'public.clutch_cosmetiques_profil_v1(text)',
     'public.clutch_definir_jeux_suivis(text[])',
     'public.clutch_demander_ami(uuid)',
+    'public.clutch_equiper_cosmetique_v1(text)',
     'public.clutch_etat_frags(text)',
     'public.clutch_friend_quests_dashboard_v1()',
     'public.clutch_call_context_v1(text)',
     'public.clutch_mes_calls_v1(text)',
+    'public.clutch_mes_cosmetiques_v1()',
     'public.clutch_mes_amis(text)',
     'public.clutch_mes_defis_match(integer)',
     'public.clutch_mes_ligues()',
@@ -42,6 +47,7 @@ declare
   v_anon_functions constant text[] := array[
     'public.classement_communautes()',
     'public.clutch_communaute_dashboard_v4()',
+    'public.clutch_cosmetiques_profil_v1(text)',
     'public.clutch_profil_public_v1(text)',
     'public.clutch_projection_match_frags(text)'
   ];

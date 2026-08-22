@@ -1,4 +1,5 @@
 import type { SeasonalGradeState, SeasonalGradeSummary } from '@/src/features/ranking/grades';
+import type { EquippedCosmetics } from '@/src/features/shop/types';
 
 export type ProfileRanking = {
   saison_id: string | null;
@@ -84,6 +85,7 @@ export type ProfileData = {
   pinnedBadges: ProfileBadge[];
   arsenalBadges: ProfileBadge[];
   level: LevelState;
+  cosmetics: EquippedCosmetics;
 };
 
 export type RawProfile = {

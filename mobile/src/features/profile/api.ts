@@ -1,6 +1,7 @@
 import { supabase } from '@/src/lib/supabase';
 import type { GameId } from '@/src/features/onboarding/types';
 import { normalizeGradeState, normalizeGradeSummary } from '@/src/features/ranking/grades';
+import { loadProfileCosmetics } from '@/src/features/shop/api';
 
 import { evaluateBadges, resolveBadgeSelection } from './badges';
 import { calculateProfileXp, levelFromXp } from './progression';
@@ -14,9 +15,10 @@ import type {
 import { toNumber } from './utils';
 
 export async function loadProfileData(pseudo: string): Promise<ProfileData> {
-  const [profileResult, progressionResult] = await Promise.all([
+  const [profileResult, progressionResult, cosmetics] = await Promise.all([
     supabase.rpc('clutch_profil_public_v1', { p_pseudo: pseudo }),
     supabase.rpc('clutch_progression_profil_v1', { p_pseudo: pseudo }),
+    loadProfileCosmetics(pseudo),
   ]);
   if (profileResult.error) throw profileResult.error;
   if (progressionResult.error) throw progressionResult.error;
@@ -58,6 +60,7 @@ export async function loadProfileData(pseudo: string): Promise<ProfileData> {
     pinnedBadges,
     arsenalBadges,
     level: levelFromXp(xp),
+    cosmetics,
   };
 }
 

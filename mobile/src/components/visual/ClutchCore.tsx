@@ -17,10 +17,19 @@ type ClutchCoreProps = {
   size?: number;
   compact?: boolean;
   label?: string;
+  styleKey?: string | null;
+  accent?: string | null;
 };
 
-export default function ClutchCore({ size = 244, compact = false, label = 'CORE // ONLINE' }: ClutchCoreProps) {
+export default function ClutchCore({
+  size = 244,
+  compact = false,
+  label = 'CORE // ONLINE',
+  styleKey,
+  accent,
+}: ClutchCoreProps) {
   const reduceMotion = useReducedMotion();
+  const palette = corePalette(styleKey, accent);
   const orbit = useSharedValue(0);
   const float = useSharedValue(0);
   const pulse = useSharedValue(0);
@@ -71,15 +80,25 @@ export default function ClutchCore({ size = 244, compact = false, label = 'CORE 
       accessibilityRole="image"
       style={[styles.stage, { width: size, height: size }]}
     >
-      <Animated.View style={[styles.glow, glowStyle, { width: middle, height: middle, borderRadius: middle / 2 }]} />
+      <Animated.View style={[
+        styles.glow,
+        glowStyle,
+        {
+          width: middle,
+          height: middle,
+          borderRadius: middle / 2,
+          backgroundColor: palette.accent,
+          boxShadow: `0 0 40px ${withAlpha(palette.accent, '70')}`,
+        },
+      ]} />
 
       <Animated.View style={[styles.orbit, orbitStyle, { width: size * 0.92, height: size * 0.92, borderRadius: size / 2 }]}>
-        <View style={[styles.orbitNode, { top: size * 0.02, left: size * 0.43 }]} />
+        <View style={[styles.orbitNode, { top: size * 0.02, left: size * 0.43, backgroundColor: palette.accent, boxShadow: `0 0 9px ${withAlpha(palette.accent, 'CC')}` }]} />
         <View style={[styles.orbitNodeMuted, { bottom: size * 0.07, right: size * 0.11 }]} />
       </Animated.View>
 
       <Animated.View style={[styles.orbitInner, reverseOrbitStyle, { width: size * 0.72, height: size * 0.72, borderRadius: size / 2 }]}>
-        <View style={[styles.orbitDash, { top: -2, left: size * 0.24 }]} />
+        <View style={[styles.orbitDash, { top: -2, left: size * 0.24, backgroundColor: palette.accent }]} />
       </Animated.View>
 
       <View style={[styles.axis, { width: size * 0.82, transform: [{ rotate: '-31deg' }] }]} />
@@ -87,43 +106,61 @@ export default function ClutchCore({ size = 244, compact = false, label = 'CORE 
 
       <Animated.View style={[styles.coreWrap, coreStyle, { width: inner, height: inner, borderRadius: inner * 0.34 }]}>
         <LinearGradient
-          colors={['#F8FFC7', colors.volt, '#9EB315', '#242A08']}
+          colors={palette.gradient}
           end={{ x: 0.92, y: 1 }}
           start={{ x: 0.08, y: 0 }}
-          style={[styles.core, { borderRadius: inner * 0.34 }]}
+          style={[styles.core, { borderRadius: inner * 0.34, borderColor: palette.highlight }]}
         >
           <View style={styles.coreReflection} />
-          <Text style={[styles.coreLetter, { fontSize: inner * 0.55, lineHeight: inner * 0.59 }]}>C</Text>
+          <Text style={[styles.coreLetter, { color: palette.ink, fontSize: inner * 0.55, lineHeight: inner * 0.59 }]}>C</Text>
           <View style={styles.coreCut} />
         </LinearGradient>
       </Animated.View>
 
       {!compact ? (
-        <View style={styles.status}>
-          <View style={styles.statusDot} />
-          <Text style={styles.statusText}>{label}</Text>
+        <View style={[styles.status, { borderColor: withAlpha(palette.accent, '55') }]}>
+          <View style={[styles.statusDot, { backgroundColor: palette.accent }]} />
+          <Text style={[styles.statusText, { color: palette.accent }]}>{label}</Text>
         </View>
       ) : null}
     </View>
   );
 }
 
+function corePalette(styleKey?: string | null, accent?: string | null) {
+  const resolvedAccent = /^#[0-9a-f]{6}$/i.test(accent ?? '') ? String(accent).toUpperCase() : colors.volt;
+  if (styleKey === 'core-plasma') {
+    return { accent: resolvedAccent, gradient: ['#FFE2FA', '#FF5DDF', '#8335B7', '#25102D'] as const, highlight: '#FFD0F7', ink: '#160817' };
+  }
+  if (styleKey === 'core-holo') {
+    return { accent: resolvedAccent, gradient: ['#ECFFFF', '#54D9FF', '#757BFF', '#172046'] as const, highlight: '#D4FCFF', ink: '#07121A' };
+  }
+  if (styleKey === 'core-eclipse') {
+    return { accent: resolvedAccent, gradient: ['#FFFFFF', '#D8DCE2', '#6C7280', '#0C0F14'] as const, highlight: '#FFFFFF', ink: '#050608' };
+  }
+  return { accent: resolvedAccent, gradient: ['#F8FFC7', colors.volt, '#9EB315', '#242A08'] as const, highlight: '#F7FFB4', ink: '#090C0E' };
+}
+
+function withAlpha(color: string, alpha: string) {
+  return /^#[0-9a-f]{6}$/i.test(color) ? `${color}${alpha}` : color;
+}
+
 const styles = StyleSheet.create({
   stage: { position: 'relative', alignItems: 'center', justifyContent: 'center' },
-  glow: { position: 'absolute', backgroundColor: colors.volt, boxShadow: '0 0 40px rgba(224,255,59,.55)' },
+  glow: { position: 'absolute' },
   orbit: { position: 'absolute', borderWidth: 1, borderColor: '#38431D' },
   orbitInner: { position: 'absolute', borderWidth: 1, borderColor: '#273139', borderStyle: 'dashed' },
-  orbitNode: { position: 'absolute', width: 10, height: 10, borderRadius: 5, backgroundColor: colors.volt, boxShadow: '0 0 9px rgba(224,255,59,.8)' },
+  orbitNode: { position: 'absolute', width: 10, height: 10, borderRadius: 5 },
   orbitNodeMuted: { position: 'absolute', width: 7, height: 7, borderRadius: 4, backgroundColor: '#66717B' },
-  orbitDash: { position: 'absolute', width: 26, height: 4, borderRadius: 3, backgroundColor: colors.volt },
+  orbitDash: { position: 'absolute', width: 26, height: 4, borderRadius: 3 },
   axis: { position: 'absolute', height: 1, backgroundColor: '#556221' },
   axisMuted: { position: 'absolute', height: 1, backgroundColor: '#273139' },
   coreWrap: { overflow: 'hidden', boxShadow: '0 13px 25px rgba(232,255,61,.38)', elevation: 12 },
-  core: { flex: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#F7FFB4' },
+  core: { flex: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   coreReflection: { position: 'absolute', top: -18, left: -8, width: '86%', height: '52%', borderRadius: 999, backgroundColor: 'rgba(255,255,255,.36)', transform: [{ rotate: '-18deg' }] },
   coreLetter: { color: '#090C0E', fontFamily: fonts.display, letterSpacing: -5 },
   coreCut: { position: 'absolute', right: -15, bottom: -18, width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(4,7,8,.22)' },
   status: { position: 'absolute', bottom: 1, minHeight: 27, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 999, backgroundColor: '#0B100E', borderWidth: 1, borderColor: '#344018' },
-  statusDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.volt },
-  statusText: { color: colors.volt, fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1.1 },
+  statusDot: { width: 5, height: 5, borderRadius: 3 },
+  statusText: { fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1.1 },
 });

@@ -7,11 +7,14 @@ import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIco
 import { signOut } from '@/src/features/auth/api';
 import { gradeAccent } from '@/src/features/ranking/grades';
 import { useAuth } from '@/src/providers/AuthProvider';
+import { useCosmetics } from '@/src/providers/CosmeticsProvider';
+import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 import { teamHue } from '@/src/utils/teams';
 
 import { loadProfileData } from '../api';
 import type { ProfileBadge, ProfileData, ProfileRanking, RecentPrediction } from '../types';
+import ProfileShareCard from './ProfileShareCard';
 
 type ProfileScreenProps = {
   previewData?: ProfileData;
@@ -21,6 +24,8 @@ type ProfileScreenProps = {
 
 export default function ProfileScreen({ previewData, profilePseudo, publicView = false }: ProfileScreenProps) {
   const { profile, session } = useAuth();
+  const { equipped } = useCosmetics();
+  const { volts } = useEconomy();
   const [data, setData] = useState<ProfileData | null>(previewData ?? null);
   const [loading, setLoading] = useState(!previewData);
   const [refreshing, setRefreshing] = useState(false);
@@ -55,6 +60,9 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
 
   const hue = data?.favoriteTeam ? teamHue(data.favoriteTeam.tag, data.favoriteTeam.nom) : 76;
   const teamColor = `hsl(${hue}, 68%, 55%)`;
+  const hasLiveCosmetics = Boolean(equipped.frame || equipped.title || equipped.core || equipped.factionEffect || equipped.profileCard);
+  const cosmetics = !previewData && !publicView && hasLiveCosmetics ? equipped : data?.cosmetics;
+  const frameAccent = cosmetics?.frame?.accent ?? teamColor;
   const obtained = data?.badges.filter((badge) => badge.obtained) ?? [];
   const settledCalls = data?.ranking.pronostics_regles ?? 0;
   const placementGoal = data?.ranking.grade.objectif_placements ?? 5;
@@ -94,17 +102,32 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
           </Pressable>
         ) : null}
 
-        <View style={[styles.hero, { borderColor: `${teamColor}66` }]}>
-          <View style={[styles.heroGlow, { backgroundColor: teamColor }]} />
+        {!publicView ? (
+          <Pressable accessibilityLabel="Ouvrir la boutique cosmétique" accessibilityRole="button" onPress={() => router.push('/shop' as never)} style={({ pressed }) => [styles.shopEntry, pressed && styles.pressed]}>
+            <View style={styles.shopMark}><CurrencyIcon color="#080A0C" kind="volts" size={22} /></View>
+            <View style={styles.shopCopy}>
+              <Text style={styles.shopLabel}>BOUTIQUE COSMÉTIQUE</Text>
+              <Text style={styles.shopTitle}>Cadres, titres et apparences</Text>
+              <Text style={styles.shopPromise}>Aucun avantage compétitif.</Text>
+            </View>
+            <View style={styles.shopBalance}><Text style={styles.shopBalanceValue}>{volts == null ? '—' : formatNumber(volts)}</Text><Text style={styles.shopBalanceLabel}>VOLTS</Text></View>
+          </Pressable>
+        ) : null}
+
+        <View style={[styles.hero, { borderColor: withAlpha(frameAccent, '88') }]}>
+          <View style={[styles.heroGlow, { backgroundColor: frameAccent }]} />
           <Text style={[styles.watermark, { color: teamColor }]}>{data?.favoriteTeam?.tag || 'CLUTCH'}</Text>
-          <Text style={styles.heroEyebrow}>IDENTITÉ // ÉTENDARD</Text>
+          <View style={styles.heroEyebrowRow}>
+            <Text style={styles.heroEyebrow}>IDENTITÉ // ÉTENDARD</Text>
+            {cosmetics?.frame ? <Text style={[styles.cosmeticTag, { color: frameAccent }]}>{cosmetics.frame.name.toUpperCase()}</Text> : null}
+          </View>
 
           <View style={styles.identityRow}>
             <Emblem level={data?.level.level ?? 0} />
             <View style={styles.identityCopy}>
               <Text style={styles.levelLine}>{loading ? 'NIVEAU —' : `NIVEAU ${data?.level.level} · ${data?.level.title?.toUpperCase()}`}</Text>
               <Text numberOfLines={1} adjustsFontSizeToFit style={styles.pseudo}>{data?.pseudo || pseudo}</Text>
-              <Text style={styles.profileTitle}>{data?.profileTitle || data?.level.prestigeLabel || 'Starter'}</Text>
+              <Text style={[styles.profileTitle, { color: cosmetics?.title?.accent ?? colors.volt }]}>{cosmetics?.title?.name || data?.profileTitle || data?.level.prestigeLabel || 'Starter'}</Text>
             </View>
           </View>
 
@@ -140,6 +163,20 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
           <Stat label="RÉUSSITE" value={loading ? '—' : unranked ? '—' : `${accuracy}%`} detail={unranked ? 'AUCUN VERDICT' : `${data?.ranking.pronostics_gagnes ?? 0}/${settledCalls}`} />
           <Stat label="SÉRIE" value={loading ? '—' : unranked ? '—' : `${data?.currentStreak ?? 0}`} detail={unranked ? 'NON COMMENCÉE' : 'VICTOIRES'} />
         </View>
+
+        {!loading && data ? (
+          <ProfileShareCard
+            accuracy={accuracy}
+            cosmetic={cosmetics?.profileCard}
+            frags={data.ranking.frags}
+            grade={unranked || provisional ? 'En placement' : data.ranking.grade.libelle || 'Non classé'}
+            profileTitle={cosmetics?.title?.name || data.profileTitle || data.level.prestigeLabel || 'Starter'}
+            pseudo={data.pseudo || pseudo}
+            publicProfile={data.publicProfile}
+            rank={data.ranking.rang}
+            teamTag={data.favoriteTeam?.tag || 'CLUTCH'}
+          />
+        ) : null}
 
         <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>FACTION</Text><Text style={styles.sectionTitle}>TA COULEUR DANS CLUTCH.</Text></View></View>
         {data?.favoriteTeam ? (
@@ -295,14 +332,24 @@ function roman(level: number) { return ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'
 function gameName(game: string) { const key = String(game || '').toLowerCase(); if (key.includes('lol') || key.includes('league')) return 'LoL'; if (key.includes('valorant')) return 'VAL'; if (key.includes('cs')) return 'CS2'; return 'ESPORT'; }
 function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
 function formatDecimal(value: number) { return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(Number(value || 0)); }
+function withAlpha(color: string, alpha: string) { return /^#[0-9a-f]{6}$/i.test(color) ? `${color}${alpha}` : color; }
 
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 22 },
   header: { minHeight: 78, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 }, logoBox: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, logoGlyph: { color: '#06090C', fontFamily: fonts.display, fontSize: 25, lineHeight: 28, letterSpacing: -2 }, wordmarkRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 }, wordmark: { color: colors.text, fontFamily: fonts.bold, fontSize: 17, letterSpacing: 3.1 }, dot: { width: 5, height: 5, marginBottom: 3, borderRadius: 3, backgroundColor: colors.volt }, back: { minHeight: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { ...typography.action, color: colors.text, letterSpacing: 0.6 }, visibility: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { ...typography.label, color: colors.text, letterSpacing: 0.5 },
   error: { marginHorizontal: spacing.md, padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', flexDirection: 'row', gap: 10, justifyContent: 'space-between' }, errorText: { ...typography.body, flex: 1, color: '#FF9AA2' }, retry: { ...typography.action, color: colors.volt },
   settingsEntry: { minHeight: 82, marginHorizontal: spacing.md, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 21, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, settingsMark: { width: 43, height: 43, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E', borderWidth: 1, borderColor: '#3A461D' }, settingsGlyph: { color: colors.volt, fontSize: 16, fontWeight: '900' }, settingsCopy: { flex: 1 }, settingsLabel: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 }, settingsTitle: { ...typography.bodyStrong, marginTop: 4, color: colors.text }, settingsArrow: { color: colors.volt, fontSize: 17, fontWeight: '900' },
-  hero: { position: 'relative', overflow: 'hidden', marginHorizontal: spacing.md, minHeight: 390, padding: 20, borderRadius: 31, backgroundColor: '#0A0F14', borderWidth: 1, gap: 18 }, heroGlow: { position: 'absolute', right: -120, top: -80, width: 310, height: 310, borderRadius: 155, opacity: 0.15 }, watermark: { position: 'absolute', right: -14, top: 80, fontFamily: fonts.display, fontSize: 86, lineHeight: 90, opacity: 0.09, letterSpacing: -5 }, heroEyebrow: { ...typography.eyebrow, zIndex: 2, color: colors.volt, letterSpacing: 1.2 },
-  identityRow: { zIndex: 2, flexDirection: 'row', alignItems: 'center', gap: 15 }, emblemOuter: { width: 94, height: 94, borderRadius: 30, alignItems: 'center', justifyContent: 'center', backgroundColor: '#121812', borderWidth: 1, borderColor: '#48541E' }, emblem: { width: 68, height: 68, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, emblemCut: { position: 'absolute', right: -2, width: 27, height: 38, borderTopLeftRadius: 20, borderBottomLeftRadius: 20, backgroundColor: '#121812' }, emblemLevel: { marginLeft: -6, color: '#080A0C', fontFamily: fonts.display, fontSize: 22 }, identityCopy: { flex: 1, minWidth: 0 }, levelLine: { ...typography.label, color: colors.textMuted, letterSpacing: 0.6 }, pseudo: { marginTop: 4, color: colors.text, fontFamily: fonts.bold, fontSize: 34, lineHeight: 38, letterSpacing: -1.5 }, profileTitle: { ...typography.bodyStrong, marginTop: 4, color: colors.volt },
+  shopEntry: { minHeight: 104, marginHorizontal: spacing.md, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 24, backgroundColor: '#10160E', borderWidth: 1, borderColor: '#45521E' },
+  shopMark: { width: 52, height: 52, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt, boxShadow: '0 0 20px rgba(232,255,61,.16)' },
+  shopCopy: { flex: 1, minWidth: 0 },
+  shopLabel: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 },
+  shopTitle: { ...typography.bodyStrong, marginTop: 4, color: colors.text },
+  shopPromise: { ...typography.caption, marginTop: 2, color: colors.textMuted },
+  shopBalance: { minWidth: 55, alignItems: 'flex-end' },
+  shopBalanceValue: { ...typography.metricSmall, color: colors.text },
+  shopBalanceLabel: { ...typography.label, marginTop: 2, color: colors.textMuted, letterSpacing: .4 },
+  hero: { position: 'relative', overflow: 'hidden', marginHorizontal: spacing.md, minHeight: 390, padding: 20, borderRadius: 31, backgroundColor: '#0A0F14', borderWidth: 1, gap: 18 }, heroGlow: { position: 'absolute', right: -120, top: -80, width: 310, height: 310, borderRadius: 155, opacity: 0.15 }, watermark: { position: 'absolute', right: -14, top: 80, fontFamily: fonts.display, fontSize: 86, lineHeight: 90, opacity: 0.09, letterSpacing: -5 }, heroEyebrowRow: { zIndex: 2, minHeight: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }, heroEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.2 }, cosmeticTag: { ...typography.label, flexShrink: 1, letterSpacing: .45, textAlign: 'right' },
+  identityRow: { zIndex: 2, flexDirection: 'row', alignItems: 'center', gap: 15 }, emblemOuter: { width: 94, height: 94, borderRadius: 30, alignItems: 'center', justifyContent: 'center', backgroundColor: '#121812', borderWidth: 1, borderColor: '#48541E' }, emblem: { width: 68, height: 68, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, emblemCut: { position: 'absolute', right: -2, width: 27, height: 38, borderTopLeftRadius: 20, borderBottomLeftRadius: 20, backgroundColor: '#121812' }, emblemLevel: { marginLeft: -6, color: '#080A0C', fontFamily: fonts.display, fontSize: 22 }, identityCopy: { flex: 1, minWidth: 0 }, levelLine: { ...typography.label, color: colors.textMuted, letterSpacing: 0.6 }, pseudo: { marginTop: 4, color: colors.text, fontFamily: fonts.bold, fontSize: 34, lineHeight: 38, letterSpacing: -1.5 }, profileTitle: { ...typography.bodyStrong, marginTop: 4 },
   badgeStrip: { zIndex: 2, minHeight: 70, flexDirection: 'row', gap: 10, alignItems: 'center' }, badgeToken: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0D1319', borderWidth: 1.2 }, badgeGlyph: { fontSize: 19, fontWeight: '900' }, emptyBadge: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0C1116', borderWidth: 1, borderColor: '#25303A', borderStyle: 'dashed' }, emptyBadgeText: { color: '#66727D', fontSize: 16, lineHeight: 17, fontWeight: '700' }, emptyBadgeLabel: { ...typography.caption, marginTop: 2, color: '#596570', letterSpacing: .25 },
   xpBlock: { zIndex: 2, marginTop: 'auto', padding: 14, borderRadius: 18, backgroundColor: '#080D11', borderWidth: 1, borderColor: '#202A32', gap: 8 }, xpTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, xpLabel: { ...typography.label, color: colors.textMuted, letterSpacing: 0.5 }, xpValue: { ...typography.bodyStrong, color: colors.text }, track: { height: 7, borderRadius: 999, overflow: 'hidden', backgroundColor: '#182028' }, trackFill: { height: '100%', borderRadius: 999, backgroundColor: colors.volt }, xpHint: { ...typography.caption, color: colors.textMuted },
   rankingState: { minHeight: 160, marginHorizontal: spacing.md, padding: 14, borderRadius: 24, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#414D1E' }, rankingStateStep: { width: 82, height: 92, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A0E0A', borderWidth: 1, borderColor: '#4A5822' }, rankingStateStepValue: { ...typography.metric, color: colors.volt }, rankingStateStepLabel: { ...typography.label, marginTop: 4, color: colors.textMuted, letterSpacing: .25, textAlign: 'center' }, rankingStateCopy: { flex: 1, minWidth: 0 }, rankingStateEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 }, rankingStateTitle: { ...typography.cardTitle, marginTop: 5, color: colors.text }, rankingStateText: { ...typography.body, marginTop: 5, color: colors.textMuted }, rankingStateAction: { ...typography.action, marginTop: 8, color: colors.volt, letterSpacing: .3 },

@@ -14,6 +14,7 @@ import AuthRecoveryScreen from '@/src/features/auth/components/AuthRecoveryScree
 import ResultRevealGate from '@/src/features/matches/components/ResultRevealGate';
 import { NotificationBridge } from '@/src/features/notifications';
 import { AuthProvider, useAuth } from '@/src/providers/AuthProvider';
+import { CosmeticsProvider } from '@/src/providers/CosmeticsProvider';
 import { EconomyProvider } from '@/src/providers/EconomyProvider';
 import { colors, typography } from '@/src/theme';
 
@@ -62,8 +63,8 @@ function RootNavigator() {
           <Stack.Screen name="match/[id]" />
           <Stack.Screen name="result/[id]" options={{ animation: 'fade', presentation: 'fullScreenModal' }} />
           <Stack.Screen name="duel/[token]" />
-          <Stack.Screen name="player/[pseudo]" />
           <Stack.Screen name="settings/profile" />
+          <Stack.Screen name="shop" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="admin/matches" />
           <Stack.Screen name="onboarding" />
         </Stack.Protected>
@@ -73,6 +74,8 @@ function RootNavigator() {
         <Stack.Screen name="auth/forgot-password" />
         <Stack.Screen name="auth/callback" />
         <Stack.Screen name="auth/update-password" />
+        <Stack.Screen name="player/[pseudo]" />
+        <Stack.Screen name="shop-preview" options={{ animation: 'fade' }} />
       </Stack>
     </>
   );
@@ -99,8 +102,10 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <EconomyProvider>
-        <StatusBar style="light" />
-        <RootNavigator />
+        <CosmeticsProvider>
+          <StatusBar style="light" />
+          <RootNavigator />
+        </CosmeticsProvider>
       </EconomyProvider>
     </AuthProvider>
   );

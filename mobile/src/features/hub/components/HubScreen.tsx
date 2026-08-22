@@ -19,6 +19,7 @@ import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import ClutchCore from '@/src/components/visual/ClutchCore';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { useAuth } from '@/src/providers/AuthProvider';
+import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
 import { loadHubData } from '../api';
@@ -233,6 +234,7 @@ function Team({ accent, tag, name }: { accent: string; tag: string; name: string
 }
 
 function CorePanel({ hub, loading }: { hub: HubData; loading: boolean }) {
+  const { equipped } = useCosmetics();
   const settled = hub.frags?.pronostics_regles ?? 0;
   const wins = hub.frags?.pronostics_gagnes ?? 0;
   const accuracy = settled ? `${Math.round((wins / settled) * 100)} %` : '—';
@@ -261,7 +263,9 @@ function CorePanel({ hub, loading }: { hub: HubData; loading: boolean }) {
     <Pressable accessibilityLabel="Ouvrir mon rating" accessibilityRole="button" onPress={() => router.push('/(tabs)/profile')} style={({ pressed }) => [styles.coreCard, pressed && styles.pressed]}>
       <LinearGradient colors={['#111711', '#0A0F13', '#080C10']} end={{ x: 1, y: 1 }} start={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
       <View style={styles.coreTop}>
-        <View style={styles.coreVisual}><ClutchCore compact size={130} /></View>
+        <View style={styles.coreVisual}>
+          <ClutchCore accent={equipped.core?.accent} compact size={130} styleKey={equipped.core?.styleKey} />
+        </View>
         <View style={styles.coreCopy}>
           <Text style={styles.coreKicker}>TON RATING FRAGS · {hub.seasonName?.toUpperCase() || 'INTERSAISON'}</Text>
           <View style={styles.coreRatingRow}>

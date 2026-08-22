@@ -30,6 +30,7 @@ import type {
 } from '@/src/features/social/faction/types';
 import { factionProgress, gameLabel } from '@/src/features/social/faction/utils';
 import { useAuth } from '@/src/providers/AuthProvider';
+import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
 const EMPTY_COMMUNITY: CommunityData = { factions: [], moi: null };
@@ -170,6 +171,7 @@ export function SocialHomeExperience({
 }
 
 function FactionRelicHero({ faction, me }: { faction: CommunityFaction | null; me: CommunityMe | null }) {
+  const { equipped } = useCosmetics();
   const reduceMotion = useReducedMotion();
   const [relicFocused, setRelicFocused] = useState(false);
   const float = useSharedValue(0);
@@ -260,11 +262,20 @@ function FactionRelicHero({ faction, me }: { faction: CommunityFaction | null; m
     : progress?.next
       ? `À ${formatNumber(progress.objective)} membres, la relique mute en ${progress.next.name}. Chaque membre présent reçoit alors +${formatNumber(progress.next.reward)} Volts.`
       : '';
+  const factionEffect = equipped.factionEffect;
+  const effectAccent = factionEffect?.accent ?? '#C6A34A';
+  const effectIntensity = factionEffect?.styleKey === 'faction-mutation'
+    ? '4A'
+    : factionEffect?.styleKey === 'faction-war'
+      ? '32'
+      : factionEffect?.styleKey === 'faction-veins'
+        ? '24'
+        : '12';
 
   return (
     <View style={styles.factionHero}>
       <LinearGradient colors={['#121912', '#080D11', '#06090C']} end={{ x: .8, y: 1 }} start={{ x: .1, y: 0 }} style={StyleSheet.absoluteFill} />
-      <View style={styles.heroAura} />
+      <View style={[styles.heroAura, { backgroundColor: `${effectAccent}${effectIntensity}`, boxShadow: `0 0 84px ${effectAccent}${effectIntensity}` }]} />
       <View style={styles.heroAuraCold} />
       <View style={styles.heroGridLineA} />
       <View style={styles.heroGridLineB} />
@@ -289,7 +300,7 @@ function FactionRelicHero({ faction, me }: { faction: CommunityFaction | null; m
         onPress={awakenRelic}
         style={({ pressed }) => [styles.relicStage, relicFocused && styles.relicStageFocused, pressed && styles.relicStagePressed]}
       >
-        <Animated.View style={[styles.relicCoreGlow, corePulse]} />
+        <Animated.View style={[styles.relicCoreGlow, corePulse, { backgroundColor: `${effectAccent}7A`, boxShadow: `0 0 42px ${effectAccent}B8` }]} />
         <View pointerEvents="none" style={styles.bubbleField}>
           {RELIC_BUBBLES.map((bubble) => (
             <Animated.View

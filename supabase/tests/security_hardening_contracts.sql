@@ -12,9 +12,13 @@ declare
     'public.clutch_admin_regler_match_v1(text,integer,integer,text,text,text,timestamp with time zone)',
     'public.clutch_admin_reporter_match_v1(text,timestamp with time zone)',
     'public.clutch_assurer_mon_profil_v1()',
+    'public.clutch_acheter_cosmetique_v1(text)',
     'public.clutch_boutique()',
+    'public.clutch_boutique_cosmetique_v1()',
+    'public.clutch_equiper_cosmetique_v1(text)',
     'public.clutch_est_colistier(uuid)',
     'public.clutch_marquer_resultat_revele(uuid)',
+    'public.clutch_mes_cosmetiques_v1()',
     'public.clutch_prochain_resultat_a_reveler()',
     'public.clutch_resultat_match_v1(text)',
     'public.creer_profil_a_inscription()',
@@ -28,11 +32,16 @@ begin
   end loop;
 
   if not has_function_privilege('authenticated', 'public.clutch_boutique()', 'EXECUTE')
-     or not has_function_privilege('authenticated', 'public.clutch_est_colistier(uuid)', 'EXECUTE') then
+     or not has_function_privilege('authenticated', 'public.clutch_acheter_cosmetique_v1(text)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.clutch_boutique_cosmetique_v1()', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.clutch_equiper_cosmetique_v1(text)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.clutch_est_colistier(uuid)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.clutch_mes_cosmetiques_v1()', 'EXECUTE') then
     raise exception 'authenticated lost a required helper or screen RPC';
   end if;
 
   if not has_function_privilege('anon', 'public.classement_global(text)', 'EXECUTE')
+     or not has_function_privilege('anon', 'public.clutch_cosmetiques_profil_v1(text)', 'EXECUTE')
      or not has_function_privilege('anon', 'public.clutch_defi_match_public(text)', 'EXECUTE')
      or not has_function_privilege('anon', 'public.clutch_ligue_public(text)', 'EXECUTE') then
     raise exception 'legacy public read RPC contract was narrowed unexpectedly';
