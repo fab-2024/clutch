@@ -25,6 +25,8 @@ Une tranche n'est terminée que si :
 - [x] Abandonner fonctionnellement la conviction multiplicative.
 - [x] Séparer la relique permanente de la guerre temporaire.
 - [x] Définir les cinq grades V1.
+- [x] Confirmer le rating saisonnier actuel comme doctrine Rank de GRIFF.
+- [x] Conserver le cinquième emplacement Core dans le Loadout V1.
 
 ### 0.2 Typographie et lisibilité
 
@@ -48,7 +50,7 @@ Une tranche n'est terminée que si :
 
 ### 0.4 Naming en parallèle
 
-- [ ] Produire une liste courte de noms.
+- [x] Retenir `GRIFF.` comme candidat de travail.
 - [ ] Vérifier marque, domaines et identifiants sociaux.
 - [ ] Ne renommer le code et les assets qu'après choix définitif.
 

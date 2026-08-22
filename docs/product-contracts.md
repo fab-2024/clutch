@@ -1,18 +1,48 @@
-# Contrats produit V1
+# Contrats produit GRIFF V1
 
-Statut : décision produit V1
+Version : 1.1
 
-Date : 21 août 2026
+Statut : décision produit adoptée, nom public encore conditionnel
 
-Nom du produit : Clutch, provisoire
+Date : 22 août 2026
 
-Ce document fixe le sens des mécaniques de Clutch avant leur extension. Les
+Nom public de travail : `GRIFF.`
+
+Nom technique actuel : `Clutch`
+
+Ce document fixe le sens des mécaniques du produit avant leur extension. Les
 écrans peuvent évoluer, mais ils ne doivent pas contredire ces règles sans une
-nouvelle décision produit explicite.
+nouvelle décision produit explicite et versionnée.
+
+## 0. Décisions du bloc A
+
+Les décisions suivantes remplacent les passages contradictoires du blueprint
+initial :
+
+- le blueprint GRIFF est adopté comme direction produit et business ;
+- `GRIFF.` reste un nom de travail tant que la recherche de marque, la
+  disponibilité store et la stratégie de domaine n'ont pas reçu un Go formel ;
+- le système Rank actuel est conservé sans changement de doctrine : rating
+  saisonnier initialisé à 1 000, probabilités figées, coefficients `K=60` en
+  placement puis `K=40`, gains et pertes de Frags, cinq placements et
+  promotions ou rétrogradations ;
+- les cinq grades `Recrue`, `Challenger`, `Élite`, `Master` et `Clutch` ainsi
+  que leurs seuils V1 restent la référence ;
+- la sélection hebdomadaire de calls classés et le barème cumulatif uniquement
+  positif du blueprint ne font pas partie de la V1 ;
+- le Loadout conserve cinq emplacements : cadre, bannière, titre, signature de
+  relique et Core. Le Core est une extension identitaire assumée ;
+- aucun identifiant technique `clutch_*`, bundle, package, produit IAP ou clé
+  historique n'est renommé avant le Go sur la marque. La migration de marque
+  sera additive et compatible avec les données existantes.
+
+La recherche de nom et la stratégie de migration sont suivies dans
+[le dossier de validation GRIFF](./griff-name-clearance.md) et
+[la matrice Clutch vers GRIFF](./clutch-to-griff-migration-matrix.md).
 
 ## 1. Promesse
 
-Clutch est un compagnon compétitif esport : le joueur suit les matchs, réalise
+GRIFF est un compagnon compétitif esport : le joueur suit les matchs, réalise
 des calls gratuits, prouve son expertise et fait progresser sa communauté.
 
 Les invariants sont :
@@ -27,7 +57,7 @@ Les invariants sont :
 
 | Terme | Définition |
 | --- | --- |
-| Match | Rencontre esport officielle suivie dans Clutch. |
+| Match | Rencontre esport officielle suivie dans le produit. |
 | Marché | Question résoluble attachée à un match, par exemple « Qui gagne ? ». |
 | Call | Réponse définitive d'un joueur à un marché. |
 | Verdict | Résolution officielle d'un call : réussi, manqué ou annulé. |
@@ -163,7 +193,8 @@ jeux ayant naturellement plus de marchés.
 - coefficient normal actuel : `K=40` ;
 - évolution positive ou négative selon le verdict et la probabilité figée ;
 - plancher cible : 0 ;
-- remise à zéro au début d'une nouvelle saison ;
+- réinitialisation à la valeur initiale de 1 000 au début d'une nouvelle
+  saison ;
 - meilleur résultat de saison conservé dans l'historique.
 
 Le système historique de conviction `0,75x / 1x / 1,5x` est abandonné. Il reste
