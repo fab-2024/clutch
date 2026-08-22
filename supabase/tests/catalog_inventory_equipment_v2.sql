@@ -137,7 +137,7 @@ begin
 
   if (v_shop #>> '{contrat,catalogue,schema_version}')::integer <> 2
      or jsonb_array_length(v_shop #> '{contrat,catalogue,familles_initiales}') <> 4
-     or jsonb_array_length(v_shop -> 'objets') <> 21
+     or jsonb_array_length(v_shop -> 'objets') <> 25
      or v_mission ->> 'famille' <> 'banniere'
      or v_mission ->> 'source' <> 'mission'
      or v_mission ->> 'collection_key' <> 'test-missions'

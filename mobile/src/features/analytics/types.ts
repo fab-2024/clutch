@@ -2,6 +2,10 @@ export const CLIENT_ANALYTICS_EVENTS = [
   'application_active',
   'collection_affichee',
   'objet_consulte',
+  'founder_pack_affiche',
+  'founder_pack_achat_demarre',
+  'founder_pack_restauration_demandee',
+  'founder_pack_achat_annule',
 ] as const;
 
 export type ClientAnalyticsEvent = (typeof CLIENT_ANALYTICS_EVENTS)[number];

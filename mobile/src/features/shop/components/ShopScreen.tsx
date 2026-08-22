@@ -15,6 +15,7 @@ import {
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
+import { FounderPackBanner } from '@/src/features/purchases';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
@@ -283,6 +284,8 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
         </View>
 
         <NovaWeekBanner preview={Boolean(previewData)} />
+
+        <FounderPackBanner preview={Boolean(previewData)} />
 
         {offline ? (
           <View style={styles.offlineBanner}><View style={styles.offlineDot} /><Text style={styles.offlineText}>HORS CONNEXION · DERNIÈRE COLLECTION CONNUE</Text><Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View>

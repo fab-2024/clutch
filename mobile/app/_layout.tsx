@@ -67,6 +67,7 @@ function RootNavigator() {
           <Stack.Screen name="duel/[token]" />
           <Stack.Screen name="settings/profile" />
           <Stack.Screen name="shop" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="founder-pack" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="economy" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="campaign/[key]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="admin/matches" />
@@ -81,6 +82,7 @@ function RootNavigator() {
         <Stack.Screen name="auth/update-password" />
         <Stack.Screen name="player/[pseudo]" />
         <Stack.Screen name="shop-preview" options={{ animation: 'fade' }} />
+        <Stack.Screen name="founder-pack-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="economy-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="campaign-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="campaign-report-preview" options={{ animation: 'fade' }} />

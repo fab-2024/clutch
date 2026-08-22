@@ -1,4 +1,4 @@
--- Runtime regression test for monetization contract v1.
+-- Runtime regression test for the current versioned monetization contract.
 -- The fixture proves cosmetic spending cannot reach legacy non-cosmetic items
 -- or mutate competitive state. All writes are rolled back.
 
@@ -13,8 +13,8 @@ declare
   v_purchase jsonb;
   v_rejected boolean := false;
 begin
-  if (v_contract ->> 'version')::integer <> 1
-     or v_contract ->> 'code' <> 'identity_only_v1'
+  if (v_contract ->> 'version')::integer <> 2
+     or v_contract ->> 'code' <> 'identity_founder_v2'
      or coalesce((v_contract #>> '{devises,frags,achetables}')::boolean, true)
      or coalesce((v_contract #>> '{devises,frags,depensables}')::boolean, true)
      or coalesce((v_contract #>> '{devises,volts,conversion_frags}')::boolean, true)
@@ -22,7 +22,9 @@ begin
      or coalesce((v_contract #>> '{catalogue,objets_possedes_expirent}')::boolean, true)
      or coalesce((v_contract #>> '{catalogue,effets_competitifs}')::boolean, true)
      or coalesce((v_contract #>> '{partenaires,justesse_pronostic_recompensee}')::boolean, true)
-     or coalesce((v_contract #>> '{paiements,actifs}')::boolean, true)
+     or not coalesce((v_contract #>> '{paiements,actifs}')::boolean, false)
+     or coalesce((v_contract #>> '{paiements,packs_volts_actifs}')::boolean, true)
+     or (v_contract #>> '{paiements,founder_pack,volts_inclus}')::integer <> 0
   then
     raise exception 'Monetization contract exposes a forbidden capability: %', v_contract;
   end if;
@@ -63,7 +65,7 @@ begin
 
   select public.clutch_boutique_cosmetique_v1() into v_shop;
   if v_shop -> 'contrat' <> v_contract
-     or jsonb_array_length(v_shop -> 'objets') <> 20
+     or jsonb_array_length(v_shop -> 'objets') <> 24
   then
     raise exception 'Shop does not consume monetization contract v1: %', v_shop;
   end if;
@@ -72,7 +74,7 @@ begin
   values (v_user, 500, 'ajustement', 'monetization-contract-credit');
 
   select public.clutch_acheter_cosmetique_v1('titre-profil-2') into v_purchase;
-  if (v_purchase ->> 'contrat_version')::integer <> 1
+  if (v_purchase ->> 'contrat_version')::integer <> 2
      or not (v_purchase ->> 'achete')::boolean
      or (v_purchase ->> 'solde')::integer <> 250
      or (

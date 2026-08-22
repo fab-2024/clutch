@@ -42,6 +42,7 @@ src/
     onboarding/
     hub/
     matches/
+    purchases/                Founder Pack et achats natifs
     profile/
     social/
       missions/
@@ -73,6 +74,11 @@ Exécuter depuis la racine du dépôt :
 npm run mobile:architecture
 npm run mobile:typecheck
 ```
+
+Le Founder Pack peut être prévisualisé sur le web à
+`/founder-pack-preview`, mais son paiement doit être testé dans une nouvelle
+build native. La configuration complète des stores, de RevenueCat et de
+Supabase est décrite dans [`docs/founder-pack-testing.md`](docs/founder-pack-testing.md).
 
 ## Règles produit et sécurité
 
