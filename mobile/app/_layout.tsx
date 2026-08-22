@@ -65,6 +65,7 @@ function RootNavigator() {
           <Stack.Screen name="duel/[token]" />
           <Stack.Screen name="settings/profile" />
           <Stack.Screen name="shop" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="economy" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="admin/matches" />
           <Stack.Screen name="onboarding" />
         </Stack.Protected>
@@ -76,6 +77,7 @@ function RootNavigator() {
         <Stack.Screen name="auth/update-password" />
         <Stack.Screen name="player/[pseudo]" />
         <Stack.Screen name="shop-preview" options={{ animation: 'fade' }} />
+        <Stack.Screen name="economy-preview" options={{ animation: 'fade' }} />
       </Stack>
     </>
   );

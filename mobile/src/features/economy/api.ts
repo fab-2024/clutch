@@ -1,6 +1,11 @@
 import { supabase } from '@/src/lib/supabase';
 
-import type { PlayerEconomy } from './types';
+import type {
+  PlayerEconomy,
+  VoltLedger,
+  VoltMovement,
+  VoltMovementSource,
+} from './types';
 
 type FragsState = {
   frags?: number | null;
@@ -36,7 +41,102 @@ export async function loadPlayerEconomy(userId: string): Promise<PlayerEconomy> 
   };
 }
 
+export async function loadVoltLedger(limit = 24, before: string | null = null): Promise<VoltLedger> {
+  const { data, error } = await supabase.rpc('clutch_journal_volts_v1', {
+    p_limit: Math.max(1, Math.min(Math.round(limit), 100)),
+    p_before: before,
+  });
+
+  if (error) throw error;
+
+  const raw = recordValue(data);
+  const integrity = recordValue(raw.integrite);
+  return {
+    balance: nonNegativeInteger(raw.solde),
+    movements: arrayValue(raw.mouvements).map(parseVoltMovement).filter((item): item is VoltMovement => item !== null),
+    hasMore: raw.has_more === true,
+    integrity: {
+      convertsToFrags: falseLiteral(integrity.conversion_volts_vers_frags),
+      affectsRanking: falseLiteral(integrity.impact_classement),
+    },
+  };
+}
+
 function toBalance(value: unknown): number | null {
   const balance = Number(value);
   return Number.isFinite(balance) ? Math.max(0, Math.round(balance)) : null;
+}
+
+const VOLT_SOURCES: VoltMovementSource[] = [
+  'onboarding',
+  'progression',
+  'mission',
+  'activation',
+  'exceptionnelle',
+  'achat_cosmetique',
+  'ajustement',
+];
+
+function parseVoltMovement(value: unknown): VoltMovement | null {
+  const raw = recordValue(value);
+  const id = stringValue(raw.id);
+  const createdAt = stringValue(raw.date);
+  const idempotencyKey = stringValue(raw.cle_idempotence);
+  if (!id || !createdAt || !idempotencyKey) return null;
+
+  const linkedObject = recordValue(raw.objet);
+  const objectId = stringValue(linkedObject.id);
+  const sourceValue = stringValue(raw.source_economique) as VoltMovementSource;
+
+  return {
+    id,
+    amount: integerValue(raw.montant),
+    source: VOLT_SOURCES.includes(sourceValue) ? sourceValue : 'ajustement',
+    origin: stringValue(raw.origine),
+    reference: stringValue(raw.reference),
+    object: objectId
+      ? {
+          id: objectId,
+          name: stringValue(linkedObject.nom) || objectId,
+          slot: stringValue(linkedObject.emplacement),
+        }
+      : null,
+    campaignKey: nullableString(raw.campagne_key),
+    createdAt,
+    idempotencyKey,
+    balanceAfter: nonNegativeInteger(raw.solde_apres),
+  };
+}
+
+function recordValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function arrayValue(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function stringValue(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
+function nullableString(value: unknown): string | null {
+  const result = stringValue(value).trim();
+  return result || null;
+}
+
+function integerValue(value: unknown): number {
+  const result = Number(value);
+  return Number.isFinite(result) ? Math.round(result) : 0;
+}
+
+function nonNegativeInteger(value: unknown): number {
+  return Math.max(0, integerValue(value));
+}
+
+function falseLiteral(value: unknown): false {
+  if (value !== false) throw new Error('Le contrat d’intégrité des Volts est invalide.');
+  return false;
 }

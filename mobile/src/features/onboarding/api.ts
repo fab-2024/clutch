@@ -59,15 +59,11 @@ export async function loadTeamOrganizations(games: GameId[]): Promise<TeamOrgani
     .slice(0, 18);
 }
 
-export async function saveOnboarding(games: GameId[], teamId: string, userId: string) {
-  const { error: gamesError } = await supabase.rpc('clutch_definir_jeux_suivis', {
+export async function saveOnboarding(games: GameId[], teamId: string) {
+  const { data, error } = await supabase.rpc('clutch_terminer_onboarding_v1', {
     p_jeux: games,
+    p_equipe_id: teamId,
   });
-  if (gamesError) throw gamesError;
-
-  const { error: teamError } = await supabase
-    .from('profils')
-    .update({ equipe_favorite_id: teamId })
-    .eq('id', userId);
-  if (teamError) throw teamError;
+  if (error) throw error;
+  return data;
 }

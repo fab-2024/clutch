@@ -26,7 +26,7 @@ type ProfileScreenProps = {
 export default function ProfileScreen({ previewData, profilePseudo, publicView = false }: ProfileScreenProps) {
   const { profile, session } = useAuth();
   const { equipped } = useCosmetics();
-  const { volts } = useEconomy();
+  const { refresh: refreshEconomy, volts } = useEconomy();
   const [data, setData] = useState<ProfileData | null>(previewData ?? null);
   const [loading, setLoading] = useState(!previewData);
   const [refreshing, setRefreshing] = useState(false);
@@ -46,10 +46,16 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
     }
     refresh ? setRefreshing(true) : setLoading(true);
     setError(null);
-    try { setData(await loadProfileData(pseudo)); }
+    try {
+      const [nextProfile] = await Promise.all([
+        loadProfileData(pseudo),
+        refresh ? refreshEconomy() : Promise.resolve(),
+      ]);
+      setData(nextProfile);
+    }
     catch (caught) { setError(caught instanceof Error ? caught.message : 'Impossible de charger le profil.'); }
     finally { setLoading(false); setRefreshing(false); }
-  }, [previewData, profile?.equipe_favorite_id, profile?.profil_public, pseudo]);
+  }, [previewData, profile?.equipe_favorite_id, profile?.profil_public, pseudo, refreshEconomy]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -112,6 +118,14 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
               <Text style={styles.shopPromise}>Visible partout. Aucun avantage compétitif.</Text>
             </View>
             <View style={styles.shopBalance}><Text style={styles.shopBalanceValue}>{volts == null ? '—' : formatNumber(volts)}</Text><Text style={styles.shopBalanceLabel}>VOLTS</Text></View>
+          </Pressable>
+        ) : null}
+
+        {!publicView ? (
+          <Pressable accessibilityLabel="Ouvrir le journal des Volts" accessibilityRole="button" onPress={() => router.push('/economy' as never)} style={({ pressed }) => [styles.ledgerEntry, pressed && styles.pressed]}>
+            <View style={styles.ledgerMark}><Text style={styles.ledgerGlyph}>≋</Text></View>
+            <View style={styles.ledgerCopy}><Text style={styles.ledgerLabel}>JOURNAL DES VOLTS</Text><Text style={styles.ledgerTitle}>Chaque gain et dépense, ligne par ligne</Text></View>
+            <Text style={styles.ledgerArrow}>→</Text>
           </Pressable>
         ) : null}
 
@@ -345,6 +359,13 @@ const styles = StyleSheet.create({
   shopBalance: { minWidth: 55, alignItems: 'flex-end' },
   shopBalanceValue: { ...typography.metricSmall, color: colors.text },
   shopBalanceLabel: { ...typography.label, marginTop: 2, color: colors.textMuted, letterSpacing: .4 },
+  ledgerEntry: { minHeight: 68, marginHorizontal: spacing.md, marginTop: -10, paddingHorizontal: 13, flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 19, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#28313A' },
+  ledgerMark: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: '#151C0E', borderWidth: 1, borderColor: '#3A461D' },
+  ledgerGlyph: { color: colors.volt, fontSize: 19, lineHeight: 21, fontWeight: '900' },
+  ledgerCopy: { flex: 1, minWidth: 0 },
+  ledgerLabel: { ...typography.eyebrow, color: colors.volt, letterSpacing: .65 },
+  ledgerTitle: { ...typography.caption, marginTop: 3, color: colors.textSubtle },
+  ledgerArrow: { color: colors.volt, fontSize: 17, fontWeight: '900' },
   hero: { position: 'relative', overflow: 'hidden', marginHorizontal: spacing.md, minHeight: 390, padding: 20, borderRadius: 31, backgroundColor: '#0A0F14', borderWidth: 1, gap: 18 }, heroGlow: { position: 'absolute', right: -120, top: -80, width: 310, height: 310, borderRadius: 155, opacity: 0.15 }, watermark: { position: 'absolute', right: -14, top: 80, fontFamily: fonts.display, fontSize: 86, lineHeight: 90, opacity: 0.09, letterSpacing: -5 }, heroEyebrowRow: { zIndex: 2, minHeight: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }, heroEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.2 }, cosmeticTag: { ...typography.label, flexShrink: 1, letterSpacing: .45, textAlign: 'right' },
   identityRow: { zIndex: 2, flexDirection: 'row', alignItems: 'center', gap: 15 }, identityCopy: { flex: 1, minWidth: 0 }, levelLine: { ...typography.label, color: colors.textMuted, letterSpacing: 0.6 }, pseudo: { marginTop: 4, color: colors.text, fontFamily: fonts.bold, fontSize: 34, lineHeight: 38, letterSpacing: -1.5 }, profileTitle: { ...typography.bodyStrong, marginTop: 4 },
   badgeStrip: { zIndex: 2, minHeight: 70, flexDirection: 'row', gap: 10, alignItems: 'center' }, badgeToken: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0D1319', borderWidth: 1.2 }, badgeGlyph: { fontSize: 19, fontWeight: '900' }, emptyBadge: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0C1116', borderWidth: 1, borderColor: '#25303A', borderStyle: 'dashed' }, emptyBadgeText: { color: '#66727D', fontSize: 16, lineHeight: 17, fontWeight: '700' }, emptyBadgeLabel: { ...typography.caption, marginTop: 2, color: '#596570', letterSpacing: .25 },

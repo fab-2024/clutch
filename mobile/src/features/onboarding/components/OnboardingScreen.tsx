@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { errorFeedback, impactFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
+import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors, fonts, spacing, typography } from '@/src/theme';
 
 import { loadTeamOrganizations, saveOnboarding } from '../api';
@@ -29,6 +30,7 @@ type Step = 0 | 1;
 
 export default function OnboardingScreen() {
   const { session, profile, refreshProfile } = useAuth();
+  const { refresh: refreshEconomy } = useEconomy();
   const reduceMotion = useReducedMotion();
   const initialGames = useMemo(
     () => GAMES.map((game) => game.id).filter((id) => profile?.jeux_suivis?.includes(id)),
@@ -80,8 +82,8 @@ export default function OnboardingScreen() {
     setSaving(true);
     setError(null);
     try {
-      await saveOnboarding(games, teamId, session.user.id);
-      await refreshProfile();
+      await saveOnboarding(games, teamId);
+      await Promise.all([refreshProfile(), refreshEconomy()]);
       successFeedback();
       router.replace('/(tabs)' as never);
     } catch (caught) {
