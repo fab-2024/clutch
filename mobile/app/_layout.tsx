@@ -10,6 +10,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import { AnalyticsBridge } from '@/src/features/analytics';
 import AuthRecoveryScreen from '@/src/features/auth/components/AuthRecoveryScreen';
 import ResultRevealGate from '@/src/features/matches/components/ResultRevealGate';
 import { NotificationBridge } from '@/src/features/notifications';
@@ -50,6 +51,7 @@ function RootNavigator() {
 
   return (
     <>
+      <AnalyticsBridge userId={userId} />
       <NotificationBridge userId={userId} />
       <ResultRevealGate />
       <Stack
@@ -66,7 +68,9 @@ function RootNavigator() {
           <Stack.Screen name="settings/profile" />
           <Stack.Screen name="shop" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="economy" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="campaign/[key]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="admin/matches" />
+          <Stack.Screen name="admin/campaigns/[key]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="onboarding" />
         </Stack.Protected>
         <Stack.Protected guard={!session}>
@@ -78,6 +82,8 @@ function RootNavigator() {
         <Stack.Screen name="player/[pseudo]" />
         <Stack.Screen name="shop-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="economy-preview" options={{ animation: 'fade' }} />
+        <Stack.Screen name="campaign-preview" options={{ animation: 'fade' }} />
+        <Stack.Screen name="campaign-report-preview" options={{ animation: 'fade' }} />
       </Stack>
     </>
   );

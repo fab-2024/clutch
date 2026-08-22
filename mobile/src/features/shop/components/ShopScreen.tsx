@@ -14,6 +14,7 @@ import {
 
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
+import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
@@ -69,6 +70,7 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const requestRef = useRef(0);
   const cachedDataRef = useRef<CosmeticShopData | null>(previewData ?? null);
+  const collectionEventRef = useRef('');
 
   const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
 
@@ -121,6 +123,21 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
     setSelectedId(null);
   }, [slot]);
 
+  useEffect(() => {
+    if (previewData || loading || !data) return;
+    const day = new Date().toISOString().slice(0, 10);
+    const eventKey = `locker:${day}`;
+    if (collectionEventRef.current === eventKey) return;
+
+    collectionEventRef.current = eventKey;
+    void trackAnalyticsEvent({
+      type: 'collection_affichee',
+      idempotencyKey: eventKey,
+    }).catch(() => {
+      if (collectionEventRef.current === eventKey) collectionEventRef.current = '';
+    });
+  }, [data, loading, previewData]);
+
   const contract = data?.contract ?? DEFAULT_MONETIZATION_CONTRACT;
   const availableSlots = useMemo(
     () => SLOT_ORDER.filter((itemSlot) => contract.catalog.allowedSlots.includes(itemSlot)),
@@ -148,6 +165,16 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
     setTeamFilter('all');
     setCollectionFilter('all');
     setRarityFilter('all');
+  }
+
+  function openItem(item: CosmeticItem) {
+    setSelectedId(item.id);
+    if (previewData) return;
+    void trackAnalyticsEvent({
+      type: 'objet_consulte',
+      itemId: item.id,
+      campaignKey: item.campaignKey,
+    }).catch(() => undefined);
   }
 
   async function handleItem(item: CosmeticItem) {
@@ -255,6 +282,8 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
           </View>
         </View>
 
+        <NovaWeekBanner preview={Boolean(previewData)} />
+
         {offline ? (
           <View style={styles.offlineBanner}><View style={styles.offlineDot} /><Text style={styles.offlineText}>HORS CONNEXION · DERNIÈRE COLLECTION CONNUE</Text><Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View>
         ) : null}
@@ -301,7 +330,7 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
           <View style={styles.loading}><ActivityIndicator color={colors.volt} /><Text style={styles.loadingText}>Ouverture du Locker…</Text></View>
         ) : visibleItems.length ? (
           <View style={styles.grid}>
-            {visibleItems.map((item) => <ItemCard balance={data?.balance ?? 0} confirming={confirmingId === item.id} item={item} key={item.id} pending={pendingId === item.id} pseudo={pseudo} onAction={() => void handleItem(item)} onOpen={() => setSelectedId(item.id)} />)}
+            {visibleItems.map((item) => <ItemCard balance={data?.balance ?? 0} confirming={confirmingId === item.id} item={item} key={item.id} pending={pendingId === item.id} pseudo={pseudo} onAction={() => void handleItem(item)} onOpen={() => openItem(item)} />)}
           </View>
         ) : (
           <View style={styles.empty}>
@@ -335,6 +364,27 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
         </View>
       </Modal>
     </Screen>
+  );
+}
+
+function NovaWeekBanner({ preview }: { preview: boolean }) {
+  return (
+    <Pressable
+      accessibilityHint="Ouvre les missions et récompenses de l’activation"
+      accessibilityLabel="Découvrir Nova Week"
+      accessibilityRole="button"
+      onPress={() => router.push((preview ? '/campaign-preview' : '/campaign/nova-week') as never)}
+      style={({ pressed }) => [styles.novaBanner, pressed && styles.pressed]}
+    >
+      <LinearGradient colors={['#28184F', '#151023', '#0A0E14']} end={{ x: 1, y: 1 }} start={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
+      <View style={styles.novaOrb}><View style={styles.novaOrbCore} /></View>
+      <View style={styles.novaCopy}>
+        <View style={styles.novaTopline}><Text style={styles.novaEyebrow}>ACTIVATION // PARTENAIRE FICTIF</Text><Text style={styles.novaLive}>LIVE</Text></View>
+        <Text style={styles.novaTitle}>NOVA WEEK</Text>
+        <Text style={styles.novaText}>3 signaux à compléter. Cadre, titre et variation de relique à gagner.</Text>
+        <Text style={styles.novaAction}>ENTRER DANS L’ACTIVATION  →</Text>
+      </View>
+    </Pressable>
   );
 }
 
@@ -404,6 +454,7 @@ const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: 42, gap: 20 },
   header: { minHeight: 72, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderBottomColor: '#171E25' }, back: { minHeight: 42, paddingHorizontal: 11, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#29333D' }, backText: { ...typography.action, color: colors.text, letterSpacing: .4 }, headerIdentity: { flex: 1, minWidth: 0 }, headerEyebrow: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .8 }, headerTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 25, lineHeight: 25, letterSpacing: -.3 }, balancePill: { minHeight: 43, minWidth: 88, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, backgroundColor: colors.volt }, balanceValue: { ...typography.bodyStrong, color: '#080A0C', fontVariant: ['tabular-nums'] },
   hero: { position: 'relative', overflow: 'hidden', minHeight: 320, marginHorizontal: spacing.md, padding: 19, borderRadius: 30, borderWidth: 1, borderColor: '#46531F', gap: 14 }, heroGlow: { position: 'absolute', right: -110, top: -90, width: 270, height: 270, borderRadius: 135, backgroundColor: 'rgba(232,255,61,.11)', boxShadow: '0 0 80px rgba(232,255,61,.10)' }, heroHeading: { zIndex: 1, flexDirection: 'row', justifyContent: 'space-between', gap: 10 }, heroKicker: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.1 }, heroTitle: { ...typography.displaySmall, maxWidth: 300, marginTop: 5, color: colors.text }, heroLive: { ...typography.label, height: 28, paddingHorizontal: 9, paddingTop: 7, overflow: 'hidden', color: '#080A0C', borderRadius: 14, backgroundColor: colors.volt }, heroStats: { minHeight: 64, marginTop: 'auto', paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', borderRadius: 18, backgroundColor: 'rgba(4,8,10,.68)', borderWidth: 1, borderColor: '#273129' }, heroStat: { flex: 1, alignItems: 'center' }, heroStatValue: { ...typography.metricSmall, color: colors.text }, heroStatValueAccent: { color: colors.volt }, heroStatLabel: { ...typography.label, marginTop: 3, color: colors.textMuted, fontSize: 9, letterSpacing: .35 }, heroDivider: { width: 1, height: 30, backgroundColor: '#28322C' },
+  novaBanner: { position: 'relative', minHeight: 190, marginHorizontal: spacing.md, padding: 17, overflow: 'hidden', flexDirection: 'row', alignItems: 'stretch', borderRadius: 26, borderWidth: 1, borderColor: '#59447B' }, novaOrb: { position: 'absolute', right: -44, top: -25, width: 190, height: 190, alignItems: 'center', justifyContent: 'center', borderRadius: 95, backgroundColor: 'rgba(139,108,255,.14)', borderWidth: 1, borderColor: 'rgba(175,160,255,.25)', boxShadow: '0 0 55px rgba(139,108,255,.18)' }, novaOrbCore: { width: 88, height: 88, borderRadius: 44, backgroundColor: 'rgba(199,125,255,.18)', boxShadow: '0 0 32px rgba(199,125,255,.38)' }, novaCopy: { zIndex: 1, flex: 1, maxWidth: 320 }, novaTopline: { flexDirection: 'row', alignItems: 'center', gap: 8 }, novaEyebrow: { ...typography.eyebrow, flex: 1, color: '#B8A8FF', letterSpacing: .7 }, novaLive: { ...typography.label, paddingHorizontal: 7, paddingVertical: 5, overflow: 'hidden', color: '#0A0810', borderRadius: 999, backgroundColor: '#B8A8FF', fontSize: 8 }, novaTitle: { marginTop: 17, color: colors.text, fontFamily: fonts.display, fontSize: 38, lineHeight: 39 }, novaText: { ...typography.caption, maxWidth: 245, marginTop: 7, color: '#C2BBD0' }, novaAction: { ...typography.action, marginTop: 'auto', paddingTop: 14, color: '#C5B8FF', letterSpacing: .3 },
   offlineBanner: { minHeight: 48, marginHorizontal: spacing.md, paddingHorizontal: 13, flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 15, backgroundColor: '#17140C', borderWidth: 1, borderColor: '#4A4020' }, offlineDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#FFCB45' }, offlineText: { ...typography.label, flex: 1, color: '#D9C57D', letterSpacing: .35 },
   scopeTabs: { minHeight: 59, marginHorizontal: spacing.md, padding: 5, flexDirection: 'row', gap: 5, borderRadius: 19, backgroundColor: '#090D11', borderWidth: 1, borderColor: '#222C35' }, scopeButton: { flex: 1, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 14 }, scopeButtonActive: { backgroundColor: '#18200F', borderWidth: 1, borderColor: '#4E5C21' }, scopeLabel: { ...typography.action, color: '#697580' }, scopeLabelActive: { color: colors.text }, scopeMeta: { ...typography.label, color: '#697580' }, scopeMetaActive: { color: colors.volt },
   tabs: { gap: 9, paddingHorizontal: spacing.md }, tab: { width: 143, minHeight: 68, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 9, borderRadius: 19, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222C35' }, tabActive: { backgroundColor: '#141B0F', borderColor: '#596725' }, tabGlyph: { width: 29, color: '#65717D', fontFamily: fonts.display, fontSize: 22, textAlign: 'center' }, tabGlyphActive: { color: colors.volt }, tabCopy: { flex: 1, minWidth: 0 }, tabLabel: { ...typography.bodyStrong, color: colors.textMuted }, tabLabelActive: { color: colors.text }, tabEquipped: { ...typography.caption, marginTop: 2, color: '#64707B' },
