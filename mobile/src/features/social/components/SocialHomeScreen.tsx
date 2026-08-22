@@ -21,6 +21,11 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
+import {
+  CosmeticAvatar,
+  relicSignatureTheme,
+} from '@/src/features/shop/components/CosmeticRenderer';
+import type { EquippedCosmetics } from '@/src/features/shop/types';
 import { loadCommunityData } from '@/src/features/social/faction/api';
 import type {
   CommunityActivity,
@@ -262,20 +267,13 @@ function FactionRelicHero({ faction, me }: { faction: CommunityFaction | null; m
     : progress?.next
       ? `À ${formatNumber(progress.objective)} membres, la relique mute en ${progress.next.name}. Chaque membre présent reçoit alors +${formatNumber(progress.next.reward)} Volts.`
       : '';
-  const factionEffect = equipped.factionEffect;
-  const effectAccent = factionEffect?.accent ?? '#C6A34A';
-  const effectIntensity = factionEffect?.styleKey === 'faction-mutation'
-    ? '4A'
-    : factionEffect?.styleKey === 'faction-war'
-      ? '32'
-      : factionEffect?.styleKey === 'faction-veins'
-        ? '24'
-        : '12';
+  const signature = relicSignatureTheme(equipped.factionEffect);
+  const effectAccent = signature.accent;
 
   return (
     <View style={styles.factionHero}>
       <LinearGradient colors={['#121912', '#080D11', '#06090C']} end={{ x: .8, y: 1 }} start={{ x: .1, y: 0 }} style={StyleSheet.absoluteFill} />
-      <View style={[styles.heroAura, { backgroundColor: `${effectAccent}${effectIntensity}`, boxShadow: `0 0 84px ${effectAccent}${effectIntensity}` }]} />
+      <View style={[styles.heroAura, { backgroundColor: signature.aura, boxShadow: signature.glow }]} />
       <View style={styles.heroAuraCold} />
       <View style={styles.heroGridLineA} />
       <View style={styles.heroGridLineB} />
@@ -455,6 +453,7 @@ function FactionWar({ factions, mine }: { factions: CommunityFaction[]; mine: Co
 }
 
 function FactionMemberRanking({ faction, me }: { faction: CommunityFaction; me: CommunityMe }) {
+  const { equipped } = useCosmetics();
   const ranking = me.top_activite.length ? me.top_activite : [fallbackActivity(me)];
   const placement = me.rang_activite && me.total_activite
     ? `#${me.rang_activite} SUR ${me.total_activite}`
@@ -483,7 +482,7 @@ function FactionMemberRanking({ faction, me }: { faction: CommunityFaction; me: 
 
       <View style={styles.memberList}>
         {ranking.slice(0, 5).map((person) => (
-          <FactionMemberRow key={person.user_id} person={person} mine={person.user_id === me.user_id} />
+          <FactionMemberRow cosmetics={equipped} key={person.user_id} person={person} mine={person.user_id === me.user_id} />
         ))}
       </View>
     </View>
@@ -499,11 +498,13 @@ function MemberStat({ featured = false, label, value }: { featured?: boolean; la
   );
 }
 
-function FactionMemberRow({ mine, person }: { mine: boolean; person: CommunityActivity }) {
+function FactionMemberRow({ cosmetics, mine, person }: { cosmetics: EquippedCosmetics; mine: boolean; person: CommunityActivity }) {
   return (
     <View style={[styles.memberRow, mine && styles.memberRowMine]}>
       <Text style={[styles.memberRowRank, mine && styles.memberRowRankMine]}>#{person.rang}</Text>
-      <View style={styles.memberAvatar}><Text style={styles.memberAvatarText}>{initials(person.pseudo)}</Text></View>
+      {mine
+        ? <CosmeticAvatar cosmetics={cosmetics} label={person.pseudo} size={42} />
+        : <View style={styles.memberAvatar}><Text style={styles.memberAvatarText}>{initials(person.pseudo)}</Text></View>}
       <View style={styles.memberCopy}>
         <Text numberOfLines={1} style={styles.memberName}>{person.pseudo}{mine ? ' · TOI' : ''}</Text>
         <Text style={styles.memberMeta}>{person.pronos_7j} call{person.pronos_7j > 1 ? 's' : ''} · {person.gagnes_7j} validé{person.gagnes_7j > 1 ? 's' : ''}</Text>

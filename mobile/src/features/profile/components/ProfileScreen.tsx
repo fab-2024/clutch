@@ -6,6 +6,7 @@ import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
 import { signOut } from '@/src/features/auth/api';
 import { gradeAccent } from '@/src/features/ranking/grades';
+import { CosmeticAvatar } from '@/src/features/shop/components/CosmeticRenderer';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
@@ -103,12 +104,12 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
         ) : null}
 
         {!publicView ? (
-          <Pressable accessibilityLabel="Ouvrir la boutique cosmétique" accessibilityRole="button" onPress={() => router.push('/shop' as never)} style={({ pressed }) => [styles.shopEntry, pressed && styles.pressed]}>
+          <Pressable accessibilityLabel="Ouvrir le Locker cosmétique" accessibilityRole="button" onPress={() => router.push('/shop' as never)} style={({ pressed }) => [styles.shopEntry, pressed && styles.pressed]}>
             <View style={styles.shopMark}><CurrencyIcon color="#080A0C" kind="volts" size={22} /></View>
             <View style={styles.shopCopy}>
-              <Text style={styles.shopLabel}>BOUTIQUE COSMÉTIQUE</Text>
-              <Text style={styles.shopTitle}>Cadres, titres et apparences</Text>
-              <Text style={styles.shopPromise}>Aucun avantage compétitif.</Text>
+              <Text style={styles.shopLabel}>LOCKER COSMÉTIQUE</Text>
+              <Text style={styles.shopTitle}>Ta collection et ton identité équipée</Text>
+              <Text style={styles.shopPromise}>Visible partout. Aucun avantage compétitif.</Text>
             </View>
             <View style={styles.shopBalance}><Text style={styles.shopBalanceValue}>{volts == null ? '—' : formatNumber(volts)}</Text><Text style={styles.shopBalanceLabel}>VOLTS</Text></View>
           </Pressable>
@@ -123,7 +124,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
           </View>
 
           <View style={styles.identityRow}>
-            <Emblem level={data?.level.level ?? 0} />
+            <CosmeticAvatar cosmetics={cosmetics} fallback={`${data?.level.level ?? 0}`} label={data?.pseudo || pseudo} size={94} />
             <View style={styles.identityCopy}>
               <Text style={styles.levelLine}>{loading ? 'NIVEAU —' : `NIVEAU ${data?.level.level} · ${data?.level.title?.toUpperCase()}`}</Text>
               <Text numberOfLines={1} adjustsFontSizeToFit style={styles.pseudo}>{data?.pseudo || pseudo}</Text>
@@ -227,10 +228,6 @@ function ProfileHeader({ publicProfile, publicView }: { publicProfile: boolean; 
       <View style={styles.visibility}><View style={[styles.visibilityDot, !publicProfile && styles.visibilityDotPrivate]} /><Text style={styles.visibilityText}>{publicProfile ? 'PUBLIC' : 'PRIVÉ'}</Text></View>
     </View>
   );
-}
-
-function Emblem({ level }: { level: number }) {
-  return <View style={styles.emblemOuter}><View style={styles.emblem}><View style={styles.emblemCut} /><Text style={styles.emblemLevel}>{level}</Text></View></View>;
 }
 
 function BadgeToken({ badge }: { badge: ProfileBadge }) {
@@ -349,7 +346,7 @@ const styles = StyleSheet.create({
   shopBalanceValue: { ...typography.metricSmall, color: colors.text },
   shopBalanceLabel: { ...typography.label, marginTop: 2, color: colors.textMuted, letterSpacing: .4 },
   hero: { position: 'relative', overflow: 'hidden', marginHorizontal: spacing.md, minHeight: 390, padding: 20, borderRadius: 31, backgroundColor: '#0A0F14', borderWidth: 1, gap: 18 }, heroGlow: { position: 'absolute', right: -120, top: -80, width: 310, height: 310, borderRadius: 155, opacity: 0.15 }, watermark: { position: 'absolute', right: -14, top: 80, fontFamily: fonts.display, fontSize: 86, lineHeight: 90, opacity: 0.09, letterSpacing: -5 }, heroEyebrowRow: { zIndex: 2, minHeight: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }, heroEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.2 }, cosmeticTag: { ...typography.label, flexShrink: 1, letterSpacing: .45, textAlign: 'right' },
-  identityRow: { zIndex: 2, flexDirection: 'row', alignItems: 'center', gap: 15 }, emblemOuter: { width: 94, height: 94, borderRadius: 30, alignItems: 'center', justifyContent: 'center', backgroundColor: '#121812', borderWidth: 1, borderColor: '#48541E' }, emblem: { width: 68, height: 68, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, emblemCut: { position: 'absolute', right: -2, width: 27, height: 38, borderTopLeftRadius: 20, borderBottomLeftRadius: 20, backgroundColor: '#121812' }, emblemLevel: { marginLeft: -6, color: '#080A0C', fontFamily: fonts.display, fontSize: 22 }, identityCopy: { flex: 1, minWidth: 0 }, levelLine: { ...typography.label, color: colors.textMuted, letterSpacing: 0.6 }, pseudo: { marginTop: 4, color: colors.text, fontFamily: fonts.bold, fontSize: 34, lineHeight: 38, letterSpacing: -1.5 }, profileTitle: { ...typography.bodyStrong, marginTop: 4 },
+  identityRow: { zIndex: 2, flexDirection: 'row', alignItems: 'center', gap: 15 }, identityCopy: { flex: 1, minWidth: 0 }, levelLine: { ...typography.label, color: colors.textMuted, letterSpacing: 0.6 }, pseudo: { marginTop: 4, color: colors.text, fontFamily: fonts.bold, fontSize: 34, lineHeight: 38, letterSpacing: -1.5 }, profileTitle: { ...typography.bodyStrong, marginTop: 4 },
   badgeStrip: { zIndex: 2, minHeight: 70, flexDirection: 'row', gap: 10, alignItems: 'center' }, badgeToken: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0D1319', borderWidth: 1.2 }, badgeGlyph: { fontSize: 19, fontWeight: '900' }, emptyBadge: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0C1116', borderWidth: 1, borderColor: '#25303A', borderStyle: 'dashed' }, emptyBadgeText: { color: '#66727D', fontSize: 16, lineHeight: 17, fontWeight: '700' }, emptyBadgeLabel: { ...typography.caption, marginTop: 2, color: '#596570', letterSpacing: .25 },
   xpBlock: { zIndex: 2, marginTop: 'auto', padding: 14, borderRadius: 18, backgroundColor: '#080D11', borderWidth: 1, borderColor: '#202A32', gap: 8 }, xpTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, xpLabel: { ...typography.label, color: colors.textMuted, letterSpacing: 0.5 }, xpValue: { ...typography.bodyStrong, color: colors.text }, track: { height: 7, borderRadius: 999, overflow: 'hidden', backgroundColor: '#182028' }, trackFill: { height: '100%', borderRadius: 999, backgroundColor: colors.volt }, xpHint: { ...typography.caption, color: colors.textMuted },
   rankingState: { minHeight: 160, marginHorizontal: spacing.md, padding: 14, borderRadius: 24, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#414D1E' }, rankingStateStep: { width: 82, height: 92, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A0E0A', borderWidth: 1, borderColor: '#4A5822' }, rankingStateStepValue: { ...typography.metric, color: colors.volt }, rankingStateStepLabel: { ...typography.label, marginTop: 4, color: colors.textMuted, letterSpacing: .25, textAlign: 'center' }, rankingStateCopy: { flex: 1, minWidth: 0 }, rankingStateEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 }, rankingStateTitle: { ...typography.cardTitle, marginTop: 5, color: colors.text }, rankingStateText: { ...typography.body, marginTop: 5, color: colors.textMuted }, rankingStateAction: { ...typography.action, marginTop: 8, color: colors.volt, letterSpacing: .3 },

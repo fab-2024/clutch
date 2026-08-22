@@ -5,6 +5,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import type { GameId } from '@/src/features/onboarding/types';
+import { SupporterIdentity } from '@/src/features/shop/components/CosmeticRenderer';
+import { useAuth } from '@/src/providers/AuthProvider';
+import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, fonts, radius, typography } from '@/src/theme';
 
 import type { MyCallItem, MyCallsDashboard, MyCallState } from '../types';
@@ -27,6 +30,8 @@ const STATES: { id: MyCallState; label: string; key: keyof Pick<MyCallsDashboard
 ];
 
 export function MyCallsPanel({ dashboard, followedGames, game, query }: Props) {
+  const { profile, session } = useAuth();
+  const { equipped } = useCosmetics();
   const initialState = dashboard.verrouilles.length
     ? 'verrouille'
     : dashboard.ouverts.length
@@ -40,6 +45,7 @@ export function MyCallsPanel({ dashboard, followedGames, game, query }: Props) {
     filterCalls(dashboard[item.key], game, followedGames, query),
   ])) as Record<MyCallState, MyCallItem[]>, [dashboard, followedGames, game, query]);
   const calls = scoped[state];
+  const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
 
   return (
     <View style={styles.section}>
@@ -51,6 +57,8 @@ export function MyCallsPanel({ dashboard, followedGames, game, query }: Props) {
           <Text style={styles.explainerText}>Le verrouillage est définitif. La tendance des joueurs n’apparaît qu’une fois ton choix validé.</Text>
         </View>
       </View>
+
+      <SupporterIdentity compact cosmetics={equipped} meta="SIGNATURE DU CALL" pseudo={pseudo} />
 
       <View style={styles.tabs}>
         {STATES.map((item) => {

@@ -3,6 +3,10 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { CosmeticAvatar } from '@/src/features/shop/components/CosmeticRenderer';
+import { useCosmetics } from '@/src/providers/CosmeticsProvider';
+import { colors, layout, radius, spacing, typography } from '@/src/theme';
+
 import {
   answerFriendRequest,
   loadFriends,
@@ -11,7 +15,6 @@ import {
   searchPlayers,
 } from '../api';
 import type { CircleWeeklyData, CircleWeeklyRow, FriendRow, FriendsData, PlayerSearchRow } from '../types';
-import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
 const EMPTY: FriendsData = { amis: [], recues: [], envoyees: [], weekly: null };
 type CircleView = 'friends' | 'requests';
@@ -274,6 +277,7 @@ function WeeklyRanking({ weekly, onChallenge, onOpen }: {
   onChallenge: (player: CircleWeeklyRow) => void;
   onOpen: (pseudo: string) => void;
 }) {
+  const { equipped } = useCosmetics();
   if (!weekly?.classement.length) return null;
   return (
     <View style={styles.weeklySection}>
@@ -283,7 +287,9 @@ function WeeklyRanking({ weekly, onChallenge, onOpen }: {
           <View key={player.id} style={[styles.weeklyRow, player.moi && styles.weeklyRowMine]}>
             <Text style={[styles.weeklyRank, player.rang <= 3 && styles.weeklyRankTop]}>{String(player.rang).padStart(2, '0')}</Text>
             <Pressable accessibilityRole="button" onPress={() => onOpen(player.pseudo)} style={({ pressed }) => [styles.weeklyIdentity, pressed && styles.pressed]}>
-              <View style={styles.avatarSmall}><Text style={styles.avatarSmallText}>{initials(player.pseudo)}</Text></View>
+              {player.moi
+                ? <CosmeticAvatar cosmetics={equipped} label={player.pseudo} size={34} />
+                : <View style={styles.avatarSmall}><Text style={styles.avatarSmallText}>{initials(player.pseudo)}</Text></View>}
               <View style={styles.weeklyPlayerCopy}>
                 <Text numberOfLines={1} style={styles.weeklyPlayerName}>{player.moi ? 'TOI' : player.pseudo}</Text>
                 <Text style={styles.weeklyPlayerMeta}>{player.victoires}/{player.calls} calls · {player.precision_pct == null ? '—' : `${Math.round(player.precision_pct)}%`}</Text>

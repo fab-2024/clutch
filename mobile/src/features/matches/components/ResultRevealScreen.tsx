@@ -18,7 +18,10 @@ import Animated, {
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
+import { SupporterIdentity } from '@/src/features/shop/components/CosmeticRenderer';
 import { errorFeedback, successFeedback } from '@/src/lib/feedback';
+import { useAuth } from '@/src/providers/AuthProvider';
+import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors, fonts, radius, spacing, typography } from '@/src/theme';
 import { teamHue } from '@/src/utils/teams';
@@ -39,6 +42,8 @@ type ResultRevealScreenProps = {
 type ExitTarget = 'calls' | 'history';
 
 export default function ResultRevealScreen({ previewData }: ResultRevealScreenProps) {
+  const { profile, session } = useAuth();
+  const { equipped } = useCosmetics();
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const routeMatchId = Array.isArray(params.id) ? params.id[0] : params.id;
   const matchId = previewData?.match_id ?? routeMatchId;
@@ -51,6 +56,7 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
   const requestRef = useRef(0);
   const feedbackIdRef = useRef<string | null>(null);
   const revealProgress = useSharedValue(reduceMotion ? 1 : 0);
+  const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
 
   const load = useCallback(async () => {
     if (previewData) {
@@ -180,6 +186,8 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
           <Text style={[styles.resultKicker, { color: tone }]}>{won ? 'CALL VALIDÉ' : 'CALL MANQUÉ'}</Text>
           <Text accessibilityRole="header" style={styles.resultTitle}>{won ? 'BIEN LU.' : 'PAS CETTE FOIS.'}</Text>
           <Text numberOfLines={1} style={styles.eventLine}>{gameLabel(result.jeu)} · {result.evenement} · BO{result.format}</Text>
+
+          <View style={styles.revealIdentity}><SupporterIdentity compact cosmetics={equipped} meta="SIGNATURE DU VERDICT" pseudo={pseudo} /></View>
 
           <Animated.View entering={reduceMotion ? undefined : ZoomIn.delay(140).duration(520)} style={styles.scoreboard}>
             <RevealTeam accent={teamAColor} chosen={result.choix === 'a'} name={result.equipe_a} tag={result.tag_a} winner={result.score_a > result.score_b} />
@@ -313,6 +321,7 @@ const styles = StyleSheet.create({
   resultKicker: { ...typography.eyebrow, marginTop: 5, letterSpacing: 1.4 },
   resultTitle: { ...typography.displayLarge, marginTop: 6, color: colors.text, textAlign: 'center' },
   eventLine: { ...typography.caption, maxWidth: '92%', marginTop: 8, color: colors.textMuted, textAlign: 'center' },
+  revealIdentity: { width: '100%', marginTop: 13 },
   scoreboard: { width: '100%', minHeight: 190, marginTop: 17, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   team: { width: 92, alignItems: 'center', gap: 5 },
   teamLogoWrap: { padding: 3, borderRadius: 23, borderWidth: 1, borderColor: 'transparent', backgroundColor: '#060A0D' },
