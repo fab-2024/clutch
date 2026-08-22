@@ -13,6 +13,7 @@ Une tranche n'est terminée que si :
 - les écritures sont idempotentes ;
 - les événements produit nécessaires sont mesurés ;
 - `npm run mobile:architecture` et `npm run mobile:typecheck` passent ;
+- le lint, les tests unitaires et les contrats SQL passent dans la CI ;
 - le parcours est vérifié sur le rendu web mobile et au moins un appareil natif
   avant une release.
 
@@ -154,6 +155,12 @@ Indicateurs à suivre :
 
 ## Prochaine tranche recommandée
 
-Finaliser le lot **0.2 Typographie et lisibilité** par un contrôle visuel natif
-des cinq onglets (contraste, troncature et taille dynamique), puis ouvrir le lot
-**0.3 Identité des monnaies** sans redessiner les parcours validés.
+La tranche active est la **préparation de release** : valider le parcours de
+suppression sur l’environnement distant, configurer le domaine HTTPS et ses
+associations iOS/Android, exécuter les tests E2E sur les deux plateformes puis
+faire la matrice de contrôle native. Le détail et les responsabilités sont dans
+[`mobile/docs/release-readiness.md`](../mobile/docs/release-readiness.md).
+
+Les nouveaux lots produit restent gelés jusqu’à fermeture de ces critères. Les
+seuls travaux structurels admis entre-temps sont les extractions sans changement
+visuel et l’ajout de pagination sur les listes qui grandissent.

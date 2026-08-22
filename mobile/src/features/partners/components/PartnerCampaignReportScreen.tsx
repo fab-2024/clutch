@@ -43,7 +43,8 @@ export default function PartnerCampaignReportScreen({ previewReport }: PartnerCa
       return;
     }
     if (!isAdmin) return;
-    refresh ? setRefreshing(true) : setLoading(true);
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try {
       setReport(await loadPartnerCampaignReport(campaignKey));
@@ -92,7 +93,7 @@ export default function PartnerCampaignReportScreen({ previewReport }: PartnerCa
         <View style={styles.hero}>
           <LinearGradient colors={['#291A50', '#100E1B', '#080B10']} end={{ x: 1, y: 1 }} start={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
           <View style={styles.heroGlow} />
-          <View style={styles.heroTop}><Text style={styles.heroKicker}>{report.campaign.partner.toUpperCase()} // ACTIVATION</Text><Text style={styles.fictionTag}>{report.campaign.fictionalPartner ? 'FICTIONAL DEMO' : 'PARTNER'}</Text></View>
+          <View style={styles.heroTop}><Text style={styles.heroKicker}>{report.campaign.partner.toUpperCase()}{' // ACTIVATION'}</Text><Text style={styles.fictionTag}>{report.campaign.fictionalPartner ? 'FICTIONAL DEMO' : 'PARTNER'}</Text></View>
           <Text style={styles.heroTitle}>{report.campaign.name.toUpperCase()}</Text>
           <Text style={styles.heroSubtitle}>Une lecture commerciale claire, sans profil, email, pseudo ni identifiant utilisateur exposé.</Text>
           <View style={styles.heroFacts}><HeroFact label="PÉRIODE" value={dateRange(report.campaign.startsAt, report.campaign.endsAt)} /><View style={styles.factDivider} /><HeroFact label="EXPORT" value={report.partnerExport.publishable ? 'PRÊT' : 'MASQUÉ'} /><View style={styles.factDivider} /><HeroFact label="SEUIL" value={`${report.partnerExport.privacyThreshold} USERS`} /></View>

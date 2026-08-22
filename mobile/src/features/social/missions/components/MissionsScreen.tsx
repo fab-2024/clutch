@@ -26,7 +26,8 @@ export default function MissionsScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async (refresh = false) => {
-    refresh ? setRefreshing(true) : setLoading(true);
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try { setData(await loadFriendQuests()); }
     catch (caught) { setError(caught instanceof Error ? caught.message : 'Impossible de charger tes missions.'); }

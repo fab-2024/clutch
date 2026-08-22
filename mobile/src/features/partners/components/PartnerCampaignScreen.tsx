@@ -55,7 +55,8 @@ export default function PartnerCampaignScreen({ previewData }: PartnerCampaignSc
       setRefreshing(false);
       return;
     }
-    refresh ? setRefreshing(true) : setLoading(true);
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try {
       setData(await loadPartnerCampaign(campaignKey));
@@ -143,8 +144,6 @@ export default function PartnerCampaignScreen({ previewData }: PartnerCampaignSc
     ? Math.min(100, Math.round((data.progress.current / data.progress.goal) * 100))
     : 0;
   const followTask = data.tasks.find((task) => task.type === 'match_follow');
-  const callTask = data.tasks.find((task) => task.type === 'calls');
-  const factionTask = data.tasks.find((task) => task.type === 'faction_mission');
   const claimable = data.completed && !data.rewardClaimed;
 
   return (

@@ -10,12 +10,17 @@
     "db:start": "supabase start",
     "db:reset": "supabase db reset",
     "db:lint": "supabase db lint --local --schema public --level warning --fail-on error",
-    "db:verify": "supabase db query --local --file supabase/tests/p0_mobile_contracts.sql && supabase db query --local --file supabase/tests/security_hardening_contracts.sql && supabase db query --local --file supabase/tests/cosmetic_shop.sql && supabase db query --local --file supabase/tests/monetization_contract.sql && supabase db query --local --file supabase/tests/catalog_inventory_equipment_v2.sql && supabase db query --local --file supabase/tests/volts_economy_ledger_v2.sql && supabase db query --local --file supabase/tests/privacy_analytics_partner_campaign.sql && supabase db query --local --file supabase/tests/founder_pack_iap.sql && supabase db query --local --file supabase/tests/match_result_reliability.sql && node scripts/test-match-result-concurrency.mjs && npm run economy:simulate",
+    "db:verify": "supabase db query --local --file supabase/tests/p0_mobile_contracts.sql && supabase db query --local --file supabase/tests/security_hardening_contracts.sql && supabase db query --local --file supabase/tests/cosmetic_shop.sql && supabase db query --local --file supabase/tests/monetization_contract.sql && supabase db query --local --file supabase/tests/catalog_inventory_equipment_v2.sql && supabase db query --local --file supabase/tests/volts_economy_ledger_v2.sql && supabase db query --local --file supabase/tests/privacy_analytics_partner_campaign.sql && supabase db query --local --file supabase/tests/founder_pack_iap.sql && supabase db query --local --file supabase/tests/match_result_reliability.sql && supabase db query --local --file supabase/tests/release_readiness_privacy.sql && node scripts/test-match-result-concurrency.mjs && npm run economy:simulate",
     "db:test:concurrency": "node scripts/test-match-result-concurrency.mjs",
     "economy:simulate": "node scripts/simulate-volts-economy.mjs",
     "db:advisors": "supabase db advisors --local --type all --level warn --fail-on error",
     "mobile:architecture": "node scripts/check-mobile.mjs",
-    "mobile:typecheck": "npm --prefix mobile run typecheck"
+    "mobile:typecheck": "npm --prefix mobile run typecheck",
+    "mobile:lint": "npm --prefix mobile run lint -- --max-warnings=0",
+    "mobile:test": "npm --prefix mobile run test:ci",
+    "mobile:public-pages-test": "node scripts/test-public-release-pages.mjs",
+    "mobile:audit": "npm --prefix mobile audit --omit=dev --audit-level=high",
+    "mobile:release-check": "node scripts/check-mobile-release.mjs"
   },
   "dependencies": {
     "@vercel/og": "0.11.1",

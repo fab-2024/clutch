@@ -74,7 +74,8 @@ export default function FounderPackScreen({ previewStatus }: FounderPackScreenPr
     if (!userId) return;
 
     const requestId = ++requestRef.current;
-    refresh ? setRefreshing(true) : setLoading(true);
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try {
       const platform = currentFounderPlatform();

@@ -394,6 +394,11 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/clutch-founder-webhook/index.ts"
 
+[functions.clutch-account-delete]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/clutch-account-delete/index.ts"
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

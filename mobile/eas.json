@@ -11,6 +11,17 @@
     "preview": {
       "distribution": "internal"
     },
+    "e2e-test": {
+      "withoutCredentials": true,
+      "android": {
+        "buildType": "apk",
+        "image": "latest"
+      },
+      "ios": {
+        "simulator": true,
+        "image": "latest"
+      }
+    },
     "production": {
       "autoIncrement": true
     }

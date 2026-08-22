@@ -6,8 +6,10 @@ function createAuthRedirect(path: string) {
   return Linking.createURL(path);
 }
 
-export function accountConfirmationRedirect() {
-  return createAuthRedirect('auth/callback');
+export function accountConfirmationRedirect(next?: string | null) {
+  const redirect = createAuthRedirect('auth/callback');
+  if (!next) return redirect;
+  return `${redirect}${redirect.includes('?') ? '&' : '?'}next=${encodeURIComponent(next)}`;
 }
 
 export function passwordRecoveryRedirect() {

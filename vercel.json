@@ -2,8 +2,32 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
-  "outputDirectory": "web",
+  "outputDirectory": "public",
   "rewrites": [
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "destination": "/api/app-association?platform=ios"
+    },
+    {
+      "source": "/.well-known/assetlinks.json",
+      "destination": "/api/app-association?platform=android"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/api/legal-page?page=privacy"
+    },
+    {
+      "source": "/terms",
+      "destination": "/api/legal-page?page=terms"
+    },
+    {
+      "source": "/support",
+      "destination": "/api/legal-page?page=support"
+    },
+    {
+      "source": "/account-deletion",
+      "destination": "/api/legal-page?page=deletion"
+    },
     {
       "source": "/u/:pseudo",
       "destination": "/api/profile-page?pseudo=:pseudo"

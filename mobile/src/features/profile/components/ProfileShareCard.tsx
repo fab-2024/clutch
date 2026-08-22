@@ -1,9 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Linking from 'expo-linking';
 import { useState } from 'react';
 import { Platform, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 
 import type { EquippedCosmetic } from '@/src/features/shop/types';
+import { publicAppUrl } from '@/src/config/release';
 import { colors, fonts, radius, spacing, typography } from '@/src/theme';
 
 type ProfileShareCardProps = {
@@ -38,7 +38,12 @@ export default function ProfileShareCard({
     setSharing(true);
     setFeedback(null);
 
-    const url = Linking.createURL(`/player/${encodeURIComponent(pseudo)}`);
+    const url = publicAppUrl(`/u/${encodeURIComponent(pseudo)}`);
+    if (!url) {
+      setFeedback('LIEN HTTPS À CONFIGURER');
+      setSharing(false);
+      return;
+    }
     const title = `${pseudo} sur Clutch`;
     const message = `${pseudo} · ${grade} · ${formatNumber(frags)} Frags · ${accuracy}% de réussite\n${url}`;
 

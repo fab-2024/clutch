@@ -62,7 +62,8 @@ export default function HomeScreen() {
       setRefreshing(false);
       return;
     }
-    refresh ? setRefreshing(true) : setLoading(true);
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try {
       setHub(await loadHubData(session.user.id, profile?.jeux_suivis ?? []));

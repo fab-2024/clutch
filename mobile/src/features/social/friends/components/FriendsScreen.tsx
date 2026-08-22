@@ -1,9 +1,9 @@
-import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { CosmeticAvatar } from '@/src/features/shop/components/CosmeticRenderer';
+import { publicAppUrl } from '@/src/config/release';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
@@ -17,6 +17,7 @@ import {
 import type { CircleWeeklyData, CircleWeeklyRow, FriendRow, FriendsData, PlayerSearchRow } from '../types';
 
 const EMPTY: FriendsData = { amis: [], recues: [], envoyees: [], weekly: null };
+const RANKING_PAGE_SIZE = 10;
 type CircleView = 'friends' | 'requests';
 
 export default function FriendsScreen() {
@@ -42,7 +43,8 @@ function CirclePeopleScreen({ view }: { view: CircleView }) {
   const searchRequest = useRef(0);
 
   const load = useCallback(async (refresh = false) => {
-    refresh ? setRefreshing(true) : setLoading(true);
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try { setData(await loadFriends()); }
     catch (caught) { setError(caught instanceof Error ? caught.message : 'Impossible de charger tes amis.'); }
@@ -112,13 +114,14 @@ function CirclePeopleScreen({ view }: { view: CircleView }) {
     if (!me) return;
     const precision = me.precision_pct == null ? '—' : `${Math.round(me.precision_pct)}%`;
     const message = `Ma semaine Clutch : #${me.rang}/${me.participants} dans mon Cercle · ${signed(me.frags_hebdo)} Frags · ${me.victoires}/${me.calls} calls · ${precision} de réussite.`;
-    const url = Linking.createURL('/(tabs)/social/friends');
+    const url = publicAppUrl('/') ?? '';
+    const shareText = url ? `${message} ${url}` : message;
     try {
       if (Platform.OS === 'web' && globalThis.navigator?.clipboard) {
-        await globalThis.navigator.clipboard.writeText(`${message} ${url}`);
+        await globalThis.navigator.clipboard.writeText(shareText);
         setShareMessage('CARTE COPIÉE · PRÊTE À ÊTRE PARTAGÉE.');
       } else {
-        await Share.share({ message: `${message} ${url}`, url });
+        await Share.share({ message: shareText, ...(url ? { url } : {}) });
         setShareMessage('CARTE PRÊTE À ÊTRE PARTAGÉE.');
       }
     } catch {
@@ -278,12 +281,15 @@ function WeeklyRanking({ weekly, onChallenge, onOpen }: {
   onOpen: (pseudo: string) => void;
 }) {
   const { equipped } = useCosmetics();
+  const [visibleCount, setVisibleCount] = useState(RANKING_PAGE_SIZE);
+  useEffect(() => setVisibleCount(RANKING_PAGE_SIZE), [weekly?.semaine]);
   if (!weekly?.classement.length) return null;
+  const visibleRanking = weekly.classement.slice(0, visibleCount);
   return (
     <View style={styles.weeklySection}>
       <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>CLASSEMENT DE LA SEMAINE</Text><Text style={styles.sectionMeta}>{weekly.classement.length}</Text></View>
       <View style={styles.weeklyList}>
-        {weekly.classement.map((player) => (
+        {visibleRanking.map((player) => (
           <View key={player.id} style={[styles.weeklyRow, player.moi && styles.weeklyRowMine]}>
             <Text style={[styles.weeklyRank, player.rang <= 3 && styles.weeklyRankTop]}>{String(player.rang).padStart(2, '0')}</Text>
             <Pressable accessibilityRole="button" onPress={() => onOpen(player.pseudo)} style={({ pressed }) => [styles.weeklyIdentity, pressed && styles.pressed]}>
@@ -300,6 +306,16 @@ function WeeklyRanking({ weekly, onChallenge, onOpen }: {
           </View>
         ))}
       </View>
+      {visibleRanking.length < weekly.classement.length ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setVisibleCount((count) => count + RANKING_PAGE_SIZE)}
+          style={({ pressed }) => [styles.rankingMore, pressed && styles.pressed]}
+        >
+          <Text style={styles.rankingMoreText}>VOIR LA SUITE DU CLASSEMENT</Text>
+          <Text style={styles.rankingMoreMeta}>{visibleRanking.length}/{weekly.classement.length}</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -413,6 +429,8 @@ const styles = StyleSheet.create({
   shareButtonText: { ...typography.action, color: '#080A0C', letterSpacing: .45 }, shareButtonArrow: { color: '#080A0C', fontSize: 18, fontWeight: '900' },
   shareMessage: { ...typography.label, marginTop: -12, color: colors.volt, letterSpacing: .35 },
   weeklySection: { gap: 9 }, weeklyList: { overflow: 'hidden', borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border },
+  rankingMore: { minHeight: 48, paddingHorizontal: 14, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#303A43' },
+  rankingMoreText: { ...typography.action, color: colors.volt, letterSpacing: .25 }, rankingMoreMeta: { ...typography.label, color: colors.textMuted },
   weeklyRow: { minHeight: 76, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 9, borderBottomWidth: 1, borderBottomColor: '#192129' },
   weeklyRowMine: { backgroundColor: '#12190E' }, weeklyRank: { ...typography.label, width: 23, color: '#68737D' }, weeklyRankTop: { color: colors.volt },
   weeklyIdentity: { flex: 1, minWidth: 0, minHeight: 74, flexDirection: 'row', alignItems: 'center', gap: 9 }, weeklyPlayerCopy: { flex: 1, minWidth: 0 }, weeklyPlayerName: { ...typography.bodyStrong, color: colors.text }, weeklyPlayerMeta: { ...typography.caption, marginTop: 3, color: colors.textMuted },

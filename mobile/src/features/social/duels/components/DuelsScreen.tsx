@@ -15,7 +15,8 @@ export default function DuelsScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async (refresh = false) => {
-    refresh ? setRefreshing(true) : setLoading(true);
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try { setDuels(await loadDuels()); }
     catch (caught) { setError(caught instanceof Error ? caught.message : 'Impossible de charger tes duels.'); }

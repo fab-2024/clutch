@@ -102,7 +102,8 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
     }
     if (feedbackIdRef.current !== result.id) {
       feedbackIdRef.current = result.id;
-      result.statut === 'gagne' ? successFeedback() : errorFeedback();
+      if (result.statut === 'gagne') successFeedback();
+      else errorFeedback();
     }
     return () => cancelAnimation(revealProgress);
   }, [reduceMotion, result, revealProgress]);

@@ -1,0 +1,38 @@
+name: Clutch E2E
+
+on:
+  pull_request_labeled:
+    labels: ['e2e']
+
+jobs:
+  build_android:
+    name: Build Android for E2E
+    type: build
+    params:
+      platform: android
+      profile: e2e-test
+
+  build_ios:
+    name: Build iOS for E2E
+    type: build
+    params:
+      platform: ios
+      profile: e2e-test
+
+  test_android:
+    name: Public entry smoke test (Android)
+    needs: [build_android]
+    type: maestro
+    params:
+      build_id: ${{ needs.build_android.outputs.build_id }}
+      flow_path: '.maestro/public-entry.yml'
+      retries: 1
+
+  test_ios:
+    name: Public entry smoke test (iOS)
+    needs: [build_ios]
+    type: maestro
+    params:
+      build_id: ${{ needs.build_ios.outputs.build_id }}
+      flow_path: '.maestro/public-entry.yml'
+      retries: 1

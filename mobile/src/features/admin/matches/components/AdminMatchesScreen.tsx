@@ -46,7 +46,8 @@ export default function AdminMatchesScreen() {
 
   const load = useCallback(async (refresh = false) => {
     if (!isAdmin) return;
-    refresh ? setRefreshing(true) : setLoading(true);
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try { setData(await loadAdminMatchData()); }
     catch (caught) { setError(messageFrom(caught, 'Impossible de charger les opérations matchs.')); }

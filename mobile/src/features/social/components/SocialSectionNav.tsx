@@ -6,22 +6,22 @@ import { colors, layout, spacing, typography } from '@/src/theme';
 type SocialSectionKey = 'faction' | 'circle' | 'challenges';
 type SocialSubsectionKey = 'friends' | 'requests' | 'leagues' | 'missions' | 'duels';
 
-const SECTIONS: Array<{
+const SECTIONS: {
   glyph: string;
   href: string;
   key: SocialSectionKey;
   label: string;
-}> = [
+}[] = [
   { key: 'faction', label: 'Faction', glyph: '✦', href: '/(tabs)/social' },
   { key: 'circle', label: 'Cercle', glyph: '◎', href: '/(tabs)/social/friends' },
   { key: 'challenges', label: 'Défis', glyph: '⚡', href: '/(tabs)/social/missions' },
 ];
 
-const SUBSECTIONS: Partial<Record<SocialSectionKey, Array<{
+const SUBSECTIONS: Partial<Record<SocialSectionKey, {
   href: string;
   key: SocialSubsectionKey;
   label: string;
-}>>> = {
+}[]>> = {
   circle: [
     { key: 'friends', label: 'Amis', href: '/(tabs)/social/friends' },
     { key: 'requests', label: 'Demandes', href: '/(tabs)/social/requests' },

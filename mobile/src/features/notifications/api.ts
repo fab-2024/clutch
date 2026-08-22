@@ -50,6 +50,20 @@ export async function deactivateNotificationToken(token: string) {
   return data === true;
 }
 
+export async function deactivateNotificationDevice(deviceId: string) {
+  const { data, error } = await supabase.rpc('clutch_desactiver_mon_appareil_notification_v1', {
+    p_appareil_id: deviceId,
+  });
+  if (error) throw error;
+  return Math.max(0, Number(data ?? 0));
+}
+
+export async function deactivateAllNotificationTokens() {
+  const { data, error } = await supabase.rpc('clutch_desactiver_mes_jetons_notification_v1');
+  if (error) throw error;
+  return Math.max(0, Number(data ?? 0));
+}
+
 function normalizePreferences(value: unknown): NotificationPreferences {
   const row = value && typeof value === 'object' ? value as Record<string, unknown> : {};
   return {

@@ -3,8 +3,11 @@
     "name": "Clutch",
     "slug": "clutch-mobile",
     "version": "0.1.0",
+    "description": "Le jeu social de prédiction e-sport, sans mise d’argent réel.",
     "orientation": "portrait",
     "scheme": "clutch",
+    "icon": "./assets/app/icon.png",
+    "backgroundColor": "#06080B",
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": false,
@@ -15,12 +18,37 @@
     },
     "android": {
       "predictiveBackGestureEnabled": false,
-      "package": "com.fabthetap.clutch"
+      "package": "com.fabthetap.clutch",
+      "icon": "./assets/app/icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/app/adaptive-icon.png",
+        "backgroundColor": "#080B0F"
+      }
     },
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-notifications"
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/app/notification-icon.png",
+          "color": "#E8FF3D",
+          "defaultChannel": "clutch-events"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/app/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#06080B",
+          "dark": {
+            "image": "./assets/app/splash-icon.png",
+            "backgroundColor": "#06080B"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

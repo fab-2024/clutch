@@ -1,0 +1,51 @@
+name: Clutch quality
+
+on:
+  pull_request:
+  push:
+    branches: [main, mobile-foundation, 'codex/**']
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+        working-directory: mobile
+      - run: npm run mobile:architecture
+      - run: npm run mobile:typecheck
+      - run: npm run mobile:lint
+      - run: npm run mobile:test
+      - run: npm run mobile:public-pages-test
+      - run: npm run mobile:audit
+      - run: npm run mobile:release-check
+
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.115.0
+      - run: npm run db:start
+      - run: npm run db:reset
+      - run: npm run db:lint
+      - run: npm run db:verify
+      - run: npm run db:advisors

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
@@ -28,6 +28,13 @@ const STATES: { id: MyCallState; label: string; key: keyof Pick<MyCallsDashboard
   { id: 'reussi', label: 'RÉUSSIS', key: 'reussis' },
   { id: 'manque', label: 'MANQUÉS', key: 'manques' },
 ];
+const CALL_PAGE_SIZE = 8;
+const INITIAL_VISIBLE: Record<MyCallState, number> = {
+  ouvert: CALL_PAGE_SIZE,
+  verrouille: CALL_PAGE_SIZE,
+  reussi: CALL_PAGE_SIZE,
+  manque: CALL_PAGE_SIZE,
+};
 
 export function MyCallsPanel({ dashboard, followedGames, game, query }: Props) {
   const { profile, session } = useAuth();
@@ -40,12 +47,19 @@ export function MyCallsPanel({ dashboard, followedGames, game, query }: Props) {
         ? 'reussi'
         : 'manque';
   const [state, setState] = useState<MyCallState>(initialState);
+  const [visibleByState, setVisibleByState] = useState(INITIAL_VISIBLE);
   const scoped = useMemo(() => Object.fromEntries(STATES.map((item) => [
     item.id,
     filterCalls(dashboard[item.key], game, followedGames, query),
   ])) as Record<MyCallState, MyCallItem[]>, [dashboard, followedGames, game, query]);
   const calls = scoped[state];
+  const visibleCalls = calls.slice(0, visibleByState[state]);
+  const hiddenCount = Math.max(0, calls.length - visibleCalls.length);
   const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
+
+  useEffect(() => {
+    setVisibleByState(INITIAL_VISIBLE);
+  }, [dashboard, followedGames, game, query]);
 
   return (
     <View style={styles.section}>
@@ -80,7 +94,21 @@ export function MyCallsPanel({ dashboard, followedGames, game, query }: Props) {
 
       {calls.length ? (
         <View style={styles.list}>
-          {calls.map((call) => <CallCard call={call} key={call.id} />)}
+          {visibleCalls.map((call) => <CallCard call={call} key={call.id} />)}
+          {hiddenCount ? (
+            <Pressable
+              accessibilityLabel={`Afficher ${Math.min(CALL_PAGE_SIZE, hiddenCount)} calls supplémentaires`}
+              accessibilityRole="button"
+              onPress={() => setVisibleByState((current) => ({
+                ...current,
+                [state]: current[state] + CALL_PAGE_SIZE,
+              }))}
+              style={({ pressed }) => [styles.loadMore, pressed && styles.pressed]}
+            >
+              <Text style={styles.loadMoreText}>AFFICHER LA SUITE</Text>
+              <Text style={styles.loadMoreMeta}>{visibleCalls.length}/{calls.length}</Text>
+            </Pressable>
+          ) : null}
         </View>
       ) : (
         <View style={styles.empty}>
@@ -266,6 +294,9 @@ const styles = StyleSheet.create({
   tabLabel: { ...typography.label, marginTop: 2, color: '#66717C', fontSize: 9 },
   tabLabelActive: { color: colors.text },
   list: { gap: 11 },
+  loadMore: { minHeight: 50, paddingHorizontal: 15, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#303A43' },
+  loadMoreText: { ...typography.action, color: colors.volt, letterSpacing: .35 },
+  loadMoreMeta: { ...typography.label, color: colors.textMuted },
   card: { overflow: 'hidden', padding: 14, borderRadius: 25, gap: 13, backgroundColor: '#0B1015', borderWidth: 1 },
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   eventCopy: { flex: 1, minWidth: 0 },

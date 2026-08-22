@@ -16,7 +16,8 @@ export default function LeaguesScreen() {
   const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(async (refresh = false) => {
-    refresh ? setRefreshing(true) : setLoading(true);
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try {
       setLeagues(await loadLeagues());

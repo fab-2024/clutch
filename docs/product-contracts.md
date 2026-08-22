@@ -297,15 +297,17 @@ prochain call. Aucun objectif chiffré n'est fixé avant cette base réelle.
 | --- | --- |
 | Call vainqueur gratuit et irréversible | En place |
 | Projection gain/perte et cinq placements | En place |
-| Snapshots Frags/rang avant-après | En base, pas encore consommés par le mobile |
-| Révélation communautaire | À construire |
-| Grade saisonnier à cinq paliers | À construire |
+| Snapshots Frags/rang avant-après | En place et consommés par le mobile |
+| Révélation communautaire | En place après validation du call |
+| Grade saisonnier à cinq paliers | En place |
 | XP permanente | Calcul mobile existant, autorité serveur à consolider |
 | Forme permanente par supporters | En place |
 | Charge temporaire par activité | À construire |
 | Volts de mutation | En place |
 | Conviction multiplicative | Historique à déprécier |
-| Instrumentation de la boucle | Absente |
+| Instrumentation de la boucle | Socle first-party privé en place, vocabulaire principal à compléter |
+| Suppression de compte coordonnée | Implémentée, déploiement et recette distante requis |
+| Liens publics HTTPS | Implémentés, domaine et associations stores à configurer |
 
 ## 11. Hors périmètre V1
 

@@ -37,6 +37,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const profileRef = useRef<ClutchProfile | null>(null);
   const statusRef = useRef<AuthStatus>('loading');
 
+  const invalidateRequests = useCallback(() => {
+    requestIdRef.current += 1;
+  }, []);
+
   const updateStatus = useCallback((nextStatus: AuthStatus) => {
     statusRef.current = nextStatus;
     setStatus(nextStatus);
@@ -181,10 +185,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return () => {
       active = false;
       mountedRef.current = false;
-      ++requestIdRef.current;
+      invalidateRequests();
       subscription.unsubscribe();
     };
-  }, [hydrateSession, restoreSession, updateSessionOnly]);
+  }, [hydrateSession, invalidateRequests, restoreSession, updateSessionOnly]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

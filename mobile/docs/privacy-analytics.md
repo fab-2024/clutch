@@ -14,6 +14,18 @@ Clutch enregistre uniquement des interactions produit first-party, associées au
 
 Le schéma interdit les identifiants publicitaires, identifiants d’appareil, adresses IP applicatives et métadonnées libres. Les événements bruts restent dans `private.analytics_evenements`, hors Data API et sans droit de lecture direct pour les rôles mobiles.
 
+## Conservation et suppression
+
+Les événements bruts sont purgés automatiquement au plus tard après treize
+mois par `private.clutch_purger_analytics_v1()`. Le job quotidien est enregistré
+sous `clutch-analytics-retention-v1`. La fonction n’est exécutable ni par
+`anon`, ni par `authenticated`, ni par le rôle Data API `service_role`; son
+appel reste réservé au propriétaire de la base et au planificateur.
+
+La suppression du compte efface les événements liés par cascade. Le parcours
+serveur supprime également le client RevenueCat avant l’utilisateur Supabase ;
+un échec reste donc rejouable et ne doit jamais être présenté comme un succès.
+
 ## Données d’achat
 
 Le Founder Pack est traité par Apple ou Google et validé par RevenueCat.
@@ -82,3 +94,5 @@ formulaire Play Console en vigueur.
 5. Tester la suppression du client RevenueCat dans le parcours de suppression
    de compte avant publication ; le `ON DELETE CASCADE` Supabase ne supprime
    pas à lui seul le client chez le prestataire.
+6. Vérifier que le job `clutch-analytics-retention-v1` existe une seule fois et
+   exécuter `supabase/tests/release_readiness_privacy.sql`.

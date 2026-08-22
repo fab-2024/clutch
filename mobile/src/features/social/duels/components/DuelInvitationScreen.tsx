@@ -1,4 +1,3 @@
-import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -13,6 +12,7 @@ import {
 } from 'react-native';
 
 import { Screen } from '@/src/components/layout/Screen';
+import { publicAppUrl } from '@/src/config/release';
 import { colors, radius, spacing, typography } from '@/src/theme';
 
 import { acceptDuel, cancelDuel, loadDuelInvitation, loadDuelResult } from '../api';
@@ -35,7 +35,8 @@ export default function DuelInvitationScreen() {
       setLoading(false);
       return;
     }
-    refresh ? setRefreshing(true) : setLoading(true);
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try {
       const invitation = await loadDuelInvitation(token);
@@ -69,7 +70,7 @@ export default function DuelInvitationScreen() {
       && duel.mon_prono.choix !== duel.choix_oppose,
   );
   const invitationUrl = useMemo(
-    () => token ? Linking.createURL(`/duel/${token}`) : '',
+    () => token ? publicAppUrl(`/c/${encodeURIComponent(token)}`) ?? '' : '',
     [token],
   );
 
@@ -98,7 +99,11 @@ export default function DuelInvitationScreen() {
   }
 
   async function onShare() {
-    if (!duel || !invitationUrl || busy) return;
+    if (!duel || busy) return;
+    if (!invitationUrl) {
+      setError('Le domaine HTTPS public doit être configuré avant de partager cette invitation.');
+      return;
+    }
     setBusy('share'); setError(null); setMessage(null);
     const shareText = `${duel.createur_pseudo} te défie sur ${duel.tag_a} vs ${duel.tag_b}. Rejoins le camp ${duel.tag_oppose} : ${invitationUrl}`;
     try {

@@ -73,17 +73,26 @@ Exécuter depuis la racine du dépôt :
 ```bash
 npm run mobile:architecture
 npm run mobile:typecheck
+npm run mobile:lint
+npm run mobile:test
+npm run mobile:audit
+npm run mobile:release-check
 ```
 
-Le Founder Pack peut être prévisualisé sur le web à
-`/founder-pack-preview`, mais son paiement doit être testé dans une nouvelle
-build native. La configuration complète des stores, de RevenueCat et de
-Supabase est décrite dans [`docs/founder-pack-testing.md`](docs/founder-pack-testing.md).
+Les routes de prévisualisation sont disponibles uniquement en développement ;
+elles redirigent vers l’application dans une build de production. Le paiement
+du Founder Pack doit toujours être testé dans une nouvelle build native. La
+configuration complète des stores, de RevenueCat et de Supabase est décrite
+dans [`docs/founder-pack-testing.md`](docs/founder-pack-testing.md).
+
+Le domaine HTTPS, la suppression de compte, les liens universels, les E2E et la
+matrice de soumission sont suivis dans
+[`docs/release-readiness.md`](docs/release-readiness.md).
 
 ## Règles produit et sécurité
 
-- Hub, Matchs, Social, Room et Moi forment la navigation principale.
-- La Clutch Room reste un placeholder jusqu'à demande explicite.
+- Hub, Matchs, Social et Moi forment la navigation publique actuelle.
+- La Clutch Room reste un placeholder masqué jusqu'à demande explicite.
 - La direction UI actuelle est validée ; un refactor structurel ne doit pas la
   redessiner.
 - Le mobile ne duplique pas les autorisations sensibles. Les soldes,

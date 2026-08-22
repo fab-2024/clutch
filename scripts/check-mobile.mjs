@@ -31,7 +31,12 @@ for (const path of walk(mobileRoot)) {
   const isFeatureApi = /^mobile\/src\/features\/.+\/api\.ts$/.test(repositoryPath);
   const isSupabaseInfrastructure = repositoryPath.startsWith('mobile/src/lib/supabase/');
 
-  if (source.includes("@/src/lib/supabase") && !isFeatureApi && !isSupabaseInfrastructure) {
+  const importsSupabaseClient =
+    /(?:from\s+|import\s*\(|require\s*\()\s*['"]@\/src\/lib\/supabase(?:\/[^'"]*)?['"]/.test(
+      source,
+    );
+
+  if (importsSupabaseClient && !isFeatureApi && !isSupabaseInfrastructure) {
     violations.push(`Supabase client imported outside a feature API: ${repositoryPath}`);
   }
   if (source.includes("@supabase/supabase-js") && repositoryPath.startsWith('mobile/app/')) {

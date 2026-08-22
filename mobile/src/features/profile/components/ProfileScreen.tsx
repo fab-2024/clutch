@@ -5,6 +5,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'r
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
 import { signOut } from '@/src/features/auth/api';
+import { deactivateCurrentDevicePushToken } from '@/src/features/notifications';
 import { gradeAccent } from '@/src/features/ranking/grades';
 import { CosmeticAvatar } from '@/src/features/shop/components/CosmeticRenderer';
 import { useAuth } from '@/src/providers/AuthProvider';
@@ -44,7 +45,8 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
       setRefreshing(false);
       return;
     }
-    refresh ? setRefreshing(true) : setLoading(true);
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try {
       const [nextProfile] = await Promise.all([
@@ -55,7 +57,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
     }
     catch (caught) { setError(caught instanceof Error ? caught.message : 'Impossible de charger le profil.'); }
     finally { setLoading(false); setRefreshing(false); }
-  }, [previewData, profile?.equipe_favorite_id, profile?.profil_public, pseudo, refreshEconomy]);
+  }, [previewData, pseudo, refreshEconomy]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -82,6 +84,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
     setSigningOut(true);
     setSignOutError(null);
     try {
+      await deactivateCurrentDevicePushToken();
       await signOut();
     } catch {
       setSignOutError('Déconnexion impossible. Vérifie ta connexion puis réessaie.');

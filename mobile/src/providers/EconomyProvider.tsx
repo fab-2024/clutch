@@ -36,6 +36,10 @@ export function EconomyProvider({ children }: PropsWithChildren) {
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
 
+  const invalidateRequests = useCallback(() => {
+    requestIdRef.current += 1;
+  }, []);
+
   const refresh = useCallback(async () => {
     const requestId = ++requestIdRef.current;
 
@@ -63,9 +67,9 @@ export function EconomyProvider({ children }: PropsWithChildren) {
     setEconomy(EMPTY_ECONOMY);
     void refresh();
     return () => {
-      ++requestIdRef.current;
+      invalidateRequests();
     };
-  }, [refresh]);
+  }, [invalidateRequests, refresh]);
 
   const value = useMemo<EconomyContextValue>(
     () => ({ ...economy, error, loading, refresh }),

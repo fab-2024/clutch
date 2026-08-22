@@ -7,11 +7,13 @@ import { SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk/700Bold';
 import { useFonts } from 'expo-font';
 import { router, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { AnalyticsBridge } from '@/src/features/analytics';
+import AppErrorBoundary from '@/src/components/errors/AppErrorBoundary';
 import AuthRecoveryScreen from '@/src/features/auth/components/AuthRecoveryScreen';
+import { consumePendingRoute } from '@/src/features/auth/pendingRoute';
 import ResultRevealGate from '@/src/features/matches/components/ResultRevealGate';
 import { NotificationBridge } from '@/src/features/notifications';
 import { AuthProvider, useAuth } from '@/src/providers/AuthProvider';
@@ -30,10 +32,21 @@ function RootNavigator() {
   );
   const inOnboarding = segments[0] === 'onboarding';
   const inAuthFlow = segments[0] === 'auth';
+  const resumingRoute = useRef(false);
 
   useEffect(() => {
     if (loading || !userId || !profileId) return;
     if (needsOnboarding && !inOnboarding && !inAuthFlow) router.replace('/onboarding');
+  }, [inAuthFlow, inOnboarding, loading, needsOnboarding, profileId, userId]);
+
+  useEffect(() => {
+    if (loading || !userId || !profileId || needsOnboarding || inOnboarding || inAuthFlow || resumingRoute.current) return;
+    let active = true;
+    resumingRoute.current = true;
+    consumePendingRoute()
+      .then((path) => { if (active && path) router.replace(path as never); })
+      .finally(() => { resumingRoute.current = false; });
+    return () => { active = false; };
   }, [inAuthFlow, inOnboarding, loading, needsOnboarding, profileId, userId]);
 
   if (loading) {
@@ -66,6 +79,7 @@ function RootNavigator() {
           <Stack.Screen name="result/[id]" options={{ animation: 'fade', presentation: 'fullScreenModal' }} />
           <Stack.Screen name="duel/[token]" />
           <Stack.Screen name="settings/profile" />
+          <Stack.Screen name="settings/account" />
           <Stack.Screen name="shop" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="founder-pack" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="economy" options={{ animation: 'slide_from_right' }} />
@@ -81,6 +95,11 @@ function RootNavigator() {
         <Stack.Screen name="auth/callback" />
         <Stack.Screen name="auth/update-password" />
         <Stack.Screen name="player/[pseudo]" />
+        <Stack.Screen name="c/[token]" />
+        <Stack.Screen name="u/[pseudo]" />
+        <Stack.Screen name="legal/privacy" />
+        <Stack.Screen name="legal/terms" />
+        <Stack.Screen name="support" />
         <Stack.Screen name="shop-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="founder-pack-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="economy-preview" options={{ animation: 'fade' }} />
@@ -110,14 +129,16 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <EconomyProvider>
-        <CosmeticsProvider>
-          <StatusBar style="light" />
-          <RootNavigator />
-        </CosmeticsProvider>
-      </EconomyProvider>
-    </AuthProvider>
+    <AppErrorBoundary>
+      <AuthProvider>
+        <EconomyProvider>
+          <CosmeticsProvider>
+            <StatusBar style="light" />
+            <RootNavigator />
+          </CosmeticsProvider>
+        </EconomyProvider>
+      </AuthProvider>
+    </AppErrorBoundary>
   );
 }
 

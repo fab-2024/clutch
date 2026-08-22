@@ -37,11 +37,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="room"
         options={{
-          title: 'Room',
-          tabBarAccessibilityLabel: 'Room, bientôt disponible',
-          tabBarLabel: 'Room · bientôt',
-          tabBarLabelStyle: [styles.label, styles.roomLabel],
-          tabBarIcon: ({ focused }) => <TabIcon glyph="◇" focused={focused} />,
+          href: null,
         }}
       />
       <Tabs.Screen name="profile" options={{ title: 'Moi', tabBarIcon: ({ focused }) => <TabIcon glyph="♙" focused={focused} /> }} />
@@ -99,9 +95,5 @@ const styles = StyleSheet.create({
     ...typography.label,
     marginTop: 1,
     letterSpacing: 0.25,
-  },
-  roomLabel: {
-    fontSize: 10,
-    letterSpacing: 0,
   },
 });

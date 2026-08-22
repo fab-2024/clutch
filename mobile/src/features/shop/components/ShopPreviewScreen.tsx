@@ -9,7 +9,7 @@ import {
 } from '../types';
 import ShopScreen from './ShopScreen';
 
-const DEFINITIONS: Array<[CosmeticSlot, string, string, string, number, string]> = [
+const DEFINITIONS: [CosmeticSlot, string, string, string, number, string][] = [
   ['cadre_profil', 'Cadre Brut', 'frame-raw', '#AAB4BE', 0, 'commun'],
   ['cadre_profil', 'Signal Volt', 'frame-volt', '#E8FF3D', 350, 'rare'],
   ['cadre_profil', 'Prisme Arena', 'frame-prism', '#63B8FF', 850, 'epique'],

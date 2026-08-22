@@ -3,7 +3,7 @@ import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-import { registerNotificationToken } from './api';
+import { deactivateNotificationDevice, registerNotificationToken } from './api';
 import type { PushRegistrationResult } from './types';
 
 const DEVICE_ID_KEY = '@clutch/notification-device-id';
@@ -39,6 +39,11 @@ export async function syncPushTokenIfGranted(): Promise<PushRegistrationResult> 
       message: caught instanceof Error ? caught.message : 'Synchronisation du jeton impossible.',
     };
   }
+}
+
+export async function deactivateCurrentDevicePushToken() {
+  if (Platform.OS === 'web') return 0;
+  return deactivateNotificationDevice(await notificationDeviceId());
 }
 
 async function registerCurrentDevice(): Promise<PushRegistrationResult> {

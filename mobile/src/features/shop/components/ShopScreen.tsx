@@ -86,7 +86,8 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
     }
 
     const requestId = ++requestRef.current;
-    refresh ? setRefreshing(true) : setLoading(true);
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try {
       const next = await loadCosmeticShop();
@@ -311,7 +312,7 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
 
         <View style={styles.sectionHead}>
           <View style={styles.sectionMark}><Text style={styles.sectionMarkText}>{SLOT_META[activeSlot].glyph}</Text></View>
-          <View style={styles.sectionCopy}><Text style={styles.sectionEyebrow}>{scope === 'owned' ? 'COLLECTION' : 'CATALOGUE'} // {SLOT_META[activeSlot].short}</Text><Text style={styles.sectionTitle}>{SLOT_META[activeSlot].label}</Text><Text style={styles.sectionPromise}>{SLOT_META[activeSlot].promise}</Text></View>
+          <View style={styles.sectionCopy}><Text style={styles.sectionEyebrow}>{scope === 'owned' ? 'COLLECTION' : 'CATALOGUE'}{' // '}{SLOT_META[activeSlot].short}</Text><Text style={styles.sectionTitle}>{SLOT_META[activeSlot].label}</Text><Text style={styles.sectionPromise}>{SLOT_META[activeSlot].promise}</Text></View>
           <Pressable accessibilityLabel="Afficher les filtres" accessibilityRole="button" accessibilityState={{ expanded: filtersVisible }} onPress={() => setFiltersVisible((visible) => !visible)} style={({ pressed }) => [styles.filterToggle, filtersVisible && styles.filterToggleActive, pressed && styles.pressed]}>
             <Text style={[styles.filterToggleText, filtersVisible && styles.filterToggleTextActive]}>FILTRES{filterCount ? ` · ${filterCount}` : ''}</Text>
           </Pressable>
@@ -345,7 +346,7 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
         )}
 
         <View style={styles.rules}>
-          <View style={styles.rulesHeader}><View style={styles.rulesIcon}><CurrencyIcon kind="volts" size={20} /></View><View style={styles.rulesCopy}><Text style={styles.rulesEyebrow}>CONTRAT {contract.version} // {contract.code.toUpperCase()}</Text><Text style={styles.rulesTitle}>LE PACTE CLUTCH</Text><Text style={styles.rulesText}>Tes objets restent permanents et ne modifient jamais tes performances.</Text></View></View>
+          <View style={styles.rulesHeader}><View style={styles.rulesIcon}><CurrencyIcon kind="volts" size={20} /></View><View style={styles.rulesCopy}><Text style={styles.rulesEyebrow}>CONTRAT {contract.version}{' // '}{contract.code.toUpperCase()}</Text><Text style={styles.rulesTitle}>LE PACTE CLUTCH</Text><Text style={styles.rulesText}>Tes objets restent permanents et ne modifient jamais tes performances.</Text></View></View>
           <View style={styles.ruleList}>{contract.rules.map((rule) => <View key={rule.id} style={styles.ruleRow}><Text style={styles.ruleCheck}>✓</Text><View style={styles.ruleCopy}><Text style={styles.ruleLabel}>{rule.label}</Text><Text style={styles.ruleDetail}>{rule.detail}</Text></View></View>)}</View>
         </View>
       </ScrollView>

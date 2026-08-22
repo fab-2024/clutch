@@ -291,6 +291,16 @@ export default function ProfileSettingsScreen() {
           {pushMessage ? <Text style={styles.pushMessage}>{pushMessage}</Text> : null}
         </View>
 
+        <View style={styles.section}>
+          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>05 // COMPTE & DONNÉES</Text><Text style={styles.sectionTitle}>TU GARDES LA MAIN.</Text></View></View>
+          <View style={styles.accountLinks}>
+            <AccountLink label="Compte, données et suppression" onPress={() => router.push('/settings/account')} />
+            <AccountLink label="Politique de confidentialité" onPress={() => router.push('/legal/privacy')} />
+            <AccountLink label="Conditions d’utilisation" onPress={() => router.push('/legal/terms')} />
+            <AccountLink label="Support" onPress={() => router.push('/support')} />
+          </View>
+        </View>
+
         <Pressable accessibilityRole="button" disabled={!canSave} onPress={() => void save()} style={({ pressed }) => [styles.save, !canSave && styles.disabled, pressed && canSave && styles.pressed]}>
           <Text style={styles.saveText}>{saving ? 'ENREGISTREMENT…' : dirty ? 'ENREGISTRER LES PARAMÈTRES' : 'PARAMÈTRES À JOUR'}</Text><Text style={styles.saveArrow}>{saving ? '·' : '→'}</Text>
         </Pressable>
@@ -354,6 +364,14 @@ function NotificationToggle({
   );
 }
 
+function AccountLink({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.accountLink, pressed && styles.pressed]}>
+      <Text style={styles.accountLinkLabel}>{label}</Text><Text style={styles.accountLinkArrow}>→</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { width: '100%', maxWidth: 430, alignSelf: 'center', paddingHorizontal: spacing.md, paddingBottom: 72, gap: 25 },
@@ -388,6 +406,10 @@ const styles = StyleSheet.create({
   deviceButton: { minHeight: 42, paddingHorizontal: 11, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: colors.volt },
   deviceButtonText: { ...typography.action, color: '#080A0C' },
   pushMessage: { ...typography.label, color: colors.textMuted, letterSpacing: .25 },
+  accountLinks: { overflow: 'hidden', borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border },
+  accountLink: { minHeight: 56, paddingHorizontal: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#182028' },
+  accountLinkLabel: { ...typography.bodyStrong, color: colors.text },
+  accountLinkArrow: { color: colors.volt, fontSize: 18 },
   switchTrack: { width: 52, height: 30, padding: 3, borderRadius: 16, justifyContent: 'center', backgroundColor: '#242D35' }, switchTrackActive: { backgroundColor: colors.volt }, switchThumb: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#75808C' }, switchThumbActive: { alignSelf: 'flex-end', backgroundColor: '#080A0C' },
   save: { minHeight: 58, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 18, backgroundColor: colors.volt }, saveText: { ...typography.action, color: '#080A0C', letterSpacing: .3 }, saveArrow: { color: '#080A0C', fontSize: 18, fontWeight: '900' },
   disabled: { opacity: 0.42 }, pressed: { opacity: 0.74 },

@@ -1,0 +1,13 @@
+appId: com.fabthetap.clutch
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Reprends ta place.'
+    timeout: 30000
+- tapOn: 'Confidentialité'
+- assertVisible: 'POLITIQUE DE CONFIDENTIALITÉ.'
+- tapOn: 'Revenir en arrière'
+- assertVisible: 'Reprends ta place.'
+- tapOn: 'Conditions'
+- assertVisible: 'CONDITIONS D’UTILISATION.'

@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import ClutchCore from '@/src/components/visual/ClutchCore';
@@ -11,11 +11,14 @@ import { colors, radius, spacing, typography } from '@/src/theme';
 import { signInWithPassword, signUpWithPassword } from '../api';
 import { authErrorMessage } from '../messages';
 import { accountConfirmationRedirect } from '../redirects';
+import { rememberPendingRoute, safePendingRoute } from '../pendingRoute';
 import AuthShell from './AuthShell';
 
 type Mode = 'signin' | 'signup';
 
 export default function LoginScreen() {
+  const params = useLocalSearchParams<{ next?: string | string[] }>();
+  const requestedRoute = safePendingRoute(Array.isArray(params.next) ? params.next[0] : params.next);
   const [mode, setMode] = useState<Mode>('signin');
   const [pseudo, setPseudo] = useState('');
   const [email, setEmail] = useState('');
@@ -33,6 +36,10 @@ export default function LoginScreen() {
     && (mode === 'signin'
       || (pseudo.trim().length >= 3 && password.length >= 8 && password === passwordConfirmation)),
   );
+
+  useEffect(() => {
+    if (requestedRoute) void rememberPendingRoute(requestedRoute);
+  }, [requestedRoute]);
 
   function selectMode(nextMode: Mode) {
     if (loading || nextMode === mode) return;
@@ -62,7 +69,7 @@ export default function LoginScreen() {
         email,
         password,
         pseudo,
-        emailRedirectTo: accountConfirmationRedirect(),
+        emailRedirectTo: accountConfirmationRedirect(requestedRoute),
       });
       if (result.confirmationRequired) {
         setConfirmationSent(true);
@@ -224,8 +231,23 @@ export default function LoginScreen() {
           <TrustItem label="Sans mise" />
           <TrustItem label="Compte privé" />
         </View>
+        <View accessibilityLabel="Informations légales" style={styles.legalRow}>
+          <LegalLink label="Confidentialité" route="/legal/privacy" />
+          <Text style={styles.legalSeparator}>·</Text>
+          <LegalLink label="Conditions" route="/legal/terms" />
+          <Text style={styles.legalSeparator}>·</Text>
+          <LegalLink label="Support" route="/support" />
+        </View>
       </View>
     </AuthShell>
+  );
+}
+
+function LegalLink({ label, route }: { label: string; route: '/legal/privacy' | '/legal/terms' | '/support' }) {
+  return (
+    <Pressable accessibilityRole="link" onPress={() => router.push(route)}>
+      <Text style={styles.legalText}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -307,6 +329,9 @@ const styles = StyleSheet.create({
   trustItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   trustDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.volt },
   trustText: { ...typography.caption, color: '#6E7A84' },
+  legalRow: { minHeight: 28, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  legalText: { ...typography.caption, color: '#8F9AA3', textDecorationLine: 'underline' },
+  legalSeparator: { ...typography.caption, color: '#4E5962' },
   disabled: { opacity: 0.45 },
   pressed: { opacity: 0.8 },
 });

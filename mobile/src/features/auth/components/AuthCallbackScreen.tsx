@@ -7,16 +7,18 @@ import { colors, radius, spacing, typography } from '@/src/theme';
 
 import { exchangeAuthCodeForSession } from '../api';
 import { authErrorMessage } from '../messages';
+import { rememberPendingRoute, safePendingRoute } from '../pendingRoute';
 import AuthShell from './AuthShell';
 
 export default function AuthCallbackScreen() {
-  const params = useLocalSearchParams<{ code?: string | string[]; error_description?: string | string[] }>();
+  const params = useLocalSearchParams<{ code?: string | string[]; error_description?: string | string[]; next?: string | string[] }>();
   const { profile, session, status } = useAuth();
   const startedRef = useRef(false);
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const code = firstParam(params.code);
   const providerError = firstParam(params.error_description);
+  const requestedRoute = safePendingRoute(firstParam(params.next));
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -27,10 +29,11 @@ export default function AuthCallbackScreen() {
       return;
     }
 
+    if (requestedRoute) void rememberPendingRoute(requestedRoute);
     exchangeAuthCodeForSession(code)
       .then(() => setConfirmed(true))
       .catch((caught) => setError(authErrorMessage(caught, 'La confirmation du compte a échoué.')));
-  }, [code, providerError]);
+  }, [code, providerError, requestedRoute]);
 
   useEffect(() => {
     if (!confirmed || !session || !profile || status !== 'ready') return;
