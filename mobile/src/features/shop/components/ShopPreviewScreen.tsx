@@ -1,6 +1,7 @@
 import { Redirect } from 'expo-router';
 
 import {
+  COSMETIC_FAMILY_BY_SLOT,
   DEFAULT_MONETIZATION_CONTRACT,
   type CosmeticItem,
   type CosmeticShopData,
@@ -34,6 +35,7 @@ const DEFINITIONS: Array<[CosmeticSlot, string, string, string, number, string]>
 const ITEMS: CosmeticItem[] = DEFINITIONS.map(([slot, name, styleKey, accent, price, rarity], index) => ({
   id: `preview-${styleKey}`,
   slot,
+  family: COSMETIC_FAMILY_BY_SLOT[slot],
   level: index % 4 + 1,
   name,
   description: price ? 'Une signature visuelle pure, sans aucun avantage compétitif.' : 'Le style de départ inclus avec ton profil.',
@@ -41,6 +43,19 @@ const ITEMS: CosmeticItem[] = DEFINITIONS.map(([slot, name, styleKey, accent, pr
   styleKey,
   accent,
   price,
+  collectionKey: 'origine',
+  source: price ? 'achat' : 'gratuit',
+  team: null,
+  brandKey: null,
+  campaignKey: null,
+  seasonId: null,
+  availableFrom: null,
+  availableUntil: null,
+  publicationStatus: 'publie',
+  license: { type: 'interne', holder: 'Clutch' },
+  included: price === 0,
+  available: true,
+  acquirable: true,
   owned: price === 0 || styleKey === 'frame-volt' || styleKey === 'title-reader',
   equipped: styleKey === 'frame-volt' || styleKey === 'title-reader' || styleKey === 'core-origin' || styleKey === 'faction-aura' || styleKey === 'card-black',
 }));

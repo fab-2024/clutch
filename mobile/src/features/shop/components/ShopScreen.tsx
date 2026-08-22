@@ -33,8 +33,8 @@ const SLOT_META: Record<CosmeticSlot, { label: string; short: string; promise: s
   cadre_profil: { label: 'Cadres', short: 'CADRE', promise: 'Signe ton profil sans toucher à tes performances.', glyph: '▣' },
   titre_profil: { label: 'Titres', short: 'TITRE', promise: 'Affiche une identité gagnée, jamais un avantage.', glyph: 'T' },
   apparence_core: { label: 'Core', short: 'CORE', promise: 'Change la matière du noyau visible sur ton Hub.', glyph: 'C' },
-  effet_faction: { label: 'Faction', short: 'EFFET', promise: 'Habille la relique sans accélérer sa progression.', glyph: '✦' },
-  carte_profil: { label: 'Cartes', short: 'CARTE', promise: 'Prépare une signature visuelle à partager.', glyph: '◇' },
+  effet_faction: { label: 'Reliques', short: 'RELIQUE', promise: 'Habille la relique sans accélérer sa progression.', glyph: '✦' },
+  carte_profil: { label: 'Bannières', short: 'BANNIÈRE', promise: 'Prépare une signature visuelle à partager.', glyph: '◇' },
 };
 
 const SLOT_ORDER = Object.keys(SLOT_META) as CosmeticSlot[];
@@ -104,6 +104,11 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
     if (!data || pendingId || item.equipped) return;
 
     if (!item.owned) {
+      if (!item.acquirable) {
+        setConfirmingId(null);
+        setMessage(acquisitionMessage(item));
+        return;
+      }
       if (data.balance < item.price) {
         setMessage(`Il te manque ${formatNumber(item.price - data.balance)} Volts pour ${item.name}.`);
         return;
@@ -272,13 +277,16 @@ function ItemCard({
   pending: boolean;
 }) {
   const missing = Math.max(0, item.price - balance);
-  const disabled = item.equipped || pending;
+  const locked = !item.owned && !item.acquirable;
+  const disabled = item.equipped || pending || locked;
   const action = item.equipped
     ? 'ÉQUIPÉ'
     : pending
       ? 'SYNCHRONISATION…'
       : item.owned
         ? 'ÉQUIPER'
+        : locked
+          ? acquisitionAction(item)
         : missing
           ? `MANQUE ${formatNumber(missing)} V`
           : confirming
@@ -294,9 +302,14 @@ function ItemCard({
       </View>
       <Text numberOfLines={2} style={styles.itemName}>{item.name}</Text>
       <Text numberOfLines={3} style={styles.itemDescription}>{item.description}</Text>
+      <Text numberOfLines={1} style={styles.itemProvenance}>{provenanceLabel(item)}</Text>
       <View style={styles.itemPrice}>
         {item.price ? <CurrencyIcon kind="volts" size={14} /> : <Text style={styles.includedDot}>●</Text>}
-        <Text style={styles.itemPriceText}>{item.price ? formatNumber(item.price) : 'INCLUS'}</Text>
+        <Text style={styles.itemPriceText}>{item.price
+          ? formatNumber(item.price)
+          : item.included
+            ? 'INCLUS'
+            : sourceLabel(item.source)}</Text>
       </View>
       <Pressable
         accessibilityLabel={`${action}, ${item.name}`}
@@ -309,10 +322,11 @@ function ItemCard({
           item.equipped && styles.itemActionEquipped,
           confirming && styles.itemActionConfirm,
           missing > 0 && !item.owned && styles.itemActionMissing,
+          locked && styles.itemActionMissing,
           pressed && styles.pressed,
         ]}
       >
-        {pending ? <ActivityIndicator color="#080A0C" size="small" /> : <Text style={[styles.itemActionText, (item.equipped || (missing > 0 && !item.owned)) && styles.itemActionTextMuted]}>{action}</Text>}
+        {pending ? <ActivityIndicator color="#080A0C" size="small" /> : <Text style={[styles.itemActionText, (item.equipped || locked || (missing > 0 && !item.owned)) && styles.itemActionTextMuted]}>{action}</Text>}
       </Pressable>
     </View>
   );
@@ -339,6 +353,7 @@ function HeroStat({ accent = false, label, value }: { accent?: boolean; label: s
 }
 
 function applyPreviewAction(data: CosmeticShopData, selected: CosmeticItem): CosmeticShopData {
+  if (!selected.owned && !selected.acquirable) return data;
   const purchasedNow = !selected.owned;
   return {
     ...data,
@@ -351,6 +366,27 @@ function applyPreviewAction(data: CosmeticShopData, selected: CosmeticItem): Cos
 
 function rarityColor(rarity: CosmeticItem['rarity'], accent: string) { return rarity === 'commun' ? '#87929E' : accent; }
 function rarityLabel(rarity: CosmeticItem['rarity']) { if (rarity === 'legendaire') return 'LÉGENDAIRE'; if (rarity === 'epique') return 'ÉPIQUE'; if (rarity === 'rare') return 'RARE'; return 'COMMUN'; }
+function sourceLabel(source: CosmeticItem['source']) {
+  if (source === 'mission') return 'MISSION';
+  if (source === 'partenaire') return 'PARTENAIRE';
+  if (source === 'founder_pack') return 'FOUNDER PACK';
+  if (source === 'gratuit') return 'OFFERT';
+  return 'VOLTS';
+}
+function acquisitionAction(item: CosmeticItem) {
+  return item.available ? sourceLabel(item.source) : 'INDISPONIBLE';
+}
+function acquisitionMessage(item: CosmeticItem) {
+  if (!item.available) return `${item.name} n’est plus disponible à l’acquisition, mais reste permanent pour ses propriétaires.`;
+  if (item.source === 'mission') return `${item.name} se débloque en accomplissant sa mission.`;
+  if (item.source === 'partenaire') return `${item.name} se débloque via son activation partenaire.`;
+  if (item.source === 'founder_pack') return `${item.name} est réservé au Founder Pack.`;
+  return `${item.name} ne peut pas être débloqué depuis la boutique.`;
+}
+function provenanceLabel(item: CosmeticItem) {
+  const identity = item.team?.tag || item.brandKey || item.collectionKey.replace(/-/g, ' ');
+  return `${identity.toUpperCase()} · ${sourceLabel(item.source)}`;
+}
 function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
 function friendlyError(value: string) { if (value.toLowerCase().includes('solde insuffisant')) return 'Ton solde a changé. Recharge la boutique avant de confirmer.'; return value; }
 
@@ -397,7 +433,7 @@ const styles = StyleSheet.create({
   loading: { minHeight: 300, marginHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 26, backgroundColor: '#0B1015' },
   loadingText: { ...typography.body, color: colors.textMuted },
   grid: { paddingHorizontal: spacing.md, flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  itemCard: { width: '48%', minHeight: 375, padding: 12, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222C35' },
+  itemCard: { width: '48%', minHeight: 392, padding: 12, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222C35' },
   preview: { height: 120, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 17, backgroundColor: '#070B0F', borderWidth: 1, borderColor: '#1C252D' },
   framePreview: { width: 126, height: 78, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 9, borderRadius: 18, backgroundColor: '#0C1116', borderWidth: 2 },
   frameAvatar: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
@@ -428,6 +464,7 @@ const styles = StyleSheet.create({
   itemLevel: { ...typography.label, color: colors.textMuted, fontSize: 9 },
   itemName: { ...typography.cardTitle, minHeight: 40, marginTop: 5, color: colors.text },
   itemDescription: { ...typography.caption, minHeight: 43, marginTop: 4, color: colors.textMuted },
+  itemProvenance: { ...typography.eyebrow, minHeight: 15, marginTop: 5, color: '#71808C', fontSize: 8, letterSpacing: .45 },
   itemPrice: { minHeight: 29, marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 5 },
   includedDot: { color: colors.volt, fontSize: 9 },
   itemPriceText: { ...typography.bodyStrong, color: colors.text },

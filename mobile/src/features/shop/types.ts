@@ -9,6 +9,47 @@ export const COSMETIC_SLOTS = [
 export type CosmeticSlot = (typeof COSMETIC_SLOTS)[number];
 export type CosmeticRarity = 'commun' | 'rare' | 'epique' | 'legendaire';
 
+export const COSMETIC_FAMILIES = [
+  'cadre_avatar',
+  'banniere',
+  'titre_supporter',
+  'signature_relique',
+  'core_clutch',
+] as const;
+
+export type CosmeticFamily = (typeof COSMETIC_FAMILIES)[number];
+
+export const COSMETIC_SOURCES = [
+  'gratuit',
+  'mission',
+  'partenaire',
+  'achat',
+  'founder_pack',
+] as const;
+
+export type CosmeticSource = (typeof COSMETIC_SOURCES)[number];
+export type CosmeticPublicationStatus = 'brouillon' | 'publie' | 'retire';
+
+export const COSMETIC_FAMILY_BY_SLOT: Record<CosmeticSlot, CosmeticFamily> = {
+  cadre_profil: 'cadre_avatar',
+  titre_profil: 'titre_supporter',
+  apparence_core: 'core_clutch',
+  effet_faction: 'signature_relique',
+  carte_profil: 'banniere',
+};
+
+export type CosmeticTeam = {
+  id: string;
+  name: string;
+  tag: string;
+  logo: string | null;
+};
+
+export type CosmeticLicense = {
+  type: string;
+  holder: string;
+};
+
 export type MonetizationRule = {
   id: string;
   label: string;
@@ -28,7 +69,11 @@ export type MonetizationContract = {
     voltsConvertibleToFrags: boolean;
   };
   catalog: {
+    schemaVersion: number;
     allowedSlots: CosmeticSlot[];
+    initialFamilies: CosmeticFamily[];
+    extensionFamilies: CosmeticFamily[];
+    sources: CosmeticSource[];
     paidRandomItems: boolean;
     ownedItemsExpire: boolean;
     competitiveEffects: boolean;
@@ -49,6 +94,7 @@ export type MonetizationContract = {
 export type CosmeticItem = {
   id: string;
   slot: CosmeticSlot;
+  family: CosmeticFamily;
   level: number;
   name: string;
   description: string;
@@ -56,11 +102,27 @@ export type CosmeticItem = {
   styleKey: string;
   accent: string;
   price: number;
+  collectionKey: string;
+  source: CosmeticSource;
+  team: CosmeticTeam | null;
+  brandKey: string | null;
+  campaignKey: string | null;
+  seasonId: string | null;
+  availableFrom: string | null;
+  availableUntil: string | null;
+  publicationStatus: CosmeticPublicationStatus;
+  license: CosmeticLicense;
+  included: boolean;
+  available: boolean;
+  acquirable: boolean;
   owned: boolean;
   equipped: boolean;
 };
 
-export type EquippedCosmetic = Omit<CosmeticItem, 'price' | 'owned' | 'equipped'>;
+export type EquippedCosmetic = Pick<
+  CosmeticItem,
+  'id' | 'slot' | 'level' | 'name' | 'description' | 'rarity' | 'styleKey' | 'accent'
+>;
 
 export type EquippedCosmetics = {
   frame: EquippedCosmetic | null;
@@ -106,7 +168,11 @@ export const DEFAULT_MONETIZATION_CONTRACT: MonetizationContract = {
     voltsConvertibleToFrags: false,
   },
   catalog: {
+    schemaVersion: 2,
     allowedSlots: [...COSMETIC_SLOTS],
+    initialFamilies: ['cadre_avatar', 'banniere', 'titre_supporter', 'signature_relique'],
+    extensionFamilies: ['core_clutch'],
+    sources: [...COSMETIC_SOURCES],
     paidRandomItems: false,
     ownedItemsExpire: false,
     competitiveEffects: false,
