@@ -13,7 +13,7 @@ declare
   v_purged bigint;
   v_guarded boolean := false;
 begin
-  if (v_contract ->> 'version')::integer <> 2
+  if (v_contract ->> 'version')::integer <> 4
      or v_contract ->> 'retention_brute' <> '13 months maximum'
      or coalesce((v_contract ->> 'purge_automatique')::boolean, false) is false
      or (select count(*) from cron.job where jobname = 'clutch-analytics-retention-v1') <> 1

@@ -27,15 +27,18 @@ prototype partenaire existent déjà à des niveaux avancés.
 
 Le blueprint est désormais traduit en contrat produit versionné. Deux écarts
 ont été volontairement adoptés : Rank conserve le rating actuel et le Loadout
-conserve son cinquième emplacement Core. Les écarts prioritaires restants sont :
+conserve son cinquième emplacement Core. Le cœur applicatif du bloc B est
+désormais construit et appliqué sur Supabase. Les écarts prioritaires restants
+sont :
 
 1. le nom GRIFF reste au statut AMBRE après le pré-contrôle et le produit reste
    volontairement Clutch tant que la clearance n'est pas terminée ;
-2. Rank n'existe pas comme cinquième onglet ;
-3. l'instrumentation couvre surtout Collection, campagnes et achat, pas encore
-   la boucle Match → Call → Résultat → Rank ;
-4. plusieurs garanties de release existent dans le dépôt, mais ne sont pas
-   encore déployées ou validées sur les environnements distants.
+2. les trois fonctions Edge RevenueCat attendent l'autorisation explicite du
+   traitement de l'UUID Supabase avant leur déploiement ;
+3. la protection contre les mots de passe compromis doit être activée dans
+   Supabase Auth ;
+4. la recette native, les stores sandbox, les notifications et les liens
+   application fermée restent à valider sur appareils.
 
 ---
 
@@ -56,11 +59,10 @@ conserve son cinquième emplacement Core. Les écarts prioritaires restants sont
 - ✅ Hub présent.
 - ✅ Matchs présent.
 - ✅ Social présent.
-- ⬜ Rank absent de la navigation et sans écran dédié.
+- ✅ Rank présent comme cinquième onglet avec un écran dédié.
 - ✅ Moi présent.
 - ✅ Room retirée de la navigation principale avec `href: null`.
-- 🟡 La navigation visible possède donc quatre onglets au lieu des cinq du
-  blueprint.
+- ✅ La navigation visible possède les cinq onglets du contrat produit.
 
 ## Room et Vitrine
 
@@ -69,11 +71,10 @@ conserve son cinquième emplacement Core. Les écarts prioritaires restants sont
   développement.
 - ✅ Les anciens objets ne sont pas supprimés : 25 entrées du catalogue distant
   restent classées dans `legacy-room`.
-- ⬜ Remplacer visuellement Room par Rank.
+- ✅ Room est remplacée visuellement par Rank dans la navigation.
 - 🟡 Collection accessible depuis Moi via le Locker, mais encore comme route
   secondaire et non comme section clairement nommée « Collection ».
-- ⬜ Inscrire formellement la Vitrine 2.5D conditionnelle dans la roadmap
-  exécutable du dépôt.
+- ✅ La Vitrine 2.5D conditionnelle est formalisée dans la roadmap versionnée.
 - ✅ Aucune reprise de Room ne figure dans le périmètre V1 actuel.
 
 ## Migration Clutch → GRIFF
@@ -114,12 +115,11 @@ conserve son cinquième emplacement Core. Les écarts prioritaires restants sont
 - ✅ Match du moment avec état ouvert, verrouillé ou live.
 - ✅ Prochains matchs et raccourci vers Matchs.
 - ✅ Progression de saison, Frags, grade, rang, précision et percentile.
-- 🟡 Mission quotidienne de calls présente, mais ce n'est pas encore la mission
-  collective de faction demandée.
-- ⬜ Résultats récents prioritaires.
-- ⬜ Raccourci vers la dernière récompense obtenue.
-- 🟡 Le Hub reste relativement focalisé, mais il devra pointer vers Rank au lieu
-  d'envoyer la progression vers Moi.
+- ✅ Mission quotidienne collective calculée depuis les vrais calls de la
+  faction.
+- ✅ Dernier verdict mis en avant avec son delta de Frags.
+- ✅ Raccourci vers la dernière récompense réellement possédée.
+- ✅ La progression du Hub pointe vers Rank.
 
 ## Matchs
 
@@ -141,23 +141,23 @@ conserve son cinquième emplacement Core. Les écarts prioritaires restants sont
 - ✅ Missions entre amis et missions de campagne.
 - ✅ Ligues privées accessibles dans le domaine Cercle.
 - ✅ Aucun fil public, chat généraliste ou salons publics.
-- ⬜ Signalement et blocage d'un utilisateur.
-- ⬜ Outils et règles de modération opérationnels.
+- ✅ Signalement, blocage réciproque des interactions et déblocage d'un
+  utilisateur.
+- ✅ Règles de modération publiées et accessibles dans les paramètres de
+  sécurité.
 - 🟡 La « guerre des factions » visible repose encore sur les métriques de
   communauté existantes ; la vraie charge temporaire, son calendrier et sa
   remise à zéro restent à construire.
 
 ## Rank
 
-- ⬜ Créer la route et l'onglet Rank.
-- 🟡 Les données nécessaires à « Ma saison » existent déjà : Frags, placements,
-  grade, rang, percentile, record et précision.
-- 🟡 Les RPC de classement global, Cercle, ligue et faction existent, mais ne
-  sont pas orchestrées dans un écran Rank unique.
-- ⬜ Section « Ma saison ».
-- ⬜ Section « Classements » avec amis, faction et global.
-- ⬜ Section « Récompenses » avec récompense de saison.
-- ⬜ Analytics `rank_viewed`.
+- ✅ Route et cinquième onglet Rank.
+- ✅ Section « Ma saison » sur les Frags, placements, grade, rang, record et
+  précision existants.
+- ✅ Section « Classements » orchestrant Global, Cercle et Faction.
+- ✅ Section « Récompenses » présente sans inventer un objet non attribué.
+- ✅ Analytics first-party `rank_consulte`, soumis au consentement.
+- ⬜ Récompense cosmétique et récapitulatif de fin de saison à produire.
 
 ## Moi
 
@@ -386,51 +386,53 @@ compétitive.
   applicative ou métadonnée libre.
 - ✅ Événements Collection, équipement, campagnes et Founder Pack.
 - ✅ Rapports partenaires agrégés et seuil minimum de confidentialité.
-- 🟡 La migration de purge automatique à 13 mois existe dans le dépôt, mais
-  n'est pas appliquée sur Supabase distant.
-- 🟡 Le projet distant contient actuellement seulement quatre événements bruts :
-  activité quotidienne, affichage de Collection et affichage Founder Pack.
+- ✅ Purge automatique à 13 mois et contrôle de consentement appliqués sur
+  Supabase distant.
+- ✅ Contrat analytique V4 limité à une liste blanche d'événements et sans
+  métadonnée libre.
 
 ## Événements du blueprint
 
-- ⬜ Onboarding commencé.
-- ⬜ Onboarding terminé.
-- ⬜ Match consulté.
-- ⬜ Call commencé ou option sélectionnée.
-- ⬜ Call verrouillé.
-- ⬜ Résultat consulté ou révélé.
-- ⬜ Frags attribués.
-- ⬜ Rank consulté.
+- ✅ Onboarding commencé.
+- ✅ Onboarding terminé.
+- ✅ Match consulté.
+- ✅ Call commencé ou option sélectionnée.
+- ✅ Call verrouillé.
+- ✅ Résultat consulté ou révélé.
+- ✅ Frags attribués côté serveur.
+- ✅ Rank consulté.
 - ✅ Objet obtenu, équipé et retiré via événements serveur.
-- ⬜ Profil public consulté.
-- 🟡 Mission/campagne rejointe et terminée couvertes pour le prototype partenaire,
-  pas encore pour toutes les missions sociales.
-- 🟡 Achat commencé couvert pour le Founder Pack.
+- ✅ Profil public consulté sans pseudo dans la clé analytique.
+- ✅ Mission commencée et terminée instrumentées côté serveur pour les contrats
+  pris en charge.
+- ✅ Achat cosmétique commencé côté mobile et terminé côté serveur.
 - ✅ Achat Founder Pack attribué/révoqué couvert côté serveur.
-- ⬜ Notification ouverte.
+- ✅ Notification ouverte.
 
 ## Indicateurs
 
 - 🟡 Rétention J7/J30 disponible pour les campagnes partenaires.
-- ⬜ Rétention produit générale J1/J7/J30.
-- ⬜ Calls par utilisateur actif.
-- ⬜ Taux de retour au résultat.
-- ⬜ Visites de Rank.
-- ⬜ Utilisation du Loadout.
-- ⬜ Visites des profils publics.
-- ⬜ Activité des factions selon la nouvelle charge.
+- 🟡 Les événements nécessaires à la rétention produit J1/J7/J30 sont présents ;
+  le tableau de mesure de cohorte reste à produire.
+- 🟡 Calls par utilisateur actif calculables, sans tableau produit dédié.
+- 🟡 Taux de retour au résultat calculable, sans tableau produit dédié.
+- 🟡 Visites de Rank mesurables, sans cohorte réelle à ce stade.
+- ✅ Utilisation du Loadout déjà instrumentée.
+- 🟡 Visites des profils publics mesurables, sans cohorte réelle à ce stade.
+- 🟡 Activité des factions mesurable via la mission quotidienne réelle ; aucun
+  recul de bêta disponible.
 - 🟡 Conversion Founder Pack partiellement modélisée, mais sans données d'achat
   réelles.
 - ✅ Taux de complétion de campagne disponible dans le rapport pilote.
 
 ## Consentement et gouvernance
 
-- ⬜ Préférence de consentement analytique ou base légale documentée dans le
-  parcours utilisateur.
-- ⬜ Interface permettant de modifier ce choix.
+- ✅ Consentement analytique facultatif et refus par défaut dans le parcours
+  utilisateur.
+- ✅ Interface permettant de modifier ce choix à tout moment.
 - ✅ Contrat de données et déclarations stores documentés.
-- 🟡 La purge 13 mois et la suppression coordonnée doivent être déployées puis
-  testées avant la bêta publique.
+- 🟡 La purge 13 mois est appliquée ; la suppression coordonnée attend le
+  déploiement autorisé de la fonction Edge RevenueCat et sa recette sandbox.
 
 ---
 
@@ -444,10 +446,12 @@ compétitive.
 - 🟡 Suppression du compte implémentée dans le dépôt.
 - ⬜ Fonction Edge de suppression non déployée sur Supabase distant.
 - ⬜ Recette de suppression avec et sans achat RevenueCat.
-- ⬜ Gestion explicite du consentement analytique.
-- ⬜ Âge minimum défini dans l'onboarding et les conditions.
-- ⬜ Règles de modération publiées.
-- ⬜ Signalement et blocage dans Social ; aucune table distante dédiée n'existe.
+- ✅ Gestion explicite du consentement analytique facultatif.
+- ✅ Âge minimum de 15 ans déclaré à l'inscription et confirmé avant accès au
+  produit, sans collecte de date de naissance.
+- ✅ Règles de modération publiées dans l'application.
+- ✅ Signalement et blocage appliqués sur Supabase ; les profils et interactions
+  bloqués sont masqués dans les deux sens.
 - 🌐 Droits effectifs sur logos, photos et données de matchs à documenter.
 - 🟡 Le catalogue stocke une licence et son titulaire, mais ce champ ne remplace
   pas une autorisation contractuelle.
@@ -458,20 +462,20 @@ compétitive.
 ## État Supabase distant
 
 - ✅ Projet actif et sain.
-- ✅ 65 migrations appliquées jusqu'au durcissement analytics du Founder Pack.
-- ⬜ Migration `20260822134313_release_readiness_privacy.sql` non appliquée.
+- ✅ Migrations de release confidentialité, Bloc B, validation des jetons Expo et
+  masquage des profils bloqués appliquées et testées à distance.
 - 🟡 Une seule fonction Edge est active : `clutch-notifications`.
 - ⬜ `clutch-account-delete`, `clutch-founder-sync` et
-  `clutch-founder-webhook` absentes du distant.
+  `clutch-founder-webhook` absentes du distant, en attente d'autorisation du
+  traitement RevenueCat.
 - 🟡 Les advisors signalent une protection contre les mots de passe compromis à
   activer.
-- 🟡 Les advisors signalent 11 RPC `SECURITY DEFINER` exécutables par `anon` et
-  92 par `authenticated`. Plusieurs sont intentionnelles et contrôlent
-  `auth.uid()` ou l'administration dans leur corps, mais une revue fonction par
-  fonction est nécessaire avant release ; le nombre ne doit pas être ignoré ni
-  traité aveuglément.
-- 🟡 Dette performance signalée : clés étrangères non indexées, policies RLS non
-  optimisées et policies permissives multiples.
+- 🟡 Les advisors signalent encore des RPC `SECURITY DEFINER` historiques
+  exécutables par `anon` ou `authenticated`. Plusieurs sont intentionnelles et
+  contrôlent `auth.uid()` ou l'administration dans leur corps ; leur revue doit
+  rester fonctionnelle et progressive.
+- 🟡 Dette performance historique signalée sur certaines policies RLS et
+  policies permissives multiples ; le Bloc B n'ajoute aucun nouveau WARN.
 
 Références Supabase :
 
@@ -499,7 +503,7 @@ Références Supabase :
 - ✅ Positionnement adopté dans le contrat produit GRIFF V1.1.
 - 🌐 Nom GRIFF au statut AMBRE, non validé définitivement.
 - 🌐 Domaines et identifiants non réservés.
-- 🟡 Navigation décidée sur le papier, Rank absent du produit.
+- ✅ Navigation à cinq onglets, Rank inclus.
 - ✅ Room gelée et masquée.
 - ✅ XP, Frags et Volts documentés ; le rating actuel est confirmé.
 - ✅ Grades et règles saisonnières V1 confirmés avant construction de Rank.
@@ -514,14 +518,14 @@ Références Supabase :
 - ✅ Résultats et révélation avancés.
 - ✅ Mes calls présent.
 - ✅ Doctrine Frags confirmée.
-- ⬜ Analytics de la boucle principale.
+- ✅ Analytics de la boucle principale, avec consentement facultatif.
 - ⬜ Bêta fermée formellement lancée et mesurée.
 
 ## Phase 2 — Progression
 
-- ⬜ Écran Rank.
+- ✅ Écran Rank.
 - ✅ Divisions actuelles conservées.
-- 🟡 Classements existants mais dispersés.
+- ✅ Classements Global, Cercle et Faction réunis dans Rank.
 - ⬜ Fin de saison mobile.
 - ⬜ Récompenses saisonnières.
 - ✅ Meilleur grade et meilleur rang déjà disponibles sur le profil.
@@ -575,16 +579,25 @@ Références Supabase :
 
 ## Bloc B — Cœur de bêta
 
-6. Instrumenter onboarding, match, call, résultat et Rank.
-7. Construire Rank sur le contrat Frags validé.
-8. Compléter Hub avec résultat récent, mission de faction réelle et dernière
-   récompense.
-9. Ajouter consentement analytique, âge minimum, blocage, signalement et règles
-   de modération.
-10. Appliquer la migration de confidentialité et déployer les fonctions Edge
-    manquantes.
-11. Fermer les alertes Supabase réellement actionnables.
-12. Exécuter la recette native, achats, suppression, notifications et liens.
+6. ✅ Onboarding, consultation du match, début/verrouillage du call, verdict,
+   Frags, Rank, achat cosmétique et ouverture de notification instrumentés.
+7. ✅ Rank construit sur le contrat Frags existant, sans MMR ni second système :
+   Ma saison, classements Global/Cercle/Faction et récompense annoncée honnêtement.
+8. ✅ Hub complété avec dernier verdict, mission quotidienne calculée depuis les
+   vrais calls de la faction et dernière récompense réellement possédée.
+9. ✅ Consentement analytique facultatif, déclaration 15+ sans date de naissance,
+   blocage, signalement, règles et gestion des comptes bloqués ajoutés.
+10. 🟡 Migrations confidentialité et Bloc B appliquées sur Supabase. Déploiement
+    des fonctions Edge compte/Founder en attente d'une autorisation explicite de
+    l'échange de l'UUID interne avec RevenueCat.
+11. 🟡 Aucun nouveau WARN de schéma introduit par le Bloc B ; les tables privées
+    restent volontairement sans policy et sans accès Data API. La protection
+    contre les mots de passe compromis doit encore être activée dans Auth, et
+    les anciens `SECURITY DEFINER` doivent continuer leur revue par contrat.
+12. 🟡 Typecheck, architecture, lint, tests Jest, pages publiques, release check
+    et régressions SQL distantes sont verts. La recette sur appareils, stores
+    sandbox, suppression RevenueCat, notifications réelles et liens application
+    fermée reste une étape de release externe.
 
 ## Bloc C — Validation marché
 
@@ -597,13 +610,15 @@ Références Supabase :
 
 ## Prochaine tranche recommandée
 
-Le travail interne du bloc A est terminé. La clearance du nom peut continuer en
-parallèle sans bloquer le cœur produit. La prochaine tranche devrait produire :
+Le travail interne du bloc A et les surfaces produit du bloc B sont terminés.
+La clearance du nom peut continuer en parallèle. Avant la bêta, la prochaine
+tranche doit fermer les validations externes du bloc B :
 
-1. **l'architecture fonctionnelle et visuelle de Rank sur le rating actuel** ;
-2. **le plan d'analytics de la boucle cœur** ;
-3. **la fermeture des critères externes de validation du nom GRIFF** ;
-4. **l'instrumentation puis la construction de Rank**.
+1. **autoriser puis déployer les fonctions Edge RevenueCat** ;
+2. **configurer leurs secrets et exécuter les achats/suppressions sandbox** ;
+3. **activer la protection Auth contre les mots de passe compromis** ;
+4. **signer la matrice native iOS/Android, notifications et liens** ;
+5. **fermer les critères externes de validation du nom GRIFF**.
 
 Le rebranding du code et des stores reste interdit jusqu'au Go, mais Rank ne
 dépend plus de cette décision de marque.

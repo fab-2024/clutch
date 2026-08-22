@@ -64,6 +64,8 @@ begin
     true
   );
 
+  perform public.clutch_enregistrer_preferences_confidentialite_v1(true, true);
+
   select public.clutch_statut_founder_pack_v1() into v_initial;
   select coalesce(sum(m.montant), 0)::integer
   into v_volts_before

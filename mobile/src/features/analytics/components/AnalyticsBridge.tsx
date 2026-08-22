@@ -18,9 +18,13 @@ export function AnalyticsBridge({ userId }: { userId?: string }) {
       void trackAnalyticsEvent({
         type: 'application_active',
         idempotencyKey: `activity:${day}`,
-      }).catch(() => {
-        if (lastActivityKey === localKey) lastActivityKey = '';
-      });
+      })
+        .then((receipt) => {
+          if (!receipt.accepted && lastActivityKey === localKey) lastActivityKey = '';
+        })
+        .catch(() => {
+          if (lastActivityKey === localKey) lastActivityKey = '';
+        });
     };
 
     trackDailyActivity();

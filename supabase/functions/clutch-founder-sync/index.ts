@@ -18,18 +18,20 @@ Deno.serve(async (request: Request) => {
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")
+    ?? Deno.env.get("SUPABASE_ANON_KEY");
+  const secretKey = Deno.env.get("SUPABASE_SECRET_KEY")
+    ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const authorization = request.headers.get("Authorization");
 
-  if (!supabaseUrl || !anonKey || !serviceRoleKey) {
+  if (!supabaseUrl || !publishableKey || !secretKey) {
     return Response.json({ error: "missing_runtime_configuration" }, { status: 500 });
   }
   if (!authorization) {
     return Response.json({ error: "authentication_required" }, { status: 401 });
   }
 
-  const authClient = createClient(supabaseUrl, anonKey, {
+  const authClient = createClient(supabaseUrl, publishableKey, {
     global: { headers: { Authorization: authorization } },
     auth: { autoRefreshToken: false, persistSession: false },
   });
@@ -52,7 +54,7 @@ Deno.serve(async (request: Request) => {
     return Response.json({ error: "invalid_sync_request" }, { status: 400 });
   }
 
-  const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
+  const serviceClient = createClient(supabaseUrl, secretKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 

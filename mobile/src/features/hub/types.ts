@@ -43,6 +43,48 @@ export type HubFaction = {
   croissance24h: number;
 };
 
+export type HubRecentResult = {
+  id: string;
+  matchId: string;
+  status: 'gagne' | 'perdu';
+  choice: 'a' | 'b';
+  deltaFrags: number;
+  resolvedAt: string;
+  game: string;
+  event: string;
+  teamA: string;
+  tagA: string;
+  teamB: string;
+  tagB: string;
+  scoreA: number | null;
+  scoreB: number | null;
+};
+
+export type HubFactionMission = {
+  id: string;
+  title: string;
+  goal: number;
+  progress: number;
+  personalContribution: number;
+  startsAt: string;
+  endsAt: string;
+  completed: boolean;
+  participants: number;
+  team: { id: string; name: string; tag: string; logo: string | null };
+};
+
+export type HubReward = {
+  id: string;
+  name: string;
+  family: string | null;
+  slot: string;
+  rarity: string;
+  styleKey: string | null;
+  accent: string;
+  source: string;
+  acquiredAt: string;
+};
+
 export type HubData = {
   seasonId: string | null;
   seasonName: string | null;
@@ -54,4 +96,7 @@ export type HubData = {
   predictionsToday: number;
   leagueCount: number;
   faction: HubFaction | null;
+  recentResult: HubRecentResult | null;
+  factionMission: HubFactionMission | null;
+  latestReward: HubReward | null;
 };

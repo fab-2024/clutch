@@ -85,18 +85,24 @@ export async function signUpWithPassword({
   email,
   password,
   pseudo,
+  minimumAgeConfirmed,
   emailRedirectTo,
 }: {
   email: string;
   password: string;
   pseudo: string;
+  minimumAgeConfirmed: boolean;
   emailRedirectTo: string;
 }) {
   const { data, error } = await supabase.auth.signUp({
     email: email.trim(),
     password,
     options: {
-      data: { pseudo: pseudo.trim() },
+      data: {
+        pseudo: pseudo.trim(),
+        age_minimum_confirme: minimumAgeConfirmed,
+        age_minimum_version: '2026-08-22',
+      },
       emailRedirectTo,
     },
   });

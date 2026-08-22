@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { Screen } from '@/src/components/layout/Screen';
+import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { createDuel } from '@/src/features/social/duels/api';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
@@ -59,6 +60,7 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
   const [webConfirmationOpen, setWebConfirmationOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [duelError, setDuelError] = useState<string | null>(null);
+  const callStartedRef = useRef<string | null>(null);
   const { data, error, load, loading, refreshing } = useMatchCenterData({
     matchId,
     onResolved: refreshEconomy,
@@ -67,6 +69,7 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
   });
 
   useEffect(() => {
+    callStartedRef.current = null;
     setSelected(null);
     setSubmitError(null);
     setWebConfirmationOpen(false);
@@ -87,6 +90,14 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
     [projection],
   );
   const selectedChoice = selected === 'a' ? choiceA : selected === 'b' ? choiceB : null;
+
+  useEffect(() => {
+    if (!session?.user.id || previewData || !match?.id) return;
+    void trackAnalyticsEvent({
+      type: 'match_consulte',
+      idempotencyKey: `match:${match.id}:view`,
+    }).catch(() => undefined);
+  }, [match?.id, previewData, session?.user.id]);
 
   async function confirmPrediction() {
     if (!match || !selected || !selectedChoice || submitting) return;
@@ -117,6 +128,10 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
     setSubmitError(null);
     try {
       await submitRankedPrediction(targetMatchId, choice);
+      void trackAnalyticsEvent({
+        type: 'call_verrouille',
+        idempotencyKey: `match:${targetMatchId}:call-locked`,
+      }).catch(() => undefined);
       setSelected(null);
       await load();
       if (duelToken) {
@@ -232,6 +247,15 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
                 open={open}
                 selected={selected}
                 onSelect={(choice) => {
+                  if (!previewData && match.id && callStartedRef.current !== match.id) {
+                    callStartedRef.current = match.id;
+                    void trackAnalyticsEvent({
+                      type: 'call_commence',
+                      idempotencyKey: `match:${match.id}:call-started`,
+                    }).catch(() => {
+                      if (callStartedRef.current === match.id) callStartedRef.current = null;
+                    });
+                  }
                   setSelected(choice);
                   setSubmitError(null);
                   setWebConfirmationOpen(false);

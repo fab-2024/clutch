@@ -17,6 +17,7 @@ import Animated, {
 
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
+import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { SupporterIdentity } from '@/src/features/shop/components/CosmeticRenderer';
 import { errorFeedback, successFeedback } from '@/src/lib/feedback';
@@ -107,6 +108,14 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
     }
     return () => cancelAnimation(revealProgress);
   }, [reduceMotion, result, revealProgress]);
+
+  useEffect(() => {
+    if (!session?.user.id || previewData || !result) return;
+    void trackAnalyticsEvent({
+      type: 'resultat_consulte',
+      idempotencyKey: `result:${result.id}:view`,
+    }).catch(() => undefined);
+  }, [previewData, result, session?.user.id]);
 
   const transition = useMemo(
     () => result ? gradeTransition(result.grade_avant, result.grade_apres) : null,

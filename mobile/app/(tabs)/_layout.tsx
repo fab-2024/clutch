@@ -34,6 +34,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="index" options={{ title: 'Hub', tabBarIcon: ({ focused }) => <TabIcon glyph="⌂" focused={focused} /> }} />
       <Tabs.Screen name="matches" options={{ title: 'Matchs', tabBarIcon: ({ focused }) => <TabIcon glyph="▣" focused={focused} /> }} />
       <Tabs.Screen name="social" options={{ title: 'Social', tabBarIcon: ({ focused }) => <TabIcon glyph="◎" focused={focused} /> }} />
+      <Tabs.Screen name="rank" options={{ title: 'Rank', tabBarIcon: ({ focused }) => <TabIcon glyph="◆" focused={focused} /> }} />
       <Tabs.Screen
         name="room"
         options={{

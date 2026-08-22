@@ -3,6 +3,8 @@ import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
+import { trackAnalyticsEvent } from '@/src/features/analytics/api';
+
 import { syncPushTokenIfGranted } from '../registration';
 
 if (Platform.OS !== 'web') {
@@ -34,6 +36,11 @@ export default function NotificationBridge({ userId }: { userId?: string }) {
 }
 
 function openNotification(response: Notifications.NotificationResponse) {
+  const notificationId = response.notification.request.identifier;
+  void trackAnalyticsEvent({
+    type: 'notification_ouverte',
+    idempotencyKey: notificationId ? `notification:${notificationId}` : null,
+  }).catch(() => undefined);
   const path = response.notification.request.content.data?.path;
   if (typeof path !== 'string' || !allowedNotificationPath(path)) return;
   router.push(path as never);

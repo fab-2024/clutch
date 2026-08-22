@@ -25,6 +25,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [minimumAgeConfirmed, setMinimumAgeConfirmed] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +35,10 @@ export default function LoginScreen() {
     email.trim()
     && password
     && (mode === 'signin'
-      || (pseudo.trim().length >= 3 && password.length >= 8 && password === passwordConfirmation)),
+      || (pseudo.trim().length >= 3
+        && password.length >= 8
+        && password === passwordConfirmation
+        && minimumAgeConfirmed)),
   );
 
   useEffect(() => {
@@ -48,6 +52,7 @@ export default function LoginScreen() {
     setConfirmationSent(false);
     setPassword('');
     setPasswordConfirmation('');
+    setMinimumAgeConfirmed(false);
     selectionFeedback();
   }
 
@@ -69,6 +74,7 @@ export default function LoginScreen() {
         email,
         password,
         pseudo,
+        minimumAgeConfirmed,
         emailRedirectTo: accountConfirmationRedirect(requestedRoute),
       });
       if (result.confirmationRequired) {
@@ -172,22 +178,32 @@ export default function LoginScreen() {
             </AuthField>
 
             {mode === 'signup' ? (
-              <AuthField label="Confirmer le mot de passe">
-                <TextInput
-                  accessibilityLabel="Confirmation du mot de passe"
-                  autoCapitalize="none"
-                  autoComplete="new-password"
-                  onChangeText={setPasswordConfirmation}
-                  onBlur={() => setFocusedField(null)}
-                  onFocus={() => setFocusedField('confirmation')}
-                  onSubmitEditing={() => void submit()}
-                  placeholder="Retape ton mot de passe"
-                  placeholderTextColor={colors.textMuted}
-                  secureTextEntry={!passwordVisible}
-                  style={[styles.input, focusedField === 'confirmation' && styles.inputFocused]}
-                  value={passwordConfirmation}
-                />
-              </AuthField>
+              <>
+                <AuthField label="Confirmer le mot de passe">
+                  <TextInput
+                    accessibilityLabel="Confirmation du mot de passe"
+                    autoCapitalize="none"
+                    autoComplete="new-password"
+                    onChangeText={setPasswordConfirmation}
+                    onBlur={() => setFocusedField(null)}
+                    onFocus={() => setFocusedField('confirmation')}
+                    placeholder="Retape ton mot de passe"
+                    placeholderTextColor={colors.textMuted}
+                    secureTextEntry={!passwordVisible}
+                    style={[styles.input, focusedField === 'confirmation' && styles.inputFocused]}
+                    value={passwordConfirmation}
+                  />
+                </AuthField>
+                <Pressable
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: minimumAgeConfirmed }}
+                  onPress={() => setMinimumAgeConfirmed((current) => !current)}
+                  style={({ pressed }) => [styles.ageChoice, pressed && styles.pressed]}
+                >
+                  <View style={[styles.ageCheck, minimumAgeConfirmed && styles.ageCheckActive]}><Text style={styles.ageCheckText}>{minimumAgeConfirmed ? '✓' : ''}</Text></View>
+                  <Text style={styles.ageText}>Je confirme avoir 15 ans ou plus et accepter les Conditions d’utilisation.</Text>
+                </Pressable>
+              </>
             ) : null}
 
             {mode === 'signin' ? (
@@ -313,6 +329,8 @@ const styles = StyleSheet.create({
   fieldAction: { ...typography.action, color: colors.volt, letterSpacing: 0.3 },
   input: { ...typography.bodyStrong, minHeight: 54, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: '#090D12', color: colors.text, paddingHorizontal: spacing.md },
   inputFocused: { borderColor: '#71851E', backgroundColor: '#0D120D', boxShadow: '0 0 10px rgba(224,255,59,.12)' },
+  ageChoice: { minHeight: 58, padding: 11, flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: radius.md, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border },
+  ageCheck: { width: 24, height: 24, borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#59646E' }, ageCheckActive: { backgroundColor: colors.volt, borderColor: colors.volt }, ageCheckText: { ...typography.label, color: '#080A0C' }, ageText: { ...typography.caption, flex: 1, color: colors.textMuted },
   forgotButton: { alignSelf: 'flex-end', minHeight: 30, justifyContent: 'center' },
   forgotText: { ...typography.action, color: colors.volt, letterSpacing: 0.3 },
   error: { ...typography.body, color: '#FF8B8B' },

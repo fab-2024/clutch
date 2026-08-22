@@ -294,6 +294,7 @@ export default function ProfileSettingsScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>05 // COMPTE & DONNÉES</Text><Text style={styles.sectionTitle}>TU GARDES LA MAIN.</Text></View></View>
           <View style={styles.accountLinks}>
+            <AccountLink label="Confidentialité, sécurité et blocages" onPress={() => router.push('/settings/safety')} />
             <AccountLink label="Compte, données et suppression" onPress={() => router.push('/settings/account')} />
             <AccountLink label="Politique de confidentialité" onPress={() => router.push('/legal/privacy')} />
             <AccountLink label="Conditions d’utilisation" onPress={() => router.push('/legal/terms')} />

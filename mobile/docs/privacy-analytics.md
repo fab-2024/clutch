@@ -1,18 +1,32 @@
-# Contrat de confidentialité analytics et achats — Clutch v2
+# Contrat de confidentialité analytics et achats — Clutch v3
 
 Ce document décrit la mesure produit introduite pour les activations partenaires. Il sert de référence avant chaque soumission App Store Connect ou Play Console. La déclaration finale doit rester alignée sur le binaire réellement soumis et sur tous ses SDK.
 
 ## Données mesurées
 
-Clutch enregistre uniquement des interactions produit first-party, associées au compte interne pour dédupliquer les impressions et calculer la rétention :
+Après accord facultatif de l'utilisateur, Clutch enregistre uniquement des
+interactions produit first-party, associées au compte interne pour dédupliquer
+les impressions et calculer la rétention :
 
 - application active ;
+- onboarding commencé et terminé ;
+- match consulté, call commencé et verrouillé, résultat consulté et Frags gagnés ;
+- Rank et profil public consultés ;
 - collection affichée et objet consulté ;
 - objet obtenu, équipé ou retiré ;
-- campagne rejointe, tâche terminée et récompense réclamée.
+- campagne rejointe, mission commencée ou terminée, tâche terminée et récompense réclamée ;
+- achat cosmétique commencé ou terminé et notification ouverte ;
 - Founder Pack affiché, achat démarré ou annulé et restauration demandée.
 
-Le schéma interdit les identifiants publicitaires, identifiants d’appareil, adresses IP applicatives et métadonnées libres. Les événements bruts restent dans `private.analytics_evenements`, hors Data API et sans droit de lecture direct pour les rôles mobiles.
+Le schéma interdit les identifiants publicitaires, identifiants d’appareil,
+adresses IP applicatives et métadonnées libres. Les événements bruts restent
+dans `private.analytics_evenements`, hors Data API et sans droit de lecture
+direct pour les rôles mobiles. Le refus ne bloque aucune fonction et le choix
+peut être modifié dans Moi → Paramètres → Confidentialité et sécurité.
+
+Clutch est réservé aux personnes de 15 ans ou plus. Seule la confirmation de
+cette condition est stockée dans `private.preferences_confidentialite` ; aucune
+date de naissance n'est demandée ou conservée.
 
 ## Conservation et suppression
 
@@ -62,6 +76,9 @@ Déclaration recommandée pour cette version :
 | Tracking | Non |
 | ATT | Non requis pour ce traitement, car aucun suivi inter-apps/sites |
 
+La déclaration doit préciser que la collecte facultative n'a lieu qu'après le
+choix présenté dans l'application.
+
 Pour une version contenant le Founder Pack, ajouter également **Purchases →
 Purchase History**, liée à l’identifiant de compte et utilisée pour App
 Functionality. Vérifier la privacy manifest du SDK RevenueCat réellement
@@ -78,6 +95,8 @@ Déclaration recommandée pour cette version :
 | Partagée avec un tiers | Non pour les événements bruts ; rapports partenaires agrégés uniquement |
 | Finalité | Analytics |
 | Traitement | Chiffré en transit ; suppression avec le compte selon la politique Clutch |
+
+La collecte d'interactions produit est facultative et désactivée par défaut.
 
 Pour une version contenant le Founder Pack, déclarer aussi l’historique
 d’achat comme donnée collectée pour le fonctionnement de l’app. RevenueCat
@@ -96,3 +115,5 @@ formulaire Play Console en vigueur.
    pas à lui seul le client chez le prestataire.
 6. Vérifier que le job `clutch-analytics-retention-v1` existe une seule fois et
    exécuter `supabase/tests/release_readiness_privacy.sql`.
+7. Vérifier les RPC et événements du Bloc B avec
+   `supabase/tests/block_b_core_beta.sql`.

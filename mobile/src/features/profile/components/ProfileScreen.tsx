@@ -4,10 +4,13 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'r
 
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
+import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { signOut } from '@/src/features/auth/api';
 import { deactivateCurrentDevicePushToken } from '@/src/features/notifications';
 import { gradeAccent } from '@/src/features/ranking/grades';
+import { loadProfileSafetyState } from '@/src/features/safety/api';
 import { CosmeticAvatar } from '@/src/features/shop/components/CosmeticRenderer';
+import { ProfileSafetyActions } from '@/src/features/safety';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
@@ -34,9 +37,11 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
   const [error, setError] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
+  const [publicBlocked, setPublicBlocked] = useState(false);
 
   const ownPseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'joueur';
   const pseudo = profilePseudo?.trim() || ownPseudo;
+  const handlePublicBlocked = useCallback(() => setPublicBlocked(true), []);
 
   const load = useCallback(async (refresh = false) => {
     if (previewData) {
@@ -49,6 +54,15 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
     else setLoading(true);
     setError(null);
     try {
+      if (publicView) {
+        setPublicBlocked(false);
+        const safety = await loadProfileSafetyState(pseudo);
+        if (safety?.iBlock || safety?.blocksMe) {
+          setData(null);
+          setPublicBlocked(true);
+          return;
+        }
+      }
       const [nextProfile] = await Promise.all([
         loadProfileData(pseudo),
         refresh ? refreshEconomy() : Promise.resolve(),
@@ -57,9 +71,18 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
     }
     catch (caught) { setError(caught instanceof Error ? caught.message : 'Impossible de charger le profil.'); }
     finally { setLoading(false); setRefreshing(false); }
-  }, [previewData, pseudo, refreshEconomy]);
+  }, [previewData, pseudo, publicView, refreshEconomy]);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    if (!publicView || !profilePseudo?.trim()) return;
+    const day = new Date().toISOString().slice(0, 10);
+    void trackAnalyticsEvent({
+      type: 'profil_public_consulte',
+      idempotencyKey: `public-profile:view:${day}`,
+    }).catch(() => undefined);
+  }, [profilePseudo, publicView]);
 
   const accuracy = useMemo(() => {
     const total = data?.ranking.pronostics_regles ?? 0;
@@ -93,6 +116,19 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
     }
   }
 
+  if (publicView && publicBlocked) {
+    return (
+      <Screen>
+        <View style={styles.blockedState}>
+          <Text style={styles.blockedStateEyebrow}>SÉCURITÉ ACTIVE</Text>
+          <Text style={styles.blockedStateTitle}>PROFIL MASQUÉ.</Text>
+          <Text style={styles.blockedStateCopy}>Ce compte et le tien ne peuvent plus interagir.</Text>
+          <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.blockedStateButton}><Text style={styles.blockedStateButtonText}>RETOUR AU SOCIAL</Text></Pressable>
+        </View>
+      </Screen>
+    );
+  }
+
   return (
     <Screen>
       <ScrollView
@@ -111,6 +147,8 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             <Text style={styles.settingsArrow}>→</Text>
           </Pressable>
         ) : null}
+
+        {publicView ? <ProfileSafetyActions onBlocked={handlePublicBlocked} pseudo={pseudo} /> : null}
 
         {!publicView ? (
           <Pressable accessibilityLabel="Ouvrir le Locker cosmétique" accessibilityRole="button" onPress={() => router.push('/shop' as never)} style={({ pressed }) => [styles.shopEntry, pressed && styles.pressed]}>
@@ -349,6 +387,12 @@ function formatDecimal(value: number) { return new Intl.NumberFormat('fr-FR', { 
 function withAlpha(color: string, alpha: string) { return /^#[0-9a-f]{6}$/i.test(color) ? `${color}${alpha}` : color; }
 
 const styles = StyleSheet.create({
+  blockedState: { flex: 1, minHeight: 560, margin: spacing.lg, padding: spacing.lg, alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: radius.lg, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#303A43' },
+  blockedStateEyebrow: { ...typography.eyebrow, color: colors.volt },
+  blockedStateTitle: { ...typography.displayMedium, color: colors.text, textAlign: 'center' },
+  blockedStateCopy: { ...typography.body, maxWidth: 320, color: colors.textMuted, textAlign: 'center' },
+  blockedStateButton: { minHeight: 48, marginTop: 8, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.volt },
+  blockedStateButtonText: { ...typography.action, color: '#080A0C' },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 22 },
   header: { minHeight: 78, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 }, logoBox: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, logoGlyph: { color: '#06090C', fontFamily: fonts.display, fontSize: 25, lineHeight: 28, letterSpacing: -2 }, wordmarkRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 }, wordmark: { color: colors.text, fontFamily: fonts.bold, fontSize: 17, letterSpacing: 3.1 }, dot: { width: 5, height: 5, marginBottom: 3, borderRadius: 3, backgroundColor: colors.volt }, back: { minHeight: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { ...typography.action, color: colors.text, letterSpacing: 0.6 }, visibility: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { ...typography.label, color: colors.text, letterSpacing: 0.5 },
   error: { marginHorizontal: spacing.md, padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', flexDirection: 'row', gap: 10, justifyContent: 'space-between' }, errorText: { ...typography.body, flex: 1, color: '#FF9AA2' }, retry: { ...typography.action, color: colors.volt },

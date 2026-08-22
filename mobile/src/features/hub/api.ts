@@ -5,8 +5,11 @@ import type {
   FragsState,
   HubData,
   HubFaction,
+  HubFactionMission,
   HubMatch,
   HubPrediction,
+  HubRecentResult,
+  HubReward,
 } from './types';
 
 type CommunityRow = {
@@ -31,6 +34,7 @@ export async function loadHubData(userId: string, followedGames: string[] = []):
     upcomingResult,
     leaguesResult,
     communitiesResult,
+    complementsResult,
   ] = await Promise.all([
     supabase
       .from('v_saisons')
@@ -65,12 +69,14 @@ export async function loadHubData(userId: string, followedGames: string[] = []):
       .limit(4),
     supabase.rpc('clutch_mes_ligues'),
     supabase.rpc('classement_communautes'),
+    supabase.rpc('clutch_hub_complements_v1'),
   ]);
 
   if (seasonResult.error) throw seasonResult.error;
   if (inProgressResult.error) throw inProgressResult.error;
   if (startedResult.error) throw startedResult.error;
   if (upcomingResult.error) throw upcomingResult.error;
+  if (complementsResult.error) throw complementsResult.error;
 
   const season = seasonResult.data;
   const upcoming = (upcomingResult.data ?? []) as HubMatch[];
@@ -156,6 +162,7 @@ export async function loadHubData(userId: string, followedGames: string[] = []):
   if (!communitiesResult.error && Array.isArray(communitiesResult.data)) {
     faction = findMyFaction(communitiesResult.data as CommunityRow[]);
   }
+  const complements = normalizeComplements(complementsResult.data);
 
   return {
     seasonId: season?.id ?? null,
@@ -168,8 +175,98 @@ export async function loadHubData(userId: string, followedGames: string[] = []):
     nextMatch: match,
     upNext,
     nextMatchPrediction,
+    recentResult: complements.recentResult,
+    factionMission: complements.factionMission,
+    latestReward: complements.latestReward,
   };
 }
+
+function normalizeComplements(value: unknown): {
+  recentResult: HubRecentResult | null;
+  factionMission: HubFactionMission | null;
+  latestReward: HubReward | null;
+} {
+  const payload = asRecord(value);
+  return {
+    recentResult: normalizeRecentResult(payload.resultat_recent),
+    factionMission: normalizeFactionMission(payload.mission_faction),
+    latestReward: normalizeReward(payload.derniere_recompense),
+  };
+}
+
+function normalizeRecentResult(value: unknown): HubRecentResult | null {
+  const row = asRecord(value);
+  const status = row.statut === 'gagne' || row.statut === 'perdu' ? row.statut : null;
+  const choice = row.choix === 'a' || row.choix === 'b' ? row.choix : null;
+  const id = textValue(row.id);
+  const matchId = textValue(row.match_id);
+  if (!status || !choice || !id || !matchId) return null;
+  return {
+    id,
+    matchId,
+    status,
+    choice,
+    deltaFrags: Number(row.delta_frags ?? 0),
+    resolvedAt: textValue(row.regle_le),
+    game: textValue(row.jeu),
+    event: textValue(row.evenement),
+    teamA: textValue(row.equipe_a),
+    tagA: textValue(row.tag_a),
+    teamB: textValue(row.equipe_b),
+    tagB: textValue(row.tag_b),
+    scoreA: optionalNumber(row.score_a),
+    scoreB: optionalNumber(row.score_b),
+  };
+}
+
+function normalizeFactionMission(value: unknown): HubFactionMission | null {
+  const row = asRecord(value);
+  const team = asRecord(row.equipe);
+  const id = textValue(row.id);
+  const teamId = textValue(team.id);
+  if (!id || !teamId) return null;
+  return {
+    id,
+    title: textValue(row.titre) || 'Mission de faction',
+    goal: Math.max(1, Number(row.objectif ?? 1)),
+    progress: Math.max(0, Number(row.progression ?? 0)),
+    personalContribution: Math.max(0, Number(row.contribution_personnelle ?? 0)),
+    startsAt: textValue(row.debut),
+    endsAt: textValue(row.fin),
+    completed: row.terminee === true,
+    participants: Math.max(0, Number(row.participants ?? 0)),
+    team: {
+      id: teamId,
+      name: textValue(team.nom),
+      tag: textValue(team.tag),
+      logo: textValue(team.logo) || null,
+    },
+  };
+}
+
+function normalizeReward(value: unknown): HubReward | null {
+  const row = asRecord(value);
+  const id = textValue(row.id);
+  if (!id) return null;
+  return {
+    id,
+    name: textValue(row.nom) || 'Objet obtenu',
+    family: textValue(row.famille) || null,
+    slot: textValue(row.emplacement),
+    rarity: textValue(row.rarete) || 'commun',
+    styleKey: textValue(row.style_key) || null,
+    accent: textValue(row.accent) || '#E8FF3D',
+    source: textValue(row.source),
+    acquiredAt: textValue(row.acquis_le),
+  };
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? value as Record<string, unknown> : {};
+}
+
+function textValue(value: unknown) { return typeof value === 'string' ? value.trim() : ''; }
+function optionalNumber(value: unknown) { if (value == null) return null; const number = Number(value); return Number.isFinite(number) ? number : null; }
 
 function findMyFaction(rows: CommunityRow[]): HubFaction | null {
   const mine = rows.find((row) => Boolean(row.moi));

@@ -217,6 +217,12 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
         setData(next);
         setMessage(fallback ? `${item.name} a été retiré.` : `${item.name} est maintenant équipé.`);
       } else {
+        if (!item.owned) {
+          void trackAnalyticsEvent({
+            type: 'achat_commence',
+            idempotencyKey: `cosmetic-purchase:${item.id}`,
+          }).catch(() => undefined);
+        }
         const mutation = !item.owned
           ? await purchaseCosmetic(item.id)
           : await equipCosmetic(target.id);

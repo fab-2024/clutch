@@ -18,9 +18,10 @@ Deno.serve(async (request: Request) => {
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const secretKey = Deno.env.get("SUPABASE_SECRET_KEY")
+    ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const expectedAuthorization = Deno.env.get("REVENUECAT_WEBHOOK_AUTH")?.trim() ?? "";
-  if (!supabaseUrl || !serviceRoleKey || !expectedAuthorization) {
+  if (!supabaseUrl || !secretKey || !expectedAuthorization) {
     return Response.json({ error: "missing_runtime_configuration" }, { status: 500 });
   }
 
@@ -54,7 +55,7 @@ Deno.serve(async (request: Request) => {
     return Response.json({ error: "unsupported_or_missing_store" }, { status: 400 });
   }
 
-  const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
+  const serviceClient = createClient(supabaseUrl, secretKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 

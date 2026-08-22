@@ -23,11 +23,9 @@ import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
 import { loadHubData } from '../api';
-import type { HubData, HubMatch, HubPrediction } from '../types';
+import type { HubData, HubFactionMission, HubMatch, HubPrediction, HubRecentResult, HubReward } from '../types';
 
 type HubGame = 'lol' | 'valorant' | 'cs2';
-
-const DAILY_CALL_GOAL = 3;
 
 const GAME_BACKGROUNDS: Record<HubGame, ImageSourcePropType> = {
   lol: require('../../../../assets/onboarding/lol-characters.jpg'),
@@ -46,6 +44,9 @@ const EMPTY_HUB: HubData = {
   predictionsToday: 0,
   leagueCount: 0,
   faction: null,
+  recentResult: null,
+  factionMission: null,
+  latestReward: null,
 };
 
 export default function HomeScreen() {
@@ -154,15 +155,27 @@ export function HubExperience({
           <CorePanel hub={hub} loading={loading} />
         </Animated.View>
 
-        {!loading && hub.upNext.length ? (
-          <Animated.View entering={entrance(210)}>
-            <UpNext matches={hub.upNext} />
+        {!loading && hub.recentResult ? (
+          <Animated.View entering={entrance(180)}>
+            <RecentResultCard result={hub.recentResult} />
           </Animated.View>
         ) : null}
 
-        <Animated.View entering={entrance(270)}>
-          <DailyMission calls={hub.predictionsToday} loading={loading} />
+        <Animated.View entering={entrance(210)}>
+          <FactionMissionCard loading={loading} mission={hub.factionMission} />
         </Animated.View>
+
+        {!loading && hub.latestReward ? (
+          <Animated.View entering={entrance(240)}>
+            <LatestRewardCard reward={hub.latestReward} />
+          </Animated.View>
+        ) : null}
+
+        {!loading && hub.upNext.length ? (
+          <Animated.View entering={entrance(270)}>
+            <UpNext matches={hub.upNext} />
+          </Animated.View>
+        ) : null}
 
       </ScrollView>
     </Screen>
@@ -261,7 +274,7 @@ function CorePanel({ hub, loading }: { hub: HubData; loading: boolean }) {
         : 'Palier saisonnier maximal atteint.';
 
   return (
-    <Pressable accessibilityLabel="Ouvrir mon rating" accessibilityRole="button" onPress={() => router.push('/(tabs)/profile')} style={({ pressed }) => [styles.coreCard, pressed && styles.pressed]}>
+    <Pressable accessibilityLabel="Ouvrir Rank" accessibilityRole="button" onPress={() => router.push('/(tabs)/rank')} style={({ pressed }) => [styles.coreCard, pressed && styles.pressed]}>
       <LinearGradient colors={['#111711', '#0A0F13', '#080C10']} end={{ x: 1, y: 1 }} start={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
       <View style={styles.coreTop}>
         <View style={styles.coreVisual}>
@@ -341,25 +354,42 @@ function SectionHead({ kicker, title }: { kicker: string; title: string }) {
   );
 }
 
-function DailyMission({ calls, loading }: { calls: number; loading: boolean }) {
-  const completed = Math.min(calls, DAILY_CALL_GOAL);
-  const progress = loading ? 0 : Math.round((completed / DAILY_CALL_GOAL) * 100);
-  const remaining = Math.max(0, DAILY_CALL_GOAL - completed);
-  const title = remaining === 0
-    ? 'RYTHME VALIDÉ.'
-    : remaining === 1
-      ? 'PLUS QU’UN CALL.'
-      : `${remaining} CALLS À POSER.`;
+function FactionMissionCard({ loading, mission }: { loading: boolean; mission: HubFactionMission | null }) {
+  const progress = loading || !mission ? 0 : Math.min(100, Math.round((mission.progress / mission.goal) * 100));
+  const remaining = mission ? Math.max(0, mission.goal - mission.progress) : 0;
   return (
-    <Pressable accessibilityLabel={`Rythme du jour, ${completed} appels sur ${DAILY_CALL_GOAL}`} accessibilityRole="button" onPress={() => router.push('/(tabs)/matches')} style={({ pressed }) => [styles.missionCard, pressed && styles.pressed]}>
+    <Pressable accessibilityLabel="Ouvrir la mission de faction" accessibilityRole="button" onPress={() => router.push('/(tabs)/social/faction')} style={({ pressed }) => [styles.missionCard, pressed && styles.pressed]}>
       <View style={styles.missionIcon}><Text style={styles.missionIconText}>◎</Text></View>
       <View style={styles.missionCopy}>
-        <View style={styles.missionTop}><Text style={styles.missionKicker}>MISSION UNIQUE · AUJOURD’HUI</Text><Text style={styles.missionCount}>{loading ? '—' : `${completed} / ${DAILY_CALL_GOAL}`}</Text></View>
-        <Text style={styles.missionTitle}>{loading ? 'LECTURE DU RYTHME…' : title}</Text>
-        <Text style={styles.missionHint}>{remaining === 0 ? 'Ton historique du jour est lancé.' : 'Chaque call nourrit ton historique et ton rating.'}</Text>
+        <View style={styles.missionTop}><Text style={styles.missionKicker}>MISSION COLLECTIVE · 24 H</Text><Text style={styles.missionCount}>{loading || !mission ? '—' : `${mission.progress} / ${mission.goal}`}</Text></View>
+        <Text style={styles.missionTitle}>{loading ? 'LECTURE DE LA FACTION…' : mission ? (mission.completed ? 'OBJECTIF VALIDÉ.' : `${remaining} CALL${remaining > 1 ? 'S' : ''} À VERROUILLER.`) : 'REJOINS UNE FACTION.'}</Text>
+        <Text style={styles.missionHint}>{mission ? `${mission.team.tag} · ta contribution ${mission.personalContribution} · ${mission.participants} participant${mission.participants > 1 ? 's' : ''}` : 'Choisis ton équipe favorite pour activer la mission collective.'}</Text>
         <View style={styles.missionTrack}><View style={[styles.missionProgress, { width: `${progress}%` }]} /></View>
       </View>
       <Text style={styles.missionArrow}>→</Text>
+    </Pressable>
+  );
+}
+
+function RecentResultCard({ result }: { result: HubRecentResult }) {
+  const won = result.status === 'gagne';
+  const tone = won ? colors.success : colors.danger;
+  const choice = result.choice === 'a' ? result.tagA : result.tagB;
+  return (
+    <Pressable accessibilityLabel={`Ouvrir le verdict ${choice}`} accessibilityRole="button" onPress={() => router.push({ pathname: '/result/[id]', params: { id: result.matchId } })} style={({ pressed }) => [styles.resultCard, pressed && styles.pressed]}>
+      <View style={[styles.resultState, { borderColor: `${tone}77`, backgroundColor: `${tone}16` }]}><Text style={[styles.resultStateText, { color: tone }]}>{won ? 'W' : 'L'}</Text></View>
+      <View style={styles.resultCopy}><Text style={styles.resultKicker}>DERNIER VERDICT · {gameName(result.game).toUpperCase()}</Text><Text numberOfLines={1} style={styles.resultTitle}>{result.tagA} {result.scoreA ?? '—'} — {result.scoreB ?? '—'} {result.tagB}</Text><Text numberOfLines={1} style={styles.resultMeta}>{choice} · {result.event}</Text></View>
+      <View style={styles.resultDelta}><CurrencyIcon color={tone} kind="frags" size={13} /><Text style={[styles.resultDeltaText, { color: tone }]}>{result.deltaFrags >= 0 ? '+' : '−'}{formatNumber(Math.abs(result.deltaFrags))}</Text></View>
+    </Pressable>
+  );
+}
+
+function LatestRewardCard({ reward }: { reward: HubReward }) {
+  return (
+    <Pressable accessibilityLabel={`Ouvrir la collection, ${reward.name}`} accessibilityRole="button" onPress={() => router.push('/shop' as never)} style={({ pressed }) => [styles.rewardCard, { borderColor: `${reward.accent}55` }, pressed && styles.pressed]}>
+      <View style={[styles.rewardMark, { borderColor: reward.accent, backgroundColor: `${reward.accent}18` }]}><Text style={[styles.rewardGlyph, { color: reward.accent }]}>◇</Text></View>
+      <View style={styles.rewardCopy}><Text style={[styles.rewardKicker, { color: reward.accent }]}>DERNIÈRE RÉCOMPENSE</Text><Text numberOfLines={1} style={styles.rewardTitle}>{reward.name}</Text><Text style={styles.rewardMeta}>{reward.rarity.toUpperCase()} · {reward.source.toUpperCase()}</Text></View>
+      <Text style={[styles.rewardArrow, { color: reward.accent }]}>→</Text>
     </Pressable>
   );
 }
@@ -500,6 +530,9 @@ const styles = StyleSheet.create({
   upNextFooter: { zIndex: 1, marginTop: 'auto', paddingTop: 9, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.09)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   upNextFormat: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .5 },
   upNextArrow: { color: colors.volt, fontFamily: fonts.display, fontSize: 17 },
+  resultCard: { minHeight: 92, marginHorizontal: spacing.md, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#2B343D' },
+  resultState: { width: 52, height: 52, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1 }, resultStateText: { fontFamily: fonts.display, fontSize: 27, lineHeight: 29 }, resultCopy: { flex: 1, minWidth: 0 }, resultKicker: { ...typography.eyebrow, color: colors.textMuted }, resultTitle: { ...typography.cardTitle, marginTop: 3, color: colors.text }, resultMeta: { ...typography.caption, marginTop: 2, color: colors.textMuted }, resultDelta: { flexDirection: 'row', alignItems: 'center', gap: 4 }, resultDeltaText: { ...typography.bodyStrong },
+  rewardCard: { minHeight: 96, marginHorizontal: spacing.md, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1 }, rewardMark: { width: 53, height: 53, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1 }, rewardGlyph: { fontSize: 25 }, rewardCopy: { flex: 1, minWidth: 0 }, rewardKicker: { ...typography.eyebrow }, rewardTitle: { ...typography.cardTitle, marginTop: 3, color: colors.text }, rewardMeta: { ...typography.caption, marginTop: 2, color: colors.textMuted }, rewardArrow: { fontFamily: fonts.display, fontSize: 20 },
   missionCard: { minHeight: 126, marginHorizontal: spacing.md, padding: 14, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#0B1014', borderWidth: 1, borderColor: '#303A22' },
   missionIcon: { width: 51, height: 51, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E', borderWidth: 1, borderColor: '#46531E' },
   missionIconText: { color: colors.volt, fontFamily: fonts.display, fontSize: 29, lineHeight: 31 },

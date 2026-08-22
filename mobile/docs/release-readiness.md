@@ -1,8 +1,9 @@
 # Préparation de release mobile
 
-Statut au 22 août 2026 : le socle applicatif est implémenté dans le dépôt ; les
-étapes qui modifient les environnements Supabase, Vercel, Apple, Google ou EAS
-restent à exécuter explicitement par un responsable de release.
+Statut au 22 août 2026 : les migrations de confidentialité, du cœur de bêta et
+du correctif de jeton Expo sont appliquées au projet Supabase connecté. Les
+fonctions Edge RevenueCat, les stores et la recette native restent à valider
+explicitement par un responsable de release.
 
 ## 1. Barrière de qualité
 
@@ -84,6 +85,10 @@ avec achat restaurable :
 supabase functions deploy clutch-account-delete
 ```
 
+Ce déploiement et ceux du Founder Pack transmettent l'UUID Supabase à
+RevenueCat comme identifiant de client. Ils exigent une validation explicite de
+ce traitement et la présence des secrets serveur avant la recette.
+
 Vérifications obligatoires : profil et données enfants absents, aucun jeton push
 actif, client RevenueCat absent, seconde tentative idempotente après un échec
 simulé. La suppression RevenueCat ne résilie pas automatiquement un abonnement
@@ -126,6 +131,8 @@ Avant soumission, compléter manuellement cette matrice :
 | Hub | à faire | à faire | à faire | à faire |
 | Matchs et Match Center | à faire | à faire | à faire | à faire |
 | Social : Faction/Cercle/Défis | à faire | à faire | à faire | à faire |
+| Rank : saison/classements/récompense | à faire | à faire | à faire | à faire |
+| Confidentialité, signalement et blocage | à faire | à faire | à faire | à faire |
 | Moi, compte et suppression sandbox | à faire | à faire | à faire | à faire |
 | Achat/restauration sandbox | à faire | à faire | à faire | à faire |
 | Notifications réelles | à faire | n/a | à faire | n/a |
@@ -170,7 +177,8 @@ positions prévues par leur design.
 La release est **No-Go** tant qu’un des éléments suivants manque :
 
 - fonction de suppression déployée et testée avec le secret RevenueCat ;
-- migration `20260822134313_release_readiness_privacy.sql` appliquée ;
+- migrations de confidentialité et du Bloc B appliquées ;
+- protection Auth contre les mots de passe compromis activée ;
 - domaine HTTPS et fichiers d’association validés ;
 - CI verte, E2E iOS/Android verts et matrice native signée ;
 - support et identité légale réels ;

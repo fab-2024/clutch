@@ -16,6 +16,7 @@ import AuthRecoveryScreen from '@/src/features/auth/components/AuthRecoveryScree
 import { consumePendingRoute } from '@/src/features/auth/pendingRoute';
 import ResultRevealGate from '@/src/features/matches/components/ResultRevealGate';
 import { NotificationBridge } from '@/src/features/notifications';
+import { PrivacyConsentGate } from '@/src/features/safety';
 import { AuthProvider, useAuth } from '@/src/providers/AuthProvider';
 import { CosmeticsProvider } from '@/src/providers/CosmeticsProvider';
 import { EconomyProvider } from '@/src/providers/EconomyProvider';
@@ -67,6 +68,7 @@ function RootNavigator() {
       <AnalyticsBridge userId={userId} />
       <NotificationBridge userId={userId} />
       <ResultRevealGate />
+      <PrivacyConsentGate userId={userId} />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -80,6 +82,7 @@ function RootNavigator() {
           <Stack.Screen name="duel/[token]" />
           <Stack.Screen name="settings/profile" />
           <Stack.Screen name="settings/account" />
+          <Stack.Screen name="settings/safety" />
           <Stack.Screen name="shop" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="founder-pack" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="economy" options={{ animation: 'slide_from_right' }} />

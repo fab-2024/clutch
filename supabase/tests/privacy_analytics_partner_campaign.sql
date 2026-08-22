@@ -136,6 +136,8 @@ begin
     true
   );
 
+  perform public.clutch_enregistrer_preferences_confidentialite_v1(true, true);
+
   select public.clutch_enregistrer_evenement_analytics_v1(
     'collection_affichee',
     null,

@@ -18,5 +18,6 @@ export async function trackAnalyticsEvent(input: AnalyticsEventInput): Promise<A
     isNew: payload.nouveau === true,
     type: input.type,
     scope: 'first_party_aggregate_only',
+    reason: payload.raison === 'consentement_requis' ? 'consentement_requis' : null,
   };
 }

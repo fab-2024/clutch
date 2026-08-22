@@ -13,6 +13,7 @@ import {
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { errorFeedback, impactFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
@@ -50,6 +51,14 @@ export default function OnboardingScreen() {
     setGames(initialGames);
   }, [games.length, initialGames]);
 
+  useEffect(() => {
+    if (!session?.user.id) return;
+    void trackAnalyticsEvent({
+      type: 'onboarding_commence',
+      idempotencyKey: 'onboarding:v1:started',
+    }).catch(() => undefined);
+  }, [session?.user.id]);
+
   async function goToTeams() {
     if (!games.length) return;
     setLoadingTeams(true);
@@ -83,6 +92,10 @@ export default function OnboardingScreen() {
     setError(null);
     try {
       await saveOnboarding(games, teamId);
+      void trackAnalyticsEvent({
+        type: 'onboarding_termine',
+        idempotencyKey: 'onboarding:v1:completed',
+      }).catch(() => undefined);
       await Promise.all([refreshProfile(), refreshEconomy()]);
       successFeedback();
       router.replace('/(tabs)' as never);

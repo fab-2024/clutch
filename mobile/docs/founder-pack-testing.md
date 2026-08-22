@@ -84,13 +84,13 @@ Après revue de la migration :
 
 ```bash
 supabase db push
-supabase functions deploy clutch-founder-sync --no-verify-jwt
+supabase functions deploy clutch-founder-sync
 supabase functions deploy clutch-founder-webhook --no-verify-jwt
 ```
 
-`clutch-founder-sync` vérifie lui-même le JWT Supabase de l’utilisateur.
-`clutch-founder-webhook` n’accepte que le secret RevenueCat. Les deux refusent
-donc les appels anonymes malgré `--no-verify-jwt` au niveau de la passerelle.
+La passerelle et `clutch-founder-sync` vérifient le JWT Supabase de l’utilisateur.
+`clutch-founder-webhook`, seul déployé avec `--no-verify-jwt`, n’accepte que le
+secret RevenueCat et refuse donc les appels anonymes ordinaires.
 
 ## 5. Construire et tester
 
