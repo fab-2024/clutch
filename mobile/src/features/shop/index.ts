@@ -6,4 +6,6 @@ export type {
   CosmeticSlot,
   EquippedCosmetic,
   EquippedCosmetics,
+  MonetizationContract,
+  MonetizationRule,
 } from './types';

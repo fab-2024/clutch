@@ -1,6 +1,11 @@
 import { Redirect } from 'expo-router';
 
-import type { CosmeticItem, CosmeticShopData, CosmeticSlot } from '../types';
+import {
+  DEFAULT_MONETIZATION_CONTRACT,
+  type CosmeticItem,
+  type CosmeticShopData,
+  type CosmeticSlot,
+} from '../types';
 import ShopScreen from './ShopScreen';
 
 const DEFINITIONS: Array<[CosmeticSlot, string, string, string, number, string]> = [
@@ -44,6 +49,7 @@ const PREVIEW_SHOP: CosmeticShopData = {
   balance: 1280,
   items: ITEMS,
   equipped: { frame: null, title: null, core: null, factionEffect: null, profileCard: null },
+  contract: DEFAULT_MONETIZATION_CONTRACT,
 };
 
 export default function ShopPreviewScreen() {

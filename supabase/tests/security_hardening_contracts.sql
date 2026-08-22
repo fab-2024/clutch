@@ -41,6 +41,7 @@ begin
   end if;
 
   if not has_function_privilege('anon', 'public.classement_global(text)', 'EXECUTE')
+     or not has_function_privilege('anon', 'public.clutch_contrat_monetisation_v1()', 'EXECUTE')
      or not has_function_privilege('anon', 'public.clutch_cosmetiques_profil_v1(text)', 'EXECUTE')
      or not has_function_privilege('anon', 'public.clutch_defi_match_public(text)', 'EXECUTE')
      or not has_function_privilege('anon', 'public.clutch_ligue_public(text)', 'EXECUTE') then

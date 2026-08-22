@@ -23,6 +23,7 @@ import type {
   CosmeticShopData,
   CosmeticSlot,
 } from '../types';
+import { DEFAULT_MONETIZATION_CONTRACT } from '../types';
 
 type ShopScreenProps = {
   previewData?: CosmeticShopData;
@@ -87,11 +88,17 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
     setMessage(null);
   }, [slot]);
 
-  const visibleItems = useMemo(
-    () => (data?.items ?? []).filter((item) => item.slot === slot).sort((a, b) => a.level - b.level),
-    [data?.items, slot],
-  );
   const collection = data?.items.filter((item) => item.owned).length ?? 0;
+  const contract = data?.contract ?? DEFAULT_MONETIZATION_CONTRACT;
+  const availableSlots = useMemo(
+    () => SLOT_ORDER.filter((itemSlot) => contract.catalog.allowedSlots.includes(itemSlot)),
+    [contract.catalog.allowedSlots],
+  );
+  const activeSlot = availableSlots.includes(slot) ? slot : availableSlots[0] ?? 'cadre_profil';
+  const visibleItems = useMemo(
+    () => (data?.items ?? []).filter((item) => item.slot === activeSlot).sort((a, b) => a.level - b.level),
+    [activeSlot, data?.items],
+  );
 
   async function handleItem(item: CosmeticItem) {
     if (!data || pendingId || item.equipped) return;
@@ -156,21 +163,21 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
         <View style={styles.hero}>
           <LinearGradient colors={['#171E10', '#0A0F13', '#080B0F']} end={{ x: 1, y: 1 }} start={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
           <View style={styles.heroGlow} />
-          <Text style={styles.heroKicker}>POINT 3 // VOLTS</Text>
+          <Text style={styles.heroKicker}>PACTE {contract.version} // VOLTS</Text>
           <Text style={styles.heroTitle}>DÉPENSE TON STYLE.{`\n`}JAMAIS TON AVANTAGE.</Text>
-          <Text style={styles.heroCopy}>Chaque achat personnalise ce que les autres voient. Aucun objet ne change tes Calls, tes Frags ou ton classement.</Text>
+          <Text style={styles.heroCopy}>{contract.promise} Chaque achat personnalise ce que les autres voient.</Text>
           <View style={styles.heroStats}>
             <HeroStat label="COLLECTION" value={loading ? '—' : `${collection}/${data?.items.length ?? 0}`} />
             <View style={styles.heroDivider} />
-            <HeroStat label="CATÉGORIES" value="5" />
+            <HeroStat label="CATÉGORIES" value={`${availableSlots.length}`} />
             <View style={styles.heroDivider} />
-            <HeroStat label="PAY-TO-WIN" value="0" accent />
+            <HeroStat label="PAY-TO-WIN" value={contract.catalog.competitiveEffects ? '!' : '0'} accent={!contract.catalog.competitiveEffects} />
           </View>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
-          {SLOT_ORDER.map((itemSlot) => {
-            const active = itemSlot === slot;
+          {availableSlots.map((itemSlot) => {
+            const active = itemSlot === activeSlot;
             const equipped = data?.items.find((item) => item.slot === itemSlot && item.equipped);
             return (
               <Pressable
@@ -191,11 +198,11 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
         </ScrollView>
 
         <View style={styles.sectionHead}>
-          <View style={styles.sectionMark}><Text style={styles.sectionMarkText}>{SLOT_META[slot].glyph}</Text></View>
+          <View style={styles.sectionMark}><Text style={styles.sectionMarkText}>{SLOT_META[activeSlot].glyph}</Text></View>
           <View style={styles.sectionCopy}>
-            <Text style={styles.sectionEyebrow}>{SLOT_META[slot].short} // COLLECTION</Text>
-            <Text style={styles.sectionTitle}>{SLOT_META[slot].label}</Text>
-            <Text style={styles.sectionPromise}>{SLOT_META[slot].promise}</Text>
+            <Text style={styles.sectionEyebrow}>{SLOT_META[activeSlot].short} // COLLECTION</Text>
+            <Text style={styles.sectionTitle}>{SLOT_META[activeSlot].label}</Text>
+            <Text style={styles.sectionPromise}>{SLOT_META[activeSlot].promise}</Text>
           </View>
         </View>
 
@@ -225,8 +232,26 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
         )}
 
         <View style={styles.rules}>
-          <View style={styles.rulesIcon}><CurrencyIcon kind="volts" size={20} /></View>
-          <View style={styles.rulesCopy}><Text style={styles.rulesTitle}>LES VOLTS RESTENT COSMÉTIQUES.</Text><Text style={styles.rulesText}>Ils proviennent des missions, accomplissements et événements. Ils ne peuvent ni acheter des Frags, ni modifier un verdict.</Text></View>
+          <View style={styles.rulesHeader}>
+            <View style={styles.rulesIcon}><CurrencyIcon kind="volts" size={20} /></View>
+            <View style={styles.rulesCopy}>
+              <Text style={styles.rulesEyebrow}>CONTRAT {contract.version} // {contract.code.toUpperCase()}</Text>
+              <Text style={styles.rulesTitle}>LE PACTE CLUTCH</Text>
+              <Text style={styles.rulesText}>Ces règles viennent du même contrat que celui appliqué à chaque achat.</Text>
+            </View>
+          </View>
+          <View style={styles.ruleList}>
+            {contract.rules.map((rule) => (
+              <View key={rule.id} style={styles.ruleRow}>
+                <Text style={styles.ruleCheck}>✓</Text>
+                <View style={styles.ruleCopy}>
+                  <Text style={styles.ruleLabel}>{rule.label}</Text>
+                  <Text style={styles.ruleDetail}>{rule.detail}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+          {!contract.payments.enabled ? <Text style={styles.paymentStatus}>PAIEMENTS RÉELS DÉSACTIVÉS POUR CETTE VERSION</Text> : null}
         </View>
       </ScrollView>
     </Screen>
@@ -316,11 +341,11 @@ function HeroStat({ accent = false, label, value }: { accent?: boolean; label: s
 function applyPreviewAction(data: CosmeticShopData, selected: CosmeticItem): CosmeticShopData {
   const purchasedNow = !selected.owned;
   return {
+    ...data,
     balance: Math.max(0, data.balance - (purchasedNow ? selected.price : 0)),
     items: data.items.map((item) => item.slot === selected.slot
       ? { ...item, owned: item.owned || item.id === selected.id, equipped: item.id === selected.id }
       : item),
-    equipped: data.equipped,
   };
 }
 
@@ -412,10 +437,19 @@ const styles = StyleSheet.create({
   itemActionMissing: { backgroundColor: '#11171D', borderWidth: 1, borderColor: '#29343D' },
   itemActionText: { ...typography.action, color: '#080A0C', textAlign: 'center' },
   itemActionTextMuted: { color: colors.textMuted },
-  rules: { minHeight: 116, marginHorizontal: spacing.md, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 23, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#26313A' },
+  rules: { marginHorizontal: spacing.md, padding: 16, gap: 14, borderRadius: 23, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#26313A' },
+  rulesHeader: { minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 12 },
   rulesIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E' },
   rulesCopy: { flex: 1, minWidth: 0 },
+  rulesEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .6 },
   rulesTitle: { ...typography.bodyStrong, color: colors.text },
   rulesText: { ...typography.caption, marginTop: 4, color: colors.textMuted },
+  ruleList: { borderTopWidth: 1, borderTopColor: '#202A32' },
+  ruleRow: { minHeight: 67, paddingVertical: 11, flexDirection: 'row', gap: 10, borderBottomWidth: 1, borderBottomColor: '#182128' },
+  ruleCheck: { width: 20, color: colors.volt, fontFamily: fonts.bold, fontSize: 15 },
+  ruleCopy: { flex: 1, minWidth: 0 },
+  ruleLabel: { ...typography.label, color: colors.text, letterSpacing: .35 },
+  ruleDetail: { ...typography.caption, marginTop: 3, color: colors.textMuted },
+  paymentStatus: { ...typography.eyebrow, color: '#77838E', letterSpacing: .45, textAlign: 'center' },
   pressed: { opacity: .76 },
 });

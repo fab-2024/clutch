@@ -2,6 +2,7 @@ import { supabase } from '@/src/lib/supabase';
 
 import {
   COSMETIC_SLOTS,
+  DEFAULT_MONETIZATION_CONTRACT,
   EMPTY_EQUIPPED_COSMETICS,
   type CosmeticItem,
   type CosmeticMutation,
@@ -10,6 +11,8 @@ import {
   type CosmeticSlot,
   type EquippedCosmetic,
   type EquippedCosmetics,
+  type MonetizationContract,
+  type MonetizationRule,
 } from './types';
 
 export async function loadCosmeticShop(): Promise<CosmeticShopData> {
@@ -23,6 +26,7 @@ export async function loadCosmeticShop(): Promise<CosmeticShopData> {
       ? payload.objets.map(normalizeItem).filter((item): item is CosmeticItem => item !== null)
       : [],
     equipped: normalizeEquipped(payload.equipes),
+    contract: normalizeMonetizationContract(payload.contrat),
   };
 }
 
@@ -121,6 +125,61 @@ function normalizeMutation(value: unknown, fallbackId: string): CosmeticMutation
   };
 }
 
+function normalizeMonetizationContract(value: unknown): MonetizationContract {
+  const payload = asRecord(value);
+  const currencies = asRecord(payload.devises);
+  const frags = asRecord(currencies.frags);
+  const volts = asRecord(currencies.volts);
+  const catalog = asRecord(payload.catalogue);
+  const partners = asRecord(payload.partenaires);
+  const payments = asRecord(payload.paiements);
+  const slots = Array.isArray(catalog.emplacements)
+    ? catalog.emplacements.map(normalizeSlot).filter((slot): slot is CosmeticSlot => slot !== null)
+    : [];
+  const rules = Array.isArray(payload.regles)
+    ? payload.regles.map(normalizeRule).filter((rule): rule is MonetizationRule => rule !== null)
+    : [];
+
+  return {
+    version: Math.max(1, toNonNegativeInteger(payload.version) || DEFAULT_MONETIZATION_CONTRACT.version),
+    code: stringValue(payload.code) || DEFAULT_MONETIZATION_CONTRACT.code,
+    promise: stringValue(payload.promesse) || DEFAULT_MONETIZATION_CONTRACT.promise,
+    currencies: {
+      fragsPurchasable: booleanValue(frags.achetables, false),
+      fragsSpendable: booleanValue(frags.depensables, false),
+      voltsCosmeticOnly: stringValue(volts.usage) === 'cosmetiques_uniquement',
+      voltsCashPurchaseEnabled: booleanValue(volts.achat_reel_actif, false),
+      voltsExpire: booleanValue(volts.expiration, false),
+      voltsConvertibleToFrags: booleanValue(volts.conversion_frags, false),
+    },
+    catalog: {
+      allowedSlots: slots.length ? Array.from(new Set(slots)) : DEFAULT_MONETIZATION_CONTRACT.catalog.allowedSlots,
+      paidRandomItems: booleanValue(catalog.objets_aleatoires_payants, false),
+      ownedItemsExpire: booleanValue(catalog.objets_possedes_expirent, false),
+      competitiveEffects: booleanValue(catalog.effets_competitifs, false),
+      idempotentPurchases: booleanValue(catalog.achat_idempotent, true),
+    },
+    partners: {
+      rewardBasis: stringValue(partners.recompense) || DEFAULT_MONETIZATION_CONTRACT.partners.rewardBasis,
+      predictionAccuracyRewards: booleanValue(partners.justesse_pronostic_recompensee, false),
+      exposesPersonalData: booleanValue(partners.donnees_personnelles_exposees, false),
+    },
+    payments: {
+      enabled: booleanValue(payments.actifs, false),
+      nativeStoreRequired: booleanValue(payments.biens_numeriques_via_stores, true),
+    },
+    rules: rules.length ? rules : DEFAULT_MONETIZATION_CONTRACT.rules,
+  };
+}
+
+function normalizeRule(value: unknown): MonetizationRule | null {
+  const rule = asRecord(value);
+  const id = stringValue(rule.id);
+  const label = stringValue(rule.label);
+  const detail = stringValue(rule.detail);
+  return id && label && detail ? { id, label, detail } : null;
+}
+
 function normalizeSlot(value: unknown): CosmeticSlot | null {
   const slot = stringValue(value) as CosmeticSlot;
   return COSMETIC_SLOTS.includes(slot) ? slot : null;
@@ -142,6 +201,10 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function stringValue(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function booleanValue(value: unknown, fallback: boolean) {
+  return typeof value === 'boolean' ? value : fallback;
 }
 
 function toNonNegativeInteger(value: unknown) {

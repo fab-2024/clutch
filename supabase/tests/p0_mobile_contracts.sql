@@ -20,6 +20,7 @@ declare
     'public.clutch_boutique_cosmetique_v1()',
     'public.clutch_classement_frags(text)',
     'public.clutch_communaute_dashboard_v4()',
+    'public.clutch_contrat_monetisation_v1()',
     'public.clutch_cosmetiques_profil_v1(text)',
     'public.clutch_definir_jeux_suivis(text[])',
     'public.clutch_demander_ami(uuid)',
@@ -47,6 +48,7 @@ declare
   v_anon_functions constant text[] := array[
     'public.classement_communautes()',
     'public.clutch_communaute_dashboard_v4()',
+    'public.clutch_contrat_monetisation_v1()',
     'public.clutch_cosmetiques_profil_v1(text)',
     'public.clutch_profil_public_v1(text)',
     'public.clutch_projection_match_frags(text)'
