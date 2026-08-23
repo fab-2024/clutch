@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, Platform, StyleSheet, Text, View } from 'react-native';
 import { SvgUri } from 'react-native-svg';
 
@@ -10,26 +10,31 @@ const LIGHT_MONOCHROME_LOGOS = new Set(['G2 Esports', 'Karmine Corp', 'SK Gaming
 
 type TeamLogoProps = {
   accent: string;
+  contentScale?: number;
+  frameless?: boolean;
   name: string;
   size: number;
   tag: string;
   uri?: string | null;
 };
 
-export default function TeamLogo({ accent, name, size, tag, uri }: TeamLogoProps) {
+export default function TeamLogo({ accent, contentScale, frameless = false, name, size, tag, uri }: TeamLogoProps) {
   const [failed, setFailed] = useState(false);
   const source = uri || TEAM_LOGOS[name];
   const isSvg = source ? /\.svg(?:$|\?)/i.test(source) : false;
   const showImage = Boolean(source && !failed);
-  const markSize = Math.round(size * 0.72);
+  const markSize = Math.round(size * (contentScale ?? (frameless ? 0.86 : 0.72)));
   const tintColor = LIGHT_MONOCHROME_LOGOS.has(name) ? '#F6F8F3' : undefined;
+
+  useEffect(() => { setFailed(false); }, [source]);
 
   return (
     <View
       style={[
         styles.holder,
         { width: size, height: size, borderRadius: size * 0.3, borderColor: accent },
-        showImage && styles.imageHolder,
+        showImage && !frameless && styles.imageHolder,
+        frameless && styles.frameless,
       ]}
     >
       {showImage && isSvg && Platform.OS !== 'web' ? (
@@ -43,7 +48,13 @@ export default function TeamLogo({ accent, name, size, tag, uri }: TeamLogoProps
           tintColor={tintColor}
         />
       ) : (
-        <Text adjustsFontSizeToFit numberOfLines={1} style={[styles.tag, { color: accent }]}>{tag}</Text>
+        <Text
+          adjustsFontSizeToFit
+          numberOfLines={1}
+          style={[styles.tag, { color: accent }, frameless && { fontSize: Math.max(11, Math.round(size * .23)) }]}
+        >
+          {tag}
+        </Text>
       )}
     </View>
   );
@@ -52,5 +63,6 @@ export default function TeamLogo({ accent, name, size, tag, uri }: TeamLogoProps
 const styles = StyleSheet.create({
   holder: { borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0C1116' },
   imageHolder: { backgroundColor: '#05070A', boxShadow: 'inset 0 0 18px rgba(255,255,255,.035)' },
+  frameless: { borderWidth: 0, backgroundColor: 'transparent' },
   tag: { maxWidth: '78%', fontFamily: fonts.bold, fontSize: 11 },
 });

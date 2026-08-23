@@ -26,6 +26,12 @@ export type HubMatch = {
   evenement: string;
   format: number;
   statut: string;
+  score_a?: number | null;
+  score_b?: number | null;
+  logo_a?: string | null;
+  logo_b?: string | null;
+  couleur_a?: string | null;
+  couleur_b?: string | null;
 };
 
 export type HubPrediction = {
