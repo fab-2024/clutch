@@ -60,7 +60,7 @@ const ITEMS: CosmeticItem[] = DEFINITIONS.map(([slot, name, styleKey, accent, pr
   equipped: styleKey === 'frame-volt' || styleKey === 'title-reader' || styleKey === 'core-origin' || styleKey === 'faction-aura' || styleKey === 'card-black',
 }));
 
-const PREVIEW_SHOP: CosmeticShopData = {
+export const PREVIEW_SHOP: CosmeticShopData = {
   balance: 1280,
   items: ITEMS,
   equipped: { frame: null, title: null, core: null, factionEffect: null, profileCard: null },

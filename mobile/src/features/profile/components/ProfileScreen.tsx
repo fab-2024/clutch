@@ -9,7 +9,6 @@ import { signOut } from '@/src/features/auth/api';
 import { deactivateCurrentDevicePushToken } from '@/src/features/notifications';
 import { gradeAccent } from '@/src/features/ranking/grades';
 import { loadProfileSafetyState } from '@/src/features/safety/api';
-import { CosmeticAvatar } from '@/src/features/shop/components/CosmeticRenderer';
 import { ProfileSafetyActions } from '@/src/features/safety';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
@@ -19,6 +18,7 @@ import { teamHue } from '@/src/utils/teams';
 
 import { loadProfileData } from '../api';
 import type { ProfileBadge, ProfileData, ProfileRanking, RecentPrediction } from '../types';
+import ProfileShowcaseCard from './ProfileShowcaseCard';
 import ProfileShareCard from './ProfileShareCard';
 
 type ProfileScreenProps = {
@@ -94,13 +94,21 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
   const teamColor = `hsl(${hue}, 68%, 55%)`;
   const hasLiveCosmetics = Boolean(equipped.frame || equipped.title || equipped.core || equipped.factionEffect || equipped.profileCard);
   const cosmetics = !previewData && !publicView && hasLiveCosmetics ? equipped : data?.cosmetics;
-  const frameAccent = cosmetics?.frame?.accent ?? teamColor;
   const obtained = data?.badges.filter((badge) => badge.obtained) ?? [];
   const settledCalls = data?.ranking.pronostics_regles ?? 0;
   const placementGoal = data?.ranking.grade.objectif_placements ?? 5;
   const unranked = !loading && settledCalls === 0;
   const provisional = !loading && Boolean(data?.ranking.provisoire);
   const placementsRemaining = data?.ranking.placements_restants ?? Math.max(0, placementGoal - settledCalls);
+  const rankLabel = loading
+    ? 'SYNCHRO'
+    : unranked
+      ? 'NON CLASSÉ'
+      : provisional
+        ? 'PLACEMENT'
+        : data?.ranking.grade.libelle?.toUpperCase() ?? 'NON CLASSÉ';
+  const rankColor = gradeAccent(data?.ranking.grade);
+  const profileTitle = cosmetics?.title?.name || data?.profileTitle || data?.level.prestigeLabel || 'Starter';
 
   async function leaveSession() {
     if (signingOut) return;
@@ -140,68 +148,42 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
 
         {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text><Pressable onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
 
-        {!publicView ? (
-          <Pressable accessibilityLabel="Modifier les paramètres du profil" accessibilityRole="button" onPress={() => router.push('/settings/profile')} style={({ pressed }) => [styles.settingsEntry, pressed && styles.pressed]}>
-            <View style={styles.settingsMark}><Text style={styles.settingsGlyph}>⚙</Text></View>
-            <View style={styles.settingsCopy}><Text style={styles.settingsLabel}>PARAMÈTRES</Text><Text style={styles.settingsTitle}>Jeux, faction et visibilité</Text></View>
-            <Text style={styles.settingsArrow}>→</Text>
-          </Pressable>
-        ) : null}
-
         {publicView ? <ProfileSafetyActions onBlocked={handlePublicBlocked} pseudo={pseudo} /> : null}
 
-        {!publicView ? (
-          <Pressable accessibilityLabel="Ouvrir le Locker cosmétique" accessibilityRole="button" onPress={() => router.push('/shop' as never)} style={({ pressed }) => [styles.shopEntry, pressed && styles.pressed]}>
-            <View style={styles.shopMark}><CurrencyIcon color="#080A0C" kind="volts" size={22} /></View>
-            <View style={styles.shopCopy}>
-              <Text style={styles.shopLabel}>LOCKER COSMÉTIQUE</Text>
-              <Text style={styles.shopTitle}>Ta collection et ton identité équipée</Text>
-              <Text style={styles.shopPromise}>Visible partout. Aucun avantage compétitif.</Text>
-            </View>
-            <View style={styles.shopBalance}><Text style={styles.shopBalanceValue}>{volts == null ? '—' : formatNumber(volts)}</Text><Text style={styles.shopBalanceLabel}>VOLTS</Text></View>
-          </Pressable>
-        ) : null}
+        <ProfileShowcaseCard
+          cosmetics={cosmetics}
+          level={data?.level.level ?? 0}
+          loading={loading}
+          onOpenLoadout={publicView ? undefined : () => router.push((previewData ? '/shop-preview' : '/shop') as never)}
+          onOpenShowcase={publicView ? undefined : () => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
+          profileTitle={profileTitle}
+          pseudo={data?.pseudo || pseudo}
+          rankAccent={rankColor}
+          rankLabel={rankLabel}
+          relicLevel={data?.favoriteTeam?.relique_niveau ?? 1}
+          teamTag={data?.favoriteTeam?.tag || 'CLUTCH'}
+          volts={publicView ? undefined : volts}
+        />
 
         {!publicView ? (
-          <Pressable accessibilityLabel="Ouvrir le journal des Volts" accessibilityRole="button" onPress={() => router.push('/economy' as never)} style={({ pressed }) => [styles.ledgerEntry, pressed && styles.pressed]}>
-            <View style={styles.ledgerMark}><Text style={styles.ledgerGlyph}>≋</Text></View>
-            <View style={styles.ledgerCopy}><Text style={styles.ledgerLabel}>JOURNAL DES VOLTS</Text><Text style={styles.ledgerTitle}>Chaque gain et dépense, ligne par ligne</Text></View>
-            <Text style={styles.ledgerArrow}>→</Text>
-          </Pressable>
+          <View style={styles.profileTools}>
+            <Pressable accessibilityLabel="Modifier les paramètres du profil" accessibilityRole="button" onPress={() => router.push('/settings/profile')} style={({ pressed }) => [styles.settingsEntry, styles.toolEntry, pressed && styles.pressed]}>
+              <View style={styles.settingsMark}><Text style={styles.settingsGlyph}>⚙</Text></View>
+              <View style={styles.settingsCopy}><Text style={styles.settingsLabel}>PARAMÈTRES</Text><Text style={styles.settingsTitle}>Jeux, faction et visibilité</Text></View>
+              <Text style={styles.settingsArrow}>→</Text>
+            </Pressable>
+            <Pressable accessibilityLabel="Ouvrir le journal des Volts" accessibilityRole="button" onPress={() => router.push('/economy' as never)} style={({ pressed }) => [styles.ledgerEntry, styles.toolEntry, pressed && styles.pressed]}>
+              <View style={styles.ledgerMark}><Text style={styles.ledgerGlyph}>≋</Text></View>
+              <View style={styles.ledgerCopy}><Text style={styles.ledgerLabel}>JOURNAL DES VOLTS</Text><Text style={styles.ledgerTitle}>Chaque gain et dépense, ligne par ligne</Text></View>
+              <Text style={styles.ledgerArrow}>→</Text>
+            </Pressable>
+          </View>
         ) : null}
 
-        <View style={[styles.hero, { borderColor: withAlpha(frameAccent, '88') }]}>
-          <View style={[styles.heroGlow, { backgroundColor: frameAccent }]} />
-          <Text style={[styles.watermark, { color: teamColor }]}>{data?.favoriteTeam?.tag || 'CLUTCH'}</Text>
-          <View style={styles.heroEyebrowRow}>
-            <Text style={styles.heroEyebrow}>IDENTITÉ // ÉTENDARD</Text>
-            {cosmetics?.frame ? <Text style={[styles.cosmeticTag, { color: frameAccent }]}>{cosmetics.frame.name.toUpperCase()}</Text> : null}
-          </View>
-
-          <View style={styles.identityRow}>
-            <CosmeticAvatar cosmetics={cosmetics} fallback={`${data?.level.level ?? 0}`} label={data?.pseudo || pseudo} size={94} />
-            <View style={styles.identityCopy}>
-              <Text style={styles.levelLine}>{loading ? 'NIVEAU —' : `NIVEAU ${data?.level.level} · ${data?.level.title?.toUpperCase()}`}</Text>
-              <Text numberOfLines={1} adjustsFontSizeToFit style={styles.pseudo}>{data?.pseudo || pseudo}</Text>
-              <Text style={[styles.profileTitle, { color: cosmetics?.title?.accent ?? colors.volt }]}>{cosmetics?.title?.name || data?.profileTitle || data?.level.prestigeLabel || 'Starter'}</Text>
-            </View>
-          </View>
-
-          <View style={styles.badgeStrip}>
-            {(loading ? [] : data?.pinnedBadges ?? []).map((badge) => <BadgeToken key={badge.key} badge={badge} />)}
-            {!loading && Array.from({ length: Math.max(0, 4 - (data?.pinnedBadges.length ?? 0)) }).map((_, index) => (
-              <View accessibilityLabel="Emplacement de badge vide" key={`empty-${index}`} style={styles.emptyBadge}>
-                <Text style={styles.emptyBadgeText}>+</Text>
-                <Text style={styles.emptyBadgeLabel}>BADGE</Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.xpBlock}>
-            <View style={styles.xpTop}><Text style={styles.xpLabel}>PROGRESSION PERMANENTE</Text><Text style={styles.xpValue}>{loading ? '—' : `${formatNumber(data?.level.xp ?? 0)} XP`}</Text></View>
-            <View style={styles.track}><View style={[styles.trackFill, { width: `${Math.max(2, Math.round((data?.level.progress ?? 0) * 100))}%` }]} /></View>
-            <Text style={styles.xpHint}>{loading ? 'Synchronisation…' : `${formatNumber(data?.level.remaining ?? 0)} XP avant le niveau suivant`}</Text>
-          </View>
+        <View style={styles.xpBlock}>
+          <View style={styles.xpTop}><Text style={styles.xpLabel}>NIVEAU {data?.level.level ?? '—'} · {data?.level.title?.toUpperCase() ?? 'PROGRESSION PERMANENTE'}</Text><Text style={styles.xpValue}>{loading ? '—' : `${formatNumber(data?.level.xp ?? 0)} XP`}</Text></View>
+          <View style={styles.track}><View style={[styles.trackFill, { width: `${Math.max(2, Math.round((data?.level.progress ?? 0) * 100))}%` }]} /></View>
+          <Text style={styles.xpHint}>{loading ? 'Synchronisation…' : `${formatNumber(data?.level.remaining ?? 0)} XP avant le niveau suivant`}</Text>
         </View>
 
         {!loading && (unranked || provisional) ? (
@@ -226,7 +208,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             cosmetic={cosmetics?.profileCard}
             frags={data.ranking.frags}
             grade={unranked || provisional ? 'En placement' : data.ranking.grade.libelle || 'Non classé'}
-            profileTitle={cosmetics?.title?.name || data.profileTitle || data.level.prestigeLabel || 'Starter'}
+            profileTitle={profileTitle}
             pseudo={data.pseudo || pseudo}
             publicProfile={data.publicProfile}
             rank={data.ranking.rang}
@@ -283,11 +265,6 @@ function ProfileHeader({ publicProfile, publicView }: { publicProfile: boolean; 
       <View style={styles.visibility}><View style={[styles.visibilityDot, !publicProfile && styles.visibilityDotPrivate]} /><Text style={styles.visibilityText}>{publicProfile ? 'PUBLIC' : 'PRIVÉ'}</Text></View>
     </View>
   );
-}
-
-function BadgeToken({ badge }: { badge: ProfileBadge }) {
-  const tone = rarityColor(badge.rarity);
-  return <View style={[styles.badgeToken, { borderColor: tone }]}><Text style={[styles.badgeGlyph, { color: tone }]}>{familyGlyph(badge.family)}</Text></View>;
 }
 
 function ArsenalCard({ badge }: { badge: ProfileBadge }) {
@@ -384,8 +361,6 @@ function roman(level: number) { return ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'
 function gameName(game: string) { const key = String(game || '').toLowerCase(); if (key.includes('lol') || key.includes('league')) return 'LoL'; if (key.includes('valorant')) return 'VAL'; if (key.includes('cs')) return 'CS2'; return 'ESPORT'; }
 function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
 function formatDecimal(value: number) { return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(Number(value || 0)); }
-function withAlpha(color: string, alpha: string) { return /^#[0-9a-f]{6}$/i.test(color) ? `${color}${alpha}` : color; }
-
 const styles = StyleSheet.create({
   blockedState: { flex: 1, minHeight: 560, margin: spacing.lg, padding: spacing.lg, alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: radius.lg, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#303A43' },
   blockedStateEyebrow: { ...typography.eyebrow, color: colors.volt },
@@ -396,16 +371,9 @@ const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 22 },
   header: { minHeight: 78, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 }, logoBox: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, logoGlyph: { color: '#06090C', fontFamily: fonts.display, fontSize: 25, lineHeight: 28, letterSpacing: -2 }, wordmarkRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 }, wordmark: { color: colors.text, fontFamily: fonts.bold, fontSize: 17, letterSpacing: 3.1 }, dot: { width: 5, height: 5, marginBottom: 3, borderRadius: 3, backgroundColor: colors.volt }, back: { minHeight: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { ...typography.action, color: colors.text, letterSpacing: 0.6 }, visibility: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { ...typography.label, color: colors.text, letterSpacing: 0.5 },
   error: { marginHorizontal: spacing.md, padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', flexDirection: 'row', gap: 10, justifyContent: 'space-between' }, errorText: { ...typography.body, flex: 1, color: '#FF9AA2' }, retry: { ...typography.action, color: colors.volt },
+  profileTools: { marginHorizontal: spacing.md, gap: 9 },
+  toolEntry: { marginHorizontal: 0, marginTop: 0 },
   settingsEntry: { minHeight: 82, marginHorizontal: spacing.md, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 21, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, settingsMark: { width: 43, height: 43, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E', borderWidth: 1, borderColor: '#3A461D' }, settingsGlyph: { color: colors.volt, fontSize: 16, fontWeight: '900' }, settingsCopy: { flex: 1 }, settingsLabel: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 }, settingsTitle: { ...typography.bodyStrong, marginTop: 4, color: colors.text }, settingsArrow: { color: colors.volt, fontSize: 17, fontWeight: '900' },
-  shopEntry: { minHeight: 104, marginHorizontal: spacing.md, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 24, backgroundColor: '#10160E', borderWidth: 1, borderColor: '#45521E' },
-  shopMark: { width: 52, height: 52, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt, boxShadow: '0 0 20px rgba(232,255,61,.16)' },
-  shopCopy: { flex: 1, minWidth: 0 },
-  shopLabel: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 },
-  shopTitle: { ...typography.bodyStrong, marginTop: 4, color: colors.text },
-  shopPromise: { ...typography.caption, marginTop: 2, color: colors.textMuted },
-  shopBalance: { minWidth: 55, alignItems: 'flex-end' },
-  shopBalanceValue: { ...typography.metricSmall, color: colors.text },
-  shopBalanceLabel: { ...typography.label, marginTop: 2, color: colors.textMuted, letterSpacing: .4 },
   ledgerEntry: { minHeight: 68, marginHorizontal: spacing.md, marginTop: -10, paddingHorizontal: 13, flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 19, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#28313A' },
   ledgerMark: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: '#151C0E', borderWidth: 1, borderColor: '#3A461D' },
   ledgerGlyph: { color: colors.volt, fontSize: 19, lineHeight: 21, fontWeight: '900' },
@@ -413,10 +381,7 @@ const styles = StyleSheet.create({
   ledgerLabel: { ...typography.eyebrow, color: colors.volt, letterSpacing: .65 },
   ledgerTitle: { ...typography.caption, marginTop: 3, color: colors.textSubtle },
   ledgerArrow: { color: colors.volt, fontSize: 17, fontWeight: '900' },
-  hero: { position: 'relative', overflow: 'hidden', marginHorizontal: spacing.md, minHeight: 390, padding: 20, borderRadius: 31, backgroundColor: '#0A0F14', borderWidth: 1, gap: 18 }, heroGlow: { position: 'absolute', right: -120, top: -80, width: 310, height: 310, borderRadius: 155, opacity: 0.15 }, watermark: { position: 'absolute', right: -14, top: 80, fontFamily: fonts.display, fontSize: 86, lineHeight: 90, opacity: 0.09, letterSpacing: -5 }, heroEyebrowRow: { zIndex: 2, minHeight: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }, heroEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.2 }, cosmeticTag: { ...typography.label, flexShrink: 1, letterSpacing: .45, textAlign: 'right' },
-  identityRow: { zIndex: 2, flexDirection: 'row', alignItems: 'center', gap: 15 }, identityCopy: { flex: 1, minWidth: 0 }, levelLine: { ...typography.label, color: colors.textMuted, letterSpacing: 0.6 }, pseudo: { marginTop: 4, color: colors.text, fontFamily: fonts.bold, fontSize: 34, lineHeight: 38, letterSpacing: -1.5 }, profileTitle: { ...typography.bodyStrong, marginTop: 4 },
-  badgeStrip: { zIndex: 2, minHeight: 70, flexDirection: 'row', gap: 10, alignItems: 'center' }, badgeToken: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0D1319', borderWidth: 1.2 }, badgeGlyph: { fontSize: 19, fontWeight: '900' }, emptyBadge: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0C1116', borderWidth: 1, borderColor: '#25303A', borderStyle: 'dashed' }, emptyBadgeText: { color: '#66727D', fontSize: 16, lineHeight: 17, fontWeight: '700' }, emptyBadgeLabel: { ...typography.caption, marginTop: 2, color: '#596570', letterSpacing: .25 },
-  xpBlock: { zIndex: 2, marginTop: 'auto', padding: 14, borderRadius: 18, backgroundColor: '#080D11', borderWidth: 1, borderColor: '#202A32', gap: 8 }, xpTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, xpLabel: { ...typography.label, color: colors.textMuted, letterSpacing: 0.5 }, xpValue: { ...typography.bodyStrong, color: colors.text }, track: { height: 7, borderRadius: 999, overflow: 'hidden', backgroundColor: '#182028' }, trackFill: { height: '100%', borderRadius: 999, backgroundColor: colors.volt }, xpHint: { ...typography.caption, color: colors.textMuted },
+  xpBlock: { marginHorizontal: spacing.md, padding: 14, borderRadius: 18, backgroundColor: '#080D11', borderWidth: 1, borderColor: '#202A32', gap: 8 }, xpTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 9 }, xpLabel: { ...typography.label, flex: 1, color: colors.textMuted, letterSpacing: 0.5 }, xpValue: { ...typography.bodyStrong, color: colors.text }, track: { height: 7, borderRadius: 999, overflow: 'hidden', backgroundColor: '#182028' }, trackFill: { height: '100%', borderRadius: 999, backgroundColor: colors.volt }, xpHint: { ...typography.caption, color: colors.textMuted },
   rankingState: { minHeight: 160, marginHorizontal: spacing.md, padding: 14, borderRadius: 24, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#414D1E' }, rankingStateStep: { width: 82, height: 92, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A0E0A', borderWidth: 1, borderColor: '#4A5822' }, rankingStateStepValue: { ...typography.metric, color: colors.volt }, rankingStateStepLabel: { ...typography.label, marginTop: 4, color: colors.textMuted, letterSpacing: .25, textAlign: 'center' }, rankingStateCopy: { flex: 1, minWidth: 0 }, rankingStateEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 }, rankingStateTitle: { ...typography.cardTitle, marginTop: 5, color: colors.text }, rankingStateText: { ...typography.body, marginTop: 5, color: colors.textMuted }, rankingStateAction: { ...typography.action, marginTop: 8, color: colors.volt, letterSpacing: .3 },
   gradeCard: { marginHorizontal: spacing.md, padding: 15, borderRadius: 25, gap: 13, backgroundColor: '#0B1015', borderWidth: 1 },
   gradeTop: { flexDirection: 'row', alignItems: 'center', gap: 11 },

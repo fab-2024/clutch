@@ -84,6 +84,7 @@ function RootNavigator() {
           <Stack.Screen name="settings/account" />
           <Stack.Screen name="settings/safety" />
           <Stack.Screen name="shop" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="showcase" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="founder-pack" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="economy" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="campaign/[key]" options={{ animation: 'slide_from_right' }} />
@@ -104,6 +105,7 @@ function RootNavigator() {
         <Stack.Screen name="legal/terms" />
         <Stack.Screen name="support" />
         <Stack.Screen name="shop-preview" options={{ animation: 'fade' }} />
+        <Stack.Screen name="showcase-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="founder-pack-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="economy-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="campaign-preview" options={{ animation: 'fade' }} />

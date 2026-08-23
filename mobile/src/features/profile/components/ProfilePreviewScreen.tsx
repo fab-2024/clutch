@@ -3,7 +3,7 @@ import { Redirect } from 'expo-router';
 import type { ProfileData } from '../types';
 import ProfileScreen from './ProfileScreen';
 
-const PREVIEW_PROFILE: ProfileData = {
+export const PREVIEW_PROFILE: ProfileData = {
   pseudo: 'Pierre-Louis',
   createdAt: new Date().toISOString(),
   profileTitle: null,
