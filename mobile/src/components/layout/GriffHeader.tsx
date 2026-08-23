@@ -18,7 +18,7 @@ export function GriffHeader({ economy }: Props = {}) {
   return (
     <View style={styles.root}>
       <View style={styles.brandRow}>
-        <GriffLockup width={102} />
+        <GriffLockup width={96} />
       </View>
 
       <View
@@ -27,7 +27,6 @@ export function GriffHeader({ economy }: Props = {}) {
         style={styles.wallet}
       >
         <Balance kind="frags" label="FRAGS" value={displayedFrags} />
-        <View style={styles.walletDivider} />
         <Balance kind="volts" label="VOLTS" value={displayedVolts} />
       </View>
     </View>
@@ -44,9 +43,9 @@ function Balance({
   value: number | null;
 }) {
   return (
-    <View style={styles.balance}>
+    <View style={[styles.balance, kind === 'volts' ? styles.voltsBalance : styles.fragsBalance]}>
       <View style={[styles.balanceMark, kind === 'volts' ? styles.voltsMark : styles.fragsMark]}>
-        <CurrencyIcon kind={kind} size={18} />
+        <CurrencyIcon kind={kind} size={24} />
       </View>
       <View style={styles.balanceCopy}>
         <Text style={styles.balanceLabel}>{label}</Text>
@@ -64,7 +63,7 @@ const styles = StyleSheet.create({
   root: {
     width: '100%',
     maxWidth: 430,
-    minHeight: 66,
+    minHeight: 70,
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
@@ -79,31 +78,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   wallet: {
-    minHeight: 44,
     flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 7,
-    borderRadius: 16,
-    backgroundColor: '#0C1116',
-    borderWidth: 1,
-    borderColor: '#26313B',
+    gap: 5,
   },
   balance: {
-    minWidth: 60,
+    minWidth: 76,
+    minHeight: 48,
+    paddingHorizontal: 6,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
+    borderRadius: 14,
+    borderWidth: 1,
   },
+  fragsBalance: { backgroundColor: '#0C0B13', borderColor: '#353047' },
+  voltsBalance: { backgroundColor: '#0D120B', borderColor: '#343D1C' },
   balanceMark: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
+    width: 30,
+    height: 34,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fragsMark: { backgroundColor: '#090E12', borderWidth: 1, borderColor: '#35414B' },
-  voltsMark: { backgroundColor: '#10160A', borderWidth: 1, borderColor: '#47551A' },
+  fragsMark: { backgroundColor: '#09080F' },
+  voltsMark: { backgroundColor: '#090D08' },
   balanceCopy: { minWidth: 0 },
   balanceLabel: {
     ...typography.eyebrow,
@@ -116,11 +116,5 @@ const styles = StyleSheet.create({
     marginTop: 1,
     color: colors.text,
     fontVariant: ['tabular-nums'],
-  },
-  walletDivider: {
-    width: 1,
-    height: 25,
-    marginHorizontal: 6,
-    backgroundColor: '#27313A',
   },
 });

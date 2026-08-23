@@ -13,6 +13,12 @@ for (const path of [
   'mobile/assets/app/griff-notification-icon.png',
   'mobile/assets/brand/griff-mark.png',
   'mobile/assets/brand/griff-lockup.png',
+  'mobile/assets/currency/frag.png',
+  'mobile/assets/currency/frag@2x.png',
+  'mobile/assets/currency/frag@3x.png',
+  'mobile/assets/currency/volt.png',
+  'mobile/assets/currency/volt@2x.png',
+  'mobile/assets/currency/volt@3x.png',
   'mobile/app/legal/privacy.tsx',
   'mobile/app/legal/terms.tsx',
   'mobile/app/settings/account.tsx',
@@ -73,6 +79,12 @@ requirePngDimensions('mobile/assets/app/griff-splash-icon.png', 1024, 1024);
 requirePngDimensions('mobile/assets/app/griff-notification-icon.png', 96, 96);
 requirePngDimensions('mobile/assets/brand/griff-mark.png', 512, 512);
 requirePngDimensions('mobile/assets/brand/griff-lockup.png', 960, 280);
+requirePngDimensions('mobile/assets/currency/frag.png', 40, 40);
+requirePngDimensions('mobile/assets/currency/frag@2x.png', 80, 80);
+requirePngDimensions('mobile/assets/currency/frag@3x.png', 120, 120);
+requirePngDimensions('mobile/assets/currency/volt.png', 40, 40);
+requirePngDimensions('mobile/assets/currency/volt@2x.png', 80, 80);
+requirePngDimensions('mobile/assets/currency/volt@3x.png', 120, 120);
 
 const tabs = readFileSync(resolve(root, 'mobile/app/(tabs)/_layout.tsx'), 'utf8');
 if (!/name="room"[\s\S]{0,180}href: null/.test(tabs)) failures.push('Room reste visible dans la navigation');

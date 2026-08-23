@@ -136,7 +136,7 @@ export default function VoltLedgerScreen({ previewData }: VoltLedgerScreenProps)
         <View style={styles.hero}>
           <View style={styles.heroGlow} />
           <View style={styles.heroTop}>
-            <View style={styles.currencyMark}><CurrencyIcon color="#080A0C" kind="volts" size={30} /></View>
+            <View style={styles.currencyMark}><CurrencyIcon kind="volts" size={42} /></View>
             <Text style={styles.heroLabel}>SOLDE DISPONIBLE</Text>
           </View>
           <Text accessibilityLabel={`${formatNumber(ledger?.balance ?? 0)} Volts disponibles`} style={styles.balance}>
@@ -171,7 +171,7 @@ export default function VoltLedgerScreen({ previewData }: VoltLedgerScreenProps)
 
         {!loading && ledger && !ledger.movements.length ? (
           <View style={styles.emptyCard}>
-            <View style={styles.emptyMark}><CurrencyIcon kind="volts" size={28} /></View>
+            <View style={styles.emptyMark}><CurrencyIcon kind="volts" size={36} /></View>
             <Text style={styles.emptyEyebrow}>REGISTRE VIERGE</Text>
             <Text style={styles.emptyTitle}>Ton premier mouvement apparaîtra ici.</Text>
             <Text style={styles.emptyText}>Termine l’onboarding, progresse ou accomplis une mission pour recevoir tes premiers Volts.</Text>
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   hero: { position: 'relative', overflow: 'hidden', minHeight: 300, marginHorizontal: spacing.md, padding: 22, borderRadius: 31, backgroundColor: '#0D130C', borderWidth: 1, borderColor: '#4A5822' },
   heroGlow: { position: 'absolute', width: 300, height: 300, right: -95, top: -110, borderRadius: 150, backgroundColor: colors.volt, opacity: .1 },
   heroTop: { zIndex: 1, flexDirection: 'row', alignItems: 'center', gap: 11 },
-  currencyMark: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
+  currencyMark: { width: 66, height: 66, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: '#080D09', borderWidth: 1, borderColor: '#53621F', boxShadow: '0 0 22px rgba(232,255,61,.12)' },
   heroLabel: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: 1.1 },
   balance: { zIndex: 1, marginTop: 17, color: colors.text, fontFamily: fonts.display, fontSize: 68, lineHeight: 66, letterSpacing: -2.5 },
   balanceUnit: { zIndex: 1, marginTop: 2, color: colors.volt, fontFamily: fonts.bold, fontSize: 11, letterSpacing: 2.2 },
