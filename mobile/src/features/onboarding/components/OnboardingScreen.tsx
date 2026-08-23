@@ -13,6 +13,7 @@ import {
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { errorFeedback, impactFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
@@ -101,7 +102,7 @@ export default function OnboardingScreen() {
       router.replace('/(tabs)' as never);
     } catch (caught) {
       errorFeedback();
-      setError(caught instanceof Error ? caught.message : 'Impossible de finaliser ton entrée dans Clutch.');
+      setError(caught instanceof Error ? caught.message : 'Impossible de finaliser ton entrée dans GRIFF.');
     } finally {
       setSaving(false);
     }
@@ -168,8 +169,7 @@ function OnboardingTop({ step }: { step: Step }) {
   return (
     <View style={styles.top}>
       <View style={styles.brandRow}>
-        <View style={styles.logo}><Text style={styles.logoText}>C</Text></View>
-        <Text style={styles.brand}>CLUTCH<Text style={styles.brandDot}>.</Text></Text>
+        <GriffLockup width={102} />
       </View>
       <View style={styles.progress}>
         {[0, 1].map((index) => <View key={index} style={[styles.progressBar, index <= step && styles.progressBarActive]} />)}
@@ -330,7 +330,7 @@ function TeamsStep({
           onPress={onFinish}
           style={({ pressed }) => [styles.nextButton, (!selected || saving) && styles.disabled, pressed && styles.pressed]}
         >
-          {saving ? <ActivityIndicator color="#080A0C" /> : <Text style={styles.nextText}>Entrer dans Clutch →</Text>}
+          {saving ? <ActivityIndicator color="#080A0C" /> : <Text style={styles.nextText}>Entrer dans GRIFF →</Text>}
         </Pressable>
       </View>
     </View>
@@ -345,11 +345,7 @@ const styles = StyleSheet.create({
   shell: { flex: 1, width: '100%', maxWidth: 430, alignSelf: 'center', paddingHorizontal: spacing.md },
   stepFrame: { flex: 1 },
   top: { minHeight: 70, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  logo: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt, boxShadow: '0 0 10px rgba(224,255,59,.24)' },
-  logoText: { color: '#07090B', fontFamily: fonts.display, fontSize: 22, lineHeight: 25, letterSpacing: -1 },
-  brand: { color: colors.text, fontFamily: fonts.bold, fontSize: 12, letterSpacing: 2.3 },
-  brandDot: { color: colors.volt },
+  brandRow: { minHeight: 34, flexDirection: 'row', alignItems: 'center' },
   progress: { flex: 1, flexDirection: 'row', justifyContent: 'center', gap: 5 },
   progressBar: { width: 27, height: 3, borderRadius: 3, backgroundColor: '#242C33' },
   progressBarActive: { backgroundColor: colors.volt },

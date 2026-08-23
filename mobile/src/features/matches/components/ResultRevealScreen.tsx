@@ -15,6 +15,7 @@ import Animated, {
   ZoomIn,
 } from 'react-native-reanimated';
 
+import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
@@ -160,7 +161,7 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
     }
   }
 
-  if (loading) return <RevealState title="VERDICT EN APPROCHE…" copy="Clutch vérifie le score et ton rating." />;
+  if (loading) return <RevealState title="VERDICT EN APPROCHE…" copy="GRIFF vérifie le score et ton rating." />;
   if (!result) return <RevealState title="AUCUN VERDICT À RÉVÉLER." copy={error || 'Ce résultat n’est pas disponible dans ton historique.'} action="RETOUR AUX MATCHS" onPress={() => router.replace('/(tabs)/matches')} />;
 
   const won = result.statut === 'gagne';
@@ -185,7 +186,7 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
               <Text style={styles.backText}>← RETOUR</Text>
             </Pressable>
           ) : (
-            <View style={styles.brand}><View style={styles.brandMark}><Text style={styles.brandGlyph}>C</Text></View><Text style={styles.brandText}>CLUTCH</Text></View>
+            <View style={styles.brand}><GriffLockup width={100} /></View>
           )}
           <View style={styles.officialPill}><View style={[styles.officialDot, { backgroundColor: tone }]} /><Text style={styles.officialText}>{replay ? 'HISTORIQUE' : 'RÉSULTAT OFFICIEL'}</Text></View>
         </View>

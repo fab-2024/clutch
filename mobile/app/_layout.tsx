@@ -54,7 +54,7 @@ function RootNavigator() {
     return (
       <View style={styles.loading}>
         <ActivityIndicator color={colors.volt} />
-        <Text style={styles.loadingText}>Chargement de Clutch…</Text>
+        <Text style={styles.loadingText}>Chargement de GRIFF…</Text>
       </View>
     );
   }

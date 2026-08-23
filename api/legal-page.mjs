@@ -1,8 +1,8 @@
 const PAGES = {
   privacy: {
-    eyebrow: 'CLUTCH // DONNÉES',
+    eyebrow: 'GRIFF // DONNÉES',
     title: 'Politique de confidentialité',
-    intro: 'Clutch limite la collecte aux données utiles au compte, à la compétition, aux fonctions sociales, aux notifications, aux achats et à la mesure de fiabilité du produit.',
+    intro: 'GRIFF limite la collecte aux données utiles au compte, à la compétition, aux fonctions sociales, aux notifications, aux achats et à la mesure de fiabilité du produit.',
     sections: [
       ['Données traitées', 'Adresse e-mail, pseudo, préférences, calls, verdicts, progression, relations sociales, inventaire, références d’achat validées et événements produit prédéfinis. Aucun identifiant publicitaire ou suivi inter-applications.'],
       ['Prestataires', 'Supabase héberge le compte et les données, Expo livre les notifications push et RevenueCat vérifie les achats intégrés. Ils ne reçoivent que les informations nécessaires à leur mission.'],
@@ -11,9 +11,9 @@ const PAGES = {
     ],
   },
   terms: {
-    eyebrow: 'CLUTCH // RÈGLES',
+    eyebrow: 'GRIFF // RÈGLES',
     title: 'Conditions d’utilisation',
-    intro: 'Clutch est un jeu social de prédiction e-sport, sans mise d’argent réel. Frags, XP et Volts n’ont aucune valeur monétaire et ne sont pas retirables.',
+    intro: 'GRIFF est un jeu social de prédiction e-sport, sans mise d’argent réel. Frags, XP et Volts n’ont aucune valeur monétaire et ne sont pas retirables.',
     sections: [
       ['Compte', 'Tu dois protéger ton mot de passe, utiliser des informations exactes et respecter les autres joueurs. Les abus, fraudes, contenus illicites ou atteintes aux droits d’autrui sont interdits.'],
       ['Compétition', 'Les verdicts sont réglés à partir des sources indiquées dans le Match Center. Une erreur manifeste ou un match annulé peut entraîner une correction traçable.'],
@@ -22,13 +22,13 @@ const PAGES = {
     ],
   },
   support: {
-    eyebrow: 'CLUTCH // SUPPORT',
+    eyebrow: 'GRIFF // SUPPORT',
     title: 'Besoin d’aide ?',
     intro: 'Compte, verdict, achat ou sécurité : indique ton pseudo, ton appareil et l’heure du problème. Ne communique jamais ton mot de passe.',
     sections: [],
   },
   deletion: {
-    eyebrow: 'CLUTCH // COMPTE',
+    eyebrow: 'GRIFF // COMPTE',
     title: 'Supprimer ton compte',
     intro: 'Tu peux supprimer ton compte directement dans Moi → Paramètres → Compte et données. Si tu n’as plus accès à l’application, utilise la demande ci-dessous.',
     sections: [
@@ -50,14 +50,14 @@ export default function handler(req, res) {
   if (!page) return res.status(404).send('Not Found');
 
   const supportEmail = validEmail(process.env.CLUTCH_SUPPORT_EMAIL) ? process.env.CLUTCH_SUPPORT_EMAIL.trim() : null;
-  const subject = key === 'deletion' ? 'Demande de suppression de compte Clutch' : 'Support Clutch';
+  const subject = key === 'deletion' ? 'Demande de suppression de compte GRIFF' : 'Support GRIFF';
   const mail = supportEmail ? `mailto:${encodeURIComponent(supportEmail)}?subject=${encodeURIComponent(subject)}` : null;
   const contact = mail
     ? `<a class="cta" href="${escapeAttr(mail)}">${key === 'deletion' ? 'DEMANDER LA SUPPRESSION' : 'CONTACTER LE SUPPORT'} <span>›</span></a>`
     : '<div class="warning">Le contact public est en cours de configuration. La publication Store reste bloquée tant qu’il manque.</div>';
   const canonical = `${requestOrigin(req)}${canonicalPath(key)}`;
   const sections = page.sections.map(([title, copy], index) => `<section><b>${String(index + 1).padStart(2, '0')}</b><div><h2>${escapeHtml(title)}</h2><p>${escapeHtml(copy)}</p></div></section>`).join('');
-  const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>${escapeHtml(page.title)} | Clutch</title><meta name="description" content="${escapeAttr(page.intro)}"><link rel="canonical" href="${escapeAttr(canonical)}"><meta name="theme-color" content="#06080b"><style>${css()}</style></head><body><header><a href="/" class="brand">CLUTCH<span>.</span></a><nav><a href="/privacy">Confidentialité</a><a href="/terms">Conditions</a><a href="/support">Support</a></nav></header><main><div class="eyebrow">${escapeHtml(page.eyebrow)}</div><h1>${escapeHtml(page.title)}</h1><p class="lead">${escapeHtml(page.intro)}</p>${sections}${contact}<small>Dernière mise à jour : 22 août 2026</small></main><footer>Prédictions e-sport gratuites · Aucun argent réel en jeu.</footer></body></html>`;
+  const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>${escapeHtml(page.title)} | GRIFF</title><meta name="description" content="${escapeAttr(page.intro)}"><link rel="canonical" href="${escapeAttr(canonical)}"><meta name="theme-color" content="#06080b"><style>${css()}</style></head><body><header><a href="/" class="brand">GRIFF<span>.</span></a><nav><a href="/privacy">Confidentialité</a><a href="/terms">Conditions</a><a href="/support">Support</a></nav></header><main><div class="eyebrow">${escapeHtml(page.eyebrow)}</div><h1>${escapeHtml(page.title)}</h1><p class="lead">${escapeHtml(page.intro)}</p>${sections}${contact}<small>Dernière mise à jour : 23 août 2026</small></main><footer>Calls e-sport gratuits · Aucun argent réel en jeu.</footer></body></html>`;
   res.statusCode = 200;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');

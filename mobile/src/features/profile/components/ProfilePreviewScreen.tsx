@@ -72,7 +72,7 @@ export const PREVIEW_PROFILE: ProfileData = {
   },
   cosmetics: {
     frame: { id: 'cadre-profil-2', slot: 'cadre_profil', level: 2, name: 'Signal Volt', description: '', rarity: 'rare', styleKey: 'frame-volt', accent: '#E8FF3D' },
-    title: { id: 'titre-profil-3', slot: 'titre_profil', level: 3, name: 'Instinct Clutch', description: '', rarity: 'epique', styleKey: 'title-instinct', accent: '#E8FF3D' },
+    title: { id: 'titre-profil-3', slot: 'titre_profil', level: 3, name: 'Instinct GRIFF', description: '', rarity: 'epique', styleKey: 'title-instinct', accent: '#E8FF3D' },
     core: { id: 'apparence-core-3', slot: 'apparence_core', level: 3, name: 'Core Holographique', description: '', rarity: 'epique', styleKey: 'core-holo', accent: '#54D9FF' },
     factionEffect: { id: 'effet-faction-2', slot: 'effet_faction', level: 2, name: 'Veines Volt', description: '', rarity: 'rare', styleKey: 'faction-veins', accent: '#E8FF3D' },
     profileCard: { id: 'carte-profil-2', slot: 'carte_profil', level: 2, name: 'Signal Acide', description: '', rarity: 'rare', styleKey: 'card-signal', accent: '#E8FF3D' },

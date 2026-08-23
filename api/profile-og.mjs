@@ -27,12 +27,12 @@ function render(card) {
     h('div',{style:styles.glowA}),h('div',{style:styles.glowB}),
     h('div',{style:styles.frame},
       h('div',{style:styles.top},
-        h('div',{style:styles.brand},'CLUTCH',h('span',{style:styles.dot},'.')),
+        h('div',{style:styles.brand},'GRIFF',h('span',{style:styles.dot},'.')),
         h('div',{style:styles.public},'PUBLIC PROFILE')
       ),
       h('div',{style:styles.content},
         h('div',{style:styles.signature},h('span',{style:styles.signatureIcon},card.styleSymbol || '◌'),String(card.style || 'PLAYER').toUpperCase()),
-        h('div',{style:styles.pseudo},String(card.pseudo || 'CLUTCH PLAYER').toUpperCase()),
+        h('div',{style:styles.pseudo},String(card.pseudo || 'GRIFF PLAYER').toUpperCase()),
         h('div',{style:styles.short},String(card.short || card.style || 'PLAYER IDENTITY').toUpperCase()),
         h('div',{style:styles.stats},
           stat('FRAGS',Number(card.frags || 1000).toLocaleString('fr-FR')),
@@ -42,15 +42,15 @@ function render(card) {
         )
       ),
       h('div',{style:styles.bottom},
-        h('div',{style:styles.faction},card.faction ? `FACTION // ${String(card.faction).toUpperCase()}` : 'CLUTCH // PLAYER IDENTITY'),
-        h('div',{style:styles.cta},'MONTRE TON PROFIL CLUTCH.')
+        h('div',{style:styles.faction},card.faction ? `FACTION // ${String(card.faction).toUpperCase()}` : 'GRIFF // PLAYER IDENTITY'),
+        h('div',{style:styles.cta},'MONTRE TON PROFIL GRIFF.')
       )
     )
   );
 }
 
 function stat(label,value){return h('div',{style:styles.stat},h('div',{style:styles.statLabel},label),h('div',{style:styles.statValue},String(value)));}
-function genericCard(){return {pseudo:'CLUTCH PLAYER',style:'PLAYER IDENTITY',styleSymbol:'◌',short:'TON STYLE. TON RANG. TON ARSENAL.',frags:1000,rang:null,precision:0,serie:0,faction:null};}
+function genericCard(){return {pseudo:'GRIFF PLAYER',style:'PLAYER IDENTITY',styleSymbol:'◌',short:'TON STYLE. TON RANG. TON ARSENAL.',frags:1000,rang:null,precision:0,serie:0,faction:null};}
 const styles={
 root:{width:'100%',height:'100%',display:'flex',position:'relative',overflow:'hidden',background:'#06080b',color:'#f6f7f3',padding:'34px'},
 glowA:{position:'absolute',width:'620px',height:'620px',left:'-260px',top:'-300px',borderRadius:'999px',background:'radial-gradient(circle,rgba(232,255,61,.19),rgba(232,255,61,0) 68%)'},

@@ -17,7 +17,7 @@ export default function handler(req, res) {
     res.statusCode = 503;
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.end('<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Clutch bientôt disponible</title><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#06080b;color:#f5f7f2;font:16px system-ui"><main style="max-width:32rem;padding:2rem"><b style="color:#e8ff3d">CLUTCH.</b><h1>LIEN STORE EN COURS DE CONFIGURATION.</h1><p>Reviens bientôt ou contacte le support depuis Clutch.</p><a style="color:#e8ff3d" href="/">Retour à l’accueil</a></main></body></html>');
+    return res.end('<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>GRIFF bientôt disponible</title><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#06080b;color:#f5f7f2;font:16px system-ui"><main style="max-width:32rem;padding:2rem"><b style="color:#e8ff3d">GRIFF.</b><h1>LIEN STORE EN COURS DE CONFIGURATION.</h1><p>Reviens bientôt ou contacte le support depuis GRIFF.</p><a style="color:#e8ff3d" href="/">Retour à l’accueil</a></main></body></html>');
   }
 
   res.statusCode = 302;

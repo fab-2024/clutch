@@ -1,15 +1,16 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
 import type { PlayerEconomy } from '@/src/features/economy/types';
 import { useEconomy } from '@/src/providers/EconomyProvider';
-import { colors, fonts, typography } from '@/src/theme';
+import { colors, typography } from '@/src/theme';
 
 type Props = {
   economy?: Pick<PlayerEconomy, 'frags' | 'volts'>;
 };
 
-export function ClutchHeader({ economy }: Props = {}) {
+export function GriffHeader({ economy }: Props = {}) {
   const { frags, volts } = useEconomy();
   const displayedFrags = economy?.frags ?? frags;
   const displayedVolts = economy?.volts ?? volts;
@@ -17,13 +18,7 @@ export function ClutchHeader({ economy }: Props = {}) {
   return (
     <View style={styles.root}>
       <View style={styles.brandRow}>
-        <View style={styles.logoBox}>
-          <Text style={styles.logoGlyph}>C</Text>
-        </View>
-        <View style={styles.wordmarkRow}>
-          <Text style={styles.wordmark}>CLUTCH</Text>
-          <View style={styles.dot} />
-        </View>
+        <GriffLockup width={102} />
       </View>
 
       <View
@@ -82,41 +77,6 @@ const styles = StyleSheet.create({
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  logoBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.volt,
-  },
-  logoGlyph: {
-    color: '#06090C',
-    fontSize: 22,
-    lineHeight: 24,
-    fontWeight: '900',
-    letterSpacing: -2,
-  },
-  wordmarkRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-  wordmark: {
-    color: colors.text,
-    fontFamily: fonts.bold,
-    fontSize: 15,
-    fontWeight: '900',
-    letterSpacing: 3.1,
-  },
-  dot: {
-    width: 5,
-    height: 5,
-    marginBottom: 3,
-    borderRadius: 3,
-    backgroundColor: colors.volt,
   },
   wallet: {
     minHeight: 44,

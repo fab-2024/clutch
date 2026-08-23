@@ -150,7 +150,7 @@ begin
      or (v_mission ->> 'statut_publication') <> 'publie'
      or (v_mission ->> 'disponible')::boolean is not true
      or (v_mission ->> 'acquerable')::boolean is not false
-     or v_mission #>> '{licence,titulaire}' <> 'Clutch'
+     or v_mission #>> '{licence,titulaire}' <> 'GRIFF'
   then
     raise exception 'Catalogue v2 metadata payload is inconsistent: %', v_shop;
   end if;

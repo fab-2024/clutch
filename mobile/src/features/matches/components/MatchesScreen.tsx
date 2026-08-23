@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
-import { ClutchHeader } from '@/src/components/layout/ClutchHeader';
+import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors } from '@/src/theme';
@@ -152,7 +152,7 @@ export function MatchesExperience({
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
       >
-        <ClutchHeader economy={headerEconomy} />
+        <GriffHeader economy={headerEconomy} />
 
         {duelRivalId ? (
           <View style={styles.targetedDuelBanner}>

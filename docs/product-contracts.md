@@ -2,13 +2,14 @@
 
 Version : 1.2
 
-Statut : décision produit adoptée, nom public encore conditionnel
+Statut : décision produit adoptée, bascule visible GRIFF préparée
 
-Date : 22 août 2026
+Date : 23 août 2026
 
-Nom public de travail : `GRIFF.`
+Marque visible : `GRIFF`
 
-Nom technique actuel : `Clutch`
+Identifiants techniques historiques : `clutch_*`, `clutch://` et
+`com.fabthetap.clutch` conservés pour compatibilité
 
 Ce document fixe le sens des mécaniques du produit avant leur extension. Les
 écrans peuvent évoluer, mais ils ne doivent pas contredire ces règles sans une
@@ -23,8 +24,8 @@ Les décisions suivantes remplacent les passages contradictoires du blueprint
 initial :
 
 - le blueprint GRIFF est adopté comme direction produit et business ;
-- `GRIFF.` reste un nom de travail tant que la recherche de marque, la
-  disponibilité store et la stratégie de domaine n'ont pas reçu un Go formel ;
+- la bascule visible vers `GRIFF` est préparée dans le produit ; la publication
+  store et domaine reste conditionnée à la clearance externe ;
 - le système Rank actuel est conservé sans changement de doctrine : rating
   saisonnier initialisé à 1 000, probabilités figées, coefficients `K=60` en
   placement puis `K=40`, gains et pertes de Frags, cinq placements et
@@ -36,8 +37,8 @@ initial :
 - le Loadout conserve cinq emplacements : cadre, bannière, titre, signature de
   relique et Core. Le Core est une extension identitaire assumée ;
 - aucun identifiant technique `clutch_*`, bundle, package, produit IAP ou clé
-  historique n'est renommé avant le Go sur la marque. La migration de marque
-  sera additive et compatible avec les données existantes.
+  historique n'est renommé pour la bascule visible. La migration de marque
+  reste additive et compatible avec les données existantes.
 
 La recherche de nom et la stratégie de migration sont suivies dans
 [le dossier de validation GRIFF](./griff-name-clearance.md) et

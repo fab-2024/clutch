@@ -113,7 +113,7 @@ function CirclePeopleScreen({ view }: { view: CircleView }) {
     const me = data.weekly?.moi;
     if (!me) return;
     const precision = me.precision_pct == null ? '—' : `${Math.round(me.precision_pct)}%`;
-    const message = `Ma semaine Clutch : #${me.rang}/${me.participants} dans mon Cercle · ${signed(me.frags_hebdo)} Frags · ${me.victoires}/${me.calls} calls · ${precision} de réussite.`;
+    const message = `Ma semaine GRIFF : #${me.rang}/${me.participants} dans mon Cercle · ${signed(me.frags_hebdo)} Frags · ${me.victoires}/${me.calls} calls · ${precision} de réussite.`;
     const url = publicAppUrl('/') ?? '';
     const shareText = url ? `${message} ${url}` : message;
     try {

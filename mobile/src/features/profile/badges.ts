@@ -49,7 +49,7 @@ const SECRET_BADGES: BadgeDefinition[] = [
   { key: 'main_froide', name: 'Main Froide', family: 'Précision', rarity: 'legendaire', secret: true },
   { key: 'david', name: 'David', family: 'Audace', rarity: 'legendaire', secret: true },
   { key: 'contre_le_monde', name: 'Contre le monde', family: 'Audace', rarity: 'legendaire', secret: true },
-  { key: 'clutch_secret', name: 'CLUTCH.', family: 'Prestige', rarity: 'legendaire', secret: true },
+  { key: 'clutch_secret', name: 'GRIFF.', family: 'Prestige', rarity: 'legendaire', secret: true },
 ];
 
 export function evaluateBadges(recap: Record<string, unknown>, founder: boolean): ProfileBadge[] {

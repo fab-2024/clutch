@@ -2,7 +2,7 @@ import { Redirect } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { ClutchHeader } from '@/src/components/layout/ClutchHeader';
+import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import { COMMUNITY_FORMS } from '@/src/features/social/faction/constants';
 import type { CommunityData, CommunityFaction, CommunityMutationPresentation } from '@/src/features/social/faction/types';
@@ -81,7 +81,7 @@ export default function SocialHomePreviewScreen() {
   return (
     <Screen>
       <View style={{ flex: 1 }}>
-        <ClutchHeader economy={{ frags: 1842, volts: 680 }} />
+        <GriffHeader economy={{ frags: 1842, volts: 680 }} />
         <SocialSectionNav activeOverride="faction" />
         <View style={previewStyles.panel}>
           <View style={previewStyles.panelTop}>

@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
@@ -200,7 +201,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
           rankAccent={rankColor}
           rankLabel={rankLabel}
           relicLevel={data?.favoriteTeam?.relique_niveau ?? 1}
-          teamTag={data?.favoriteTeam?.tag || 'CLUTCH'}
+          teamTag={data?.favoriteTeam?.tag || 'GRIFF'}
           volts={publicView ? undefined : volts}
         />
 
@@ -251,11 +252,11 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             pseudo={data.pseudo || pseudo}
             publicProfile={data.publicProfile}
             rank={data.ranking.rang}
-            teamTag={data.favoriteTeam?.tag || 'CLUTCH'}
+            teamTag={data.favoriteTeam?.tag || 'GRIFF'}
           />
         ) : null}
 
-        <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>FACTION</Text><Text style={styles.sectionTitle}>TA COULEUR DANS CLUTCH.</Text></View></View>
+        <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>FACTION</Text><Text style={styles.sectionTitle}>TA COULEUR DANS GRIFF.</Text></View></View>
         {data?.favoriteTeam ? (
           <Pressable onPress={() => router.push('/(tabs)/social/faction')} style={({ pressed }) => [styles.factionCard, pressed && styles.pressed]}>
             <View style={[styles.factionGlow, { backgroundColor: teamColor }]} />
@@ -311,7 +312,7 @@ function ProfileHeader({
       {publicView ? (
         <Pressable accessibilityLabel="Revenir au Social" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><Text style={styles.backText}>← SOCIAL</Text></Pressable>
       ) : (
-        <View style={styles.brandRow}><View style={styles.logoBox}><Text style={styles.logoGlyph}>C</Text></View><View style={styles.wordmarkRow}><Text style={styles.wordmark}>CLUTCH</Text><View style={styles.dot} /></View></View>
+        <View style={styles.brandRow}><GriffLockup width={112} /></View>
       )}
       <View style={styles.headerActions}>
         {publicView ? (

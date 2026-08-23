@@ -1,8 +1,8 @@
 # Matrice de migration Clutch vers GRIFF
 
-Statut : prête pour exécution après Go sur le nom
+Statut : bascule visible implémentée dans la branche, publication externe en attente
 
-Date : 22 août 2026
+Date : 23 août 2026
 
 ## Principe
 
@@ -13,13 +13,13 @@ cosmétiques.
 
 ## Phases
 
-1. **Avant Go** : aucun renommage ; GRIFF reste dans la documentation de
-   cadrage.
-2. **Préparation privée** : nouveaux assets, textes, noms store et domaines
-   préparés derrière une branche ou un flag.
-3. **Bascule visible** : nom, logo, signature, textes légaux et présence store.
-4. **Compatibilité** : anciens liens, produits, événements et RPC continuent de
-   fonctionner.
+1. **Avant Go** : état historique terminé.
+2. **Préparation privée** : assets, textes et configuration intégrés dans la
+   branche de migration.
+3. **Bascule visible** : nom, logo, signature, textes légaux et pages publiques
+   configurés en GRIFF ; publication store encore externe.
+4. **Compatibilité** : anciens liens, produits, événements et RPC restent
+   fonctionnels.
 5. **Nettoyage différé** : seulement ce qui est sans données, sans client et
    sans intégration externe.
 
@@ -68,9 +68,9 @@ cosmétiques.
 - [ ] Domaine, e-mail support et identifiants sociaux réservés.
 - [ ] Nom App Store Connect réservé.
 - [ ] Nom Google Play vérifié.
-- [ ] Logo, icône, splash et assets store validés.
-- [ ] Inventaire de toutes les chaînes visibles `Clutch` terminé.
-- [ ] Textes légaux et consentements mis à jour.
+- [x] Logo, icône, splash et assets embarqués validés dans la branche.
+- [x] Inventaire des chaînes visibles des surfaces actives terminé.
+- [x] Textes légaux et consentements mis à jour.
 - [ ] Liens universels et app links validés sur les deux marques.
 - [ ] Achat et restauration Founder testés avant et après mise à jour.
 - [ ] Connexion, mot de passe oublié et suppression de compte testés.

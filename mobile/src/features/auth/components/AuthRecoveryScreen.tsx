@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { Screen } from '@/src/components/layout/Screen';
 import { useAuth } from '@/src/providers/AuthProvider';
-import { colors, fonts, radius, spacing, typography } from '@/src/theme';
+import { colors, radius, spacing, typography } from '@/src/theme';
 
 import { signOut } from '../api';
 
@@ -17,10 +18,10 @@ export default function AuthRecoveryScreen() {
   const title = missingProfile
     ? 'ON RÉPARE TON PROFIL.'
     : sessionFailure
-      ? 'RECONNECTONS CLUTCH.'
+      ? 'RECONNECTONS GRIFF.'
       : 'TON COMPTE NE RÉPOND PAS.';
   const copy = missingProfile
-    ? 'Ton compte est bien connecté. Il reste seulement à récupérer ton profil Clutch.'
+    ? 'Ton compte est bien connecté. Il reste seulement à récupérer ton profil GRIFF.'
     : sessionFailure
       ? 'La session enregistrée ne répond plus. Une nouvelle tentative suffit généralement.'
       : 'Tes données sont toujours là, mais elles sont momentanément indisponibles.';
@@ -55,8 +56,7 @@ export default function AuthRecoveryScreen() {
     <Screen>
       <View style={styles.shell}>
         <View style={styles.brandRow}>
-          <View style={styles.logo}><Text style={styles.logoText}>C</Text></View>
-          <Text style={styles.brand}>CLUTCH<Text style={styles.brandDot}>.</Text></Text>
+          <GriffLockup width={132} />
         </View>
 
         <View style={styles.signal}>
@@ -101,11 +101,7 @@ export default function AuthRecoveryScreen() {
 
 const styles = StyleSheet.create({
   shell: { flex: 1, width: '100%', maxWidth: 430, alignSelf: 'center', justifyContent: 'center', padding: spacing.lg, gap: spacing.xl },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  logo: { width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  logoText: { color: '#06090C', fontFamily: fonts.display, fontSize: 24, lineHeight: 27, letterSpacing: -2 },
-  brand: { color: colors.text, fontFamily: fonts.bold, fontSize: 18, letterSpacing: 3 },
-  brandDot: { color: colors.volt },
+  brandRow: { minHeight: 42, flexDirection: 'row', alignItems: 'center' },
   signal: { position: 'relative', width: 104, height: 104, alignItems: 'center', justifyContent: 'center' },
   signalRing: { position: 'absolute', width: 104, height: 104, borderRadius: 52, borderWidth: 1, borderColor: '#46551E' },
   signalDot: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.volt },

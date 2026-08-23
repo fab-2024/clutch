@@ -22,7 +22,7 @@ const PREVIEW_STATUS: FounderPackStatus = {
   restorable: true,
   items: [
     { id: 'founder-frame-v1', slot: 'cadre_profil', name: 'Cadre Pionnier', description: 'Un cadre graphite fendu par le premier signal Volt.', styleKey: 'founder-frame', accent: '#FFCB45', owned: false, equipped: false },
-    { id: 'founder-title-v1', slot: 'titre_profil', name: 'Fondateur Clutch', description: 'Le titre permanent de celles et ceux qui ont lancé l’Arena.', styleKey: 'founder-title', accent: '#FFCB45', owned: false, equipped: false },
+    { id: 'founder-title-v1', slot: 'titre_profil', name: 'Fondateur GRIFF', description: 'Le titre permanent de celles et ceux qui ont lancé l’Arena.', styleKey: 'founder-title', accent: '#FFCB45', owned: false, equipped: false },
     { id: 'founder-relic-v1', slot: 'effet_faction', name: 'Relique Originelle', description: 'Une signature ambrée née avant la première Guerre des factions.', styleKey: 'founder-relic', accent: '#FFCB45', owned: false, equipped: false },
     { id: 'founder-banner-v1', slot: 'carte_profil', name: 'Bannière Première Vague', description: 'Une carte noire et or réservée aux premiers supporters.', styleKey: 'founder-banner', accent: '#FFCB45', owned: false, equipped: false },
   ],

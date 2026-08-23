@@ -1,4 +1,5 @@
 import { supabase } from '@/src/lib/supabase';
+import { visibleBrandLabel } from '@/src/config/brand';
 
 import {
   COSMETIC_FAMILIES,
@@ -98,8 +99,8 @@ function normalizeItem(value: unknown): CosmeticItem | null {
     slot,
     family: normalizeFamily(item.famille, slot),
     level,
-    name: stringValue(item.nom) || 'Cosmétique Clutch',
-    description: stringValue(item.description),
+    name: visibleBrandLabel(stringValue(item.nom) || 'Cosmétique GRIFF'),
+    description: visibleBrandLabel(stringValue(item.description)),
     rarity: normalizeRarity(item.rarete),
     styleKey,
     accent: normalizeAccent(item.accent),
@@ -133,8 +134,8 @@ function normalizeEquippedItem(value: unknown, expectedSlot: CosmeticSlot): Equi
     id,
     slot,
     level: Math.max(1, toNonNegativeInteger(item.niveau)),
-    name: stringValue(item.nom) || 'Cosmétique Clutch',
-    description: stringValue(item.description),
+    name: visibleBrandLabel(stringValue(item.nom) || 'Cosmétique GRIFF'),
+    description: visibleBrandLabel(stringValue(item.description)),
     rarity: normalizeRarity(item.rarete),
     styleKey,
     accent: normalizeAccent(item.accent),
@@ -274,7 +275,7 @@ function normalizeLicense(value: unknown): CosmeticLicense {
   const license = asRecord(value);
   return {
     type: stringValue(license.type) || 'interne',
-    holder: stringValue(license.titulaire) || 'Clutch',
+    holder: visibleBrandLabel(stringValue(license.titulaire) || 'GRIFF'),
   };
 }
 

@@ -1,4 +1,4 @@
-# Pousser Clutch sur ton GitHub
+# Pousser GRIFF sur ton GitHub
 
 L'archive contient déjà un dépôt Git complet, avec deux commits propres.
 Tu n'as donc rien à initialiser : juste à le relier à ton compte.

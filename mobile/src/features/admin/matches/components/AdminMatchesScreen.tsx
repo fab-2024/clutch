@@ -32,7 +32,7 @@ const RESULT_SOURCES = [
   { id: 'grid', label: 'GRID' },
   { id: 'pandascore', label: 'PandaScore' },
   { id: 'liquipedia', label: 'Liquipedia' },
-  { id: 'validation_clutch', label: 'Validation Clutch' },
+  { id: 'validation_clutch', label: 'Validation GRIFF' },
 ] as const;
 
 export default function AdminMatchesScreen() {
@@ -76,7 +76,7 @@ export default function AdminMatchesScreen() {
   const attentionCount = openMatches.filter((match) => match.statut === 'a_venir' && new Date(match.debut).getTime() <= Date.now()).length;
 
   if (authLoading || !profile) return <Screen><View style={styles.center}><Text style={styles.muted}>Vérification des droits…</Text></View></Screen>;
-  if (!isAdmin) return <Screen><View style={styles.center}><Text style={styles.deniedTitle}>ACCÈS REFUSÉ.</Text><Text style={styles.muted}>Cette zone est réservée aux administrateurs Clutch.</Text></View></Screen>;
+  if (!isAdmin) return <Screen><View style={styles.center}><Text style={styles.deniedTitle}>ACCÈS REFUSÉ.</Text><Text style={styles.muted}>Cette zone est réservée aux administrateurs GRIFF.</Text></View></Screen>;
 
   return (
     <Screen>
@@ -239,7 +239,7 @@ function AdminMatchCard({ match, onChanged }: { match: AdminMatch; onChanged: ()
   const [historyLoading, setHistoryLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const sourceLabel = RESULT_SOURCES.find((item) => item.id === source)?.label ?? 'Validation Clutch';
+  const sourceLabel = RESULT_SOURCES.find((item) => item.id === source)?.label ?? 'Validation GRIFF';
   const terminal = match.statut === 'termine' || match.statut === 'annule';
   const statusLabel = match.statut === 'termine'
     ? `FINAL · V${Math.max(1, match.resultat_revision)}`

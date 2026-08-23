@@ -1,7 +1,7 @@
 # Exploitation des résultats de match
 
 Ce document est le runbook du lot 1.4. Il décrit les seules transitions
-autorisées pour un match Clutch et les garanties attendues du backend.
+autorisées pour un match GRIFF et les garanties attendues du backend.
 
 ## Provenance obligatoire
 

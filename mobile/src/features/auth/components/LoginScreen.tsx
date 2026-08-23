@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import ClutchCore from '@/src/components/visual/ClutchCore';
+import GriffCore from '@/src/components/visual/GriffCore';
 import { errorFeedback, impactFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
 import { colors, radius, spacing, typography } from '@/src/theme';
 
@@ -99,9 +99,9 @@ export default function LoginScreen() {
       eyebrow={mode === 'signin' ? 'RETOUR DANS L’ARENA' : 'NOUVEAU CHALLENGER'}
       subtitle={mode === 'signin'
         ? 'Retrouve tes pronostics, tes duels et ta faction.'
-        : 'Crée ton identité Clutch. Tu choisiras ensuite tes jeux et ton équipe.'}
+        : 'Crée ton identité GRIFF. Tu choisiras ensuite tes jeux et ton équipe.'}
       title={mode === 'signin' ? 'Reprends ta place.' : 'Entre dans le game.'}
-      visual={<ClutchCore compact label="AUTH // READY" size={170} />}
+      visual={<GriffCore compact label="AUTH // READY" size={170} />}
     >
       <View style={styles.authContent}>
         <View style={styles.modeSwitch}>
@@ -114,7 +114,7 @@ export default function LoginScreen() {
             <Text style={styles.successEyebrow}>E-mail envoyé</Text>
             <Text style={styles.successTitle}>Confirme ton inscription.</Text>
             <Text style={styles.successCopy}>
-              Ouvre le lien reçu à {email.trim()}. Il te ramènera dans Clutch pour terminer ton profil.
+              Ouvre le lien reçu à {email.trim()}. Il te ramènera dans GRIFF pour terminer ton profil.
             </Text>
             <Pressable accessibilityRole="button" onPress={() => selectMode('signin')}>
               <Text style={styles.inlineAction}>Revenir à la connexion →</Text>
@@ -234,7 +234,7 @@ export default function LoginScreen() {
                 <Text style={styles.buttonText}>
                   {loading
                     ? (mode === 'signin' ? 'Connexion…' : 'Création…')
-                    : (mode === 'signin' ? 'Entrer dans Clutch' : 'Créer mon compte')}
+                    : (mode === 'signin' ? 'Entrer dans GRIFF' : 'Créer mon compte')}
                 </Text>
                 <Text style={styles.buttonArrow}>→</Text>
               </LinearGradient>

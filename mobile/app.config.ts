@@ -4,7 +4,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const host = publicAppHost(process.env.EXPO_PUBLIC_APP_ORIGIN);
   return {
     ...config,
-    name: config.name ?? 'Clutch',
+    name: config.name ?? 'GRIFF',
     slug: config.slug ?? 'clutch-mobile',
     ios: {
       ...config.ios,

@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "Clutch",
+    "name": "GRIFF",
     "slug": "clutch-mobile",
     "version": "0.1.0",
-    "description": "Le jeu social de prédiction e-sport, sans mise d’argent réel.",
+    "description": "Le compagnon esport où chaque call laisse une marque, sans mise d’argent réel.",
     "orientation": "portrait",
-    "scheme": "clutch",
-    "icon": "./assets/app/icon.png",
+    "scheme": ["griff", "clutch"],
+    "icon": "./assets/app/griff-icon.png",
     "backgroundColor": "#06080B",
     "userInterfaceStyle": "dark",
     "ios": {
@@ -19,10 +19,10 @@
     "android": {
       "predictiveBackGestureEnabled": false,
       "package": "com.fabthetap.clutch",
-      "icon": "./assets/app/icon.png",
+      "icon": "./assets/app/griff-icon.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/app/adaptive-icon.png",
-        "backgroundColor": "#080B0F"
+        "foregroundImage": "./assets/app/griff-adaptive-icon.png",
+        "backgroundColor": "#05090C"
       }
     },
     "plugins": [
@@ -31,7 +31,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/app/notification-icon.png",
+          "icon": "./assets/app/griff-notification-icon.png",
           "color": "#E8FF3D",
           "defaultChannel": "clutch-events"
         }
@@ -39,12 +39,12 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/app/splash-icon.png",
-          "imageWidth": 180,
+          "image": "./assets/app/griff-splash-icon.png",
+          "imageWidth": 240,
           "resizeMode": "contain",
           "backgroundColor": "#06080B",
           "dark": {
-            "image": "./assets/app/splash-icon.png",
+            "image": "./assets/app/griff-splash-icon.png",
             "backgroundColor": "#06080B"
           }
         }

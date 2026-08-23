@@ -19,7 +19,7 @@ test('public match presentation stays action-oriented', () => {
   });
 
   assert.equal(card.kind, 'match');
-  assert.equal(card.title, 'VIT vs G2 · IEM Cologne | Clutch');
+  assert.equal(card.title, 'VIT vs G2 · IEM Cologne | GRIFF');
   assert.equal(card.cta, 'Prendre position');
   assert.equal(card.spaPath, '/#/matchs/m-test');
   assert.match(card.description, /Team Vitality vs G2 Esports/);

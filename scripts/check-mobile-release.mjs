@@ -7,10 +7,12 @@ const appConfig = JSON.parse(readFileSync(resolve(root, 'mobile/app.json'), 'utf
 const failures = [];
 
 for (const path of [
-  'mobile/assets/app/icon.png',
-  'mobile/assets/app/adaptive-icon.png',
-  'mobile/assets/app/splash-icon.png',
-  'mobile/assets/app/notification-icon.png',
+  'mobile/assets/app/griff-icon.png',
+  'mobile/assets/app/griff-adaptive-icon.png',
+  'mobile/assets/app/griff-splash-icon.png',
+  'mobile/assets/app/griff-notification-icon.png',
+  'mobile/assets/brand/griff-mark.png',
+  'mobile/assets/brand/griff-lockup.png',
   'mobile/app/legal/privacy.tsx',
   'mobile/app/legal/terms.tsx',
   'mobile/app/settings/account.tsx',
@@ -45,15 +47,32 @@ if (!appConfig.icon) failures.push('expo.icon absent');
 if (!appConfig.android?.adaptiveIcon?.foregroundImage) failures.push('expo.android.adaptiveIcon absent');
 if (!pluginConfigured(appConfig.plugins, 'expo-splash-screen')) failures.push('plugin expo-splash-screen absent');
 if (!pluginConfigured(appConfig.plugins, 'expo-notifications')) failures.push('plugin expo-notifications absent');
+if (appConfig.name !== 'GRIFF') failures.push('nom visible Expo inattendu');
+if (!Array.isArray(appConfig.scheme) || !appConfig.scheme.includes('griff') || !appConfig.scheme.includes('clutch')) {
+  failures.push('schemes griff/clutch incompatibles');
+}
+if (appConfig.icon !== './assets/app/griff-icon.png') failures.push('icône GRIFF non configurée');
+if (appConfig.android?.icon !== './assets/app/griff-icon.png') failures.push('icône Android GRIFF non configurée');
+if (appConfig.android?.adaptiveIcon?.foregroundImage !== './assets/app/griff-adaptive-icon.png') {
+  failures.push('icône adaptative GRIFF non configurée');
+}
+if (pluginOptions(appConfig.plugins, 'expo-splash-screen')?.image !== './assets/app/griff-splash-icon.png') {
+  failures.push('splash GRIFF non configuré');
+}
+if (pluginOptions(appConfig.plugins, 'expo-notifications')?.icon !== './assets/app/griff-notification-icon.png') {
+  failures.push('icône de notification GRIFF non configurée');
+}
 if (appConfig.ios?.bundleIdentifier !== 'com.fabthetap.clutch') failures.push('bundleIdentifier iOS inattendu');
 if (appConfig.android?.package !== 'com.fabthetap.clutch') failures.push('package Android inattendu');
 const vercelConfig = JSON.parse(readFileSync(resolve(root, 'vercel.json'), 'utf8'));
 if (vercelConfig.outputDirectory !== 'public') failures.push('Vercel déploie encore le prototype web historique');
 
-requirePngDimensions('mobile/assets/app/icon.png', 1024, 1024);
-requirePngDimensions('mobile/assets/app/adaptive-icon.png', 1024, 1024);
-requirePngDimensions('mobile/assets/app/splash-icon.png', 512, 512);
-requirePngDimensions('mobile/assets/app/notification-icon.png', 96, 96);
+requirePngDimensions('mobile/assets/app/griff-icon.png', 1024, 1024);
+requirePngDimensions('mobile/assets/app/griff-adaptive-icon.png', 1024, 1024);
+requirePngDimensions('mobile/assets/app/griff-splash-icon.png', 1024, 1024);
+requirePngDimensions('mobile/assets/app/griff-notification-icon.png', 96, 96);
+requirePngDimensions('mobile/assets/brand/griff-mark.png', 512, 512);
+requirePngDimensions('mobile/assets/brand/griff-lockup.png', 960, 280);
 
 const tabs = readFileSync(resolve(root, 'mobile/app/(tabs)/_layout.tsx'), 'utf8');
 if (!/name="room"[\s\S]{0,180}href: null/.test(tabs)) failures.push('Room reste visible dans la navigation');
@@ -115,6 +134,10 @@ console.log(`Mobile release check: OK${strict ? ' (strict)' : ''}`);
 
 function pluginConfigured(plugins, name) {
   return plugins?.some((plugin) => plugin === name || (Array.isArray(plugin) && plugin[0] === name));
+}
+function pluginOptions(plugins, name) {
+  const plugin = plugins?.find((entry) => Array.isArray(entry) && entry[0] === name);
+  return Array.isArray(plugin) ? plugin[1] : undefined;
 }
 function previewRoutes() {
   return [

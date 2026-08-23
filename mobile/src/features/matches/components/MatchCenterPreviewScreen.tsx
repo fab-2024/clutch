@@ -63,7 +63,7 @@ const PREVIEW_MATCH_CENTER: MatchCenterData = {
       delta_frags: 18,
     },
     source_resultat: 'validation_clutch',
-    source_resultat_label: 'Validation Clutch',
+    source_resultat_label: 'Validation GRIFF',
     identifiant_resultat_externe: 'clutch:preview-final-kc-fnc:2-1',
     revision_resultat: 1,
     resultat_corrige: false,

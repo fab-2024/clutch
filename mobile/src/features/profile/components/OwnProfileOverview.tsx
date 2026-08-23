@@ -188,7 +188,7 @@ function SettingsRow({
 }
 
 function maskEmail(email?: string | null) {
-  if (!email) return 'Compte Clutch';
+  if (!email) return 'Compte GRIFF';
   const [local, domain] = email.split('@');
   if (!domain) return email;
   const visible = local.slice(0, Math.min(2, local.length));

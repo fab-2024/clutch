@@ -19,7 +19,7 @@ export async function GET(request) {
 
 function render(card) {
   const finished = card.status === 'termine' && card.scoreA != null && card.scoreB != null;
-  const headline = String(card.headline || 'CLUTCH.').slice(0, 72);
+  const headline = String(card.headline || 'GRIFF.').slice(0, 72);
   const detail = card.kind === 'challenge' && card.chosenTag
     ? `${card.creator} → ${card.chosenTag} · ${card.conviction}`
     : card.kind === 'league'
@@ -27,16 +27,16 @@ function render(card) {
       : card.event || 'Esport prediction';
   const kicker = card.kind === 'challenge' ? 'TU JOUES CONTRE QUELQU’UN.' : card.kind === 'league' ? 'TA PROCHAINE RIVALITÉ COMMENCE ICI.' : 'PRENDS POSITION.';
   const separator = finished ? `${card.scoreA} — ${card.scoreB}` : card.separator || 'VS';
-  const cta = card.kind === 'challenge' ? 'TU PRENDS QUI ?' : card.kind === 'league' ? 'REJOINDRE LA LIGUE' : 'CLUTCH // MATCH';
+  const cta = card.kind === 'challenge' ? 'TU PRENDS QUI ?' : card.kind === 'league' ? 'REJOINDRE LA LIGUE' : 'GRIFF // MATCH';
   return h('div',{style:styles.root},h('div',{style:styles.glowA}),h('div',{style:styles.glowB}),h('div',{style:styles.frame},
-    h('div',{style:styles.top},h('div',{style:styles.brand},'CLUTCH',h('span',{style:styles.dot},'.')),h('div',{style:styles.badge},card.eyebrow||'ESPORT PREDICTION')),
-    h('div',{style:styles.content},h('div',{style:styles.kicker},kicker),h('div',{style:styles.headline},headline),h('div',{style:styles.matchup},team(card.tagA||'CL',card.equipeA||'Clutch'),h('div',{style:styles.vs},separator),team(card.tagB||'CH',card.equipeB||'Challenge',true))),
+    h('div',{style:styles.top},h('div',{style:styles.brand},'GRIFF',h('span',{style:styles.dot},'.')),h('div',{style:styles.badge},card.eyebrow||'ESPORT PREDICTION')),
+    h('div',{style:styles.content},h('div',{style:styles.kicker},kicker),h('div',{style:styles.headline},headline),h('div',{style:styles.matchup},team(card.tagA||'GRF',card.equipeA||'GRIFF'),h('div',{style:styles.vs},separator),team(card.tagB||'CALL',card.equipeB||'Challenge',true))),
     h('div',{style:styles.bottom},h('div',{style:styles.detail},detail),h('div',{style:styles.cta},cta))
   ));
 }
 
 function team(tag,name,right=false){ return h('div',{style:{...styles.team,alignItems:right?'flex-end':'flex-start'}},h('div',{style:styles.tag},String(tag||'').slice(0,8).toUpperCase()),h('div',{style:{...styles.teamName,textAlign:right?'right':'left'}},String(name||'').slice(0,34))); }
-function genericCard(){ return {kind:'generic',eyebrow:'ESPORT PREDICTION',headline:'CE SOIR, TU PRENDS QUI ?',tagA:'CL',equipeA:'Ton call',tagB:'VS',equipeB:'Tes potes',event:'Clutch · Pronostics gratuits',status:'a_venir'}; }
+function genericCard(){ return {kind:'generic',eyebrow:'ESPORT PREDICTION',headline:'CE SOIR, TU PRENDS QUI ?',tagA:'GRF',equipeA:'Ton call',tagB:'VS',equipeB:'Tes potes',event:'GRIFF · Calls gratuits',status:'a_venir'}; }
 const styles={
 root:{width:'100%',height:'100%',display:'flex',position:'relative',overflow:'hidden',background:'#06080b',color:'#f5f7f2',padding:'34px'},
 glowA:{position:'absolute',width:'520px',height:'520px',borderRadius:'999px',left:'-220px',top:'-260px',background:'radial-gradient(circle, rgba(232,255,61,.18), rgba(232,255,61,0) 68%)'},

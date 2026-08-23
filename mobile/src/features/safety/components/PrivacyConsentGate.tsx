@@ -79,9 +79,9 @@ export default function PrivacyConsentGate({ userId }: { userId?: string }) {
           ) : (
             <>
               <View style={styles.mark}><Text style={styles.markText}>15+</Text></View>
-              <Text style={styles.eyebrow}>CLUTCH // CONFIDENTIALITÉ</Text>
+              <Text style={styles.eyebrow}>GRIFF // CONFIDENTIALITÉ</Text>
               <Text style={styles.title}>Avant d’entrer.</Text>
-              <Text style={styles.copy}>Clutch est réservé aux personnes de 15 ans ou plus. Nous ne demandons pas ta date de naissance : seulement cette déclaration.</Text>
+              <Text style={styles.copy}>GRIFF est réservé aux personnes de 15 ans ou plus. Nous ne demandons pas ta date de naissance : seulement cette déclaration.</Text>
               <Pressable
                 accessibilityRole="switch"
                 accessibilityState={{ checked: analyticsAllowed }}

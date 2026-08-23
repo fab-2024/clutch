@@ -1,4 +1,5 @@
 import { supabase } from '@/src/lib/supabase';
+import { visibleBrandLabel } from '@/src/config/brand';
 import { normalizeGradeState } from '@/src/features/ranking/grades';
 
 import type {
@@ -201,13 +202,13 @@ function withPrediction(
 }
 
 function normalizeMatchResult(value: unknown): MatchResultReveal {
-  if (!value || typeof value !== 'object') throw new Error('Résultat Clutch invalide.');
+  if (!value || typeof value !== 'object') throw new Error('Résultat GRIFF invalide.');
   const row = value as Record<string, unknown>;
   const id = requiredString(row.id, 'résultat');
   const matchId = requiredString(row.match_id, 'match');
   const status = row.statut === 'gagne' || row.statut === 'perdu' ? row.statut : null;
   const choice = row.choix === 'a' || row.choix === 'b' ? row.choix : null;
-  if (!status || !choice) throw new Error('Verdict Clutch invalide.');
+  if (!status || !choice) throw new Error('Verdict GRIFF invalide.');
 
   return {
     id,
@@ -242,8 +243,8 @@ function normalizeMatchResult(value: unknown): MatchResultReveal {
       ? row.source_resultat
       : 'validation_clutch',
     source_resultat_label: typeof row.source_resultat_label === 'string'
-      ? row.source_resultat_label
-      : 'Validation Clutch',
+      ? visibleBrandLabel(row.source_resultat_label)
+      : 'Validation GRIFF',
     identifiant_resultat_externe: requiredString(
       row.identifiant_resultat_externe,
       'référence externe',
@@ -394,14 +395,14 @@ function isCallState(value: unknown): value is MyCallState {
 
 function requiredString(value: unknown, field: string) {
   if (typeof value !== 'string' || !value.trim()) {
-    throw new Error(`Champ ${field} absent du résultat Clutch.`);
+    throw new Error(`Champ ${field} absent du résultat GRIFF.`);
   }
   return value;
 }
 
 function finiteNumber(value: unknown) {
   const parsed = Number(value);
-  if (!Number.isFinite(parsed)) throw new Error('Valeur numérique invalide dans le résultat Clutch.');
+  if (!Number.isFinite(parsed)) throw new Error('Valeur numérique invalide dans le résultat GRIFF.');
   return parsed;
 }
 

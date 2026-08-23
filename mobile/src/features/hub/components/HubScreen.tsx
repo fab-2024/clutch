@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 
-import { ClutchHeader } from '@/src/components/layout/ClutchHeader';
+import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
 import { useAuth } from '@/src/providers/AuthProvider';
@@ -124,7 +124,7 @@ export function HubExperience({
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
         showsVerticalScrollIndicator={false}
       >
-        <ClutchHeader economy={headerEconomy} />
+        <GriffHeader economy={headerEconomy} />
 
         <Animated.View entering={entrance(30)} style={styles.headline}>
           <Text style={styles.headlineKicker}>{headlineKicker}</Text>

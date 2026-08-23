@@ -94,7 +94,7 @@ export function ScheduleHero({
         ) : (
           <View style={styles.arenaMark}>
             <View style={styles.arenaMarkDot} />
-            <Text style={styles.arenaMarkText}>CLUTCH ARENA</Text>
+            <Text style={styles.arenaMarkText}>GRIFF ARENA</Text>
           </View>
         )}
         <View style={styles.scheduleActions}>

@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 
+import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { Screen } from '@/src/components/layout/Screen';
 import { publicAppUrl } from '@/src/config/release';
 import { colors, radius, spacing, typography } from '@/src/theme';
@@ -135,7 +136,7 @@ export default function DuelInvitationScreen() {
           <Pressable accessibilityRole="button" onPress={() => router.replace('/(tabs)/social/duels')} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
             <Text style={styles.backText}>← DUELS</Text>
           </Pressable>
-          <Text style={styles.brand}>CLUTCH</Text>
+          <GriffLockup width={92} />
         </View>
 
         {loading ? <View style={styles.skeleton} /> : null}

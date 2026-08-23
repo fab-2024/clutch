@@ -64,8 +64,8 @@ export function profilePresentation(data) {
     serie,
     faction,
     factionName: data.equipe_favorite?.nom || null,
-    title: `${data.pseudo} · ${signature.nom} | Clutch`,
-    description: `${signature.nom} · ${frags.toLocaleString('fr-FR')} Frags${rang ? ` · #${rang}` : ''}${precision ? ` · ${precision} %` : ''}. Découvre son profil Clutch.`,
+    title: `${data.pseudo} · ${signature.nom} | GRIFF`,
+    description: `${signature.nom} · ${frags.toLocaleString('fr-FR')} Frags${rang ? ` · #${rang}` : ''}${precision ? ` · ${precision} %` : ''}. Découvre son profil GRIFF.`,
     spaPath: `/#/u/${encodeURIComponent(String(data.pseudo))}`,
   };
 }

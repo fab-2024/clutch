@@ -1,4 +1,4 @@
-/* Overlay Clutch — styles volontairement préfixés et isolés pour ne rien
+/* Overlay GRIFF — styles volontairement préfixés et isolés pour ne rien
    casser sur Twitch ou YouTube. */
 
 #clutch-overlay {
@@ -16,14 +16,15 @@
   height: 46px;
   border-radius: 50%;
   border: 0;
-  background: #00e5a0;
-  color: #04160f;
+  background: #05090c;
+  color: #e8ff3d;
   cursor: pointer;
   display: grid;
   place-items: center;
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
   transition: transform 150ms ease;
 }
+#clutch-overlay .clutch-lanceur img { width: 32px; height: 32px; border-radius: 8px; }
 #clutch-overlay .clutch-lanceur:hover { transform: scale(1.08); }
 #clutch-overlay.clutch-ouvert .clutch-lanceur { display: none; }
 

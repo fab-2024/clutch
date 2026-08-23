@@ -59,7 +59,7 @@ const PREVIEW_RESULT: MatchResultReveal = {
   format: 3,
   debut: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
   source_resultat: 'validation_clutch',
-  source_resultat_label: 'Validation Clutch',
+  source_resultat_label: 'Validation GRIFF',
   identifiant_resultat_externe: 'clutch:preview-final-kc-fnc:2-1',
   revision_resultat: 1,
   resultat_corrige: false,

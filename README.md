@@ -1,6 +1,6 @@
-# Clutch
+# GRIFF
 
-Clutch est un compagnon compétitif esport mobile : suivre les matchs, réaliser
+GRIFF est un compagnon compétitif esport mobile : suivre les matchs, réaliser
 des **calls gratuits**, révéler les verdicts, progresser en Frags et en XP, puis
 jouer avec son Cercle et sa Faction.
 
@@ -20,7 +20,7 @@ Router pour iOS, Android et web mobile. Les parcours actifs sont :
 - onboarding, authentification et récupération de mot de passe ;
 - boutique cosmétique et Founder Pack.
 
-Clutch Room est volontairement masqué et reste en pause. Les routes `*-preview`
+La Room est volontairement masquée et reste en pause. Les routes `*-preview`
 servent au développement visuel et redirigent hors des builds de développement.
 
 [`web/`](web/) est l’ancien prototype, conservé uniquement comme référence

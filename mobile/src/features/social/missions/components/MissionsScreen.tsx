@@ -157,7 +157,7 @@ function EmptyMissions() {
     <View style={styles.empty}>
       <Text style={styles.emptyEyebrow}>AUCUNE MISSION ACTIVE</Text>
       <Text style={styles.emptyTitle}>TON PROCHAIN RIVAL N’EST PAS ENCORE LÀ.</Text>
-      <Text style={styles.emptyText}>Ajoute un ami, rejoins une ligue ou termine un duel. Clutch créera ensuite des missions contextuelles.</Text>
+      <Text style={styles.emptyText}>Ajoute un ami, rejoins une ligue ou termine un duel. GRIFF créera ensuite des missions contextuelles.</Text>
       <Pressable onPress={() => router.replace('/(tabs)/social/friends')} style={styles.emptyCta}><Text style={styles.emptyCtaText}>TROUVER UN RIVAL</Text></Pressable>
     </View>
   );
@@ -173,7 +173,7 @@ function description(q: FriendQuest) {
   if (q.type === 'duel') return `Termine un duel avec ${p} avant expiration.`;
   if (q.type === 'revenge') return `Bats ${p} dans votre prochain duel.`;
   if (q.type === 'league_push') return `Cumulez ${q.objectif} Frags réellement gagnés à deux${q.ligue?.nom ? ` dans ${q.ligue.nom}` : ''}.`;
-  return 'Une mission sociale Clutch.';
+  return 'Une mission sociale GRIFF.';
 }
 function matchLabel(q: FriendQuest) { const m = q.match; return m ? `${m.tag_a || m.equipe_a || 'A'} vs ${m.tag_b || m.equipe_b || 'B'}` : 'ce match'; }
 function timeLeft(value: string | null) { if (!value) return '—'; const ms = Math.max(0, new Date(value).getTime() - Date.now()); const min = Math.ceil(ms / 60000); if (min < 60) return `${min} min`; const h = Math.floor(min / 60); if (h < 24) return `${h} h`; return `${Math.floor(h / 24)} j`; }

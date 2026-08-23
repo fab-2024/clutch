@@ -1,4 +1,4 @@
-# Mettre Clutch en ligne
+# Mettre GRIFF en ligne
 
 Guide pas à pas, écrit pour quelqu'un qui ne code pas. Compte environ
 **30 minutes**. Tout est gratuit à ce stade.
@@ -164,7 +164,7 @@ fonctionneront pas.
 
 1. `chrome://extensions` → active le **Mode développeur** en haut à droite
 2. **Charger l'extension non empaquetée** → sélectionne le dossier `extension/`
-3. Clique sur l'icône Clutch dans la barre d'outils, colle l'adresse de ton site,
+3. Clique sur l'icône GRIFF dans la barre d'outils, colle l'adresse de ton site,
    **Enregistrer**
 4. Ouvre un stream Twitch : le bouton apparaît en bas à droite (ou **Alt + C**)
 

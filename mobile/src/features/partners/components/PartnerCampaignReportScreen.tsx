@@ -63,7 +63,7 @@ export default function PartnerCampaignReportScreen({ previewReport }: PartnerCa
   }
 
   if (!isAdmin) {
-    return <Screen><View style={styles.center}><Text style={styles.denied}>ACCÈS INTERNE.</Text><Text style={styles.muted}>Ce rapport est réservé à l’équipe Clutch.</Text><Pressable accessibilityRole="button" onPress={() => router.replace('/(tabs)/matches')} style={styles.backButton}><Text style={styles.backButtonText}>REVENIR AUX MATCHS</Text></Pressable></View></Screen>;
+    return <Screen><View style={styles.center}><Text style={styles.denied}>ACCÈS INTERNE.</Text><Text style={styles.muted}>Ce rapport est réservé à l’équipe GRIFF.</Text><Pressable accessibilityRole="button" onPress={() => router.replace('/(tabs)/matches')} style={styles.backButton}><Text style={styles.backButtonText}>REVENIR AUX MATCHS</Text></Pressable></View></Screen>;
   }
 
   if (loading && !report) {
@@ -143,7 +143,7 @@ export default function PartnerCampaignReportScreen({ previewReport }: PartnerCa
           <PrivacyRow label="Identifiants ou pseudos" safe={!report.privacy.userIdentifiers} />
           <PrivacyRow label="Cohortes faibles masquées" safe={report.privacy.smallCohortsMasked} />
           <PrivacyRow label="Mesure inter-apps / publicitaire" safe />
-          <Text style={styles.privacyFootnote}>La donnée brute reste dans le schéma privé Clutch. Le partenaire ne reçoit que les indicateurs agrégés déclarés.</Text>
+          <Text style={styles.privacyFootnote}>La donnée brute reste dans le schéma privé GRIFF. Le partenaire ne reçoit que les indicateurs agrégés déclarés.</Text>
         </View>
       </ScrollView>
     </Screen>

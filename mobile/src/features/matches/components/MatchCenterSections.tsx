@@ -111,7 +111,7 @@ export function LockedPrediction({ data }: { data: MatchCenterData }) {
     ? 'Le match a été annulé : ton rating Frags reste inchangé.'
     : settled
       ? 'Ton rating de saison a été mis à jour et ce verdict rejoint maintenant ton historique.'
-      : 'Après le résultat, Clutch tranche le call puis applique automatiquement le delta à ton rating.';
+      : 'Après le résultat, GRIFF tranche le call puis applique automatiquement le delta à ton rating.';
 
   return (
     <View style={[styles.lockedCard, won && styles.lockedCardWin, lost && styles.lockedCardLoss]}>
@@ -278,7 +278,7 @@ export function CallContract({ data }: { data: MatchCenterData }) {
         <View style={styles.contractSource}>
           <Text style={styles.contractSourceLabel}>{callContext.resultat_corrige ? `CORRIGÉ · RÉVISION ${callContext.revision_resultat}` : 'SOURCE DU VERDICT'}</Text>
           <View style={styles.contractSourceCopy}>
-            <Text style={styles.contractSourceValue}>{callContext.source_resultat_label ?? 'Validation Clutch'}</Text>
+            <Text style={styles.contractSourceValue}>{callContext.source_resultat_label ?? 'Validation GRIFF'}</Text>
             {callContext.identifiant_resultat_externe ? <Text numberOfLines={1} style={styles.contractSourceReference}>RÉF. {callContext.identifiant_resultat_externe}</Text> : null}
           </View>
         </View>

@@ -3,8 +3,9 @@
 - Version : 1.2
 - Dernière mise à jour : 22 août 2026
 - Statut produit : blocs A et B intégrés
-- Statut de marque : **AMBRE — GRIFF reste un nom de travail**
-- Nom actuellement publié dans le produit : `Clutch`
+- Statut de marque : **BASCULE VISIBLE PRÉPARÉE — publication externe en attente**
+- Nom configuré dans la branche de migration : `GRIFF`
+- Identifiants historiques conservés : `clutch_*`, `clutch://`, bundle et package
 
 Ce document est la source de vérité synthétique de la direction produit. Les
 règles détaillées sont dans [les contrats produit](./product-contracts.md),
@@ -47,11 +48,11 @@ Invariants :
 
 ### Marque
 
-- `GRIFF.` est un candidat de travail, pas encore le nom public validé.
-- Aucun rebranding du code, des stores, des produits IAP ou des identifiants
-  `clutch_*` avant le Go juridique et commercial.
-- Le futur rebranding sera visible d'abord et techniquement compatible avec les
-  comptes, achats, liens et données existants.
+- `GRIFF` est configuré comme marque visible dans la branche de migration.
+- La publication store, domaine et communication reste soumise au Go juridique
+  et commercial.
+- Les produits IAP et identifiants `clutch_*` restent inchangés pour préserver
+  les comptes, achats, liens et données existants.
 
 ### Rank
 
@@ -272,7 +273,7 @@ une publication publique.
 
 ## 8. Design et identité
 
-Le produit conserve pendant la phase Clutch :
+L'identité GRIFF conserve :
 
 - un fond presque noir ;
 - le vert acide réservé aux actions, états actifs et récompenses ;
@@ -281,10 +282,9 @@ Le produit conserve pendant la phase Clutch :
 - Barlow Condensed pour les scores et accroches ;
 - une esthétique esport premium avec moins de bordures et plus d'espace.
 
-Le futur territoire GRIFF reposera sur les fragments, entailles, traces et
-surfaces gravées. Le logo cible est un `G` simple construit par deux fragments,
-accompagné du mot-symbole `GRIFF.`. Aucun logo final ni asset store ne doit être
-produit avant la clearance du nom.
+Le territoire GRIFF repose sur les fragments, entailles, traces et surfaces
+gravées. Le logo intégré est un `G` fragmenté accompagné du mot-symbole
+`GRIFF`. Sa publication externe reste conditionnée à la clearance du nom.
 
 ---
 
@@ -326,6 +326,7 @@ produit avant la clearance du nom.
 - [x] Conserver les cinq grades actuels.
 - [x] Conserver le Core dans le Loadout.
 - [x] Préparer la migration compatible Clutch → GRIFF.
+- [x] Implémenter la bascule visible et conserver les identifiants compatibles.
 - [ ] Obtenir le Go juridique et commercial sur le nom.
 
 ### Bloc B — Cœur de bêta

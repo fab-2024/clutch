@@ -44,7 +44,7 @@ export default function AuthCallbackScreen() {
   return (
     <AuthShell
       eyebrow="VALIDATION DU COMPTE"
-      subtitle="Clutch vérifie le lien et prépare ton profil."
+      subtitle="GRIFF vérifie le lien et prépare ton profil."
       title={error ? 'Lien non valide.' : 'Dernière vérification.'}
     >
       <View style={[styles.card, error && styles.errorCard]}>

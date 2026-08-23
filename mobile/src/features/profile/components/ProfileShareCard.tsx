@@ -44,7 +44,7 @@ export default function ProfileShareCard({
       setSharing(false);
       return;
     }
-    const title = `${pseudo} sur Clutch`;
+    const title = `${pseudo} sur GRIFF`;
     const message = `${pseudo} · ${grade} · ${formatNumber(frags)} Frags · ${accuracy}% de réussite\n${url}`;
 
     try {
@@ -78,7 +78,7 @@ export default function ProfileShareCard({
           <View style={[styles.brandMark, { backgroundColor: palette.accent }]}><Text style={styles.brandGlyph}>C</Text></View>
           <View><Text style={styles.eyebrow}>CARTE DE PROFIL</Text><Text style={[styles.skinName, { color: palette.accent }]}>{cosmetic?.name?.toUpperCase() || 'CARTE NOIRE'}</Text></View>
         </View>
-        <Text style={[styles.team, { color: palette.accent }]}>{teamTag || 'CLUTCH'}</Text>
+        <Text style={[styles.team, { color: palette.accent }]}>{teamTag || 'GRIFF'}</Text>
       </View>
 
       <View style={styles.identity}>
@@ -97,7 +97,7 @@ export default function ProfileShareCard({
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.signature}>CLUTCH // PRENDS POSITION</Text>
+        <Text style={styles.signature}>GRIFF // LAISSE TA MARQUE</Text>
         <Pressable
           accessibilityLabel={publicProfile ? `Partager la carte de ${pseudo}` : 'Profil privé, partage indisponible'}
           accessibilityRole="button"

@@ -91,14 +91,14 @@ export function SupporterIdentity({
   return (
     <View
       accessible
-      accessibilityLabel={`${pseudo}, ${title?.name ?? 'supporter Clutch'}${frame ? `, cadre ${frame.name}` : ''}`}
+      accessibilityLabel={`${pseudo}, ${title?.name ?? 'supporter GRIFF'}${frame ? `, cadre ${frame.name}` : ''}`}
       style={[styles.identity, compact && styles.identityCompact, { borderColor: alpha(frame?.accent ?? '#33404A', '72') }]}
     >
       <CosmeticAvatar cosmetics={cosmetics} label={pseudo} size={compact ? 40 : 52} />
       <View style={styles.identityCopy}>
         <Text numberOfLines={1} style={[styles.identityPseudo, compact && styles.identityPseudoCompact]}>{pseudo}</Text>
         <Text numberOfLines={1} style={[styles.identityTitle, { color: title?.accent ?? colors.volt }]}>
-          {(title?.name ?? meta ?? 'Supporter Clutch').toUpperCase()}
+          {(title?.name ?? meta ?? 'Supporter GRIFF').toUpperCase()}
         </Text>
       </View>
       {meta && title ? <Text numberOfLines={1} style={styles.identityMeta}>{meta}</Text> : null}

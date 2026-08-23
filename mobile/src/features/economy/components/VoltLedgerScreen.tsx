@@ -29,7 +29,7 @@ type SourceMeta = {
 
 const PAGE_SIZE = 24;
 const SOURCE_META: Record<VoltMovementSource, SourceMeta> = {
-  onboarding: { label: 'BIENVENUE', glyph: '✦', tone: colors.volt, detail: 'Entrée dans Clutch' },
+  onboarding: { label: 'BIENVENUE', glyph: '✦', tone: colors.volt, detail: 'Entrée dans GRIFF' },
   progression: { label: 'PROGRESSION', glyph: '↗', tone: '#68B8FF', detail: 'Progression et saison' },
   mission: { label: 'MISSION', glyph: '◆', tone: '#A982FF', detail: 'Objectif accompli' },
   activation: { label: 'ACTIVATION', glyph: '◎', tone: '#FFB84D', detail: 'Participation validée' },
@@ -205,7 +205,7 @@ export default function VoltLedgerScreen({ previewData }: VoltLedgerScreenProps)
         <View style={styles.promiseCard}>
           <View style={styles.promiseMark}><Text style={styles.promiseGlyph}>◇</Text></View>
           <View style={styles.promiseCopy}>
-            <Text style={styles.promiseEyebrow}>PACTE CLUTCH</Text>
+            <Text style={styles.promiseEyebrow}>PACTE GRIFF</Text>
             <Text style={styles.promiseTitle}>L’identité du supporter. Jamais ses performances.</Text>
             <Text style={styles.promiseText}>Les Volts servent uniquement aux objets visuels connus à l’avance. Ils ne deviennent ni Frags, ni rang, ni avantage.</Text>
           </View>
@@ -252,7 +252,7 @@ function MovementRow({ first, movement }: { first: boolean; movement: VoltMoveme
 
 function movementTitle(movement: VoltMovement) {
   if (movement.object) return movement.object.name;
-  if (movement.source === 'onboarding') return 'Bienvenue dans Clutch';
+  if (movement.source === 'onboarding') return 'Bienvenue dans GRIFF';
   if (movement.source === 'mission') return 'Mission accomplie';
   if (movement.source === 'activation') return 'Participation validée';
   if (movement.source === 'exceptionnelle') return 'Récompense exceptionnelle';
@@ -261,7 +261,7 @@ function movementTitle(movement: VoltMovement) {
   if (movement.origin === 'saison') return 'Progression de saison';
   if (movement.origin === 'faction') return 'Mutation de faction';
   if (movement.origin === 'call' || movement.origin === 'pari') return 'Progression Calls';
-  return 'Progression Clutch';
+  return 'Progression GRIFF';
 }
 
 function mergeMovements(current: VoltMovement[], next: VoltMovement[]) {

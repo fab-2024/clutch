@@ -11,9 +11,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { GriffMark } from '@/src/components/brand/GriffLogo';
 import { colors, fonts } from '@/src/theme';
 
-type ClutchCoreProps = {
+type GriffCoreProps = {
   size?: number;
   compact?: boolean;
   label?: string;
@@ -21,13 +22,13 @@ type ClutchCoreProps = {
   accent?: string | null;
 };
 
-export default function ClutchCore({
+export default function GriffCore({
   size = 244,
   compact = false,
   label = 'CORE // ONLINE',
   styleKey,
   accent,
-}: ClutchCoreProps) {
+}: GriffCoreProps) {
   const reduceMotion = useReducedMotion();
   const palette = corePalette(styleKey, accent);
   const orbit = useSharedValue(0);
@@ -76,7 +77,7 @@ export default function ClutchCore({
 
   return (
     <View
-      accessibilityLabel="Clutch Core actif"
+      accessibilityLabel="Noyau GRIFF actif"
       accessibilityRole="image"
       style={[styles.stage, { width: size, height: size }]}
     >
@@ -112,7 +113,7 @@ export default function ClutchCore({
           style={[styles.core, { borderRadius: inner * 0.34, borderColor: palette.highlight }]}
         >
           <View style={styles.coreReflection} />
-          <Text style={[styles.coreLetter, { color: palette.ink, fontSize: inner * 0.55, lineHeight: inner * 0.59 }]}>C</Text>
+          <GriffMark size={inner * 0.74} style={{ tintColor: palette.ink }} />
           <View style={styles.coreCut} />
         </LinearGradient>
       </Animated.View>
@@ -158,7 +159,6 @@ const styles = StyleSheet.create({
   coreWrap: { overflow: 'hidden', boxShadow: '0 13px 25px rgba(232,255,61,.38)', elevation: 12 },
   core: { flex: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   coreReflection: { position: 'absolute', top: -18, left: -8, width: '86%', height: '52%', borderRadius: 999, backgroundColor: 'rgba(255,255,255,.36)', transform: [{ rotate: '-18deg' }] },
-  coreLetter: { color: '#090C0E', fontFamily: fonts.display, letterSpacing: -5 },
   coreCut: { position: 'absolute', right: -15, bottom: -18, width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(4,7,8,.22)' },
   status: { position: 'absolute', bottom: 1, minHeight: 27, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 999, backgroundColor: '#0B100E', borderWidth: 1, borderColor: '#344018' },
   statusDot: { width: 5, height: 5, borderRadius: 3 },

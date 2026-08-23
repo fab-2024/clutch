@@ -1,6 +1,6 @@
 # Checklist d'écart — Blueprint GRIFF
 
-Date de l'audit : 22 août 2026
+Date de l'audit : 23 août 2026
 
 Périmètre : application mobile, dépôt Git, base Supabase distante et fonctions
 Edge actuellement déployées.
@@ -33,8 +33,8 @@ conserve son cinquième emplacement Core. Le cœur applicatif du bloc B est
 désormais construit et appliqué sur Supabase. Les écarts prioritaires restants
 sont :
 
-1. le nom GRIFF reste au statut AMBRE après le pré-contrôle et le produit reste
-   volontairement Clutch tant que la clearance n'est pas terminée ;
+1. la bascule visible GRIFF est préparée dans la branche, mais sa publication
+   store, domaine et communication reste soumise à la clearance externe ;
 2. les trois fonctions Edge RevenueCat attendent l'autorisation explicite du
    traitement de l'UUID Supabase avant leur déploiement ;
 3. la protection contre les mots de passe compromis doit être activée dans
@@ -54,7 +54,7 @@ sont :
 - 🟡 Le vocabulaire produit privilégie déjà « call », « Frags » et
   « progression », mais quelques formulations visibles utilisent encore
   « mise », « portefeuille » ou « prédiction ».
-- ⬜ La promesse `GRIFF. — LAISSE TA MARQUE.` n'est pas intégrée.
+- ✅ La promesse `GRIFF — LAISSE TA MARQUE.` est intégrée aux surfaces de marque.
 
 ## Navigation définitive
 
@@ -92,10 +92,10 @@ sont :
   [`griff-name-clearance.md`](./griff-name-clearance.md).
 - ✅ Matrice de renommage préparée : nom visible, slug, scheme, bundle,
   package, domaine, variables, RPC, produits IAP, textes légaux et assets.
-- ⬜ Renommer l'application après validation seulement.
-- 🔒 Le dépôt conserve volontairement la marque Clutch dans 122 fichiers hors ancien
-  prototype web ; `app.json` utilise `Clutch`, `clutch-mobile`, le scheme
-  `clutch` et les identifiants `com.fabthetap.clutch` jusqu'au Go.
+- ✅ L'application, les assets, les pages publiques et les textes actifs sont
+  configurés en GRIFF dans la branche de migration.
+- 🔒 Le slug `clutch-mobile`, le scheme `clutch` en alias, les RPC, produits IAP,
+  bundle et package historiques restent volontairement compatibles.
 
 ---
 
@@ -313,8 +313,8 @@ compétitive.
 - ⬜ Produits et recette sandbox App Store/Google Play non validés.
 - 🛑 Le pack actuel contient 0 Volt, tandis que le blueprint prévoit une
   allocation de Volts. Trancher avant de renommer le produit IAP.
-- ⬜ Migrer les identifiants et textes Clutch vers GRIFF seulement après
-  validation du nom et stratégie de compatibilité des achats.
+- ✅ Les textes visibles du Pack Fondateur passent à GRIFF tandis que
+  l'identifiant IAP `clutch_founder_pack_v1` reste compatible.
 
 ## Vente de Volts et boutique
 
@@ -491,8 +491,8 @@ Références Supabase :
   « débloquer » et « progresser ».
 - ⬜ Remplacer les formulations visibles « Sans mise », « pas ton portefeuille »
   et « gain/risque » par un vocabulaire purement score et progression.
-- ⬜ Renommer les références historiques visibles « Validation Clutch » lors du
-  rebranding.
+- ✅ Les références visibles « Validation Clutch » sont migrées et normalisées
+  pour les futures écritures, sans renommer les sources techniques.
 - ✅ Les termes historiques en base peuvent rester temporairement pour la
   compatibilité s'ils ne sont pas exposés aux utilisateurs.
 
@@ -510,7 +510,7 @@ Références Supabase :
 - ✅ XP, Frags et Volts documentés ; le rating actuel est confirmé.
 - ✅ Grades et règles saisonnières V1 confirmés avant construction de Rank.
 - 🟡 Fonctionnalités non essentielles déjà largement gelées.
-- ✅ Plan de migration Clutch → GRIFF documenté sans renommage prématuré.
+- ✅ Bascule visible Clutch → GRIFF implémentée avec compatibilité technique.
 
 ## Phase 1 — Bêta du cœur produit
 

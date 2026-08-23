@@ -1,4 +1,4 @@
-# Architecture Clutch
+# Architecture GRIFF
 
 ## Frontières du dépôt
 

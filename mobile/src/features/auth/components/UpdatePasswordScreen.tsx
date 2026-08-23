@@ -54,7 +54,7 @@ export default function UpdatePasswordScreen() {
     }
   }
 
-  function enterClutch() {
+  function enterGriff() {
     const needsOnboarding = Boolean(profile && (!profile.jeux_suivis.length || !profile.equipe_favorite_id));
     router.replace(needsOnboarding ? '/onboarding' : '/(tabs)');
   }
@@ -87,10 +87,10 @@ export default function UpdatePasswordScreen() {
           <Pressable
             accessibilityRole="button"
             disabled={status === 'loading'}
-            onPress={enterClutch}
+            onPress={enterGriff}
             style={[styles.primaryButton, status === 'loading' && styles.disabled]}
           >
-            <Text style={styles.primaryText}>{status === 'loading' ? 'Préparation…' : 'Revenir dans Clutch'}</Text>
+            <Text style={styles.primaryText}>{status === 'loading' ? 'Préparation…' : 'Revenir dans GRIFF'}</Text>
           </Pressable>
         </View>
       ) : (

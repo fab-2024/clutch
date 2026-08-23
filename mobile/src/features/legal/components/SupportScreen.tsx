@@ -10,7 +10,7 @@ export default function SupportScreen() {
   const supportUrl = publicAppUrl('/support');
 
   async function contactSupport() {
-    const url = supportMailto('Support Clutch');
+    const url = supportMailto('Support GRIFF');
     if (url) await Linking.openURL(url);
   }
 
@@ -20,7 +20,7 @@ export default function SupportScreen() {
         <View style={styles.header}>
           <Pressable accessibilityLabel="Revenir en arrière" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><Text style={styles.backText}>← RETOUR</Text></Pressable>
         </View>
-        <View style={styles.intro}><Text style={styles.eyebrow}>CLUTCH // SUPPORT</Text><Text style={styles.title}>ON GARDE LE MATCH OUVERT.</Text><Text style={styles.subtitle}>Compte, verdict, achat ou sécurité : décris le problème avec le plus de contexte possible, sans envoyer ton mot de passe.</Text></View>
+        <View style={styles.intro}><Text style={styles.eyebrow}>GRIFF // SUPPORT</Text><Text style={styles.title}>ON GARDE LE MATCH OUVERT.</Text><Text style={styles.subtitle}>Compte, verdict, achat ou sécurité : décris le problème avec le plus de contexte possible, sans envoyer ton mot de passe.</Text></View>
         <View style={styles.card}>
           <Text style={styles.cardEyebrow}>CONTACT</Text>
           <Text style={styles.cardTitle}>{supportEmail ?? 'CONFIGURATION REQUISE'}</Text>

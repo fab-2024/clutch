@@ -158,7 +158,7 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
         <View style={[styles.hero, { borderColor: alpha(bannerAccent, '72') }]}>
           <LinearGradient colors={[alpha(bannerAccent, '38'), '#11161D', '#070A0E']} end={{ x: 1, y: 1 }} start={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
           <View style={[styles.heroGlow, { backgroundColor: bannerAccent }]} />
-          <Text style={[styles.heroWatermark, { color: bannerAccent }]}>{profileData?.favoriteTeam?.tag || 'CLUTCH'}</Text>
+          <Text style={[styles.heroWatermark, { color: bannerAccent }]}>{profileData?.favoriteTeam?.tag || 'GRIFF'}</Text>
           <View style={styles.heroMeta}>
             <Text numberOfLines={1} style={styles.bannerName}>{cosmetics?.profileCard?.name?.toUpperCase() ?? 'BANNIÈRE ORIGINE'}</Text>
             <Text style={[styles.heroRank, { color: rankColor }]}>{rankLabel}</Text>

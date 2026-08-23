@@ -168,7 +168,7 @@ export default function ProfileSettingsScreen() {
     if (result.status === 'registered') {
       setNotificationPreferences((current) => current ? { ...current, activeDevices: result.activeDevices } : current);
       setSavedNotificationPreferences((current) => current ? { ...current, activeDevices: result.activeDevices } : current);
-      setPushMessage('APPAREIL ENREGISTRÉ · LES ALERTES CLUTCH SONT ACTIVES.');
+      setPushMessage('APPAREIL ENREGISTRÉ · LES ALERTES GRIFF SONT ACTIVES.');
     } else if (result.status === 'denied') {
       setPushMessage('AUTORISATION REFUSÉE · ACTIVE-LA DANS LES RÉGLAGES DU TÉLÉPHONE.');
     } else if (result.status === 'unconfigured') {
@@ -196,7 +196,7 @@ export default function ProfileSettingsScreen() {
         </View>
 
         {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text></View> : null}
-        {saved ? <View style={styles.success}><Text style={styles.successText}>PARAMÈTRES ENREGISTRÉS · TOUT CLUTCH EST À JOUR.</Text></View> : null}
+        {saved ? <View style={styles.success}><Text style={styles.successText}>PARAMÈTRES ENREGISTRÉS · TOUT GRIFF EST À JOUR.</Text></View> : null}
 
         <View style={styles.section}>
           <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>01 // JEUX SUIVIS</Text><Text style={styles.sectionTitle}>TES TERRAINS.</Text></View><Text style={styles.sectionMeta}>{games.length}/3</Text></View>
@@ -256,7 +256,7 @@ export default function ProfileSettingsScreen() {
             onPress={() => { setPublicProfile((current) => !current); setSaved(false); }}
             style={({ pressed }) => [styles.visibilityCard, pressed && styles.pressed]}
           >
-            <View style={styles.visibilityCopy}><Text style={styles.visibilityTitle}>{publicProfile ? 'PROFIL PUBLIC' : 'PROFIL PRIVÉ'}</Text><Text style={styles.visibilityMeta}>{publicProfile ? 'Les joueurs peuvent ouvrir ton identité Clutch.' : 'Toi seul peux consulter ton profil complet.'}</Text></View>
+            <View style={styles.visibilityCopy}><Text style={styles.visibilityTitle}>{publicProfile ? 'PROFIL PUBLIC' : 'PROFIL PRIVÉ'}</Text><Text style={styles.visibilityMeta}>{publicProfile ? 'Les joueurs peuvent ouvrir ton identité GRIFF.' : 'Toi seul peux consulter ton profil complet.'}</Text></View>
             <View style={[styles.switchTrack, publicProfile && styles.switchTrackActive]}><View style={[styles.switchThumb, publicProfile && styles.switchThumbActive]} /></View>
           </Pressable>
         </View>
@@ -284,7 +284,7 @@ export default function ProfileSettingsScreen() {
           <View style={styles.deviceCard}>
             <View style={styles.deviceCopy}>
               <Text style={styles.deviceTitle}>{Platform.OS === 'web' ? 'APERÇU WEB' : 'CET APPAREIL'}</Text>
-              <Text style={styles.deviceMeta}>{Platform.OS === 'web' ? 'Tes choix sont enregistrés ici. Le jeton push s’active depuis la build iPhone ou Android.' : notificationPreferences?.activeDevices ? `${notificationPreferences.activeDevices} appareil${notificationPreferences.activeDevices > 1 ? 's' : ''} actif${notificationPreferences.activeDevices > 1 ? 's' : ''}.` : 'Autorise Clutch à recevoir les événements sélectionnés.'}</Text>
+              <Text style={styles.deviceMeta}>{Platform.OS === 'web' ? 'Tes choix sont enregistrés ici. Le jeton push s’active depuis la build iPhone ou Android.' : notificationPreferences?.activeDevices ? `${notificationPreferences.activeDevices} appareil${notificationPreferences.activeDevices > 1 ? 's' : ''} actif${notificationPreferences.activeDevices > 1 ? 's' : ''}.` : 'Autorise GRIFF à recevoir les événements sélectionnés.'}</Text>
             </View>
             {Platform.OS !== 'web' ? <Pressable accessibilityRole="button" disabled={pushBusy} onPress={() => void enablePushOnDevice()} style={({ pressed }) => [styles.deviceButton, (pressed || pushBusy) && styles.pressed]}><Text style={styles.deviceButtonText}>{pushBusy ? 'ACTIVATION…' : notificationPreferences?.activeDevices ? 'RESYNCHRONISER' : 'ACTIVER'}</Text></Pressable> : null}
           </View>

@@ -63,7 +63,7 @@ async function registerCurrentDevice(): Promise<PushRegistrationResult> {
 async function ensureAndroidChannel() {
   if (Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync('clutch-events', {
-    name: 'Événements Clutch',
+    name: 'Événements GRIFF',
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 180, 100, 180],
     lightColor: '#E8FF3D',

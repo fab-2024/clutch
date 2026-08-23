@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, fonts, spacing, typography } from '@/src/theme';
+import { GriffLockup } from '@/src/components/brand/GriffLogo';
+import { colors, spacing, typography } from '@/src/theme';
 
 type AuthShellProps = PropsWithChildren<{
   eyebrow: string;
@@ -58,8 +59,7 @@ export default function AuthShell({
           <View style={styles.shell}>
             <View style={styles.topRow}>
               <View style={styles.brandRow}>
-                <View style={styles.logo}><Text style={styles.logoText}>C</Text></View>
-                <Text style={styles.brand}>CLUTCH<Text style={styles.brandDot}>.</Text></Text>
+                <GriffLockup width={122} />
               </View>
               {backLabel && onBack ? (
                 <Pressable
@@ -100,11 +100,7 @@ const styles = StyleSheet.create({
   scrollContent: { flexGrow: 1 },
   shell: { flexGrow: 1, width: '100%', maxWidth: 430, minHeight: 720, alignSelf: 'center', justifyContent: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.lg, gap: 20 },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  logo: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt, boxShadow: '0 0 12px rgba(224,255,59,.25)' },
-  logoText: { color: '#06090C', fontFamily: fonts.display, fontSize: 26, lineHeight: 29, letterSpacing: -1.4 },
-  brand: { color: colors.text, fontFamily: fonts.bold, fontSize: 15, letterSpacing: 3 },
-  brandDot: { color: colors.volt },
+  brandRow: { minHeight: 42, flexDirection: 'row', alignItems: 'center' },
   back: { minHeight: 42, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center' },
   backText: { ...typography.action, color: colors.textMuted, letterSpacing: .3 },
   visual: { height: 160, alignItems: 'center', justifyContent: 'center', marginVertical: -5 },

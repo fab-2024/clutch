@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { ClutchHeader } from '@/src/components/layout/ClutchHeader';
+import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
@@ -79,7 +79,7 @@ export default function RankScreen({ previewData }: { previewData?: RankDashboar
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
         showsVerticalScrollIndicator={false}
       >
-        <ClutchHeader />
+        <GriffHeader />
 
         <View style={styles.intro}>
           <Text style={styles.eyebrow}>RANK // SAISON</Text>

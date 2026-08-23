@@ -1,8 +1,8 @@
 /**
- * Overlay Clutch injecté sur Twitch et YouTube.
+ * Overlay GRIFF injecté sur Twitch et YouTube.
  *
- * Choix d'architecture : le panneau affiche l'application Clutch dans une
- * iframe plutôt que de réimplémenter les cotes et les paris. Conséquence :
+ * Choix d'architecture : le panneau affiche l'application GRIFF dans une
+ * iframe plutôt que de réimplémenter les calls. Conséquence :
  * une seule base de code à maintenir, la session de connexion est celle du
  * site, et toute évolution de l'app apparaît immédiatement dans l'overlay.
  */
@@ -33,14 +33,12 @@
     racine.id = ID;
     racine.dataset.cote = reglages.cote;
     racine.innerHTML = `
-      <button class="clutch-lanceur" title="Ouvrir Clutch" aria-label="Ouvrir Clutch">
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-          <path d="M14 2 L7 13 h4 l-3 9 8-12 h-4 z" fill="currentColor"/>
-        </svg>
+      <button class="clutch-lanceur" title="Ouvrir GRIFF" aria-label="Ouvrir GRIFF">
+        <img src="${chrome.runtime.getURL('icons/icone-128.png')}" alt="" aria-hidden="true" />
       </button>
-      <section class="clutch-panneau" hidden aria-label="Panneau Clutch">
+      <section class="clutch-panneau" hidden aria-label="Panneau GRIFF">
         <header class="clutch-entete">
-          <span class="clutch-titre">CLUTCH<span class="clutch-point"></span></span>
+          <span class="clutch-titre">GRIFF<span class="clutch-point"></span></span>
           <div class="clutch-actions">
             <button class="clutch-btn" data-action="cote" title="Changer de côté">⇄</button>
             <button class="clutch-btn" data-action="ouvrir" title="Ouvrir dans un onglet">↗</button>
@@ -68,12 +66,12 @@
       corps.innerHTML = `
         <div class="clutch-vide">
           <p><strong>Presque prêt.</strong></p>
-          <p>Indique l'adresse de ton Clutch dans les réglages de l'extension
+          <p>Indique l'adresse de ton GRIFF dans les réglages de l'extension
              (clic sur l'icône dans la barre d'outils).</p>
         </div>`;
       return;
     }
-    corps.innerHTML = `<iframe src="${url}" title="Clutch" referrerpolicy="no-referrer"></iframe>`;
+    corps.innerHTML = `<iframe src="${url}" title="GRIFF" referrerpolicy="no-referrer"></iframe>`;
   }
 
   function basculer(force) {
@@ -98,9 +96,9 @@
       }
     });
 
-    // Raccourci clavier : Alt + C
+    // Raccourci clavier principal : Alt + G. Alt + C reste compatible.
     document.addEventListener('keydown', (e) => {
-      if (e.altKey && e.key.toLowerCase() === 'c') {
+      if (e.altKey && ['g', 'c'].includes(e.key.toLowerCase())) {
         e.preventDefault();
         basculer();
       }

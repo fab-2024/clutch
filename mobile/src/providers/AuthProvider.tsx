@@ -89,7 +89,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
       setError({
         scope: 'profile',
-        message: 'Le profil Clutch ne peut pas être synchronisé pour le moment.',
+        message: 'Le profil GRIFF ne peut pas être synchronisé pour le moment.',
       });
       updateStatus('error');
       return null;
@@ -120,7 +120,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const currentSession = sessionRef.current;
     if (!currentSession) return null;
     const nextProfile = await hydrateSession(currentSession, false);
-    if (!nextProfile) throw new Error('Le profil Clutch n’a pas pu être actualisé.');
+    if (!nextProfile) throw new Error('Le profil GRIFF n’a pas pu être actualisé.');
     return nextProfile;
   }, [hydrateSession]);
 

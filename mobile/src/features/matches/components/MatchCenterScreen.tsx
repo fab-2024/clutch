@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { Screen } from '@/src/components/layout/Screen';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { createDuel } from '@/src/features/social/duels/api';
@@ -179,7 +180,7 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
             <Text style={styles.backArrow}>←</Text>
             <Text style={styles.backText}>{duelToken ? 'DUEL' : 'ARENA'}</Text>
           </Pressable>
-          <Text style={styles.brand}>CLUTCH</Text>
+          <GriffLockup width={92} />
         </View>
 
         {loading ? <LoadingCard /> : null}

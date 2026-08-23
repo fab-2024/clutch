@@ -28,7 +28,7 @@ export default class AppErrorBoundary extends Component<Props, State> {
 
     return (
       <View accessibilityRole="alert" style={styles.root}>
-        <Text style={styles.eyebrow}>CLUTCH // INCIDENT</Text>
+        <Text style={styles.eyebrow}>GRIFF // INCIDENT</Text>
         <Text style={styles.title}>LE MATCH EST INTERROMPU.</Text>
         <Text style={styles.copy}>Une erreur inattendue a été interceptée. Réessaie ; si elle revient, contacte le support depuis l’écran de connexion.</Text>
         <Pressable accessibilityRole="button" onPress={() => this.setState({ error: null })} style={({ pressed }) => [styles.button, pressed && styles.pressed]}>

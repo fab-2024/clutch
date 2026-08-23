@@ -1,6 +1,6 @@
-# Clutch Mobile
+# GRIFF Mobile
 
-Application principale de Clutch, construite avec Expo, React Native et Expo
+Application principale de GRIFF, construite avec Expo, React Native et Expo
 Router. L'ancienne application web reste disponible dans `../web` uniquement
 comme référence pendant la migration.
 
@@ -20,6 +20,7 @@ de confirmation et de récupération reviennent dans l'application, ajouter dans
 
 ```text
 http://localhost:8081/**
+griff://**
 clutch://**
 ```
 
@@ -91,8 +92,8 @@ matrice de soumission sont suivis dans
 
 ## Règles produit et sécurité
 
-- Hub, Matchs, Social et Moi forment la navigation publique actuelle.
-- La Clutch Room reste un placeholder masqué jusqu'à demande explicite.
+- Hub, Matchs, Social, Rank et Moi forment la navigation publique actuelle.
+- La Room reste un placeholder masqué jusqu'à demande explicite.
 - La direction UI actuelle est validée ; un refactor structurel ne doit pas la
   redessiner.
 - Le mobile ne duplique pas les autorisations sensibles. Les soldes,

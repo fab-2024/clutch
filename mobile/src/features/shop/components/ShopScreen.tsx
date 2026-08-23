@@ -276,7 +276,7 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
           <View style={styles.heroHeading}>
             <View>
               <Text style={styles.heroKicker}>APERÇU ÉQUIPÉ // PUBLIC</Text>
-              <Text style={styles.heroTitle}>TA SIGNATURE,{`\n`}PARTOUT DANS CLUTCH.</Text>
+              <Text style={styles.heroTitle}>TA SIGNATURE,{`\n`}PARTOUT DANS GRIFF.</Text>
             </View>
             <Text style={styles.heroLive}>ACTIF</Text>
           </View>
@@ -352,7 +352,7 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
         )}
 
         <View style={styles.rules}>
-          <View style={styles.rulesHeader}><View style={styles.rulesIcon}><CurrencyIcon kind="volts" size={20} /></View><View style={styles.rulesCopy}><Text style={styles.rulesEyebrow}>CONTRAT {contract.version}{' // '}{contract.code.toUpperCase()}</Text><Text style={styles.rulesTitle}>LE PACTE CLUTCH</Text><Text style={styles.rulesText}>Tes objets restent permanents et ne modifient jamais tes performances.</Text></View></View>
+          <View style={styles.rulesHeader}><View style={styles.rulesIcon}><CurrencyIcon kind="volts" size={20} /></View><View style={styles.rulesCopy}><Text style={styles.rulesEyebrow}>CONTRAT {contract.version}{' // '}{contract.code.toUpperCase()}</Text><Text style={styles.rulesTitle}>LE PACTE GRIFF</Text><Text style={styles.rulesText}>Tes objets restent permanents et ne modifient jamais tes performances.</Text></View></View>
           <View style={styles.ruleList}>{contract.rules.map((rule) => <View key={rule.id} style={styles.ruleRow}><Text style={styles.ruleCheck}>✓</Text><View style={styles.ruleCopy}><Text style={styles.ruleLabel}>{rule.label}</Text><Text style={styles.ruleDetail}>{rule.detail}</Text></View></View>)}</View>
         </View>
       </ScrollView>
@@ -367,7 +367,7 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
               <CosmeticItemPreview item={selectedItem} pseudo={pseudo} />
               <View style={styles.sheetTags}><Tag label={rarityLabel(selectedItem.rarity)} color={rarityColor(selectedItem.rarity, selectedItem.accent)} /><Tag label={selectedItem.owned ? 'POSSÉDÉ' : sourceLabel(selectedItem.source)} color={selectedItem.owned ? colors.volt : '#AAB4BE'} />{selectedItem.equipped ? <Tag label="ÉQUIPÉ" color={selectedItem.accent} /> : null}</View>
               <Text style={styles.sheetDescription}>{selectedItem.description}</Text>
-              <View style={styles.provenance}><DetailRow label="COLLECTION" value={humanize(selectedItem.collectionKey)} /><DetailRow label="ÉQUIPE" value={selectedItem.team ? `${selectedItem.team.name} · ${selectedItem.team.tag}` : 'Collection Clutch'} /><DetailRow label="PROVENANCE" value={sourceDetail(selectedItem)} /><DetailRow label="LICENCE" value={`${humanize(selectedItem.license.type)} · ${selectedItem.license.holder}`} /><DetailRow label="DISPONIBILITÉ" value={availabilityLabel(selectedItem)} /></View>
+              <View style={styles.provenance}><DetailRow label="COLLECTION" value={humanize(selectedItem.collectionKey)} /><DetailRow label="ÉQUIPE" value={selectedItem.team ? `${selectedItem.team.name} · ${selectedItem.team.tag}` : 'Collection GRIFF'} /><DetailRow label="PROVENANCE" value={sourceDetail(selectedItem)} /><DetailRow label="LICENCE" value={`${humanize(selectedItem.license.type)} · ${selectedItem.license.holder}`} /><DetailRow label="DISPONIBILITÉ" value={availabilityLabel(selectedItem)} /></View>
               <ActionButton balance={data?.balance ?? 0} confirming={confirmingId === selectedItem.id} item={selectedItem} pending={pendingId === selectedItem.id} onPress={() => void handleItem(selectedItem)} />
             </View>
           ) : null}

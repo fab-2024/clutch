@@ -8,7 +8,7 @@ const authCodeExchanges = new Map<string, Promise<Session>>();
 
 export class ClutchProfileMissingError extends Error {
   constructor() {
-    super('Le profil Clutch associé à cette session reste introuvable.');
+    super('Le profil GRIFF associé à cette session reste introuvable.');
     this.name = 'ClutchProfileMissingError';
   }
 }

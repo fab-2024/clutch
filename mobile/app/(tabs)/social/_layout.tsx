@@ -2,7 +2,7 @@ import { Slot } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ClutchHeader } from '@/src/components/layout/ClutchHeader';
+import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import SocialSectionNav from '@/src/features/social/components/SocialSectionNav';
 import { colors } from '@/src/theme';
 
@@ -12,7 +12,7 @@ export default function SocialLayout() {
   return (
     <View style={styles.root}>
       <View style={[styles.top, { paddingTop: Math.max(insets.top, 6) }]}>
-        <ClutchHeader />
+        <GriffHeader />
       </View>
 
       <SocialSectionNav />

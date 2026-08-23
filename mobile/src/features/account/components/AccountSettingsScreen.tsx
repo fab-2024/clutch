@@ -24,7 +24,7 @@ export default function AccountSettingsScreen() {
 
   async function requestDataAccess() {
     const url = supportMailto(
-      'Demande d’accès à mes données Clutch',
+      'Demande d’accès à mes données GRIFF',
       `Bonjour,\n\nJe souhaite recevoir une copie des données associées à mon compte ${email}.\n\nMerci.`,
     );
     if (url) await Linking.openURL(url);
@@ -54,7 +54,7 @@ export default function AccountSettingsScreen() {
         <View style={styles.header}>
           <Pressable accessibilityLabel="Revenir aux paramètres" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><Text style={styles.backText}>← PARAMÈTRES</Text></Pressable>
         </View>
-        <View style={styles.intro}><Text style={styles.eyebrow}>MOI // COMPTE & DONNÉES</Text><Text style={styles.title}>TU GARDES LE CONTRÔLE.</Text><Text style={styles.subtitle}>Consulte les règles de Clutch, exerce tes droits ou supprime définitivement ton compte.</Text></View>
+        <View style={styles.intro}><Text style={styles.eyebrow}>MOI // COMPTE & DONNÉES</Text><Text style={styles.title}>TU GARDES LE CONTRÔLE.</Text><Text style={styles.subtitle}>Consulte les règles de GRIFF, exerce tes droits ou supprime définitivement ton compte.</Text></View>
 
         <View style={styles.links}>
           <SettingsLink label="Politique de confidentialité" onPress={() => router.push('/legal/privacy')} />

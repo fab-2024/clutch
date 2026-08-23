@@ -28,7 +28,7 @@ test('le mouvement de rang distingue montée, stabilité et baisse', () => {
   assert.equal(mouvementRang(null, null).disponible, false);
 });
 
-test('la présentation victoire reprend la signature Clutch et les données réelles', () => {
+test('la présentation victoire reprend la signature GRIFF et les données réelles', () => {
   const resultat = {
     statut: 'gagne',
     choix: 'a',

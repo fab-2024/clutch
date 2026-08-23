@@ -22,7 +22,7 @@ export async function loadProfileData(pseudo: string): Promise<ProfileData> {
   ]);
   if (profileResult.error) throw profileResult.error;
   if (progressionResult.error) throw progressionResult.error;
-  if (!profileResult.data || !progressionResult.data) throw new Error('Profil Clutch introuvable.');
+  if (!profileResult.data || !progressionResult.data) throw new Error('Profil GRIFF introuvable.');
 
   const raw = profileResult.data as RawProfile;
   const progression = progressionResult.data as Partial<ProfileRanking>;

@@ -184,7 +184,7 @@ function CallCard({ call }: { call: MyCallItem }) {
         <View style={styles.verdict}>
           <View>
             <Text style={styles.verdictLabel}>{call.resultat_corrige ? `CORRIGÉ · RÉVISION ${call.revision_resultat}` : 'SOURCE DU VERDICT'}</Text>
-            <Text style={styles.verdictSource}>{call.source_resultat_label ?? 'Validation Clutch'}</Text>
+            <Text style={styles.verdictSource}>{call.source_resultat_label ?? 'Validation GRIFF'}</Text>
             {call.identifiant_resultat_externe ? <Text numberOfLines={1} style={styles.verdictReference}>RÉF. {call.identifiant_resultat_externe}</Text> : null}
           </View>
           <View style={styles.deltaRow}>

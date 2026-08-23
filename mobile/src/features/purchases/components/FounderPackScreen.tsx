@@ -166,7 +166,7 @@ export default function FounderPackScreen({ previewStatus }: FounderPackScreenPr
       setMessage('Founder Pack validé. Tes quatre signatures sont dans le Locker.');
     } catch (caught) {
       setError(storeValidated
-        ? 'Le store a validé l’achat, mais la synchronisation Clutch est retardée. Utilise « Restaurer » ou attends le webhook automatique.'
+        ? 'Le store a validé l’achat, mais la synchronisation GRIFF est retardée. Utilise « Restaurer » ou attends le webhook automatique.'
         : friendlyError(caught));
     } finally {
       setActing(null);
@@ -235,9 +235,9 @@ export default function FounderPackScreen({ previewStatus }: FounderPackScreenPr
               <View style={styles.sealCutBottom} />
             </LinearGradient>
           </View>
-          <Text style={styles.heroEyebrow}>CLUTCH // ORIGIN SERIES 0001</Text>
+          <Text style={styles.heroEyebrow}>GRIFF // ORIGIN SERIES 0001</Text>
           <Text style={styles.heroTitle}>TU ÉTAIS LÀ{`\n`}AVANT LE BRUIT.</Text>
-          <Text style={styles.heroText}>Quatre signatures visuelles qui marquent le lancement de Clutch. Achat unique, permanent, restaurable.</Text>
+          <Text style={styles.heroText}>Quatre signatures visuelles qui marquent le lancement de GRIFF. Achat unique, permanent, restaurable.</Text>
           <View style={styles.priceRow}>
             <View><Text style={styles.priceLabel}>{store.localizedPrice ? 'PRIX DU STORE' : 'PRIX CIBLE'}</Text><Text style={styles.price}>{localizedPrice}</Text></View>
             <View style={styles.once}><Text style={styles.onceLabel}>UNE FOIS</Text><Text style={styles.onceValue}>PAS D’ABONNEMENT</Text></View>

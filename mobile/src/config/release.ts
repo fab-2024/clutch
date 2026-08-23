@@ -3,7 +3,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const publicAppOrigin = normalizeOrigin(process.env.EXPO_PUBLIC_APP_ORIGIN);
 export const supportEmail = normalizeEmail(process.env.EXPO_PUBLIC_SUPPORT_EMAIL);
-export const legalEntity = process.env.EXPO_PUBLIC_LEGAL_ENTITY?.trim() || 'Clutch';
+export const legalEntity = process.env.EXPO_PUBLIC_LEGAL_ENTITY?.trim() || 'GRIFF';
 
 export function publicAppUrl(path = '/') {
   if (!publicAppOrigin) return null;
