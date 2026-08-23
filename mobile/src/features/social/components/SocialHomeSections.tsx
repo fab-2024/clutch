@@ -1,140 +1,51 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  Easing,
-  cancelAnimation,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
+import { StyleSheet, Text, View } from 'react-native';
 
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { CosmeticAvatar, relicSignatureTheme } from '@/src/features/shop/components/CosmeticRenderer';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
-import type { CommunityActivity, CommunityFaction, CommunityMe } from '@/src/features/social/faction/types';
+import CollectiveRelic from '@/src/features/social/faction/components/CollectiveRelic';
+import type {
+  CommunityActivity,
+  CommunityFaction,
+  CommunityMe,
+  CommunityMutationPresentation,
+} from '@/src/features/social/faction/types';
 import { factionProgress, gameLabel } from '@/src/features/social/faction/utils';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors } from '@/src/theme';
 
 import { styles } from './SocialHomeScreen.styles';
 
-const RELIC_SOURCE = require('../../../../assets/social/faction-relic-v5.png');
-
-type RelicBubbleSpec = {
-  bottom: number;
-  id: string;
-  left?: number;
-  right?: number;
-  size: number;
-};
-
-const RELIC_BUBBLES: RelicBubbleSpec[] = [
-  { id: 'bubble-a', size: 11, left: 28, bottom: 8 },
-  { id: 'bubble-b', size: 8, right: 25, bottom: 20 },
-  { id: 'bubble-c', size: 7, left: 20, bottom: 36 },
-  { id: 'bubble-d', size: 10, right: 16, bottom: 49 },
-  { id: 'bubble-e', size: 6, left: 45, bottom: 56 },
-  { id: 'bubble-f', size: 8, right: 39, bottom: 72 },
-];
-
-export function FactionRelicHero({ faction, me }: { faction: CommunityFaction | null; me: CommunityMe | null }) {
+export function FactionRelicHero({
+  faction,
+  me,
+  mutationOverride,
+  onMutationPresented,
+  reduceMotionOverride,
+}: {
+  faction: CommunityFaction | null;
+  me: CommunityMe | null;
+  mutationOverride?: CommunityMutationPresentation | null;
+  onMutationPresented?: (eventId: string) => Promise<void> | void;
+  reduceMotionOverride?: boolean;
+}) {
   const { equipped } = useCosmetics();
-  const reduceMotion = useReducedMotion();
-  const [relicFocused, setRelicFocused] = useState(false);
-  const float = useSharedValue(0);
-  const instability = useSharedValue(0);
-  const boil = useSharedValue(0);
-
-  useEffect(() => {
-    if (reduceMotion) {
-      cancelAnimation(float);
-      cancelAnimation(instability);
-      cancelAnimation(boil);
-      float.value = 0;
-      instability.value = 0;
-      boil.value = 0;
-      return undefined;
-    }
-    float.value = withRepeat(
-      withTiming(1, { duration: 4800, easing: Easing.inOut(Easing.sin) }),
-      -1,
-      true,
-    );
-    return () => {
-      cancelAnimation(float);
-      cancelAnimation(instability);
-      cancelAnimation(boil);
-    };
-  }, [boil, float, instability, reduceMotion]);
-
-  const awakenRelic = useCallback(() => {
-    cancelAnimation(instability);
-    cancelAnimation(boil);
-
-    if (reduceMotion) {
-      instability.value = instability.value === 0 ? 1 : 0;
-      boil.value = 0;
-      return;
-    }
-
-    instability.value = 0;
-    boil.value = 0;
-    instability.value = withSequence(
-      withTiming(1, { duration: 420, easing: Easing.out(Easing.quad) }),
-      withTiming(-0.85, { duration: 210 }),
-      withTiming(0.7, { duration: 200 }),
-      withTiming(-0.55, { duration: 190 }),
-      withTiming(0.4, { duration: 180 }),
-      withTiming(-0.25, { duration: 160 }),
-      withTiming(0, { duration: 1000, easing: Easing.out(Easing.quad) }),
-    );
-    boil.value = withRepeat(
-      withTiming(1, { duration: 1100, easing: Easing.out(Easing.cubic) }),
-      2,
-      false,
-    );
-  }, [boil, instability, reduceMotion]);
-
-  const relicMotion = useAnimatedStyle(() => ({
-    opacity: 0.42 + Math.min(1, Math.abs(instability.value)) * 0.58,
-    transform: [
-      { perspective: 900 },
-      { translateX: instability.value * 1.8 },
-      { translateY: -3 + float.value * 6 },
-      { rotateZ: `${-0.45 + float.value * 0.9 + instability.value * 0.35}deg` },
-    ],
-  }));
-  const corePulse = useAnimatedStyle(() => ({
-    opacity: 0.04 + Math.min(1, Math.abs(instability.value)) * 0.9,
-    transform: [{ scale: 0.72 + Math.min(1, Math.abs(instability.value)) * 0.52 }],
-  }));
-  const interiorDarkness = useAnimatedStyle(() => ({
-    opacity: 0.82 - Math.min(1, Math.abs(instability.value)) * 0.68,
-  }));
-  const bubbleMotion = useAnimatedStyle(() => ({
-    opacity: Math.sin(boil.value * Math.PI) * 0.88,
-    transform: [
-      { translateY: boil.value * -50 },
-      { scale: 0.55 + boil.value * 0.6 },
-    ],
-  }));
-  const progress = faction ? factionProgress(faction.membres, faction.niveau_atteint) : null;
-  const pct = progress ? Math.round(progress.progress * 100) : 0;
+  const progress = factionProgress(faction?.membres ?? 0, faction?.niveau_atteint);
+  const pct = Math.round(progress.progress * 100);
+  const totalPct = Math.floor(progress.totalProgress * 100);
   const title = faction ? 'PORTE TES COULEURS.' : 'CHOISIS TES COULEURS.';
-  const actionTitle = progress?.max
-    ? 'LA RELIQUE A ATTEINT SA FORME ULTIME.'
-    : `RALLIER ${formatNumber(progress?.remaining ?? 0)} SUPPORTER${(progress?.remaining ?? 0) > 1 ? 'S' : ''}.`;
-  const actionCopy = progress?.max
-    ? 'La puissance collective continue désormais d’alimenter le classement de la faction.'
-    : progress?.next
-      ? `À ${formatNumber(progress.objective)} membres, la relique mute en ${progress.next.name}. Chaque membre présent reçoit alors +${formatNumber(progress.next.reward)} Volts.`
+  const actionTitle = progress.max
+    ? 'LE CŒUR EST PLEINEMENT ÉVEILLÉ.'
+    : `RALLIER ${formatNumber(progress.remaining)} SUPPORTER${progress.remaining > 1 ? 'S' : ''}.`;
+  const actionCopy = progress.max
+    ? 'La puissance collective reste visible dans le Reliquaire et continue d’alimenter la faction.'
+    : progress.next
+      ? `À ${formatNumber(progress.objective)} membres, la relique mute en ${progress.next.name}. L’événement collectif reste inscrit dans l’histoire de la faction.`
       : '';
   const signature = relicSignatureTheme(equipped.factionEffect);
   const effectAccent = signature.accent;
+  const mutation = mutationOverride === undefined ? me?.mutation_a_presenter : mutationOverride;
 
   return (
     <View style={styles.factionHero}>
@@ -151,70 +62,17 @@ export function FactionRelicHero({ faction, me }: { faction: CommunityFaction | 
         </View>
         <View style={styles.levelPill}>
           <View style={styles.levelDot} />
-          <Text style={styles.levelText}>{progress ? `FORME ${progress.current.code}` : 'NON LIÉE'}</Text>
+          <Text style={styles.levelText}>{progress.awakened ? 'CŒUR ÉVEILLÉ' : progress.level > 0 ? `FORME ${progress.current.code}` : 'DORMANT'}</Text>
         </View>
       </View>
 
-      <Pressable
-        accessibilityHint="Déclenche une brève réaction du liquide"
-        accessibilityLabel="Réveiller le cœur de la Fiole"
-        accessibilityRole="button"
-        onBlur={() => setRelicFocused(false)}
-        onFocus={() => setRelicFocused(true)}
-        onPress={awakenRelic}
-        style={({ pressed }) => [styles.relicStage, relicFocused && styles.relicStageFocused, pressed && styles.relicStagePressed]}
-      >
-        <Animated.View style={[styles.relicCoreGlow, corePulse, { backgroundColor: `${effectAccent}7A`, boxShadow: `0 0 42px ${effectAccent}B8` }]} />
-        <View pointerEvents="none" style={styles.bubbleField}>
-          {RELIC_BUBBLES.map((bubble) => (
-            <Animated.View
-              key={bubble.id}
-              style={[
-                styles.relicBubble,
-                {
-                  width: bubble.size,
-                  height: bubble.size,
-                  left: bubble.left,
-                  right: bubble.right,
-                  bottom: bubble.bottom,
-                  borderRadius: bubble.size / 2,
-                },
-                bubbleMotion,
-              ]}
-            >
-              <LinearGradient
-                colors={['rgba(255,250,225,.72)', 'rgba(223,165,66,.15)', 'rgba(30,13,5,.34)']}
-                end={{ x: 1, y: 1 }}
-                start={{ x: 0, y: 0 }}
-                style={StyleSheet.absoluteFill}
-              />
-              <View style={styles.relicBubbleHighlight} />
-              <View style={styles.relicBubbleDepth} />
-            </Animated.View>
-          ))}
-        </View>
-        <Animated.Image resizeMode="contain" source={RELIC_SOURCE} style={[styles.relicImage, relicMotion]} />
-        <Animated.View pointerEvents="none" style={[styles.relicInteriorShade, interiorDarkness]}>
-          <LinearGradient
-            colors={['rgba(0,0,0,.04)', 'rgba(0,0,0,.72)', 'rgba(0,0,0,.04)']}
-            end={{ x: 1, y: 0.5 }}
-            locations={[0, 0.5, 1]}
-            start={{ x: 0, y: 0.5 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <LinearGradient
-            colors={['rgba(0,0,0,.02)', 'rgba(0,0,0,.42)', 'rgba(0,0,0,.02)']}
-            end={{ x: 0.5, y: 1 }}
-            locations={[0, 0.54, 1]}
-            start={{ x: 0.5, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
-        <View pointerEvents="none" style={styles.relicHint}>
-          <View style={styles.relicHintDot} />
-          <Text style={styles.relicHintText}>TOUCHE POUR RÉVEILLER LE CŒUR</Text>
-        </View>
-      </Pressable>
+      <CollectiveRelic
+        accent={effectAccent}
+        mutation={mutation}
+        onMutationPresented={onMutationPresented}
+        progress={progress}
+        reduceMotionOverride={reduceMotionOverride}
+      />
 
       <View style={styles.factionIdentity}>
         <View style={styles.factionSeal}>
@@ -236,25 +94,25 @@ export function FactionRelicHero({ faction, me }: { faction: CommunityFaction | 
         ) : null}
       </View>
 
-      {faction && progress ? (
+      {faction ? (
         <View style={styles.progressBlock}>
           <View style={styles.relicState}>
             <Text style={styles.relicForm}>{progress.current.name.toUpperCase()}</Text>
             <Text numberOfLines={1} style={styles.relicPhrase}>{progress.current.phrase}</Text>
           </View>
           <View style={styles.progressHeadline}>
-            <Text style={styles.progressLabel}>SUPPORTERS DE LA FACTION</Text>
-            <Text style={styles.progressValue}>{formatNumber(faction.membres)} / {formatNumber(progress.objective)}</Text>
+            <Text style={styles.progressLabel}>{progress.max ? 'ÉVEIL TOTAL' : 'CHARGE VERS LA PROCHAINE FORME'}</Text>
+            <Text style={styles.progressValue}>{progress.max ? '10 000+' : `${formatNumber(faction.membres)} / ${formatNumber(progress.objective)}`}</Text>
           </View>
           <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${progress.max ? 100 : pct}%` }]} /></View>
           <View style={styles.progressFoot}>
-            <Text style={styles.progressNext}>{progress.max ? 'FORME TERMINALE' : `PROCHAINE MUTATION · ${progress.next?.name.toUpperCase() ?? 'OCÉAN SATURÉ'}`}</Text>
-            {me ? <Text style={styles.progressImpact}>TOI · {me.pronos_7j} CALL{me.pronos_7j > 1 ? 'S' : ''} · 7J</Text> : null}
+            <Text style={styles.progressNext}>{progress.max ? 'CŒUR ÉVEILLÉ' : `PROCHAINE MUTATION · ${progress.next?.name.toUpperCase()}`}</Text>
+            <Text style={styles.progressImpact}>ÉVEIL TOTAL · {progress.max ? 100 : totalPct} %</Text>
           </View>
           <View style={styles.mutationGuide}>
             <View style={styles.mutationPreview}>
               <Text style={styles.mutationCode}>{progress.next?.code ?? '∞'}</Text>
-              <Text numberOfLines={1} style={styles.mutationName}>{progress.next?.name.toUpperCase() ?? 'OCÉAN'}</Text>
+              <Text numberOfLines={1} style={styles.mutationName}>{progress.next?.name.toUpperCase() ?? 'ÉVEILLÉ'}</Text>
             </View>
             <View style={styles.mutationCopy}>
               <Text style={styles.mutationEyebrow}>{progress.max ? 'ÉTAT ACTUEL' : 'À FAIRE MAINTENANT'}</Text>

@@ -1,11 +1,45 @@
 import type { CommunityForm } from './types';
 
 export const COMMUNITY_FORMS: CommunityForm[] = [
-  { level: 1, code: 'I', name: 'Fiole', threshold: 0, reward: 0, phrase: 'Le noyau vient de s’allumer.' },
-  { level: 2, code: 'II', name: 'Flacon', threshold: 10, reward: 200, phrase: 'L’élixir commence à tenir sa charge.' },
-  { level: 3, code: 'III', name: 'Bombonne', threshold: 50, reward: 300, phrase: 'La faction devient impossible à ignorer.' },
-  { level: 4, code: 'IV', name: 'Calice', threshold: 100, reward: 500, phrase: 'Le récipient devient un véritable artefact.' },
-  { level: 5, code: 'V', name: 'Alambic', threshold: 500, reward: 750, phrase: 'La charge se raffine au lieu de simplement grossir.' },
-  { level: 6, code: 'VI', name: 'Cornue', threshold: 1000, reward: 1000, phrase: 'Le réacteur devient instable — dans le bon sens.' },
-  { level: 7, code: 'VII', name: 'Océan', threshold: 5000, reward: 1500, phrase: 'La faction est devenue son propre environnement.' },
+  {
+    state: 'dormant', level: 0, code: '0', name: 'Dormant', threshold: 0, reward: 0,
+    phrase: 'Le cœur attend sa première impulsion.', container: 'ampoule', intensity: 0,
+    coreBottom: 92, visualScale: 1.08,
+  },
+  {
+    state: 'ampoule', level: 1, code: 'I', name: 'Ampoule', threshold: 1, reward: 0,
+    phrase: 'Une première racine vient de s’éveiller.', container: 'ampoule', intensity: .22,
+    coreBottom: 92, visualScale: 1.08,
+  },
+  {
+    state: 'fiole', level: 2, code: 'II', name: 'Fiole', threshold: 100, reward: 200,
+    phrase: 'Le liquide commence à répondre au cœur.', container: 'fiole', intensity: .4,
+    coreBottom: 47, visualScale: .97,
+  },
+  {
+    state: 'flacon', level: 3, code: 'III', name: 'Flacon', threshold: 500, reward: 300,
+    phrase: 'Les ramifications gagnent tout le récipient.', container: 'flacon', intensity: .58,
+    coreBottom: 43, visualScale: .96,
+  },
+  {
+    state: 'reacteur', level: 4, code: 'IV', name: 'Réacteur', threshold: 2_000, reward: 500,
+    phrase: 'La pression collective devient instable.', container: 'reacteur', intensity: .78,
+    coreBottom: 42, visualScale: .9,
+  },
+  {
+    state: 'reliquaire', level: 5, code: 'V', name: 'Reliquaire', threshold: 5_000, reward: 1_000,
+    phrase: 'Le cœur est contenu par une armature cérémonielle.', container: 'reliquaire', intensity: 1,
+    coreBottom: 57, visualScale: .89,
+  },
+  {
+    state: 'awakened', level: 6, code: '∞', name: 'Cœur éveillé', threshold: 10_000, reward: 1_500,
+    phrase: 'La relique maîtrise enfin toute sa puissance.', container: 'reliquaire', intensity: .88,
+    coreBottom: 72, visualScale: .89,
+  },
 ];
+
+export const RELIC_TOTAL_AWAKENING = 10_000;
+
+export const RELIC_MUTATION_THRESHOLDS = COMMUNITY_FORMS
+  .filter((form) => form.level >= 2)
+  .map((form) => form.threshold);

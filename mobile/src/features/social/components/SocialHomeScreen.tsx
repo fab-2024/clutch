@@ -8,8 +8,8 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 
-import type { CommunityData } from '@/src/features/social/faction/types';
 import { useCommunityDashboard } from '@/src/features/social/faction/hooks/useCommunityDashboard';
+import type { CommunityData, CommunityMutationPresentation } from '@/src/features/social/faction/types';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors } from '@/src/theme';
 
@@ -27,14 +27,17 @@ type SocialHomeExperienceProps = {
   error: string | null;
   favoriteTeamId?: string | null;
   loading: boolean;
+  mutationOverride?: CommunityMutationPresentation | null;
+  onMutationPresented?: (eventId: string) => Promise<void> | void;
   onRefresh: () => void;
   onRetry: () => void;
+  reduceMotionOverride?: boolean;
   refreshing: boolean;
 };
 
 export default function SocialHomeScreen() {
   const { profile } = useAuth();
-  const { data, error, load, loading, refreshing } = useCommunityDashboard();
+  const { acknowledgeMutation, data, error, load, loading, refreshing } = useCommunityDashboard();
 
   return (
     <SocialHomeExperience
@@ -42,6 +45,7 @@ export default function SocialHomeScreen() {
       error={error}
       favoriteTeamId={profile?.equipe_favorite_id}
       loading={loading}
+      onMutationPresented={acknowledgeMutation}
       refreshing={refreshing}
       onRefresh={() => void load(true)}
       onRetry={() => void load()}
@@ -54,11 +58,15 @@ export function SocialHomeExperience({
   error,
   favoriteTeamId,
   loading,
+  mutationOverride,
+  onMutationPresented,
   onRefresh,
   onRetry,
+  reduceMotionOverride,
   refreshing,
 }: SocialHomeExperienceProps) {
-  const reduceMotion = useReducedMotion();
+  const systemReduceMotion = useReducedMotion();
+  const reduceMotion = reduceMotionOverride ?? systemReduceMotion;
   const rankedFactions = useMemo(
     () => [...data.factions].sort((a, b) => (
       b.membres - a.membres
@@ -90,7 +98,15 @@ export function SocialHomeExperience({
       ) : null}
 
       <Animated.View entering={entrance(20)}>
-        {loading ? <FactionHeroSkeleton /> : <FactionRelicHero faction={faction} me={data.moi} />}
+        {loading ? <FactionHeroSkeleton /> : (
+          <FactionRelicHero
+            faction={faction}
+            me={data.moi}
+            mutationOverride={mutationOverride}
+            onMutationPresented={onMutationPresented}
+            reduceMotionOverride={reduceMotionOverride}
+          />
+        )}
       </Animated.View>
 
       {!loading && rankedFactions.length ? (

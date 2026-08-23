@@ -48,6 +48,7 @@ export type CommunityMe = {
   total_activite: number | null;
   top_activite: CommunityActivity[];
   archives: CommunityArchive[];
+  mutation_a_presenter: CommunityMutationPresentation | null;
 };
 
 export type CommunityData = {
@@ -55,21 +56,45 @@ export type CommunityData = {
   moi: CommunityMe | null;
 };
 
+export type RelicContainer = 'ampoule' | 'fiole' | 'flacon' | 'reacteur' | 'reliquaire';
+
+export type RelicState = 'dormant' | RelicContainer | 'awakened';
+
 export type CommunityForm = {
+  state: RelicState;
   level: number;
   code: string;
   name: string;
   threshold: number;
   reward: number;
   phrase: string;
+  container: RelicContainer;
+  intensity: number;
+  coreBottom: number;
+  visualScale: number;
 };
 
 export type FactionProgress = {
+  charge: number;
   level: number;
   current: CommunityForm;
   next: CommunityForm | null;
   progress: number;
+  totalProgress: number;
+  tierStart: number;
   objective: number;
   remaining: number;
+  awakened: boolean;
   max: boolean;
+};
+
+export type CommunityMutationPresentation = {
+  id: string;
+  from_level: number;
+  to_level: number;
+  name: string;
+  threshold: number;
+  reward: number;
+  awakened: boolean;
+  occurred_at: string;
 };

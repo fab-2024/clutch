@@ -1,6 +1,10 @@
 import { supabase } from '@/src/lib/supabase';
 
-import type { CommunityData, CommunityFaction, CommunityMe } from './types';
+import type {
+  CommunityData,
+  CommunityFaction,
+  CommunityMe,
+} from './types';
 
 export async function loadCommunityData(): Promise<CommunityData> {
   const { data, error } = await supabase.rpc('clutch_communaute_dashboard_v4');
@@ -22,6 +26,9 @@ function normalizeFaction(value: CommunityFaction): CommunityFaction {
     niveau_atteint: Number(value.niveau_atteint ?? 1),
     croissance_24h: Number(value.croissance_24h ?? 0),
     croissance_7j: Number(value.croissance_7j ?? 0),
+    dernier_evenement_id: value.dernier_evenement_id == null
+      ? null
+      : String(value.dernier_evenement_id),
     dernier_evenement_recompense_volts: Number(value.dernier_evenement_recompense_volts ?? 0),
     moi: Boolean(value.moi),
   };
@@ -48,11 +55,13 @@ function normalizeMe(value: CommunityMe): CommunityMe {
     archives: Array.isArray(value.archives)
       ? value.archives.map((item) => ({
           ...item,
+          id: String(item.id),
           niveau: Number(item.niveau ?? 1),
           seuil: Number(item.seuil ?? 0),
           recompense_volts: Number(item.recompense_volts ?? 0),
           membres: Number(item.membres ?? 0),
         }))
       : [],
+    mutation_a_presenter: null,
   };
 }
