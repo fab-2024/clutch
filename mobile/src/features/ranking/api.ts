@@ -4,7 +4,9 @@ import { normalizeGradeState, normalizeGradeSummary } from './grades';
 import type {
   RankDashboard,
   RankLeaderboardRow,
+  RankMovement,
   RankReward,
+  RankRules,
   RankScope,
   RankSeason,
   RankSeasonState,
@@ -23,6 +25,8 @@ export async function loadRankDashboard(): Promise<RankDashboard> {
     leaderboards: Object.fromEntries(
       SCOPES.map((scope) => [scope, normalizeRows(boards[scope])]),
     ) as Record<RankScope, RankLeaderboardRow[]>,
+    recentMovements: normalizeMovements(payload.mouvements_recents),
+    rules: normalizeRules(payload.regles),
     reward: normalizeReward(payload.recompense),
   };
 }
@@ -86,6 +90,34 @@ function normalizeReward(value: unknown): RankReward {
     status,
     title: stringValue(row.titre) || (status === 'intersaison' ? 'Intersaison' : 'Récompense de fin de saison'),
     detail: stringValue(row.detail) || 'La récompense sera annoncée avant la clôture de la saison.',
+  };
+}
+
+function normalizeMovements(value: unknown): RankMovement[] {
+  return Array.isArray(value)
+    ? value.map((item) => {
+        const row = asRecord(item);
+        return {
+          id: stringValue(row.id),
+          matchId: stringValue(row.match_id),
+          teamA: stringValue(row.equipe_a) || 'Équipe A',
+          teamB: stringValue(row.equipe_b) || 'Équipe B',
+          game: stringValue(row.jeu),
+          status: row.statut === 'perdu' ? 'perdu' as const : 'gagne' as const,
+          deltaFrags: numberValue(row.delta_frags),
+          settledAt: stringValue(row.regle_le),
+        };
+      }).filter((movement) => Boolean(movement.id))
+    : [];
+}
+
+function normalizeRules(value: unknown): RankRules {
+  const row = asRecord(value);
+  return {
+    base: numberValue(row.base, 1000),
+    placements: numberValue(row.placements, 5),
+    placementK: numberValue(row.k_placement, 60),
+    rankedK: numberValue(row.k_classe, 40),
   };
 }
 

@@ -44,9 +44,29 @@ export type RankReward = {
   detail: string;
 };
 
+export type RankMovement = {
+  id: string;
+  matchId: string;
+  teamA: string;
+  teamB: string;
+  game: string;
+  status: 'gagne' | 'perdu';
+  deltaFrags: number;
+  settledAt: string;
+};
+
+export type RankRules = {
+  base: number;
+  placements: number;
+  placementK: number;
+  rankedK: number;
+};
+
 export type RankDashboard = {
   season: RankSeason | null;
   state: RankSeasonState | null;
   leaderboards: Record<RankScope, RankLeaderboardRow[]>;
+  recentMovements: RankMovement[];
+  rules: RankRules;
   reward: RankReward;
 };

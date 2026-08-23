@@ -18,6 +18,7 @@ import { teamHue } from '@/src/utils/teams';
 
 import { loadProfileData } from '../api';
 import type { ProfileBadge, ProfileData, ProfileRanking, RecentPrediction } from '../types';
+import OwnProfileOverview from './OwnProfileOverview';
 import ProfileShowcaseCard from './ProfileShowcaseCard';
 import ProfileShareCard from './ProfileShareCard';
 
@@ -30,7 +31,7 @@ type ProfileScreenProps = {
 export default function ProfileScreen({ previewData, profilePseudo, publicView = false }: ProfileScreenProps) {
   const { profile, session } = useAuth();
   const { equipped } = useCosmetics();
-  const { refresh: refreshEconomy, volts } = useEconomy();
+  const { frags, refresh: refreshEconomy, volts } = useEconomy();
   const [data, setData] = useState<ProfileData | null>(previewData ?? null);
   const [loading, setLoading] = useState(!previewData);
   const [refreshing, setRefreshing] = useState(false);
@@ -133,6 +134,44 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
           <Text style={styles.blockedStateCopy}>Ce compte et le tien ne peuvent plus interagir.</Text>
           <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.blockedStateButton}><Text style={styles.blockedStateButtonText}>RETOUR AU SOCIAL</Text></Pressable>
         </View>
+      </Screen>
+    );
+  }
+
+  if (!publicView) {
+    return (
+      <Screen>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
+        >
+          <ProfileHeader
+            frags={frags ?? data?.ranking.frags}
+            onOpenSettings={() => router.push('/settings/profile')}
+            publicProfile={data?.publicProfile !== false}
+            publicView={false}
+            volts={volts ?? (previewData ? 300 : null)}
+          />
+          <ProfileSwitcher onOpenCollection={() => router.push((previewData ? '/showcase-preview' : '/showcase') as never)} />
+
+          {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text><Pressable onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
+
+          <OwnProfileOverview
+            cosmetics={cosmetics}
+            data={data}
+            email={session?.user.email}
+            loading={loading}
+            onOpenAccount={() => router.push('/settings/account')}
+            onOpenInventory={() => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
+            onOpenPreferences={() => router.push('/settings/profile')}
+            onOpenShop={() => router.push((previewData ? '/shop-preview' : '/shop') as never)}
+            onSignOut={() => void leaveSession()}
+            pseudo={data?.pseudo || pseudo}
+            signingOut={signingOut}
+            signOutError={signOutError}
+          />
+        </ScrollView>
       </Screen>
     );
   }
@@ -254,7 +293,19 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
   );
 }
 
-function ProfileHeader({ publicProfile, publicView }: { publicProfile: boolean; publicView: boolean }) {
+function ProfileHeader({
+  frags,
+  onOpenSettings,
+  publicProfile,
+  publicView,
+  volts,
+}: {
+  frags?: number | null;
+  onOpenSettings?: () => void;
+  publicProfile: boolean;
+  publicView: boolean;
+  volts?: number | null;
+}) {
   return (
     <View style={styles.header}>
       {publicView ? (
@@ -262,7 +313,56 @@ function ProfileHeader({ publicProfile, publicView }: { publicProfile: boolean; 
       ) : (
         <View style={styles.brandRow}><View style={styles.logoBox}><Text style={styles.logoGlyph}>C</Text></View><View style={styles.wordmarkRow}><Text style={styles.wordmark}>CLUTCH</Text><View style={styles.dot} /></View></View>
       )}
-      <View style={styles.visibility}><View style={[styles.visibilityDot, !publicProfile && styles.visibilityDotPrivate]} /><Text style={styles.visibilityText}>{publicProfile ? 'PUBLIC' : 'PRIVÉ'}</Text></View>
+      <View style={styles.headerActions}>
+        {publicView ? (
+          <View style={styles.visibility}><View style={[styles.visibilityDot, !publicProfile && styles.visibilityDotPrivate]} /><Text style={styles.visibilityText}>{publicProfile ? 'PUBLIC' : 'PRIVÉ'}</Text></View>
+        ) : (
+          <>
+            <HeaderBalance kind="frags" value={frags} />
+            <HeaderBalance kind="volts" value={volts} />
+          </>
+        )}
+        {onOpenSettings ? (
+          <Pressable
+            accessibilityLabel="Ouvrir les paramètres"
+            accessibilityRole="button"
+            onPress={onOpenSettings}
+            style={({ pressed }) => [styles.headerSettings, pressed && styles.pressed]}
+          >
+            <Text style={styles.headerSettingsGlyph}>⚙</Text>
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function HeaderBalance({ kind, value }: { kind: CurrencyKind; value?: number | null }) {
+  return (
+    <View accessible accessibilityLabel={`${kind === 'frags' ? 'Frags' : 'Volts'} : ${value == null ? 'indisponible' : formatNumber(value)}`} style={styles.headerBalance}>
+      <CurrencyIcon color={kind === 'frags' ? colors.frag : colors.volt} kind={kind} size={14} />
+      <View>
+        <Text style={styles.headerBalanceLabel}>{kind === 'frags' ? 'FRAGS' : 'VOLTS'}</Text>
+        <Text style={styles.headerBalanceValue}>{value == null ? '—' : formatNumber(value)}</Text>
+      </View>
+    </View>
+  );
+}
+
+function ProfileSwitcher({ onOpenCollection }: { onOpenCollection: () => void }) {
+  return (
+    <View accessibilityRole="tablist" style={styles.profileSwitcher}>
+      <View accessibilityRole="tab" accessibilityState={{ selected: true }} style={styles.profileSwitchActive}>
+        <Text style={styles.profileSwitchActiveText}>PROFIL</Text>
+      </View>
+      <Pressable
+        accessibilityRole="tab"
+        accessibilityState={{ selected: false }}
+        onPress={onOpenCollection}
+        style={({ pressed }) => [styles.profileSwitch, pressed && styles.pressed]}
+      >
+        <Text style={styles.profileSwitchText}>VITRINE PUBLIQUE</Text>
+      </Pressable>
     </View>
   );
 }
@@ -369,7 +469,12 @@ const styles = StyleSheet.create({
   blockedStateButton: { minHeight: 48, marginTop: 8, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.volt },
   blockedStateButtonText: { ...typography.action, color: '#080A0C' },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 22 },
-  header: { minHeight: 78, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 }, logoBox: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, logoGlyph: { color: '#06090C', fontFamily: fonts.display, fontSize: 25, lineHeight: 28, letterSpacing: -2 }, wordmarkRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 }, wordmark: { color: colors.text, fontFamily: fonts.bold, fontSize: 17, letterSpacing: 3.1 }, dot: { width: 5, height: 5, marginBottom: 3, borderRadius: 3, backgroundColor: colors.volt }, back: { minHeight: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { ...typography.action, color: colors.text, letterSpacing: 0.6 }, visibility: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { ...typography.label, color: colors.text, letterSpacing: 0.5 },
+  header: { minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 }, logoBox: { width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, logoGlyph: { color: '#06090C', fontFamily: fonts.display, fontSize: 23, lineHeight: 25, letterSpacing: -2 }, wordmarkRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 3 }, wordmark: { color: colors.text, fontFamily: fonts.bold, fontSize: 14, letterSpacing: 2.4 }, dot: { width: 5, height: 5, marginBottom: 3, borderRadius: 3, backgroundColor: colors.volt }, back: { minHeight: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { ...typography.action, color: colors.text, letterSpacing: 0.6 }, headerActions: { flexDirection: 'row', alignItems: 'center', gap: 6 }, headerBalance: { minWidth: 65, height: 38, paddingHorizontal: 7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderRadius: 12, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, headerBalanceLabel: { ...typography.label, color: colors.textMuted, fontSize: 7, lineHeight: 9, letterSpacing: .35 }, headerBalanceValue: { color: colors.text, fontFamily: fonts.bold, fontSize: 12, lineHeight: 14 }, visibility: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { ...typography.label, color: colors.text, letterSpacing: 0.5 }, headerSettings: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, headerSettingsGlyph: { color: colors.text, fontSize: 17, lineHeight: 20, fontWeight: '900' },
+  profileSwitcher: { minHeight: 54, marginHorizontal: 16, padding: 4, flexDirection: 'row', borderRadius: 17, backgroundColor: '#080D11', borderWidth: 1, borderColor: '#26313A' },
+  profileSwitchActive: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: '#171D10', borderWidth: 1, borderColor: '#48551F' },
+  profileSwitch: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 15 },
+  profileSwitchActiveText: { ...typography.action, color: colors.volt, letterSpacing: .4 },
+  profileSwitchText: { ...typography.action, color: colors.textMuted, letterSpacing: .4 },
   error: { marginHorizontal: spacing.md, padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', flexDirection: 'row', gap: 10, justifyContent: 'space-between' }, errorText: { ...typography.body, flex: 1, color: '#FF9AA2' }, retry: { ...typography.action, color: colors.volt },
   profileTools: { marginHorizontal: spacing.md, gap: 9 },
   toolEntry: { marginHorizontal: 0, marginTop: 0 },

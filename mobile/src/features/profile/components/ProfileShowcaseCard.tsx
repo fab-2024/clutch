@@ -116,8 +116,28 @@ export default function ProfileShowcaseCard({
   );
 }
 
-export function ProfileRelicThumbnail({ accent, level, name }: { accent: string; level: number; name: string }) {
+export function ProfileRelicThumbnail({
+  accent,
+  compact = false,
+  level,
+  name,
+  size = 76,
+}: {
+  accent: string;
+  compact?: boolean;
+  level: number;
+  name: string;
+  size?: number;
+}) {
   const relicAsset = RELIC_ASSETS[Math.max(0, Math.min(RELIC_ASSETS.length - 1, level - 1))];
+  if (compact) {
+    return (
+      <View accessible accessibilityLabel={`Relique principale, ${name}`} style={[styles.compactRelicBlock, { height: size, width: size }]}>
+        <View style={[styles.compactRelicHalo, { borderColor: alpha(accent, '6E'), height: size * .9, width: size * .9 }]} />
+        <Image resizeMode="contain" source={relicAsset} style={{ height: size * .95, width: size * .95 }} />
+      </View>
+    );
+  }
   return (
     <View accessible accessibilityLabel={`Relique principale, ${name}`} style={styles.relicBlock}>
       <View style={[styles.relicHalo, { borderColor: alpha(accent, '6E') }]} />
@@ -158,6 +178,8 @@ const styles = StyleSheet.create({
   relicImage: { width: 142, height: 145 },
   relicLabel: { ...typography.label, marginTop: -5, color: colors.textMuted, letterSpacing: .45 },
   relicName: { ...typography.eyebrow, width: 142, marginTop: 2, textAlign: 'center', letterSpacing: .35 },
+  compactRelicBlock: { position: 'relative', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderRadius: 999 },
+  compactRelicHalo: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(0,0,0,.3)', borderWidth: 1 },
   visibilityPromise: { ...typography.label, zIndex: 2, marginTop: 2, color: '#AAB3BC', letterSpacing: .45, textAlign: 'center' },
   actions: { zIndex: 2, marginTop: 14, gap: 8 },
   primaryAction: { minHeight: 50, alignItems: 'center', justifyContent: 'center', borderRadius: 16, backgroundColor: colors.volt, boxShadow: '0 10px 28px rgba(232,255,61,.13)' },

@@ -1,4 +1,4 @@
-export type SeasonalGradeKey = 'recrue' | 'challenger' | 'elite' | 'master' | 'clutch';
+export type SeasonalGradeKey = 'bronze' | 'argent' | 'or' | 'platine' | 'diamant' | 'mythique';
 
 export type SeasonalGradeState = {
   classe: boolean;
@@ -13,6 +13,8 @@ export type SeasonalGradeState = {
   prochaine_cle?: SeasonalGradeKey;
   prochain_libelle?: string;
   prochain_minimum?: number;
+  prochain_objectif_pronostics?: number;
+  prochains_pronostics_restants?: number;
 };
 
 export type SeasonalGradeSummary = {
@@ -28,16 +30,91 @@ export type GradeTransition = {
   kind: 'placement' | 'reveal' | 'promotion' | 'demotion' | 'stable';
 };
 
-const GRADE_ACCENTS: Record<SeasonalGradeKey, string> = {
-  recrue: '#A8B1BA',
-  challenger: '#60B7FF',
-  elite: '#A982FF',
-  master: '#FFB454',
-  clutch: '#E8FF3D',
+export type SeasonalGradeDefinition = {
+  key: SeasonalGradeKey;
+  label: string;
+  minimum: number;
+  maximum: number | null;
+  accent: string;
+  rewardType: string;
+  rewardName: string;
+  rewardDetail: string;
 };
+
+export const SEASONAL_GRADE_LADDER: SeasonalGradeDefinition[] = [
+  {
+    key: 'bronze',
+    label: 'Bronze',
+    minimum: 0,
+    maximum: 849,
+    accent: '#B87845',
+    rewardType: 'CADRE',
+    rewardName: 'Entaille Bronze',
+    rewardDetail: 'Un cadre graphite marqué d’une première facette.',
+  },
+  {
+    key: 'argent',
+    label: 'Argent',
+    minimum: 850,
+    maximum: 1049,
+    accent: '#AAB4C0',
+    rewardType: 'TITRE',
+    rewardName: 'Trace nette',
+    rewardDetail: 'Un titre saisonnier visible sur ton profil public.',
+  },
+  {
+    key: 'or',
+    label: 'Or',
+    minimum: 1050,
+    maximum: 1249,
+    accent: '#E6B84A',
+    rewardType: 'BANNIÈRE',
+    rewardName: 'Éclat de saison',
+    rewardDetail: 'Une bannière traversée par trois fragments dorés.',
+  },
+  {
+    key: 'platine',
+    label: 'Platine',
+    minimum: 1250,
+    maximum: 1449,
+    accent: '#67D4C1',
+    rewardType: 'VOLTS',
+    rewardName: 'Réserve Platine',
+    rewardDetail: 'Une allocation cosmétique de 300 Volts.',
+  },
+  {
+    key: 'diamant',
+    label: 'Diamant',
+    minimum: 1450,
+    maximum: 1649,
+    accent: '#8AA8FF',
+    rewardType: 'RELIQUE',
+    rewardName: 'Cristal classé',
+    rewardDetail: 'Une relique saisonnière aux facettes complètes.',
+  },
+  {
+    key: 'mythique',
+    label: 'Mythique',
+    minimum: 1650,
+    maximum: null,
+    accent: '#E8FF3D',
+    rewardType: 'ENSEMBLE',
+    rewardName: 'Cœur Mythique',
+    rewardDetail: 'Le set complet de la saison. Requiert aussi 30 verdicts classés.',
+  },
+];
+
+const GRADE_ACCENTS = Object.fromEntries(
+  SEASONAL_GRADE_LADDER.map((grade) => [grade.key, grade.accent]),
+) as Record<SeasonalGradeKey, string>;
 
 export function gradeAccent(grade?: SeasonalGradeState | SeasonalGradeSummary | null) {
   return grade?.cle ? GRADE_ACCENTS[grade.cle] : '#E8FF3D';
+}
+
+export function gradeDefinition(grade?: SeasonalGradeState | SeasonalGradeSummary | SeasonalGradeKey | null) {
+  const key = typeof grade === 'string' ? grade : grade?.cle;
+  return SEASONAL_GRADE_LADDER.find((item) => item.key === key) ?? null;
 }
 
 export function gradeTransition(
@@ -71,6 +148,8 @@ export function normalizeGradeState(value: unknown): SeasonalGradeState {
     prochaine_cle: nextKey,
     prochain_libelle: typeof row.prochain_libelle === 'string' ? row.prochain_libelle : undefined,
     prochain_minimum: optionalNumber(row.prochain_minimum),
+    prochain_objectif_pronostics: optionalNumber(row.prochain_objectif_pronostics),
+    prochains_pronostics_restants: optionalNumber(row.prochains_pronostics_restants),
   };
 }
 
@@ -87,11 +166,12 @@ export function normalizeGradeSummary(value: unknown): SeasonalGradeSummary | nu
 }
 
 function isGradeKey(value: unknown): value is SeasonalGradeKey {
-  return value === 'recrue'
-    || value === 'challenger'
-    || value === 'elite'
-    || value === 'master'
-    || value === 'clutch';
+  return value === 'bronze'
+    || value === 'argent'
+    || value === 'or'
+    || value === 'platine'
+    || value === 'diamant'
+    || value === 'mythique';
 }
 
 function optionalNumber(value: unknown) {
