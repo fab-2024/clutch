@@ -51,7 +51,7 @@ function Balance({
   return (
     <View style={styles.balance}>
       <View style={[styles.balanceMark, kind === 'volts' ? styles.voltsMark : styles.fragsMark]}>
-        <CurrencyIcon color={kind === 'volts' ? '#080A0C' : colors.frag} kind={kind} size={14} />
+        <CurrencyIcon kind={kind} size={18} />
       </View>
       <View style={styles.balanceCopy}>
         <Text style={styles.balanceLabel}>{label}</Text>
@@ -136,14 +136,14 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   balanceMark: {
-    width: 22,
-    height: 22,
+    width: 26,
+    height: 26,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fragsMark: { backgroundColor: '#13243A', borderWidth: 1, borderColor: '#315A86' },
-  voltsMark: { backgroundColor: colors.volt },
+  fragsMark: { backgroundColor: '#090E12', borderWidth: 1, borderColor: '#35414B' },
+  voltsMark: { backgroundColor: '#10160A', borderWidth: 1, borderColor: '#47551A' },
   balanceCopy: { minWidth: 0 },
   balanceLabel: {
     ...typography.eyebrow,

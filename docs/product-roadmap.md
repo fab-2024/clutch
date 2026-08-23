@@ -1,7 +1,8 @@
 # Roadmap produit exécutable
 
 Cette roadmap traduit la vision produit en lots vérifiables. Le détail des
-règles se trouve dans [les contrats produit](./product-contracts.md).
+règles se trouve dans [les contrats produit](./product-contracts.md) et la
+direction consolidée dans [le blueprint GRIFF](./griff-blueprint.md).
 
 ## Principes de livraison
 
@@ -94,6 +95,36 @@ entièrement explicable après résolution.
 - [x] Ajouter une piste d'audit aux corrections administratives.
 - [x] Tester résolution simultanée, rejeu et concurrence.
 
+## Lot 1 bis — Cœur de bêta GRIFF
+
+### Navigation, Rank et Hub
+
+- [x] Ajouter Rank comme cinquième onglet sans réactiver Room.
+- [x] Construire Ma saison sur le rating Frags existant.
+- [x] Réunir les classements Global, Cercle et Faction.
+- [x] Afficher le contrat de récompense de saison sans inventer d'objet.
+- [x] Relier la progression du Hub à Rank.
+- [x] Afficher dernier verdict, mission réelle de faction et dernière
+  récompense possédée dans le Hub.
+
+### Analytics et sécurité
+
+- [x] Instrumenter onboarding, match, call, verdict, Frags, Rank, profil,
+  mission, achat et notification.
+- [x] Soumettre les événements clients à un consentement facultatif.
+- [x] Ajouter une déclaration 15+ sans collecter la date de naissance.
+- [x] Ajouter blocage, déblocage, signalement et règles de modération.
+- [x] Appliquer et tester les migrations du bloc B sur Supabase.
+- [ ] Faire valider juridiquement l'âge minimum et les documents.
+
+### Fermeture de release
+
+- [ ] Autoriser le traitement de l'UUID Supabase par RevenueCat.
+- [ ] Déployer les trois fonctions Edge compte et Founder Pack.
+- [ ] Effectuer la recette sandbox achat, restauration et suppression.
+- [ ] Activer la protection Auth contre les mots de passe compromis.
+- [ ] Signer la matrice native iOS/Android, notifications et liens.
+
 ## Lot 2 — Rétention et expertise
 
 ### 2.1 Charge de faction
@@ -128,22 +159,25 @@ Le planificateur, la file idempotente et le relais Expo sont déployés ; le
 cycle cron répond en production. Les deux types de livraison restent ouverts
 jusqu'à leur validation sur une build native EAS avec un vrai appareil.
 
-## Lot 3 — Usage des Volts
+## Lot 3 — Usage des Volts et Collection
 
-Ce lot ne démarre qu'après mesure d'une rétention J7 et d'un retour au verdict
-suffisants pour justifier une économie cosmétique.
+Le socle a été construit avant la mesure de bêta. Il ne doit plus être étendu
+avant d'avoir mesuré une rétention J7 et un retour au verdict suffisants.
 
-- [ ] Catalogue de cadres, emblèmes, titres et effets de call.
-- [ ] Apparences du Core et effets de faction.
-- [ ] Inventaire, équipement et historique d'achat.
-- [ ] Aperçu avant achat et confirmation explicite.
-- [ ] Aucun avantage compétitif, loot box ou récompense réelle.
+- [x] Catalogue de cadres, bannières, titres, reliques et effets de profil.
+- [x] Apparences du Core et effets de faction.
+- [x] Inventaire, équipement et historique d'achat.
+- [x] Aperçu avant achat et confirmation explicite.
+- [x] Aucun avantage compétitif, loot box ou récompense réelle.
+- [ ] Réduire l'offre visible à une collection de lancement éditorialisée.
+- [ ] Mesurer acquisition, équipement, dépense et frustration sur une cohorte.
+- [ ] Tester le Pack Fondateur seulement après stabilité de la boucle gratuite.
 
-## Instrumentation préalable
+## Instrumentation de bêta
 
-Avant le Lot 1, choisir un outil et implémenter un vocabulaire d'événements
-stable. La première période sert à établir la base ; les seuils de décision sont
-fixés ensuite.
+Le socle first-party privé, la liste blanche d'événements et le consentement
+facultatif sont en place. La première cohorte fermée doit maintenant établir la
+base ; les seuils de décision seront fixés ensuite.
 
 Indicateurs à suivre :
 
@@ -155,14 +189,18 @@ Indicateurs à suivre :
 - rétention J1 et J7 ;
 - participation au Cercle et à la guerre de factions.
 
+Les événements nécessaires sont disponibles. Les tableaux de cohorte et les
+seuils chiffrés restent à produire à partir d'utilisateurs réels.
+
 ## Prochaine tranche recommandée
 
-La tranche active est la **préparation de release** : valider le parcours de
-suppression sur l’environnement distant, configurer le domaine HTTPS et ses
-associations iOS/Android, exécuter les tests E2E sur les deux plateformes puis
-faire la matrice de contrôle native. Le détail et les responsabilités sont dans
+La tranche active est la **fermeture externe du bloc B** : autoriser puis
+déployer les fonctions RevenueCat, valider achat/restauration/suppression en
+sandbox, activer la protection Auth contre les mots de passe compromis,
+configurer le domaine HTTPS et ses associations iOS/Android, puis signer la
+matrice native. Le détail et les responsabilités sont dans
 [`mobile/docs/release-readiness.md`](../mobile/docs/release-readiness.md).
 
-Les nouveaux lots produit restent gelés jusqu’à fermeture de ces critères. Les
-seuls travaux structurels admis entre-temps sont les extractions sans changement
-visuel et l’ajout de pagination sur les listes qui grandissent.
+Les nouveaux lots produit restent gelés jusqu'à fermeture de ces critères. La
+bêta fermée et la mesure du bloc C viennent immédiatement après ; la Collection
+et la monétisation ne doivent pas être enrichies avant cette preuve d'usage.

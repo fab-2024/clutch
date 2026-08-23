@@ -1,6 +1,6 @@
 # Contrats produit GRIFF V1
 
-Version : 1.1
+Version : 1.2
 
 Statut : décision produit adoptée, nom public encore conditionnel
 
@@ -13,6 +13,9 @@ Nom technique actuel : `Clutch`
 Ce document fixe le sens des mécaniques du produit avant leur extension. Les
 écrans peuvent évoluer, mais ils ne doivent pas contredire ces règles sans une
 nouvelle décision produit explicite et versionnée.
+
+Il détaille le [blueprint produit et business](./griff-blueprint.md), qui reste
+la source synthétique de la direction actuelle.
 
 ## 0. Décisions du bloc A
 
@@ -39,6 +42,20 @@ initial :
 La recherche de nom et la stratégie de migration sont suivies dans
 [le dossier de validation GRIFF](./griff-name-clearance.md) et
 [la matrice Clutch vers GRIFF](./clutch-to-griff-migration-matrix.md).
+
+### État du bloc B
+
+- la navigation Hub, Matchs, Social, Rank et Moi est implémentée ;
+- Rank orchestre le rating existant sans modifier son calcul ;
+- le Hub consomme le dernier verdict, la mission de faction et la dernière
+  récompense réellement possédée ;
+- l'analytics de la boucle est first-party, sur consentement facultatif et sans
+  métadonnée libre ;
+- la déclaration 15+, le blocage, le déblocage, le signalement et les règles de
+  modération sont intégrés ;
+- les migrations correspondantes sont appliquées et testées sur Supabase ;
+- les fonctions Edge RevenueCat restent volontairement non déployées en attente
+  d'une autorisation explicite du traitement de l'UUID Supabase.
 
 ## 1. Promesse
 
@@ -307,16 +324,21 @@ L'événement central est un call classé réglé puis révélé au joueur. La m
 principale est le nombre hebdomadaire de joueurs qui reviennent consulter leur
 verdict.
 
-Événements minimums :
+Événements minimums actuellement contractuels :
 
-- `match_viewed` ;
-- `call_option_selected` ;
-- `call_locked` ;
-- `community_split_revealed` ;
-- `call_resolved` ;
-- `result_revealed` ;
-- `next_call_opened` ;
-- `faction_charge_awarded`.
+- `onboarding_commence` et `onboarding_termine` ;
+- `match_consulte` ;
+- `call_commence` et `call_verrouille` ;
+- `resultat_consulte` et `frags_gagnes` ;
+- `rank_consulte` et `profil_public_consulte` ;
+- `mission_commencee` et `mission_terminee` ;
+- `objet_obtenu`, `objet_equipe` et `objet_retire` ;
+- `achat_commence` et `achat_termine` ;
+- `notification_ouverte`.
+
+Les événements clients sont refusés tant que l'utilisateur n'a pas consenti.
+Les événements compétitifs ou économiques faisant autorité sont produits côté
+serveur afin de ne pas dépendre d'une déclaration du mobile.
 
 Le premier relevé doit établir une base pour : activation par un premier call,
 taux de retour après résolution, rétention J1/J7 et passage du récapitulatif au
@@ -331,13 +353,17 @@ prochain call. Aucun objectif chiffré n'est fixé avant cette base réelle.
 | Snapshots Frags/rang avant-après | En place et consommés par le mobile |
 | Révélation communautaire | En place après validation du call |
 | Grade saisonnier à cinq paliers | En place |
+| Rank : saison, classements et récompenses | En place sur le rating existant |
+| Hub : verdict, mission de faction et récompense | En place avec données serveur |
 | XP permanente | Calcul mobile existant, autorité serveur à consolider |
 | Forme permanente par supporters | En place |
 | Charge temporaire par activité | À construire |
 | Volts de mutation | En place |
 | Conviction multiplicative | Historique à déprécier |
-| Instrumentation de la boucle | Socle first-party privé en place, vocabulaire principal à compléter |
+| Instrumentation de la boucle | En place, first-party et soumise au consentement |
+| Âge minimum, blocage et signalement | En place ; validation juridique finale requise |
 | Suppression de compte coordonnée | Implémentée, déploiement et recette distante requis |
+| Fonctions Edge RevenueCat | Code prêt, déploiement différé par décision explicite |
 | Liens publics HTTPS | Implémentés, domaine et associations stores à configurer |
 
 ## 11. Hors périmètre V1

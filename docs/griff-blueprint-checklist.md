@@ -5,6 +5,8 @@ Date de l'audit : 22 août 2026
 Périmètre : application mobile, dépôt Git, base Supabase distante et fonctions
 Edge actuellement déployées.
 
+Document maître : [Blueprint produit & business — GRIFF v1.2](./griff-blueprint.md).
+
 ## Légende
 
 - ✅ **Fait** : présent dans le produit et, lorsque nécessaire, appliqué sur
@@ -500,7 +502,7 @@ Références Supabase :
 
 ## Phase 0 — Cadrage
 
-- ✅ Positionnement adopté dans le contrat produit GRIFF V1.1.
+- ✅ Positionnement adopté dans le contrat produit GRIFF V1.2.
 - 🌐 Nom GRIFF au statut AMBRE, non validé définitivement.
 - 🌐 Domaines et identifiants non réservés.
 - ✅ Navigation à cinq onglets, Rank inclus.
@@ -572,7 +574,7 @@ Références Supabase :
 
 1. 🟡 GRIFF pré-contrôlé et classé AMBRE ; recherche juridique et réservations
    externes encore requises.
-2. ✅ Blueprint adopté comme contrat produit GRIFF V1.1.
+2. ✅ Blueprint adopté comme contrat produit GRIFF V1.2.
 3. ✅ Rating actuel confirmé comme modèle Frags.
 4. ✅ Grades actuels et cinquième emplacement `apparence_core` confirmés.
 5. ✅ Matrice de migration écrite sans renommer les identifiants techniques.
