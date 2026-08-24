@@ -21,14 +21,24 @@ export function GriffHeader({ economy, variant = 'default' }: Props = {}) {
   return (
     <View style={[styles.root, social && styles.rootSocial]}>
       {social ? (
+        <LinearGradient
+          colors={['rgba(8,18,25,.92)', 'rgba(5,10,14,.72)', 'rgba(2,5,8,0)']}
+          end={{ x: 1, y: 0.5 }}
+          pointerEvents="none"
+          start={{ x: 0, y: 0.5 }}
+          style={styles.socialAtmosphere}
+        />
+      ) : null}
+
+      {social ? (
         <View accessibilityLabel="GRIFF" accessibilityRole="image" style={styles.socialBrand}>
           <LinearGradient
-            colors={['#F2B07D', '#9A4D2C', '#4C241D']}
+            colors={['#18191A', '#090B0D', '#030405']}
             end={{ x: 1, y: 1 }}
             start={{ x: 0, y: 0 }}
             style={styles.socialMark}
           >
-            <GriffMark size={30} style={styles.socialMarkImage} />
+            <GriffMark size={35} style={styles.socialMarkImage} />
           </LinearGradient>
           <Text style={styles.socialWord}>GRIFF</Text>
           <View style={styles.socialDot} />
@@ -45,6 +55,15 @@ export function GriffHeader({ economy, variant = 'default' }: Props = {}) {
         accessibilityRole="summary"
         style={[styles.wallet, social && styles.walletSocial]}
       >
+        {social ? (
+          <LinearGradient
+            colors={['rgba(42,46,49,.88)', 'rgba(10,13,16,.98)', 'rgba(2,4,6,.99)']}
+            end={{ x: 0.72, y: 1 }}
+            pointerEvents="none"
+            start={{ x: 0.2, y: 0 }}
+            style={styles.walletSurface}
+          />
+        ) : null}
         <Balance compact={social} kind="frags" label="FRAGS" value={displayedFrags} />
         {social ? <View style={styles.walletDivider} /> : null}
         <Balance compact={social} kind="volts" label="VOLTS" value={displayedVolts} />
@@ -75,11 +94,11 @@ function Balance({
         kind === 'volts' ? styles.voltsMark : styles.fragsMark,
         compact && styles.balanceMarkCompact,
       ]}>
-        <CurrencyIcon kind={kind} size={compact ? 17 : 24} />
+        <CurrencyIcon kind={kind} size={compact ? 29 : 24} />
       </View>
       <View style={styles.balanceCopy}>
-        <Text style={styles.balanceLabel}>{label}</Text>
-        <Text numberOfLines={1} style={styles.balanceValue}>{formatBalance(value)}</Text>
+        <Text style={[styles.balanceLabel, compact && styles.balanceLabelCompact]}>{label}</Text>
+        <Text numberOfLines={1} style={[styles.balanceValue, compact && styles.balanceValueCompact]}>{formatBalance(value)}</Text>
       </View>
     </View>
   );
@@ -102,7 +121,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
-  rootSocial: { minHeight: 50, paddingHorizontal: 18, paddingVertical: 3 },
+  rootSocial: {
+    minHeight: 96,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+    overflow: 'hidden',
+  },
+  socialAtmosphere: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    opacity: 0.82,
+  },
   brandRow: {
     minWidth: 0,
     flexDirection: 'row',
@@ -112,34 +144,41 @@ const styles = StyleSheet.create({
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 10,
   },
   socialMark: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
+    width: 45,
+    height: 45,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,193,145,.52)',
-    boxShadow: '0 0 16px rgba(173,77,39,.2)',
+    borderWidth: 1.25,
+    borderColor: 'rgba(201,125,79,.82)',
+    boxShadow: '0 0 18px rgba(190,101,55,.22), inset 0 1px 0 rgba(255,211,171,.18)',
   },
-  socialMarkImage: { width: 24, height: 24, tintColor: '#090A0B' },
+  socialMarkImage: {
+    width: 35,
+    height: 35,
+    tintColor: '#C98154',
+  },
   socialWord: {
-    color: '#F5F3EE',
+    color: '#F8F7F4',
     fontFamily: fonts.bold,
-    fontSize: 16,
-    lineHeight: 19,
-    letterSpacing: 2.8,
+    fontSize: 19,
+    lineHeight: 22,
+    letterSpacing: 3.2,
+    textShadowColor: 'rgba(255,255,255,.16)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   socialDot: {
-    width: 5,
-    height: 5,
-    marginLeft: -3,
-    marginTop: 10,
+    width: 6,
+    height: 6,
+    marginLeft: -7,
+    marginTop: 15,
     borderRadius: 3,
     backgroundColor: colors.volt,
-    boxShadow: '0 0 7px rgba(232,255,61,.65)',
+    boxShadow: '0 0 9px rgba(232,255,61,.72)',
   },
   wallet: {
     flexShrink: 1,
@@ -148,20 +187,29 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   walletSocial: {
-    minHeight: 36,
-    paddingHorizontal: 3,
+    width: 209,
+    minHeight: 56,
+    paddingHorizontal: 5,
     gap: 0,
     overflow: 'hidden',
-    borderRadius: 15,
-    backgroundColor: 'rgba(7,11,15,.94)',
-    borderWidth: 1,
-    borderColor: '#26313B',
-    boxShadow: '0 0 14px rgba(27,77,98,.08)',
+    borderRadius: 22,
+    backgroundColor: '#070A0D',
+    borderWidth: 1.25,
+    borderColor: 'rgba(181,109,69,.72)',
+    boxShadow: '0 5px 20px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,217,183,.12)',
+  },
+  walletSurface: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
   walletDivider: {
     width: 1,
-    height: 24,
-    backgroundColor: '#222B33',
+    height: 34,
+    backgroundColor: 'rgba(111,116,120,.36)',
+    boxShadow: '1px 0 0 rgba(0,0,0,.5)',
   },
   balance: {
     minWidth: 76,
@@ -176,10 +224,11 @@ const styles = StyleSheet.create({
   fragsBalance: { backgroundColor: '#0C0B13', borderColor: '#353047' },
   voltsBalance: { backgroundColor: '#0D120B', borderColor: '#343D1C' },
   balanceCompact: {
-    minWidth: 67,
-    minHeight: 32,
-    paddingHorizontal: 5,
-    gap: 4,
+    minWidth: 0,
+    minHeight: 51,
+    flex: 1,
+    paddingHorizontal: 6,
+    gap: 7,
     borderWidth: 0,
     borderRadius: 0,
     backgroundColor: 'transparent',
@@ -194,9 +243,9 @@ const styles = StyleSheet.create({
   fragsMark: { backgroundColor: '#09080F' },
   voltsMark: { backgroundColor: '#090D08' },
   balanceMarkCompact: {
-    width: 22,
-    height: 24,
-    borderRadius: 8,
+    width: 31,
+    height: 36,
+    borderRadius: 0,
     backgroundColor: 'transparent',
   },
   balanceCopy: { minWidth: 0 },
@@ -205,11 +254,27 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     letterSpacing: 0.6,
   },
+  balanceLabelCompact: {
+    color: '#858A93',
+    fontFamily: fonts.bold,
+    fontSize: 8,
+    lineHeight: 9,
+    letterSpacing: 0.8,
+  },
   balanceValue: {
     ...typography.bodyStrong,
     maxWidth: 52,
     marginTop: 1,
     color: colors.text,
     fontVariant: ['tabular-nums'],
+  },
+  balanceValueCompact: {
+    maxWidth: 58,
+    marginTop: 2,
+    color: '#F7F7F5',
+    fontFamily: fonts.bold,
+    fontSize: 17,
+    lineHeight: 19,
+    letterSpacing: 0.2,
   },
 });
