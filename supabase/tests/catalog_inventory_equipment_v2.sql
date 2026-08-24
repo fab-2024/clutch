@@ -66,6 +66,29 @@ begin
     raise exception 'Catalogue v2 requires team and season reference data';
   end if;
 
+  -- The catalogue campaign foreign key is part of the production contract.
+  -- Keep this fixture self-contained instead of depending on seeded campaigns.
+  insert into public.campagnes_partenaire (
+    key,
+    nom,
+    partenaire_nom,
+    description,
+    debut,
+    fin,
+    collection_key,
+    licence
+  ) values (
+    'launch-test',
+    'Launch Test',
+    'GRIFF Labs',
+    'Temporary campaign used by the catalogue v2 regression test.',
+    now() - interval '1 day',
+    now() + interval '1 day',
+    'test-missions',
+    '{"type":"interne","titulaire":"GRIFF"}'::jsonb
+  )
+  on conflict (key) do nothing;
+
   -- A second level-2 banner proves that collections are no longer limited to
   -- one object per (slot, level). Mission objects are visible but not buyable.
   insert into public.objets_catalogue (
