@@ -9,7 +9,13 @@ import {
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 
 import { useCommunityDashboard } from '@/src/features/social/faction/hooks/useCommunityDashboard';
-import type { CommunityData, CommunityMutationPresentation } from '@/src/features/social/faction/types';
+import type {
+  RelicMotionDiagnostics,
+  RelicMotionCommand,
+  RelicMotionPreview,
+  SupporterContributionPresentation,
+} from '@/src/features/social/faction/relicMotion';
+import type { CommunityData, CommunityMutationPresentation, FactionProgress } from '@/src/features/social/faction/types';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors } from '@/src/theme';
 
@@ -27,12 +33,22 @@ type SocialHomeExperienceProps = {
   error: string | null;
   favoriteTeamId?: string | null;
   loading: boolean;
+  mutationInterruptSignal?: number;
   mutationOverride?: CommunityMutationPresentation | null;
+  mutationPreviewMs?: number | null;
+  relicLabMode?: boolean;
+  relicMotionCommand?: RelicMotionCommand | null;
+  relicProgressOverride?: FactionProgress;
+  instabilityPreviewOverride?: { charge: number; objective: number };
+  motionPreviewOverride?: RelicMotionPreview;
+  onRelicDiagnosticsChange?: (diagnostics: RelicMotionDiagnostics) => void;
   onMutationPresented?: (eventId: string) => Promise<void> | void;
   onRefresh: () => void;
   onRetry: () => void;
   reduceMotionOverride?: boolean;
   refreshing: boolean;
+  supporterContribution?: SupporterContributionPresentation | null;
+  onSupporterContributionPresented?: (contributionId: string) => Promise<void> | void;
 };
 
 export default function SocialHomeScreen() {
@@ -58,12 +74,22 @@ export function SocialHomeExperience({
   error,
   favoriteTeamId,
   loading,
+  mutationInterruptSignal,
   mutationOverride,
+  mutationPreviewMs,
+  relicLabMode,
+  relicMotionCommand,
+  relicProgressOverride,
+  instabilityPreviewOverride,
+  motionPreviewOverride,
+  onRelicDiagnosticsChange,
   onMutationPresented,
   onRefresh,
   onRetry,
   reduceMotionOverride,
   refreshing,
+  supporterContribution,
+  onSupporterContributionPresented,
 }: SocialHomeExperienceProps) {
   const systemReduceMotion = useReducedMotion();
   const reduceMotion = reduceMotionOverride ?? systemReduceMotion;
@@ -102,9 +128,19 @@ export function SocialHomeExperience({
           <FactionRelicHero
             faction={faction}
             me={data.moi}
+            mutationInterruptSignal={mutationInterruptSignal}
             mutationOverride={mutationOverride}
+            mutationPreviewMs={mutationPreviewMs}
+            relicLabMode={relicLabMode}
+            relicMotionCommand={relicMotionCommand}
+            relicProgressOverride={relicProgressOverride}
+            instabilityPreviewOverride={instabilityPreviewOverride}
+            motionPreviewOverride={motionPreviewOverride}
+            onRelicDiagnosticsChange={onRelicDiagnosticsChange}
             onMutationPresented={onMutationPresented}
+            onSupporterContributionPresented={onSupporterContributionPresented}
             reduceMotionOverride={reduceMotionOverride}
+            supporterContribution={supporterContribution}
           />
         )}
       </Animated.View>

@@ -1,6 +1,8 @@
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Platform, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Platform, Pressable, Share, StyleSheet, Text, View, type LayoutRectangle } from 'react-native';
+import { useReducedMotion, useSharedValue } from 'react-native-reanimated';
 
 import { publicAppUrl } from '@/src/config/release';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
@@ -8,11 +10,25 @@ import { CosmeticAvatar, relicSignatureTheme } from '@/src/features/shop/compone
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 import CollectiveRelic from '@/src/features/social/faction/components/CollectiveRelic';
 import FactionEvolutionRail, { FactionRelicMiniature } from '@/src/features/social/faction/components/FactionEvolutionRail';
+import {
+  resolveRelicInstability,
+  type RelicMotionDiagnostics,
+  type RelicMotionCommand,
+  type RelicMotionPreview,
+  type SupporterContributionBatch,
+  type SupporterContributionPresentation,
+} from '@/src/features/social/faction/relicMotion';
+import {
+  SupporterArrivalOverlay,
+  SupporterCounterPulse,
+  type RelicScenePoint,
+} from '@/src/features/social/faction/components/SupporterArrivalOverlay';
 import type {
   CommunityActivity,
   CommunityFaction,
   CommunityMe,
   CommunityMutationPresentation,
+  FactionProgress,
 } from '@/src/features/social/faction/types';
 import { factionProgress, gameLabel } from '@/src/features/social/faction/utils';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
@@ -23,26 +39,66 @@ import { styles } from './SocialHomeScreen.styles';
 export function FactionRelicHero({
   faction,
   me,
+  mutationInterruptSignal,
   mutationOverride,
+  mutationPreviewMs,
+  relicLabMode,
+  relicMotionCommand,
+  relicProgressOverride,
+  instabilityPreviewOverride,
+  motionPreviewOverride,
+  onRelicDiagnosticsChange,
   onMutationPresented,
+  onSupporterContributionPresented,
   reduceMotionOverride,
+  supporterContribution,
 }: {
   faction: CommunityFaction | null;
   me: CommunityMe | null;
+  mutationInterruptSignal?: number;
   mutationOverride?: CommunityMutationPresentation | null;
+  mutationPreviewMs?: number | null;
+  relicLabMode?: boolean;
+  relicMotionCommand?: RelicMotionCommand | null;
+  relicProgressOverride?: FactionProgress;
+  instabilityPreviewOverride?: { charge: number; objective: number };
+  motionPreviewOverride?: RelicMotionPreview;
+  onRelicDiagnosticsChange?: (diagnostics: RelicMotionDiagnostics) => void;
   onMutationPresented?: (eventId: string) => Promise<void> | void;
+  onSupporterContributionPresented?: (contributionId: string) => Promise<void> | void;
   reduceMotionOverride?: boolean;
+  supporterContribution?: SupporterContributionPresentation | null;
 }) {
+  const systemReduceMotion = useReducedMotion();
   const { equipped } = useCosmetics();
-  const progress = factionProgress(faction?.membres ?? 0, faction?.niveau_atteint);
+  const progress = relicProgressOverride ?? factionProgress(faction?.membres ?? 0, faction?.niveau_atteint);
+  const instability = resolveRelicInstability(
+    instabilityPreviewOverride?.charge ?? progress.charge,
+    instabilityPreviewOverride?.objective ?? progress.objective,
+  );
   const pct = Math.round(progress.progress * 100);
   const title = faction ? 'PORTE TES COULEURS.' : 'CHOISIS TES COULEURS.';
   const actionTitle = progress.max
     ? 'FAIRE RAYONNER LA FACTION'
+    : instability.tier === 'mutationReady'
+      ? 'MUTATION PRÊTE'
     : `RALLIER ${formatNumber(progress.remaining)} SUPPORTER${progress.remaining > 1 ? 'S' : ''}`;
   const signature = relicSignatureTheme(equipped.factionEffect);
   const effectAccent = signature.accent;
   const mutation = mutationOverride === undefined ? me?.mutation_a_presenter : mutationOverride;
+  const supporterArrivalPhase = useSharedValue(0);
+  const [identityLayout, setIdentityLayout] = useState<LayoutRectangle | null>(null);
+  const [supporterLayout, setSupporterLayout] = useState<LayoutRectangle | null>(null);
+  const [liquidTarget, setLiquidTarget] = useState<RelicScenePoint | null>(null);
+  const [activeSupporterAmount, setActiveSupporterAmount] = useState(0);
+  const reduceMotion = reduceMotionOverride ?? systemReduceMotion;
+  const handleSupporterArrivalStart = (batch: SupporterContributionBatch) => {
+    setActiveSupporterAmount(batch.amount);
+  };
+  const supporterAnchor = identityLayout && supporterLayout ? {
+    x: identityLayout.x + supporterLayout.x + supporterLayout.width / 2,
+    y: identityLayout.y + supporterLayout.y + supporterLayout.height / 2,
+  } : null;
 
   async function rallySupporters() {
     if (!faction) return;
@@ -78,20 +134,36 @@ export function FactionRelicHero({
         </View>
         <View style={styles.levelPill}>
           <View style={styles.levelDot} />
-          <Text style={styles.levelText}>{progress.awakened ? 'CŒUR ÉVEILLÉ' : progress.level > 0 ? `FORME ${progress.current.code}` : 'DORMANT'}</Text>
+          <Text style={styles.levelText}>{progress.awakened ? 'CŒUR ÉVEILLÉ' : instability.tier === 'mutationReady' ? 'MUTATION PRÊTE' : progress.level > 0 ? `FORME ${progress.current.code}` : 'DORMANT'}</Text>
         </View>
       </View>
 
       <CollectiveRelic
         accent={effectAccent}
         faction={faction}
+        instabilityPreviewOverride={instabilityPreviewOverride}
         mutation={mutation}
+        mutationInterruptSignal={mutationInterruptSignal}
+        mutationPreviewMs={mutationPreviewMs}
+        labMode={relicLabMode}
+        motionCommand={relicMotionCommand}
+        motionPreviewOverride={motionPreviewOverride}
+        onDiagnosticsChange={onRelicDiagnosticsChange}
+        onLiquidTargetLayout={setLiquidTarget}
         onMutationPresented={onMutationPresented}
+        onSupporterArrivalComplete={() => setActiveSupporterAmount(0)}
+        onSupporterArrivalStart={handleSupporterArrivalStart}
+        onSupporterContributionPresented={onSupporterContributionPresented}
         progress={progress}
         reduceMotionOverride={reduceMotionOverride}
+        supporterArrivalPhase={supporterArrivalPhase}
+        supporterContribution={supporterContribution}
       />
 
-      <View style={styles.factionIdentity}>
+      <View
+        onLayout={(event) => setIdentityLayout(event.nativeEvent.layout)}
+        style={styles.factionIdentity}
+      >
         <View style={styles.factionSeal}>
           {faction ? (
             <TeamLogo accent={colors.volt} name={faction.nom} size={34} tag={faction.tag} uri={faction.logo} />
@@ -101,12 +173,17 @@ export function FactionRelicHero({
         </View>
         <View style={styles.factionIdentityCopy}>
           <Text style={styles.factionName}>{faction?.nom.toUpperCase() ?? 'AUCUNE FACTION'}</Text>
-          <Text style={styles.factionMeta}>{faction ? `${gameLabel(faction.jeu)} · ${formatNumber(faction.membres)} MEMBRE${faction.membres > 1 ? 'S' : ''}` : 'UNE RELIQUE ATTEND TES COULEURS'}</Text>
+          <Text style={styles.factionMeta}>{faction ? `${gameLabel(faction.jeu)} · ${formatNumber(progress.charge)} MEMBRE${progress.charge > 1 ? 'S' : ''}` : 'UNE RELIQUE ATTEND TES COULEURS'}</Text>
         </View>
         {faction ? (
-          <View style={styles.factionGrowthBlock}>
+          <View
+            onLayout={(event) => setSupporterLayout(event.nativeEvent.layout)}
+            style={styles.factionGrowthBlock}
+          >
             <Text style={styles.factionGrowthLabel}>SUPPORTERS ·</Text>
-            <Text style={styles.factionGrowth}>{signed(faction.croissance_7j)}</Text>
+            <SupporterCounterPulse phase={supporterArrivalPhase}>
+              <Text style={styles.factionGrowth}>{signed(faction.croissance_7j)}</Text>
+            </SupporterCounterPulse>
           </View>
         ) : null}
       </View>
@@ -115,7 +192,7 @@ export function FactionRelicHero({
         <View style={styles.progressBlock}>
           <View style={styles.progressHeadline}>
             <Text style={styles.relicForm}>{progress.max ? 'ÉVEIL TOTAL' : progress.current.name.toUpperCase()}</Text>
-            <Text style={styles.progressValue}>{progress.max ? '10 000+' : `${formatNumber(faction.membres)} / ${formatNumber(progress.objective)}`}</Text>
+            <Text style={styles.progressValue}>{progress.max ? '10 000+' : `${formatNumber(progress.charge)} / ${formatNumber(progress.objective)}`}</Text>
           </View>
           <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${progress.max ? 100 : pct}%` }]} /></View>
           <View style={styles.progressFoot}>
@@ -143,6 +220,16 @@ export function FactionRelicHero({
           </Pressable>
         </View>
       ) : null}
+
+      <View pointerEvents="none" style={styles.supporterArrivalOverlay}>
+        <SupporterArrivalOverlay
+          amount={activeSupporterAmount}
+          end={liquidTarget}
+          phase={supporterArrivalPhase}
+          reduceMotion={reduceMotion}
+          start={supporterAnchor}
+        />
+      </View>
     </View>
   );
 }

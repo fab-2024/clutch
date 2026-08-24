@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   },
   frontLipMask: {
     position: 'absolute',
-    zIndex: 6,
+    zIndex: 10,
     top: PEDESTAL_TOP + FRONT_LIP_OFFSET,
     width: PEDESTAL_WIDTH,
     height: FRONT_LIP_HEIGHT,
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     width: PEDESTAL_WIDTH,
     height: PEDESTAL_HEIGHT,
   },
-  medallionLayer: { zIndex: 8 },
+  medallionLayer: { zIndex: 12 },
   logoSocket: {
     position: 'absolute',
     left: 123,
