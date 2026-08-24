@@ -2,10 +2,18 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
+import {
+  resolveLocalDatabaseContainer,
+  runLocalSql,
+} from './local-supabase-sql.mjs';
+
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const databaseTarget = process.argv.includes('--linked') ? '--linked' : '--local';
 const holdSeconds = 1.5;
 const target = new Date(Date.now() + 8_000).toISOString();
+const localDatabaseContainer = databaseTarget === '--local'
+  ? await resolveLocalDatabaseContainer(repositoryRoot)
+  : null;
 
 function buildProbeSql(label) {
   return `
@@ -49,6 +57,15 @@ select jsonb_build_object(
 }
 
 function runProbe(label) {
+  if (localDatabaseContainer) {
+    return runLocalSql({
+      containerName: localDatabaseContainer,
+      cwd: repositoryRoot,
+      label: `Concurrency probe ${label}`,
+      sql: buildProbeSql(label),
+    }).then(({ stdout }) => stdout);
+  }
+
   return new Promise((resolve, reject) => {
     const child = spawn(
       'supabase',
