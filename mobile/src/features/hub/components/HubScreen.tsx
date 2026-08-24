@@ -124,7 +124,7 @@ export function HubExperience({
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
         showsVerticalScrollIndicator={false}
       >
-        <GriffHeader economy={headerEconomy} />
+        <GriffHeader economy={headerEconomy} variant="social" />
 
         <Animated.View entering={entrance(30)} style={styles.headline}>
           <Text style={styles.headlineKicker}>{headlineKicker}</Text>

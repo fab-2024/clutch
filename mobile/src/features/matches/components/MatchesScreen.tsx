@@ -152,7 +152,7 @@ export function MatchesExperience({
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
       >
-        <GriffHeader economy={headerEconomy} />
+        <GriffHeader economy={headerEconomy} variant="social" />
 
         {duelRivalId ? (
           <View style={styles.targetedDuelBanner}>

@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { GriffLockup } from '@/src/components/brand/GriffLogo';
+import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
@@ -14,7 +14,7 @@ import { ProfileSafetyActions } from '@/src/features/safety';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
-import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
+import { colors, layout, radius, spacing, typography } from '@/src/theme';
 import { teamHue } from '@/src/utils/teams';
 
 import { loadProfileData } from '../api';
@@ -307,22 +307,32 @@ function ProfileHeader({
   publicView: boolean;
   volts?: number | null;
 }) {
+  if (!publicView) {
+    return (
+      <View style={styles.privateHeader}>
+        <GriffHeader
+          economy={{ frags: frags ?? null, volts: volts ?? null }}
+          variant="social"
+        />
+        {onOpenSettings ? (
+          <Pressable
+            accessibilityLabel="Ouvrir les paramètres"
+            accessibilityRole="button"
+            onPress={onOpenSettings}
+            style={({ pressed }) => [styles.privateHeaderSettings, pressed && styles.pressed]}
+          >
+            <Text style={styles.headerSettingsGlyph}>⚙</Text>
+          </Pressable>
+        ) : null}
+      </View>
+    );
+  }
+
   return (
     <View style={styles.header}>
-      {publicView ? (
-        <Pressable accessibilityLabel="Revenir au Social" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><Text style={styles.backText}>← SOCIAL</Text></Pressable>
-      ) : (
-        <View style={styles.brandRow}><GriffLockup width={112} /></View>
-      )}
+      <Pressable accessibilityLabel="Revenir au Social" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><Text style={styles.backText}>← SOCIAL</Text></Pressable>
       <View style={styles.headerActions}>
-        {publicView ? (
-          <View style={styles.visibility}><View style={[styles.visibilityDot, !publicProfile && styles.visibilityDotPrivate]} /><Text style={styles.visibilityText}>{publicProfile ? 'PUBLIC' : 'PRIVÉ'}</Text></View>
-        ) : (
-          <>
-            <HeaderBalance kind="frags" value={frags} />
-            <HeaderBalance kind="volts" value={volts} />
-          </>
-        )}
+        <View style={styles.visibility}><View style={[styles.visibilityDot, !publicProfile && styles.visibilityDotPrivate]} /><Text style={styles.visibilityText}>{publicProfile ? 'PUBLIC' : 'PRIVÉ'}</Text></View>
         {onOpenSettings ? (
           <Pressable
             accessibilityLabel="Ouvrir les paramètres"
@@ -333,22 +343,6 @@ function ProfileHeader({
             <Text style={styles.headerSettingsGlyph}>⚙</Text>
           </Pressable>
         ) : null}
-      </View>
-    </View>
-  );
-}
-
-function HeaderBalance({ kind, value }: { kind: CurrencyKind; value?: number | null }) {
-  return (
-    <View
-      accessible
-      accessibilityLabel={`${kind === 'frags' ? 'Frags' : 'Volts'} : ${value == null ? 'indisponible' : formatNumber(value)}`}
-      style={[styles.headerBalance, kind === 'frags' ? styles.headerBalanceFrags : styles.headerBalanceVolts]}
-    >
-      <CurrencyIcon kind={kind} size={20} />
-      <View>
-        <Text style={styles.headerBalanceLabel}>{kind === 'frags' ? 'FRAGS' : 'VOLTS'}</Text>
-        <Text style={styles.headerBalanceValue}>{value == null ? '—' : formatNumber(value)}</Text>
       </View>
     </View>
   );
@@ -474,7 +468,9 @@ const styles = StyleSheet.create({
   blockedStateButton: { minHeight: 48, marginTop: 8, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.volt },
   blockedStateButtonText: { ...typography.action, color: '#080A0C' },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 22 },
-  header: { minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 }, logoBox: { width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, logoGlyph: { color: '#06090C', fontFamily: fonts.display, fontSize: 23, lineHeight: 25, letterSpacing: -2 }, wordmarkRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 3 }, wordmark: { color: colors.text, fontFamily: fonts.bold, fontSize: 14, letterSpacing: 2.4 }, dot: { width: 5, height: 5, marginBottom: 3, borderRadius: 3, backgroundColor: colors.volt }, back: { minHeight: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { ...typography.action, color: colors.text, letterSpacing: 0.6 }, headerActions: { flexDirection: 'row', alignItems: 'center', gap: 6 }, headerBalance: { minWidth: 65, height: 40, paddingHorizontal: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: 12, borderWidth: 1 }, headerBalanceFrags: { backgroundColor: '#0C0B13', borderColor: '#353047' }, headerBalanceVolts: { backgroundColor: '#0D120B', borderColor: '#343D1C' }, headerBalanceLabel: { ...typography.label, color: colors.textMuted, fontSize: 7, lineHeight: 9, letterSpacing: .35 }, headerBalanceValue: { color: colors.text, fontFamily: fonts.bold, fontSize: 12, lineHeight: 14 }, visibility: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { ...typography.label, color: colors.text, letterSpacing: 0.5 }, headerSettings: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, headerSettingsGlyph: { color: colors.text, fontSize: 17, lineHeight: 20, fontWeight: '900' },
+  privateHeader: { position: 'relative', zIndex: 2 },
+  privateHeaderSettings: { position: 'absolute', right: 18, bottom: -18, width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#735039', boxShadow: '0 8px 18px rgba(0,0,0,.42)' },
+  header: { minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, back: { minHeight: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { ...typography.action, color: colors.text, letterSpacing: 0.6 }, headerActions: { flexDirection: 'row', alignItems: 'center', gap: 6 }, visibility: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { ...typography.label, color: colors.text, letterSpacing: 0.5 }, headerSettings: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, headerSettingsGlyph: { color: colors.text, fontSize: 17, lineHeight: 20, fontWeight: '900' },
   profileSwitcher: { minHeight: 54, marginHorizontal: 16, padding: 4, flexDirection: 'row', borderRadius: 17, backgroundColor: '#080D11', borderWidth: 1, borderColor: '#26313A' },
   profileSwitchActive: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: '#171D10', borderWidth: 1, borderColor: '#48551F' },
   profileSwitch: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 15 },

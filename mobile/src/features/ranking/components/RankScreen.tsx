@@ -79,7 +79,7 @@ export default function RankScreen({ previewData }: { previewData?: RankDashboar
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
         showsVerticalScrollIndicator={false}
       >
-        <GriffHeader />
+        <GriffHeader variant="social" />
 
         <View style={styles.intro}>
           <Text style={styles.eyebrow}>RANK // SAISON</Text>
