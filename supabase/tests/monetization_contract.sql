@@ -65,7 +65,7 @@ begin
 
   select public.clutch_boutique_cosmetique_v1() into v_shop;
   if v_shop -> 'contrat' <> v_contract
-     or jsonb_array_length(v_shop -> 'objets') <> 24
+     or jsonb_array_length(v_shop -> 'objets') <> 27
   then
     raise exception 'Shop does not consume monetization contract v1: %', v_shop;
   end if;
