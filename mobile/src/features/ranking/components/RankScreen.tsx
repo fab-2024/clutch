@@ -12,7 +12,6 @@ import {
   gradeAccent,
   SEASONAL_GRADE_LADDER,
   type SeasonalGradeDefinition,
-  type SeasonalGradeState,
 } from '../grades';
 import type {
   RankDashboard,
@@ -22,6 +21,7 @@ import type {
   RankScope,
 } from '../types';
 import { RankEmblem } from './RankEmblem';
+import { SeasonJourneyCard } from './SeasonJourneyCard';
 
 type Section = 'season' | 'leaderboards' | 'rewards';
 
@@ -37,7 +37,12 @@ const SCOPES: { key: RankScope; label: string }[] = [
   { key: 'faction', label: 'Faction' },
 ];
 
-export default function RankScreen({ previewData }: { previewData?: RankDashboard }) {
+type RankScreenProps = {
+  previewData?: RankDashboard;
+  previewReduceMotion?: boolean;
+};
+
+export default function RankScreen({ previewData, previewReduceMotion }: RankScreenProps) {
   const [dashboard, setDashboard] = useState<RankDashboard | null>(previewData ?? null);
   const [section, setSection] = useState<Section>('season');
   const [scope, setScope] = useState<RankScope>('global');
@@ -111,7 +116,9 @@ export default function RankScreen({ previewData }: { previewData?: RankDashboar
         ) : null}
 
         {loading ? <RankSkeleton /> : null}
-        {!loading && dashboard && section === 'season' ? <SeasonSection dashboard={dashboard} /> : null}
+        {!loading && dashboard && section === 'season' ? (
+          <SeasonSection dashboard={dashboard} reduceMotionOverride={previewReduceMotion} />
+        ) : null}
         {!loading && dashboard && section === 'leaderboards' ? (
           <LeaderboardSection dashboard={dashboard} scope={scope} onScope={setScope} />
         ) : null}
@@ -121,7 +128,13 @@ export default function RankScreen({ previewData }: { previewData?: RankDashboar
   );
 }
 
-function SeasonSection({ dashboard }: { dashboard: RankDashboard }) {
+function SeasonSection({
+  dashboard,
+  reduceMotionOverride,
+}: {
+  dashboard: RankDashboard;
+  reduceMotionOverride?: boolean;
+}) {
   const [showRules, setShowRules] = useState(false);
   const state = dashboard.state;
 
@@ -130,67 +143,18 @@ function SeasonSection({ dashboard }: { dashboard: RankDashboard }) {
   }
 
   const accent = gradeAccent(state.grade);
-  const placementTarget = state.grade.objectif_placements;
-  const completed = Math.max(0, placementTarget - state.placementsRemaining);
-  const progress = state.provisional ? completed / placementTarget : state.grade.progression;
-  const progressWidth = (Math.max(2, Math.round(progress * 100)) + '%') as `${number}%`;
-  const accuracy = state.settledCalls ? Math.round((state.wonCalls / state.settledCalls) * 100) : 0;
-  const next = nextMilestone(state.frags, state.grade);
 
   return (
     <View style={styles.sectionStack}>
-      <View style={[styles.seasonHero, { borderColor: accent + '66' }]}>
-        <View style={[styles.heroAura, { backgroundColor: accent }]} />
-        <View style={styles.seasonHeading}>
-          <View>
-            <Text style={[styles.seasonKicker, { color: accent }]}>{dashboard.season.name.toUpperCase()}</Text>
-            <Text style={styles.seasonLabel}>RATING DE SAISON</Text>
-          </View>
-          <Pressable
-            accessibilityLabel="Afficher les règles du rating"
-            accessibilityRole="button"
-            onPress={() => setShowRules((visible) => !visible)}
-            style={({ pressed }) => [styles.infoButton, { borderColor: accent + '55' }, pressed && styles.pressed]}
-          >
-            <Text style={[styles.infoGlyph, { color: accent }]}>i</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.emblemStage}>
-          <RankEmblem grade={state.grade} placement={state.provisional} size={136} />
-          <Text style={styles.gradeName}>
-            {state.provisional ? 'PLACEMENT' : state.grade.libelle?.toUpperCase() || 'NON CLASSÉ'}
-          </Text>
-        </View>
-
-        <View style={styles.ratingRow}>
-          <Text style={styles.rating}>{formatNumber(state.frags)}</Text>
-          <View style={styles.ratingCopy}>
-            <Text style={[styles.ratingUnit, { color: accent }]}>FRAGS</Text>
-            <Text style={styles.ratingMeaning}>RATING</Text>
-          </View>
-        </View>
-
-        {state.provisional ? (
-          <PlacementProgress complete={completed} target={placementTarget} accent={accent} />
-        ) : (
-          <>
-            <View style={styles.nextRow}>
-              <Text style={styles.next}>{next.toUpperCase()}</Text>
-              <Text style={[styles.progressPercent, { color: accent }]}>{Math.round(progress * 100)}%</Text>
-            </View>
-            <View style={styles.track}>
-              <View style={[styles.trackFill, { width: progressWidth, backgroundColor: accent }]} />
-            </View>
-          </>
-        )}
-
-        <View style={styles.heroMetrics}>
-          <Metric label="GLOBAL" value={state.provisional ? '—' : state.rank ? '#' + state.rank : '—'} />
-          <Metric label="PRÉCISION" value={state.settledCalls ? accuracy + '%' : '—'} />
-          <Metric label="RECORD" value={formatNumber(state.peakFrags)} />
-        </View>
-      </View>
+      <SeasonJourneyCard
+        onChooseMatch={() => router.push('/(tabs)/matches')}
+        onToggleRules={() => setShowRules((visible) => !visible)}
+        reduceMotionOverride={reduceMotionOverride}
+        rules={dashboard.rules}
+        rulesVisible={showRules}
+        season={dashboard.season}
+        state={state}
+      />
 
       {showRules ? <RulesCard rules={dashboard.rules} /> : null}
 
@@ -210,28 +174,6 @@ function SeasonSection({ dashboard }: { dashboard: RankDashboard }) {
           <Metric label="CLASSÉS" value={formatNumber(state.classifiedPlayers)} />
         </View>
       </View>
-    </View>
-  );
-}
-
-function PlacementProgress({ complete, target, accent }: { complete: number; target: number; accent: string }) {
-  return (
-    <View style={styles.placementBlock}>
-      <View accessibilityLabel={complete + ' placements terminés sur ' + target} style={styles.placementDots}>
-        {Array.from({ length: target }, (_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.placementDot,
-              {
-                backgroundColor: index < complete ? accent : 'transparent',
-                borderColor: index < complete ? accent : '#4B5660',
-              },
-            ]}
-          />
-        ))}
-      </View>
-      <Text style={styles.next}>{Math.max(0, target - complete)} VERDICTS AVANT LA RÉVÉLATION</Text>
     </View>
   );
 }
@@ -533,17 +475,6 @@ function RankSkeleton() {
   );
 }
 
-function nextMilestone(frags: number, grade: SeasonalGradeState) {
-  if (!grade.prochain_libelle) return 'Palier saisonnier maximal atteint';
-  const missingFrags = Math.max(0, Number(grade.prochain_minimum ?? frags) - frags);
-  const missingCalls = Math.max(0, Number(grade.prochains_pronostics_restants ?? 0));
-  if (missingFrags > 0 && missingCalls > 0) {
-    return missingFrags + ' Frags et ' + missingCalls + ' verdicts avant ' + grade.prochain_libelle;
-  }
-  if (missingCalls > 0) return missingCalls + ' verdicts avant ' + grade.prochain_libelle;
-  return missingFrags + ' Frags avant ' + grade.prochain_libelle;
-}
-
 function formatNumber(value: number) {
   return new Intl.NumberFormat('fr-FR').format(Number(value || 0));
 }
@@ -630,137 +561,6 @@ const styles = StyleSheet.create({
   sectionStack: {
     gap: 13,
     marginHorizontal: spacing.md,
-  },
-  seasonHero: {
-    position: 'relative',
-    minHeight: 520,
-    padding: 18,
-    overflow: 'hidden',
-    borderRadius: 30,
-    backgroundColor: '#090E13',
-    borderWidth: 1,
-  },
-  heroAura: {
-    position: 'absolute',
-    top: -250,
-    alignSelf: 'center',
-    width: 500,
-    height: 500,
-    borderRadius: 250,
-    opacity: 0.12,
-  },
-  seasonHeading: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  seasonKicker: {
-    ...typography.eyebrow,
-    letterSpacing: 0.8,
-  },
-  seasonLabel: {
-    ...typography.label,
-    marginTop: 3,
-    color: colors.textMuted,
-  },
-  infoButton: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 18,
-    backgroundColor: '#080C10',
-    borderWidth: 1,
-  },
-  infoGlyph: {
-    fontFamily: fonts.bold,
-    fontSize: 17,
-  },
-  emblemStage: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  gradeName: {
-    ...typography.displayMedium,
-    marginTop: 2,
-    color: colors.text,
-    textAlign: 'center',
-  },
-  ratingRow: {
-    marginTop: 16,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    gap: 9,
-  },
-  rating: {
-    color: colors.text,
-    fontFamily: fonts.display,
-    fontSize: 67,
-    lineHeight: 69,
-    letterSpacing: -3,
-    fontVariant: ['tabular-nums'],
-  },
-  ratingCopy: {
-    marginBottom: 9,
-  },
-  ratingUnit: {
-    ...typography.label,
-  },
-  ratingMeaning: {
-    ...typography.eyebrow,
-    marginTop: 1,
-    color: colors.textMuted,
-  },
-  placementBlock: {
-    marginTop: 19,
-    alignItems: 'center',
-    gap: 10,
-  },
-  placementDots: {
-    flexDirection: 'row',
-    gap: 9,
-  },
-  placementDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 1.5,
-  },
-  nextRow: {
-    marginTop: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  next: {
-    ...typography.label,
-    flex: 1,
-    color: colors.textSubtle,
-  },
-  progressPercent: {
-    ...typography.label,
-    fontVariant: ['tabular-nums'],
-  },
-  track: {
-    height: 7,
-    marginTop: 9,
-    overflow: 'hidden',
-    borderRadius: 4,
-    backgroundColor: '#222A32',
-  },
-  trackFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  heroMetrics: {
-    minHeight: 69,
-    marginTop: 'auto',
-    paddingTop: 16,
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: '#273039',
   },
   metric: {
     flex: 1,
