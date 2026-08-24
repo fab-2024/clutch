@@ -12,7 +12,7 @@ export default function SocialLayout() {
   return (
     <View style={styles.root}>
       <View style={[styles.top, { paddingTop: Math.max(insets.top, 6) }]}>
-        <GriffHeader />
+        <GriffHeader variant="social" />
       </View>
 
       <SocialSectionNav />

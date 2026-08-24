@@ -83,7 +83,7 @@ describe('mutation presentation idempotence', () => {
     id: 'event-42',
     from_level: 2,
     to_level: 5,
-    name: 'Reliquaire',
+    name: 'Cuve',
     threshold: 5_000,
     reward: 1_000,
     awakened: false,
@@ -115,7 +115,7 @@ describe('mutation presentation idempotence', () => {
       id: 'collective:kc:relic-v2:5',
       from_level: 2,
       to_level: 5,
-      name: 'Reliquaire',
+      name: 'Cuve',
       reward: 0,
     });
   });

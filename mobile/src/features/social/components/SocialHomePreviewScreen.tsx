@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -14,12 +14,12 @@ import SocialSectionNav from './SocialSectionNav';
 
 const PREVIEW_COMMUNITY: CommunityData = {
   factions: [
-    previewFaction('g2', 'G2 Esports', 'G2', 286, 18),
-    previewFaction('fnc', 'Fnatic', 'FNC', 244, 12),
-    previewFaction('kc', 'Karmine Corp', 'KC', 312, 21, true),
-    previewFaction('bds', 'Team BDS', 'BDS', 175, 8),
-    previewFaction('th', 'Team Heretics', 'TH', 142, 5),
-    previewFaction('sk', 'SK Gaming', 'SK', 119, 3),
+    previewFaction('g2', 'G2 Esports', 'G2', 1, 18),
+    previewFaction('fnc', 'Fnatic', 'FNC', 1, 12),
+    previewFaction('kc', 'Karmine Corp', 'KC', 1, 21, true),
+    previewFaction('bds', 'Team BDS', 'BDS', 1, 8),
+    previewFaction('th', 'Team Heretics', 'TH', 1, 5),
+    previewFaction('sk', 'SK Gaming', 'SK', 1, 3),
   ],
   moi: {
     user_id: 'preview-user',
@@ -48,7 +48,8 @@ const PREVIEW_COMMUNITY: CommunityData = {
 const CHARGE_PRESETS = [0, 1, 99, 100, 499, 500, 1_999, 2_000, 4_999, 5_000, 9_999, 10_000];
 
 export default function SocialHomePreviewScreen() {
-  const [charge, setCharge] = useState(312);
+  const { clean } = useLocalSearchParams<{ clean?: string }>();
+  const [charge, setCharge] = useState(1);
   const [mutation, setMutation] = useState<CommunityMutationPresentation | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
   const eventSequence = useRef(0);
@@ -78,12 +79,11 @@ export default function SocialHomePreviewScreen() {
     });
   };
 
-  return (
-    <Screen>
-      <View style={{ flex: 1 }}>
-        <GriffHeader economy={{ frags: 1842, volts: 680 }} />
+  const experience = (
+    <View style={{ flex: 1 }}>
+        <GriffHeader economy={{ frags: 1842, volts: 680 }} variant="social" />
         <SocialSectionNav activeOverride="faction" />
-        <View style={previewStyles.panel}>
+        {clean !== '1' ? <View style={previewStyles.panel}>
           <View style={previewStyles.panelTop}>
             <View>
               <Text style={previewStyles.eyebrow}>LABO RELIQUE · DEV UNIQUEMENT</Text>
@@ -119,7 +119,7 @@ export default function SocialHomePreviewScreen() {
               </Pressable>
             ))}
           </ScrollView>
-        </View>
+        </View> : null}
         <SocialHomeExperience
           data={data}
           error={null}
@@ -132,9 +132,10 @@ export default function SocialHomePreviewScreen() {
           onRefresh={noop}
           onRetry={noop}
         />
-      </View>
-    </Screen>
+    </View>
   );
+
+  return <Screen>{experience}</Screen>;
 }
 
 function previewFaction(

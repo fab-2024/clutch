@@ -22,12 +22,12 @@ export const COMMUNITY_FORMS: CommunityForm[] = [
     coreBottom: 43, visualScale: .96,
   },
   {
-    state: 'reacteur', level: 4, code: 'IV', name: 'Réacteur', threshold: 2_000, reward: 500,
+    state: 'reacteur', level: 4, code: 'IV', name: 'Bonbonne', threshold: 2_000, reward: 500,
     phrase: 'La pression collective devient instable.', container: 'reacteur', intensity: .78,
     coreBottom: 42, visualScale: .9,
   },
   {
-    state: 'reliquaire', level: 5, code: 'V', name: 'Reliquaire', threshold: 5_000, reward: 1_000,
+    state: 'reliquaire', level: 5, code: 'V', name: 'Cuve', threshold: 5_000, reward: 1_000,
     phrase: 'Le cœur est contenu par une armature cérémonielle.', container: 'reliquaire', intensity: 1,
     coreBottom: 57, visualScale: .89,
   },

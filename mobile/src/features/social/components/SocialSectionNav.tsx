@@ -1,7 +1,7 @@
 import { router, usePathname } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, layout, spacing, typography } from '@/src/theme';
+import { colors, layout, typography } from '@/src/theme';
 
 type SocialSectionKey = 'faction' | 'circle' | 'challenges';
 type SocialSubsectionKey = 'friends' | 'requests' | 'leagues' | 'missions' | 'duels';
@@ -103,36 +103,37 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: layout.contentMaxWidth,
     alignSelf: 'center',
-    paddingHorizontal: spacing.md,
-    paddingTop: 10,
-    paddingBottom: 6,
+    paddingHorizontal: 18,
+    paddingTop: 5,
+    paddingBottom: 5,
     backgroundColor: colors.background,
   },
   rail: {
     flexDirection: 'row',
-    gap: 7,
+    gap: 8,
   },
   item: {
     flex: 1,
     minWidth: 0,
-    height: 48,
-    paddingHorizontal: 11,
-    borderRadius: 16,
+    minHeight: 38,
+    paddingHorizontal: 10,
+    borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#0B1015',
+    gap: 7,
+    backgroundColor: 'rgba(7,12,17,.9)',
     borderWidth: 1,
-    borderColor: '#222B34',
+    borderColor: '#25313B',
   },
   itemActive: {
-    backgroundColor: '#171E10',
-    borderColor: '#4A5720',
+    backgroundColor: 'rgba(17,25,23,.96)',
+    borderColor: '#789081',
+    boxShadow: '0 0 16px rgba(115,191,190,.18), 0 0 10px rgba(205,231,58,.1)',
   },
   glyph: {
     color: '#65717D',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '900',
   },
   glyphActive: { color: colors.volt },
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
     color: '#78838E',
     letterSpacing: .25,
   },
-  labelActive: { color: '#F5F7F8' },
+  labelActive: { color: colors.volt },
   subRail: {
     minHeight: 44,
     marginTop: 7,
