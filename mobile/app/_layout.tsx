@@ -8,7 +8,7 @@ import { useFonts } from 'expo-font';
 import { router, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
 
 import { AnalyticsBridge } from '@/src/features/analytics';
 import AppErrorBoundary from '@/src/components/errors/AppErrorBoundary';
@@ -73,6 +73,7 @@ function RootNavigator() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: colors.background },
+          orientation: 'portrait',
         }}
       >
         <Stack.Protected guard={Boolean(session)}>
@@ -84,7 +85,7 @@ function RootNavigator() {
           <Stack.Screen name="settings/account" />
           <Stack.Screen name="settings/safety" />
           <Stack.Screen name="shop" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="showcase" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="showcase" options={{ animation: 'fade', orientation: Platform.OS === 'web' ? 'default' : 'landscape' }} />
           <Stack.Screen name="founder-pack" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="economy" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="campaign/[key]" options={{ animation: 'slide_from_right' }} />
@@ -105,7 +106,7 @@ function RootNavigator() {
         <Stack.Screen name="legal/terms" />
         <Stack.Screen name="support" />
         <Stack.Screen name="shop-preview" options={{ animation: 'fade' }} />
-        <Stack.Screen name="showcase-preview" options={{ animation: 'fade' }} />
+        <Stack.Screen name="showcase-preview" options={{ animation: 'fade', orientation: Platform.OS === 'web' ? 'default' : 'landscape' }} />
         <Stack.Screen name="founder-pack-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="economy-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="campaign-preview" options={{ animation: 'fade' }} />

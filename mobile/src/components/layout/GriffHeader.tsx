@@ -8,18 +8,19 @@ import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors, fonts, typography } from '@/src/theme';
 
 type Props = {
+  compact?: boolean;
   economy?: Pick<PlayerEconomy, 'frags' | 'volts'>;
   variant?: 'default' | 'social';
 };
 
-export function GriffHeader({ economy, variant = 'default' }: Props = {}) {
+export function GriffHeader({ compact = false, economy, variant = 'default' }: Props = {}) {
   const { frags, volts } = useEconomy();
   const displayedFrags = economy?.frags ?? frags;
   const displayedVolts = economy?.volts ?? volts;
   const social = variant === 'social';
 
   return (
-    <View style={[styles.root, social && styles.rootSocial]}>
+    <View style={[styles.root, social && styles.rootSocial, social && compact && styles.rootSocialCompact]}>
       {social ? (
         <LinearGradient
           colors={['rgba(8,18,25,.92)', 'rgba(5,10,14,.72)', 'rgba(2,5,8,0)']}
@@ -31,17 +32,17 @@ export function GriffHeader({ economy, variant = 'default' }: Props = {}) {
       ) : null}
 
       {social ? (
-        <View accessibilityLabel="GRIFF" accessibilityRole="image" style={styles.socialBrand}>
+        <View accessibilityLabel="GRIFF" accessibilityRole="image" style={[styles.socialBrand, compact && styles.socialBrandCompact]}>
           <LinearGradient
             colors={['#18191A', '#090B0D', '#030405']}
             end={{ x: 1, y: 1 }}
             start={{ x: 0, y: 0 }}
-            style={styles.socialMark}
+            style={[styles.socialMark, compact && styles.socialMarkCompact]}
           >
-            <GriffMark size={35} style={styles.socialMarkImage} />
+            <GriffMark size={compact ? 32 : 35} style={[styles.socialMarkImage, compact && styles.socialMarkImageCompact]} />
           </LinearGradient>
-          <Text style={styles.socialWord}>GRIFF</Text>
-          <View style={styles.socialDot} />
+          <Text style={[styles.socialWord, compact && styles.socialWordCompact]}>GRIFF</Text>
+          <View style={[styles.socialDot, compact && styles.socialDotCompact]} />
         </View>
       ) : (
         <View style={styles.brandRow}>
@@ -53,7 +54,7 @@ export function GriffHeader({ economy, variant = 'default' }: Props = {}) {
         accessible
         accessibilityLabel={`${formatBalance(displayedFrags)} Frags, ${formatBalance(displayedVolts)} Volts`}
         accessibilityRole="summary"
-        style={[styles.wallet, social && styles.walletSocial]}
+        style={[styles.wallet, social && styles.walletSocial, social && compact && styles.walletSocialCompact]}
       >
         {social ? (
           <LinearGradient
@@ -127,6 +128,13 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     overflow: 'hidden',
   },
+  rootSocialCompact: {
+    minHeight: 80,
+    paddingTop: 10,
+    paddingRight: 70,
+    paddingBottom: 10,
+    paddingLeft: 14,
+  },
   socialAtmosphere: {
     position: 'absolute',
     top: 0,
@@ -146,6 +154,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+  socialBrandCompact: { gap: 8 },
   socialMark: {
     width: 45,
     height: 45,
@@ -156,11 +165,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(201,125,79,.82)',
     boxShadow: '0 0 18px rgba(190,101,55,.22), inset 0 1px 0 rgba(255,211,171,.18)',
   },
+  socialMarkCompact: { width: 42, height: 42, borderRadius: 13 },
   socialMarkImage: {
     width: 35,
     height: 35,
     tintColor: '#C98154',
   },
+  socialMarkImageCompact: { width: 32, height: 32 },
   socialWord: {
     color: '#F8F7F4',
     fontFamily: fonts.bold,
@@ -171,6 +182,7 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
+  socialWordCompact: { fontSize: 17, lineHeight: 20, letterSpacing: 2.8 },
   socialDot: {
     width: 6,
     height: 6,
@@ -180,6 +192,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.volt,
     boxShadow: '0 0 9px rgba(232,255,61,.72)',
   },
+  socialDotCompact: { marginLeft: -6, marginTop: 13 },
   wallet: {
     flexShrink: 1,
     flexDirection: 'row',
@@ -198,6 +211,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(181,109,69,.72)',
     boxShadow: '0 5px 20px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,217,183,.12)',
   },
+  walletSocialCompact: { width: 170, minHeight: 52, borderRadius: 19 },
   walletSurface: {
     position: 'absolute',
     top: 0,

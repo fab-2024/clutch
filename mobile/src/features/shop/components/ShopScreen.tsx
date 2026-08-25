@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -22,6 +22,7 @@ import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors, fonts, layout, spacing, typography } from '@/src/theme';
 
 import { equipCosmetic, loadCosmeticShop, purchaseCosmetic } from '../api';
+import { collectionScopeFromParam, type CollectionScope } from '../scope';
 import type {
   CosmeticItem,
   CosmeticRarity,
@@ -37,8 +38,6 @@ type ShopScreenProps = {
   previewData?: CosmeticShopData;
 };
 
-type CollectionScope = 'owned' | 'catalog';
-
 const SLOT_META: Record<CosmeticSlot, { label: string; short: string; promise: string; glyph: string }> = {
   cadre_profil: { label: 'Cadres', short: 'CADRE', promise: 'Signe ton profil sans toucher à tes performances.', glyph: '▣' },
   titre_profil: { label: 'Titres', short: 'TITRE', promise: 'Affiche une identité gagnée, jamais un avantage.', glyph: 'T' },
@@ -51,12 +50,14 @@ const SLOT_ORDER = Object.keys(SLOT_META) as CosmeticSlot[];
 const RARITIES: CosmeticRarity[] = ['commun', 'rare', 'epique', 'legendaire'];
 
 export default function ShopScreen({ previewData }: ShopScreenProps) {
+  const params = useLocalSearchParams<{ scope?: string | string[] }>();
+  const requestedScope = collectionScopeFromParam(params.scope);
   const { profile, session } = useAuth();
   const { refresh: refreshEconomy } = useEconomy();
   const { refresh: refreshCosmetics } = useCosmetics();
   const [data, setData] = useState<CosmeticShopData | null>(previewData ?? null);
   const [slot, setSlot] = useState<CosmeticSlot>('cadre_profil');
-  const [scope, setScope] = useState<CollectionScope>('owned');
+  const [scope, setScope] = useState<CollectionScope>(requestedScope);
   const [teamFilter, setTeamFilter] = useState('all');
   const [collectionFilter, setCollectionFilter] = useState('all');
   const [rarityFilter, setRarityFilter] = useState<'all' | CosmeticRarity>('all');
@@ -124,6 +125,10 @@ export default function ShopScreen({ previewData }: ShopScreenProps) {
     setMessage(null);
     setSelectedId(null);
   }, [slot]);
+
+  useEffect(() => {
+    setScope(requestedScope);
+  }, [requestedScope]);
 
   useEffect(() => {
     if (previewData || loading || !data) return;

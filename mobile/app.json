@@ -4,7 +4,7 @@
     "slug": "clutch-mobile",
     "version": "0.1.0",
     "description": "Le compagnon esport où chaque call laisse une marque, sans mise d’argent réel.",
-    "orientation": "portrait",
+    "orientation": "default",
     "scheme": ["griff", "clutch"],
     "icon": "./assets/app/griff-icon.png",
     "backgroundColor": "#06080B",

@@ -133,8 +133,8 @@ export function ProfileRelicThumbnail({
   if (compact) {
     return (
       <View accessible accessibilityLabel={`Relique principale, ${name}`} style={[styles.compactRelicBlock, { height: size, width: size }]}>
-        <View style={[styles.compactRelicHalo, { borderColor: alpha(accent, '6E'), height: size * .9, width: size * .9 }]} />
-        <Image resizeMode="contain" source={relicAsset} style={{ height: size * .95, width: size * .95 }} />
+        <View style={[styles.compactRelicContact, { backgroundColor: alpha(accent, '54'), width: size * .52 }]} />
+        <Image resizeMode="contain" source={relicAsset} style={{ height: size * .98, width: size * .76 }} />
       </View>
     );
   }
@@ -178,8 +178,8 @@ const styles = StyleSheet.create({
   relicImage: { width: 142, height: 145 },
   relicLabel: { ...typography.label, marginTop: -5, color: colors.textMuted, letterSpacing: .45 },
   relicName: { ...typography.eyebrow, width: 142, marginTop: 2, textAlign: 'center', letterSpacing: .35 },
-  compactRelicBlock: { position: 'relative', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderRadius: 999 },
-  compactRelicHalo: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(0,0,0,.3)', borderWidth: 1 },
+  compactRelicBlock: { position: 'relative', alignItems: 'center', justifyContent: 'center' },
+  compactRelicContact: { position: 'absolute', bottom: 2, height: 2, borderRadius: 999, opacity: 0.48, boxShadow: '0 0 7px rgba(49,215,226,.15)' },
   visibilityPromise: { ...typography.label, zIndex: 2, marginTop: 2, color: '#AAB3BC', letterSpacing: .45, textAlign: 'center' },
   actions: { zIndex: 2, marginTop: 14, gap: 8 },
   primaryAction: { minHeight: 50, alignItems: 'center', justifyContent: 'center', borderRadius: 16, backgroundColor: colors.volt, boxShadow: '0 10px 28px rgba(232,255,61,.13)' },

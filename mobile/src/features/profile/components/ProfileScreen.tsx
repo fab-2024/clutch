@@ -6,8 +6,6 @@ import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
-import { signOut } from '@/src/features/auth/api';
-import { deactivateCurrentDevicePushToken } from '@/src/features/notifications';
 import { gradeAccent } from '@/src/features/ranking/grades';
 import { loadProfileSafetyState } from '@/src/features/safety/api';
 import { ProfileSafetyActions } from '@/src/features/safety';
@@ -37,8 +35,6 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
   const [loading, setLoading] = useState(!previewData);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [signingOut, setSigningOut] = useState(false);
-  const [signOutError, setSignOutError] = useState<string | null>(null);
   const [publicBlocked, setPublicBlocked] = useState(false);
 
   const ownPseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'joueur';
@@ -112,20 +108,6 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
   const rankColor = gradeAccent(data?.ranking.grade);
   const profileTitle = cosmetics?.title?.name || data?.profileTitle || data?.level.prestigeLabel || 'Starter';
 
-  async function leaveSession() {
-    if (signingOut) return;
-    setSigningOut(true);
-    setSignOutError(null);
-    try {
-      await deactivateCurrentDevicePushToken();
-      await signOut();
-    } catch {
-      setSignOutError('Déconnexion impossible. Vérifie ta connexion puis réessaie.');
-    } finally {
-      setSigningOut(false);
-    }
-  }
-
   if (publicView && publicBlocked) {
     return (
       <Screen>
@@ -143,7 +125,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
     return (
       <Screen>
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, styles.privateContent]}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
         >
@@ -154,23 +136,22 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             publicView={false}
             volts={volts ?? (previewData ? 300 : null)}
           />
-          <ProfileSwitcher onOpenCollection={() => router.push((previewData ? '/showcase-preview' : '/showcase') as never)} />
 
-          {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text><Pressable onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
+          {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text><Pressable accessibilityLabel="Réessayer de charger mon profil" accessibilityRole="button" onPress={() => void load()} style={styles.retryButton}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
 
           <OwnProfileOverview
             cosmetics={cosmetics}
             data={data}
-            email={session?.user.email}
             loading={loading}
-            onOpenAccount={() => router.push('/settings/account')}
-            onOpenInventory={() => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
-            onOpenPreferences={() => router.push('/settings/profile')}
-            onOpenShop={() => router.push((previewData ? '/shop-preview' : '/shop') as never)}
-            onSignOut={() => void leaveSession()}
+            onModify={() => router.push('/settings/profile')}
+            onOpenActivations={() => router.push((previewData ? '/campaign-preview' : '/campaign/nova-week') as never)}
+            onOpenLocker={() => router.push({ pathname: previewData ? '/shop-preview' : '/shop', params: { scope: 'owned' } } as never)}
+            onOpenShop={() => router.push({ pathname: previewData ? '/shop-preview' : '/shop', params: { scope: 'catalog' } } as never)}
+            onOpenShowcase={() => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
+            onOpenVisitor={() => router.push({ pathname: '/u/[pseudo]', params: { pseudo: data?.pseudo || pseudo } })}
             pseudo={data?.pseudo || pseudo}
-            signingOut={signingOut}
-            signOutError={signOutError}
+            rankAccent={rankColor}
+            rankLabel={rankLabel}
           />
         </ScrollView>
       </Screen>
@@ -280,15 +261,6 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
           {!loading && !data?.recent.length ? <View style={styles.emptyCard}><Text style={styles.emptyEyebrow}>AUCUN VERDICT</Text><Text style={styles.emptyTitle}>Ton historique commence avec ton premier call.</Text><Pressable onPress={() => router.push('/(tabs)/matches')}><Text style={styles.inlineAction}>ENTRER DANS L’ARENA →</Text></Pressable></View> : null}
         </View>
 
-        {!publicView ? (
-          <>
-            <View style={styles.accountCard}>
-              <View style={styles.accountCopy}><Text style={styles.accountLabel}>COMPTE</Text><Text numberOfLines={1} style={styles.accountEmail}>{session?.user.email}</Text></View>
-              <Pressable accessibilityLabel="Se déconnecter" accessibilityRole="button" disabled={signingOut} onPress={() => void leaveSession()} style={({ pressed }) => [styles.logout, signingOut && styles.disabled, pressed && styles.pressed]}><Text style={styles.logoutText}>{signingOut ? 'DÉCONNEXION…' : 'SE DÉCONNECTER'}</Text></Pressable>
-            </View>
-            {signOutError ? <Text style={styles.accountError}>{signOutError}</Text> : null}
-          </>
-        ) : null}
       </ScrollView>
     </Screen>
   );
@@ -311,6 +283,7 @@ function ProfileHeader({
     return (
       <View style={styles.privateHeader}>
         <GriffHeader
+          compact
           economy={{ frags: frags ?? null, volts: volts ?? null }}
           variant="social"
         />
@@ -344,24 +317,6 @@ function ProfileHeader({
           </Pressable>
         ) : null}
       </View>
-    </View>
-  );
-}
-
-function ProfileSwitcher({ onOpenCollection }: { onOpenCollection: () => void }) {
-  return (
-    <View accessibilityRole="tablist" style={styles.profileSwitcher}>
-      <View accessibilityRole="tab" accessibilityState={{ selected: true }} style={styles.profileSwitchActive}>
-        <Text style={styles.profileSwitchActiveText}>PROFIL</Text>
-      </View>
-      <Pressable
-        accessibilityRole="tab"
-        accessibilityState={{ selected: false }}
-        onPress={onOpenCollection}
-        style={({ pressed }) => [styles.profileSwitch, pressed && styles.pressed]}
-      >
-        <Text style={styles.profileSwitchText}>VITRINE PUBLIQUE</Text>
-      </Pressable>
     </View>
   );
 }
@@ -468,15 +423,11 @@ const styles = StyleSheet.create({
   blockedStateButton: { minHeight: 48, marginTop: 8, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.volt },
   blockedStateButtonText: { ...typography.action, color: '#080A0C' },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 22 },
+  privateContent: { gap: 12 },
   privateHeader: { position: 'relative', zIndex: 2 },
-  privateHeaderSettings: { position: 'absolute', right: 18, bottom: -18, width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#735039', boxShadow: '0 8px 18px rgba(0,0,0,.42)' },
+  privateHeaderSettings: { position: 'absolute', top: 18, right: 14, width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#735039', boxShadow: '0 8px 18px rgba(0,0,0,.42)' },
   header: { minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, back: { minHeight: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { ...typography.action, color: colors.text, letterSpacing: 0.6 }, headerActions: { flexDirection: 'row', alignItems: 'center', gap: 6 }, visibility: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { ...typography.label, color: colors.text, letterSpacing: 0.5 }, headerSettings: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, headerSettingsGlyph: { color: colors.text, fontSize: 17, lineHeight: 20, fontWeight: '900' },
-  profileSwitcher: { minHeight: 54, marginHorizontal: 16, padding: 4, flexDirection: 'row', borderRadius: 17, backgroundColor: '#080D11', borderWidth: 1, borderColor: '#26313A' },
-  profileSwitchActive: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: '#171D10', borderWidth: 1, borderColor: '#48551F' },
-  profileSwitch: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 15 },
-  profileSwitchActiveText: { ...typography.action, color: colors.volt, letterSpacing: .4 },
-  profileSwitchText: { ...typography.action, color: colors.textMuted, letterSpacing: .4 },
-  error: { marginHorizontal: spacing.md, padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', flexDirection: 'row', gap: 10, justifyContent: 'space-between' }, errorText: { ...typography.body, flex: 1, color: '#FF9AA2' }, retry: { ...typography.action, color: colors.volt },
+  error: { marginHorizontal: spacing.md, padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'space-between' }, errorText: { ...typography.body, flex: 1, color: '#FF9AA2' }, retryButton: { minHeight: 44, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' }, retry: { ...typography.action, color: colors.volt },
   profileTools: { marginHorizontal: spacing.md, gap: 9 },
   toolEntry: { marginHorizontal: 0, marginTop: 0 },
   settingsEntry: { minHeight: 82, marginHorizontal: spacing.md, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 21, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, settingsMark: { width: 43, height: 43, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E', borderWidth: 1, borderColor: '#3A461D' }, settingsGlyph: { color: colors.volt, fontSize: 16, fontWeight: '900' }, settingsCopy: { flex: 1 }, settingsLabel: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 }, settingsTitle: { ...typography.bodyStrong, marginTop: 4, color: colors.text }, settingsArrow: { color: colors.volt, fontSize: 17, fontWeight: '900' },
@@ -516,5 +467,5 @@ const styles = StyleSheet.create({
   arsenalRail: { gap: 10, paddingHorizontal: spacing.md }, arsenalCard: { width: 148, minHeight: 184, padding: 14, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, arsenalMedal: { width: 58, height: 58, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1.2, backgroundColor: '#0D1319' }, arsenalGlyph: { fontSize: 21, fontWeight: '900' }, arsenalName: { ...typography.bodyStrong, marginTop: 17, color: colors.text }, arsenalRarity: { ...typography.eyebrow, marginTop: 'auto', letterSpacing: 0.5 }, arsenalEmpty: { width: 270, minHeight: 166, justifyContent: 'center', padding: 18, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, arsenalEmptyTitle: { ...typography.cardTitle, color: colors.text }, arsenalEmptyText: { ...typography.body, marginTop: 7, color: colors.textMuted },
   verdicts: { marginHorizontal: spacing.md, overflow: 'hidden', borderRadius: 23, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, verdictRow: { minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 13, borderBottomWidth: 1, borderBottomColor: '#192129' }, verdictMark: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1 }, verdictMarkWin: { backgroundColor: '#0E1C14', borderColor: '#23583A' }, verdictMarkLoss: { backgroundColor: '#1A1012', borderColor: '#5A2730' }, verdictLetter: { ...typography.bodyStrong }, verdictWin: { color: colors.success }, verdictLoss: { color: colors.danger }, verdictCopy: { flex: 1, minWidth: 0 }, verdictTitle: { ...typography.bodyStrong, color: colors.text }, verdictMeta: { ...typography.caption, marginTop: 3, color: colors.textMuted }, deltaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 }, delta: { ...typography.bodyStrong },
   emptyCard: { marginHorizontal: spacing.md, minHeight: 176, justifyContent: 'center', padding: 20, borderRadius: 25, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, gap: 8 }, emptyEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 }, emptyTitle: { ...typography.cardTitle, maxWidth: 320, color: colors.text }, emptyText: { ...typography.body, color: colors.textMuted }, inlineAction: { ...typography.action, marginTop: 5, color: colors.volt },
-  accountCard: { marginHorizontal: spacing.md, minHeight: 96, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, accountCopy: { flex: 1, minWidth: 0 }, accountLabel: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .7 }, accountEmail: { ...typography.bodyStrong, marginTop: 5, color: colors.text }, logout: { minHeight: 44, paddingHorizontal: 12, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171015', borderWidth: 1, borderColor: '#43252F' }, logoutText: { ...typography.action, color: '#FF8B96' }, accountError: { ...typography.body, marginHorizontal: spacing.md, marginTop: -14, color: '#FF9AA2' }, disabled: { opacity: 0.48 }, pressed: { opacity: 0.74 },
+  disabled: { opacity: 0.48 }, pressed: { opacity: 0.74 },
 });

@@ -3,11 +3,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Screen } from '@/src/components/layout/Screen';
+import { signOut } from '@/src/features/auth/api';
 import { loadTeamOrganizations } from '@/src/features/onboarding/api';
 import { GAMES } from '@/src/features/onboarding/constants';
 import type { GameId, TeamOrganization } from '@/src/features/onboarding/types';
 import { teamIdForOrganization } from '@/src/features/onboarding/utils';
 import {
+  deactivateCurrentDevicePushToken,
   loadNotificationPreferences,
   requestAndRegisterPushToken,
   saveNotificationPreferences,
@@ -38,6 +40,8 @@ export default function ProfileSettingsScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
   const teamRequest = useRef(0);
 
   useEffect(() => {
@@ -181,6 +185,20 @@ export default function ProfileSettingsScreen() {
     setPushBusy(false);
   }
 
+  async function leaveSession() {
+    if (signingOut) return;
+    setSigningOut(true);
+    setSignOutError(null);
+    try {
+      await deactivateCurrentDevicePushToken();
+      await signOut();
+    } catch {
+      setSignOutError('Déconnexion impossible. Vérifie ta connexion puis réessaie.');
+    } finally {
+      setSigningOut(false);
+    }
+  }
+
   return (
     <Screen>
       <ScrollView style={styles.root} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -300,6 +318,18 @@ export default function ProfileSettingsScreen() {
             <AccountLink label="Conditions d’utilisation" onPress={() => router.push('/legal/terms')} />
             <AccountLink label="Support" onPress={() => router.push('/support')} />
           </View>
+          <Pressable
+            accessibilityLabel="Se déconnecter"
+            accessibilityRole="button"
+            accessibilityState={{ busy: signingOut, disabled: signingOut }}
+            disabled={signingOut}
+            onPress={() => void leaveSession()}
+            style={({ pressed }) => [styles.logout, signingOut && styles.disabled, pressed && !signingOut && styles.pressed]}
+          >
+            <Text style={styles.logoutText}>{signingOut ? 'DÉCONNEXION…' : 'SE DÉCONNECTER'}</Text>
+            <Text style={styles.logoutArrow}>→</Text>
+          </Pressable>
+          {signOutError ? <Text accessibilityLiveRegion="polite" accessibilityRole="alert" style={styles.signOutError}>{signOutError}</Text> : null}
         </View>
 
         <Pressable accessibilityRole="button" disabled={!canSave} onPress={() => void save()} style={({ pressed }) => [styles.save, !canSave && styles.disabled, pressed && canSave && styles.pressed]}>
@@ -411,6 +441,10 @@ const styles = StyleSheet.create({
   accountLink: { minHeight: 56, paddingHorizontal: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#182028' },
   accountLinkLabel: { ...typography.bodyStrong, color: colors.text },
   accountLinkArrow: { color: colors.volt, fontSize: 18 },
+  logout: { minHeight: 54, paddingHorizontal: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 17, backgroundColor: '#171015', borderWidth: 1, borderColor: '#4A2730' },
+  logoutText: { ...typography.action, color: '#FF8B96', letterSpacing: .3 },
+  logoutArrow: { color: '#FF8B96', fontSize: 18, fontWeight: '900' },
+  signOutError: { ...typography.body, color: '#FF9AA2' },
   switchTrack: { width: 52, height: 30, padding: 3, borderRadius: 16, justifyContent: 'center', backgroundColor: '#242D35' }, switchTrackActive: { backgroundColor: colors.volt }, switchThumb: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#75808C' }, switchThumbActive: { alignSelf: 'flex-end', backgroundColor: '#080A0C' },
   save: { minHeight: 58, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 18, backgroundColor: colors.volt }, saveText: { ...typography.action, color: '#080A0C', letterSpacing: .3 }, saveArrow: { color: '#080A0C', fontSize: 18, fontWeight: '900' },
   disabled: { opacity: 0.42 }, pressed: { opacity: 0.74 },

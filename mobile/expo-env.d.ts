@@ -1,3 +1,3 @@
 /// <reference types="expo/types" />
 
-// Generated/maintained by Expo. Keep this file committed.
+// NOTE: This file should not be edited and should be in your git ignore
