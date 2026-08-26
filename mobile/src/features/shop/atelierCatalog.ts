@@ -251,7 +251,7 @@ export function createAtelierPreviewItems(): CosmeticItem[] {
       name: product.name,
       description: product.description,
       rarity: product.rarity,
-      styleKey: product.id,
+      styleKey: product.id.replace(/_/g, '-'),
       accent: product.accent,
       price: product.price,
       collectionKey: 'atelier',

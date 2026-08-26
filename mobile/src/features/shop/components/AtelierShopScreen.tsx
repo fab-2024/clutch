@@ -127,7 +127,11 @@ export default function AtelierShopScreen({ previewData, previewProfile }: Ateli
   const balance = data?.balance ?? volts ?? 0;
   const action = selectedItem ? atelierPrimaryAction(selectedItem, balance) : 'unavailable';
   const scene = resolveAtelierSceneConfig(data?.equipped ?? profileData?.cosmetics, trial);
-  const equippedIds = equippedAtelierIds(data?.equipped ?? profileData?.cosmetics);
+  const equippedIds = useMemo(
+    () => equippedAtelierIds(data?.equipped ?? profileData?.cosmetics),
+    [data?.equipped, profileData?.cosmetics],
+  );
+  const equippedIdsRef = useRef(equippedIds);
   const cosmetics = data?.equipped ?? profileData?.cosmetics ?? null;
   const grade = profileData?.ranking.grade;
   const rankLabel = loading
@@ -141,12 +145,16 @@ export default function AtelierShopScreen({ previewData, previewProfile }: Ateli
   const trialActive = Object.keys(trial).length > 0;
 
   useEffect(() => {
-    const persistedId = equippedIds[category];
+    equippedIdsRef.current = equippedIds;
+  }, [equippedIds]);
+
+  useEffect(() => {
+    const persistedId = equippedIdsRef.current[category];
     const nextId = products.some((product) => product.id === persistedId)
       ? persistedId
       : products[0]?.id;
     if (nextId) setSelectedId(nextId);
-  }, [category]); // Equipment updates must not pull the carousel away from the user's selection.
+  }, [category, products]); // Equipment updates must not pull the carousel away from the user's selection.
 
   async function handlePrimaryAction() {
     if (!selectedItem || !selectedProduct || pendingId) return;

@@ -37,6 +37,7 @@ describe('showcase Atelier catalog', () => {
 
   it('maps each category to one server slot and exactly one included default', () => {
     const items = createAtelierPreviewItems();
+    expect(items.every((item) => /^[a-z0-9-]+$/.test(item.styleKey))).toBe(true);
     expect(atelierProducts('materials')).toHaveLength(5);
     expect(atelierProducts('lighting')).toHaveLength(5);
     expect(atelierProducts('supports')).toHaveLength(3);

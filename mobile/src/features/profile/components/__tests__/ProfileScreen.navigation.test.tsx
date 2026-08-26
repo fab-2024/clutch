@@ -42,7 +42,7 @@ describe('ProfileScreen private navigation', () => {
     fireEvent.press(screen.getByLabelText('Ouvrir ma Vitrine en paysage'));
 
     expect(push).toHaveBeenCalledWith('/showcase-preview');
-  });
+  }, 15_000); // The first cold render compiles the complete showroom scene.
 
   it('opens the production Vitrine route from Moi', async () => {
     const screen = await render(<ProfileScreen />);
