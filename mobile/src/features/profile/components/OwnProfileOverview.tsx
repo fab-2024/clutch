@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import type { EquippedCosmetics } from '@/src/features/shop/types';
+import type { LevelFrameVariant } from '@/src/features/profile/levelFrames/types';
 
 import type { ProfileData } from '../types';
 import ProfileIdentityCard from './ProfileIdentityCard';
@@ -12,6 +13,7 @@ type OwnProfileOverviewProps = {
   cosmetics?: EquippedCosmetics | null;
   data: ProfileData | null;
   loading: boolean;
+  levelFrameVariant: LevelFrameVariant;
   onModify: () => void;
   onOpenActivations: () => void;
   onOpenLocker: () => void;
@@ -28,6 +30,7 @@ export default function OwnProfileOverview({
   cosmetics,
   data,
   loading,
+  levelFrameVariant,
   onModify,
   onOpenActivations,
   onOpenLocker,
@@ -47,6 +50,7 @@ export default function OwnProfileOverview({
         cosmetics={cosmetics}
         data={data}
         loading={loading}
+        levelFrameVariant={levelFrameVariant}
         onModify={onModify}
         pseudo={pseudo}
       />
@@ -63,6 +67,8 @@ export default function OwnProfileOverview({
       />
       <ProfileSignatureCard
         cosmetics={cosmetics}
+        level={data?.level.level ?? 0}
+        levelFrameVariant={levelFrameVariant}
         loading={loading}
         onOpenLocker={onOpenLocker}
         pseudo={pseudo}

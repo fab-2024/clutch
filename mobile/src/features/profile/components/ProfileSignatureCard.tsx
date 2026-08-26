@@ -2,6 +2,9 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { EquippedCosmetics } from '@/src/features/shop/types';
+import { LEVEL_FRAME_CATALOG } from '@/src/features/profile/levelFrames/catalog';
+import LevelFrame from '@/src/features/profile/levelFrames/components/LevelFrame';
+import type { LevelFrameVariant } from '@/src/features/profile/levelFrames/types';
 import { colors, typography } from '@/src/theme';
 
 import { ProfileRelicThumbnail } from './ProfileShowcaseCard';
@@ -10,6 +13,8 @@ import { SHOWCASE_PALETTE } from './showcase/showcasePalette';
 
 type ProfileSignatureCardProps = {
   cosmetics?: EquippedCosmetics | null;
+  level: number;
+  levelFrameVariant: LevelFrameVariant;
   loading: boolean;
   onOpenLocker: () => void;
   pseudo: string;
@@ -18,6 +23,8 @@ type ProfileSignatureCardProps = {
 
 export default function ProfileSignatureCard({
   cosmetics,
+  level,
+  levelFrameVariant,
   loading,
   onOpenLocker,
   pseudo,
@@ -28,6 +35,7 @@ export default function ProfileSignatureCard({
   const titleName = cosmetics?.title?.name ?? 'Origine';
   const bannerName = cosmetics?.profileCard?.name ?? 'Origine';
   const relicName = cosmetics?.factionEffect?.name ?? 'Origine';
+  const levelFrameName = LEVEL_FRAME_CATALOG[levelFrameVariant].name;
 
   return (
     <View style={styles.card}>
@@ -36,6 +44,9 @@ export default function ProfileSignatureCard({
       </View>
 
       <View style={styles.slots}>
+        <SignatureSlot accessibilityLabel={`Cadre de niveau, ${levelFrameName}`}>
+          <LevelFrame level={level} size={44} variant={levelFrameVariant} />
+        </SignatureSlot>
         <SignatureSlot accessibilityLabel={`Cadre d’avatar, ${loading ? 'chargement' : frameName}`}>
           <ShowcasePhysicalObject
             compact
@@ -88,8 +99,8 @@ export default function ProfileSignatureCard({
 }
 
 export function signatureEquippedCount(cosmetics?: EquippedCosmetics | null) {
-  if (!cosmetics) return 0;
-  return [cosmetics.frame, cosmetics.title, cosmetics.profileCard, cosmetics.factionEffect].filter(Boolean).length;
+  if (!cosmetics) return 1;
+  return 1 + [cosmetics.frame, cosmetics.title, cosmetics.profileCard, cosmetics.factionEffect].filter(Boolean).length;
 }
 
 function SignatureSlot({

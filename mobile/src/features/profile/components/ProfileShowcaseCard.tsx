@@ -2,7 +2,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { ImageSourcePropType } from 'react-native';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { CosmeticAvatar } from '@/src/features/shop/components/CosmeticRenderer';
+import { LEVEL_FRAME_CATALOG } from '@/src/features/profile/levelFrames/catalog';
+import LevelFrame from '@/src/features/profile/levelFrames/components/LevelFrame';
+import type { LevelFrameVariant } from '@/src/features/profile/levelFrames/types';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 import { colors, fonts, radius, typography } from '@/src/theme';
 
@@ -18,6 +20,7 @@ type ProfileShowcaseCardProps = {
   cosmetics?: EquippedCosmetics | null;
   level: number;
   loading: boolean;
+  levelFrameVariant: LevelFrameVariant;
   onOpenLoadout?: () => void;
   onOpenShowcase?: () => void;
   profileTitle: string;
@@ -33,6 +36,7 @@ export default function ProfileShowcaseCard({
   cosmetics,
   level,
   loading,
+  levelFrameVariant,
   onOpenLoadout,
   onOpenShowcase,
   profileTitle,
@@ -77,8 +81,8 @@ export default function ProfileShowcaseCard({
 
       <View style={styles.stage}>
         <View style={styles.supporterBlock}>
-          <CosmeticAvatar cosmetics={cosmetics} fallback={`${level}`} label={pseudo} size={92} />
-          <Text numberOfLines={1} style={styles.frameName}>{cosmetics?.frame?.name?.toUpperCase() ?? 'CADRE ORIGINE'}</Text>
+          <LevelFrame level={level} size={104} variant={levelFrameVariant} />
+          <Text numberOfLines={1} style={styles.frameName}>{LEVEL_FRAME_CATALOG[levelFrameVariant].name.toUpperCase()}</Text>
           <Text numberOfLines={1} style={[styles.title, { color: cosmetics?.title?.accent ?? frameAccent }]}>{profileTitle.toUpperCase()}</Text>
         </View>
 

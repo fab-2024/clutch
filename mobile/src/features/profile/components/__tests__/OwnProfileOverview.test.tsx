@@ -84,6 +84,7 @@ async function renderHub({
       cosmetics={cosmetics}
       data={data}
       loading={loading}
+      levelFrameVariant="signalAscendant"
       onModify={jest.fn()}
       onOpenActivations={jest.fn()}
       onOpenLocker={jest.fn()}
@@ -134,9 +135,10 @@ describe('OwnProfileOverview', () => {
     expect(onOpenVisitor).not.toHaveBeenCalled();
   });
 
-  it('renders four neutral Origine slots when no signature item is equipped', async () => {
+  it('renders the level frame separately from four neutral signature slots', async () => {
     const screen = await renderHub();
 
+    expect(screen.getByLabelText('Cadre de niveau, Signal Ascendant')).toBeTruthy();
     expect(screen.getByLabelText('Cadre d’avatar, Origine')).toBeTruthy();
     expect(screen.getByLabelText('Titre, Origine')).toBeTruthy();
     expect(screen.getByLabelText('Bannière de profil, Origine')).toBeTruthy();

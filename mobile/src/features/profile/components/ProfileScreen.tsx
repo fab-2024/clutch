@@ -8,6 +8,8 @@ import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIco
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { gradeAccent } from '@/src/features/ranking/grades';
 import AchievementBadgeArtwork from '@/src/features/profile/achievementBadges/components/AchievementBadgeArtwork';
+import { resolveOwnedLevelFrames } from '@/src/features/profile/levelFrames/catalog';
+import { useLevelFrameEquipment } from '@/src/features/profile/levelFrames/useLevelFrameEquipment';
 import { loadProfileSafetyState } from '@/src/features/safety/api';
 import { ProfileSafetyActions } from '@/src/features/safety';
 import { useAuth } from '@/src/providers/AuthProvider';
@@ -41,6 +43,14 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
   const ownPseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'joueur';
   const pseudo = profilePseudo?.trim() || ownPseudo;
   const handlePublicBlocked = useCallback(() => setPublicBlocked(true), []);
+  const ownedLevelFrames = useMemo(
+    () => resolveOwnedLevelFrames({ founder: data?.founder, preview: Boolean(previewData) }),
+    [data?.founder, previewData],
+  );
+  const levelFrameEquipment = useLevelFrameEquipment(
+    previewData ? `preview-${pseudo}` : pseudo,
+    ownedLevelFrames,
+  );
 
   const load = useCallback(async (refresh = false) => {
     if (previewData) {
@@ -144,6 +154,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             cosmetics={cosmetics}
             data={data}
             loading={loading}
+            levelFrameVariant={levelFrameEquipment.variant}
             onModify={() => router.push('/settings/profile')}
             onOpenActivations={() => router.push((previewData ? '/campaign-preview' : '/campaign/nova-week') as never)}
             onOpenLocker={() => router.push({ pathname: previewData ? '/shop-preview' : '/shop', params: { scope: 'owned' } } as never)}
@@ -177,6 +188,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
           cosmetics={cosmetics}
           level={data?.level.level ?? 0}
           loading={loading}
+          levelFrameVariant={levelFrameEquipment.variant}
           onOpenLoadout={publicView ? undefined : () => router.push((previewData ? '/shop-preview' : '/shop') as never)}
           onOpenShowcase={publicView ? undefined : () => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
           profileTitle={profileTitle}

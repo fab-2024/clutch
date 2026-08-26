@@ -22,6 +22,13 @@ import AchievementBadgeCollection, {
 } from '@/src/features/profile/achievementBadges/components/AchievementBadgeCollection';
 import { useAchievementBadgeEquipment } from '@/src/features/profile/achievementBadges/useAchievementBadgeEquipment';
 import { BADGE_IDS, type BadgeId } from '@/src/features/profile/achievementBadges/types';
+import {
+  resolveLevelFrameCollection,
+  resolveOwnedLevelFrames,
+} from '@/src/features/profile/levelFrames/catalog';
+import LevelFrameGallery from '@/src/features/profile/levelFrames/components/LevelFrameGallery';
+import type { LevelFrameVariant } from '@/src/features/profile/levelFrames/types';
+import { useLevelFrameEquipment } from '@/src/features/profile/levelFrames/useLevelFrameEquipment';
 import { SHOWCASE_RING_CATALOG } from '@/src/features/profile/showcaseRings/catalog';
 import ShowcaseRingCollection from '@/src/features/profile/showcaseRings/components/ShowcaseRingCollection';
 import {
@@ -54,7 +61,7 @@ export type LockerScreenProps = {
   previewProfile?: ProfileData;
 };
 
-type LockerTab = IdentityCosmeticSlot | 'showcase_ring' | 'achievement_badge';
+type LockerTab = IdentityCosmeticSlot | 'showcase_ring' | 'achievement_badge' | 'level_frame';
 
 const SLOT_META: Record<IdentityCosmeticSlot, { label: string; short: string; promise: string; glyph: string }> = {
   cadre_profil: { label: 'Cadres', short: 'CADRE', promise: 'Signe ton profil sans toucher à tes performances.', glyph: '▣' },
@@ -77,6 +84,12 @@ const BADGE_TAB_META = {
   label: 'Badges',
   promise: 'Des accomplissements physiques à gagner et à exposer. Jamais à acheter.',
   short: 'BADGES',
+} as const;
+const LEVEL_FRAME_TAB_META = {
+  glyph: '⌑',
+  label: 'Niveaux',
+  promise: 'Le petit cadre du niveau, distinct de ton cadre d’avatar et de ta signature.',
+  short: 'CADRES DE NIVEAU',
 } as const;
 
 export default function LockerScreen({ previewData, previewProfile }: LockerScreenProps) {
@@ -128,6 +141,15 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
   const badgeEquipment = useAchievementBadgeEquipment(
     previewData ? `preview-${pseudo}` : pseudo,
     badgeEquipmentFallback,
+  );
+  const ownedLevelFrames = useMemo(
+    () => resolveOwnedLevelFrames({ founder: profileData?.founder, preview: Boolean(previewData) }),
+    [previewData, profileData?.founder],
+  );
+  const levelFrameEquipment = useLevelFrameEquipment(
+    previewData ? `preview-${pseudo}` : pseudo,
+    ownedLevelFrames,
+    previewData ? 'azurOrbit' : 'signalAscendant',
   );
 
   const load = useCallback(async (refresh = false) => {
@@ -237,16 +259,23 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
     [contract.catalog.allowedSlots],
   );
   const availableTabs = useMemo<LockerTab[]>(
-    () => [...availableSlots, 'showcase_ring', 'achievement_badge'],
+    () => [...availableSlots, 'level_frame', 'showcase_ring', 'achievement_badge'],
     [availableSlots],
   );
   const ringActive = slot === 'showcase_ring';
   const badgeActive = slot === 'achievement_badge';
-  const profileCollectionActive = ringActive || badgeActive;
+  const levelFrameActive = slot === 'level_frame';
+  const profileCollectionActive = ringActive || badgeActive || levelFrameActive;
   const activeSlot = isIdentityTab(slot) && availableSlots.includes(slot)
     ? slot
     : availableSlots[0] ?? 'cadre_profil';
-  const activeMeta = badgeActive ? BADGE_TAB_META : ringActive ? RING_TAB_META : SLOT_META[activeSlot];
+  const activeMeta = badgeActive
+    ? BADGE_TAB_META
+    : ringActive
+      ? RING_TAB_META
+      : levelFrameActive
+        ? LEVEL_FRAME_TAB_META
+        : SLOT_META[activeSlot];
   const ringStats = useMemo(() => adaptShowcaseRingStats(profileData), [profileData]);
   const ringProgressions = useMemo(
     () => resolveAllShowcaseRings(ringStats, ringEquipment.family),
@@ -257,7 +286,14 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
   const badgeCollection = profileData?.badges ?? [];
   const unlockedBadgeCount = badgeCollection.filter((badge) => badge.obtained).length;
   const equippedBadgeCount = badgeEquipment.slots.filter(Boolean).length;
-  const collectionCount = (data?.items.filter((item) => item.owned).length ?? 0) + unlockedRingCount + unlockedBadgeCount;
+  const levelFrameCollection = useMemo(
+    () => resolveLevelFrameCollection(levelFrameEquipment.variant, ownedLevelFrames),
+    [levelFrameEquipment.variant, ownedLevelFrames],
+  );
+  const collectionCount = (data?.items.filter((item) => item.owned).length ?? 0)
+    + unlockedRingCount
+    + unlockedBadgeCount
+    + ownedLevelFrames.length;
   const equipped = useMemo(() => resolveEquipped(data), [data]);
   const teams = useMemo(() => uniqueTeams(data?.items ?? []), [data?.items]);
   const collections = useMemo(() => uniqueCollections(data?.items ?? []), [data?.items]);
@@ -293,6 +329,16 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
         : `Socle ${slotIndex + 1} libéré.`);
     } catch (caught) {
       setMessage(caught instanceof Error ? caught.message : 'Le badge n’a pas pu être enregistré sur cet appareil.');
+      throw caught;
+    }
+  }
+
+  async function handleLevelFrameEquip(variant: LevelFrameVariant) {
+    try {
+      await levelFrameEquipment.equip(variant);
+      setMessage(`${levelFrameCollection.find((entry) => entry.variant === variant)?.name ?? 'Cadre'} équipe maintenant ton niveau.`);
+    } catch (caught) {
+      setMessage(caught instanceof Error ? caught.message : 'Le cadre de niveau n’a pas pu être enregistré.');
       throw caught;
     }
   }
@@ -416,9 +462,9 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
           </View>
           <SupporterIdentity cosmetics={equipped} meta="5 SURFACES" pseudo={pseudo} />
           <View style={styles.heroStats}>
-            <HeroStat label="OBJETS" value={loading ? '—' : `${collectionCount}/${(data?.items.length ?? 0) + 25}`} />
+            <HeroStat label="OBJETS" value={loading ? '—' : `${collectionCount}/${(data?.items.length ?? 0) + 32}`} />
             <View style={styles.heroDivider} />
-            <HeroStat label="ÉQUIPÉS" value={`${countEquipped(equipped) + Number(Boolean(equippedRingProgress)) + equippedBadgeCount}/${availableSlots.length + 5}`} />
+            <HeroStat label="ÉQUIPÉS" value={`${countEquipped(equipped) + Number(Boolean(equippedRingProgress)) + equippedBadgeCount + 1}/${availableSlots.length + 6}`} />
             <View style={styles.heroDivider} />
             <HeroStat label="PAY-TO-WIN" value={contract.catalog.competitiveEffects ? '!' : '0'} accent={!contract.catalog.competitiveEffects} />
           </View>
@@ -443,12 +489,15 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
           {availableTabs.map((itemTab) => {
             const isRing = itemTab === 'showcase_ring';
             const isBadge = itemTab === 'achievement_badge';
-            const active = isBadge ? badgeActive : isRing ? ringActive : itemTab === activeSlot && !profileCollectionActive;
-            const meta = isBadge ? BADGE_TAB_META : isRing ? RING_TAB_META : SLOT_META[itemTab];
+            const isLevelFrame = itemTab === 'level_frame';
+            const active = isBadge ? badgeActive : isRing ? ringActive : isLevelFrame ? levelFrameActive : itemTab === activeSlot && !profileCollectionActive;
+            const meta = isBadge ? BADGE_TAB_META : isRing ? RING_TAB_META : isLevelFrame ? LEVEL_FRAME_TAB_META : SLOT_META[itemTab];
             const currentName = isBadge
               ? `${equippedBadgeCount}/4 exposés`
               : isRing
               ? equippedRingProgress?.display.name ?? 'À équiper'
+              : isLevelFrame
+              ? levelFrameCollection.find((entry) => entry.equipped)?.name ?? 'Signal Ascendant'
               : data?.items.find((item) => item.slot === itemTab && item.equipped)?.name ?? 'À équiper';
             return (
               <Pressable accessibilityRole="tab" accessibilityState={{ selected: active }} key={itemTab} onPress={() => setSlot(itemTab)} style={({ pressed }) => [styles.tab, active && styles.tabActive, pressed && styles.pressed]}>
@@ -482,7 +531,7 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
         {profileError && profileCollectionActive ? <View style={styles.error}><Text style={styles.errorText}>Les données d’accomplissement ne sont pas synchronisées. Les objets déjà connus restent visibles.</Text><Pressable accessibilityRole="button" onPress={() => void loadRingProfile()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
         {message ? <Text style={styles.message}>{message}</Text> : null}
 
-        {profileCollectionActive && (profileLoading || ringEquipment.loading || badgeEquipment.loading) ? (
+        {profileCollectionActive && (profileLoading || ringEquipment.loading || badgeEquipment.loading || levelFrameEquipment.loading) ? (
           <View style={styles.loading}><ActivityIndicator color={colors.volt} /><Text style={styles.loadingText}>Lecture de tes accomplissements…</Text></View>
         ) : badgeActive ? (
           <AchievementBadgeCollection
@@ -497,6 +546,13 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
             onEquip={handleRingEquip}
             progressions={ringProgressions}
             stats={ringStats}
+          />
+        ) : levelFrameActive ? (
+          <LevelFrameGallery
+            entries={levelFrameCollection}
+            level={profileData?.level.level ?? 1}
+            mode="locker"
+            onEquip={handleLevelFrameEquip}
           />
         ) : loading ? (
           <View style={styles.loading}><ActivityIndicator color={colors.volt} /><Text style={styles.loadingText}>Ouverture du Locker…</Text></View>
@@ -625,10 +681,11 @@ function humanize(value: string) { return value.replace(/[-_]/g, ' ').replace(/\
 function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
 function friendlyError(value: string) { if (value.toLowerCase().includes('solde insuffisant')) return 'Ton solde a changé. Recharge le Locker avant de confirmer.'; if (isOfflineError(value)) return 'Connexion indisponible. Tes objets équipés restent visibles sur cet appareil.'; return value; }
 function isOfflineError(value: string) { return /network|fetch|connexion|offline|hors ligne/i.test(value); }
-function collectionTabFromParam(value?: string | string[]): 'showcase_ring' | 'achievement_badge' | null {
+function collectionTabFromParam(value?: string | string[]): 'showcase_ring' | 'achievement_badge' | 'level_frame' | null {
   const normalized = Array.isArray(value) ? value[0] : value;
   if (normalized === 'rings' || normalized === 'anneaux') return 'showcase_ring';
   if (normalized === 'badges' || normalized === 'accomplissements') return 'achievement_badge';
+  if (normalized === 'levelFrames' || normalized === 'level-frames' || normalized === 'niveaux') return 'level_frame';
   return null;
 }
 

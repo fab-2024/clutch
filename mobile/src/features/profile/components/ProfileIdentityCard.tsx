@@ -1,7 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { CosmeticAvatar } from '@/src/features/shop/components/CosmeticRenderer';
+import LevelFrame from '@/src/features/profile/levelFrames/components/LevelFrame';
+import type { LevelFrameVariant } from '@/src/features/profile/levelFrames/types';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 import { colors, fonts, typography } from '@/src/theme';
 
@@ -11,6 +12,7 @@ type ProfileIdentityCardProps = {
   cosmetics?: EquippedCosmetics | null;
   data: ProfileData | null;
   loading: boolean;
+  levelFrameVariant: LevelFrameVariant;
   onModify: () => void;
   pseudo: string;
 };
@@ -19,6 +21,7 @@ export default function ProfileIdentityCard({
   cosmetics,
   data,
   loading,
+  levelFrameVariant,
   onModify,
   pseudo,
 }: ProfileIdentityCardProps) {
@@ -43,7 +46,7 @@ export default function ProfileIdentityCard({
         start={{ x: 0, y: 0 }}
         style={StyleSheet.absoluteFill}
       />
-      <CosmeticAvatar cosmetics={cosmetics} fallback={String(level)} label={pseudo} size={58} />
+      <LevelFrame level={typeof level === 'number' ? level : 0} size={64} variant={levelFrameVariant} />
       <View style={styles.identity}>
         <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={styles.pseudo}>
           {pseudo || '—'}

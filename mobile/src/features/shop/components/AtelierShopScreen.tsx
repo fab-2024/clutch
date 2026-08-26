@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -16,6 +16,12 @@ import {
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { loadProfileData } from '@/src/features/profile/api';
+import {
+  resolveLevelFrameCollection,
+  resolveOwnedLevelFrames,
+} from '@/src/features/profile/levelFrames/catalog';
+import LevelFrameGallery from '@/src/features/profile/levelFrames/components/LevelFrameGallery';
+import { useLevelFrameEquipment } from '@/src/features/profile/levelFrames/useLevelFrameEquipment';
 import ShowcaseRoomScene from '@/src/features/profile/components/showcase/ShowcaseRoomScene';
 import type { ProfileData } from '@/src/features/profile/types';
 import { gradeAccent } from '@/src/features/ranking/grades';
@@ -51,6 +57,7 @@ export type AtelierShopScreenProps = {
 };
 
 export default function AtelierShopScreen({ previewData, previewProfile }: AtelierShopScreenProps) {
+  const params = useLocalSearchParams<{ category?: string | string[] }>();
   const { width } = useWindowDimensions();
   const { profile, session } = useAuth();
   const { refresh: refreshEconomy, volts } = useEconomy();
@@ -58,6 +65,7 @@ export default function AtelierShopScreen({ previewData, previewProfile }: Ateli
   const [data, setData] = useState<CosmeticShopData | null>(previewData ?? null);
   const [profileData, setProfileData] = useState<ProfileData | null>(previewProfile ?? null);
   const [category, setCategory] = useState<AtelierCategory>('materials');
+  const [division, setDivision] = useState<'showcase' | 'levelFrames'>(() => levelFrameCategoryFromParam(params.category));
   const [selectedId, setSelectedId] = useState('material_graphite');
   const [trial, setTrial] = useState<AtelierTrySelection>({});
   const [loading, setLoading] = useState(!previewData);
@@ -143,10 +151,26 @@ export default function AtelierShopScreen({ previewData, previewProfile }: Ateli
         : grade?.libelle?.toUpperCase() ?? 'NON CLASSÉ';
   const rankAccent = gradeAccent(grade);
   const trialActive = Object.keys(trial).length > 0;
+  const ownedLevelFrames = useMemo(
+    () => resolveOwnedLevelFrames({ founder: profileData?.founder, preview: Boolean(previewData) }),
+    [previewData, profileData?.founder],
+  );
+  const levelFrameEquipment = useLevelFrameEquipment(
+    previewData ? `preview-${pseudo}` : pseudo,
+    ownedLevelFrames,
+  );
+  const levelFrameCollection = useMemo(
+    () => resolveLevelFrameCollection(levelFrameEquipment.variant, ownedLevelFrames),
+    [levelFrameEquipment.variant, ownedLevelFrames],
+  );
 
   useEffect(() => {
     equippedIdsRef.current = equippedIds;
   }, [equippedIds]);
+
+  useEffect(() => {
+    setDivision(levelFrameCategoryFromParam(params.category));
+  }, [params.category]);
 
   useEffect(() => {
     const persistedId = equippedIdsRef.current[category];
@@ -222,8 +246,8 @@ export default function AtelierShopScreen({ previewData, previewProfile }: Ateli
             <Text style={styles.backIcon}>‹</Text>
           </Pressable>
           <View style={styles.headerCopy}>
-            <Text style={styles.headerEyebrow}>BOUTIQUE // VITRINE</Text>
-            <Text style={styles.headerTitle}>ATELIER</Text>
+            <Text style={styles.headerEyebrow}>BOUTIQUE // {division === 'levelFrames' ? 'IDENTITÉ' : 'VITRINE'}</Text>
+            <Text style={styles.headerTitle}>{division === 'levelFrames' ? 'CADRES' : 'ATELIER'}</Text>
           </View>
           <View accessible accessibilityLabel={`${formatNumber(balance)} Volts`} style={styles.balancePill}>
             <CurrencyIcon kind="volts" size={17} />
@@ -237,6 +261,24 @@ export default function AtelierShopScreen({ previewData, previewProfile }: Ateli
             <Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable>
           </View>
         ) : null}
+
+        <View style={styles.divisionTabs}>
+          <Pressable accessibilityRole="tab" accessibilityState={{ selected: division === 'showcase' }} onPress={() => setDivision('showcase')} style={({ pressed }) => [styles.divisionTab, division === 'showcase' && styles.divisionTabActive, pressed && styles.pressed]}>
+            <Text style={[styles.divisionTabText, division === 'showcase' && styles.divisionTabTextActive]}>ATELIER VITRINE</Text>
+          </Pressable>
+          <Pressable accessibilityRole="tab" accessibilityState={{ selected: division === 'levelFrames' }} onPress={() => setDivision('levelFrames')} style={({ pressed }) => [styles.divisionTab, division === 'levelFrames' && styles.divisionTabActive, pressed && styles.pressed]}>
+            <Text style={[styles.divisionTabText, division === 'levelFrames' && styles.divisionTabTextActive]}>CADRES DE NIVEAU</Text>
+          </Pressable>
+        </View>
+
+        {division === 'levelFrames' ? (
+          <LevelFrameGallery
+            entries={levelFrameCollection}
+            level={profileData?.level.level ?? 42}
+            mode="shop"
+          />
+        ) : (
+          <>
 
         <View style={styles.livePanel}>
           <LinearGradient colors={['rgba(11,18,24,.98)', 'rgba(5,9,13,.98)']} style={StyleSheet.absoluteFill} />
@@ -352,6 +394,8 @@ export default function AtelierShopScreen({ previewData, previewProfile }: Ateli
             </View>
           ))}
         </View>
+          </>
+        )}
       </ScrollView>
     </Screen>
   );
@@ -479,6 +523,13 @@ function friendlyError(value: string) {
   return value;
 }
 
+function levelFrameCategoryFromParam(value?: string | string[]) {
+  const normalized = Array.isArray(value) ? value[0] : value;
+  return normalized === 'level-frames' || normalized === 'levelFrames' || normalized === 'niveaux'
+    ? 'levelFrames'
+    : 'showcase';
+}
+
 const styles = StyleSheet.create({
   content: { paddingHorizontal: 14, paddingTop: 10, paddingBottom: 30, gap: 15, backgroundColor: '#05080B' },
   header: { minHeight: 61, flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -490,6 +541,11 @@ const styles = StyleSheet.create({
   balancePill: { minWidth: 92, height: 42, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 13, borderWidth: 1, borderColor: '#445120', backgroundColor: '#0D130A' },
   balanceLabel: { ...typography.label, color: '#7F8A92', fontSize: 6, letterSpacing: 0.4 },
   balanceValue: { color: '#F2F5F5', fontFamily: fonts.display, fontSize: 16, lineHeight: 17 },
+  divisionTabs: { minHeight: 48, padding: 4, flexDirection: 'row', gap: 4, borderRadius: 14, borderWidth: 1, borderColor: '#26323B', backgroundColor: '#070B0F' },
+  divisionTab: { flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
+  divisionTabActive: { borderWidth: 1, borderColor: '#596725', backgroundColor: '#151D0E' },
+  divisionTabText: { ...typography.label, color: '#75818B', fontSize: 7.5, letterSpacing: .28 },
+  divisionTabTextActive: { color: colors.volt },
   livePanel: { position: 'relative', overflow: 'hidden', padding: 10, borderRadius: 18, borderWidth: 1, borderColor: '#2B3944', backgroundColor: '#081017' },
   panelHeading: { minHeight: 43, marginBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   panelEyebrow: { ...typography.eyebrow, color: colors.volt, fontSize: 8, letterSpacing: 0.6 },
