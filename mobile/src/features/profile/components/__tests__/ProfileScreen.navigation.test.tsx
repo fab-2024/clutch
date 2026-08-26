@@ -23,7 +23,7 @@ jest.mock('@/src/providers/AuthProvider', () => ({
 }));
 jest.mock('@/src/providers/CosmeticsProvider', () => ({
   useCosmetics: () => ({
-    equipped: { frame: null, title: null, core: null, factionEffect: null, profileCard: null },
+    equipped: { frame: null, title: null, core: null, factionEffect: null, profileCard: null, showcase: { material: null, lighting: null, supports: null, jersey: null } },
   }),
 }));
 jest.mock('@/src/providers/EconomyProvider', () => {

@@ -6,6 +6,7 @@ import { Screen } from '@/src/components/layout/Screen';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { gradeAccent } from '@/src/features/ranking/grades';
 import { loadCosmeticShop } from '@/src/features/shop/api';
+import { resolveAtelierSceneConfig } from '@/src/features/shop/atelierState';
 import type { CosmeticShopData, EquippedCosmetics } from '@/src/features/shop/types';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, typography } from '@/src/theme';
@@ -18,6 +19,7 @@ import ShowcaseTopNavigation from './showcase/ShowcaseTopNavigation';
 import { SHOWCASE_PALETTE } from './showcase/showcasePalette';
 import type {
   ShowcaseLighting,
+  ShowcaseJerseyPresentation,
   ShowcasePedestalSkin,
   ShowcaseRoomTheme,
   ShowcaseSection,
@@ -39,8 +41,10 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
   const [pedestal, setPedestal] = useState<ShowcasePedestalSkin>('obsidian');
   const [theme, setTheme] = useState<ShowcaseRoomTheme>('graphite');
   const [lighting, setLighting] = useState<ShowcaseLighting>('cyan');
+  const [jerseyPresentation, setJerseyPresentation] = useState<ShowcaseJerseyPresentation>('locker');
   const requestRef = useRef(0);
   const trackedRef = useRef(false);
+  const savedAtelierAppliedRef = useRef(false);
   const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
 
   const load = useCallback(async (refresh = false) => {
@@ -91,6 +95,16 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
     }).catch(() => { trackedRef.current = false; });
   }, [loading, previewProfile, profileData]);
 
+  useEffect(() => {
+    if (!shopData || savedAtelierAppliedRef.current) return;
+    const saved = resolveAtelierSceneConfig(shopData.equipped);
+    savedAtelierAppliedRef.current = true;
+    setTheme(saved.theme);
+    setLighting(saved.lighting);
+    setPedestal(saved.pedestal);
+    setJerseyPresentation(saved.jerseyPresentation);
+  }, [shopData]);
+
   const ownedItems = useMemo(
     () => shopData?.items.filter((item) => item.owned) ?? [],
     [shopData?.items],
@@ -124,6 +138,7 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
             cosmetics={cosmetics}
             data={profileData}
             focus={section}
+            jerseyPresentation={jerseyPresentation}
             lighting={lighting}
             loading={loading}
             mode="full"
@@ -174,7 +189,15 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
 function resolveEquipped(shop: CosmeticShopData | null, fallback?: EquippedCosmetics | null) {
   if (!shop) return fallback ?? null;
   const equipped = shop.equipped;
-  return Object.values(equipped).some(Boolean) ? equipped : fallback ?? equipped;
+  const hasEquipment = [
+    equipped.frame,
+    equipped.title,
+    equipped.core,
+    equipped.factionEffect,
+    equipped.profileCard,
+    ...Object.values(equipped.showcase),
+  ].some(Boolean);
+  return hasEquipment ? equipped : fallback ?? equipped;
 }
 
 const styles = StyleSheet.create({

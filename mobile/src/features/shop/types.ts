@@ -1,4 +1,4 @@
-export const COSMETIC_SLOTS = [
+export const IDENTITY_COSMETIC_SLOTS = [
   'cadre_profil',
   'titre_profil',
   'apparence_core',
@@ -6,7 +6,21 @@ export const COSMETIC_SLOTS = [
   'carte_profil',
 ] as const;
 
+export const SHOWCASE_ATELIER_SLOTS = [
+  'vitrine_materiau',
+  'vitrine_eclairage',
+  'vitrine_supports',
+  'vitrine_maillot',
+] as const;
+
+export const COSMETIC_SLOTS = [
+  ...IDENTITY_COSMETIC_SLOTS,
+  ...SHOWCASE_ATELIER_SLOTS,
+] as const;
+
 export type CosmeticSlot = (typeof COSMETIC_SLOTS)[number];
+export type IdentityCosmeticSlot = (typeof IDENTITY_COSMETIC_SLOTS)[number];
+export type ShowcaseAtelierSlot = (typeof SHOWCASE_ATELIER_SLOTS)[number];
 export type CosmeticRarity = 'commun' | 'rare' | 'epique' | 'legendaire';
 
 export const COSMETIC_FAMILIES = [
@@ -15,6 +29,10 @@ export const COSMETIC_FAMILIES = [
   'titre_supporter',
   'signature_relique',
   'core_clutch',
+  'vitrine_materiau',
+  'vitrine_eclairage',
+  'vitrine_supports',
+  'vitrine_maillot',
 ] as const;
 
 export type CosmeticFamily = (typeof COSMETIC_FAMILIES)[number];
@@ -36,6 +54,10 @@ export const COSMETIC_FAMILY_BY_SLOT: Record<CosmeticSlot, CosmeticFamily> = {
   apparence_core: 'core_clutch',
   effet_faction: 'signature_relique',
   carte_profil: 'banniere',
+  vitrine_materiau: 'vitrine_materiau',
+  vitrine_eclairage: 'vitrine_eclairage',
+  vitrine_supports: 'vitrine_supports',
+  vitrine_maillot: 'vitrine_maillot',
 };
 
 export type CosmeticTeam = {
@@ -130,6 +152,14 @@ export type EquippedCosmetics = {
   core: EquippedCosmetic | null;
   factionEffect: EquippedCosmetic | null;
   profileCard: EquippedCosmetic | null;
+  showcase: ShowcaseAtelierEquipment;
+};
+
+export type ShowcaseAtelierEquipment = {
+  material: EquippedCosmetic | null;
+  lighting: EquippedCosmetic | null;
+  supports: EquippedCosmetic | null;
+  jersey: EquippedCosmetic | null;
 };
 
 export type CosmeticShopData = {
@@ -153,11 +183,17 @@ export const EMPTY_EQUIPPED_COSMETICS: EquippedCosmetics = {
   core: null,
   factionEffect: null,
   profileCard: null,
+  showcase: {
+    material: null,
+    lighting: null,
+    supports: null,
+    jersey: null,
+  },
 };
 
 export const DEFAULT_MONETIZATION_CONTRACT: MonetizationContract = {
-  version: 1,
-  code: 'identity_only_v1',
+  version: 3,
+  code: 'identity_showcase_founder_v3',
   promise: 'L’identité du supporter. Jamais ses performances.',
   currencies: {
     fragsPurchasable: false,
@@ -168,10 +204,16 @@ export const DEFAULT_MONETIZATION_CONTRACT: MonetizationContract = {
     voltsConvertibleToFrags: false,
   },
   catalog: {
-    schemaVersion: 2,
+    schemaVersion: 3,
     allowedSlots: [...COSMETIC_SLOTS],
     initialFamilies: ['cadre_avatar', 'banniere', 'titre_supporter', 'signature_relique'],
-    extensionFamilies: ['core_clutch'],
+    extensionFamilies: [
+      'core_clutch',
+      'vitrine_materiau',
+      'vitrine_eclairage',
+      'vitrine_supports',
+      'vitrine_maillot',
+    ],
     sources: [...COSMETIC_SOURCES],
     paidRandomItems: false,
     ownedItemsExpire: false,

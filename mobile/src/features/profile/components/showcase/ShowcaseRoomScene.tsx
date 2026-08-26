@@ -25,6 +25,7 @@ import ShowcasePhysicalObject, {
 } from './ShowcasePhysicalObject';
 import { SHOWCASE_PALETTE } from './showcasePalette';
 import type {
+  ShowcaseJerseyPresentation,
   ShowcaseLighting,
   ShowcasePedestalSkin,
   ShowcaseRoomTheme,
@@ -35,6 +36,7 @@ type ShowcaseRoomSceneProps = {
   cosmetics?: EquippedCosmetics | null;
   data: ProfileData | null;
   focus?: ShowcaseSection;
+  jerseyPresentation?: ShowcaseJerseyPresentation;
   lighting?: ShowcaseLighting;
   loading: boolean;
   mode: 'preview' | 'full';
@@ -59,14 +61,18 @@ const RELIC_ASSETS: ImageSourcePropType[] = [
 ];
 
 const LIGHTING: Record<ShowcaseLighting, { glow: string; wash: readonly [string, string, string] }> = {
+  acid: { glow: '#E8FF3D', wash: ['rgba(7,9,1,.03)', 'rgba(114,135,13,.10)', 'rgba(3,5,4,.16)'] },
   cyan: { glow: '#31D7E2', wash: ['rgba(1,8,12,.03)', 'rgba(20,105,138,.09)', 'rgba(1,5,8,.16)'] },
   violet: { glow: '#9A6BFF', wash: ['rgba(5,3,12,.04)', 'rgba(80,43,143,.09)', 'rgba(2,4,8,.17)'] },
   amber: { glow: '#E2B25D', wash: ['rgba(10,6,2,.03)', 'rgba(118,75,24,.09)', 'rgba(3,4,7,.17)'] },
+  white: { glow: '#F1F4F4', wash: ['rgba(8,10,12,.02)', 'rgba(196,207,214,.08)', 'rgba(2,4,6,.15)'] },
 };
 
 const THEME_WASH: Record<ShowcaseRoomTheme, readonly [string, string, string]> = {
   graphite: ['rgba(5,9,13,.04)', 'rgba(4,8,12,.01)', 'rgba(2,5,8,.12)'],
+  steel: ['rgba(138,151,162,.10)', 'rgba(24,29,33,.02)', 'rgba(102,116,127,.10)'],
   museum: ['rgba(55,34,21,.09)', 'rgba(10,10,11,.01)', 'rgba(38,23,14,.11)'],
+  carbon: ['rgba(5,7,9,.10)', 'rgba(18,22,25,.01)', 'rgba(1,3,5,.16)'],
   azure: ['rgba(5,27,42,.10)', 'rgba(5,12,18,.01)', 'rgba(3,30,48,.13)'],
 };
 
@@ -113,6 +119,7 @@ export default function ShowcaseRoomScene({
   cosmetics,
   data,
   focus = 'showcase',
+  jerseyPresentation = 'locker',
   lighting = 'cyan',
   loading,
   mode,
@@ -265,12 +272,32 @@ export default function ShowcaseRoomScene({
           <View
             accessible
             accessibilityLabel={team ? `Maillot de ${team.nom}` : 'Emplacement de maillot vide'}
-            style={[styles.jerseyStage, compact && styles.jerseyStagePreview]}
+            style={[
+              styles.jerseyStage,
+              compact && styles.jerseyStagePreview,
+              jerseyPresentation === 'gallery' && styles.jerseyStageGallery,
+              jerseyPresentation === 'podium' && styles.jerseyStagePodium,
+            ]}
           >
             {team ? (
               <>
-                <Image resizeMode="contain" source={JERSEY_ASSET} style={{ height: metrics.jerseyHeight, width: metrics.jerseyHeight * 0.76 }} />
-                <View style={[styles.jerseyLogo, compact && styles.jerseyLogoPreview]}>
+                {jerseyPresentation === 'gallery' ? <View style={[styles.jerseyGalleryFrame, compact && styles.jerseyGalleryFramePreview]} /> : null}
+                {jerseyPresentation === 'podium' ? <View style={[styles.jerseyPodiumBase, compact && styles.jerseyPodiumBasePreview]} /> : null}
+                <Image
+                  resizeMode="contain"
+                  source={JERSEY_ASSET}
+                  style={[
+                    { height: metrics.jerseyHeight, width: metrics.jerseyHeight * 0.76 },
+                    jerseyPresentation === 'gallery' && styles.jerseyImageGallery,
+                    jerseyPresentation === 'podium' && styles.jerseyImagePodium,
+                  ]}
+                />
+                <View style={[
+                  styles.jerseyLogo,
+                  compact && styles.jerseyLogoPreview,
+                  jerseyPresentation === 'gallery' && styles.jerseyLogoGallery,
+                  jerseyPresentation === 'podium' && styles.jerseyLogoPodium,
+                ]}>
                   <TeamLogo
                     accent={teamAccent}
                     contentScale={0.92}
@@ -443,8 +470,18 @@ const styles = StyleSheet.create({
   rankNamePreview: { maxWidth: 60, fontSize: 10, lineHeight: 11 },
   jerseyStage: { position: 'absolute', left: '1%', top: '0%', width: '57%', height: '76%', alignItems: 'center', justifyContent: 'flex-start' },
   jerseyStagePreview: { left: '1%', top: '2%', width: '56%', height: '74%' },
+  jerseyStageGallery: { justifyContent: 'center' },
+  jerseyStagePodium: { justifyContent: 'center' },
+  jerseyGalleryFrame: { position: 'absolute', top: '4%', right: '7%', bottom: '4%', left: '7%', borderWidth: 2, borderColor: 'rgba(157,170,179,.42)', backgroundColor: 'rgba(4,7,9,.22)', boxShadow: '0 0 8px rgba(185,199,209,.12)' },
+  jerseyGalleryFramePreview: { borderWidth: 1 },
+  jerseyPodiumBase: { position: 'absolute', right: '16%', bottom: '2%', left: '16%', height: '18%', borderRadius: 999, borderWidth: 1, borderColor: 'rgba(167,116,78,.42)', backgroundColor: '#080B0D', transform: [{ scaleY: 0.44 }] },
+  jerseyPodiumBasePreview: { bottom: '4%', height: '16%' },
+  jerseyImageGallery: { transform: [{ scale: 0.88 }] },
+  jerseyImagePodium: { transform: [{ translateY: 5 }, { scale: 0.91 }] },
   jerseyLogo: { position: 'absolute', top: '32%', left: '50%', marginLeft: -14 },
   jerseyLogoPreview: { top: '32%', marginLeft: -7 },
+  jerseyLogoGallery: { top: '36%' },
+  jerseyLogoPodium: { top: '39%' },
   emptyJersey: { position: 'relative', width: 72, height: 112, marginTop: 12, alignItems: 'center', justifyContent: 'flex-start', opacity: 0.48 },
   emptyJerseyPreview: { width: 36, height: 58, marginTop: 6 },
   emptyHangerHook: { width: '15%', height: '14%', marginTop: '8%', borderTopWidth: 1, borderRightWidth: 1, borderColor: '#687580', borderTopRightRadius: 999, transform: [{ rotate: '-18deg' }] },

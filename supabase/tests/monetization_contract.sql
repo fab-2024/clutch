@@ -13,8 +13,8 @@ declare
   v_purchase jsonb;
   v_rejected boolean := false;
 begin
-  if (v_contract ->> 'version')::integer <> 2
-     or v_contract ->> 'code' <> 'identity_founder_v2'
+  if (v_contract ->> 'version')::integer <> 3
+     or v_contract ->> 'code' <> 'identity_showcase_founder_v3'
      or coalesce((v_contract #>> '{devises,frags,achetables}')::boolean, true)
      or coalesce((v_contract #>> '{devises,frags,depensables}')::boolean, true)
      or coalesce((v_contract #>> '{devises,volts,conversion_frags}')::boolean, true)
@@ -65,7 +65,7 @@ begin
 
   select public.clutch_boutique_cosmetique_v1() into v_shop;
   if v_shop -> 'contrat' <> v_contract
-     or jsonb_array_length(v_shop -> 'objets') <> 27
+     or jsonb_array_length(v_shop -> 'objets') <> 43
   then
     raise exception 'Shop does not consume monetization contract v1: %', v_shop;
   end if;
@@ -74,7 +74,7 @@ begin
   values (v_user, 500, 'ajustement', 'monetization-contract-credit');
 
   select public.clutch_acheter_cosmetique_v1('titre-profil-2') into v_purchase;
-  if (v_purchase ->> 'contrat_version')::integer <> 2
+  if (v_purchase ->> 'contrat_version')::integer <> 3
      or not (v_purchase ->> 'achete')::boolean
      or (v_purchase ->> 'solde')::integer <> 250
      or (

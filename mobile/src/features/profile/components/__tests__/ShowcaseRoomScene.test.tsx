@@ -116,7 +116,7 @@ describe('Showcase room composition', () => {
     const screen = await render(
       <ShowcaseRoomScene
         {...ROOM_PROPS}
-        cosmetics={{ frame: null, title: null, core: null, factionEffect: null, profileCard: null }}
+        cosmetics={{ frame: null, title: null, core: null, factionEffect: null, profileCard: null, showcase: { material: null, lighting: null, supports: null, jersey: null } }}
         data={sparseData}
         mode="full"
       />,

@@ -158,9 +158,9 @@ begin
   from jsonb_array_elements(v_shop -> 'objets') item
   where item ->> 'id' = v_mission_id;
 
-  if (v_shop #>> '{contrat,catalogue,schema_version}')::integer <> 2
+  if (v_shop #>> '{contrat,catalogue,schema_version}')::integer <> 3
      or jsonb_array_length(v_shop #> '{contrat,catalogue,familles_initiales}') <> 4
-     or jsonb_array_length(v_shop -> 'objets') <> 28
+     or jsonb_array_length(v_shop -> 'objets') <> 44
      or v_mission ->> 'famille' <> 'banniere'
      or v_mission ->> 'source' <> 'mission'
      or v_mission ->> 'collection_key' <> 'test-missions'

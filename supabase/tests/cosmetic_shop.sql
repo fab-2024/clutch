@@ -10,6 +10,8 @@ declare
   v_shop jsonb;
   v_purchase jsonb;
   v_repeat jsonb;
+  v_showcase_purchase jsonb;
+  v_showcase_repeat jsonb;
   v_equipped jsonb;
   v_rejected boolean := false;
 begin
@@ -50,13 +52,13 @@ begin
   select public.clutch_boutique_cosmetique_v1() into v_shop;
 
   if (v_shop ->> 'solde')::integer <> 0
-     or jsonb_array_length(v_shop -> 'objets') <> 27
+     or jsonb_array_length(v_shop -> 'objets') <> 43
      or (
        select count(*)
        from jsonb_array_elements(v_shop -> 'objets') item
        where (item ->> 'possede')::boolean
          and (item ->> 'equipe')::boolean
-     ) <> 5
+     ) <> 9
   then
     raise exception 'Initial cosmetic shop payload is inconsistent: %', v_shop;
   end if;
@@ -96,6 +98,31 @@ begin
     raise exception 'Repeated purchase was not idempotent: %', v_repeat;
   end if;
 
+  select public.clutch_acheter_cosmetique_v1('material_steel') into v_showcase_purchase;
+  select public.clutch_acheter_cosmetique_v1('material_steel') into v_showcase_repeat;
+
+  if not (v_showcase_purchase ->> 'achete')::boolean
+     or (v_showcase_purchase ->> 'solde')::integer <> 630
+     or (v_showcase_purchase ->> 'emplacement') <> 'vitrine_materiau'
+     or (v_showcase_repeat ->> 'achete')::boolean
+     or (v_showcase_repeat ->> 'solde')::integer <> 630
+     or (
+       select count(*) from public.volts_mouvements m
+       where m.user_id = v_user
+         and m.origine = 'achat'
+         and m.reference = 'material_steel'
+     ) <> 1
+     or (
+       select count(*) from public.inventaire i
+       where i.user_id = v_user
+         and i.objet_id = 'material_steel'
+     ) <> 1
+  then
+    raise exception 'Showcase purchase was not atomic and idempotent: %, %',
+      v_showcase_purchase,
+      v_showcase_repeat;
+  end if;
+
   begin
     perform public.clutch_acheter_cosmetique_v1('apparence-core-4');
   exception when sqlstate 'P0001' then
@@ -114,6 +141,10 @@ begin
   select public.clutch_mes_cosmetiques_v1() into v_equipped;
   if v_equipped #>> '{titre_profil,id}' <> 'titre-profil-2'
      or v_equipped #>> '{apparence_core,id}' <> 'apparence-core-1'
+     or v_equipped #>> '{vitrine_materiau,id}' <> 'material_steel'
+     or v_equipped #>> '{vitrine_eclairage,id}' <> 'lighting_cyan'
+     or v_equipped #>> '{vitrine_supports,id}' <> 'supports_gallery'
+     or v_equipped #>> '{vitrine_maillot,id}' <> 'jersey_locker'
   then
     raise exception 'Equipped cosmetic projection is inconsistent: %', v_equipped;
   end if;

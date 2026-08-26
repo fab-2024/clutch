@@ -66,6 +66,12 @@ export const PREVIEW_PROFILE: ProfileData = {
     core: { id: 'apparence-core-1', slot: 'apparence_core', level: 1, name: 'Core Origine', description: '', rarity: 'commun', styleKey: 'core-origin', accent: '#E8FF3D' },
     factionEffect: { id: 'effet-faction-1', slot: 'effet_faction', level: 1, name: 'Aura Discrète', description: '', rarity: 'commun', styleKey: 'faction-aura', accent: '#C6A34A' },
     profileCard: { id: 'carte-profil-1', slot: 'carte_profil', level: 1, name: 'Carte Noire', description: '', rarity: 'commun', styleKey: 'card-black', accent: '#AAB4BE' },
+    showcase: {
+      material: { id: 'material_graphite', slot: 'vitrine_materiau', level: 1, name: 'Graphite mat', description: '', rarity: 'commun', styleKey: 'material_graphite', accent: '#7B8791' },
+      lighting: { id: 'lighting_cyan', slot: 'vitrine_eclairage', level: 2, name: 'Cryo cyan', description: '', rarity: 'commun', styleKey: 'lighting_cyan', accent: '#31D7E2' },
+      supports: { id: 'supports_gallery', slot: 'vitrine_supports', level: 2, name: 'Galerie', description: '', rarity: 'commun', styleKey: 'supports_gallery', accent: '#8A959E' },
+      jersey: { id: 'jersey_locker', slot: 'vitrine_maillot', level: 1, name: 'Vestiaire', description: '', rarity: 'commun', styleKey: 'jersey_locker', accent: '#7B8791' },
+    },
   },
 };
 

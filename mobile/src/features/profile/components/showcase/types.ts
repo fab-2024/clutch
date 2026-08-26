@@ -2,6 +2,8 @@ export type ShowcaseSection = 'showcase' | 'collection' | 'season' | 'rank' | 't
 
 export type ShowcasePedestalSkin = 'obsidian' | 'bronze' | 'steel';
 
-export type ShowcaseRoomTheme = 'graphite' | 'museum' | 'azure';
+export type ShowcaseRoomTheme = 'graphite' | 'steel' | 'museum' | 'carbon' | 'azure';
 
-export type ShowcaseLighting = 'cyan' | 'violet' | 'amber';
+export type ShowcaseLighting = 'acid' | 'cyan' | 'violet' | 'amber' | 'white';
+
+export type ShowcaseJerseyPresentation = 'locker' | 'gallery' | 'podium';

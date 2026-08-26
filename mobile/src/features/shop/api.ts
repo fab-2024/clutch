@@ -77,6 +77,12 @@ export function normalizeEquipped(value: unknown): EquippedCosmetics {
     core: normalizeEquippedItem(payload.apparence_core, 'apparence_core'),
     factionEffect: normalizeEquippedItem(payload.effet_faction, 'effet_faction'),
     profileCard: normalizeEquippedItem(payload.carte_profil, 'carte_profil'),
+    showcase: {
+      material: normalizeEquippedItem(payload.vitrine_materiau, 'vitrine_materiau'),
+      lighting: normalizeEquippedItem(payload.vitrine_eclairage, 'vitrine_eclairage'),
+      supports: normalizeEquippedItem(payload.vitrine_supports, 'vitrine_supports'),
+      jersey: normalizeEquippedItem(payload.vitrine_maillot, 'vitrine_maillot'),
+    },
   };
 }
 

@@ -1,11 +1,15 @@
 import { Redirect } from 'expo-router';
 
+import { PREVIEW_PROFILE } from '@/src/features/profile/components/ProfilePreviewScreen';
+
+import { createAtelierPreviewItems } from '../atelierCatalog';
 import {
   COSMETIC_FAMILY_BY_SLOT,
   DEFAULT_MONETIZATION_CONTRACT,
   type CosmeticItem,
   type CosmeticShopData,
   type CosmeticSlot,
+  type EquippedCosmetic,
 } from '../types';
 import ShopScreen from './ShopScreen';
 
@@ -59,15 +63,35 @@ const ITEMS: CosmeticItem[] = DEFINITIONS.map(([slot, name, styleKey, accent, pr
   owned: price === 0 || styleKey === 'frame-volt' || styleKey === 'title-reader',
   equipped: styleKey === 'frame-volt' || styleKey === 'title-reader' || styleKey === 'core-origin' || styleKey === 'faction-aura' || styleKey === 'card-black',
 }));
+const ATELIER_ITEMS = createAtelierPreviewItems();
 
 export const PREVIEW_SHOP: CosmeticShopData = {
   balance: 1280,
-  items: ITEMS,
-  equipped: { frame: null, title: null, core: null, factionEffect: null, profileCard: null },
+  items: [...ITEMS, ...ATELIER_ITEMS],
+  equipped: {
+    frame: previewEquipped(ITEMS, 'cadre_profil'),
+    title: previewEquipped(ITEMS, 'titre_profil'),
+    core: previewEquipped(ITEMS, 'apparence_core'),
+    factionEffect: previewEquipped(ITEMS, 'effet_faction'),
+    profileCard: previewEquipped(ITEMS, 'carte_profil'),
+    showcase: {
+      material: previewEquipped(ATELIER_ITEMS, 'vitrine_materiau'),
+      lighting: previewEquipped(ATELIER_ITEMS, 'vitrine_eclairage'),
+      supports: previewEquipped(ATELIER_ITEMS, 'vitrine_supports'),
+      jersey: previewEquipped(ATELIER_ITEMS, 'vitrine_maillot'),
+    },
+  },
   contract: DEFAULT_MONETIZATION_CONTRACT,
 };
 
+function previewEquipped(items: CosmeticItem[], slot: CosmeticSlot): EquippedCosmetic | null {
+  const item = items.find((candidate) => candidate.slot === slot && candidate.equipped);
+  if (!item) return null;
+  const { id, level, name, description, rarity, styleKey, accent } = item;
+  return { id, slot, level, name, description, rarity, styleKey, accent };
+}
+
 export default function ShopPreviewScreen() {
   if (!__DEV__) return <Redirect href="/" />;
-  return <ShopScreen previewData={PREVIEW_SHOP} />;
+  return <ShopScreen previewData={PREVIEW_SHOP} previewProfile={PREVIEW_PROFILE} />;
 }
