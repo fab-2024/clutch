@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { EquippedCosmetics } from '@/src/features/shop/types';
+import { resolveEquippedAchievementBadges } from '@/src/features/profile/achievementBadges/equipment';
+import { useAchievementBadgeEquipment } from '@/src/features/profile/achievementBadges/useAchievementBadgeEquipment';
 import {
   adaptShowcaseRingStats,
   resolveEquippedShowcaseRing,
@@ -45,11 +47,23 @@ export default function ProfileVitrinePreviewCard({
     () => resolveEquippedShowcaseRing(ringStats, ringEquipment.family),
     [ringEquipment.family, ringStats],
   );
+  const fallbackBadgeIds = useMemo(
+    () => data?.pinnedBadges.map((badge) => badge.id) ?? [],
+    [data?.pinnedBadges],
+  );
+  const badgeEquipment = useAchievementBadgeEquipment(
+    preview ? `preview-${pseudo}` : pseudo,
+    fallbackBadgeIds,
+  );
+  const equippedBadges = useMemo(
+    () => resolveEquippedAchievementBadges(data?.badges ?? [], badgeEquipment.slots),
+    [badgeEquipment.slots, data?.badges],
+  );
   const level = loading ? '—' : data?.level.level ?? '—';
   const displayedRank = loading ? '—' : rankLabel;
   const publicProfile = !loading && Boolean(data?.publicProfile);
   const visitorDisabled = loading || !data || !data.publicProfile;
-  const visibleBadges = loading ? [] : (data?.pinnedBadges ?? []).filter((badge) => badge.obtained);
+  const visibleBadges = loading ? [] : equippedBadges.filter((badge) => badge?.obtained);
   const trophies = loading ? [] : (data?.badges ?? []).filter((badge) => badge.obtained);
   const status = loading ? '—' : publicProfile ? 'EN LIGNE' : 'PRIVÉE';
   const statusColor = publicProfile ? colors.success : '#FFB84D';
@@ -70,6 +84,7 @@ export default function ProfileVitrinePreviewCard({
       <ShowcaseRoomScene
         cosmetics={cosmetics}
         data={data}
+        equippedBadges={equippedBadges}
         equippedRing={equippedRing}
         loading={loading}
         mode="preview"

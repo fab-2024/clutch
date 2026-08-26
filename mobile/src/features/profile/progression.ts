@@ -1,12 +1,13 @@
-import type { BadgeRarity, LevelState, ProfileBadge } from './types';
+import type { BadgeRarity } from './achievementBadges/types';
+import type { LevelState, ProfileBadge } from './types';
 import { toNumber } from './utils';
 
 const RARITY_XP: Record<BadgeRarity, number> = {
-  commun: 200,
+  common: 200,
   rare: 400,
-  epique: 800,
-  legendaire: 1200,
-  mythique: 2000,
+  epic: 800,
+  legendary: 1200,
+  secret: 1600,
 };
 
 const XP_PRONO_REGLE = 30;

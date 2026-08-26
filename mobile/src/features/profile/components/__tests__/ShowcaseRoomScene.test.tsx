@@ -30,13 +30,7 @@ describe('Showcase room composition', () => {
     const onLightingChange = jest.fn();
     const onPedestalChange = jest.fn();
     const onThemeChange = jest.fn();
-    const data = {
-      ...PREVIEW_PROFILE,
-      badges: [
-        ...PREVIEW_PROFILE.badges,
-        { key: 'verrouille', name: 'Encore verrouillé', family: 'audace', rarity: 'epique' as const, obtained: false },
-      ],
-    };
+    const data = PREVIEW_PROFILE;
     const screen = await render(
       <View>
         <ShowcaseRoomScene {...ROOM_PROPS} mode="preview" />
@@ -74,20 +68,19 @@ describe('Showcase room composition', () => {
     expect(screen.getByTestId('showcase-room-preview')).toBeTruthy();
     expect(screen.getByTestId('showcase-room-full')).toBeTruthy();
     expect(screen.getAllByLabelText('Maillot de Fnatic')).toHaveLength(2);
-    expect(screen.getAllByLabelText('Trophée Premier pas')).toHaveLength(2);
-    expect(screen.getAllByLabelText(/Relique Aura Discrète/)).toHaveLength(2);
+    expect(screen.getAllByLabelText('Trophée Premier Signal')).toHaveLength(2);
     expect(screen.getAllByLabelText('Cristal de classement dormant, rang non classé')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-frame-cadre-profil-1')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-title-titre-profil-1')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-core-apparence-core-1')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-banner-carte-profil-1')).toHaveLength(2);
-    expect(screen.getAllByLabelText(/1 badges visibles et 1 trophées/)).toHaveLength(2);
+    expect(screen.getAllByLabelText(/3 badges visibles/)).toHaveLength(2);
     expect(screen.getAllByTestId('locked-display-top-0', { includeHiddenElements: true })).toHaveLength(2);
-    expect(screen.getAllByTestId('locked-display-middle-0', { includeHiddenElements: true })).toHaveLength(2);
+    expect(screen.getAllByTestId('locked-display-middle-3', { includeHiddenElements: true })).toHaveLength(2);
     expect(screen.getAllByTestId('locked-display-bottom-0', { includeHiddenElements: true })).toHaveLength(2);
-    expect(screen.getAllByTestId('locked-trophy-0', { includeHiddenElements: true })).toHaveLength(2);
+    expect(screen.queryByTestId('locked-trophy-0', { includeHiddenElements: true })).toBeNull();
     expect(screen.queryByText('▣')).toBeNull();
-    expect(screen.queryByLabelText('Trophée Encore verrouillé')).toBeNull();
+    expect(screen.queryByLabelText('Trophée Badge mystère')).toBeNull();
     expect(screen.queryByLabelText(/emplacement verrouillé/i)).toBeNull();
 
     await fireEvent.press(screen.getByLabelText('Afficher collection'));
@@ -128,7 +121,7 @@ describe('Showcase room composition', () => {
 
     expect(screen.getByLabelText('Emplacement de maillot vide')).toBeTruthy();
     expect(screen.queryByLabelText('Maillot de Fnatic')).toBeNull();
-    expect(screen.queryByLabelText('Trophée Premier pas')).toBeNull();
+    expect(screen.queryByLabelText('Trophée Premier Signal')).toBeNull();
     expect(screen.queryByTestId(/showcase-object-/)).toBeNull();
     expect(screen.getByTestId('placement-artifact')).toBeTruthy();
   });
@@ -175,7 +168,7 @@ describe('Showcase room composition', () => {
     );
 
     expect(screen.getAllByTestId('showcase-ring-artifact-faction')).toHaveLength(2);
-    expect(screen.getAllByLabelText(/Anneau Faction, Pilier, palier 3/)).toHaveLength(2);
+    expect(screen.getAllByLabelText(/Anneau Faction, Recrue, palier 1/)).toHaveLength(2);
     await fireEvent.press(screen.getAllByTestId('showcase-ring-artifact-faction')[1]);
     expect(onRingPress).toHaveBeenCalledTimes(1);
   });

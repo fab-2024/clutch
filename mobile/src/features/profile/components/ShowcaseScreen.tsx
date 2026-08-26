@@ -8,6 +8,8 @@ import { gradeAccent } from '@/src/features/ranking/grades';
 import { loadCosmeticShop } from '@/src/features/shop/api';
 import { resolveAtelierSceneConfig } from '@/src/features/shop/atelierState';
 import type { CosmeticShopData, EquippedCosmetics } from '@/src/features/shop/types';
+import { resolveEquippedAchievementBadges } from '@/src/features/profile/achievementBadges/equipment';
+import { useAchievementBadgeEquipment } from '@/src/features/profile/achievementBadges/useAchievementBadgeEquipment';
 import ShowcaseRingDetailSheet from '@/src/features/profile/showcaseRings/components/ShowcaseRingDetailSheet';
 import {
   adaptShowcaseRingStats,
@@ -58,6 +60,14 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
   const ringEquipment = useShowcaseRingEquipment(
     previewProfile ? `preview-${previewProfile.pseudo}` : pseudo,
     previewProfile ? 'rank' : null,
+  );
+  const fallbackBadgeIds = useMemo(
+    () => profileData?.pinnedBadges.map((badge) => badge.id) ?? [],
+    [profileData?.pinnedBadges],
+  );
+  const badgeEquipment = useAchievementBadgeEquipment(
+    previewProfile ? `preview-${previewProfile.pseudo}` : pseudo,
+    fallbackBadgeIds,
   );
 
   const load = useCallback(async (refresh = false) => {
@@ -132,6 +142,10 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
     () => resolveEquippedShowcaseRing(ringStats, ringEquipment.family),
     [ringEquipment.family, ringStats],
   );
+  const equippedBadges = useMemo(
+    () => resolveEquippedAchievementBadges(profileData?.badges ?? [], badgeEquipment.slots),
+    [badgeEquipment.slots, profileData?.badges],
+  );
   const selectedRingProgress = ringProgressions.find(({ family }) => family === selectedRingFamily) ?? null;
   const grade = profileData?.ranking.grade;
   const rankLabel = loading
@@ -149,7 +163,7 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
         <ShowcaseTopNavigation
           active={section}
           loading={loading}
-          objectCount={ownedItems.length + ringProgressions.filter((progress) => progress.current).length}
+          objectCount={ownedItems.length + ringProgressions.filter((progress) => progress.current).length + (profileData?.badges.filter((badge) => badge.obtained).length ?? 0)}
           onBack={() => router.back()}
           onRefresh={() => void load(true)}
           onSelect={setSection}
@@ -160,6 +174,7 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
           <ShowcaseRoomScene
             cosmetics={cosmetics}
             data={profileData}
+            equippedBadges={equippedBadges}
             equippedRing={equippedRing}
             focus={section}
             jerseyPresentation={jerseyPresentation}

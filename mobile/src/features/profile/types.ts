@@ -1,6 +1,8 @@
 import type { SeasonalGradeState, SeasonalGradeSummary } from '@/src/features/ranking/grades';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 
+import type { PublicAchievementBadge } from './achievementBadges/types';
+
 export type ProfileRanking = {
   saison_id: string | null;
   saison_nom: string | null;
@@ -48,16 +50,7 @@ export type RecentPrediction = {
   score_b: number | null;
 };
 
-export type BadgeRarity = 'commun' | 'rare' | 'epique' | 'legendaire' | 'mythique';
-
-export type ProfileBadge = {
-  key: string;
-  name: string;
-  family: string;
-  rarity: BadgeRarity;
-  secret?: boolean;
-  obtained: boolean;
-};
+export type ProfileBadge = PublicAchievementBadge;
 
 export type LevelState = {
   xp: number;
@@ -103,9 +96,4 @@ export type RawProfile = {
   meilleur_jeu?: ProfileData['bestGame'];
   forme_recente?: RecentPrediction[] | null;
   equipe_favorite?: Partial<ProfileTeam> | null;
-};
-
-export type BadgeDefinition = Omit<ProfileBadge, 'obtained'> & {
-  test?: (recap: Record<string, unknown>) => boolean;
-  meta?: boolean;
 };

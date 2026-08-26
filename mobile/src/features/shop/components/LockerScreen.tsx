@@ -17,6 +17,11 @@ import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { FounderPackBanner } from '@/src/features/purchases';
 import { loadProfileData } from '@/src/features/profile/api';
+import AchievementBadgeCollection, {
+  badgeFilterFromParam,
+} from '@/src/features/profile/achievementBadges/components/AchievementBadgeCollection';
+import { useAchievementBadgeEquipment } from '@/src/features/profile/achievementBadges/useAchievementBadgeEquipment';
+import { BADGE_IDS, type BadgeId } from '@/src/features/profile/achievementBadges/types';
 import { SHOWCASE_RING_CATALOG } from '@/src/features/profile/showcaseRings/catalog';
 import ShowcaseRingCollection from '@/src/features/profile/showcaseRings/components/ShowcaseRingCollection';
 import {
@@ -49,7 +54,7 @@ export type LockerScreenProps = {
   previewProfile?: ProfileData;
 };
 
-type LockerTab = IdentityCosmeticSlot | 'showcase_ring';
+type LockerTab = IdentityCosmeticSlot | 'showcase_ring' | 'achievement_badge';
 
 const SLOT_META: Record<IdentityCosmeticSlot, { label: string; short: string; promise: string; glyph: string }> = {
   cadre_profil: { label: 'Cadres', short: 'CADRE', promise: 'Signe ton profil sans toucher à tes performances.', glyph: '▣' },
@@ -67,11 +72,24 @@ const RING_TAB_META = {
   promise: 'Expose les accomplissements qui ont réellement marqué ton parcours.',
   short: 'ANNEAUX',
 } as const;
+const BADGE_TAB_META = {
+  glyph: '✦',
+  label: 'Badges',
+  promise: 'Des accomplissements physiques à gagner et à exposer. Jamais à acheter.',
+  short: 'BADGES',
+} as const;
 
 export default function LockerScreen({ previewData, previewProfile }: LockerScreenProps) {
-  const params = useLocalSearchParams<{ scope?: string | string[]; tab?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    badge?: string | string[];
+    badgeFilter?: string | string[];
+    scope?: string | string[];
+    tab?: string | string[];
+  }>();
   const requestedScope = collectionScopeFromParam(params.scope);
-  const requestedTab = ringTabFromParam(params.tab);
+  const requestedTab = collectionTabFromParam(params.tab);
+  const requestedBadgeFilter = badgeFilterFromParam(params.badgeFilter);
+  const requestedBadgeId = badgeIdFromParam(params.badge);
   const { profile, session } = useAuth();
   const { refresh: refreshEconomy } = useEconomy();
   const { refresh: refreshCosmetics } = useCosmetics();
@@ -102,6 +120,14 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
   const ringEquipment = useShowcaseRingEquipment(
     previewData ? `preview-${pseudo}` : pseudo,
     previewData ? 'rank' : null,
+  );
+  const badgeEquipmentFallback = useMemo(
+    () => profileData?.pinnedBadges.map((badge) => badge.id) ?? [],
+    [profileData?.pinnedBadges],
+  );
+  const badgeEquipment = useAchievementBadgeEquipment(
+    previewData ? `preview-${pseudo}` : pseudo,
+    badgeEquipmentFallback,
   );
 
   const load = useCallback(async (refresh = false) => {
@@ -211,14 +237,16 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
     [contract.catalog.allowedSlots],
   );
   const availableTabs = useMemo<LockerTab[]>(
-    () => [...availableSlots, 'showcase_ring'],
+    () => [...availableSlots, 'showcase_ring', 'achievement_badge'],
     [availableSlots],
   );
   const ringActive = slot === 'showcase_ring';
-  const activeSlot = slot !== 'showcase_ring' && availableSlots.includes(slot)
+  const badgeActive = slot === 'achievement_badge';
+  const profileCollectionActive = ringActive || badgeActive;
+  const activeSlot = isIdentityTab(slot) && availableSlots.includes(slot)
     ? slot
     : availableSlots[0] ?? 'cadre_profil';
-  const activeMeta = ringActive ? RING_TAB_META : SLOT_META[activeSlot];
+  const activeMeta = badgeActive ? BADGE_TAB_META : ringActive ? RING_TAB_META : SLOT_META[activeSlot];
   const ringStats = useMemo(() => adaptShowcaseRingStats(profileData), [profileData]);
   const ringProgressions = useMemo(
     () => resolveAllShowcaseRings(ringStats, ringEquipment.family),
@@ -226,7 +254,10 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
   );
   const unlockedRingCount = ringProgressions.filter((progress) => progress.current).length;
   const equippedRingProgress = ringProgressions.find((progress) => progress.availability === 'equipped') ?? null;
-  const collectionCount = (data?.items.filter((item) => item.owned).length ?? 0) + unlockedRingCount;
+  const badgeCollection = profileData?.badges ?? [];
+  const unlockedBadgeCount = badgeCollection.filter((badge) => badge.obtained).length;
+  const equippedBadgeCount = badgeEquipment.slots.filter(Boolean).length;
+  const collectionCount = (data?.items.filter((item) => item.owned).length ?? 0) + unlockedRingCount + unlockedBadgeCount;
   const equipped = useMemo(() => resolveEquipped(data), [data]);
   const teams = useMemo(() => uniqueTeams(data?.items ?? []), [data?.items]);
   const collections = useMemo(() => uniqueCollections(data?.items ?? []), [data?.items]);
@@ -251,6 +282,18 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
         : 'Anneau retiré de ta Vitrine.');
     } catch {
       setMessage('L’anneau n’a pas pu être enregistré sur cet appareil.');
+    }
+  }
+
+  async function handleBadgeEquip(slotIndex: number, badgeId: BadgeId | null) {
+    try {
+      await badgeEquipment.equip(slotIndex, badgeId, badgeCollection);
+      setMessage(badgeId
+        ? `${badgeCollection.find((badge) => badge.id === badgeId)?.name ?? 'Badge'} exposé sur le socle ${slotIndex + 1}.`
+        : `Socle ${slotIndex + 1} libéré.`);
+    } catch (caught) {
+      setMessage(caught instanceof Error ? caught.message : 'Le badge n’a pas pu être enregistré sur cet appareil.');
+      throw caught;
     }
   }
 
@@ -373,9 +416,9 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
           </View>
           <SupporterIdentity cosmetics={equipped} meta="5 SURFACES" pseudo={pseudo} />
           <View style={styles.heroStats}>
-            <HeroStat label="OBJETS" value={loading ? '—' : `${collectionCount}/${(data?.items.length ?? 0) + 5}`} />
+            <HeroStat label="OBJETS" value={loading ? '—' : `${collectionCount}/${(data?.items.length ?? 0) + 25}`} />
             <View style={styles.heroDivider} />
-            <HeroStat label="ÉQUIPÉS" value={`${countEquipped(equipped) + Number(Boolean(equippedRingProgress))}/${availableSlots.length + 1}`} />
+            <HeroStat label="ÉQUIPÉS" value={`${countEquipped(equipped) + Number(Boolean(equippedRingProgress)) + equippedBadgeCount}/${availableSlots.length + 5}`} />
             <View style={styles.heroDivider} />
             <HeroStat label="PAY-TO-WIN" value={contract.catalog.competitiveEffects ? '!' : '0'} accent={!contract.catalog.competitiveEffects} />
           </View>
@@ -389,7 +432,7 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
           <View style={styles.offlineBanner}><View style={styles.offlineDot} /><Text style={styles.offlineText}>HORS CONNEXION · DERNIÈRE COLLECTION CONNUE</Text><Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View>
         ) : null}
 
-        {!ringActive ? (
+        {!profileCollectionActive ? (
           <View style={styles.scopeTabs}>
             <ScopeButton active={scope === 'owned'} label="MES OBJETS" meta={`${collectionCount - unlockedRingCount}`} onPress={() => setScope('owned')} />
             <ScopeButton active={scope === 'catalog'} label="CATALOGUE" meta={`${data?.items.length ?? 0}`} onPress={() => setScope('catalog')} />
@@ -399,9 +442,12 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
           {availableTabs.map((itemTab) => {
             const isRing = itemTab === 'showcase_ring';
-            const active = isRing ? ringActive : itemTab === activeSlot && !ringActive;
-            const meta = isRing ? RING_TAB_META : SLOT_META[itemTab];
-            const currentName = isRing
+            const isBadge = itemTab === 'achievement_badge';
+            const active = isBadge ? badgeActive : isRing ? ringActive : itemTab === activeSlot && !profileCollectionActive;
+            const meta = isBadge ? BADGE_TAB_META : isRing ? RING_TAB_META : SLOT_META[itemTab];
+            const currentName = isBadge
+              ? `${equippedBadgeCount}/4 exposés`
+              : isRing
               ? equippedRingProgress?.display.name ?? 'À équiper'
               : data?.items.find((item) => item.slot === itemTab && item.equipped)?.name ?? 'À équiper';
             return (
@@ -415,15 +461,15 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
 
         <View style={styles.sectionHead}>
           <View style={styles.sectionMark}><Text style={styles.sectionMarkText}>{activeMeta.glyph}</Text></View>
-          <View style={styles.sectionCopy}><Text style={styles.sectionEyebrow}>{ringActive ? 'COLLECTION' : scope === 'owned' ? 'COLLECTION' : 'CATALOGUE'}{' // '}{activeMeta.short}</Text><Text style={styles.sectionTitle}>{activeMeta.label}</Text><Text style={styles.sectionPromise}>{activeMeta.promise}</Text></View>
-          {!ringActive ? (
+          <View style={styles.sectionCopy}><Text style={styles.sectionEyebrow}>{profileCollectionActive ? 'COLLECTION' : scope === 'owned' ? 'COLLECTION' : 'CATALOGUE'}{' // '}{activeMeta.short}</Text><Text style={styles.sectionTitle}>{activeMeta.label}</Text><Text style={styles.sectionPromise}>{activeMeta.promise}</Text></View>
+          {!profileCollectionActive ? (
             <Pressable accessibilityLabel="Afficher les filtres" accessibilityRole="button" accessibilityState={{ expanded: filtersVisible }} onPress={() => setFiltersVisible((visible) => !visible)} style={({ pressed }) => [styles.filterToggle, filtersVisible && styles.filterToggleActive, pressed && styles.pressed]}>
               <Text style={[styles.filterToggleText, filtersVisible && styles.filterToggleTextActive]}>FILTRES{filterCount ? ` · ${filterCount}` : ''}</Text>
             </Pressable>
           ) : null}
         </View>
 
-        {filtersVisible && !ringActive ? (
+        {filtersVisible && !profileCollectionActive ? (
           <View style={styles.filters}>
             <FilterRow label="ÉQUIPE" options={[{ id: 'all', label: 'TOUTES' }, ...teams]} selected={teamFilter} onSelect={setTeamFilter} />
             <FilterRow label="COLLECTION" options={[{ id: 'all', label: 'TOUTES' }, ...collections]} selected={collectionFilter} onSelect={setCollectionFilter} />
@@ -432,12 +478,20 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
           </View>
         ) : null}
 
-        {error && !ringActive ? <View style={styles.error}><Text style={styles.errorText}>{friendlyError(error)}</Text><Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
-        {profileError && ringActive ? <View style={styles.error}><Text style={styles.errorText}>Les données de progression ne sont pas synchronisées. Les anneaux déjà connus restent visibles.</Text><Pressable accessibilityRole="button" onPress={() => void loadRingProfile()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
+        {error && !profileCollectionActive ? <View style={styles.error}><Text style={styles.errorText}>{friendlyError(error)}</Text><Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
+        {profileError && profileCollectionActive ? <View style={styles.error}><Text style={styles.errorText}>Les données d’accomplissement ne sont pas synchronisées. Les objets déjà connus restent visibles.</Text><Pressable accessibilityRole="button" onPress={() => void loadRingProfile()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
         {message ? <Text style={styles.message}>{message}</Text> : null}
 
-        {ringActive && (profileLoading || ringEquipment.loading) ? (
+        {profileCollectionActive && (profileLoading || ringEquipment.loading || badgeEquipment.loading) ? (
           <View style={styles.loading}><ActivityIndicator color={colors.volt} /><Text style={styles.loadingText}>Lecture de tes accomplissements…</Text></View>
+        ) : badgeActive ? (
+          <AchievementBadgeCollection
+            badges={badgeCollection}
+            equipment={badgeEquipment.slots}
+            initialFilter={requestedBadgeFilter}
+            initialSelectedId={requestedBadgeId}
+            onEquip={handleBadgeEquip}
+          />
         ) : ringActive ? (
           <ShowcaseRingCollection
             onEquip={handleRingEquip}
@@ -571,9 +625,20 @@ function humanize(value: string) { return value.replace(/[-_]/g, ' ').replace(/\
 function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
 function friendlyError(value: string) { if (value.toLowerCase().includes('solde insuffisant')) return 'Ton solde a changé. Recharge le Locker avant de confirmer.'; if (isOfflineError(value)) return 'Connexion indisponible. Tes objets équipés restent visibles sur cet appareil.'; return value; }
 function isOfflineError(value: string) { return /network|fetch|connexion|offline|hors ligne/i.test(value); }
-function ringTabFromParam(value?: string | string[]): 'showcase_ring' | null {
+function collectionTabFromParam(value?: string | string[]): 'showcase_ring' | 'achievement_badge' | null {
   const normalized = Array.isArray(value) ? value[0] : value;
-  return normalized === 'rings' || normalized === 'anneaux' ? 'showcase_ring' : null;
+  if (normalized === 'rings' || normalized === 'anneaux') return 'showcase_ring';
+  if (normalized === 'badges' || normalized === 'accomplissements') return 'achievement_badge';
+  return null;
+}
+
+function badgeIdFromParam(value?: string | string[]): BadgeId | null {
+  const normalized = Array.isArray(value) ? value[0] : value;
+  return BADGE_IDS.includes(normalized as BadgeId) ? normalized as BadgeId : null;
+}
+
+function isIdentityTab(value: LockerTab): value is IdentityCosmeticSlot {
+  return IDENTITY_COSMETIC_SLOTS.includes(value as IdentityCosmeticSlot);
 }
 
 const styles = StyleSheet.create({

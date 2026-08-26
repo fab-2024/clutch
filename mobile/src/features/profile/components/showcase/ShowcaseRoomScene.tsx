@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Text,
   View,
-  type ImageSourcePropType,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -13,6 +12,8 @@ import {
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
+import ShowcaseAchievementBadge from '@/src/features/profile/achievementBadges/components/ShowcaseAchievementBadge';
+import type { PublicAchievementBadge } from '@/src/features/profile/achievementBadges/types';
 import ShowcaseRingArtifact from '@/src/features/profile/showcaseRings/components/ShowcaseRingArtifact';
 import type { EquippedShowcaseRing } from '@/src/features/profile/showcaseRings/types';
 import { colors, fonts, typography } from '@/src/theme';
@@ -37,6 +38,7 @@ import type {
 type ShowcaseRoomSceneProps = {
   cosmetics?: EquippedCosmetics | null;
   data: ProfileData | null;
+  equippedBadges?: readonly (PublicAchievementBadge | null)[];
   equippedRing?: EquippedShowcaseRing | null;
   focus?: ShowcaseSection;
   jerseyPresentation?: ShowcaseJerseyPresentation;
@@ -55,14 +57,6 @@ const ROOM_ASSET = require('../../../../../assets/showcase/showcase-room-empty-v
 const JERSEY_ASSET = require('../../../../../assets/showcase/showcase-jersey-base-v1.png');
 const TROPHY_ASSET = require('../../../../../assets/showcase/showcase-trophy-v1.png');
 const PEDESTAL_ASSET = require('../../../../../assets/rank/rank-tier-pedestal-v1.png');
-
-const RELIC_ASSETS: ImageSourcePropType[] = [
-  require('../../../../../assets/social/faction-relic-v5.png'),
-  require('../../../../../assets/social/relic-evolution/fiole-cutout-v1.png'),
-  require('../../../../../assets/social/relic-evolution/flacon-cutout-v1.png'),
-  require('../../../../../assets/social/relic-evolution/reacteur-cutout-v1.png'),
-  require('../../../../../assets/social/relic-evolution/reliquaire-cutout-v1.png'),
-];
 
 const LIGHTING: Record<ShowcaseLighting, { glow: string; wash: readonly [string, string, string] }> = {
   acid: { glow: '#E8FF3D', wash: ['rgba(7,9,1,.03)', 'rgba(114,135,13,.10)', 'rgba(3,5,4,.16)'] },
@@ -98,22 +92,18 @@ const METRICS = {
     pedestalHeight: 50,
     pedestalWidth: 100,
     rankSize: 64,
-    relicHeight: 42,
-    relicWidth: 30,
     ringSize: 48,
     tokenSize: 18,
     trophyHeight: 44,
     trophyWidth: 30,
   },
   full: {
-    badgeSize: 38,
+    badgeSize: 52,
     jerseyHeight: 164,
     jerseyLogo: 28,
     pedestalHeight: 70,
     pedestalWidth: 144,
     rankSize: 98,
-    relicHeight: 76,
-    relicWidth: 54,
     ringSize: 88,
     tokenSize: 42,
     trophyHeight: 82,
@@ -124,6 +114,7 @@ const METRICS = {
 export default function ShowcaseRoomScene({
   cosmetics,
   data,
+  equippedBadges,
   equippedRing,
   focus = 'showcase',
   jerseyPresentation = 'locker',
@@ -140,11 +131,10 @@ export default function ShowcaseRoomScene({
   const compact = mode === 'preview';
   const metrics = METRICS[mode];
   const level = data?.level.level ?? 0;
-  const visibleBadges = loading ? [] : (data?.pinnedBadges ?? []).filter((badge) => badge.obtained);
+  const badgeSlots = resolveBadgeSlots(loading, equippedBadges, data?.pinnedBadges);
+  const visibleBadges = badgeSlots.filter((badge) => Boolean(badge?.obtained));
   const trophies = loading ? [] : (data?.badges ?? []).filter((badge) => badge.obtained);
   const placement = !loading && Boolean(!data?.ranking.pronostics_regles || data?.ranking.provisoire);
-  const relicLevel = Math.max(1, Math.min(RELIC_ASSETS.length, data?.favoriteTeam?.relique_niveau ?? 1));
-  const relicName = cosmetics?.factionEffect?.name ?? data?.favoriteTeam?.relique ?? 'Relique origine';
   const team = data?.favoriteTeam;
   const teamAccent = team ? `hsl(${teamHue(team.tag, team.nom)}, 72%, 58%)` : '#71808B';
   const light = LIGHTING[lighting];
@@ -194,39 +184,18 @@ export default function ShowcaseRoomScene({
             />
           </ShowcaseShelfRow>
           <ShowcaseShelfRow compact={compact} style={styles.shelfMiddle}>
-            {visibleBadges.slice(0, 4).map((badge) => (
-              <ShowcaseBadge compact={compact} badge={badge} key={badge.key} size={metrics.badgeSize} />
+            {badgeSlots.map((badge, index) => badge ? (
+              <ShowcaseBadge compact={compact} badge={badge} key={`badge-slot-${index}-${badge.key}`} size={metrics.badgeSize} />
+            ) : (
+              <LockedDisplaySlot
+                key={`locked-middle-${index}`}
+                kind={MIDDLE_LOCKED_KINDS[index % MIDDLE_LOCKED_KINDS.length]}
+                size={metrics.badgeSize}
+                testID={`locked-display-middle-${index}`}
+              />
             ))}
-            <LockedSlots
-              count={Math.max(0, 4 - visibleBadges.slice(0, 4).length)}
-              group="middle"
-              kinds={MIDDLE_LOCKED_KINDS}
-              size={metrics.badgeSize}
-            />
           </ShowcaseShelfRow>
           <ShowcaseShelfRow compact={compact} style={styles.shelfBottom}>
-            {!loading ? (
-              <View
-                accessible
-                accessibilityLabel={`Relique ${relicName}`}
-                style={[styles.relicSlot, { height: metrics.relicHeight + 8, width: metrics.relicWidth * 1.8 }]}
-              >
-                <LinearGradient
-                  colors={['rgba(226,178,93,.16)', alpha(cosmetics?.factionEffect?.accent ?? light.glow, '16'), 'rgba(0,0,0,0)']}
-                  end={{ x: 0.5, y: 1 }}
-                  pointerEvents="none"
-                  start={{ x: 0.5, y: 0 }}
-                  style={styles.relicShelfLight}
-                />
-                <View style={[styles.relicContactShadow, { width: metrics.relicWidth * 1.12 }]} />
-                <Image
-                  resizeMode="contain"
-                  source={RELIC_ASSETS[relicLevel - 1]}
-                  style={{ height: metrics.relicHeight, width: metrics.relicWidth, zIndex: 2 }}
-                />
-                <View style={[styles.contactLine, { backgroundColor: cosmetics?.factionEffect?.accent ?? light.glow }]} />
-              </View>
-            ) : null}
             {bottomTokens.map((token) => (
               <ShowcasePhysicalObject compact={compact} key={token.id} model={token} showName={token.kind === 'title'} size={metrics.tokenSize} />
             ))}
@@ -239,7 +208,7 @@ export default function ShowcaseRoomScene({
               />
             ) : null}
             <LockedSlots
-              count={Math.max(0, 3 - (loading ? 0 : 1) - bottomTokens.length - Number(Boolean(equippedRing)))}
+              count={Math.max(0, 3 - bottomTokens.length - Number(Boolean(equippedRing)))}
               group="bottom"
               kinds={BOTTOM_LOCKED_KINDS}
               size={metrics.tokenSize}
@@ -410,15 +379,20 @@ function LockedTrophySlot({ height, testID, width }: { height: number; testID: s
 }
 
 function ShowcaseBadge({ badge, compact, size }: { badge: ProfileBadge; compact: boolean; size: number }) {
-  const accent = badgeAccent(badge);
-  return (
-    <ShowcasePhysicalObject
-      compact={compact}
-      model={{ accent, id: badge.key, kind: 'badge', name: badge.name }}
-      size={size}
-      testID={`showcase-badge-${badge.key}`}
-    />
-  );
+  return <ShowcaseAchievementBadge badge={badge} compact={compact} size={size} />;
+}
+
+function resolveBadgeSlots(
+  loading: boolean,
+  equippedBadges?: readonly (PublicAchievementBadge | null)[],
+  fallback: readonly ProfileBadge[] = [],
+) {
+  if (loading) return [null, null, null, null] as const;
+  const source = equippedBadges ?? fallback.filter((badge) => badge.obtained);
+  return Array.from({ length: 4 }, (_, index) => {
+    const badge = source[index];
+    return badge?.obtained ? badge : null;
+  });
 }
 
 function cosmeticTokens(cosmetics?: EquippedCosmetics | null): ShowcasePhysicalObjectModel[] {
@@ -440,9 +414,9 @@ function sectionOpacity(focus: ShowcaseSection, target: 'left' | 'center' | 'rig
 }
 
 function badgeAccent(badge: ProfileBadge) {
-  if (badge.rarity === 'mythique') return '#FF5DDF';
-  if (badge.rarity === 'legendaire') return '#FFB84D';
-  if (badge.rarity === 'epique') return '#A982FF';
+  if (badge.rarity === 'legendary') return '#FFB84D';
+  if (badge.rarity === 'secret') return '#D1D7DC';
+  if (badge.rarity === 'epic') return '#A982FF';
   if (badge.rarity === 'rare') return '#63B8FF';
   return '#AAB4BE';
 }
@@ -468,10 +442,6 @@ const styles = StyleSheet.create({
   shelfTop: { top: '8%' },
   shelfMiddle: { top: '38%' },
   shelfBottom: { top: '66%' },
-  relicSlot: { position: 'relative', alignItems: 'center', justifyContent: 'flex-end' },
-  relicShelfLight: { position: 'absolute', top: -4, width: '82%', height: '78%', borderTopLeftRadius: 20, borderTopRightRadius: 20, opacity: 0.72 },
-  relicContactShadow: { position: 'absolute', bottom: 1, height: 7, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.82)', transform: [{ scaleY: 0.38 }] },
-  contactLine: { zIndex: 3, position: 'absolute', bottom: 2, width: '58%', height: 1, borderRadius: 4, opacity: 0.54 },
   rankStage: { position: 'absolute', left: '35%', top: '12%', width: '30%', height: '56%', alignItems: 'center', justifyContent: 'flex-end' },
   rankStagePreview: { left: '32%', top: '8%', width: '36%', height: '62%' },
   rankBeam: { position: 'absolute', top: '2%', width: '16%', height: '72%', borderRadius: 90, opacity: 0.028 },

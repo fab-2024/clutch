@@ -28,13 +28,18 @@ export async function loadProfileData(pseudo: string): Promise<ProfileData> {
   const progression = progressionResult.data as Partial<ProfileRanking>;
   const recap = raw.recap ?? {};
   const founder = Boolean(raw.est_fondateur);
-  const badges = evaluateBadges(recap, founder);
+  const ranking = normalizeRanking({ ...raw.classement, ...progression });
+  const badges = evaluateBadges({
+    now: new Date().toISOString(),
+    ranking,
+    recap,
+  });
   const pinnedBadges = resolveBadgeSelection(
     [raw.badge_vedette ?? '', ...(raw.badges_exposes ?? [])],
     badges,
     4,
   );
-  const arsenalBadges = resolveBadgeSelection(raw.arsenal_exposes ?? [], badges, 5);
+  const arsenalBadges = resolveBadgeSelection(raw.arsenal_exposes ?? [], badges, 5, true);
   const xp = calculateProfileXp(recap, badges);
 
   return {
@@ -43,7 +48,7 @@ export async function loadProfileData(pseudo: string): Promise<ProfileData> {
     profileTitle: raw.titre_profil ?? null,
     founder,
     publicProfile: raw.profil_public !== false,
-    ranking: normalizeRanking({ ...raw.classement, ...progression }),
+    ranking,
     recap,
     currentStreak: toNumber(raw.serie_actuelle),
     favoriteTeam: raw.equipe_favorite ? normalizeTeam(raw.equipe_favorite) : null,
