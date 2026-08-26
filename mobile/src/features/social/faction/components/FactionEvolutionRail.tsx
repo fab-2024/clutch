@@ -23,11 +23,17 @@ const RELIC_ZOOM: Record<number, number> = {
   5: 1.03,
 };
 
-export default function FactionEvolutionRail({ progress }: { progress: FactionProgress }) {
+export default function FactionEvolutionRail({
+  comfortable = false,
+  progress,
+}: {
+  comfortable?: boolean;
+  progress: FactionProgress;
+}) {
   const currentLevel = Math.min(5, Math.max(0, progress.level));
 
   return (
-    <View style={styles.evolutionRail}>
+    <View style={[styles.evolutionRail, comfortable && styles.evolutionRailComfortable]}>
       {RAIL_FORMS.map((form, index) => {
         const state = miniatureState(form.level, currentLevel, progress.awakened);
         return (
@@ -38,7 +44,11 @@ export default function FactionEvolutionRail({ progress }: { progress: FactionPr
             style={styles.evolutionNode}
           >
             {index < RAIL_FORMS.length - 1 ? (
-              <View style={[styles.connector, state === 'complete' && styles.connectorComplete]}>
+              <View style={[
+                styles.connector,
+                comfortable && styles.connectorComfortable,
+                state === 'complete' && styles.connectorComplete,
+              ]}>
                 <View style={[styles.connectorDot, state === 'complete' && styles.connectorDotComplete]} />
               </View>
             ) : null}
@@ -48,6 +58,7 @@ export default function FactionEvolutionRail({ progress }: { progress: FactionPr
               numberOfLines={1}
               style={[
                 styles.evolutionLabel,
+                comfortable && styles.evolutionLabelComfortable,
                 state === 'current' && styles.evolutionLabelCurrent,
                 state === 'locked' && styles.evolutionLabelLocked,
               ]}
@@ -157,6 +168,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: '#020609',
   },
+  evolutionRailComfortable: {
+    minHeight: 76,
+    paddingTop: 3,
+  },
   evolutionNode: {
     position: 'relative',
     zIndex: 2,
@@ -174,6 +189,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#303A42',
   },
   connectorComplete: { backgroundColor: '#557F79' },
+  connectorComfortable: { top: 31 },
   connectorDot: {
     position: 'absolute',
     width: 4,
@@ -257,6 +273,13 @@ const styles = StyleSheet.create({
     lineHeight: 10,
     letterSpacing: .05,
     textAlign: 'center',
+  },
+  evolutionLabelComfortable: {
+    maxWidth: 68,
+    marginTop: 0,
+    fontSize: 10,
+    lineHeight: 12,
+    letterSpacing: 0,
   },
   evolutionLabelCurrent: { color: colors.volt },
   evolutionLabelLocked: { color: '#78838C' },

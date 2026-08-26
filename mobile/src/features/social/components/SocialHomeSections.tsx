@@ -8,7 +8,7 @@ import { publicAppUrl } from '@/src/config/release';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { CosmeticAvatar, relicSignatureTheme } from '@/src/features/shop/components/CosmeticRenderer';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
-import CollectiveRelic from '@/src/features/social/faction/components/CollectiveRelic';
+import CollectiveRelic, { type RelicAnimationPreset } from '@/src/features/social/faction/components/CollectiveRelic';
 import FactionEvolutionRail, { FactionRelicMiniature } from '@/src/features/social/faction/components/FactionEvolutionRail';
 import {
   resolveRelicInstability,
@@ -42,6 +42,7 @@ export function FactionRelicHero({
   mutationInterruptSignal,
   mutationOverride,
   mutationPreviewMs,
+  relicAnimationPreset,
   relicLabMode,
   relicMotionCommand,
   relicProgressOverride,
@@ -58,6 +59,7 @@ export function FactionRelicHero({
   mutationInterruptSignal?: number;
   mutationOverride?: CommunityMutationPresentation | null;
   mutationPreviewMs?: number | null;
+  relicAnimationPreset?: RelicAnimationPreset;
   relicLabMode?: boolean;
   relicMotionCommand?: RelicMotionCommand | null;
   relicProgressOverride?: FactionProgress;
@@ -140,6 +142,7 @@ export function FactionRelicHero({
 
       <CollectiveRelic
         accent={effectAccent}
+        animationPreset={relicAnimationPreset}
         faction={faction}
         instabilityPreviewOverride={instabilityPreviewOverride}
         mutation={mutation}

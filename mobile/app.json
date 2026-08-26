@@ -25,6 +25,9 @@
         "backgroundColor": "#05090C"
       }
     },
+    "web": {
+      "bundler": "metro"
+    },
     "plugins": [
       "expo-router",
       "expo-font",

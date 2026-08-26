@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Platform, Pressable, Text, View, type LayoutChangeEvent, type LayoutRectangle } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -10,6 +10,7 @@ import Animated, {
   interpolate,
   type SharedValue,
   useAnimatedStyle,
+  useDerivedValue,
   useReducedMotion,
   useSharedValue,
   withRepeat,
@@ -44,6 +45,7 @@ import {
 import {
   RELIC_HEART_ASSET,
   RELIC_STAGE_ARTWORK,
+  SKIA_RELIC_STAGE_ARTWORK,
   type RelicStageArtworkConfig,
 } from '@/src/features/social/faction/relicArtwork';
 import type {
@@ -54,7 +56,7 @@ import type {
 } from '@/src/features/social/faction/types';
 import { communityFormForLevel } from '@/src/features/social/faction/utils';
 
-import { relicStyles as styles } from './CollectiveRelic.styles';
+import { COMPACT_RELIC_SCALE, relicStyles as styles } from './CollectiveRelic.styles';
 import {
   RelicGlassHighlightsArtwork,
   RelicCracksArtwork,
@@ -79,6 +81,7 @@ import type { RelicScenePoint } from './SupporterArrivalOverlay';
 
 const RELIC_ASSET = RELIC_STAGE_ARTWORK.ampoule.asset;
 const ARCH_ASSET = require('../../../../../assets/social/faction-relic-arch.png');
+const SkiaRelicLayer = lazy(() => import('./SkiaRelicLayer'));
 
 const IDLE_DURATION_MS = 6_400;
 const TAP_DURATION_MS = 550;
@@ -97,8 +100,15 @@ const MOTION_SUPPORTER_ARRIVAL = 6;
 const MOTION_MUTATION_READY = 7;
 const MOTION_MUTATING = 8;
 
+const ANIMATION_CLASSIC = 0;
+const ANIMATION_LIVING = 1;
+const ANIMATION_PULSE = 2;
+const ANIMATION_ORBIT = 3;
+
 const PRESENTED_SUPPORTER_CONTRIBUTION_IDS = new Set<string>();
 const PRESENTED_MUTATION_EVENT_IDS = new Set<string>();
+
+export type RelicAnimationPreset = 'classic' | 'living' | 'pulse' | 'orbit' | 'skia';
 
 type ActiveRelicMutation = {
   event: CommunityMutationPresentation;
@@ -107,6 +117,8 @@ type ActiveRelicMutation = {
 
 type CollectiveRelicProps = {
   accent: string;
+  animationPreset?: RelicAnimationPreset;
+  compact?: boolean;
   faction: CommunityFaction | null;
   labMode?: boolean;
   mutation?: CommunityMutationPresentation | null;
@@ -129,6 +141,8 @@ type CollectiveRelicProps = {
 
 export default function CollectiveRelic({
   accent,
+  animationPreset = 'classic',
+  compact = false,
   faction,
   labMode = false,
   mutation,
@@ -189,6 +203,13 @@ export default function CollectiveRelic({
   const mutationReadyPhase = useSharedValue(0);
   const motionCode = useSharedValue(MOTION_IDLE);
   const supporterPhase = supporterArrivalPhase ?? localSupporterPhase;
+  const animationPresetCode = animationCodeFor(animationPreset);
+  const skiaEnergy = useDerivedValue(() => {
+    const interaction = interactionEnergy(motionCode.value, pressCharge.value, tapPhase.value, resonancePhase.value);
+    const arrival = supporterArrivalEnergy(supporterPhase.value, motionCode.value);
+    const ready = motionCode.value === MOTION_MUTATION_READY ? 1 : 0;
+    return Math.min(1.25, interaction + arrival * .92 + ready);
+  });
 
   const instability = useMemo(() => resolveRelicInstability(
     instabilityPreviewOverride?.charge ?? progress.charge,
@@ -197,6 +218,9 @@ export default function CollectiveRelic({
   const instabilityEnergy = instabilityEnergyFor(instability.tier, instability.localIntensity);
   const idlePulseCount = idlePulseCountFor(instability.tier, instability.localIntensity);
   const persistentLiquidLift = Math.min(18, Math.max(0, progress.progress * 15));
+  const artworkRegistry = animationPreset === 'skia'
+    ? SKIA_RELIC_STAGE_ARTWORK
+    : RELIC_STAGE_ARTWORK;
   const mutationFromForm = activeMutation
     ? communityFormForLevel(activeMutation.transition.fromLevel)
     : null;
@@ -204,10 +228,10 @@ export default function CollectiveRelic({
     ? communityFormForLevel(activeMutation.transition.toLevel)
     : null;
   const mutationFromArtwork = mutationFromForm
-    ? RELIC_STAGE_ARTWORK[mutationFromForm.container]
+    ? artworkRegistry[mutationFromForm.container]
     : null;
   const mutationToArtwork = mutationToForm
-    ? RELIC_STAGE_ARTWORK[mutationToForm.container]
+    ? artworkRegistry[mutationToForm.container]
     : null;
   const mutationFromMetrics = mutationFromArtwork
     ? mutationArtworkMetrics(mutationFromArtwork)
@@ -828,6 +852,92 @@ export default function CollectiveRelic({
     };
   }, [idlePulseCount, instability.tier, instabilityEnergy, reduceMotion]);
 
+  const relicBodyMotion = useAnimatedStyle(() => {
+    if (reduceMotion || !isRestingMode(motionCode.value)) {
+      return { transform: [{ translateX: 0 }, { translateY: 0 }, { rotate: '0deg' }, { scale: 1 }] };
+    }
+    const phase = idlePhase.value;
+    if (animationPresetCode === ANIMATION_LIVING) {
+      const wave = Math.sin(phase * TWO_PI);
+      return {
+        transform: [
+          { translateX: Math.cos(phase * TWO_PI) * 1.4 },
+          { translateY: -2.5 + wave * 3.5 },
+          { rotate: `${Math.sin(phase * TWO_PI + .8) * .65}deg` },
+          { scale: 1 + organicBreath(phase) * .008 },
+        ],
+      };
+    }
+    if (animationPresetCode === ANIMATION_PULSE) {
+      return {
+        transform: [
+          { translateX: 0 },
+          { translateY: -relicHeartbeat(phase) * 1.8 },
+          { rotate: '0deg' },
+          { scale: 1 + relicHeartbeat(phase) * .014 },
+        ],
+      };
+    }
+    if (animationPresetCode === ANIMATION_ORBIT) {
+      return {
+        transform: [
+          { translateX: Math.cos(phase * TWO_PI) * 3 },
+          { translateY: Math.sin(phase * TWO_PI * 2) * 1.8 },
+          { rotate: `${Math.sin(phase * TWO_PI) * 1.15}deg` },
+          { scale: 1 },
+        ],
+      };
+    }
+    return { transform: [{ translateX: 0 }, { translateY: 0 }, { rotate: '0deg' }, { scale: 1 }] };
+  }, [animationPresetCode, reduceMotion]);
+
+  const signatureFieldMotion = useAnimatedStyle(() => {
+    if (reduceMotion || !isRestingMode(motionCode.value) || animationPresetCode === ANIMATION_CLASSIC) {
+      return { opacity: 0, transform: [{ scale: 1 }] };
+    }
+    const phase = idlePhase.value;
+    if (animationPresetCode === ANIMATION_LIVING) {
+      const breath = organicBreath(phase);
+      return {
+        opacity: .09 + breath * .15,
+        transform: [{ scale: .9 + breath * .18 }],
+      };
+    }
+    if (animationPresetCode === ANIMATION_PULSE) {
+      const beat = relicHeartbeat(phase);
+      return {
+        opacity: .04 + beat * .42,
+        transform: [{ scale: .78 + beat * .52 }],
+      };
+    }
+    return {
+      opacity: .1 + organicBreath(phase) * .08,
+      transform: [{ scale: .96 + organicBreath(phase) * .08 }],
+    };
+  }, [animationPresetCode, reduceMotion]);
+
+  const signatureOrbitMotion = useAnimatedStyle(() => {
+    if (reduceMotion || animationPresetCode !== ANIMATION_ORBIT || !isRestingMode(motionCode.value)) {
+      return { opacity: 0, transform: [{ rotate: '0deg' }] };
+    }
+    const energy = interactionEnergy(motionCode.value, pressCharge.value, tapPhase.value, resonancePhase.value);
+    return {
+      opacity: .38 + organicBreath(idlePhase.value) * .24 + energy * .2,
+      transform: [{ rotate: `${idlePhase.value * 360 + energy * 24}deg` }],
+    };
+  }, [animationPresetCode, reduceMotion]);
+
+  const signaturePulseRingMotion = useAnimatedStyle(() => {
+    if (reduceMotion || animationPresetCode !== ANIMATION_PULSE || !isRestingMode(motionCode.value)) {
+      return { opacity: 0, transform: [{ scale: .7 }] };
+    }
+    const beat = relicHeartbeat(idlePhase.value);
+    return {
+      opacity: beat * .66,
+      transform: [{ scale: .72 + beat * .82 }],
+    };
+  }, [animationPresetCode, reduceMotion]);
+
   const liquidMotion = useAnimatedStyle(() => {
     if (reduceMotion) {
       return { opacity: .94 + interactionEnergy(motionCode.value, pressCharge.value, tapPhase.value, resonancePhase.value) * .06 };
@@ -895,6 +1005,15 @@ export default function CollectiveRelic({
     if (isRestingMode(mode)) {
       scale = 1 + breath * (.035 + instabilityEnergy * .012);
       opacity = .92 + breath * .08 + instabilityEnergy * .04;
+      if (animationPresetCode === ANIMATION_LIVING) {
+        scale += organicBreath(idlePhase.value) * .035;
+      } else if (animationPresetCode === ANIMATION_PULSE) {
+        const beat = relicHeartbeat(idlePhase.value);
+        scale += beat * .115;
+        opacity = .94 + beat * .06;
+      } else if (animationPresetCode === ANIMATION_ORBIT) {
+        scale += organicBreath(idlePhase.value) * .018;
+      }
     } else if (mode === MOTION_PRESSING || mode === MOTION_CHARGING || mode === MOTION_RECOVERING) {
       const charge = pressCharge.value;
       scale = charge <= .3
@@ -916,7 +1035,7 @@ export default function CollectiveRelic({
       opacity = 1;
     }
     return { opacity, transform: [{ scale: reduceMotion ? 1 : scale }] };
-  }, [idlePulseCount, instability.tier, instabilityEnergy, reduceMotion]);
+  }, [animationPresetCode, idlePulseCount, instability.tier, instabilityEnergy, reduceMotion]);
 
   const heartAuraMotion = useAnimatedStyle(() => {
     const breath = instabilityBreath(idlePhase.value, idlePulseCount, instability.tier === 'critical' ? .16 : 0);
@@ -1167,7 +1286,7 @@ export default function CollectiveRelic({
     };
   }, [idlePulseCount, instability.tier, reduceMotion]);
 
-  const stageArtwork = RELIC_STAGE_ARTWORK[displayForm.container];
+  const stageArtwork = artworkRegistry[displayForm.container];
   const labContainerLayout = stageArtwork.layout;
   const labLayoutScale = labContainerLayout.height / 330;
   const labLayoutOffsetX = (labContainerLayout.width - 220 * labLayoutScale) / 2;
@@ -1201,6 +1320,7 @@ export default function CollectiveRelic({
   const showAlternateContainer = displayForm.container !== 'ampoule';
   const reportLiquidTarget = useCallback((layout: LayoutRectangle) => {
     if (!onLiquidTargetLayout) return;
+    const stageScale = compact ? COMPACT_RELIC_SCALE : 1;
     const artworkScale = stageArtwork.layout.height / 330;
     const surfaceY = displayForm.container === 'ampoule'
       ? 5 + 132 + 20 - persistentLiquidLift
@@ -1209,9 +1329,9 @@ export default function CollectiveRelic({
         + (stageArtwork.liquidLevel - persistentLiquidLift) * artworkScale;
     onLiquidTargetLayout({
       x: layout.x + layout.width / 2,
-      y: layout.y + surfaceY,
+      y: layout.y + layout.height / 2 + (surfaceY - layout.height / 2) * stageScale,
     });
-  }, [displayForm.container, onLiquidTargetLayout, persistentLiquidLift, stageArtwork]);
+  }, [compact, displayForm.container, onLiquidTargetLayout, persistentLiquidLift, stageArtwork]);
   const handleStageLayout = useCallback((event: LayoutChangeEvent) => {
     stageLayoutRef.current = event.nativeEvent.layout;
     reportLiquidTarget(event.nativeEvent.layout);
@@ -1356,6 +1476,31 @@ export default function CollectiveRelic({
   );
 
   const vessel = showAlternateContainer ? alternateVessel : phaseOneVessel;
+  const skiaVessel = (
+    <Suspense fallback={vessel}>
+      <View pointerEvents="none" style={styles.vesselCanvas}>
+        <SkiaRelicLayer
+          accent={accent}
+          config={stageArtwork}
+          container={displayForm.container}
+          energy={skiaEnergy}
+          instabilityEnergy={instabilityEnergy}
+          levelLift={persistentLiquidLift}
+          mutation={activeMutation && mutationFromArtwork && mutationToArtwork && mutationFromForm && mutationToForm ? {
+            fromConfig: mutationFromArtwork,
+            fromContainer: mutationFromForm.container,
+            phase: mutationPhase,
+            toConfig: mutationToArtwork,
+            toContainer: mutationToForm.container,
+          } : null}
+          phase={idlePhase}
+          reduceMotion={reduceMotion}
+          supporterPhase={supporterPhase}
+          tapPhase={tapPhase}
+        />
+      </View>
+    </Suspense>
+  );
   const mutationContactWidth = activeMutation && mutationFromArtwork && mutationToArtwork
     ? Math.max(mutationFromArtwork.contactWidth, mutationToArtwork.contactWidth)
     : stageArtwork.contactWidth;
@@ -1407,6 +1552,8 @@ export default function CollectiveRelic({
       </View>
     </View>
   ) : null;
+  const presentedVessel = animationPreset === 'skia' ? skiaVessel : mutationScene ?? vessel;
+  const showLegacyScene = animationPreset !== 'skia';
 
   return (
     <Pressable
@@ -1419,16 +1566,18 @@ export default function CollectiveRelic({
       onLayout={handleStageLayout}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={styles.stage}
+      style={[styles.stage, compact && styles.stageCompact]}
     >
       <LinearGradient
-        colors={['rgba(2,10,19,.96)', 'rgba(3,28,40,.7)', 'rgba(2,8,14,.18)']}
-        locations={[0, .54, 1]}
+        colors={animationPreset === 'skia'
+          ? ['rgba(0,3,6,.92)', 'rgba(1,5,8,.76)', 'rgba(0,2,4,.34)']
+          : ['rgba(2,10,19,.96)', 'rgba(3,28,40,.7)', 'rgba(2,8,14,.18)']}
+        locations={animationPreset === 'skia' ? [0, .58, 1] : [0, .54, 1]}
         style={styles.sceneBackdrop}
       />
       <Animated.View pointerEvents="none" style={[styles.mutationBackdrop, mutationBackdropMotion]} />
 
-      <View pointerEvents="none" style={styles.haloCanvas}>
+      {showLegacyScene ? <View pointerEvents="none" style={styles.haloCanvas}>
         <Animated.View style={[styles.ambientEnergy, ambientMotion]}>
           <LinearGradient
             colors={['rgba(5,31,49,.1)', 'rgba(6,55,72,.46)', 'rgba(3,10,18,0)']}
@@ -1450,21 +1599,42 @@ export default function CollectiveRelic({
           locations={[0, .72, 1]}
           style={styles.haloFade}
         />
-      </View>
+      </View> : null}
 
-      <Image accessibilityIgnoresInvertColors resizeMode="contain" source={ARCH_ASSET} style={styles.arch} />
+      {showLegacyScene ? (
+        <Image accessibilityIgnoresInvertColors resizeMode="contain" source={ARCH_ASSET} style={styles.arch} />
+      ) : null}
 
-      <RelicPedestalBack />
+      {showLegacyScene ? <RelicPedestalBack /> : null}
 
-      {mutationActive ? <Animated.View pointerEvents="none" style={[styles.labMutationAura, mutationAuraMotion]} /> : null}
+      {animationPreset === 'living' || animationPreset === 'pulse' || animationPreset === 'orbit' ? (
+        <Animated.View pointerEvents="none" style={[styles.signatureField, signatureFieldMotion]} />
+      ) : null}
 
-      <Animated.View pointerEvents="none" style={[styles.resonanceRing, ringMotion]}>
+      {animationPreset === 'pulse' ? (
+        <Animated.View pointerEvents="none" style={[styles.signaturePulseRing, signaturePulseRingMotion]} />
+      ) : null}
+
+      {animationPreset === 'orbit' ? (
+        <Animated.View pointerEvents="none" style={[styles.signatureOrbit, signatureOrbitMotion]}>
+          <View style={[styles.signatureOrbitNode, styles.signatureOrbitNodePrimary]} />
+          <View style={[styles.signatureOrbitNode, styles.signatureOrbitNodeSecondary]} />
+        </Animated.View>
+      ) : null}
+
+      {mutationActive && showLegacyScene ? <Animated.View pointerEvents="none" style={[styles.labMutationAura, mutationAuraMotion]} /> : null}
+
+      {showLegacyScene ? <Animated.View pointerEvents="none" style={[styles.resonanceRing, ringMotion]}>
         <RelicResonanceRingArtwork />
-      </Animated.View>
+      </Animated.View> : null}
 
-      {mutationScene ?? vessel}
+      {animationPreset === 'classic' || animationPreset === 'skia' ? presentedVessel : (
+        <Animated.View pointerEvents="none" style={[styles.vesselMotionLayer, relicBodyMotion]}>
+          {presentedVessel}
+        </Animated.View>
+      )}
 
-      <Animated.View
+      {showLegacyScene ? <Animated.View
         pointerEvents="none"
         style={[styles.contactLightLayer, { width: mutationContactWidth }, contactMotion]}
       >
@@ -1478,12 +1648,14 @@ export default function CollectiveRelic({
           />
           <View style={[styles.contactCore, { width: Math.max(34, mutationContactWidth - 12) }]} />
         </Animated.View>
-      </Animated.View>
+      </Animated.View> : null}
 
-      <RelicPedestalFrontLip />
-      <Animated.View pointerEvents="none" style={[styles.contactCopperReflection, pedestalRestMotion]} />
-      <Animated.View pointerEvents="none" style={[styles.supporterPedestalSegment, supporterPedestalSegmentMotion]} />
-      <RelicPedestal accent={accent} faction={faction} />
+      {showLegacyScene ? <>
+        <RelicPedestalFrontLip />
+        <Animated.View pointerEvents="none" style={[styles.contactCopperReflection, pedestalRestMotion]} />
+        <Animated.View pointerEvents="none" style={[styles.supporterPedestalSegment, supporterPedestalSegmentMotion]} />
+        <RelicPedestal accent={accent} faction={faction} />
+      </> : null}
 
       {activeMutation && mutationToForm ? (
         <Animated.View accessibilityLiveRegion="polite" style={[styles.reveal, labMode && styles.labReveal, mutationRevealMotion]}>
@@ -1706,6 +1878,26 @@ function motionCodeFor(state: RelicMotionState) {
   if (state === 'mutationReady') return MOTION_MUTATION_READY;
   if (state === 'mutating') return MOTION_MUTATING;
   return MOTION_IDLE;
+}
+
+function animationCodeFor(preset: RelicAnimationPreset) {
+  if (preset === 'living') return ANIMATION_LIVING;
+  if (preset === 'pulse') return ANIMATION_PULSE;
+  if (preset === 'orbit') return ANIMATION_ORBIT;
+  return ANIMATION_CLASSIC;
+}
+
+function organicBreath(phase: number) {
+  'worklet';
+  return (Math.sin(phase * TWO_PI - Math.PI / 2) + 1) / 2;
+}
+
+function relicHeartbeat(phase: number) {
+  'worklet';
+  const local = (phase * 2) % 1;
+  const first = Math.exp(-Math.pow((local - .2) / .06, 2));
+  const second = Math.exp(-Math.pow((local - .36) / .075, 2)) * .68;
+  return Math.max(first, second);
 }
 
 function instabilityBreath(phase: number, pulseCount: number, irregularity: number) {

@@ -33,15 +33,22 @@ const SUBSECTIONS: Partial<Record<SocialSectionKey, {
   ],
 };
 
-export default function SocialSectionNav({ activeOverride }: { activeOverride?: SocialSectionKey }) {
+export default function SocialSectionNav({
+  activeOverride,
+  variant = 'default',
+}: {
+  activeOverride?: SocialSectionKey;
+  variant?: 'default' | 'v2';
+}) {
   const pathname = usePathname();
   const active = activeOverride ?? sectionFromPath(pathname);
   const activeSubsection = subsectionFromPath(pathname);
   const subsections = active ? SUBSECTIONS[active] ?? [] : [];
+  const refined = variant === 'v2' || pathname.includes('/social/v2');
 
   return (
     <View style={styles.outer}>
-      <View style={styles.rail}>
+      <View style={[styles.rail, refined && styles.railRefined]}>
         {SECTIONS.map((item) => {
           const selected = active === item.key;
           return (
@@ -51,10 +58,17 @@ export default function SocialSectionNav({ activeOverride }: { activeOverride?: 
               accessibilityState={{ selected }}
               key={item.key}
               onPress={() => router.replace(item.href as never)}
-              style={({ pressed }) => [styles.item, selected && styles.itemActive, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.item,
+                refined && styles.itemRefined,
+                selected && styles.itemActive,
+                selected && refined && styles.itemActiveRefined,
+                pressed && styles.pressed,
+              ]}
             >
               <Text style={[styles.glyph, selected && styles.glyphActive]}>{item.glyph}</Text>
               <Text style={[styles.label, selected && styles.labelActive]}>{item.label}</Text>
+              {selected && refined ? <View pointerEvents="none" style={styles.activeTrace} /> : null}
             </Pressable>
           );
         })}
@@ -112,7 +126,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
+  railRefined: { gap: 10 },
   item: {
+    position: 'relative',
     flex: 1,
     minWidth: 0,
     minHeight: 38,
@@ -126,10 +142,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#25313B',
   },
+  itemRefined: {
+    minHeight: 44,
+    borderRadius: 16,
+    backgroundColor: 'rgba(7,12,17,.7)',
+  },
   itemActive: {
     backgroundColor: 'rgba(17,25,23,.96)',
     borderColor: '#789081',
     boxShadow: '0 0 16px rgba(115,191,190,.18), 0 0 10px rgba(205,231,58,.1)',
+  },
+  itemActiveRefined: {
+    backgroundColor: 'rgba(14,20,18,.92)',
+    borderColor: '#56685A',
+    boxShadow: 'none',
+  },
+  activeTrace: {
+    position: 'absolute',
+    width: 36,
+    height: 3,
+    left: '50%',
+    bottom: -8,
+    marginLeft: -18,
+    borderRadius: 2,
+    backgroundColor: colors.volt,
   },
   glyph: {
     color: '#65717D',

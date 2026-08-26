@@ -9,6 +9,7 @@ import {
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 
 import { useCommunityDashboard } from '@/src/features/social/faction/hooks/useCommunityDashboard';
+import type { RelicAnimationPreset } from '@/src/features/social/faction/components/CollectiveRelic';
 import type {
   RelicMotionDiagnostics,
   RelicMotionCommand,
@@ -26,16 +27,21 @@ import {
   FactionRelicHero,
   FactionWar,
 } from './SocialHomeSections';
+import FactionRelicHeroV2 from './FactionRelicHeroV2';
 import { styles } from './SocialHomeScreen.styles';
+
+export type FactionHeroVariant = 'current' | 'v2';
 
 type SocialHomeExperienceProps = {
   data: CommunityData;
   error: string | null;
+  factionHeroVariant?: FactionHeroVariant;
   favoriteTeamId?: string | null;
   loading: boolean;
   mutationInterruptSignal?: number;
   mutationOverride?: CommunityMutationPresentation | null;
   mutationPreviewMs?: number | null;
+  relicAnimationPreset?: RelicAnimationPreset;
   relicLabMode?: boolean;
   relicMotionCommand?: RelicMotionCommand | null;
   relicProgressOverride?: FactionProgress;
@@ -52,6 +58,14 @@ type SocialHomeExperienceProps = {
 };
 
 export default function SocialHomeScreen() {
+  return <SocialHomeScreenForVariant factionHeroVariant="current" />;
+}
+
+export function SocialHomeV2Screen() {
+  return <SocialHomeScreenForVariant factionHeroVariant="v2" />;
+}
+
+function SocialHomeScreenForVariant({ factionHeroVariant }: { factionHeroVariant: FactionHeroVariant }) {
   const { profile } = useAuth();
   const { acknowledgeMutation, data, error, load, loading, refreshing } = useCommunityDashboard();
 
@@ -59,6 +73,7 @@ export default function SocialHomeScreen() {
     <SocialHomeExperience
       data={data}
       error={error}
+      factionHeroVariant={factionHeroVariant}
       favoriteTeamId={profile?.equipe_favorite_id}
       loading={loading}
       onMutationPresented={acknowledgeMutation}
@@ -72,11 +87,13 @@ export default function SocialHomeScreen() {
 export function SocialHomeExperience({
   data,
   error,
+  factionHeroVariant = 'current',
   favoriteTeamId,
   loading,
   mutationInterruptSignal,
   mutationOverride,
   mutationPreviewMs,
+  relicAnimationPreset,
   relicLabMode,
   relicMotionCommand,
   relicProgressOverride,
@@ -108,6 +125,7 @@ export function SocialHomeExperience({
     [favoriteTeamId, rankedFactions],
   );
   const entrance = (delay: number) => reduceMotion ? undefined : FadeInDown.delay(delay).duration(380);
+  const RelicHero = factionHeroVariant === 'v2' ? FactionRelicHeroV2 : FactionRelicHero;
 
   return (
     <ScrollView
@@ -125,12 +143,13 @@ export function SocialHomeExperience({
 
       <Animated.View entering={entrance(20)}>
         {loading ? <FactionHeroSkeleton /> : (
-          <FactionRelicHero
+          <RelicHero
             faction={faction}
             me={data.moi}
             mutationInterruptSignal={mutationInterruptSignal}
             mutationOverride={mutationOverride}
             mutationPreviewMs={mutationPreviewMs}
+            relicAnimationPreset={relicAnimationPreset}
             relicLabMode={relicLabMode}
             relicMotionCommand={relicMotionCommand}
             relicProgressOverride={relicProgressOverride}

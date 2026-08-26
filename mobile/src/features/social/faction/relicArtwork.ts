@@ -34,6 +34,7 @@ export type RelicStageArtworkConfig = {
   contactWidth: number;
   contactY: number;
   layout: RelicArtworkLayout;
+  neutralMatte?: boolean;
   rootsFrame: RelicArtworkFrame;
 };
 
@@ -155,6 +156,74 @@ export const RELIC_STAGE_ARTWORK: Record<RelicContainer, RelicStageArtworkConfig
     contactY: 300,
     layout: { height: 295, top: -8, width: 220 },
     rootsFrame: { height: 50, width: 150, x: 35, y: 207 },
+  },
+};
+
+export const SKIA_RELIC_STAGE_ARTWORK: Record<RelicContainer, RelicStageArtworkConfig> = {
+  ampoule: {
+    ...RELIC_STAGE_ARTWORK.ampoule,
+    asset: require('../../../../assets/social/relic-evolution/skia-fiole-v2.png'),
+    contactWidth: 80,
+    contactY: 304,
+    heartScale: .5,
+    heartY: 267,
+    layout: { height: 315, top: -20, width: 158 },
+    liquidLevel: 100,
+    liquidSurfaceWidth: 23,
+    neutralMatte: true,
+    rootsFrame: { height: 144, width: 58, x: 81, y: 100 },
+  },
+  fiole: {
+    ...RELIC_STAGE_ARTWORK.fiole,
+    asset: require('../../../../assets/social/relic-evolution/skia-ampoule-v2.png'),
+    contactWidth: 120,
+    contactY: 248,
+    heartScale: .59,
+    heartY: 214,
+    layout: { height: 300, top: -20, width: 300 },
+    liquidLevel: 108,
+    liquidSurfaceWidth: 65,
+    neutralMatte: true,
+    rootsFrame: { height: 108, width: 116, x: 52, y: 144 },
+  },
+  flacon: {
+    ...RELIC_STAGE_ARTWORK.flacon,
+    asset: require('../../../../assets/social/relic-evolution/skia-flacon-v2.png'),
+    contactWidth: 160,
+    contactY: 225,
+    heartScale: .66,
+    heartY: 155,
+    layout: { height: 300, top: -8, width: 300 },
+    liquidLevel: 90,
+    liquidSurfaceWidth: 115,
+    neutralMatte: true,
+    rootsFrame: { height: 94, width: 132, x: 44, y: 92 },
+  },
+  reacteur: {
+    ...RELIC_STAGE_ARTWORK.reacteur,
+    asset: require('../../../../assets/social/relic-evolution/skia-reacteur-v2.png'),
+    contactWidth: 172,
+    contactY: 300,
+    heartScale: .68,
+    heartY: 250,
+    layout: { height: 330, top: -46, width: 260 },
+    liquidLevel: 126,
+    liquidSurfaceWidth: 95,
+    neutralMatte: true,
+    rootsFrame: { height: 136, width: 146, x: 37, y: 122 },
+  },
+  reliquaire: {
+    ...RELIC_STAGE_ARTWORK.reliquaire,
+    asset: require('../../../../assets/social/relic-evolution/skia-reliquaire-v2.png'),
+    contactWidth: 192,
+    contactY: 250,
+    heartScale: .68,
+    heartY: 190,
+    layout: { height: 375, top: -66, width: 300 },
+    liquidLevel: 120,
+    liquidSurfaceWidth: 90,
+    neutralMatte: true,
+    rootsFrame: { height: 146, width: 164, x: 28, y: 86 },
   },
 };
 

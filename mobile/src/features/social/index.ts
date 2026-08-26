@@ -1,1 +1,1 @@
-export { default as SocialHomeScreen } from './components/SocialHomeScreen';
+export { default as SocialHomeScreen, SocialHomeV2Screen } from './components/SocialHomeScreen';

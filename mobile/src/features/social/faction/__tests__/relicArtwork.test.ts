@@ -6,6 +6,7 @@ import {
   RELIC_CONTAINER_SEQUENCE,
   RELIC_HEART_ASSET,
   RELIC_STAGE_ARTWORK,
+  SKIA_RELIC_STAGE_ARTWORK,
   relicContainerForPreview,
   rootBranchesForContainer,
 } from '../relicArtwork';
@@ -56,5 +57,48 @@ describe('relic artwork progression', () => {
     expect(relicContainerForPreview('flacon')).toBe('flacon');
     expect(relicContainerForPreview('bonbonne')).toBe('reacteur');
     expect(relicContainerForPreview('cuve')).toBe('reliquaire');
+  });
+
+  it('keeps the five Skia chassis aligned with the same progression', () => {
+    expect(RELIC_CONTAINER_SEQUENCE.map((container) => ({
+      matte: SKIA_RELIC_STAGE_ARTWORK[container].neutralMatte,
+      stage: SKIA_RELIC_STAGE_ARTWORK[container].stage,
+    }))).toEqual([
+      { matte: true, stage: 1 },
+      { matte: true, stage: 2 },
+      { matte: true, stage: 3 },
+      { matte: true, stage: 4 },
+      { matte: true, stage: 5 },
+    ]);
+  });
+
+  it('keeps the Skia heart proportional to every chamber', () => {
+    expect(RELIC_CONTAINER_SEQUENCE.map((container) => (
+      SKIA_RELIC_STAGE_ARTWORK[container].heartScale
+    ))).toEqual([.5, .59, .66, .68, .68]);
+
+    const renderedHeartSizes = RELIC_CONTAINER_SEQUENCE.map((container) => {
+      const config = SKIA_RELIC_STAGE_ARTWORK[container];
+      return 56 * config.heartScale * config.layout.height / 330;
+    });
+    expect(renderedHeartSizes.every((size, index) => index === 0 || size > renderedHeartSizes[index - 1])).toBe(true);
+  });
+
+  it('uses the former second vessel for form I and the former first vessel for form II', () => {
+    expect({
+      formI: {
+        contactY: SKIA_RELIC_STAGE_ARTWORK.ampoule.contactY,
+        heartY: SKIA_RELIC_STAGE_ARTWORK.ampoule.heartY,
+        width: SKIA_RELIC_STAGE_ARTWORK.ampoule.layout.width,
+      },
+      formII: {
+        contactY: SKIA_RELIC_STAGE_ARTWORK.fiole.contactY,
+        heartY: SKIA_RELIC_STAGE_ARTWORK.fiole.heartY,
+        width: SKIA_RELIC_STAGE_ARTWORK.fiole.layout.width,
+      },
+    }).toEqual({
+      formI: { contactY: 304, heartY: 267, width: 158 },
+      formII: { contactY: 248, heartY: 214, width: 300 },
+    });
   });
 });

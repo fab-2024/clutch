@@ -2,6 +2,8 @@ import { StyleSheet } from 'react-native';
 
 import { fonts, typography } from '@/src/theme';
 
+export const COMPACT_RELIC_SCALE = .92;
+
 export const relicStyles = StyleSheet.create({
   stage: {
     position: 'relative',
@@ -16,6 +18,13 @@ export const relicStyles = StyleSheet.create({
     outlineWidth: 0,
     outlineStyle: 'solid',
     outlineColor: 'transparent',
+  },
+  stageCompact: {
+    height: 290,
+    marginTop: -48,
+    marginHorizontal: -34,
+    marginBottom: -12,
+    transform: [{ scale: COMPACT_RELIC_SCALE }],
   },
   sceneBackdrop: {
     position: 'absolute',
@@ -123,6 +132,67 @@ export const relicStyles = StyleSheet.create({
     top: 5,
     alignItems: 'center',
     overflow: 'visible',
+  },
+  vesselMotionLayer: {
+    position: 'absolute',
+    zIndex: 5,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  signatureField: {
+    position: 'absolute',
+    zIndex: 4,
+    top: 74,
+    width: 172,
+    height: 172,
+    borderRadius: 86,
+    backgroundColor: 'rgba(48,215,226,.26)',
+    boxShadow: '0 0 38px rgba(48,215,226,.34), 0 0 72px rgba(164,73,255,.2)',
+  },
+  signaturePulseRing: {
+    position: 'absolute',
+    zIndex: 7,
+    top: 96,
+    width: 126,
+    height: 126,
+    borderRadius: 63,
+    borderWidth: 1,
+    borderColor: 'rgba(217,250,255,.82)',
+    boxShadow: '0 0 20px rgba(48,215,226,.7), inset 0 0 16px rgba(164,73,255,.26)',
+  },
+  signatureOrbit: {
+    position: 'absolute',
+    zIndex: 7,
+    top: 82,
+    width: 158,
+    height: 158,
+    borderRadius: 79,
+    borderWidth: 1,
+    borderColor: 'rgba(73,226,237,.42)',
+    borderStyle: 'dashed',
+    boxShadow: '0 0 16px rgba(48,215,226,.22)',
+  },
+  signatureOrbitNode: {
+    position: 'absolute',
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#9AF6FF',
+    boxShadow: '0 0 12px rgba(109,239,248,.92)',
+  },
+  signatureOrbitNodePrimary: {
+    top: -4,
+    left: 75,
+  },
+  signatureOrbitNodeSecondary: {
+    right: 10,
+    bottom: 16,
+    width: 4,
+    height: 4,
+    backgroundColor: '#C58BFF',
+    boxShadow: '0 0 10px rgba(197,139,255,.9)',
   },
   image: {
     position: 'absolute',
