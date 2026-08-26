@@ -1,6 +1,12 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { EquippedCosmetics } from '@/src/features/shop/types';
+import {
+  adaptShowcaseRingStats,
+  resolveEquippedShowcaseRing,
+} from '@/src/features/profile/showcaseRings/progression';
+import { useShowcaseRingEquipment } from '@/src/features/profile/showcaseRings/useShowcaseRingEquipment';
 import { colors, typography } from '@/src/theme';
 
 import type { ProfileData } from '../types';
@@ -13,6 +19,7 @@ type ProfileVitrinePreviewCardProps = {
   loading: boolean;
   onOpenShowcase: () => void;
   onOpenVisitor: () => void;
+  preview?: boolean;
   pseudo: string;
   rankAccent: string;
   rankLabel: string;
@@ -24,10 +31,20 @@ export default function ProfileVitrinePreviewCard({
   loading,
   onOpenShowcase,
   onOpenVisitor,
+  preview = false,
   pseudo,
   rankAccent,
   rankLabel,
 }: ProfileVitrinePreviewCardProps) {
+  const ringEquipment = useShowcaseRingEquipment(
+    preview ? `preview-${pseudo}` : pseudo,
+    preview ? 'rank' : null,
+  );
+  const ringStats = useMemo(() => adaptShowcaseRingStats(data), [data]);
+  const equippedRing = useMemo(
+    () => resolveEquippedShowcaseRing(ringStats, ringEquipment.family),
+    [ringEquipment.family, ringStats],
+  );
   const level = loading ? '—' : data?.level.level ?? '—';
   const displayedRank = loading ? '—' : rankLabel;
   const publicProfile = !loading && Boolean(data?.publicProfile);
@@ -53,6 +70,7 @@ export default function ProfileVitrinePreviewCard({
       <ShowcaseRoomScene
         cosmetics={cosmetics}
         data={data}
+        equippedRing={equippedRing}
         loading={loading}
         mode="preview"
         rankAccent={rankAccent}

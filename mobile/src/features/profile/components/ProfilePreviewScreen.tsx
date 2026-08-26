@@ -5,7 +5,7 @@ import ProfileScreen from './ProfileScreen';
 
 export const PREVIEW_PROFILE: ProfileData = {
   pseudo: 'FabTheTap',
-  createdAt: new Date().toISOString(),
+  createdAt: '2025-05-01T12:00:00.000Z',
   profileTitle: null,
   founder: false,
   publicProfile: true,
@@ -30,8 +30,12 @@ export const PREVIEW_PROFILE: ProfileData = {
     meilleur_grade: null,
     meilleur_rang: null,
   },
-  recap: {},
-  currentStreak: 0,
+  recap: {
+    accomplissements_majeurs: 3,
+    contribution_faction: 148,
+    saisons_terminees: 5,
+  },
+  currentStreak: 9,
   favoriteTeam: {
     id: 'fnc',
     nom: 'Fnatic',

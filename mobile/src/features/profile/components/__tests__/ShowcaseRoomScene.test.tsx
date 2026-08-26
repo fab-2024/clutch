@@ -3,6 +3,10 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { View } from 'react-native';
 
+import {
+  adaptShowcaseRingStats,
+  resolveEquippedShowcaseRing,
+} from '../../showcaseRings/progression';
 import { PREVIEW_PROFILE } from '../ProfilePreviewScreen';
 import { ShowcaseControlGroup } from '../showcase/ShowcaseCustomizationBar';
 import ShowcaseRoomScene from '../showcase/ShowcaseRoomScene';
@@ -153,5 +157,26 @@ describe('Showcase room composition', () => {
     expect(screen.getAllByTestId('placement-artifact')).toHaveLength(1);
     expect(screen.getAllByTestId('placement-artifact-image')).toHaveLength(1);
     expect(screen.getAllByTestId('rank-emblem-artifact')).toHaveLength(1);
+  });
+
+  it('renders the same equipped ring in preview and full modes and opens its detail', async () => {
+    const onRingPress = jest.fn();
+    const ring = resolveEquippedShowcaseRing(
+      adaptShowcaseRingStats(PREVIEW_PROFILE),
+      'faction',
+    );
+    expect(ring).not.toBeNull();
+
+    const screen = await render(
+      <View>
+        <ShowcaseRoomScene {...ROOM_PROPS} equippedRing={ring} mode="preview" />
+        <ShowcaseRoomScene {...ROOM_PROPS} equippedRing={ring} mode="full" onRingPress={onRingPress} />
+      </View>,
+    );
+
+    expect(screen.getAllByTestId('showcase-ring-artifact-faction')).toHaveLength(2);
+    expect(screen.getAllByLabelText(/Anneau Faction, Pilier, palier 3/)).toHaveLength(2);
+    await fireEvent.press(screen.getAllByTestId('showcase-ring-artifact-faction')[1]);
+    expect(onRingPress).toHaveBeenCalledTimes(1);
   });
 });

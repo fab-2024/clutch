@@ -15,6 +15,8 @@ export type ShopScreenProps = {
 export default function ShopScreen({ previewData, previewProfile }: ShopScreenProps) {
   const params = useLocalSearchParams<{ scope?: string | string[] }>();
 
-  if (shopSurfaceFromParam(params.scope) === 'locker') return <LockerScreen previewData={previewData} />;
+  if (shopSurfaceFromParam(params.scope) === 'locker') {
+    return <LockerScreen previewData={previewData} previewProfile={previewProfile} />;
+  }
   return <AtelierShopScreen previewData={previewData} previewProfile={previewProfile} />;
 }

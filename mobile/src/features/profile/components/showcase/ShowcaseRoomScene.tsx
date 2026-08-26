@@ -13,6 +13,8 @@ import {
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
+import ShowcaseRingArtifact from '@/src/features/profile/showcaseRings/components/ShowcaseRingArtifact';
+import type { EquippedShowcaseRing } from '@/src/features/profile/showcaseRings/types';
 import { colors, fonts, typography } from '@/src/theme';
 import { teamHue } from '@/src/utils/teams';
 
@@ -35,11 +37,13 @@ import type {
 type ShowcaseRoomSceneProps = {
   cosmetics?: EquippedCosmetics | null;
   data: ProfileData | null;
+  equippedRing?: EquippedShowcaseRing | null;
   focus?: ShowcaseSection;
   jerseyPresentation?: ShowcaseJerseyPresentation;
   lighting?: ShowcaseLighting;
   loading: boolean;
   mode: 'preview' | 'full';
+  onRingPress?: () => void;
   pedestal?: ShowcasePedestalSkin;
   rankAccent: string;
   rankLabel: string;
@@ -96,6 +100,7 @@ const METRICS = {
     rankSize: 64,
     relicHeight: 42,
     relicWidth: 30,
+    ringSize: 48,
     tokenSize: 18,
     trophyHeight: 44,
     trophyWidth: 30,
@@ -109,6 +114,7 @@ const METRICS = {
     rankSize: 98,
     relicHeight: 76,
     relicWidth: 54,
+    ringSize: 88,
     tokenSize: 42,
     trophyHeight: 82,
     trophyWidth: 56,
@@ -118,11 +124,13 @@ const METRICS = {
 export default function ShowcaseRoomScene({
   cosmetics,
   data,
+  equippedRing,
   focus = 'showcase',
   jerseyPresentation = 'locker',
   lighting = 'cyan',
   loading,
   mode,
+  onRingPress,
   pedestal = 'obsidian',
   rankAccent,
   rankLabel,
@@ -151,11 +159,11 @@ export default function ShowcaseRoomScene({
   const rightOpacity = sectionOpacity(focus, 'right');
   const description = loading
     ? 'Showroom en cours d’installation'
-    : `Showroom de ${data?.pseudo ?? 'Supporter'}, rang ${rankLabel}, ${visibleBadges.length} badges visibles et ${trophies.length} trophées`;
+    : `Showroom de ${data?.pseudo ?? 'Supporter'}, rang ${rankLabel}, ${visibleBadges.length} badges visibles et ${trophies.length} trophées${equippedRing ? `, anneau ${equippedRing.familyName} ${equippedRing.name}` : ''}`;
 
   return (
     <View
-      accessible
+      accessible={!onRingPress}
       accessibilityLabel={description}
       style={[styles.viewport, compact ? styles.viewportPreview : styles.viewportFull, style]}
       testID={`showcase-room-${mode}`}
@@ -167,7 +175,7 @@ export default function ShowcaseRoomScene({
         <View pointerEvents="none" style={[styles.edgeShade, compact && styles.edgeShadePreview]} />
 
         <View
-          pointerEvents="none"
+          pointerEvents={onRingPress ? 'box-none' : 'none'}
           style={[
             styles.leftCabinet,
             compact && styles.leftCabinetPreview,
@@ -222,8 +230,16 @@ export default function ShowcaseRoomScene({
             {bottomTokens.map((token) => (
               <ShowcasePhysicalObject compact={compact} key={token.id} model={token} showName={token.kind === 'title'} size={metrics.tokenSize} />
             ))}
+            {equippedRing ? (
+              <ShowcaseRingArtifact
+                compact={compact}
+                onPress={onRingPress}
+                ring={equippedRing}
+                size={metrics.ringSize}
+              />
+            ) : null}
             <LockedSlots
-              count={Math.max(0, 3 - (loading ? 0 : 1) - bottomTokens.length)}
+              count={Math.max(0, 3 - (loading ? 0 : 1) - bottomTokens.length - Number(Boolean(equippedRing)))}
               group="bottom"
               kinds={BOTTOM_LOCKED_KINDS}
               size={metrics.tokenSize}

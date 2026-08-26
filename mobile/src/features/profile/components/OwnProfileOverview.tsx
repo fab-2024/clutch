@@ -18,6 +18,7 @@ type OwnProfileOverviewProps = {
   onOpenShop: () => void;
   onOpenShowcase: () => void;
   onOpenVisitor: () => void;
+  preview?: boolean;
   pseudo: string;
   rankAccent: string;
   rankLabel: string;
@@ -33,6 +34,7 @@ export default function OwnProfileOverview({
   onOpenShop,
   onOpenShowcase,
   onOpenVisitor,
+  preview = false,
   pseudo,
   rankAccent,
   rankLabel,
@@ -54,6 +56,7 @@ export default function OwnProfileOverview({
         loading={loading}
         onOpenShowcase={onOpenShowcase}
         onOpenVisitor={onOpenVisitor}
+        preview={preview}
         pseudo={pseudo}
         rankAccent={rankAccent}
         rankLabel={rankLabel}

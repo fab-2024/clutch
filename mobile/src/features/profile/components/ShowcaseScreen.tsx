@@ -8,6 +8,14 @@ import { gradeAccent } from '@/src/features/ranking/grades';
 import { loadCosmeticShop } from '@/src/features/shop/api';
 import { resolveAtelierSceneConfig } from '@/src/features/shop/atelierState';
 import type { CosmeticShopData, EquippedCosmetics } from '@/src/features/shop/types';
+import ShowcaseRingDetailSheet from '@/src/features/profile/showcaseRings/components/ShowcaseRingDetailSheet';
+import {
+  adaptShowcaseRingStats,
+  resolveAllShowcaseRings,
+  resolveEquippedShowcaseRing,
+} from '@/src/features/profile/showcaseRings/progression';
+import type { ShowcaseRingFamily } from '@/src/features/profile/showcaseRings/types';
+import { useShowcaseRingEquipment } from '@/src/features/profile/showcaseRings/useShowcaseRingEquipment';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, typography } from '@/src/theme';
 
@@ -42,10 +50,15 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
   const [theme, setTheme] = useState<ShowcaseRoomTheme>('graphite');
   const [lighting, setLighting] = useState<ShowcaseLighting>('cyan');
   const [jerseyPresentation, setJerseyPresentation] = useState<ShowcaseJerseyPresentation>('locker');
+  const [selectedRingFamily, setSelectedRingFamily] = useState<ShowcaseRingFamily | null>(null);
   const requestRef = useRef(0);
   const trackedRef = useRef(false);
   const savedAtelierAppliedRef = useRef(false);
   const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
+  const ringEquipment = useShowcaseRingEquipment(
+    previewProfile ? `preview-${previewProfile.pseudo}` : pseudo,
+    previewProfile ? 'rank' : null,
+  );
 
   const load = useCallback(async (refresh = false) => {
     if (previewProfile && previewShop) {
@@ -110,6 +123,16 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
     [shopData?.items],
   );
   const cosmetics = resolveEquipped(shopData, profileData?.cosmetics);
+  const ringStats = useMemo(() => adaptShowcaseRingStats(profileData), [profileData]);
+  const ringProgressions = useMemo(
+    () => resolveAllShowcaseRings(ringStats, ringEquipment.family),
+    [ringEquipment.family, ringStats],
+  );
+  const equippedRing = useMemo(
+    () => resolveEquippedShowcaseRing(ringStats, ringEquipment.family),
+    [ringEquipment.family, ringStats],
+  );
+  const selectedRingProgress = ringProgressions.find(({ family }) => family === selectedRingFamily) ?? null;
   const grade = profileData?.ranking.grade;
   const rankLabel = loading
     ? 'SYNCHRO'
@@ -126,7 +149,7 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
         <ShowcaseTopNavigation
           active={section}
           loading={loading}
-          objectCount={ownedItems.length}
+          objectCount={ownedItems.length + ringProgressions.filter((progress) => progress.current).length}
           onBack={() => router.back()}
           onRefresh={() => void load(true)}
           onSelect={setSection}
@@ -137,11 +160,13 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
           <ShowcaseRoomScene
             cosmetics={cosmetics}
             data={profileData}
+            equippedRing={equippedRing}
             focus={section}
             jerseyPresentation={jerseyPresentation}
             lighting={lighting}
             loading={loading}
             mode="full"
+            onRingPress={equippedRing ? () => setSelectedRingFamily(equippedRing.family) : undefined}
             pedestal={pedestal}
             rankAccent={rankAccent}
             rankLabel={rankLabel}
@@ -180,6 +205,13 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
           onThemeChange={setTheme}
           pedestal={pedestal}
           theme={theme}
+        />
+
+        <ShowcaseRingDetailSheet
+          onClose={() => setSelectedRingFamily(null)}
+          onEquip={ringEquipment.equip}
+          progress={selectedRingProgress}
+          visible={Boolean(selectedRingProgress)}
         />
       </View>
     </Screen>

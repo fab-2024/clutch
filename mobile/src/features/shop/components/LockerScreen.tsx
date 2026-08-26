@@ -16,6 +16,16 @@ import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { FounderPackBanner } from '@/src/features/purchases';
+import { loadProfileData } from '@/src/features/profile/api';
+import { SHOWCASE_RING_CATALOG } from '@/src/features/profile/showcaseRings/catalog';
+import ShowcaseRingCollection from '@/src/features/profile/showcaseRings/components/ShowcaseRingCollection';
+import {
+  adaptShowcaseRingStats,
+  resolveAllShowcaseRings,
+} from '@/src/features/profile/showcaseRings/progression';
+import type { ShowcaseRingFamily } from '@/src/features/profile/showcaseRings/types';
+import { useShowcaseRingEquipment } from '@/src/features/profile/showcaseRings/useShowcaseRingEquipment';
+import type { ProfileData } from '@/src/features/profile/types';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
@@ -36,7 +46,10 @@ import { CosmeticItemPreview, SupporterIdentity } from './CosmeticRenderer';
 
 export type LockerScreenProps = {
   previewData?: CosmeticShopData;
+  previewProfile?: ProfileData;
 };
+
+type LockerTab = IdentityCosmeticSlot | 'showcase_ring';
 
 const SLOT_META: Record<IdentityCosmeticSlot, { label: string; short: string; promise: string; glyph: string }> = {
   cadre_profil: { label: 'Cadres', short: 'CADRE', promise: 'Signe ton profil sans toucher à tes performances.', glyph: '▣' },
@@ -48,15 +61,24 @@ const SLOT_META: Record<IdentityCosmeticSlot, { label: string; short: string; pr
 
 const SLOT_ORDER = [...IDENTITY_COSMETIC_SLOTS];
 const RARITIES: CosmeticRarity[] = ['commun', 'rare', 'epique', 'legendaire'];
+const RING_TAB_META = {
+  glyph: '◎',
+  label: 'Anneaux',
+  promise: 'Expose les accomplissements qui ont réellement marqué ton parcours.',
+  short: 'ANNEAUX',
+} as const;
 
-export default function LockerScreen({ previewData }: LockerScreenProps) {
-  const params = useLocalSearchParams<{ scope?: string | string[] }>();
+export default function LockerScreen({ previewData, previewProfile }: LockerScreenProps) {
+  const params = useLocalSearchParams<{ scope?: string | string[]; tab?: string | string[] }>();
   const requestedScope = collectionScopeFromParam(params.scope);
+  const requestedTab = ringTabFromParam(params.tab);
   const { profile, session } = useAuth();
   const { refresh: refreshEconomy } = useEconomy();
   const { refresh: refreshCosmetics } = useCosmetics();
+  const pseudo = previewProfile?.pseudo || profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
   const [data, setData] = useState<CosmeticShopData | null>(previewData ?? null);
-  const [slot, setSlot] = useState<IdentityCosmeticSlot>('cadre_profil');
+  const [profileData, setProfileData] = useState<ProfileData | null>(previewProfile ?? null);
+  const [slot, setSlot] = useState<LockerTab>(requestedTab ?? 'cadre_profil');
   const [scope, setScope] = useState<CollectionScope>(requestedScope);
   const [teamFilter, setTeamFilter] = useState('all');
   const [collectionFilter, setCollectionFilter] = useState('all');
@@ -70,11 +92,17 @@ export default function LockerScreen({ previewData }: LockerScreenProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [profileLoading, setProfileLoading] = useState(!previewProfile);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const requestRef = useRef(0);
+  const profileRequestRef = useRef(0);
   const cachedDataRef = useRef<CosmeticShopData | null>(previewData ?? null);
   const collectionEventRef = useRef('');
 
-  const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
+  const ringEquipment = useShowcaseRingEquipment(
+    previewData ? `preview-${pseudo}` : pseudo,
+    previewData ? 'rank' : null,
+  );
 
   const load = useCallback(async (refresh = false) => {
     if (previewData) {
@@ -115,10 +143,38 @@ export default function LockerScreen({ previewData }: LockerScreenProps) {
     }
   }, [previewData]);
 
+  const loadRingProfile = useCallback(async () => {
+    if (previewProfile) {
+      setProfileData(previewProfile);
+      setProfileError(null);
+      setProfileLoading(false);
+      return;
+    }
+
+    const requestId = ++profileRequestRef.current;
+    setProfileLoading(true);
+    setProfileError(null);
+    try {
+      const next = await loadProfileData(pseudo);
+      if (requestId === profileRequestRef.current) setProfileData(next);
+    } catch (caught) {
+      if (requestId === profileRequestRef.current) {
+        setProfileError(caught instanceof Error ? caught.message : 'Progression des anneaux indisponible.');
+      }
+    } finally {
+      if (requestId === profileRequestRef.current) setProfileLoading(false);
+    }
+  }, [previewProfile, pseudo]);
+
   useEffect(() => {
     void load();
     return () => { requestRef.current += 1; };
   }, [load]);
+
+  useEffect(() => {
+    void loadRingProfile();
+    return () => { profileRequestRef.current += 1; };
+  }, [loadRingProfile]);
 
   useEffect(() => {
     setConfirmingId(null);
@@ -129,6 +185,10 @@ export default function LockerScreen({ previewData }: LockerScreenProps) {
   useEffect(() => {
     setScope(requestedScope);
   }, [requestedScope]);
+
+  useEffect(() => {
+    if (requestedTab) setSlot(requestedTab);
+  }, [requestedTab]);
 
   useEffect(() => {
     if (previewData || loading || !data) return;
@@ -150,8 +210,23 @@ export default function LockerScreen({ previewData }: LockerScreenProps) {
     () => SLOT_ORDER.filter((itemSlot) => contract.catalog.allowedSlots.includes(itemSlot)),
     [contract.catalog.allowedSlots],
   );
-  const activeSlot = availableSlots.includes(slot) ? slot : availableSlots[0] ?? 'cadre_profil';
-  const collectionCount = data?.items.filter((item) => item.owned).length ?? 0;
+  const availableTabs = useMemo<LockerTab[]>(
+    () => [...availableSlots, 'showcase_ring'],
+    [availableSlots],
+  );
+  const ringActive = slot === 'showcase_ring';
+  const activeSlot = slot !== 'showcase_ring' && availableSlots.includes(slot)
+    ? slot
+    : availableSlots[0] ?? 'cadre_profil';
+  const activeMeta = ringActive ? RING_TAB_META : SLOT_META[activeSlot];
+  const ringStats = useMemo(() => adaptShowcaseRingStats(profileData), [profileData]);
+  const ringProgressions = useMemo(
+    () => resolveAllShowcaseRings(ringStats, ringEquipment.family),
+    [ringEquipment.family, ringStats],
+  );
+  const unlockedRingCount = ringProgressions.filter((progress) => progress.current).length;
+  const equippedRingProgress = ringProgressions.find((progress) => progress.availability === 'equipped') ?? null;
+  const collectionCount = (data?.items.filter((item) => item.owned).length ?? 0) + unlockedRingCount;
   const equipped = useMemo(() => resolveEquipped(data), [data]);
   const teams = useMemo(() => uniqueTeams(data?.items ?? []), [data?.items]);
   const collections = useMemo(() => uniqueCollections(data?.items ?? []), [data?.items]);
@@ -167,6 +242,17 @@ export default function LockerScreen({ previewData }: LockerScreenProps) {
       .filter((item) => rarityFilter === 'all' || item.rarity === rarityFilter)
       .sort((a, b) => Number(b.equipped) - Number(a.equipped) || Number(b.owned) - Number(a.owned) || a.level - b.level);
   }, [activeSlot, collectionFilter, data?.items, rarityFilter, scope, teamFilter]);
+
+  async function handleRingEquip(family: ShowcaseRingFamily | null) {
+    try {
+      await ringEquipment.equip(family);
+      setMessage(family
+        ? `Anneau ${SHOWCASE_RING_CATALOG[family].name} équipé dans ta Vitrine.`
+        : 'Anneau retiré de ta Vitrine.');
+    } catch {
+      setMessage('L’anneau n’a pas pu être enregistré sur cet appareil.');
+    }
+  }
 
   function clearFilters() {
     setTeamFilter('all');
@@ -259,7 +345,7 @@ export default function LockerScreen({ previewData }: LockerScreenProps) {
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { void load(true); void loadRingProfile(); }} tintColor={colors.volt} />}
       >
         <View style={styles.header}>
           <Pressable accessibilityLabel="Revenir au profil" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
@@ -287,9 +373,9 @@ export default function LockerScreen({ previewData }: LockerScreenProps) {
           </View>
           <SupporterIdentity cosmetics={equipped} meta="5 SURFACES" pseudo={pseudo} />
           <View style={styles.heroStats}>
-            <HeroStat label="OBJETS" value={loading ? '—' : `${collectionCount}/${data?.items.length ?? 0}`} />
+            <HeroStat label="OBJETS" value={loading ? '—' : `${collectionCount}/${(data?.items.length ?? 0) + 5}`} />
             <View style={styles.heroDivider} />
-            <HeroStat label="ÉQUIPÉS" value={`${countEquipped(equipped)}/${availableSlots.length}`} />
+            <HeroStat label="ÉQUIPÉS" value={`${countEquipped(equipped) + Number(Boolean(equippedRingProgress))}/${availableSlots.length + 1}`} />
             <View style={styles.heroDivider} />
             <HeroStat label="PAY-TO-WIN" value={contract.catalog.competitiveEffects ? '!' : '0'} accent={!contract.catalog.competitiveEffects} />
           </View>
@@ -303,33 +389,41 @@ export default function LockerScreen({ previewData }: LockerScreenProps) {
           <View style={styles.offlineBanner}><View style={styles.offlineDot} /><Text style={styles.offlineText}>HORS CONNEXION · DERNIÈRE COLLECTION CONNUE</Text><Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View>
         ) : null}
 
-        <View style={styles.scopeTabs}>
-          <ScopeButton active={scope === 'owned'} label="MES OBJETS" meta={`${collectionCount}`} onPress={() => setScope('owned')} />
-          <ScopeButton active={scope === 'catalog'} label="CATALOGUE" meta={`${data?.items.length ?? 0}`} onPress={() => setScope('catalog')} />
-        </View>
+        {!ringActive ? (
+          <View style={styles.scopeTabs}>
+            <ScopeButton active={scope === 'owned'} label="MES OBJETS" meta={`${collectionCount - unlockedRingCount}`} onPress={() => setScope('owned')} />
+            <ScopeButton active={scope === 'catalog'} label="CATALOGUE" meta={`${data?.items.length ?? 0}`} onPress={() => setScope('catalog')} />
+          </View>
+        ) : null}
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
-          {availableSlots.map((itemSlot) => {
-            const active = itemSlot === activeSlot;
-            const current = data?.items.find((item) => item.slot === itemSlot && item.equipped);
+          {availableTabs.map((itemTab) => {
+            const isRing = itemTab === 'showcase_ring';
+            const active = isRing ? ringActive : itemTab === activeSlot && !ringActive;
+            const meta = isRing ? RING_TAB_META : SLOT_META[itemTab];
+            const currentName = isRing
+              ? equippedRingProgress?.display.name ?? 'À équiper'
+              : data?.items.find((item) => item.slot === itemTab && item.equipped)?.name ?? 'À équiper';
             return (
-              <Pressable accessibilityRole="tab" accessibilityState={{ selected: active }} key={itemSlot} onPress={() => setSlot(itemSlot)} style={({ pressed }) => [styles.tab, active && styles.tabActive, pressed && styles.pressed]}>
-                <Text style={[styles.tabGlyph, active && styles.tabGlyphActive]}>{SLOT_META[itemSlot].glyph}</Text>
-                <View style={styles.tabCopy}><Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{SLOT_META[itemSlot].label}</Text><Text numberOfLines={1} style={styles.tabEquipped}>{current?.name ?? 'À équiper'}</Text></View>
+              <Pressable accessibilityRole="tab" accessibilityState={{ selected: active }} key={itemTab} onPress={() => setSlot(itemTab)} style={({ pressed }) => [styles.tab, active && styles.tabActive, pressed && styles.pressed]}>
+                <Text style={[styles.tabGlyph, active && styles.tabGlyphActive]}>{meta.glyph}</Text>
+                <View style={styles.tabCopy}><Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{meta.label}</Text><Text numberOfLines={1} style={styles.tabEquipped}>{currentName}</Text></View>
               </Pressable>
             );
           })}
         </ScrollView>
 
         <View style={styles.sectionHead}>
-          <View style={styles.sectionMark}><Text style={styles.sectionMarkText}>{SLOT_META[activeSlot].glyph}</Text></View>
-          <View style={styles.sectionCopy}><Text style={styles.sectionEyebrow}>{scope === 'owned' ? 'COLLECTION' : 'CATALOGUE'}{' // '}{SLOT_META[activeSlot].short}</Text><Text style={styles.sectionTitle}>{SLOT_META[activeSlot].label}</Text><Text style={styles.sectionPromise}>{SLOT_META[activeSlot].promise}</Text></View>
-          <Pressable accessibilityLabel="Afficher les filtres" accessibilityRole="button" accessibilityState={{ expanded: filtersVisible }} onPress={() => setFiltersVisible((visible) => !visible)} style={({ pressed }) => [styles.filterToggle, filtersVisible && styles.filterToggleActive, pressed && styles.pressed]}>
-            <Text style={[styles.filterToggleText, filtersVisible && styles.filterToggleTextActive]}>FILTRES{filterCount ? ` · ${filterCount}` : ''}</Text>
-          </Pressable>
+          <View style={styles.sectionMark}><Text style={styles.sectionMarkText}>{activeMeta.glyph}</Text></View>
+          <View style={styles.sectionCopy}><Text style={styles.sectionEyebrow}>{ringActive ? 'COLLECTION' : scope === 'owned' ? 'COLLECTION' : 'CATALOGUE'}{' // '}{activeMeta.short}</Text><Text style={styles.sectionTitle}>{activeMeta.label}</Text><Text style={styles.sectionPromise}>{activeMeta.promise}</Text></View>
+          {!ringActive ? (
+            <Pressable accessibilityLabel="Afficher les filtres" accessibilityRole="button" accessibilityState={{ expanded: filtersVisible }} onPress={() => setFiltersVisible((visible) => !visible)} style={({ pressed }) => [styles.filterToggle, filtersVisible && styles.filterToggleActive, pressed && styles.pressed]}>
+              <Text style={[styles.filterToggleText, filtersVisible && styles.filterToggleTextActive]}>FILTRES{filterCount ? ` · ${filterCount}` : ''}</Text>
+            </Pressable>
+          ) : null}
         </View>
 
-        {filtersVisible ? (
+        {filtersVisible && !ringActive ? (
           <View style={styles.filters}>
             <FilterRow label="ÉQUIPE" options={[{ id: 'all', label: 'TOUTES' }, ...teams]} selected={teamFilter} onSelect={setTeamFilter} />
             <FilterRow label="COLLECTION" options={[{ id: 'all', label: 'TOUTES' }, ...collections]} selected={collectionFilter} onSelect={setCollectionFilter} />
@@ -338,10 +432,19 @@ export default function LockerScreen({ previewData }: LockerScreenProps) {
           </View>
         ) : null}
 
-        {error ? <View style={styles.error}><Text style={styles.errorText}>{friendlyError(error)}</Text><Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
+        {error && !ringActive ? <View style={styles.error}><Text style={styles.errorText}>{friendlyError(error)}</Text><Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
+        {profileError && ringActive ? <View style={styles.error}><Text style={styles.errorText}>Les données de progression ne sont pas synchronisées. Les anneaux déjà connus restent visibles.</Text><Pressable accessibilityRole="button" onPress={() => void loadRingProfile()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
         {message ? <Text style={styles.message}>{message}</Text> : null}
 
-        {loading ? (
+        {ringActive && (profileLoading || ringEquipment.loading) ? (
+          <View style={styles.loading}><ActivityIndicator color={colors.volt} /><Text style={styles.loadingText}>Lecture de tes accomplissements…</Text></View>
+        ) : ringActive ? (
+          <ShowcaseRingCollection
+            onEquip={handleRingEquip}
+            progressions={ringProgressions}
+            stats={ringStats}
+          />
+        ) : loading ? (
           <View style={styles.loading}><ActivityIndicator color={colors.volt} /><Text style={styles.loadingText}>Ouverture du Locker…</Text></View>
         ) : visibleItems.length ? (
           <View style={styles.grid}>
@@ -468,6 +571,10 @@ function humanize(value: string) { return value.replace(/[-_]/g, ' ').replace(/\
 function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
 function friendlyError(value: string) { if (value.toLowerCase().includes('solde insuffisant')) return 'Ton solde a changé. Recharge le Locker avant de confirmer.'; if (isOfflineError(value)) return 'Connexion indisponible. Tes objets équipés restent visibles sur cet appareil.'; return value; }
 function isOfflineError(value: string) { return /network|fetch|connexion|offline|hors ligne/i.test(value); }
+function ringTabFromParam(value?: string | string[]): 'showcase_ring' | null {
+  const normalized = Array.isArray(value) ? value[0] : value;
+  return normalized === 'rings' || normalized === 'anneaux' ? 'showcase_ring' : null;
+}
 
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: 42, gap: 20 },

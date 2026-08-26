@@ -149,6 +149,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             onOpenShop={() => router.push({ pathname: previewData ? '/shop-preview' : '/shop', params: { scope: 'catalog' } } as never)}
             onOpenShowcase={() => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
             onOpenVisitor={() => router.push({ pathname: '/u/[pseudo]', params: { pseudo: data?.pseudo || pseudo } })}
+            preview={Boolean(previewData)}
             pseudo={data?.pseudo || pseudo}
             rankAccent={rankColor}
             rankLabel={rankLabel}
