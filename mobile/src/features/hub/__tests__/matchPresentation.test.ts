@@ -22,11 +22,12 @@ const BASE_MATCH: HubMatch = {
 };
 
 describe('hub match confrontation presentation', () => {
-  it('distinguishes upcoming, live and finished states', () => {
+  it('distinguishes upcoming, live, finished and cancelled states', () => {
     expect(getHubMatchPhase(BASE_MATCH, NOW)).toBe('upcoming');
     expect(getHubMatchPhase({ ...BASE_MATCH, statut: 'en_cours' }, NOW)).toBe('live');
     expect(getHubMatchPhase({ ...BASE_MATCH, statut: 'a_venir', debut: '2026-08-23T17:59:00.000Z' }, NOW)).toBe('live');
     expect(getHubMatchPhase({ ...BASE_MATCH, statut: 'termine' }, NOW)).toBe('finished');
+    expect(getHubMatchPhase({ ...BASE_MATCH, statut: 'annule' }, NOW)).toBe('cancelled');
   });
 
   it('shows a score and identifies the winner only once the match is finished', () => {
@@ -41,6 +42,24 @@ describe('hub match confrontation presentation', () => {
     const state = getMatchConfrontationState({ ...BASE_MATCH, statut: 'en_cours' }, null, NOW);
     expect(state.scoreLabel).toBe('— – —');
     expect(state.status).toBe('LIVE');
+    expect(state.winner).toBeNull();
+  });
+
+  it('keeps a locked call visible on an upcoming confrontation', () => {
+    const state = getMatchConfrontationState(BASE_MATCH, { matchId: BASE_MATCH.id, choice: 'b' }, NOW);
+    expect(state.phase).toBe('upcoming');
+    expect(state.predictionTag).toBe('A5');
+    expect(state.status).toBe('CALL · A5');
+    expect(state.action).toBe('OUVRIR MON CALL');
+    expect(state.scoreLabel).toBeNull();
+  });
+
+  it('keeps cancelled confrontations actionable without inventing a score or winner', () => {
+    const state = getMatchConfrontationState({ ...BASE_MATCH, statut: 'annule' }, null, NOW);
+    expect(state.phase).toBe('cancelled');
+    expect(state.status).toBe('ANNULÉ');
+    expect(state.action).toBe('VOIR LE MATCH');
+    expect(state.scoreLabel).toBeNull();
     expect(state.winner).toBeNull();
   });
 

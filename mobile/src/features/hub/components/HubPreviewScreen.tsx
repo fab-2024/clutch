@@ -94,10 +94,16 @@ const PREVIEW_HUB: HubData = {
 };
 
 export default function HubPreviewScreen() {
-  const params = useLocalSearchParams<{ state?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    score?: string | string[];
+    state?: string | string[];
+    teams?: string | string[];
+  }>();
   if (!__DEV__) return <Redirect href="/" />;
   const previewState = normalizePreviewState(params.state);
-  const nextMatch = matchForPreviewState(previewState);
+  const previewTeams = normalizePreviewTeams(params.teams);
+  const previewScore = normalizePreviewScore(params.score);
+  const nextMatch = matchForPreviewState(previewState, previewTeams, previewScore);
   const previewHub: HubData = {
     ...PREVIEW_HUB,
     nextMatch,
@@ -118,26 +124,75 @@ export default function HubPreviewScreen() {
   );
 }
 
-type PreviewMatchState = 'open' | 'upcoming' | 'live' | 'finished' | 'fallback';
+type PreviewMatchState = 'open' | 'upcoming' | 'live' | 'finished' | 'cancelled' | 'fallback';
+type PreviewScoreMode = 'score' | 'none';
+type PreviewTeams = 'g2-fnatic' | 'kc-vitality' | 'light-pair';
 
 function normalizePreviewState(value?: string | string[]): PreviewMatchState {
   const state = Array.isArray(value) ? value[0] : value;
-  return state === 'upcoming' || state === 'live' || state === 'finished' || state === 'fallback' ? state : 'open';
+  return state === 'upcoming' || state === 'live' || state === 'finished' || state === 'cancelled' || state === 'fallback' ? state : 'open';
 }
 
-function matchForPreviewState(state: PreviewMatchState): HubMatch {
+function normalizePreviewTeams(value?: string | string[]): PreviewTeams {
+  const teams = Array.isArray(value) ? value[0] : value;
+  return teams === 'kc-vitality' || teams === 'light-pair' ? teams : 'g2-fnatic';
+}
+
+function normalizePreviewScore(value?: string | string[]): PreviewScoreMode {
+  const score = Array.isArray(value) ? value[0] : value;
+  return score === 'none' ? 'none' : 'score';
+}
+
+function matchForPreviewState(state: PreviewMatchState, teams: PreviewTeams, scoreMode: PreviewScoreMode): HubMatch {
+  const matchup = teams === 'kc-vitality'
+    ? {
+        event: 'LFL Summer',
+        id: 'kc-vitality',
+        teamA: 'Karmine Corp',
+        teamB: 'Team Vitality',
+        tagA: 'KC',
+        tagB: 'VIT',
+      }
+    : teams === 'light-pair'
+      ? {
+          event: 'LEC Summer',
+          id: 'gx-heretics',
+          teamA: 'GIANTX',
+          teamB: 'Team Heretics',
+          tagA: 'GX',
+          tagB: 'TH',
+        }
+    : {
+        event: 'LEC Summer',
+        id: 'g2-fnatic',
+        teamA: 'G2 Esports',
+        teamB: 'Fnatic',
+        tagA: 'G2',
+        tagB: 'FNC',
+      };
+  const accentOverrides = teams === 'light-pair'
+    ? { couleur_a: '#86F6DD', couleur_b: '#FFE27A' }
+    : {};
   if (state === 'live') {
-    return previewMatch('g2-fnatic-live', -1, 'lol', 'G2 Esports', 'G2', 'Fnatic', 'FNC', 'LEC Summer', 3, {
-      score_a: 1,
-      score_b: 0,
+    return previewMatch(`${matchup.id}-live`, -1, 'lol', matchup.teamA, matchup.tagA, matchup.teamB, matchup.tagB, matchup.event, 3, {
+      ...accentOverrides,
+      score_a: scoreMode === 'none' ? null : 1,
+      score_b: scoreMode === 'none' ? null : 0,
       statut: 'en_cours',
     });
   }
   if (state === 'finished') {
-    return previewMatch('g2-fnatic-finished', -2, 'lol', 'G2 Esports', 'G2', 'Fnatic', 'FNC', 'LEC Summer', 3, {
+    return previewMatch(`${matchup.id}-finished`, -2, 'lol', matchup.teamA, matchup.tagA, matchup.teamB, matchup.tagB, matchup.event, 3, {
+      ...accentOverrides,
       score_a: 2,
       score_b: 1,
       statut: 'termine',
+    });
+  }
+  if (state === 'cancelled') {
+    return previewMatch(`${matchup.id}-cancelled`, 3, 'lol', matchup.teamA, matchup.tagA, matchup.teamB, matchup.tagB, matchup.event, 3, {
+      ...accentOverrides,
+      statut: 'annule',
     });
   }
   if (state === 'fallback') {
@@ -148,7 +203,7 @@ function matchForPreviewState(state: PreviewMatchState): HubMatch {
       logo_b: null,
     });
   }
-  return previewMatch('g2-fnatic', 3, 'lol', 'G2 Esports', 'G2', 'Fnatic', 'FNC', 'LEC Summer', 3);
+  return previewMatch(matchup.id, 3, 'lol', matchup.teamA, matchup.tagA, matchup.teamB, matchup.tagB, matchup.event, 3, accentOverrides);
 }
 
 function previewMatch(
