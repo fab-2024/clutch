@@ -21,7 +21,7 @@ const ROOM_PROPS = {
   data: PREVIEW_PROFILE,
   loading: false,
   rankAccent: '#E8FF3D',
-  rankLabel: 'NON CLASSÉ',
+  rankLabel: 'BRONZE',
 } as const;
 
 describe('Showcase room composition', () => {
@@ -69,7 +69,7 @@ describe('Showcase room composition', () => {
     expect(screen.getByTestId('showcase-room-full')).toBeTruthy();
     expect(screen.getAllByLabelText('Maillot de Fnatic')).toHaveLength(2);
     expect(screen.getAllByLabelText('Trophée Premier Signal')).toHaveLength(2);
-    expect(screen.getAllByLabelText('Cristal de classement dormant, rang non classé')).toHaveLength(2);
+    expect(screen.getAllByLabelText('Emblème de départ, zéro Frag')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-frame-cadre-profil-1')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-title-titre-profil-1')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-core-apparence-core-1')).toHaveLength(2);
@@ -123,20 +123,26 @@ describe('Showcase room composition', () => {
     expect(screen.queryByLabelText('Maillot de Fnatic')).toBeNull();
     expect(screen.queryByLabelText('Trophée Premier Signal')).toBeNull();
     expect(screen.queryByTestId(/showcase-object-/)).toBeNull();
-    expect(screen.getByTestId('placement-artifact')).toBeTruthy();
+    expect(screen.getByTestId('rank-emblem-artifact')).toBeTruthy();
   });
 
-  it('uses the placement artifact only before classification', async () => {
+  it('uses the zero badge at season start and the grade emblem after progression', async () => {
     const rankedData = {
       ...PREVIEW_PROFILE,
       ranking: {
         ...PREVIEW_PROFILE.ranking,
+        frags: 850,
+        pic_frags: 850,
         pronostics_regles: 5,
-        provisoire: false,
         grade: {
           ...PREVIEW_PROFILE.ranking.grade,
           classe: true,
-          progression: 1,
+          progression: 0,
+          cle: 'argent' as const,
+          libelle: 'Argent',
+          ordre: 1,
+          minimum: 850,
+          plafond: 1050,
         },
       },
     };
@@ -147,9 +153,10 @@ describe('Showcase room composition', () => {
       </View>,
     );
 
-    expect(screen.getAllByTestId('placement-artifact')).toHaveLength(1);
-    expect(screen.getAllByTestId('placement-artifact-image')).toHaveLength(1);
-    expect(screen.getAllByTestId('rank-emblem-artifact')).toHaveLength(1);
+    expect(screen.getAllByTestId('rank-emblem-artifact')).toHaveLength(2);
+    expect(screen.getByLabelText('Emblème de départ, zéro Frag')).toBeTruthy();
+    expect(screen.getByLabelText('Emblème Argent')).toBeTruthy();
+    expect(screen.queryByTestId('placement-artifact')).toBeNull();
   });
 
   it('renders the same equipped ring in preview and full modes and opens its detail', async () => {

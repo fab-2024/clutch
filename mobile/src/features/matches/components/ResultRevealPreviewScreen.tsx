@@ -19,7 +19,7 @@ const PREVIEW_RESULT: MatchResultReveal = {
   verdicts_apres: 9,
   grade_avant: {
     classe: true,
-    objectif_placements: 5,
+    objectif_placements: 0,
     placements_restants: 0,
     progression: 0.965,
     cle: 'or',
@@ -33,7 +33,7 @@ const PREVIEW_RESULT: MatchResultReveal = {
   },
   grade_apres: {
     classe: true,
-    objectif_placements: 5,
+    objectif_placements: 0,
     placements_restants: 0,
     progression: 0.055,
     cle: 'platine',
@@ -45,7 +45,6 @@ const PREVIEW_RESULT: MatchResultReveal = {
     prochain_libelle: 'Diamant',
     prochain_minimum: 1450,
   },
-  objectif_placements: 5,
   regle_le: new Date().toISOString(),
   revele_le: null,
   equipe_a: 'Karmine Corp',

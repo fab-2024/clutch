@@ -6,7 +6,7 @@ import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
-import { gradeAccent } from '@/src/features/ranking/grades';
+import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import AchievementBadgeArtwork from '@/src/features/profile/achievementBadges/components/AchievementBadgeArtwork';
 import { resolveOwnedLevelFrames } from '@/src/features/profile/levelFrames/catalog';
 import { useLevelFrameEquipment } from '@/src/features/profile/levelFrames/useLevelFrameEquipment';
@@ -105,18 +105,11 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
   const cosmetics = !previewData && !publicView && hasLiveCosmetics ? equipped : data?.cosmetics;
   const obtained = data?.badges.filter((badge) => badge.obtained) ?? [];
   const settledCalls = data?.ranking.pronostics_regles ?? 0;
-  const placementGoal = data?.ranking.grade.objectif_placements ?? 5;
-  const unranked = !loading && settledCalls === 0;
-  const provisional = !loading && Boolean(data?.ranking.provisoire);
-  const placementsRemaining = data?.ranking.placements_restants ?? Math.max(0, placementGoal - settledCalls);
+  const starting = Boolean(!loading && data && isZeroRank(data.ranking.frags));
   const rankLabel = loading
     ? 'SYNCHRO'
-    : unranked
-      ? 'NON CLASSÉ'
-      : provisional
-        ? 'PLACEMENT'
-        : data?.ranking.grade.libelle?.toUpperCase() ?? 'NON CLASSÉ';
-  const rankColor = gradeAccent(data?.ranking.grade);
+    : data?.ranking.grade.libelle?.toUpperCase() ?? 'BRONZE';
+  const rankColor = starting ? ZERO_RANK_ACCENT : gradeAccent(data?.ranking.grade);
   const profileTitle = cosmetics?.title?.name || data?.profileTitle || data?.level.prestigeLabel || 'Starter';
 
   if (publicView && publicBlocked) {
@@ -221,20 +214,13 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
           <Text style={styles.xpHint}>{loading ? 'Synchronisation…' : `${formatNumber(data?.level.remaining ?? 0)} XP avant le niveau suivant`}</Text>
         </View>
 
-        {!loading && (unranked || provisional) ? (
-          <RankingStateCard
-            placementGoal={placementGoal}
-            placementsRemaining={placementsRemaining}
-            publicView={publicView}
-            unranked={unranked}
-          />
-        ) : !loading && data?.ranking.grade.classe ? <GradeProgressCard ranking={data.ranking} /> : null}
+        {!loading && data?.ranking.grade.classe ? <GradeProgressCard ranking={data.ranking} /> : null}
 
         <View style={styles.statsGrid}>
-          <Stat currency="frags" label="RATING" value={loading ? '—' : formatNumber(data?.ranking.frags ?? 0)} detail={unranked ? 'BASE DE DÉPART' : 'FRAGS'} featured />
-          <Stat compact={unranked || provisional} label="RANG" value={loading ? '—' : unranked ? 'NON CLASSÉ' : provisional ? 'PLACEMENT' : data?.ranking.rang ? `#${data.ranking.rang}` : '—'} detail={unranked ? 'FAIS TON 1ER CALL' : provisional ? `${placementsRemaining} RESTANT${placementsRemaining > 1 ? 'S' : ''}` : data?.ranking.percentile == null ? 'SAISON' : `PERCENTILE ${formatDecimal(data.ranking.percentile)}`} />
-          <Stat label="RÉUSSITE" value={loading ? '—' : unranked ? '—' : `${accuracy}%`} detail={unranked ? 'AUCUN VERDICT' : `${data?.ranking.pronostics_gagnes ?? 0}/${settledCalls}`} />
-          <Stat label="SÉRIE" value={loading ? '—' : unranked ? '—' : `${data?.currentStreak ?? 0}`} detail={unranked ? 'NON COMMENCÉE' : 'VICTOIRES'} />
+          <Stat currency="frags" label="RATING" value={loading ? '—' : formatNumber(data?.ranking.frags ?? 0)} detail={starting ? 'DÉPART DE SAISON' : 'FRAGS'} featured />
+          <Stat label="RANG" value={loading ? '—' : data?.ranking.rang ? `#${data.ranking.rang}` : '—'} detail={data?.ranking.percentile == null ? 'SAISON' : `PERCENTILE ${formatDecimal(data.ranking.percentile)}`} />
+          <Stat label="RÉUSSITE" value={loading || settledCalls === 0 ? '—' : `${accuracy}%`} detail={settledCalls === 0 ? 'AUCUN VERDICT' : `${data?.ranking.pronostics_gagnes ?? 0}/${settledCalls}`} />
+          <Stat label="SÉRIE" value={loading || settledCalls === 0 ? '—' : `${data?.currentStreak ?? 0}`} detail={settledCalls === 0 ? 'NON COMMENCÉE' : 'VICTOIRES'} />
         </View>
 
         {!loading && data ? (
@@ -242,7 +228,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             accuracy={accuracy}
             cosmetic={cosmetics?.profileCard}
             frags={data.ranking.frags}
-            grade={unranked || provisional ? 'En placement' : data.ranking.grade.libelle || 'Non classé'}
+            grade={data.ranking.grade.libelle || 'Bronze'}
             profileTitle={profileTitle}
             pseudo={data.pseudo || pseudo}
             publicProfile={data.publicProfile}
@@ -340,29 +326,6 @@ function ArsenalCard({ badge }: { badge: ProfileBadge }) {
   return <View style={styles.arsenalCard}><View style={styles.arsenalArtwork}><AchievementBadgeArtwork badge={badge} showStand={false} size={58} /></View><Text numberOfLines={2} style={styles.arsenalName}>{badge.name}</Text><Text style={[styles.arsenalRarity, { color: tone }]}>{badgeRarityLabel(badge.rarity)}</Text></View>;
 }
 
-function RankingStateCard({ placementGoal, placementsRemaining, publicView, unranked }: { placementGoal: number; placementsRemaining: number; publicView: boolean; unranked: boolean }) {
-  const title = publicView
-    ? 'RANG EN CONSTRUCTION.'
-    : unranked
-      ? 'FAIS TON PREMIER CALL.'
-      : `ENCORE ${placementsRemaining} VERDICT${placementsRemaining > 1 ? 'S' : ''}.`;
-  const copy = unranked
-    ? `${placementGoal} verdicts classés révèlent le grade et le rang de saison. Le risque exact est toujours visible avant de choisir.`
-    : `${placementGoal - placementsRemaining}/${placementGoal} placements terminés. Le grade et le rang apparaîtront une fois la série complétée.`;
-
-  return (
-    <View style={styles.rankingState}>
-      <View style={styles.rankingStateStep}><Text style={styles.rankingStateStepValue}>{placementGoal - placementsRemaining}/{placementGoal}</Text><Text style={styles.rankingStateStepLabel}>PLACEMENTS</Text></View>
-      <View style={styles.rankingStateCopy}>
-        <Text style={styles.rankingStateEyebrow}>OBJECTIF DE SAISON</Text>
-        <Text style={styles.rankingStateTitle}>{title}</Text>
-        <Text style={styles.rankingStateText}>{copy}</Text>
-        {!publicView ? <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/matches')}><Text style={styles.rankingStateAction}>VOIR LES MATCHS OUVERTS →</Text></Pressable> : null}
-      </View>
-    </View>
-  );
-}
-
 function GradeProgressCard({ ranking }: { ranking: ProfileRanking }) {
   const grade = ranking.grade;
   const accent = gradeAccent(grade);
@@ -453,7 +416,6 @@ const styles = StyleSheet.create({
   ledgerTitle: { ...typography.caption, marginTop: 3, color: colors.textSubtle },
   ledgerArrow: { color: colors.volt, fontSize: 17, fontWeight: '900' },
   xpBlock: { marginHorizontal: spacing.md, padding: 14, borderRadius: 18, backgroundColor: '#080D11', borderWidth: 1, borderColor: '#202A32', gap: 8 }, xpTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 9 }, xpLabel: { ...typography.label, flex: 1, color: colors.textMuted, letterSpacing: 0.5 }, xpValue: { ...typography.bodyStrong, color: colors.text }, track: { height: 7, borderRadius: 999, overflow: 'hidden', backgroundColor: '#182028' }, trackFill: { height: '100%', borderRadius: 999, backgroundColor: colors.volt }, xpHint: { ...typography.caption, color: colors.textMuted },
-  rankingState: { minHeight: 160, marginHorizontal: spacing.md, padding: 14, borderRadius: 24, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#414D1E' }, rankingStateStep: { width: 82, height: 92, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A0E0A', borderWidth: 1, borderColor: '#4A5822' }, rankingStateStepValue: { ...typography.metric, color: colors.volt }, rankingStateStepLabel: { ...typography.label, marginTop: 4, color: colors.textMuted, letterSpacing: .25, textAlign: 'center' }, rankingStateCopy: { flex: 1, minWidth: 0 }, rankingStateEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 }, rankingStateTitle: { ...typography.cardTitle, marginTop: 5, color: colors.text }, rankingStateText: { ...typography.body, marginTop: 5, color: colors.textMuted }, rankingStateAction: { ...typography.action, marginTop: 8, color: colors.volt, letterSpacing: .3 },
   gradeCard: { marginHorizontal: spacing.md, padding: 15, borderRadius: 25, gap: 13, backgroundColor: '#0B1015', borderWidth: 1 },
   gradeTop: { flexDirection: 'row', alignItems: 'center', gap: 11 },
   gradeMark: { width: 49, height: 49, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },

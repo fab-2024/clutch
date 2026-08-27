@@ -6,18 +6,19 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Polygon } from 'react-native-svg';
 
-import type { SeasonalGradeDefinition, SeasonalGradeState } from '../grades';
+import { ZERO_RANK_ACCENT, type SeasonalGradeDefinition, type SeasonalGradeState } from '../grades';
 import { RankEmblem } from './RankEmblem';
 import { journeyStyles as styles } from './SeasonJourney.styles';
 
 const PEDESTAL_ASSET = require('../../../../assets/rank/rank-tier-pedestal-v1.png');
 
-export type RankTierVisualState = 'future' | 'acquired' | 'current' | 'placement' | 'placementComplete';
+export type RankTierVisualState = 'future' | 'acquired' | 'current';
 
 type RankTierPedestalProps = {
   accessibilityLabel: string;
   grade?: SeasonalGradeDefinition;
   pulse: SharedValue<number>;
+  starting?: boolean;
   state: RankTierVisualState;
 };
 
@@ -25,11 +26,11 @@ export function RankTierPedestal({
   accessibilityLabel,
   grade,
   pulse,
+  starting = false,
   state,
 }: RankTierPedestalProps) {
-  const placement = state === 'placement' || state === 'placementComplete';
-  const active = state === 'current' || state === 'placement';
-  const accent = placement ? '#E8FF3D' : grade?.accent ?? '#79CAFF';
+  const active = state === 'current';
+  const accent = starting ? ZERO_RANK_ACCENT : grade?.accent ?? '#79CAFF';
   const gradeState = grade ? definitionState(grade) : undefined;
   const pulseStyle = useAnimatedStyle(() => ({
     opacity: active ? interpolate(pulse.value, [0, 1], [0.15, 0.28]) : 0,
@@ -40,33 +41,32 @@ export function RankTierPedestal({
     <View
       accessible
       accessibilityLabel={accessibilityLabel}
-      style={[styles.pedestalRoot, placement && styles.pedestalRootPlacement]}
+      style={styles.pedestalRoot}
     >
       <Animated.View
         pointerEvents="none"
         style={[
           styles.pedestalHalo,
           active && styles.pedestalHaloActive,
-          placement && styles.pedestalHaloPlacement,
           { backgroundColor: accent },
           pulseStyle,
         ]}
       />
       {active ? (
         <Svg
-          height={placement ? 128 : 112}
+          height={112}
           pointerEvents="none"
           style={styles.activeContour}
-          viewBox={`0 0 ${placement ? 184 : 158} ${placement ? 128 : 112}`}
-          width={placement ? 184 : 158}
+          viewBox="0 0 158 112"
+          width={158}
         >
           <Polygon
             fill={accent}
             fillOpacity={0.045}
-            points={placement ? '92,38 166,65 92,88 18,65' : '79,34 139,57 79,77 19,57'}
+            points="79,34 139,57 79,77 19,57"
             stroke={accent}
             strokeOpacity={0.82}
-            strokeWidth={placement ? 1.4 : 1}
+            strokeWidth={1}
           />
         </Svg>
       ) : null}
@@ -76,10 +76,8 @@ export function RankTierPedestal({
         source={PEDESTAL_ASSET}
         style={[
           styles.pedestalImage,
-          placement && styles.pedestalImagePlacement,
           state === 'future' && styles.pedestalFuture,
           state === 'acquired' && styles.pedestalAcquired,
-          state === 'placementComplete' && styles.pedestalPlacementComplete,
           active && styles.pedestalCurrent,
         ]}
       />
@@ -89,16 +87,14 @@ export function RankTierPedestal({
         pointerEvents="none"
         style={[
           styles.emblem,
-          placement && styles.emblemPlacement,
           state === 'future' && styles.pedestalFuture,
           state === 'acquired' && styles.pedestalAcquired,
-          state === 'placementComplete' && styles.pedestalPlacementComplete,
         ]}
       >
         <RankEmblem
           grade={gradeState}
-          placement={placement}
-          size={placement ? 96 : 78}
+          size={78}
+          starting={starting}
         />
       </View>
     </View>
@@ -108,7 +104,7 @@ export function RankTierPedestal({
 function definitionState(grade: SeasonalGradeDefinition): SeasonalGradeState {
   return {
     classe: true,
-    objectif_placements: 5,
+    objectif_placements: 0,
     placements_restants: 0,
     progression: 1,
     cle: grade.key,

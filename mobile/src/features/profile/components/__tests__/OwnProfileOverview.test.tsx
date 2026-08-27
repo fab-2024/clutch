@@ -27,7 +27,7 @@ const PROFILE: ProfileData = {
     provisoire: false,
     grade: {
       classe: true,
-      objectif_placements: 5,
+      objectif_placements: 0,
       placements_restants: 0,
       progression: 0.55,
       cle: 'platine',

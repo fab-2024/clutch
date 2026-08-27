@@ -47,7 +47,7 @@ const FAMILY_META: Record<ShowcaseRingFamily, Omit<ShowcaseRingFamilyDefinition,
 
 const STAGE_SEEDS: Record<ShowcaseRingFamily, readonly StageSeed[]> = {
   rank: [
-    { name: 'Placement', threshold: 0, condition: 'Commencer le parcours classé' },
+    { name: 'Départ', threshold: 0, condition: 'Commencer la saison à 0 Frag' },
     { name: 'Platine', threshold: 2, condition: 'Atteindre le grade Platine' },
     { name: 'Diamant', threshold: 3, condition: 'Atteindre le grade Diamant' },
     { name: 'Élite', threshold: 4, condition: 'Atteindre le grade Mythique' },

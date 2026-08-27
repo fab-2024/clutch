@@ -12,8 +12,6 @@ export type RankSeasonState = {
   peakFrags: number;
   settledCalls: number;
   wonCalls: number;
-  placementsRemaining: number;
-  provisional: boolean;
   grade: SeasonalGradeState;
   rank: number | null;
   percentile: number | null;
@@ -31,7 +29,6 @@ export type RankLeaderboardRow = {
   settledCalls: number;
   wonCalls: number;
   accuracy: number;
-  provisional: boolean;
   me: boolean;
   grade: SeasonalGradeState;
 };
@@ -57,8 +54,6 @@ export type RankMovement = {
 
 export type RankRules = {
   base: number;
-  placements: number;
-  placementK: number;
   rankedK: number;
 };
 

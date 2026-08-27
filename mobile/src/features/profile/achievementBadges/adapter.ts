@@ -15,9 +15,13 @@ export function adaptAchievementStats(
   ranking: ProfileRanking,
 ): AchievementStats {
   const callEvents = parseCallEvents(firstDefined(recap.achievement_call_events, recap.calls_officiels));
-  const placementTarget = Math.max(1, ranking.grade.objectif_placements || 5);
-  const placementCalls = optionalNumber(firstDefined(recap.placements_termines, recap.placement_calls))
-    ?? Math.max(0, placementTarget - ranking.placements_restants);
+  const openingTarget = 5;
+  const officialCalls = optionalNumber(recap.paris) ?? ranking.pronostics_regles;
+  const openingCalls = optionalNumber(firstDefined(recap.placements_termines, recap.placement_calls))
+    ?? Math.min(openingTarget, officialCalls);
+  const openingEvents = callEvents.slice(0, openingTarget);
+  const openingCorrectCalls = optionalNumber(firstDefined(recap.placements_gagnes, recap.placements_corrects))
+    ?? (openingEvents.length === openingTarget && openingEvents.every((event) => event.correct) ? openingTarget : 0);
   const correctCalls = optionalNumber(recap.gagnes);
   const lowestShare = correctCalls && correctCalls > 0
     ? optionalNumber(firstDefined(recap.part_min_gagnee, recap.proba_min_gagnee))
@@ -39,12 +43,12 @@ export function adaptAchievementStats(
     factionWeeklyContributionStreak: optionalNumber(firstDefined(recap.serie_semaines_faction, recap.faction_weekly_streak)),
     lowestWinningPickShare: normalizeShare(lowestShare),
     maxConsecutiveActiveWeeks: optionalNumber(recap.plus_longue_serie_semaines),
-    placementCalls,
-    placementCorrectCalls: optionalNumber(firstDefined(recap.placements_gagnes, recap.placements_corrects)),
-    placementTarget,
+    placementCalls: openingCalls,
+    placementCorrectCalls: openingCorrectCalls,
+    placementTarget: openingTarget,
     resurgenceAchieved: optionalBoolean(firstDefined(recap.resurgence_obtenue, recap.resurgence_achieved)),
     synchronizedFriendCorrectStreak: optionalNumber(firstDefined(recap.serie_calls_synchrones_ami, recap.friend_synchronized_streak)),
-    totalOfficialCalls: optionalNumber(recap.paris),
+    totalOfficialCalls: officialCalls,
     victoriousCollectiveMissions: optionalNumber(firstDefined(recap.missions_collectives_victorieuses, recap.faction_missions_won)),
   };
 }

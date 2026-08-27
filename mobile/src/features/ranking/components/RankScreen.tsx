@@ -10,8 +10,10 @@ import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme'
 import { loadRankDashboard } from '../api';
 import {
   gradeAccent,
+  isZeroRank,
   SEASONAL_GRADE_LADDER,
   type SeasonalGradeDefinition,
+  ZERO_RANK_ACCENT,
 } from '../grades';
 import type {
   RankDashboard,
@@ -139,10 +141,10 @@ function SeasonSection({
   const state = dashboard.state;
 
   if (!dashboard.season || !state) {
-    return <EmptyState title="INTERSAISON." copy="La prochaine saison réactivera les Frags, placements et classements." />;
+    return <EmptyState title="INTERSAISON." copy="La prochaine saison réactivera les Frags et les classements." />;
   }
 
-  const accent = gradeAccent(state.grade);
+  const accent = isZeroRank(state.frags) ? ZERO_RANK_ACCENT : gradeAccent(state.grade);
 
   return (
     <View style={styles.sectionStack}>
@@ -189,9 +191,7 @@ function RulesCard({ rules }: { rules: RankRules }) {
         <Text style={styles.rulesVersion}>V1</Text>
       </View>
       <View style={styles.rulesGrid}>
-        <RuleItem label="BASE" value={formatNumber(rules.base)} />
-        <RuleItem label="PLACEMENTS" value={String(rules.placements)} />
-        <RuleItem label="K PLACEMENT" value={String(rules.placementK)} />
+        <RuleItem label="DÉPART" value={formatNumber(rules.base)} />
         <RuleItem label="K CLASSÉ" value={String(rules.rankedK)} />
       </View>
       <Text style={styles.rulesNote}>Le mouvement est calculé au verdict avec la difficulté du call figée à sa fermeture.</Text>
@@ -275,15 +275,6 @@ function LeaderboardSection({
       </View>
 
       {me ? <MyPositionCard row={me} scope={scopeLabel} /> : null}
-      {!me && scope === 'global' && dashboard.state?.provisional ? (
-        <View style={styles.placementNotice}>
-          <RankEmblem placement size={42} />
-          <View style={styles.placementNoticeCopy}>
-            <Text style={styles.placementNoticeTitle}>TA PLACE EST EN CONSTRUCTION</Text>
-            <Text style={styles.emptyCopy}>{dashboard.state.placementsRemaining} verdicts avant ton entrée dans le Global.</Text>
-          </View>
-        </View>
-      ) : null}
 
       <View style={styles.board}>
         {rows.map((row) => <LeaderboardRow key={row.id} row={row} />)}
@@ -303,24 +294,21 @@ function LeaderboardSection({
 }
 
 function MyPositionCard({ row, scope }: { row: RankLeaderboardRow; scope: string }) {
-  const accent = gradeAccent(row.grade);
+  const starting = isZeroRank(row.frags);
+  const accent = starting ? ZERO_RANK_ACCENT : gradeAccent(row.grade);
   const accuracy = row.settledCalls ? Math.round((row.wonCalls / row.settledCalls) * 100) : 0;
 
   return (
     <View style={[styles.meCard, { borderColor: accent + '88', backgroundColor: accent + '14' }]}>
       <View style={[styles.meAura, { backgroundColor: accent }]} />
-      <RankEmblem grade={row.grade} placement={row.provisional} size={84} />
+      <RankEmblem grade={row.grade} size={84} starting={starting} />
       <View style={styles.meIdentity}>
         <Text style={[styles.meEyebrow, { color: accent }]}>TA POSITION</Text>
-        <Text style={styles.meGrade}>{row.provisional ? 'PLACEMENT' : row.grade.libelle?.toUpperCase() || 'CLASSÉ'}</Text>
-        <Text style={styles.meMeta}>
-          {row.provisional
-            ? row.settledCalls + '/' + row.grade.objectif_placements + ' PLACEMENTS'
-            : formatNumber(row.frags) + ' FRAGS · ' + accuracy + '% PRÉCISION'}
-        </Text>
+        <Text style={styles.meGrade}>{row.grade.libelle?.toUpperCase() || 'CLASSÉ'}</Text>
+        <Text style={styles.meMeta}>{formatNumber(row.frags)} FRAGS · {accuracy}% PRÉCISION</Text>
       </View>
       <View style={styles.meRankBlock}>
-        <Text style={[styles.meRank, { color: accent }]}>{row.provisional ? '—' : row.rank ? '#' + row.rank : '—'}</Text>
+        <Text style={[styles.meRank, { color: accent }]}>{row.rank ? '#' + row.rank : '—'}</Text>
         <Text style={styles.meScope}>{scope.toUpperCase()}</Text>
       </View>
     </View>
@@ -328,24 +316,19 @@ function MyPositionCard({ row, scope }: { row: RankLeaderboardRow; scope: string
 }
 
 function LeaderboardRow({ row }: { row: RankLeaderboardRow }) {
-  const accent = gradeAccent(row.grade);
+  const starting = isZeroRank(row.frags);
+  const accent = starting ? ZERO_RANK_ACCENT : gradeAccent(row.grade);
   return (
     <Pressable
       accessibilityRole="button"
       onPress={() => router.push({ pathname: '/u/[pseudo]', params: { pseudo: row.pseudo } })}
       style={({ pressed }) => [styles.boardRow, row.me && styles.boardRowMe, pressed && styles.pressed]}
     >
-      <Text style={[styles.boardRank, row.me && styles.boardRankMe]}>
-        {row.provisional ? '—' : row.rank ? String(row.rank) : '—'}
-      </Text>
-      <RankEmblem grade={row.grade} placement={row.provisional} size={46} />
+      <Text style={[styles.boardRank, row.me && styles.boardRankMe]}>{row.rank ? String(row.rank) : '—'}</Text>
+      <RankEmblem grade={row.grade} size={46} starting={starting} />
       <View style={styles.boardIdentity}>
         <Text numberOfLines={1} style={styles.boardPseudo}>{row.pseudo}{row.me ? ' · TOI' : ''}</Text>
-        <Text style={[styles.boardGrade, { color: row.provisional ? colors.textMuted : accent }]}>
-          {row.provisional
-            ? row.settledCalls + '/' + row.grade.objectif_placements + ' PLACEMENTS'
-            : row.grade.libelle?.toUpperCase() || 'CLASSÉ'}
-        </Text>
+        <Text style={[styles.boardGrade, { color: accent }]}>{row.grade.libelle?.toUpperCase() || 'CLASSÉ'}</Text>
       </View>
       <View style={styles.boardScore}>
         <Text style={styles.boardFrags}>{formatNumber(row.frags)}</Text>
@@ -357,17 +340,18 @@ function LeaderboardRow({ row }: { row: RankLeaderboardRow }) {
 
 function RewardsSection({ dashboard }: { dashboard: RankDashboard }) {
   const state = dashboard.state;
-  const bestOrder = Number(state?.bestGrade?.ordre ?? (state?.provisional ? -1 : state?.grade.ordre ?? -1));
+  const bestOrder = Number(state?.bestGrade?.ordre ?? state?.grade.ordre ?? -1);
+  const starting = !state || isZeroRank(state.frags);
 
   return (
     <View style={styles.sectionStack}>
       <View style={styles.rewardIntro}>
         <View style={styles.rewardIntroMark}>
-          <RankEmblem grade={state?.bestGrade ?? state?.grade} placement={!state || state.provisional} size={104} />
+          <RankEmblem grade={state?.bestGrade ?? state?.grade} size={104} starting={starting} />
         </View>
         <View style={styles.rewardIntroCopy}>
           <Text style={styles.cardEyebrow}>MEILLEUR GRADE ATTEINT</Text>
-          <Text style={styles.rewardTitle}>{state?.bestGrade?.libelle?.toUpperCase() || state?.grade.libelle?.toUpperCase() || 'À RÉVÉLER'}</Text>
+          <Text style={styles.rewardTitle}>{state?.bestGrade?.libelle?.toUpperCase() || state?.grade.libelle?.toUpperCase() || 'BRONZE'}</Text>
           <Text style={styles.rewardCopy}>{dashboard.reward.detail}</Text>
         </View>
       </View>
@@ -404,7 +388,7 @@ function RewardTier({
   const visible = state !== 'locked';
   const gradeState = {
     classe: true,
-    objectif_placements: 5,
+    objectif_placements: 0,
     placements_restants: 0,
     progression: visible ? 1 : 0,
     cle: grade.key,
@@ -812,24 +796,6 @@ const styles = StyleSheet.create({
     ...typography.eyebrow,
     marginTop: 2,
     color: colors.textMuted,
-  },
-  placementNotice: {
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
-    borderRadius: 20,
-    backgroundColor: '#0B1015',
-    borderWidth: 1,
-    borderColor: '#303A43',
-  },
-  placementNoticeCopy: {
-    flex: 1,
-    gap: 3,
-  },
-  placementNoticeTitle: {
-    ...typography.label,
-    color: colors.text,
   },
   board: {
     overflow: 'hidden',

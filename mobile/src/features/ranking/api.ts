@@ -46,14 +46,15 @@ function normalizeSeason(value: unknown): RankSeason | null {
 function normalizeState(value: unknown): RankSeasonState | null {
   const row = asRecord(value);
   if (!Object.keys(row).length) return null;
+  const settledCalls = numberValue(row.pronostics_regles);
+  const rawFrags = numberValue(row.frags, 0);
+  const frags = settledCalls === 0 && row.provisoire === true && rawFrags === 1000 ? 0 : rawFrags;
   return {
-    frags: numberValue(row.frags, 1000),
-    peakFrags: numberValue(row.pic_frags, 1000),
-    settledCalls: numberValue(row.pronostics_regles),
+    frags,
+    peakFrags: numberValue(row.pic_frags, frags),
+    settledCalls,
     wonCalls: numberValue(row.pronostics_gagnes),
-    placementsRemaining: numberValue(row.placements_restants, 5),
-    provisional: row.provisoire !== false,
-    grade: normalizeGradeState(row.grade),
+    grade: normalizeGradeState(row.grade, { frags, settledCalls }),
     rank: optionalNumber(row.rang),
     percentile: optionalNumber(row.percentile),
     classifiedPlayers: numberValue(row.joueurs_classes),
@@ -66,18 +67,20 @@ function normalizeRows(value: unknown): RankLeaderboardRow[] {
   return Array.isArray(value)
     ? value.map((item) => {
         const row = asRecord(item);
+        const settledCalls = numberValue(row.pronostics_regles);
+        const rawFrags = numberValue(row.frags, 0);
+        const frags = settledCalls === 0 && row.provisoire === true && rawFrags === 1000 ? 0 : rawFrags;
         return {
           rank: optionalNumber(row.rang),
           id: stringValue(row.id),
           pseudo: stringValue(row.pseudo) || 'Joueur',
-          frags: numberValue(row.frags, 1000),
-          peakFrags: numberValue(row.pic_frags, 1000),
-          settledCalls: numberValue(row.pronostics_regles),
+          frags,
+          peakFrags: numberValue(row.pic_frags, frags),
+          settledCalls,
           wonCalls: numberValue(row.pronostics_gagnes),
           accuracy: numberValue(row.taux_reussite),
-          provisional: row.provisoire === true,
           me: row.moi === true,
-          grade: normalizeGradeState(row.grade),
+          grade: normalizeGradeState(row.grade, { frags, settledCalls }),
         };
       }).filter((row) => Boolean(row.id))
     : [];
@@ -114,9 +117,7 @@ function normalizeMovements(value: unknown): RankMovement[] {
 function normalizeRules(value: unknown): RankRules {
   const row = asRecord(value);
   return {
-    base: numberValue(row.base, 1000),
-    placements: numberValue(row.placements, 5),
-    placementK: numberValue(row.k_placement, 60),
+    base: numberValue(row.base, 0),
     rankedK: numberValue(row.k_classe, 40),
   };
 }

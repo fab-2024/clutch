@@ -27,7 +27,7 @@ export type SeasonalGradeSummary = {
 export type GradeTransition = {
   before: SeasonalGradeState | null;
   after: SeasonalGradeState | null;
-  kind: 'placement' | 'reveal' | 'promotion' | 'demotion' | 'stable';
+  kind: 'promotion' | 'demotion' | 'stable';
 };
 
 export type SeasonalGradeDefinition = {
@@ -104,6 +104,9 @@ export const SEASONAL_GRADE_LADDER: SeasonalGradeDefinition[] = [
   },
 ];
 
+export const RANK_INITIAL_FRAGS = 0;
+export const ZERO_RANK_ACCENT = '#66D9E8';
+
 const GRADE_ACCENTS = Object.fromEntries(
   SEASONAL_GRADE_LADDER.map((grade) => [grade.key, grade.accent]),
 ) as Record<SeasonalGradeKey, string>;
@@ -121,36 +124,55 @@ export function gradeTransition(
   before: SeasonalGradeState | null,
   after: SeasonalGradeState | null,
 ): GradeTransition {
-  if (!after?.classe) return { before, after, kind: 'placement' };
-  if (!before?.classe) return { before, after, kind: 'reveal' };
-
-  const beforeOrder = Number(before.ordre ?? 0);
-  const afterOrder = Number(after.ordre ?? 0);
+  const beforeOrder = Number(before?.ordre ?? 0);
+  const afterOrder = Number(after?.ordre ?? 0);
   if (afterOrder > beforeOrder) return { before, after, kind: 'promotion' };
   if (afterOrder < beforeOrder) return { before, after, kind: 'demotion' };
   return { before, after, kind: 'stable' };
 }
 
-export function normalizeGradeState(value: unknown): SeasonalGradeState {
+export function normalizeGradeState(
+  value: unknown,
+  context: { frags?: number; settledCalls?: number } = {},
+): SeasonalGradeState {
   const row = value && typeof value === 'object' ? value as Record<string, unknown> : {};
   const key = isGradeKey(row.cle) ? row.cle : undefined;
-  const nextKey = isGradeKey(row.prochaine_cle) ? row.prochaine_cle : undefined;
+  const parsedFrags = Number(context.frags ?? RANK_INITIAL_FRAGS);
+  const frags = Number.isFinite(parsedFrags) ? Math.max(RANK_INITIAL_FRAGS, parsedFrags) : RANK_INITIAL_FRAGS;
+  const settledCalls = nonNegativeInteger(context.settledCalls);
+  const definition = key
+    ? SEASONAL_GRADE_LADDER.find((item) => item.key === key) ?? gradeForScore(frags, settledCalls)
+    : gradeForScore(frags, settledCalls);
+  const definitionIndex = SEASONAL_GRADE_LADDER.indexOf(definition);
+  const nextDefinition = SEASONAL_GRADE_LADDER[definitionIndex + 1];
+  const nextKey = isGradeKey(row.prochaine_cle) ? row.prochaine_cle : nextDefinition?.key;
+  const rawProgress = Number(row.progression);
+  const progression = row.classe === true && key && Number.isFinite(rawProgress)
+    ? clamp(rawProgress, 0, 1)
+    : gradeProgress(frags, definition, nextDefinition);
   return {
-    classe: Boolean(row.classe),
-    objectif_placements: positiveInteger(row.objectif_placements, 5),
-    placements_restants: nonNegativeInteger(row.placements_restants),
-    progression: clamp(Number(row.progression ?? 0), 0, 1),
-    cle: key,
-    libelle: typeof row.libelle === 'string' ? row.libelle : undefined,
-    ordre: optionalNumber(row.ordre),
-    minimum: optionalNumber(row.minimum),
-    plafond: optionalNumber(row.plafond),
+    classe: true,
+    objectif_placements: 0,
+    placements_restants: 0,
+    progression,
+    cle: definition.key,
+    libelle: typeof row.libelle === 'string' && key ? row.libelle : definition.label,
+    ordre: optionalNumber(row.ordre) ?? definitionIndex,
+    minimum: optionalNumber(row.minimum) ?? definition.minimum,
+    plafond: optionalNumber(row.plafond) ?? definition.maximum ?? undefined,
     prochaine_cle: nextKey,
-    prochain_libelle: typeof row.prochain_libelle === 'string' ? row.prochain_libelle : undefined,
-    prochain_minimum: optionalNumber(row.prochain_minimum),
-    prochain_objectif_pronostics: optionalNumber(row.prochain_objectif_pronostics),
-    prochains_pronostics_restants: optionalNumber(row.prochains_pronostics_restants),
+    prochain_libelle: typeof row.prochain_libelle === 'string' ? row.prochain_libelle : nextDefinition?.label,
+    prochain_minimum: optionalNumber(row.prochain_minimum) ?? nextDefinition?.minimum,
+    prochain_objectif_pronostics: optionalNumber(row.prochain_objectif_pronostics)
+      ?? (nextDefinition?.key === 'mythique' ? 30 : undefined),
+    prochains_pronostics_restants: optionalNumber(row.prochains_pronostics_restants)
+      ?? (nextDefinition?.key === 'mythique' ? Math.max(0, 30 - settledCalls) : undefined),
   };
+}
+
+export function isZeroRank(frags: number | null | undefined) {
+  const value = Number(frags ?? RANK_INITIAL_FRAGS);
+  return !Number.isFinite(value) || value <= RANK_INITIAL_FRAGS;
 }
 
 export function normalizeGradeSummary(value: unknown): SeasonalGradeSummary | null {
@@ -180,14 +202,24 @@ function optionalNumber(value: unknown) {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function positiveInteger(value: unknown, fallback: number) {
-  const parsed = Math.trunc(Number(value));
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
-
 function nonNegativeInteger(value: unknown) {
   const parsed = Math.trunc(Number(value));
   return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+}
+
+function gradeForScore(frags: number, settledCalls: number) {
+  return SEASONAL_GRADE_LADDER.filter((grade) => (
+    grade.minimum <= frags && (grade.key !== 'mythique' || settledCalls >= 30)
+  )).at(-1) ?? SEASONAL_GRADE_LADDER[0];
+}
+
+function gradeProgress(
+  frags: number,
+  current: SeasonalGradeDefinition,
+  next?: SeasonalGradeDefinition,
+) {
+  if (!next) return 1;
+  return clamp((frags - current.minimum) / Math.max(1, next.minimum - current.minimum), 0, 1);
 }
 
 function clamp(value: number, minimum: number, maximum: number) {

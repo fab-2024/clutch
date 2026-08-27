@@ -24,7 +24,7 @@ import LevelFrameGallery from '@/src/features/profile/levelFrames/components/Lev
 import { useLevelFrameEquipment } from '@/src/features/profile/levelFrames/useLevelFrameEquipment';
 import ShowcaseRoomScene from '@/src/features/profile/components/showcase/ShowcaseRoomScene';
 import type { ProfileData } from '@/src/features/profile/types';
-import { gradeAccent } from '@/src/features/ranking/grades';
+import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
@@ -144,12 +144,10 @@ export default function AtelierShopScreen({ previewData, previewProfile }: Ateli
   const grade = profileData?.ranking.grade;
   const rankLabel = loading
     ? 'SYNCHRO'
-    : !profileData?.ranking.pronostics_regles
-      ? 'NON CLASSÉ'
-      : profileData.ranking.provisoire
-        ? 'PLACEMENT'
-        : grade?.libelle?.toUpperCase() ?? 'NON CLASSÉ';
-  const rankAccent = gradeAccent(grade);
+    : grade?.libelle?.toUpperCase() ?? 'BRONZE';
+  const rankAccent = profileData && isZeroRank(profileData.ranking.frags)
+    ? ZERO_RANK_ACCENT
+    : gradeAccent(grade);
   const trialActive = Object.keys(trial).length > 0;
   const ownedLevelFrames = useMemo(
     () => resolveOwnedLevelFrames({ founder: profileData?.founder, preview: Boolean(previewData) }),

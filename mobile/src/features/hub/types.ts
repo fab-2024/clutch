@@ -5,8 +5,6 @@ export type FragsState = {
   pic_frags: number;
   pronostics_regles: number;
   pronostics_gagnes: number;
-  placements_restants: number;
-  provisoire: boolean;
   grade: SeasonalGradeState;
   rang: number | null;
   percentile: number | null;

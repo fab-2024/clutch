@@ -131,14 +131,19 @@ export async function loadHubData(userId: string, followedGames: string[] = []):
     if (predictionResult.error) throw predictionResult.error;
 
     const rawFrags = (fragsResult.data ?? {}) as Partial<FragsState>;
+    const settledCalls = Number(rawFrags.pronostics_regles ?? 0);
+    const rawRating = Number(rawFrags.frags ?? 0);
+    const rating = settledCalls === 0
+      && (fragsResult.data as Record<string, unknown> | null)?.provisoire === true
+      && rawRating === 1000
+      ? 0
+      : rawRating;
     frags = {
-      frags: Number(rawFrags.frags ?? 1000),
-      pic_frags: Number(rawFrags.pic_frags ?? 1000),
-      pronostics_regles: Number(rawFrags.pronostics_regles ?? 0),
+      frags: rating,
+      pic_frags: Number(rawFrags.pic_frags ?? rating),
+      pronostics_regles: settledCalls,
       pronostics_gagnes: Number(rawFrags.pronostics_gagnes ?? 0),
-      placements_restants: Number(rawFrags.placements_restants ?? 5),
-      provisoire: rawFrags.provisoire !== false,
-      grade: normalizeGradeState(rawFrags.grade),
+      grade: normalizeGradeState(rawFrags.grade, { frags: rating, settledCalls }),
       rang: rawFrags.rang == null ? null : Number(rawFrags.rang),
       percentile: rawFrags.percentile == null ? null : Number(rawFrags.percentile),
       joueurs_classes: Number(rawFrags.joueurs_classes ?? 0),

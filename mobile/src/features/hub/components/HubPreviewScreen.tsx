@@ -13,11 +13,9 @@ const PREVIEW_HUB: HubData = {
     pic_frags: 1084,
     pronostics_regles: 18,
     pronostics_gagnes: 12,
-    placements_restants: 0,
-    provisoire: false,
     grade: {
       classe: true,
-      objectif_placements: 5,
+      objectif_placements: 0,
       placements_restants: 0,
       progression: 0.875,
       cle: 'argent',
@@ -107,25 +105,8 @@ export default function HubPreviewScreen() {
   const previewTeams = normalizePreviewTeams(params.teams);
   const previewScore = normalizePreviewScore(params.score);
   const nextMatch = matchForPreviewState(previewState, previewTeams, previewScore);
-  const placementPreview = (Array.isArray(params.rank) ? params.rank[0] : params.rank) === 'placement';
-  const frags = placementPreview && PREVIEW_HUB.frags
-    ? {
-        ...PREVIEW_HUB.frags,
-        provisoire: true,
-        placements_restants: 3,
-        grade: {
-          ...PREVIEW_HUB.frags.grade,
-          classe: false,
-          progression: 0.4,
-          placements_restants: 3,
-          cle: undefined,
-          libelle: undefined,
-        },
-      }
-    : PREVIEW_HUB.frags;
   const previewHub: HubData = {
     ...PREVIEW_HUB,
-    frags,
     nextMatch,
     nextMatchPrediction: previewState === 'upcoming'
       ? { matchId: nextMatch.id, choice: 'a' }

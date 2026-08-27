@@ -470,9 +470,9 @@ function factionAccent(faction: CommunityFaction, rank: number) {
 
 export function FactionMemberRanking({ faction, me }: { faction: CommunityFaction; me: CommunityMe }) {
   const person = me.top_activite.find((activity) => activity.user_id === me.user_id) ?? fallbackActivity(me);
-  const placement = me.rang_activite && me.total_activite
+  const rankingLabel = me.rang_activite && me.total_activite
     ? `#${me.rang_activite}/${me.total_activite}`
-    : 'EN PLACEMENT';
+    : 'NON CLASSÉ';
   const accent = factionAccent(faction, 0);
 
   return (
@@ -482,7 +482,7 @@ export function FactionMemberRanking({ faction, me }: { faction: CommunityFactio
           <Text style={styles.sectionEyebrow}>DANS TA FACTION</Text>
           <Text style={styles.sectionTitle}>TON CLASSEMENT {faction.tag}</Text>
         </View>
-        <Text style={styles.memberPlacement}>{placement}</Text>
+        <Text style={styles.memberPlacement}>{rankingLabel}</Text>
       </View>
 
       <LinearGradient

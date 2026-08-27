@@ -13,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import type { RankRules, RankSeason, RankSeasonState } from '../types';
-import { RankPlacementProgress } from './RankPlacementProgress';
+import { RankSeasonProgress } from './RankSeasonProgress';
 import { SeasonJourneyLadder } from './SeasonJourneyLadder';
 import { journeyStyles as styles } from './SeasonJourney.styles';
 
@@ -88,7 +88,7 @@ export function SeasonJourneyCard({
             {season.name.toUpperCase()}
           </Text>
           <Pressable
-            accessibilityLabel={`${rulesVisible ? 'Masquer' : 'Afficher'} les règles du rating, ${rules.placements} placements`}
+            accessibilityLabel={`${rulesVisible ? 'Masquer' : 'Afficher'} les règles du rating`}
             accessibilityRole="button"
             onPress={onToggleRules}
             style={({ pressed }) => [
@@ -110,7 +110,7 @@ export function SeasonJourneyCard({
       />
 
       <Animated.View entering={reduceMotion ? FadeIn.duration(180) : FadeInUp.delay(620).duration(460)}>
-        <RankPlacementProgress state={state} />
+        <RankSeasonProgress state={state} />
       </Animated.View>
 
       <Animated.View entering={reduceMotion ? FadeIn.duration(180) : FadeInUp.delay(760).duration(440)}>

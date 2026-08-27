@@ -11,6 +11,7 @@ import {
 
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
+import { isZeroRank } from '@/src/features/ranking/grades';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 import ShowcaseAchievementBadge from '@/src/features/profile/achievementBadges/components/ShowcaseAchievementBadge';
 import type { PublicAchievementBadge } from '@/src/features/profile/achievementBadges/types';
@@ -21,7 +22,6 @@ import { teamHue } from '@/src/utils/teams';
 
 import type { ProfileBadge, ProfileData } from '../../types';
 import LockedDisplaySlot from './LockedDisplaySlot';
-import PlacementArtifact from './PlacementArtifact';
 import ShowcasePhysicalObject, {
   type ShowcasePhysicalObjectKind,
   type ShowcasePhysicalObjectModel,
@@ -134,7 +134,7 @@ export default function ShowcaseRoomScene({
   const badgeSlots = resolveBadgeSlots(loading, equippedBadges, data?.pinnedBadges);
   const visibleBadges = badgeSlots.filter((badge) => Boolean(badge?.obtained));
   const trophies = loading ? [] : (data?.badges ?? []).filter((badge) => badge.obtained);
-  const placement = !loading && Boolean(!data?.ranking.pronostics_regles || data?.ranking.provisoire);
+  const starting = !loading && isZeroRank(data?.ranking.frags);
   const team = data?.favoriteTeam;
   const teamAccent = team ? `hsl(${teamHue(team.tag, team.nom)}, 72%, 58%)` : '#71808B';
   const light = LIGHTING[lighting];
@@ -225,14 +225,12 @@ export default function ShowcaseRoomScene({
           ]}
         >
           <View style={[styles.rankBeam, { backgroundColor: light.glow }]} />
-          {!placement ? <View style={[styles.rankHalo, { borderColor: rankAccent }]} /> : null}
+          {!loading ? <View style={[styles.rankHalo, { borderColor: rankAccent }]} /> : null}
           {loading ? (
             <View style={[styles.rankPlaceholder, { height: metrics.rankSize * 0.72, width: metrics.rankSize * 0.72 }]} />
-          ) : placement ? (
-            <PlacementArtifact compact={compact} size={metrics.rankSize} />
           ) : (
             <View style={styles.rankObject} testID="rank-emblem-artifact">
-              <RankEmblem grade={data?.ranking.grade} placement={placement} size={metrics.rankSize} />
+              <RankEmblem grade={data?.ranking.grade} size={metrics.rankSize} starting={starting} />
             </View>
           )}
           <Image

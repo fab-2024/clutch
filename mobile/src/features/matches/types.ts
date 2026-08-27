@@ -42,7 +42,6 @@ export type ProjectionChoice = {
 export type MatchProjection = {
   match_id?: string;
   choix: ProjectionChoice[];
-  placements_restants?: number;
   k?: number;
   source?: string;
   figee_le?: string;
@@ -158,7 +157,6 @@ export type MatchResultReveal = {
   verdicts_apres: number;
   grade_avant: SeasonalGradeState;
   grade_apres: SeasonalGradeState;
-  objectif_placements: number;
   regle_le: string;
   revele_le: string | null;
   equipe_a: string;

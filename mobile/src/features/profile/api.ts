@@ -92,18 +92,19 @@ export async function saveProfileSettings(
 
 function normalizeRanking(value?: Partial<ProfileRanking> | null): ProfileRanking {
   const settled = toNumber(value?.pronostics_regles);
-  const placementTarget = normalizeGradeState(value?.grade).objectif_placements;
+  const rawFrags = toNumber(value?.frags);
+  const frags = settled === 0 && value?.provisoire === true && rawFrags === 1000 ? 0 : rawFrags;
   return {
     saison_id: value?.saison_id ?? null,
     saison_nom: value?.saison_nom ?? null,
-    frags: toNumber(value?.frags ?? 1000),
+    frags,
     rang: value?.rang == null ? null : toNumber(value.rang),
     pronostics_regles: settled,
     pronostics_gagnes: toNumber(value?.pronostics_gagnes),
-    pic_frags: toNumber(value?.pic_frags ?? 1000),
-    placements_restants: toNumber(value?.placements_restants ?? Math.max(0, placementTarget - settled)),
-    provisoire: value?.provisoire ?? settled < placementTarget,
-    grade: normalizeGradeState(value?.grade),
+    pic_frags: toNumber(value?.pic_frags ?? frags),
+    placements_restants: 0,
+    provisoire: false,
+    grade: normalizeGradeState(value?.grade, { frags, settledCalls: settled }),
     percentile: value?.percentile == null ? null : toNumber(value.percentile),
     joueurs_classes: toNumber(value?.joueurs_classes),
     meilleur_grade: normalizeGradeSummary(value?.meilleur_grade),

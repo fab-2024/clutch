@@ -172,7 +172,6 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
   const choiceName = result.choix === 'a' ? result.equipe_a : result.equipe_b;
   const remaining = Math.max(0, result.restants - 1);
   const replay = Boolean(result.revele_le);
-  const placementTarget = result.objectif_placements;
   const entrance = (delay: number) => reduceMotion ? undefined : FadeInDown.delay(delay).duration(460);
 
   return (
@@ -229,13 +228,12 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
 
         {transition ? (
           <Animated.View entering={entrance(310)} style={styles.rankingCard}>
-            <GradeHeadline placementTarget={placementTarget} transition={transition} verdictsAfter={result.verdicts_apres} />
+            <GradeHeadline transition={transition} />
             <View style={styles.rankFlow}>
-              <RankMetric grade={transition.before?.libelle ?? 'Non classé'} label="AVANT" rank={result.rang_avant} />
+              <RankMetric grade={transition.before?.libelle ?? 'Bronze'} label="AVANT" rank={result.rang_avant} />
               <View style={styles.rankDivider} />
-              <RankMetric accent={gradeAccent(transition.after)} grade={transition.after?.libelle ?? `${result.verdicts_apres}/${placementTarget} placements`} label="APRÈS" rank={result.rang_apres} />
+              <RankMetric accent={gradeAccent(transition.after)} grade={transition.after?.libelle ?? 'Bronze'} label="APRÈS" rank={result.rang_apres} />
             </View>
-            {transition.kind === 'placement' ? <PlacementProgress complete={result.verdicts_apres} target={placementTarget} /> : null}
           </Animated.View>
         ) : null}
 
@@ -281,27 +279,18 @@ function Metric({ accent, label, value }: { accent?: string; label: string; valu
   return <View style={styles.metric}><Text style={styles.metricLabel}>{label}</Text><Text style={[styles.metricValue, accent ? { color: accent } : null]}>{value}</Text><View style={styles.metricUnit}><CurrencyIcon color={accent ?? colors.textMuted} kind="frags" size={12} /><Text style={styles.metricUnitText}>FRAGS</Text></View></View>;
 }
 
-function GradeHeadline({ placementTarget, transition, verdictsAfter }: { placementTarget: number; transition: GradeTransition; verdictsAfter: number }) {
+function GradeHeadline({ transition }: { transition: GradeTransition }) {
   const content = transition.kind === 'promotion'
     ? { eyebrow: 'PROMOTION', title: `${transition.before?.libelle} → ${transition.after?.libelle}`, copy: 'Ton call te fait franchir un nouveau seuil.' }
     : transition.kind === 'demotion'
       ? { eyebrow: 'RÉTROGRADATION', title: `${transition.before?.libelle} → ${transition.after?.libelle}`, copy: 'Le grade suit ton rating. Le prochain call peut relancer la remontée.' }
-      : transition.kind === 'reveal'
-        ? { eyebrow: 'GRADE RÉVÉLÉ', title: transition.after?.libelle ?? 'Classé', copy: `Tes ${placementTarget} placements sont terminés : ton rang devient visible.` }
-        : transition.kind === 'placement'
-          ? { eyebrow: 'PLACEMENT', title: `${verdictsAfter}/${placementTarget} verdicts`, copy: `${Math.max(0, placementTarget - verdictsAfter)} avant la révélation de ton grade.` }
-          : { eyebrow: 'GRADE MAINTENU', title: transition.after?.libelle ?? 'Classé', copy: 'Ton rating évolue, ton grade reste dans le même palier.' };
+      : { eyebrow: 'GRADE MAINTENU', title: transition.after?.libelle ?? 'Bronze', copy: 'Ton rating évolue, ton grade reste dans le même palier.' };
   const accent = transition.kind === 'demotion' ? colors.danger : gradeAccent(transition.after);
   return <View style={styles.gradeHeader}><View style={[styles.gradeMark, { borderColor: accent, backgroundColor: `${accent}16` }]}><Text style={[styles.gradeGlyph, { color: accent }]}>◆</Text></View><View style={styles.gradeCopy}><Text style={[styles.gradeEyebrow, { color: accent }]}>{content.eyebrow}</Text><Text style={styles.gradeTitle}>{content.title}</Text><Text style={styles.gradeText}>{content.copy}</Text></View></View>;
 }
 
 function RankMetric({ accent, grade, label, rank }: { accent?: string; grade: string; label: string; rank: number | null }) {
   return <View style={styles.rankMetric}><Text style={styles.rankLabel}>{label}</Text><Text style={[styles.rankValue, accent ? { color: accent } : null]}>{rank == null ? '—' : `#${formatNumber(rank)}`}</Text><Text numberOfLines={1} style={styles.rankGrade}>{grade.toUpperCase()}</Text></View>;
-}
-
-function PlacementProgress({ complete, target }: { complete: number; target: number }) {
-  const remaining = Math.max(0, target - complete);
-  return <View style={styles.placement}><View style={styles.placementTrack}>{Array.from({ length: target }).map((_, index) => <View key={index} style={[styles.placementStep, index < complete && styles.placementStepComplete]} />)}</View><Text style={styles.placementText}>{remaining} RESTANT{remaining > 1 ? 'S' : ''}</Text></View>;
 }
 
 function RevealState({ action, copy, onPress, title }: { action?: string; copy: string; onPress?: () => void; title: string }) {
@@ -383,11 +372,6 @@ const styles = StyleSheet.create({
   rankValue: { ...typography.metric, color: colors.text, fontVariant: ['tabular-nums'] },
   rankGrade: { ...typography.caption, maxWidth: '100%', color: colors.textMuted },
   rankDivider: { width: 1, marginHorizontal: 11, backgroundColor: '#27313A' },
-  placement: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  placementTrack: { flex: 1, flexDirection: 'row', gap: 5 },
-  placementStep: { flex: 1, height: 5, borderRadius: 3, backgroundColor: '#25303A' },
-  placementStepComplete: { backgroundColor: colors.volt },
-  placementText: { ...typography.label, color: colors.textMuted },
   proofCard: { minHeight: 91, padding: 14, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#090E12', borderWidth: 1, borderColor: '#25303A' },
   proofIcon: { width: 43, height: 43, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#131A0E', borderWidth: 1, borderColor: '#39461B' },
   proofGlyph: { color: colors.volt, fontSize: 18, fontWeight: '900' },

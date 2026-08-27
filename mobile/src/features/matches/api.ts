@@ -209,6 +209,10 @@ function normalizeMatchResult(value: unknown): MatchResultReveal {
   const status = row.statut === 'gagne' || row.statut === 'perdu' ? row.statut : null;
   const choice = row.choix === 'a' || row.choix === 'b' ? row.choix : null;
   if (!status || !choice) throw new Error('Verdict GRIFF invalide.');
+  const fragsBefore = finiteNumber(row.frags_avant);
+  const fragsAfter = finiteNumber(row.frags_apres);
+  const verdictsBefore = nonNegativeInteger(row.verdicts_avant);
+  const verdictsAfter = nonNegativeInteger(row.verdicts_apres);
 
   return {
     id,
@@ -218,15 +222,14 @@ function normalizeMatchResult(value: unknown): MatchResultReveal {
     choix: choice,
     proba_figee: finiteNumber(row.proba_figee),
     delta_frags: finiteNumber(row.delta_frags),
-    frags_avant: finiteNumber(row.frags_avant),
-    frags_apres: finiteNumber(row.frags_apres),
+    frags_avant: fragsBefore,
+    frags_apres: fragsAfter,
     rang_avant: optionalNumber(row.rang_avant),
     rang_apres: optionalNumber(row.rang_apres),
-    verdicts_avant: nonNegativeInteger(row.verdicts_avant),
-    verdicts_apres: nonNegativeInteger(row.verdicts_apres),
-    grade_avant: normalizeGradeState(row.grade_avant),
-    grade_apres: normalizeGradeState(row.grade_apres),
-    objectif_placements: positiveInteger(row.objectif_placements, 5),
+    verdicts_avant: verdictsBefore,
+    verdicts_apres: verdictsAfter,
+    grade_avant: normalizeGradeState(row.grade_avant, { frags: fragsBefore, settledCalls: verdictsBefore }),
+    grade_apres: normalizeGradeState(row.grade_apres, { frags: fragsAfter, settledCalls: verdictsAfter }),
     regle_le: requiredString(row.regle_le, 'date de résolution'),
     revele_le: typeof row.revele_le === 'string' ? row.revele_le : null,
     equipe_a: requiredString(row.equipe_a, 'équipe A'),

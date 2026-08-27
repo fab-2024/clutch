@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 
 import { Screen } from '@/src/components/layout/Screen';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
-import { gradeAccent } from '@/src/features/ranking/grades';
+import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import { loadCosmeticShop } from '@/src/features/shop/api';
 import { resolveAtelierSceneConfig } from '@/src/features/shop/atelierState';
 import type { CosmeticShopData, EquippedCosmetics } from '@/src/features/shop/types';
@@ -150,12 +150,10 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
   const grade = profileData?.ranking.grade;
   const rankLabel = loading
     ? 'SYNCHRO'
-    : !profileData?.ranking.pronostics_regles
-      ? 'NON CLASSÉ'
-      : profileData.ranking.provisoire
-        ? 'PLACEMENT'
-        : grade?.libelle?.toUpperCase() ?? 'NON CLASSÉ';
-  const rankAccent = gradeAccent(grade);
+    : grade?.libelle?.toUpperCase() ?? 'BRONZE';
+  const rankAccent = profileData && isZeroRank(profileData.ranking.frags)
+    ? ZERO_RANK_ACCENT
+    : gradeAccent(grade);
 
   return (
     <Screen>

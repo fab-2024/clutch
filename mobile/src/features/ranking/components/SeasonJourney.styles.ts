@@ -5,7 +5,6 @@ import { colors, fonts, typography } from '@/src/theme';
 export const JOURNEY_VIEWBOX_WIDTH = 360;
 export const JOURNEY_FIRST_Y = 72;
 export const JOURNEY_GRADE_SPACING = 116;
-export const JOURNEY_PLACEMENT_GAP = 134;
 
 export const journeyStyles = StyleSheet.create({
   card: {
@@ -180,36 +179,12 @@ export const journeyStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
-  placementLabel: {
-    position: 'absolute',
-    left: 0,
-    width: 120,
-    minHeight: 58,
-    justifyContent: 'center',
-  },
-  placementName: {
-    ...typography.bodyStrong,
-    color: colors.volt,
-    fontSize: 12,
-    lineHeight: 16,
-    letterSpacing: 0.58,
-  },
-  placementMeta: {
-    ...typography.eyebrow,
-    marginTop: 3,
-    color: '#8D9AA5',
-    fontSize: 8,
-  },
   pedestalRoot: {
     position: 'relative',
     width: 158,
     height: 112,
     alignItems: 'center',
     justifyContent: 'flex-end',
-  },
-  pedestalRootPlacement: {
-    width: 184,
-    height: 128,
   },
   pedestalHalo: {
     position: 'absolute',
@@ -222,12 +197,6 @@ export const journeyStyles = StyleSheet.create({
   pedestalHaloActive: {
     opacity: 0.2,
   },
-  pedestalHaloPlacement: {
-    bottom: 9,
-    width: 166,
-    height: 62,
-    backgroundColor: colors.volt,
-  },
   pedestalImage: {
     position: 'absolute',
     right: 0,
@@ -236,18 +205,11 @@ export const journeyStyles = StyleSheet.create({
     width: 158,
     height: 79,
   },
-  pedestalImagePlacement: {
-    width: 184,
-    height: 92,
-  },
   pedestalFuture: {
     opacity: 0.48,
   },
   pedestalAcquired: {
     opacity: 0.76,
-  },
-  pedestalPlacementComplete: {
-    opacity: 0.36,
   },
   pedestalCurrent: {
     opacity: 1,
@@ -256,9 +218,6 @@ export const journeyStyles = StyleSheet.create({
     position: 'absolute',
     top: -5,
     zIndex: 2,
-  },
-  emblemPlacement: {
-    top: -4,
   },
   activeContour: {
     position: 'absolute',
@@ -304,39 +263,6 @@ export const journeyStyles = StyleSheet.create({
     fontSize: 46,
     lineHeight: 47,
     letterSpacing: -1.8,
-    fontVariant: ['tabular-nums'],
-  },
-  placementProgressRow: {
-    marginTop: 11,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  placementDots: {
-    minWidth: 0,
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  placementDot: {
-    width: 15,
-    height: 15,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: '#53616D',
-    backgroundColor: 'rgba(3,9,14,.68)',
-  },
-  placementDotComplete: {
-    borderColor: colors.volt,
-    backgroundColor: 'rgba(232,255,61,.78)',
-    boxShadow: '0 0 8px rgba(232,255,61,.36)',
-  },
-  placementCount: {
-    color: colors.volt,
-    fontFamily: fonts.bold,
-    fontSize: 12,
-    lineHeight: 15,
     fontVariant: ['tabular-nums'],
   },
   progressTrack: {

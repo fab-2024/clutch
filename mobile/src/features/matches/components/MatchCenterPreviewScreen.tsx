@@ -26,7 +26,6 @@ const PREVIEW_MATCH_CENTER: MatchCenterData = {
       { cle: 'a', proba: 0.57, gain: 19, perte: 23 },
       { cle: 'b', proba: 0.43, gain: 23, perte: 19 },
     ],
-    placements_restants: 3,
     k: 40,
     source: 'modèle_clutch',
     figee_le: new Date(Date.now() - 30 * 60 * 1000).toISOString(),

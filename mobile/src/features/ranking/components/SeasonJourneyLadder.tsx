@@ -14,6 +14,7 @@ import Svg, {
 } from 'react-native-svg';
 
 import {
+  isZeroRank,
   SEASONAL_GRADE_LADDER,
   type SeasonalGradeDefinition,
 } from '../grades';
@@ -22,7 +23,6 @@ import { RankTierPedestal, type RankTierVisualState } from './RankTierPedestal';
 import {
   JOURNEY_FIRST_Y,
   JOURNEY_GRADE_SPACING,
-  JOURNEY_PLACEMENT_GAP,
   JOURNEY_VIEWBOX_WIDTH,
   journeyStyles as styles,
 } from './SeasonJourney.styles';
@@ -52,21 +52,14 @@ export function SeasonJourneyLadder({
     x: GRADE_X[index] ?? 230,
     y: JOURNEY_FIRST_Y + index * JOURNEY_GRADE_SPACING,
   }));
-  const placementPoint = {
-    x: 236,
-    y: (gradePoints.at(-1)?.y ?? JOURNEY_FIRST_Y) + JOURNEY_PLACEMENT_GAP,
-  };
-  const points = [...gradePoints, placementPoint];
-  const journeyHeight = placementPoint.y + 102;
+  const journeyHeight = (gradePoints.at(-1)?.y ?? JOURNEY_FIRST_Y) + 102;
   const pathRevealStyle = useAnimatedStyle(() => ({
     height: interpolate(reveal.value, [0, 1], [0, journeyHeight]),
   }));
   const currentOrder = Number(state.grade.ordre ?? -1);
-  const currentReversedIndex = state.provisional
-    ? -1
-    : GRADES.findIndex((grade) => SEASONAL_GRADE_LADDER.indexOf(grade) === currentOrder);
-  const placementTarget = Math.max(1, state.grade.objectif_placements);
-  const placementsComplete = Math.max(0, placementTarget - state.placementsRemaining);
+  const currentReversedIndex = GRADES.findIndex(
+    (grade) => SEASONAL_GRADE_LADDER.indexOf(grade) === currentOrder,
+  );
 
   return (
     <View style={[styles.journey, { height: journeyHeight }]}>
@@ -79,8 +72,7 @@ export function SeasonJourneyLadder({
         <JourneyEnergyPath
           currentReversedIndex={currentReversedIndex}
           height={journeyHeight}
-          points={points}
-          provisional={state.provisional}
+          points={gradePoints}
         />
       </Animated.View>
 
@@ -130,6 +122,7 @@ export function SeasonJourneyLadder({
                 accessibilityLabel={label}
                 grade={grade}
                 pulse={pulse}
+                starting={grade.key === 'bronze' && isZeroRank(state.frags)}
                 state={visualState}
               />
             </Animated.View>
@@ -137,37 +130,6 @@ export function SeasonJourneyLadder({
         );
       })}
 
-      <Animated.View
-        entering={reduceMotion ? undefined : FadeInUp.duration(420)}
-        style={[styles.placementLabel, { top: placementPoint.y - 31 }]}
-      >
-        <View style={styles.gradeLabelRow}>
-          <Text style={[styles.placementName, !state.provisional && styles.gradeNameAcquired]}>PLACEMENT</Text>
-          <View style={[styles.gradeRule, state.provisional && styles.gradeRuleCurrent]} />
-        </View>
-        <Text style={styles.placementMeta}>
-          {state.provisional ? 'EN COURS' : 'PARCOURS RÉVÉLÉ'}
-        </Text>
-      </Animated.View>
-      <Animated.View
-        entering={reduceMotion ? undefined : FadeInUp.delay(60).duration(460)}
-        style={[
-          styles.node,
-          {
-            left: percent(placementPoint.x),
-            marginLeft: -92,
-            top: placementPoint.y - 66,
-            width: 184,
-            height: 128,
-          },
-        ]}
-      >
-        <RankTierPedestal
-          accessibilityLabel={`Placement, ${placementsComplete} verdict${placementsComplete === 1 ? '' : 's'} sur ${placementTarget}`}
-          pulse={pulse}
-          state={state.provisional ? 'placement' : 'placementComplete'}
-        />
-      </Animated.View>
     </View>
   );
 }
@@ -176,12 +138,10 @@ function JourneyEnergyPath({
   currentReversedIndex,
   height,
   points,
-  provisional,
 }: {
   currentReversedIndex: number;
   height: number;
   points: JourneyPoint[];
-  provisional: boolean;
 }) {
   const segments = points.slice(0, -1).map((point, index) => ({
     d: connectorPath(point, points[index + 1]),
@@ -204,11 +164,6 @@ function JourneyEnergyPath({
           <Stop offset="0" stopColor="#B9E9FF" />
           <Stop offset="0.55" stopColor="#79CAFF" />
           <Stop offset="1" stopColor="#347FA9" />
-        </SvgLinearGradient>
-        <SvgLinearGradient id="journeyPlacement" x1="0" x2="0" y1="1" y2="0">
-          <Stop offset="0" stopColor="#E8FF3D" />
-          <Stop offset="0.38" stopColor="#BDE97E" />
-          <Stop offset="1" stopColor="#79CAFF" />
         </SvgLinearGradient>
       </Defs>
 
@@ -241,12 +196,9 @@ function JourneyEnergyPath({
       ))}
 
       {segments.map(({ d, index, point, next }) => {
-        const active = provisional
-          ? index === segments.length - 1
-          : currentReversedIndex >= 0 && index >= currentReversedIndex;
+        const active = currentReversedIndex >= 0 && index >= currentReversedIndex;
         if (!active) return null;
-        const placementSegment = index === segments.length - 1;
-        const stroke = placementSegment && provisional ? 'url(#journeyPlacement)' : 'url(#journeyCyan)';
+        const stroke = 'url(#journeyCyan)';
         const branch = branchPath(point, next, index);
         return (
           <Fragment key={`active-${index}`}>
@@ -264,8 +216,7 @@ function JourneyEnergyPath({
 function gradeVisualState(
   grade: SeasonalGradeDefinition,
   state: RankSeasonState,
-): Exclude<RankTierVisualState, 'placement' | 'placementComplete'> {
-  if (state.provisional) return 'future';
+): RankTierVisualState {
   const order = SEASONAL_GRADE_LADDER.indexOf(grade);
   const currentOrder = Number(state.grade.ordre ?? -1);
   if (order === currentOrder) return 'current';
@@ -274,7 +225,7 @@ function gradeVisualState(
 
 function gradeAccessibilityLabel(
   grade: SeasonalGradeDefinition,
-  state: Exclude<RankTierVisualState, 'placement' | 'placementComplete'>,
+  state: RankTierVisualState,
 ) {
   const status = state === 'current' ? 'grade actuel' : state === 'acquired' ? 'grade acquis' : 'verrouillé';
   return `${grade.label}, ${gradeRange(grade).toLowerCase()}, ${status}`;

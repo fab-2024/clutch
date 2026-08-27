@@ -6,17 +6,32 @@ import type { SeasonalGradeState } from '../grades';
 import type { RankDashboard, RankLeaderboardRow } from '../types';
 import RankScreen from './RankScreen';
 
-type PreviewMode = 'placement0' | 'placement3' | 'platine';
+type PreviewMode = 'start0' | 'bronze' | 'platine';
 
 const PREVIEW_MODES: { key: PreviewMode; label: string }[] = [
-  { key: 'placement0', label: '0 / 5' },
-  { key: 'placement3', label: '3 / 5' },
+  { key: 'start0', label: 'DÉPART 0' },
+  { key: 'bronze', label: 'BRONZE 420' },
   { key: 'platine', label: 'PLATINE 1 432' },
 ];
 
+const BRONZE: SeasonalGradeState = {
+  classe: true,
+  objectif_placements: 0,
+  placements_restants: 0,
+  progression: 0,
+  cle: 'bronze',
+  libelle: 'Bronze',
+  ordre: 0,
+  minimum: 0,
+  plafond: 850,
+  prochaine_cle: 'argent',
+  prochain_libelle: 'Argent',
+  prochain_minimum: 850,
+};
+
 const ARGENT: SeasonalGradeState = {
   classe: true,
-  objectif_placements: 5,
+  objectif_placements: 0,
   placements_restants: 0,
   progression: 0.91,
   cle: 'argent',
@@ -83,13 +98,6 @@ const MYTHIQUE: SeasonalGradeState = {
   prochain_minimum: undefined,
 };
 
-const PLACEMENT: SeasonalGradeState = {
-  classe: false,
-  objectif_placements: 5,
-  placements_restants: 2,
-  progression: 0.6,
-};
-
 const GLOBAL: RankLeaderboardRow[] = [
   row('nova', 'Nova', 1, 1724, 42, 31, MYTHIQUE),
   row('akira', 'Akira', 2, 1591, 36, 27, DIAMANT),
@@ -111,8 +119,6 @@ const BASE_PREVIEW: RankDashboard = {
     peakFrags: 1084,
     settledCalls: 16,
     wonCalls: 10,
-    placementsRemaining: 0,
-    provisional: false,
     grade: ARGENT,
     rank: 148,
     percentile: 84.3,
@@ -125,13 +131,13 @@ const BASE_PREVIEW: RankDashboard = {
     cercle: [
       row('akira', 'Akira', 1, 1591, 36, 27, DIAMANT),
       row('pierre-louis', 'Pierre-Louis', 2, 1032, 16, 10, ARGENT, true),
-      row('zoe', 'Zoé', null, 1014, 3, 2, PLACEMENT),
+      row('zoe', 'Zoé', 3, 420, 3, 2, { ...BRONZE, progression: 420 / 850 }),
     ],
     faction: [
       row('nova', 'Nova', 1, 1724, 42, 31, MYTHIQUE),
       row('nox', 'Nox', 2, 1376, 28, 19, PLATINE),
       row('pierre-louis', 'Pierre-Louis', 18, 1032, 16, 10, ARGENT, true),
-      row('lina', 'Lina', null, 1007, 4, 3, { ...PLACEMENT, placements_restants: 1 }),
+      row('lina', 'Lina', 19, 318, 4, 3, { ...BRONZE, progression: 318 / 850 }),
     ],
   },
   recentMovements: [
@@ -140,9 +146,7 @@ const BASE_PREVIEW: RankDashboard = {
     movement('move-3', 'FNC', 'BDS', 'lol', 'gagne', 11),
   ],
   rules: {
-    base: 1000,
-    placements: 5,
-    placementK: 60,
+    base: 0,
     rankedK: 40,
   },
   reward: {
@@ -163,7 +167,7 @@ export default function RankPreviewScreen() {
   const requestedNarrow = readParam(params.narrow) === '1';
   const requestedReduced = readParam(params.reduced) === '1';
   const clean = readParam(params.clean) === '1';
-  const [mode, setMode] = useState<PreviewMode>(isPreviewMode(requestedMode) ? requestedMode : 'placement0');
+  const [mode, setMode] = useState<PreviewMode>(isPreviewMode(requestedMode) ? requestedMode : 'start0');
   const [narrow, setNarrow] = useState(requestedNarrow);
   const [reduceMotion, setReduceMotion] = useState(requestedReduced);
 
@@ -230,8 +234,6 @@ function dashboardForMode(mode: PreviewMode): RankDashboard {
         peakFrags: 1451,
         settledCalls: 29,
         wonCalls: 19,
-        placementsRemaining: 0,
-        provisional: false,
         grade: { ...PLATINE, progression: 0.91 },
         rank: 84,
         percentile: 91.2,
@@ -241,27 +243,25 @@ function dashboardForMode(mode: PreviewMode): RankDashboard {
     };
   }
 
-  const settledCalls = mode === 'placement3' ? 3 : 0;
-  const placementsRemaining = mode === 'placement3' ? 2 : 5;
+  const started = mode === 'bronze';
+  const frags = started ? 420 : 0;
+  const settledCalls = started ? 3 : 0;
   return {
     ...BASE_PREVIEW,
     state: {
       ...BASE_PREVIEW.state!,
-      frags: 1000,
-      peakFrags: 1000,
+      frags,
+      peakFrags: frags,
       settledCalls,
-      wonCalls: mode === 'placement3' ? 2 : 0,
-      placementsRemaining,
-      provisional: true,
+      wonCalls: started ? 2 : 0,
       grade: {
-        ...PLACEMENT,
-        placements_restants: placementsRemaining,
-        progression: settledCalls / 5,
+        ...BRONZE,
+        progression: frags / 850,
       },
-      rank: null,
-      percentile: null,
-      bestGrade: null,
-      bestRank: null,
+      rank: started ? 714 : 942,
+      percentile: started ? 23.8 : 0,
+      bestGrade: { cle: 'bronze', libelle: 'Bronze', ordre: 0, minimum: 0 },
+      bestRank: started ? 714 : 942,
     },
   };
 }
@@ -271,7 +271,7 @@ function readParam(value: string | string[] | undefined) {
 }
 
 function isPreviewMode(value: string | undefined): value is PreviewMode {
-  return value === 'placement0' || value === 'placement3' || value === 'platine';
+  return value === 'start0' || value === 'bronze' || value === 'platine';
 }
 
 const previewStyles = StyleSheet.create({
@@ -346,7 +346,6 @@ function row(
     settledCalls,
     wonCalls,
     accuracy: settledCalls ? Math.round((wonCalls / settledCalls) * 1000) / 10 : 0,
-    provisional: !grade.classe,
     me,
     grade,
   };

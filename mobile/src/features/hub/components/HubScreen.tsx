@@ -19,7 +19,7 @@ import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
-import { gradeAccent } from '@/src/features/ranking/grades';
+import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
@@ -274,20 +274,13 @@ function UpNextMatchCard({ cardWidth, match }: { cardWidth: number; match: HubMa
 
 function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }) {
   const grade = hub.frags?.grade;
-  const provisional = Boolean(hub.frags?.provisoire);
+  const starting = Boolean(hub.frags && isZeroRank(hub.frags.frags));
   const gradeLabel = loading
     ? '—'
-    : provisional
-      ? 'PLACEMENT'
-      : grade?.libelle?.toUpperCase() || 'NON CLASSÉ';
+    : grade?.libelle?.toUpperCase() || 'NON CLASSÉ';
   const frags = loading || !hub.frags ? '—' : formatNumber(hub.frags.frags);
-  const accent = provisional || !grade?.classe ? colors.volt : gradeAccent(grade);
-  const placementGoal = grade?.objectif_placements ?? 5;
-  const placementsRemaining = grade?.placements_restants ?? hub.frags?.placements_restants ?? placementGoal;
-  const placementsDone = Math.max(0, placementGoal - placementsRemaining);
-  const seasonContext = provisional
-    ? `${placementsDone}/${placementGoal} MATCHS DE PLACEMENT`
-    : (hub.seasonName?.toUpperCase() ?? 'SAISON EN COURS');
+  const accent = starting ? ZERO_RANK_ACCENT : gradeAccent(grade);
+  const seasonContext = hub.seasonName?.toUpperCase() ?? 'SAISON EN COURS';
 
   return (
     <Pressable
@@ -301,7 +294,7 @@ function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }
         importantForAccessibility="no-hide-descendants"
         style={[styles.seasonEmblem, loading && styles.seasonEmblemLoading]}
       >
-        <RankEmblem grade={grade} placement={provisional || !grade?.classe} size={58} />
+        <RankEmblem grade={grade} size={58} starting={starting} />
       </View>
       <View style={styles.seasonIdentity}>
         <Text style={styles.seasonKicker}>CLASSEMENT ACTUEL</Text>

@@ -151,7 +151,6 @@ function firstMetric(
 
 function rankMetric(data: ProfileData) {
   const grade = data.ranking.grade;
-  if (!grade.classe || data.ranking.provisoire) return clamp(grade.progression, 0, 0.99);
   if ((data.ranking.percentile ?? 101) <= 1) return 5;
   const base = RANK_MILESTONE[grade.cle ?? ''] ?? 1;
   return Math.min(4.99, base + clamp(grade.progression, 0, 0.99) * 0.96);
