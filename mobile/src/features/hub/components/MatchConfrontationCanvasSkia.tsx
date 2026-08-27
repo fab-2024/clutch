@@ -26,10 +26,10 @@ import {
 import { withAlpha } from '../matchPresentation';
 import type { MatchConfrontationCanvasProps } from './MatchConfrontationCanvas.types';
 import { buildMatchTerritoryPalette } from './matchConfrontationPalette';
+import { MATCH_PLATE_OUTWARD_SHIFT } from './matchConfrontationLayout';
 
 const ARTBOARD_WIDTH = 400;
 const ARTBOARD_HEIGHT = 280;
-const PLATE_OUTWARD_SHIFT = 7;
 const FRACTURE_ATMOSPHERE_ASSET = require('../../../../assets/hub/match-fracture-atmosphere-v1.png');
 
 const LEFT_FACE_PATH = 'M79 59 L161 76 Q173 78 175 88 L189 162 Q191 171 180 172 L98 175 Q87 175 85 165 L72 70 Q69 59 79 59 Z';
@@ -356,7 +356,7 @@ function PlateArtwork({ accent, facePath, innerPath, reflectionPath, side, winne
   return (
     <Group
       opacity={winner ? 1 : .96}
-      transform={[{ translateX: outward * PLATE_OUTWARD_SHIFT }]}
+      transform={[{ translateX: outward * MATCH_PLATE_OUTWARD_SHIFT }]}
     >
       <Group transform={[{ translateX: outward * 9 }, { translateY: 13 }]}> 
         <Path color={withAlpha(palette.local, .28)} path={facePath} strokeWidth={9} style="stroke"><BlurMask blur={13} style="normal" /></Path>

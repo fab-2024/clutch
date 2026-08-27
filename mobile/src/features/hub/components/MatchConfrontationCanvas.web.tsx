@@ -6,6 +6,7 @@ import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Path, Stop } fr
 import { withAlpha } from '../matchPresentation';
 import type { MatchConfrontationCanvasProps } from './MatchConfrontationCanvas.types';
 import { buildMatchTerritoryPalette } from './matchConfrontationPalette';
+import { MATCH_PLATE_OUTWARD_SHIFT } from './matchConfrontationLayout';
 
 const SKIA_WEB_OPTIONS = { locateFile: () => '/canvaskit.wasm' };
 const loadCanvas = () => import('./MatchConfrontationCanvasSkia');
@@ -67,12 +68,12 @@ function MatchConfrontationFallback({ height, leftAccent, rightAccent, width }: 
         <Path d={TORN_OPENING_PATH} fill="#000104" />
         <Path d={LEFT_TEAR_EDGE} fill="none" stroke={leftPalette.edge} strokeOpacity=".7" strokeWidth="2.4" />
         <Path d={RIGHT_TEAR_EDGE} fill="none" stroke={rightPalette.edge} strokeOpacity=".74" strokeWidth="2.4" />
-        <Path d={LEFT_FACE_PATH} fill="#010204" transform="translate(-15 12)" />
-        <Path d={LEFT_FACE_PATH} fill={leftPalette.outer} stroke={withAlpha(leftPalette.local, .48)} transform="translate(-11 7)" />
-        <Path d={LEFT_FACE_PATH} fill="url(#fallback-left-face)" stroke={leftPalette.local} strokeWidth="1.6" transform="translate(-7 0)" />
-        <Path d={RIGHT_FACE_PATH} fill="#050201" transform="translate(15 12)" />
-        <Path d={RIGHT_FACE_PATH} fill={rightPalette.outer} stroke={withAlpha(rightPalette.local, .48)} transform="translate(11 7)" />
-        <Path d={RIGHT_FACE_PATH} fill="url(#fallback-right-face)" stroke={rightPalette.local} strokeWidth="1.6" transform="translate(7 0)" />
+        <Path d={LEFT_FACE_PATH} fill="#010204" transform={`translate(${-MATCH_PLATE_OUTWARD_SHIFT - 8} 12)`} />
+        <Path d={LEFT_FACE_PATH} fill={leftPalette.outer} stroke={withAlpha(leftPalette.local, .48)} transform={`translate(${-MATCH_PLATE_OUTWARD_SHIFT - 4} 7)`} />
+        <Path d={LEFT_FACE_PATH} fill="url(#fallback-left-face)" stroke={leftPalette.local} strokeWidth="1.6" transform={`translate(${-MATCH_PLATE_OUTWARD_SHIFT} 0)`} />
+        <Path d={RIGHT_FACE_PATH} fill="#050201" transform={`translate(${MATCH_PLATE_OUTWARD_SHIFT + 8} 12)`} />
+        <Path d={RIGHT_FACE_PATH} fill={rightPalette.outer} stroke={withAlpha(rightPalette.local, .48)} transform={`translate(${MATCH_PLATE_OUTWARD_SHIFT + 4} 7)`} />
+        <Path d={RIGHT_FACE_PATH} fill="url(#fallback-right-face)" stroke={rightPalette.local} strokeWidth="1.6" transform={`translate(${MATCH_PLATE_OUTWARD_SHIFT} 0)`} />
         <Circle cx="201" cy="146" fill="rgba(255,216,90,.28)" r="18" />
         <Path d="M190 148 Q194 139 200 141 Q205 134 210 142 Q218 145 211 151 Q211 159 202 156 Q195 162 193 153 Q184 151 190 148 Z" fill="#FFF9E8" />
       </Svg>

@@ -13,6 +13,7 @@ import {
 } from '../matchPresentation';
 import type { HubMatch } from '../types';
 import MatchConfrontationCanvas from './MatchConfrontationCanvas';
+import { MATCH_PLATE_OUTWARD_SHIFT } from './matchConfrontationLayout';
 
 type MatchConfrontationCardProps = {
   match: HubMatch;
@@ -38,7 +39,7 @@ export function MatchConfrontationCard({ match, onPress, reduceMotion, state }: 
   const event = String(match.evenement || '').trim() || 'COMPÉTITION';
   const formatValue = Number(match.format);
   const format = Number.isInteger(formatValue) && formatValue > 0 ? `BO${formatValue}` : 'FORMAT À CONFIRMER';
-  const scoreCopy = state.scoreLabel ? `, score ${state.scoreLabel}` : '';
+  const scoreCopy = state.phase !== 'live' && state.scoreLabel ? `, score ${state.scoreLabel}` : '';
   const statusGlass: [string, string, string] = state.phase === 'live'
     ? ['rgba(45,8,13,.96)', 'rgba(16,5,8,.94)', 'rgba(4,6,8,.98)']
     : ['rgba(18,25,31,.96)', 'rgba(7,11,14,.94)', 'rgba(2,5,7,.98)'];
@@ -120,28 +121,60 @@ export function MatchConfrontationCard({ match, onPress, reduceMotion, state }: 
             winner={state.winner === 'b'}
             muted={state.winner === 'a'}
           />
-          {state.scoreLabel ? (
+          {state.scoreLabel && state.phase !== 'live' ? (
             <View style={[styles.scoreOverlay, { left: 174 * sceneScale, top: 128 * sceneScale, width: 52 * sceneScale }]}>
-              <Text adjustsFontSizeToFit numberOfLines={1} style={[styles.score, state.phase === 'live' && styles.scoreLive]}>{state.scoreLabel}</Text>
+              <Text adjustsFontSizeToFit numberOfLines={1} style={styles.score}>{state.scoreLabel}</Text>
             </View>
           ) : null}
         </View>
 
-        <View
-          style={[
-            styles.matchStatus,
-            compact && styles.matchStatusCompact,
-            {
-              borderColor: withAlpha(statusAccent, .58),
-              boxShadow: `0 7px 18px ${withAlpha(statusAccent, .1)}`,
-              shadowColor: statusAccent,
-            },
-          ]}
-        >
-          <LinearGradient colors={statusGlass} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
-          <View style={styles.statusHighlight} />
-          <Text style={[styles.matchStatusText, { color: statusAccent }]}>{state.status}</Text>
-        </View>
+        {state.phase === 'live' ? (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.liveMarker,
+              {
+                marginLeft: -58 * sceneScale,
+                top: 32 * sceneScale,
+                width: 116 * sceneScale,
+              },
+            ]}
+          >
+            <View style={styles.liveMarkerLine} />
+            <View
+              style={[
+                styles.liveMarkerBadge,
+                {
+                  borderColor: withAlpha(colors.live, .88),
+                  boxShadow: `0 7px 18px ${withAlpha(colors.live, .28)}`,
+                  minHeight: Math.max(24, 26 * sceneScale),
+                  minWidth: Math.max(52, 57 * sceneScale),
+                },
+              ]}
+            >
+              <LinearGradient colors={['#F12636', '#C70D22', '#850916']} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
+              <View style={styles.liveMarkerHighlight} />
+              <Text style={[styles.liveMarkerText, { fontSize: Math.max(10, 10.5 * sceneScale) }]}>LIVE</Text>
+            </View>
+            <View style={styles.liveMarkerLine} />
+          </View>
+        ) : (
+          <View
+            style={[
+              styles.matchStatus,
+              compact && styles.matchStatusCompact,
+              {
+                borderColor: withAlpha(statusAccent, .58),
+                boxShadow: `0 7px 18px ${withAlpha(statusAccent, .1)}`,
+                shadowColor: statusAccent,
+              },
+            ]}
+          >
+            <LinearGradient colors={statusGlass} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
+            <View style={styles.statusHighlight} />
+            <Text style={[styles.matchStatusText, { color: statusAccent }]}>{state.status}</Text>
+          </View>
+        )}
 
       </Pressable>
     </View>
@@ -164,7 +197,9 @@ function TeamFace({
   winner: boolean;
 }) {
   const left = team.side === 'a';
-  const anchorLeft = (left ? 47 : 209) * sceneScale;
+  const anchorLeft = (left
+    ? 54 - MATCH_PLATE_OUTWARD_SHIFT
+    : 202 + MATCH_PLATE_OUTWARD_SHIFT) * sceneScale;
   const anchorTop = (left ? 73 : 71) * sceneScale;
   const anchorWidth = 152 * sceneScale;
   const logoSize = Math.round(80 * sceneScale);
@@ -256,7 +291,11 @@ const styles = StyleSheet.create({
   teamLayer: { position: 'absolute', zIndex: 4, inset: 0 },
   scoreOverlay: { position: 'absolute', zIndex: 5, alignItems: 'center', justifyContent: 'center' },
   score: { color: '#F5F7F8', fontFamily: fonts.display, fontSize: 22, lineHeight: 25, letterSpacing: -.35, textAlign: 'center', textShadowColor: 'rgba(0,0,0,.92)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 7 },
-  scoreLive: { color: '#FFFFFF', textShadowColor: 'rgba(255,62,85,.45)', textShadowRadius: 9 },
+  liveMarker: { position: 'absolute', zIndex: 7, left: '50%', minHeight: 28, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
+  liveMarkerLine: { flex: 1, height: 1, borderRadius: 1, backgroundColor: 'rgba(244,248,250,.84)', boxShadow: '0 0 6px rgba(255,255,255,.28)' },
+  liveMarkerBadge: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 4, borderWidth: 1, backgroundColor: '#C70D22' },
+  liveMarkerHighlight: { position: 'absolute', top: 1, left: 5, right: 5, height: 1, borderRadius: 1, backgroundColor: 'rgba(255,255,255,.42)' },
+  liveMarkerText: { color: '#FFFFFF', fontFamily: fonts.bold, lineHeight: 14, letterSpacing: .45, textShadowColor: 'rgba(80,0,10,.72)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 },
   ticketTeam: { position: 'absolute', zIndex: 2, minWidth: 0, alignItems: 'center' },
   ticketTeamMuted: { opacity: .64 },
   logoStage: { width: '100%', alignItems: 'center', justifyContent: 'center' },

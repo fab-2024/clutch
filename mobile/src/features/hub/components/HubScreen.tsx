@@ -1,9 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import Check from 'lucide-react-native/icons/check';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
-import Medal from 'lucide-react-native/icons/medal';
-import UsersRound from 'lucide-react-native/icons/users-round';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Image,
@@ -12,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
   type ImageSourcePropType,
 } from 'react-native';
@@ -19,14 +17,15 @@ import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated'
 
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
-import { GriffProgress } from '@/src/components/ui/GriffProgress';
+import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
+import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
 import { gradeAccent } from '@/src/features/ranking/grades';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
 import { loadHubData } from '../api';
-import { formatMatchSchedule, getHubMatchPhase, getMatchConfrontationState } from '../matchPresentation';
-import type { HubData, HubFactionMission, HubMatch, HubPrediction } from '../types';
+import { formatMatchSchedule, getHubMatchPhase, getMatchConfrontationState, withAlpha } from '../matchPresentation';
+import type { HubData, HubMatch, HubPrediction } from '../types';
 import { MatchConfrontationCard } from './MatchConfrontationCard';
 
 type HubGame = 'lol' | 'valorant' | 'cs2';
@@ -151,12 +150,8 @@ export function HubExperience({
           <SeasonProgressCard hub={hub} loading={loading} />
         </Animated.View>
 
-        <Animated.View entering={entrance(210)}>
-          <FactionMissionCard loading={loading} mission={hub.factionMission} />
-        </Animated.View>
-
         {!loading && hub.upNext.length ? (
-          <Animated.View entering={entrance(270)}>
+          <Animated.View entering={entrance(210)}>
             <UpNext matches={hub.upNext} />
           </Animated.View>
         ) : null}
@@ -186,64 +181,10 @@ function MatchHero({ match, prediction, reduceMotion }: { match: HubMatch; predi
   );
 }
 
-function FactionMissionCard({ loading, mission }: { loading: boolean; mission: HubFactionMission | null }) {
-  const remaining = mission ? Math.max(0, mission.goal - mission.progress) : 0;
-  const missionTitle = loading
-    ? 'LECTURE DE LA FACTION…'
-    : mission
-      ? mission.completed
-        ? 'MISSION ACCOMPLIE.'
-        : `${remaining} CALL${remaining > 1 ? 'S' : ''} À VERROUILLER.`
-      : 'REJOINS UNE FACTION.';
-  const missionMeta = loading
-    ? 'Synchronisation en cours'
-    : mission
-      ? mission.completed
-        ? `${mission.participants} membre${mission.participants > 1 ? 's' : ''} mobilisé${mission.participants > 1 ? 's' : ''}`
-        : mission.participants > 0
-          ? `${mission.participants} participant${mission.participants > 1 ? 's' : ''} aujourd’hui`
-          : 'Sois le premier à participer'
-      : 'Choisis ton équipe pour débloquer les missions';
-  const missionValue = loading || !mission ? 0 : mission.progress;
-  const missionMax = mission?.goal ?? 1;
-
-  return (
-    <Pressable
-      accessibilityLabel={`${missionTitle} ${loading || !mission ? '' : `${mission.progress} sur ${mission.goal}.`} Ouvrir la mission de faction.`}
-      accessibilityRole="button"
-      onPress={() => router.push('/(tabs)/social/faction')}
-      style={({ pressed }) => [styles.missionCard, pressed && styles.pressed]}
-    >
-      <View style={[styles.missionIcon, mission?.completed && styles.missionIconCompleted]}>
-        {mission?.completed ? (
-          <Check color="#0A0E08" size={21} strokeWidth={2.6} />
-        ) : (
-          <UsersRound color={colors.volt} size={21} strokeWidth={2} />
-        )}
-      </View>
-      <View style={styles.missionCopy}>
-        <View style={styles.missionTop}>
-          <Text style={styles.missionKicker}>MISSION DE FACTION · 24 H</Text>
-          <Text style={styles.missionCount}>{loading || !mission ? '—' : `${mission.progress}/${mission.goal}`}</Text>
-        </View>
-        <Text numberOfLines={1} style={styles.missionTitle}>{missionTitle}</Text>
-        <Text numberOfLines={1} style={styles.missionHint}>{missionMeta}</Text>
-        <View style={styles.missionBottom}>
-          <GriffProgress
-            accessibilityLabel="Progression de la mission"
-            max={missionMax}
-            style={styles.missionTrack}
-            value={missionValue}
-          />
-          <ChevronRight color="#7F8A94" size={19} strokeWidth={2} />
-        </View>
-      </View>
-    </Pressable>
-  );
-}
-
 function UpNext({ matches }: { matches: HubMatch[] }) {
+  const { width } = useWindowDimensions();
   const dots = Math.min(matches.length, 4);
+  const cardWidth = Math.min(310, Math.max(276, width - spacing.md * 2));
   return (
     <View style={styles.upNextSection}>
       <View style={styles.sectionHead}>
@@ -251,24 +192,83 @@ function UpNext({ matches }: { matches: HubMatch[] }) {
         <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/matches')}><Text style={styles.sectionLink}>TOUT VOIR →</Text></Pressable>
       </View>
       <ScrollView horizontal contentContainerStyle={styles.upNextRail} showsHorizontalScrollIndicator={false}>
-        {matches.map((match) => (
-          <Pressable
-            accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}, ${formatMatchSchedule(match.debut)}`}
-            accessibilityRole="button"
-            key={match.id}
-            onPress={() => openMatch(match.id)}
-            style={({ pressed }) => [styles.upNextCard, pressed && styles.pressed]}
-          >
-            <Image resizeMode="cover" source={GAME_BACKGROUNDS[gameKey(match.jeu)]} style={styles.upNextBackdrop} />
-            <LinearGradient colors={['rgba(3,7,11,.38)', 'rgba(3,7,11,.76)', 'rgba(3,7,11,.96)']} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
-            <View style={styles.upNextTop}><Text style={styles.upNextWhen}>{formatMatchSchedule(match.debut)}</Text><Text style={styles.upNextGame}>{gameName(match.jeu).toUpperCase()}</Text></View>
-            <View style={styles.upNextDuel}><Text adjustsFontSizeToFit minimumFontScale={0.7} numberOfLines={1} style={styles.upNextTag}>{match.tag_a}</Text><Text style={styles.upNextVs}>VS</Text><Text adjustsFontSizeToFit minimumFontScale={0.7} numberOfLines={1} style={styles.upNextTag}>{match.tag_b}</Text></View>
-            <View style={styles.upNextFooter}><Text numberOfLines={1} style={styles.upNextEvent}>{match.evenement}</Text><Text style={styles.upNextFormat}>BO{match.format}</Text></View>
-          </Pressable>
-        ))}
+        {matches.map((match) => <UpNextMatchCard cardWidth={cardWidth} key={match.id} match={match} />)}
       </ScrollView>
       {dots > 1 ? <View style={styles.railDots}>{Array.from({ length: dots }, (_, index) => <View key={index} style={[styles.railDot, index === 0 && styles.railDotActive]} />)}</View> : null}
     </View>
+  );
+}
+
+function UpNextMatchCard({ cardWidth, match }: { cardWidth: number; match: HubMatch }) {
+  const confrontation = getMatchConfrontationState(match, null);
+  const cardHeight = Math.round(cardWidth / 1.78);
+  const logoSize = Math.round(cardWidth * .28);
+  const formatValue = Number(match.format);
+  const format = Number.isInteger(formatValue) && formatValue > 0 ? `BO${formatValue}` : 'FORMAT À CONFIRMER';
+
+  return (
+    <Pressable
+      accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}, ${formatMatchSchedule(match.debut)}`}
+      accessibilityRole="button"
+      onPress={() => openMatch(match.id)}
+      style={({ pressed }) => [styles.upNextCard, { height: cardHeight, width: cardWidth }, pressed && styles.pressed]}
+    >
+      <Image resizeMode="cover" source={GAME_BACKGROUNDS[gameKey(match.jeu)]} style={styles.upNextBackdrop} />
+      <LinearGradient
+        colors={[
+          withAlpha(confrontation.teamA.accent, .38),
+          'rgba(2,7,13,.28)',
+          withAlpha(confrontation.teamB.accent, .34),
+        ]}
+        end={{ x: 1, y: .52 }}
+        start={{ x: 0, y: .48 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <LinearGradient
+        colors={['rgba(2,6,11,.22)', 'rgba(2,6,11,.36)', 'rgba(2,6,11,.94)']}
+        end={{ x: .5, y: 1 }}
+        start={{ x: .5, y: 0 }}
+        style={StyleSheet.absoluteFill}
+      />
+
+      <View style={styles.upNextSchedulePill}>
+        <Text style={styles.upNextWhen}>{formatMatchSchedule(match.debut)}</Text>
+      </View>
+
+      <View style={[styles.upNextLogo, styles.upNextLogoLeft]}>
+        <TeamLogo
+          accent={confrontation.teamA.accent}
+          contentScale={upNextLogoContentScale(confrontation.teamA.name)}
+          frameless
+          name={confrontation.teamA.name}
+          size={logoSize}
+          tag={confrontation.teamA.tag}
+          uri={confrontation.teamA.logo}
+        />
+      </View>
+      <View style={styles.upNextConfrontation}>
+        <Text adjustsFontSizeToFit minimumFontScale={.72} numberOfLines={1} style={styles.upNextTag}>{confrontation.teamA.tag}</Text>
+        <Text style={styles.upNextVs}>VS</Text>
+        <Text adjustsFontSizeToFit minimumFontScale={.72} numberOfLines={1} style={styles.upNextTag}>{confrontation.teamB.tag}</Text>
+      </View>
+      <View style={[styles.upNextLogo, styles.upNextLogoRight]}>
+        <TeamLogo
+          accent={confrontation.teamB.accent}
+          contentScale={upNextLogoContentScale(confrontation.teamB.name)}
+          frameless
+          name={confrontation.teamB.name}
+          size={logoSize}
+          tag={confrontation.teamB.tag}
+          uri={confrontation.teamB.logo}
+        />
+      </View>
+
+      <View style={styles.upNextFooter}>
+        <Text adjustsFontSizeToFit minimumFontScale={.72} numberOfLines={1} style={styles.upNextEvent}>
+          {match.evenement.toUpperCase()} · {format}
+        </Text>
+      </View>
+    </Pressable>
   );
 }
 
@@ -296,8 +296,12 @@ function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }
       onPress={() => router.push('/(tabs)/rank')}
       style={({ pressed }) => [styles.seasonCard, pressed && styles.pressed]}
     >
-      <View style={[styles.seasonEmblem, { borderColor: accent }, loading && styles.seasonEmblemLoading]}>
-        <Medal color={accent} size={23} strokeWidth={2} />
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={[styles.seasonEmblem, loading && styles.seasonEmblemLoading]}
+      >
+        <RankEmblem grade={grade} placement={provisional || !grade?.classe} size={58} />
       </View>
       <View style={styles.seasonIdentity}>
         <Text style={styles.seasonKicker}>CLASSEMENT ACTUEL</Text>
@@ -340,11 +344,12 @@ function gameKey(game: string): HubGame {
   if (key.includes('cs')) return 'cs2';
   return 'lol';
 }
-function gameName(game: string) {
-  const key = gameKey(game);
-  if (key === 'valorant') return 'Valorant';
-  if (key === 'cs2') return 'CS2';
-  return 'LoL';
+function upNextLogoContentScale(name: string) {
+  if (name === 'Karmine Corp') return .72;
+  if (name === 'Team Vitality') return 1.06;
+  if (name === 'G2 Esports') return 1.02;
+  if (name === 'Fnatic') return 1;
+  return .9;
 }
 
 const styles = StyleSheet.create({
@@ -362,38 +367,28 @@ const styles = StyleSheet.create({
   callActionText: { color: '#07090B', fontFamily: fonts.display, fontSize: 21, lineHeight: 23, letterSpacing: .55 },
   callActionTextLocked: { color: colors.volt },
   callActionArrow: { position: 'absolute', right: 20, color: '#07090B', fontSize: 31, lineHeight: 33, fontWeight: '300' },
-  missionCard: { minHeight: 118, marginHorizontal: spacing.md, padding: 15, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 13, backgroundColor: '#0C1116', borderWidth: 1, borderColor: '#28323B' },
-  missionIcon: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: 'rgba(232,255,61,.07)', borderWidth: 1, borderColor: 'rgba(232,255,61,.22)' },
-  missionIconCompleted: { backgroundColor: colors.volt, borderColor: colors.volt },
-  missionCopy: { flex: 1, minWidth: 0 },
-  missionTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  missionKicker: { flex: 1, color: '#A0AAB3', fontFamily: fonts.bold, fontSize: 11, lineHeight: 14, letterSpacing: .55 },
-  missionCount: { color: colors.volt, fontFamily: fonts.bold, fontSize: 12, lineHeight: 15 },
-  missionTitle: { color: colors.text, fontFamily: fonts.display, marginTop: 5, fontSize: 21, lineHeight: 23, letterSpacing: .05 },
-  missionHint: { marginTop: 3, color: '#A8B1B9', fontFamily: fonts.body, fontSize: 12, lineHeight: 16 },
-  missionBottom: { marginTop: 11, flexDirection: 'row', alignItems: 'center', gap: 9 },
-  missionTrack: { flex: 1 },
   upNextSection: { gap: 10 },
   sectionHead: { marginHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   sectionKicker: { color: colors.volt, fontFamily: fonts.bold, fontSize: 14, lineHeight: 17, letterSpacing: .5 },
   sectionLink: { ...typography.action, color: colors.volt, fontSize: 10, letterSpacing: .35 },
   upNextRail: { paddingHorizontal: spacing.md, gap: 10 },
-  upNextCard: { position: 'relative', width: 250, minHeight: 154, padding: 12, overflow: 'hidden', borderRadius: 18, backgroundColor: '#090D11', borderWidth: 1, borderColor: '#4A535B' },
+  upNextCard: { position: 'relative', overflow: 'hidden', borderRadius: 18, backgroundColor: '#060B10', borderWidth: 1, borderColor: '#354653', boxShadow: '0 12px 28px rgba(0,0,0,.34)' },
   upNextBackdrop: { position: 'absolute', inset: 0, width: '100%', height: '100%' },
-  upNextTop: { zIndex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  upNextWhen: { ...typography.label, color: colors.volt, letterSpacing: .35 },
-  upNextGame: { ...typography.label, color: colors.textSubtle, fontSize: 8 },
-  upNextDuel: { zIndex: 1, marginTop: 26, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
-  upNextTag: { flex: 1, color: colors.text, fontFamily: fonts.display, fontSize: 34, lineHeight: 37, textAlign: 'center', letterSpacing: -.5 },
-  upNextVs: { ...typography.action, color: colors.volt },
-  upNextFooter: { zIndex: 1, marginTop: 'auto', paddingTop: 8, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.10)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  upNextEvent: { ...typography.caption, flex: 1, color: '#AEB6BD' },
-  upNextFormat: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .5 },
+  upNextSchedulePill: { position: 'absolute', zIndex: 4, top: 9, left: '50%', minHeight: 22, minWidth: 70, marginLeft: -35, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: 'rgba(8,13,8,.9)', borderWidth: 1, borderColor: 'rgba(232,255,61,.32)', boxShadow: '0 4px 12px rgba(0,0,0,.32)' },
+  upNextWhen: { ...typography.label, color: colors.volt, fontSize: 9, lineHeight: 11, letterSpacing: .25 },
+  upNextLogo: { position: 'absolute', zIndex: 2, top: 48, alignItems: 'center', justifyContent: 'center' },
+  upNextLogoLeft: { left: 10 },
+  upNextLogoRight: { right: 10 },
+  upNextConfrontation: { position: 'absolute', zIndex: 3, top: 40, left: '50%', width: 72, marginLeft: -36, alignItems: 'center', justifyContent: 'center' },
+  upNextTag: { width: '100%', color: '#F7F8F9', fontFamily: fonts.display, fontSize: 31, lineHeight: 32, textAlign: 'center', letterSpacing: -.5, textShadowColor: 'rgba(0,0,0,.94)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 7 },
+  upNextVs: { color: colors.volt, fontFamily: fonts.bold, fontSize: 13, lineHeight: 14, letterSpacing: .35, textShadowColor: 'rgba(0,0,0,.9)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 5 },
+  upNextFooter: { position: 'absolute', zIndex: 4, left: 14, right: 14, bottom: 11, alignItems: 'center', justifyContent: 'center' },
+  upNextEvent: { color: '#AEB8C0', fontFamily: fonts.bold, fontSize: 10, lineHeight: 12, letterSpacing: .35, textAlign: 'center', textShadowColor: 'rgba(0,0,0,.95)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   railDots: { height: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
   railDot: { width: 12, height: 4, borderRadius: 2, backgroundColor: '#263039' },
   railDotActive: { width: 24, backgroundColor: colors.volt },
   seasonCard: { minHeight: 88, marginHorizontal: spacing.md, paddingHorizontal: 14, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 11, overflow: 'hidden', borderRadius: 18, backgroundColor: '#0C1116', borderWidth: 1, borderColor: '#28323B' },
-  seasonEmblem: { width: 44, height: 44, flexShrink: 0, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: '#10171C', borderWidth: 1 },
+  seasonEmblem: { width: 58, height: 58, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
   seasonEmblemLoading: { opacity: .35 },
   seasonIdentity: { flex: 1, minWidth: 0, justifyContent: 'center' },
   seasonKicker: { color: '#A0AAB3', fontFamily: fonts.bold, fontSize: 11, lineHeight: 13, letterSpacing: .45 },
