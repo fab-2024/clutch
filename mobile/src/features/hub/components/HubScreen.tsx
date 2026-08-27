@@ -12,10 +12,17 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
+import Svg, {
+  Defs,
+  G,
+  LinearGradient as SvgLinearGradient,
+  Path,
+  Stop,
+} from 'react-native-svg';
 
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
-import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
+import { gradeAccent } from '@/src/features/ranking/grades';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
@@ -243,32 +250,80 @@ function UpNext({ matches }: { matches: HubMatch[] }) {
 function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }) {
   const grade = hub.frags?.grade;
   const provisional = Boolean(hub.frags?.provisoire);
-  const progress = Math.max(0, Math.min(1, grade?.progression ?? 0));
-  const activeDots = loading ? 0 : Math.max(1, Math.min(5, Math.ceil(progress * 5)));
-  const progressLabel = provisional
-    ? `${Math.max(0, (grade?.objectif_placements ?? 5) - (hub.frags?.placements_restants ?? 0))} / ${grade?.objectif_placements ?? 5}`
-    : `${Math.round(progress * 100)} %`;
-  const progressDetail = provisional
-    ? 'VERDICTS DE PLACEMENT'
-    : grade?.prochain_libelle
-      ? `VERS ${grade.prochain_libelle.toUpperCase()}`
-      : 'PALIER MAXIMAL';
+  const gradeLabel = loading
+    ? '—'
+    : provisional
+      ? 'PLACEMENT'
+      : grade?.libelle?.toUpperCase() || 'NON CLASSÉ';
+  const frags = loading ? '—' : formatNumber(hub.frags?.frags ?? 0);
+  const accent = provisional || !grade?.classe ? colors.volt : gradeAccent(grade);
 
   return (
-    <Pressable accessibilityLabel="Ouvrir ma saison" accessibilityRole="button" onPress={() => router.push('/(tabs)/rank')} style={({ pressed }) => [styles.seasonCard, pressed && styles.pressed]}>
-      <RankEmblem grade={grade} placement={provisional || !grade?.classe} size={64} />
+    <Pressable
+      accessibilityLabel={`Ouvrir ma saison, rang ${gradeLabel}, ${frags} Frags`}
+      accessibilityRole="button"
+      onPress={() => router.push('/(tabs)/rank')}
+      style={({ pressed }) => [styles.seasonCard, pressed && styles.pressed]}
+    >
+      <View style={[styles.seasonEmblem, loading && styles.seasonEmblemLoading]}>
+        <SeasonRankMark accent={accent} />
+      </View>
       <View style={styles.seasonIdentity}>
-        <Text style={styles.seasonKicker}>TA SAISON</Text>
-        <View style={styles.seasonFrags}><Text style={styles.seasonFragsValue}>{loading ? '—' : formatNumber(hub.frags?.frags ?? 0)}</Text><Text style={styles.seasonFragsUnit}>FRAGS</Text></View>
-        <Text numberOfLines={1} style={styles.seasonGrade}>{loading ? 'SYNCHRONISATION' : provisional ? 'EN PLACEMENT' : grade?.libelle?.toUpperCase() || 'NON CLASSÉ'}</Text>
+        <Text style={styles.seasonKicker}>RANK ACTUEL</Text>
+        <Text adjustsFontSizeToFit minimumFontScale={0.68} numberOfLines={1} style={styles.seasonGrade}>{gradeLabel}</Text>
       </View>
       <View style={styles.seasonDivider} />
-      <View style={styles.seasonProgress}>
-        <View style={styles.seasonProgressTop}><Text style={styles.seasonProgressValue}>{loading ? '—' : progressLabel}</Text><Text numberOfLines={1} style={styles.seasonProgressLabel}>{progressDetail}</Text></View>
-        <View style={styles.seasonDots}>{Array.from({ length: 5 }, (_, index) => <View key={index} style={[styles.seasonDot, index < activeDots && styles.seasonDotActive]} />)}</View>
+      <View style={styles.seasonLevel}>
+        <Text style={styles.seasonKicker}>NIVEAU</Text>
+        <View style={styles.seasonLevelValueRow}>
+          <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={styles.seasonLevelValue}>{frags}</Text>
+          <Text style={styles.seasonLevelUnit}>FRAGS</Text>
+        </View>
       </View>
       <Text style={styles.seasonArrow}>›</Text>
     </Pressable>
+  );
+}
+
+function SeasonRankMark({ accent }: { accent: string }) {
+  const chevrons = [
+    'M6 16 L31 0 L58 18 L58 30 L31 12 L6 29 Z',
+    'M6 35 L31 19 L58 37 L58 49 L31 31 L6 48 Z',
+    'M6 54 L31 38 L58 56 L58 68 L31 50 L6 67 Z',
+  ];
+
+  return (
+    <Svg height={56} viewBox="0 0 64 72" width={50}>
+      <Defs>
+        <SvgLinearGradient id="rank-metal" x1="0" x2="1" y1="0" y2="1">
+          <Stop offset="0" stopColor="#F7FAFC" />
+          <Stop offset="0.28" stopColor={accent} />
+          <Stop offset="0.62" stopColor="#68727B" />
+          <Stop offset="1" stopColor="#272D33" />
+        </SvgLinearGradient>
+        <SvgLinearGradient id="rank-edge" x1="0" x2="1" y1="0" y2="0">
+          <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.76} />
+          <Stop offset="0.45" stopColor={accent} stopOpacity={0.72} />
+          <Stop offset="1" stopColor="#11161A" stopOpacity={0.9} />
+        </SvgLinearGradient>
+      </Defs>
+      <G opacity={0.88} transform="translate(0 3)">
+        {chevrons.map((path) => <Path d={path} fill="#020507" key={`shadow-${path}`} />)}
+      </G>
+      {chevrons.map((path) => (
+        <Path
+          d={path}
+          fill="url(#rank-metal)"
+          key={path}
+          stroke="url(#rank-edge)"
+          strokeLinejoin="round"
+          strokeWidth={0.85}
+        />
+      ))}
+      <Path d="M8 17 L31 2 L31 11 L8 27 Z" fill="#FFFFFF" opacity={0.18} />
+      <Path d="M8 36 L31 21 L31 30 L8 46 Z" fill="#FFFFFF" opacity={0.14} />
+      <Path d="M8 55 L31 40 L31 49 L8 65 Z" fill="#FFFFFF" opacity={0.1} />
+    </Svg>
   );
 }
 
@@ -356,22 +411,18 @@ const styles = StyleSheet.create({
   railDots: { height: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
   railDot: { width: 12, height: 4, borderRadius: 2, backgroundColor: '#263039' },
   railDotActive: { width: 24, backgroundColor: colors.volt },
-  seasonCard: { minHeight: 105, marginHorizontal: spacing.md, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 20, backgroundColor: '#090E12', borderWidth: 1, borderColor: '#29343D' },
-  seasonIdentity: { flex: .9, minWidth: 0 },
-  seasonKicker: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .5 },
-  seasonFrags: { marginTop: 4, flexDirection: 'row', alignItems: 'baseline', gap: 4 },
-  seasonFragsValue: { color: colors.text, fontFamily: fonts.display, fontSize: 23, lineHeight: 25 },
-  seasonFragsUnit: { ...typography.label, color: colors.textMuted, fontSize: 8 },
-  seasonGrade: { ...typography.label, marginTop: 3, color: colors.volt, fontSize: 8, letterSpacing: .35 },
-  seasonDivider: { width: 1, height: 59, backgroundColor: '#303A43' },
-  seasonProgress: { flex: 1.05, minWidth: 0 },
-  seasonProgressTop: { gap: 2 },
-  seasonProgressValue: { ...typography.bodyStrong, color: '#6EA6FF' },
-  seasonProgressLabel: { ...typography.label, color: colors.textMuted, fontSize: 8, letterSpacing: .25 },
-  seasonDots: { marginTop: 13, flexDirection: 'row', alignItems: 'center', gap: 5 },
-  seasonDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#27313A' },
-  seasonDotActive: { backgroundColor: '#347CFF', borderWidth: 2, borderColor: '#6AA2FF' },
-  seasonArrow: { color: colors.textMuted, fontSize: 30, lineHeight: 32, fontWeight: '300' },
+  seasonCard: { minHeight: 84, marginHorizontal: spacing.md, paddingHorizontal: 11, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8, overflow: 'hidden', borderRadius: 12, backgroundColor: '#03080B', borderWidth: 1, borderColor: '#3B4850', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.35), 0 8px 24px rgba(0,0,0,.18)' },
+  seasonEmblem: { width: 52, height: 60, alignItems: 'center', justifyContent: 'center' },
+  seasonEmblemLoading: { opacity: .35 },
+  seasonIdentity: { width: 82, minWidth: 0, justifyContent: 'center' },
+  seasonKicker: { color: '#7F8893', fontFamily: fonts.display, fontSize: 10, lineHeight: 12, letterSpacing: .2 },
+  seasonGrade: { marginTop: 5, color: colors.volt, fontFamily: fonts.display, fontSize: 25, lineHeight: 27, letterSpacing: 0 },
+  seasonDivider: { width: 1, height: 47, marginHorizontal: 1, backgroundColor: '#354049' },
+  seasonLevel: { flex: 1, minWidth: 0, justifyContent: 'center' },
+  seasonLevelValueRow: { marginTop: 4, flexDirection: 'row', alignItems: 'baseline', gap: 3 },
+  seasonLevelValue: { flexShrink: 1, color: colors.text, fontFamily: fonts.display, fontSize: 28, lineHeight: 30, letterSpacing: 0 },
+  seasonLevelUnit: { color: '#737C86', fontFamily: fonts.display, fontSize: 8, lineHeight: 11 },
+  seasonArrow: { color: '#B9C0C6', fontSize: 32, lineHeight: 34, fontWeight: '300' },
   emptyTicket: { position: 'relative', minHeight: 220, padding: 19, overflow: 'hidden', justifyContent: 'flex-end', borderRadius: 17, backgroundColor: '#080D11', borderWidth: 1, borderColor: '#39444E' },
   emptyKicker: { ...typography.eyebrow, zIndex: 1, color: colors.volt, letterSpacing: 1 },
   emptyTitle: { zIndex: 1, maxWidth: 310, marginTop: 7, color: colors.text, fontFamily: fonts.display, fontSize: 29, lineHeight: 31 },
