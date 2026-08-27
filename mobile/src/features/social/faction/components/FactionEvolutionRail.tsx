@@ -1,9 +1,16 @@
 import { Image, type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
+import { useSharedValue } from 'react-native-reanimated';
 
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { COMMUNITY_FORMS } from '@/src/features/social/faction/constants';
+import {
+  RELIC_CONTAINER_SEQUENCE,
+  SKIA_RELIC_STAGE_ARTWORK,
+} from '@/src/features/social/faction/relicArtwork';
 import type { CommunityFaction, FactionProgress } from '@/src/features/social/faction/types';
 import { colors, fonts, typography } from '@/src/theme';
+
+import SkiaRelicLayer from './SkiaRelicLayer';
 
 type MiniatureState = 'complete' | 'current' | 'next' | 'locked';
 
@@ -22,6 +29,8 @@ const RELIC_ZOOM: Record<number, number> = {
   4: 1.03,
   5: 1.03,
 };
+const MINIATURE_CANVAS_WIDTH = 360;
+const MINIATURE_CANVAS_HEIGHT = 270;
 
 export default function FactionEvolutionRail({
   comfortable = false,
@@ -60,7 +69,7 @@ export default function FactionEvolutionRail({
                 styles.evolutionLabel,
                 comfortable && styles.evolutionLabelComfortable,
                 state === 'current' && styles.evolutionLabelCurrent,
-                state === 'locked' && styles.evolutionLabelLocked,
+                (state === 'locked' || state === 'next') && styles.evolutionLabelLocked,
               ]}
             >
               {form.name.toUpperCase()}
@@ -86,7 +95,8 @@ export function FactionRelicMiniature({
   const normalizedLevel = Math.max(1, Math.min(5, level));
   const height = Math.round(size * 1.22);
   const medallionSize = Math.max(18, Math.round(size * .42));
-  const opacity = state === 'locked' ? .34 : state === 'next' ? .66 : state === 'complete' ? .82 : 1;
+  const masked = state === 'locked' || state === 'next';
+  const opacity = masked ? .34 : state === 'complete' ? .82 : 1;
 
   return (
     <View style={[styles.miniature, { width: size, height }]}>
@@ -96,16 +106,20 @@ export function FactionRelicMiniature({
           state === 'current' && styles.imageHaloCurrent,
           state === 'complete' && styles.imageHaloComplete,
         ]} />
-        <Image
-          accessibilityIgnoresInvertColors
-          resizeMode="contain"
-          source={RELIC_ASSETS[normalizedLevel]}
-          style={[
-            styles.miniatureImage,
-            { width: size, height, opacity, transform: [{ scale: RELIC_ZOOM[normalizedLevel] }] },
-          ]}
-        />
-        {state === 'locked' ? <View style={styles.lockShade} /> : null}
+        {state === 'current' ? (
+          <CurrentRelicMiniatureArtwork height={height} level={normalizedLevel} size={size} />
+        ) : (
+          <Image
+            accessibilityIgnoresInvertColors
+            resizeMode="contain"
+            source={RELIC_ASSETS[normalizedLevel]}
+            style={[
+              styles.miniatureImage,
+              { width: size, height, opacity, transform: [{ scale: RELIC_ZOOM[normalizedLevel] }] },
+            ]}
+          />
+        )}
+        {masked ? <View style={styles.lockShade} /> : null}
       </View>
 
       {faction ? (
@@ -131,12 +145,46 @@ export function FactionRelicMiniature({
         </View>
       ) : null}
 
-      {state === 'locked' ? (
+      {masked ? (
         <View style={[styles.lockBadge, { top: Math.round(height * .39) }]}>
           <View style={styles.lockLoop} />
           <View style={styles.lockBody}><Text style={styles.lockDot}>•</Text></View>
         </View>
       ) : null}
+    </View>
+  );
+}
+
+function CurrentRelicMiniatureArtwork({ height, level, size }: { height: number; level: number; size: number }) {
+  const idlePhase = useSharedValue(0);
+  const interactionPhase = useSharedValue(0);
+  const container = RELIC_CONTAINER_SEQUENCE[level - 1] ?? 'ampoule';
+  const scale = height / MINIATURE_CANVAS_HEIGHT;
+
+  return (
+    <View
+      pointerEvents="none"
+      style={[
+        styles.currentRelicCanvas,
+        {
+          left: (size - MINIATURE_CANVAS_WIDTH) / 2,
+          top: (height - MINIATURE_CANVAS_HEIGHT) / 2,
+          transform: [{ scale }],
+        },
+      ]}
+    >
+      <SkiaRelicLayer
+        accent={colors.volt}
+        config={SKIA_RELIC_STAGE_ARTWORK[container]}
+        container={container}
+        energy={interactionPhase}
+        instabilityEnergy={0}
+        levelLift={0}
+        phase={idlePhase}
+        reduceMotion
+        supporterPhase={interactionPhase}
+        tapPhase={interactionPhase}
+      />
     </View>
   );
 }
@@ -208,6 +256,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#020406',
   },
   miniatureImage: { position: 'absolute', left: 0, top: 0 },
+  currentRelicCanvas: {
+    position: 'absolute',
+    width: MINIATURE_CANVAS_WIDTH,
+    height: MINIATURE_CANVAS_HEIGHT,
+  },
   imageHalo: {
     position: 'absolute',
     left: '17%',
