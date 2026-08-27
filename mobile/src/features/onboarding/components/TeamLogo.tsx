@@ -15,16 +15,18 @@ type TeamLogoProps = {
   name: string;
   size: number;
   tag: string;
+  tintColor?: string | null;
   uri?: string | null;
 };
 
-export default function TeamLogo({ accent, contentScale, frameless = false, name, size, tag, uri }: TeamLogoProps) {
+export default function TeamLogo({ accent, contentScale, frameless = false, name, size, tag, tintColor: tintOverride, uri }: TeamLogoProps) {
   const [failed, setFailed] = useState(false);
   const source = uri || TEAM_LOGOS[name];
   const isSvg = source ? /\.svg(?:$|\?)/i.test(source) : false;
   const showImage = Boolean(source && !failed);
   const markSize = Math.round(size * (contentScale ?? (frameless ? 0.86 : 0.72)));
-  const tintColor = LIGHT_MONOCHROME_LOGOS.has(name) ? '#F6F8F3' : undefined;
+  const defaultTintColor = LIGHT_MONOCHROME_LOGOS.has(name) ? '#F6F8F3' : undefined;
+  const tintColor = tintOverride === null ? undefined : (tintOverride ?? defaultTintColor);
 
   useEffect(() => { setFailed(false); }, [source]);
 
