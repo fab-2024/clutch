@@ -18,6 +18,7 @@ export const fonts = {
  * another font scale.
  */
 export const typography = {
+  /** Short, non-essential overlines only. Never use for actions or status. */
   eyebrow: {
     fontFamily: fonts.bold,
     fontSize: 10,
@@ -48,6 +49,27 @@ export const typography = {
     fontFamily: fonts.semibold,
     fontSize: 13,
     lineHeight: 19,
+  },
+  /** Accessible functional roles for new and migrated UI. */
+  metadata: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  control: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  bodyComfort: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  bodyComfortStrong: {
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+    lineHeight: 20,
   },
   cardTitle: {
     fontFamily: fonts.bold,

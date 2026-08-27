@@ -1,4 +1,4 @@
 export { colors } from './colors';
 export { layout } from './layout';
-export { radius, spacing } from './spacing';
+export { radius, spacing, type RadiusToken, type SpacingToken } from './spacing';
 export { fonts, typography } from './typography';
