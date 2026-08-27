@@ -31,7 +31,6 @@ import {
   ProbabilityBar,
   ProjectionMeta,
   RelatedMatches,
-  RiskCell,
   formatMatchDate,
   formatTime,
 } from './MatchCenterSections';
@@ -81,6 +80,7 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
   const prediction = data?.prediction ?? null;
   const phase = match ? matchPhase(match) : null;
   const open = Boolean(match && predictionIsOpen(match));
+  const predictionPickerOpen = Boolean(open && !prediction && projection?.choix?.length);
 
   const choiceA = useMemo(
     () => projection?.choix?.find((choice) => choice.cle === 'a') ?? null,
@@ -99,6 +99,21 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
       idempotencyKey: `match:${match.id}:view`,
     }).catch(() => undefined);
   }, [match?.id, previewData, session?.user.id]);
+
+  function selectPrediction(choice: 'a' | 'b') {
+    if (!previewData && match?.id && callStartedRef.current !== match.id) {
+      callStartedRef.current = match.id;
+      void trackAnalyticsEvent({
+        type: 'call_commence',
+        idempotencyKey: `match:${match.id}:call-started`,
+      }).catch(() => {
+        if (callStartedRef.current === match.id) callStartedRef.current = null;
+      });
+    }
+    setSelected(choice);
+    setSubmitError(null);
+    setWebConfirmationOpen(false);
+  }
 
   async function confirmPrediction() {
     if (!match || !selected || !selectedChoice || submitting) return;
@@ -177,10 +192,12 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
       >
         <View style={styles.topBar}>
           <Pressable accessibilityLabel={`Retour ${duelToken ? 'au duel' : 'à l’Arena'}`} accessibilityRole="button" onPress={returnToArena} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
-            <Text style={styles.backArrow}>←</Text>
-            <Text style={styles.backText}>{duelToken ? 'DUEL' : 'ARENA'}</Text>
+            <Text style={[styles.backArrow, predictionPickerOpen && styles.pickerBackArrow]}>←</Text>
+            <Text style={[styles.backText, predictionPickerOpen && styles.pickerBackText]}>
+              {predictionPickerOpen && match ? `${match.tag_a} VS ${match.tag_b}` : duelToken ? 'DUEL' : 'ARENA'}
+            </Text>
           </Pressable>
-          <GriffLockup width={92} />
+          {predictionPickerOpen ? null : <GriffLockup width={92} />}
         </View>
 
         {loading ? <LoadingCard /> : null}
@@ -195,73 +212,66 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
 
         {match ? (
           <>
-            <View style={styles.hero}>
-              <View style={styles.heroAccent} />
-              <View style={styles.metaRow}>
-                <View style={styles.metaLeft}>
-                  <View style={styles.gameDot} />
-                  <Text style={styles.metaText}>{gameLabel(match.jeu)}</Text>
-                  <Text style={styles.metaDivider}>·</Text>
-                  <Text numberOfLines={1} style={styles.eventText}>{match.evenement}</Text>
-                </View>
-                <View style={styles.boPill}><Text style={styles.boText}>BO{match.format}</Text></View>
-              </View>
-
-              <Text style={[styles.dateText, phase === 'live' && styles.dateLive]}>{formatMatchDate(match)}</Text>
-
-              <View style={styles.duel}>
-                <HeroTeam
-                  tag={match.tag_a}
-                  name={match.equipe_a}
-                  probability={choiceA?.proba}
-                  score={match.score_a}
-                  winner={match.statut === 'termine' && Number(match.score_a) > Number(match.score_b)}
-                />
-                <View style={styles.duelCenter}>
-                  <Text style={styles.vsLabel}>{phase === 'finished' ? 'FINAL' : phase === 'cancelled' ? 'ANNULÉ' : phase === 'live' ? 'LIVE' : 'VERSUS'}</Text>
-                  <Text style={styles.vs}>{phase === 'finished' || phase === 'cancelled' ? '—' : 'VS'}</Text>
-                  <Text style={styles.kickoff}>{formatTime(match.debut)}</Text>
-                </View>
-                <HeroTeam
-                  tag={match.tag_b}
-                  name={match.equipe_b}
-                  probability={choiceB?.proba}
-                  score={match.score_b}
-                  winner={match.statut === 'termine' && Number(match.score_b) > Number(match.score_a)}
-                />
-              </View>
-
-              {choiceA && choiceB && phase !== 'finished' && phase !== 'cancelled' ? (
-                <ProbabilityBar a={choiceA} b={choiceB} tagA={match.tag_a} tagB={match.tag_b} />
-              ) : null}
-
-              {projection && phase !== 'finished' && phase !== 'cancelled' ? <ProjectionMeta projection={projection} /> : null}
-            </View>
-
-            <CallContract data={data!} />
-
-            {prediction ? (
-              <LockedPrediction data={data!} />
-            ) : (
+            {predictionPickerOpen ? (
               <PredictionZone
                 data={data!}
                 open={open}
                 selected={selected}
-                onSelect={(choice) => {
-                  if (!previewData && match.id && callStartedRef.current !== match.id) {
-                    callStartedRef.current = match.id;
-                    void trackAnalyticsEvent({
-                      type: 'call_commence',
-                      idempotencyKey: `match:${match.id}:call-started`,
-                    }).catch(() => {
-                      if (callStartedRef.current === match.id) callStartedRef.current = null;
-                    });
-                  }
-                  setSelected(choice);
-                  setSubmitError(null);
-                  setWebConfirmationOpen(false);
-                }}
+                onSelect={selectPrediction}
               />
+            ) : (
+              <>
+                <View style={styles.hero}>
+                  <View style={styles.heroAccent} />
+                  <View style={styles.metaRow}>
+                    <View style={styles.metaLeft}>
+                      <View style={styles.gameDot} />
+                      <Text style={styles.metaText}>{gameLabel(match.jeu)}</Text>
+                      <Text style={styles.metaDivider}>·</Text>
+                      <Text numberOfLines={1} style={styles.eventText}>{match.evenement}</Text>
+                    </View>
+                    <View style={styles.boPill}><Text style={styles.boText}>BO{match.format}</Text></View>
+                  </View>
+
+                  <Text style={[styles.dateText, phase === 'live' && styles.dateLive]}>{formatMatchDate(match)}</Text>
+
+                  <View style={styles.duel}>
+                    <HeroTeam
+                      tag={match.tag_a}
+                      name={match.equipe_a}
+                      probability={choiceA?.proba}
+                      score={match.score_a}
+                      winner={match.statut === 'termine' && Number(match.score_a) > Number(match.score_b)}
+                    />
+                    <View style={styles.duelCenter}>
+                      <Text style={styles.vsLabel}>{phase === 'finished' ? 'FINAL' : phase === 'cancelled' ? 'ANNULÉ' : phase === 'live' ? 'LIVE' : 'VERSUS'}</Text>
+                      <Text style={styles.vs}>{phase === 'finished' || phase === 'cancelled' ? '—' : 'VS'}</Text>
+                      <Text style={styles.kickoff}>{formatTime(match.debut)}</Text>
+                    </View>
+                    <HeroTeam
+                      tag={match.tag_b}
+                      name={match.equipe_b}
+                      probability={choiceB?.proba}
+                      score={match.score_b}
+                      winner={match.statut === 'termine' && Number(match.score_b) > Number(match.score_a)}
+                    />
+                  </View>
+
+                  {choiceA && choiceB && phase !== 'finished' && phase !== 'cancelled' ? (
+                    <ProbabilityBar a={choiceA} b={choiceB} tagA={match.tag_a} tagB={match.tag_b} />
+                  ) : null}
+
+                  {projection && phase !== 'finished' && phase !== 'cancelled' ? <ProjectionMeta projection={projection} /> : null}
+                </View>
+
+                <CallContract data={data!} />
+
+                {prediction ? (
+                  <LockedPrediction data={data!} />
+                ) : (
+                  <PredictionZone data={data!} open={open} selected={selected} onSelect={selectPrediction} />
+                )}
+              </>
             )}
 
             {prediction && duelToken ? (
@@ -287,26 +297,6 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
 
             {selectedChoice && !prediction ? (
               <View style={styles.ticket}>
-                <View style={styles.ticketTop}>
-                  <View>
-                    <Text style={styles.ticketEyebrow}>TON PRONOSTIC CLASSÉ</Text>
-                    <Text style={styles.ticketTeam}>{selected === 'a' ? match.equipe_a : match.equipe_b}</Text>
-                  </View>
-                  <View style={styles.lockMark}><Text style={styles.lockMarkText}>✓</Text></View>
-                </View>
-
-                <View style={styles.riskRow}>
-                  <RiskCell label="SI CORRECT" value={`+${Math.abs(selectedChoice.gain)}`} positive />
-                  <View style={styles.riskDivider} />
-                  <RiskCell label="SI FAUX" value={`−${Math.abs(selectedChoice.perte)}`} />
-                </View>
-
-                <Text style={styles.ticketHint}>
-                  {projection?.placements_restants
-                    ? `${projection.placements_restants} placement${projection.placements_restants > 1 ? 's' : ''} restant${projection.placements_restants > 1 ? 's' : ''}.`
-                    : 'Rating établi.'} Aucun Frag n’est engagé ni dépensé.
-                </Text>
-
                 {submitError ? <View style={styles.submitError}><Text style={styles.submitErrorTitle}>PRONOSTIC NON ENREGISTRÉ</Text><Text style={styles.submitErrorCopy}>{submitError}</Text></View> : null}
 
                 {Platform.OS === 'web' && webConfirmationOpen && selected ? (
@@ -340,12 +330,25 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
                     onPress={() => void confirmPrediction()}
                     style={({ pressed }) => [styles.confirmButton, pressed && styles.confirmPressed, submitting && styles.disabled]}
                   >
-                    <Text style={styles.confirmText}>{submitting ? 'VERROUILLAGE…' : 'VERROUILLER MON PRONOSTIC'}</Text>
+                    <Text style={styles.confirmText}>{submitting ? 'VERROUILLAGE…' : 'VERROUILLER MON CALL'}</Text>
                     <Text style={styles.confirmArrow}>→</Text>
                   </Pressable>
                 )}
+                <Pressable
+                  accessibilityLabel="Modifier mon choix plus tard"
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setSelected(null);
+                    setWebConfirmationOpen(false);
+                  }}
+                  style={({ pressed }) => [styles.deferButton, pressed && styles.confirmPressed]}
+                >
+                  <Text style={styles.deferText}>Modifier plus tard</Text>
+                </Pressable>
               </View>
             ) : null}
+
+            {predictionPickerOpen ? <CallContract data={data!} /> : null}
 
             <View style={styles.infoCard}>
               <Text style={styles.infoEyebrow}>COMMENT ÇA MARCHE</Text>

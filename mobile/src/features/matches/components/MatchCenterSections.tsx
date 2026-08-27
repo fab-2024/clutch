@@ -1,10 +1,16 @@
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import Check from 'lucide-react-native/icons/check';
+import Lock from 'lucide-react-native/icons/lock';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
+import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
+import { colors } from '@/src/theme';
 
 import type { ArenaMatch, MatchCenterData, MatchProjection, ProjectionChoice } from '../types';
-import { gameLabel, matchPhase } from '../utils';
+import { formatPredictionCountdown, gameLabel, matchPhase } from '../utils';
 import { styles } from './MatchCenterScreen.styles';
 
 export function PredictionZone({
@@ -19,6 +25,7 @@ export function PredictionZone({
   onSelect: (choice: 'a' | 'b') => void;
 }) {
   const { match, projection } = data;
+  const lockCountdown = useLockCountdown(data.callContext.ferme_le);
 
   if (match.statut === 'termine') {
     return <ClosedState eyebrow="VERDICT" title="Le match est terminé." copy="Le résultat est figé. Ton historique conserve le delta Frags associé." />;
@@ -35,15 +42,37 @@ export function PredictionZone({
 
   const a = projection.choix.find((choice) => choice.cle === 'a');
   const b = projection.choix.find((choice) => choice.cle === 'b');
+  const selectedProjection = selected === 'a' ? a : selected === 'b' ? b : null;
+  const selectedTag = selected === 'a' ? match.tag_a : selected === 'b' ? match.tag_b : null;
 
   return (
     <View style={styles.market}>
-      <Text style={styles.marketEyebrow}>PRONOSTIC CLASSÉ</Text>
-      <Text style={styles.marketTitle}>Qui remporte le match ?</Text>
-      <Text style={styles.marketCopy}>Choisis un camp. Tu vois le risque exact avant de verrouiller.</Text>
+      <Text style={styles.marketTitle}>QUI GAGNE CE BO{match.format} ?</Text>
       <View style={styles.choiceGrid}>
         {a ? <ChoiceCard choice="a" team={match.equipe_a} tag={match.tag_a} projection={a} selected={selected === 'a'} onPress={() => onSelect('a')} /> : null}
         {b ? <ChoiceCard choice="b" team={match.equipe_b} tag={match.tag_b} projection={b} selected={selected === 'b'} onPress={() => onSelect('b')} /> : null}
+      </View>
+
+      {selectedProjection && selectedTag ? (
+        <View style={styles.selectionOutcome}>
+          <View style={styles.selectionOutcomeHeader}>
+            <Text style={styles.selectionOutcomeEyebrow}>TON CALL · {selectedTag}</Text>
+            <Text style={styles.selectionOutcomeMeta}>IMPACT SUR TON RATING</Text>
+          </View>
+          <View style={styles.riskRow}>
+            <RiskCell label="À GAGNER" value={`+${Math.abs(selectedProjection.gain)}`} positive />
+            <View style={styles.riskDivider} />
+            <RiskCell label="À PERDRE" value={`−${Math.abs(selectedProjection.perte)}`} />
+          </View>
+        </View>
+      ) : (
+        <Text style={styles.marketCopy}>Sélectionne une équipe pour afficher exactement ce que ton call peut te faire gagner ou perdre.</Text>
+      )}
+
+      <View style={styles.lockCountdown}>
+        <Lock color={colors.textMuted} size={14} strokeWidth={1.8} />
+        <Text style={styles.lockCountdownLabel}>VERROUILLAGE DANS</Text>
+        <Text style={styles.lockCountdownValue}>{lockCountdown}</Text>
       </View>
     </View>
   );
@@ -64,29 +93,53 @@ function ChoiceCard({
   selected: boolean;
   onPress: () => void;
 }) {
+  const [focused, setFocused] = useState(false);
+
   return (
     <Pressable
       accessibilityLabel={`Choisir ${team}, ${Math.round(Number(projection.proba) * 100)} pour cent, gain ${Math.abs(projection.gain)} Frags, perte ${Math.abs(projection.perte)} Frags`}
       accessibilityHint={`Camp ${choice.toUpperCase()}`}
       accessibilityRole="button"
       accessibilityState={{ selected }}
+      onBlur={() => setFocused(false)}
+      onFocus={() => setFocused(true)}
       onPress={onPress}
-      style={({ pressed }) => [styles.choice, selected && styles.choiceSelected, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.choice, focused && styles.choiceFocused, selected && styles.choiceSelected, pressed && styles.pressed]}
     >
-      <View style={[styles.choiceMark, selected && styles.choiceMarkSelected]}>
-        <Text style={[styles.choiceTag, selected && styles.choiceTagSelected]}>{tag}</Text>
+      <LinearGradient
+        colors={selected ? ['#27300D', '#11170C', '#080D11'] : ['#151B21', '#0C1217', '#080C10']}
+        end={{ x: .8, y: 1 }}
+        pointerEvents="none"
+        start={{ x: .2, y: 0 }}
+        style={styles.choiceGradient}
+      />
+      {selected ? <View style={styles.choiceCheck}><Check color="#080B0F" size={15} strokeWidth={3.2} /></View> : null}
+      <View style={styles.choiceLogo}>
+        <TeamLogo
+          accent={selected ? colors.volt : '#DDE5EC'}
+          contentScale={1.2}
+          frameless
+          name={team}
+          size={112}
+          tag={tag}
+        />
       </View>
-      <Text numberOfLines={2} style={styles.choiceTeam}>{team}</Text>
-      <Text style={styles.choiceProbability}>{Math.round(Number(projection.proba) * 100)}%</Text>
-      <View style={styles.choiceRisk}>
-        <Text style={styles.choiceGain}>+{Math.abs(projection.gain)}</Text>
-        <Text style={styles.choiceSlash}>/</Text>
-        <Text style={styles.choiceLoss}>−{Math.abs(projection.perte)}</Text>
-        <CurrencyIcon kind="frags" size={12} />
-        <Text style={styles.choiceFrags}> FRAGS</Text>
-      </View>
+      <Text adjustsFontSizeToFit numberOfLines={1} style={styles.choiceTag}>{tag}</Text>
     </Pressable>
   );
+}
+
+function useLockCountdown(closesAt: string) {
+  const [label, setLabel] = useState(() => formatPredictionCountdown(closesAt));
+
+  useEffect(() => {
+    const update = () => setLabel(formatPredictionCountdown(closesAt));
+    update();
+    const interval = setInterval(update, 1_000);
+    return () => clearInterval(interval);
+  }, [closesAt]);
+
+  return label;
 }
 
 export function LockedPrediction({ data }: { data: MatchCenterData }) {
