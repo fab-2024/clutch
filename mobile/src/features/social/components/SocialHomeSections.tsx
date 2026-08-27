@@ -1,9 +1,11 @@
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import ArrowRight from 'lucide-react-native/icons/arrow-right';
+import ChartNoAxesColumnIncreasing from 'lucide-react-native/icons/chart-no-axes-column-increasing';
 import { useState } from 'react';
 import { Platform, Pressable, Share, StyleSheet, Text, View, type LayoutRectangle } from 'react-native';
 import { useReducedMotion, useSharedValue } from 'react-native-reanimated';
-import Svg, { Path as SvgPath } from 'react-native-svg';
 
 import { publicAppUrl } from '@/src/config/release';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
@@ -210,13 +212,11 @@ export function FactionRelicHero({
             style={({ pressed }) => [styles.rallyButton, pressed && styles.pressed]}
           >
             <LinearGradient
-              colors={['#EEF933', '#D8E91D', '#B8CC12']}
+              colors={['#172013', '#11180F', '#0C120C']}
               end={{ x: 1, y: 1 }}
               start={{ x: 0, y: 0 }}
               style={styles.rallySurface}
             >
-              <View pointerEvents="none" style={[styles.rallyFacet, styles.rallyFacetLeft]} />
-              <View pointerEvents="none" style={[styles.rallyFacet, styles.rallyFacetRight]} />
               <View style={styles.rallyIcon}><SupporterGroupIcon /></View>
               <Text adjustsFontSizeToFit numberOfLines={1} style={styles.rallyText}>{actionTitle}</Text>
             </LinearGradient>
@@ -244,36 +244,39 @@ export function FactionWar({ factions, mine }: { factions: CommunityFaction[]; m
     <View style={styles.warSection}>
       <View style={[styles.sectionHeading, styles.warSectionHeading]}>
         <View style={styles.sectionHeadingCopy}>
-          <Text style={styles.sectionEyebrow}>LA GUERRE DES FACTIONS</Text>
-          <Text style={styles.sectionTitle}>QUI DOMINE LE TERRAIN ?</Text>
+          <Text style={styles.sectionEyebrow}>CLASSEMENT DES FACTIONS</Text>
+          <Text style={styles.sectionTitle}>LES FACTIONS EN TÊTE</Text>
         </View>
-        <View style={styles.livePill}><View style={styles.liveDot} /><Text style={styles.liveText}>24 H</Text></View>
+        <View style={styles.periodPill}><Text style={styles.periodText}>7 J</Text></View>
       </View>
-      <LinearGradient colors={['#101A13', '#0A110E', '#05090A']} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={styles.warArena}>
-        <View pointerEvents="none" style={styles.warArcTop} />
-        <View pointerEvents="none" style={styles.warArcBottom} />
-        <View style={styles.warPodiumRow}>
-          {rows[1] ? <PodiumFaction faction={rows[1]} mine={mine} rank={2} /> : <View style={styles.warPodiumPlaceholder} />}
-          {rows[0] ? <PodiumFaction faction={rows[0]} mine={mine} rank={1} /> : <View style={styles.warPodiumPlaceholder} />}
-          {rows[2] ? <PodiumFaction faction={rows[2]} mine={mine} rank={3} /> : <View style={styles.warPodiumPlaceholder} />}
-        </View>
-      </LinearGradient>
+      <View style={styles.warList}>
+        {rows.map((faction, index) => (
+          <FactionRankRow
+            faction={faction}
+            isLast={index === rows.length - 1}
+            key={faction.equipe_id}
+            mine={mine}
+            rank={index + 1}
+          />
+        ))}
+      </View>
     </View>
   );
 }
 
-function PodiumFaction({
+function FactionRankRow({
   faction,
+  isLast,
   mine,
   rank,
 }: {
   faction: CommunityFaction;
+  isLast: boolean;
   mine: CommunityFaction | null;
-  rank: 1 | 2 | 3;
+  rank: number;
 }) {
   const selected = faction.equipe_id === mine?.equipe_id;
-  const primary = rank === 1;
-  const accent = podiumAccent(faction, rank);
+  const accent = factionAccent(faction, rank);
   const supporterLabel = faction.membres === 1 ? 'supporter' : 'supporters';
 
   return (
@@ -281,45 +284,30 @@ function PodiumFaction({
       accessible
       accessibilityLabel={`${rank}. ${faction.nom}, ${faction.membres} ${supporterLabel}, ${signed(faction.croissance_7j)} en sept jours${selected ? ', ma faction' : ''}`}
       accessibilityRole="summary"
-      style={[styles.warPodiumItem, primary ? styles.warPodiumFirst : styles.warPodiumSide, rank === 3 && styles.warPodiumThird]}
+      style={[
+        styles.warRankRow,
+        !isLast && styles.warRankRowDivider,
+        selected && styles.warRankRowMine,
+      ]}
     >
-      <Text style={[styles.warPodiumRank, primary && styles.warPodiumRankFirst, { color: primary ? colors.volt : accent }]}>#{rank}</Text>
-      <View style={[styles.warOrbitalGlow, primary && styles.warOrbitalGlowFirst, { borderColor: withAlpha(accent, '30'), backgroundColor: withAlpha(accent, '0B') }]}>
-        <View style={[styles.warOrbital, primary && styles.warOrbitalFirst, { borderColor: accent }]}>
-          <Text adjustsFontSizeToFit numberOfLines={1} style={[styles.warPodiumTag, primary && styles.warPodiumTagFirst, { color: accent }]}>{faction.tag}</Text>
+      <Text style={[styles.warRank, rank === 1 && styles.warRankFirst]}>#{rank}</Text>
+      <TeamLogo accent={accent} name={faction.nom} size={40} tag={faction.tag} uri={faction.logo} />
+      <View style={styles.warRankCopy}>
+        <View style={styles.warRankIdentity}>
+          <Text numberOfLines={1} style={styles.warRankName}>{faction.nom}</Text>
+          {selected ? <Text style={styles.warMineLabel}>TA FACTION</Text> : null}
         </View>
-        {primary ? <View style={styles.warCrown}><CrownIcon /></View> : null}
+        <Text style={styles.warRankMeta}>{faction.tag} · {formatNumber(faction.membres)} {supporterLabel}</Text>
       </View>
-      <PodiumTrophyIcon color={accent} />
-      <Text numberOfLines={2} style={styles.warPodiumName}>{faction.nom}</Text>
-      <Text style={styles.warPodiumSupporters}><Text style={styles.warPodiumMembers}>{formatNumber(faction.membres)}</Text> {supporterLabel}</Text>
-      {selected ? (
-        <Text style={styles.warPodiumMine}>MA FACTION · {signed(faction.croissance_7j)}</Text>
-      ) : (
-        <Text style={[styles.warPodiumGrowth, faction.croissance_7j < 0 && styles.warGrowthNegative]}>{signed(faction.croissance_7j)} · 7 J</Text>
-      )}
+      <View style={styles.warGrowthBlock}>
+        <Text style={[styles.warGrowth, faction.croissance_7j < 0 && styles.warGrowthNegative]}>{signed(faction.croissance_7j)}</Text>
+        <Text style={styles.warGrowthLabel}>SUR 7 J</Text>
+      </View>
     </View>
   );
 }
 
-function CrownIcon() {
-  return (
-    <Svg height={18} pointerEvents="none" viewBox="0 0 24 18" width={24}>
-      <SvgPath d="M2 3.5 7 9l5-7 5 7 5-5.5-2 11H4Z" fill="none" stroke="#07100B" strokeLinejoin="round" strokeWidth="2" />
-      <SvgPath d="M5 16h14" fill="none" stroke="#07100B" strokeLinecap="round" strokeWidth="2" />
-    </Svg>
-  );
-}
-
-function PodiumTrophyIcon({ color }: { color: string }) {
-  return (
-    <Svg height={22} pointerEvents="none" viewBox="0 0 24 24" width={22}>
-      <SvgPath d="M8 3h8v5c0 3-1.6 5-4 5s-4-2-4-5Zm0 2H4v2c0 2.4 1.5 4 4.1 4M16 5h4v2c0 2.4-1.5 4-4.1 4M12 13v5m-4 3h8m-6-3h4" fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" />
-    </Svg>
-  );
-}
-
-function podiumAccent(faction: CommunityFaction, rank: 1 | 2 | 3) {
+function factionAccent(faction: CommunityFaction, rank: number) {
   if (rank === 2) return '#AAB7BD';
   if (rank === 3) return '#A68B5D';
   const tag = faction.tag.trim().toUpperCase();
@@ -330,14 +318,11 @@ function podiumAccent(faction: CommunityFaction, rank: 1 | 2 | 3) {
   return colors.volt;
 }
 
-function withAlpha(color: string, alpha: string) {
-  return /^#[0-9a-f]{6}$/i.test(color) ? `${color}${alpha}` : color;
-}
-
 export function FactionMemberRanking({ faction, me }: { faction: CommunityFaction; me: CommunityMe }) {
   const person = me.top_activite.find((activity) => activity.user_id === me.user_id) ?? fallbackActivity(me);
+  const hasWeeklyActivity = me.pronos_7j > 0 || me.gagnes_7j > 0 || me.delta_frags_7j !== 0;
   const placement = me.rang_activite && me.total_activite
-    ? `#${me.rang_activite}/${me.total_activite}`
+    ? `#${me.rang_activite} / ${me.total_activite}`
     : 'EN PLACEMENT';
 
   return (
@@ -347,18 +332,24 @@ export function FactionMemberRanking({ faction, me }: { faction: CommunityFactio
           <Text style={styles.sectionEyebrow}>DANS TA FACTION</Text>
           <Text style={styles.sectionTitle}>TON CLASSEMENT {faction.tag}</Text>
         </View>
-        <Text style={styles.memberPlacement}>{placement}</Text>
+        <Text style={styles.memberPlacement}>{hasWeeklyActivity ? placement : '7 J'}</Text>
       </View>
 
-      <View style={styles.memberList}>
-        <FactionMemberRow person={person} />
-      </View>
-
-      <View style={styles.memberStats}>
-        <MemberStat label="calls · 7 j" value={String(me.pronos_7j)} />
-        <MemberStat label="validés" value={String(me.gagnes_7j)} />
-        <MemberStat label="frags · 7 j" value={signed(me.delta_frags_7j)} featured />
-      </View>
+      {hasWeeklyActivity ? (
+        <View style={styles.memberPanel}>
+          <FactionMemberRow person={person} />
+          <View style={styles.memberPanelDivider} />
+          <View style={styles.memberStats}>
+            <MemberStat label="CALLS" value={String(me.pronos_7j)} />
+            <View style={styles.memberStatDivider} />
+            <MemberStat label="VALIDÉS" value={String(me.gagnes_7j)} />
+            <View style={styles.memberStatDivider} />
+            <MemberStat label="FRAGS" value={signed(me.delta_frags_7j)} featured />
+          </View>
+        </View>
+      ) : (
+        <MemberEmptyState faction={faction} />
+      )}
     </View>
   );
 }
@@ -368,6 +359,29 @@ function MemberStat({ featured = false, label, value }: { featured?: boolean; la
     <View style={styles.memberStat}>
       <Text style={[styles.memberStatValue, featured && styles.memberStatValueFeatured]}>{value}</Text>
       <Text style={styles.memberStatLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function MemberEmptyState({ faction }: { faction: CommunityFaction }) {
+  return (
+    <View style={styles.memberEmpty}>
+      <View style={styles.memberEmptyIcon}>
+        <ChartNoAxesColumnIncreasing color={colors.volt} size={22} strokeWidth={2} />
+      </View>
+      <View style={styles.memberEmptyCopy}>
+        <Text style={styles.memberEmptyTitle}>ENTRE DANS LE CLASSEMENT.</Text>
+        <Text style={styles.memberEmptyText}>Fais ton premier call cette semaine pour apparaître dans le classement {faction.tag}.</Text>
+      </View>
+      <Pressable
+        accessibilityLabel="Faire mon premier call"
+        accessibilityRole="button"
+        onPress={() => router.push('/(tabs)/matches')}
+        style={({ pressed }) => [styles.memberEmptyAction, pressed && styles.pressed]}
+      >
+        <Text style={styles.memberEmptyActionText}>FAIRE MON PREMIER CALL</Text>
+        <ArrowRight color="#080B0D" size={17} strokeWidth={2.2} />
+      </Pressable>
     </View>
   );
 }
@@ -399,7 +413,6 @@ function FactionMemberRow({ person }: { person: CommunityActivity }) {
         <Text numberOfLines={1} style={styles.memberName}>{person.pseudo}</Text>
         <Text style={styles.memberMeta}>Toi</Text>
       </View>
-      <Text style={styles.memberPrecision}>−</Text>
     </View>
   );
 }

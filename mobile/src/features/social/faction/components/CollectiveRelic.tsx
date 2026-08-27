@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from 'expo-router';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Platform, Pressable, Text, View, type LayoutChangeEvent, type LayoutRectangle } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -77,11 +77,11 @@ import RelicPedestal, {
   RelicPedestalBack,
   RelicPedestalFrontLip,
 } from './RelicPedestal';
+import SkiaRelicLayer from './SkiaRelicLayer';
 import type { RelicScenePoint } from './SupporterArrivalOverlay';
 
 const RELIC_ASSET = RELIC_STAGE_ARTWORK.ampoule.asset;
 const ARCH_ASSET = require('../../../../../assets/social/faction-relic-arch.png');
-const SkiaRelicLayer = lazy(() => import('./SkiaRelicLayer'));
 
 const IDLE_DURATION_MS = 6_400;
 const TAP_DURATION_MS = 550;
@@ -1477,29 +1477,27 @@ export default function CollectiveRelic({
 
   const vessel = showAlternateContainer ? alternateVessel : phaseOneVessel;
   const skiaVessel = (
-    <Suspense fallback={vessel}>
-      <View pointerEvents="none" style={styles.vesselCanvas}>
-        <SkiaRelicLayer
-          accent={accent}
-          config={stageArtwork}
-          container={displayForm.container}
-          energy={skiaEnergy}
-          instabilityEnergy={instabilityEnergy}
-          levelLift={persistentLiquidLift}
-          mutation={activeMutation && mutationFromArtwork && mutationToArtwork && mutationFromForm && mutationToForm ? {
-            fromConfig: mutationFromArtwork,
-            fromContainer: mutationFromForm.container,
-            phase: mutationPhase,
-            toConfig: mutationToArtwork,
-            toContainer: mutationToForm.container,
-          } : null}
-          phase={idlePhase}
-          reduceMotion={reduceMotion}
-          supporterPhase={supporterPhase}
-          tapPhase={tapPhase}
-        />
-      </View>
-    </Suspense>
+    <View pointerEvents="none" style={styles.vesselCanvas}>
+      <SkiaRelicLayer
+        accent={accent}
+        config={stageArtwork}
+        container={displayForm.container}
+        energy={skiaEnergy}
+        instabilityEnergy={instabilityEnergy}
+        levelLift={persistentLiquidLift}
+        mutation={activeMutation && mutationFromArtwork && mutationToArtwork && mutationFromForm && mutationToForm ? {
+          fromConfig: mutationFromArtwork,
+          fromContainer: mutationFromForm.container,
+          phase: mutationPhase,
+          toConfig: mutationToArtwork,
+          toContainer: mutationToForm.container,
+        } : null}
+        phase={idlePhase}
+        reduceMotion={reduceMotion}
+        supporterPhase={supporterPhase}
+        tapPhase={tapPhase}
+      />
+    </View>
   );
   const mutationContactWidth = activeMutation && mutationFromArtwork && mutationToArtwork
     ? Math.max(mutationFromArtwork.contactWidth, mutationToArtwork.contactWidth)

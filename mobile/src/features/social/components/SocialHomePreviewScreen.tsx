@@ -2,6 +2,7 @@ import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { previewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import type { RelicAnimationPreset } from '@/src/features/social/faction/components/CollectiveRelic';
@@ -84,6 +85,7 @@ export default function SocialHomePreviewScreen({
   factionHeroVariant?: FactionHeroVariant;
 }) {
   const {
+    activity,
     clean,
     fx,
     fxlab,
@@ -95,6 +97,7 @@ export default function SocialHomePreviewScreen({
     mutationTo: mutationToParam,
     reduced: reducedParam,
   } = useLocalSearchParams<{
+    activity?: string;
     clean?: string;
     fx?: string;
     fxlab?: string;
@@ -160,12 +163,28 @@ export default function SocialHomePreviewScreen({
       ? 0
       : previewProgress.remaining,
   } : undefined;
-  const data = useMemo<CommunityData>(() => ({
-    ...PREVIEW_COMMUNITY,
-    factions: PREVIEW_COMMUNITY.factions.map((faction) => faction.equipe_id === 'kc'
-      ? { ...faction, membres: charge, niveau_atteint: factionProgress(charge).level }
-      : faction),
-  }), [charge]);
+  const data = useMemo<CommunityData>(() => {
+    const moi = activity === 'empty' && PREVIEW_COMMUNITY.moi
+      ? {
+          ...PREVIEW_COMMUNITY.moi,
+          pseudo: 'FabTheTap',
+          pronos_7j: 0,
+          gagnes_7j: 0,
+          delta_frags_7j: 0,
+          rang_activite: 1,
+          total_activite: 1,
+          top_activite: [],
+        }
+      : PREVIEW_COMMUNITY.moi;
+
+    return {
+      ...PREVIEW_COMMUNITY,
+      moi,
+      factions: PREVIEW_COMMUNITY.factions.map((faction) => faction.equipe_id === 'kc'
+        ? { ...faction, membres: charge, niveau_atteint: factionProgress(charge).level }
+        : faction),
+    };
+  }, [activity, charge]);
 
   useEffect(() => {
     if (requestedMutationFrom !== null && requestedMutationTo !== null && requestedMutationTo > requestedMutationFrom) {
@@ -209,7 +228,7 @@ export default function SocialHomePreviewScreen({
     if (previewScenarioTimerRef.current) clearTimeout(previewScenarioTimerRef.current);
   }, []);
 
-  if (!__DEV__) return <Redirect href="/" />;
+  if (!previewRoutesEnabled) return <Redirect href="/" />;
 
   const playMutation = (fromLevel: number, toLevel: number, freezeMs: number | null = null) => {
     const target = communityFormForLevel(toLevel);

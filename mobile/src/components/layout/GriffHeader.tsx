@@ -95,7 +95,7 @@ function Balance({
         kind === 'volts' ? styles.voltsMark : styles.fragsMark,
         compact && styles.balanceMarkCompact,
       ]}>
-        <CurrencyIcon kind={kind} size={compact ? 29 : 24} />
+        <CurrencyIcon kind={kind} size={compact ? 25 : 24} />
       </View>
       <View style={styles.balanceCopy}>
         <Text style={[styles.balanceLabel, compact && styles.balanceLabelCompact]}>{label}</Text>
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
     minHeight: 51,
     flex: 1,
     paddingHorizontal: 6,
-    gap: 7,
+    gap: 5,
     borderWidth: 0,
     borderRadius: 0,
     backgroundColor: 'transparent',
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   fragsMark: { backgroundColor: '#09080F' },
   voltsMark: { backgroundColor: '#090D08' },
   balanceMarkCompact: {
-    width: 31,
+    width: 28,
     height: 36,
     borderRadius: 0,
     backgroundColor: 'transparent',

@@ -1,5 +1,7 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 
+import { previewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
+
 import type { HubData, HubMatch } from '../types';
 import { HubExperience } from './HubScreen';
 
@@ -95,17 +97,35 @@ const PREVIEW_HUB: HubData = {
 
 export default function HubPreviewScreen() {
   const params = useLocalSearchParams<{
+    rank?: string | string[];
     score?: string | string[];
     state?: string | string[];
     teams?: string | string[];
   }>();
-  if (!__DEV__) return <Redirect href="/" />;
+  if (!previewRoutesEnabled) return <Redirect href="/" />;
   const previewState = normalizePreviewState(params.state);
   const previewTeams = normalizePreviewTeams(params.teams);
   const previewScore = normalizePreviewScore(params.score);
   const nextMatch = matchForPreviewState(previewState, previewTeams, previewScore);
+  const placementPreview = (Array.isArray(params.rank) ? params.rank[0] : params.rank) === 'placement';
+  const frags = placementPreview && PREVIEW_HUB.frags
+    ? {
+        ...PREVIEW_HUB.frags,
+        provisoire: true,
+        placements_restants: 3,
+        grade: {
+          ...PREVIEW_HUB.frags.grade,
+          classe: false,
+          progression: 0.4,
+          placements_restants: 3,
+          cle: undefined,
+          libelle: undefined,
+        },
+      }
+    : PREVIEW_HUB.frags;
   const previewHub: HubData = {
     ...PREVIEW_HUB,
+    frags,
     nextMatch,
     nextMatchPrediction: previewState === 'upcoming'
       ? { matchId: nextMatch.id, choice: 'a' }

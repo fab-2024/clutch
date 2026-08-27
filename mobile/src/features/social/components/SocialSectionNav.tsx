@@ -1,4 +1,8 @@
 import { router, usePathname } from 'expo-router';
+import type { LucideIcon } from 'lucide-react-native';
+import Shield from 'lucide-react-native/icons/shield';
+import Swords from 'lucide-react-native/icons/swords';
+import UsersRound from 'lucide-react-native/icons/users-round';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, layout, typography } from '@/src/theme';
@@ -7,14 +11,14 @@ type SocialSectionKey = 'faction' | 'circle' | 'challenges';
 type SocialSubsectionKey = 'friends' | 'requests' | 'leagues' | 'missions' | 'duels';
 
 const SECTIONS: {
-  glyph: string;
   href: string;
+  icon: LucideIcon;
   key: SocialSectionKey;
   label: string;
 }[] = [
-  { key: 'faction', label: 'Faction', glyph: '✦', href: '/(tabs)/social' },
-  { key: 'circle', label: 'Cercle', glyph: '◎', href: '/(tabs)/social/friends' },
-  { key: 'challenges', label: 'Défis', glyph: '⚡', href: '/(tabs)/social/missions' },
+  { key: 'faction', label: 'Faction', icon: Shield, href: '/(tabs)/social' },
+  { key: 'circle', label: 'Cercle', icon: UsersRound, href: '/(tabs)/social/friends' },
+  { key: 'challenges', label: 'Défis', icon: Swords, href: '/(tabs)/social/missions' },
 ];
 
 const SUBSECTIONS: Partial<Record<SocialSectionKey, {
@@ -51,6 +55,7 @@ export default function SocialSectionNav({
       <View style={[styles.rail, refined && styles.railRefined]}>
         {SECTIONS.map((item) => {
           const selected = active === item.key;
+          const Icon = item.icon;
           return (
             <Pressable
               accessibilityLabel={`Ouvrir ${item.label.toLowerCase()}`}
@@ -66,9 +71,8 @@ export default function SocialSectionNav({
                 pressed && styles.pressed,
               ]}
             >
-              <Text style={[styles.glyph, selected && styles.glyphActive]}>{item.glyph}</Text>
+              <Icon color={selected ? colors.volt : '#6F7B87'} size={17} strokeWidth={selected ? 2.2 : 1.8} />
               <Text style={[styles.label, selected && styles.labelActive]}>{item.label}</Text>
-              {selected && refined ? <View pointerEvents="none" style={styles.activeTrace} /> : null}
             </Pressable>
           );
         })}
@@ -123,60 +127,45 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   rail: {
+    minHeight: 48,
+    padding: 4,
+    borderRadius: 17,
     flexDirection: 'row',
-    gap: 8,
+    gap: 4,
+    backgroundColor: '#0A0F14',
+    borderWidth: 1,
+    borderColor: '#202A33',
   },
-  railRefined: { gap: 10 },
+  railRefined: { backgroundColor: '#080D11', borderColor: '#25323A' },
   item: {
     position: 'relative',
     flex: 1,
     minWidth: 0,
-    minHeight: 38,
+    minHeight: 40,
     paddingHorizontal: 10,
-    borderRadius: 14,
+    borderRadius: 13,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 7,
-    backgroundColor: 'rgba(7,12,17,.9)',
-    borderWidth: 1,
-    borderColor: '#25313B',
+    backgroundColor: 'transparent',
   },
   itemRefined: {
-    minHeight: 44,
-    borderRadius: 16,
-    backgroundColor: 'rgba(7,12,17,.7)',
+    minHeight: 40,
+    borderRadius: 13,
   },
   itemActive: {
-    backgroundColor: 'rgba(17,25,23,.96)',
-    borderColor: '#789081',
-    boxShadow: '0 0 16px rgba(115,191,190,.18), 0 0 10px rgba(205,231,58,.1)',
+    backgroundColor: 'rgba(232,255,61,.09)',
   },
   itemActiveRefined: {
-    backgroundColor: 'rgba(14,20,18,.92)',
-    borderColor: '#56685A',
-    boxShadow: 'none',
+    backgroundColor: 'rgba(232,255,61,.08)',
   },
-  activeTrace: {
-    position: 'absolute',
-    width: 36,
-    height: 3,
-    left: '50%',
-    bottom: -8,
-    marginLeft: -18,
-    borderRadius: 2,
-    backgroundColor: colors.volt,
-  },
-  glyph: {
-    color: '#65717D',
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  glyphActive: { color: colors.volt },
   label: {
     ...typography.label,
-    color: '#78838E',
-    letterSpacing: .25,
+    color: '#7F8A95',
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: .15,
   },
   labelActive: { color: colors.volt },
   subRail: {

@@ -1,5 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import Check from 'lucide-react-native/icons/check';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import Medal from 'lucide-react-native/icons/medal';
+import UsersRound from 'lucide-react-native/icons/users-round';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Image,
@@ -12,16 +16,10 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
-import Svg, {
-  Defs,
-  G,
-  LinearGradient as SvgLinearGradient,
-  Path,
-  Stop,
-} from 'react-native-svg';
 
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
+import { GriffProgress } from '@/src/components/ui/GriffProgress';
 import { gradeAccent } from '@/src/features/ranking/grades';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
@@ -189,28 +187,55 @@ function MatchHero({ match, prediction, reduceMotion }: { match: HubMatch; predi
 }
 
 function FactionMissionCard({ loading, mission }: { loading: boolean; mission: HubFactionMission | null }) {
-  const progress = loading || !mission ? 0 : Math.min(100, Math.round((mission.progress / mission.goal) * 100));
   const remaining = mission ? Math.max(0, mission.goal - mission.progress) : 0;
-  const action = mission ? (mission.completed ? 'TERMINÉE' : 'PARTICIPER') : 'REJOINDRE';
+  const missionTitle = loading
+    ? 'LECTURE DE LA FACTION…'
+    : mission
+      ? mission.completed
+        ? 'MISSION ACCOMPLIE.'
+        : `${remaining} CALL${remaining > 1 ? 'S' : ''} À VERROUILLER.`
+      : 'REJOINS UNE FACTION.';
+  const missionMeta = loading
+    ? 'Synchronisation en cours'
+    : mission
+      ? mission.completed
+        ? `${mission.participants} membre${mission.participants > 1 ? 's' : ''} mobilisé${mission.participants > 1 ? 's' : ''}`
+        : mission.participants > 0
+          ? `${mission.participants} participant${mission.participants > 1 ? 's' : ''} aujourd’hui`
+          : 'Sois le premier à participer'
+      : 'Choisis ton équipe pour débloquer les missions';
+  const missionValue = loading || !mission ? 0 : mission.progress;
+  const missionMax = mission?.goal ?? 1;
 
   return (
     <Pressable
-      accessibilityLabel="Ouvrir la mission de faction"
+      accessibilityLabel={`${missionTitle} ${loading || !mission ? '' : `${mission.progress} sur ${mission.goal}.`} Ouvrir la mission de faction.`}
       accessibilityRole="button"
       onPress={() => router.push('/(tabs)/social/faction')}
       style={({ pressed }) => [styles.missionCard, pressed && styles.pressed]}
     >
-      <View style={styles.missionIcon}><View style={styles.missionIconRing}><View style={styles.missionIconCore} /></View></View>
+      <View style={[styles.missionIcon, mission?.completed && styles.missionIconCompleted]}>
+        {mission?.completed ? (
+          <Check color="#0A0E08" size={21} strokeWidth={2.6} />
+        ) : (
+          <UsersRound color={colors.volt} size={21} strokeWidth={2} />
+        )}
+      </View>
       <View style={styles.missionCopy}>
         <View style={styles.missionTop}>
-          <Text style={styles.missionKicker}>MISSION COLLECTIVE · 24 H</Text>
-          <Text style={styles.missionCount}>{loading || !mission ? '—' : `${mission.progress} / ${mission.goal}`}</Text>
+          <Text style={styles.missionKicker}>MISSION DE FACTION · 24 H</Text>
+          <Text style={styles.missionCount}>{loading || !mission ? '—' : `${mission.progress}/${mission.goal}`}</Text>
         </View>
-        <Text numberOfLines={1} style={styles.missionTitle}>{loading ? 'LECTURE DE LA FACTION…' : mission ? (mission.completed ? 'OBJECTIF VALIDÉ.' : `${remaining} CALL${remaining > 1 ? 'S' : ''} À VERROUILLER.`) : 'REJOINS UNE FACTION.'}</Text>
-        <Text numberOfLines={1} style={styles.missionHint}>{mission ? `Ta contribution · ${mission.personalContribution}` : 'Choisis ton équipe pour activer les missions.'}</Text>
+        <Text numberOfLines={1} style={styles.missionTitle}>{missionTitle}</Text>
+        <Text numberOfLines={1} style={styles.missionHint}>{missionMeta}</Text>
         <View style={styles.missionBottom}>
-          <View style={styles.missionTrack}><View style={[styles.missionProgress, { width: `${progress}%` }]} /></View>
-          <View style={[styles.missionAction, mission?.completed && styles.missionActionDone]}><Text style={styles.missionActionText}>{action}</Text></View>
+          <GriffProgress
+            accessibilityLabel="Progression de la mission"
+            max={missionMax}
+            style={styles.missionTrack}
+            value={missionValue}
+          />
+          <ChevronRight color="#7F8A94" size={19} strokeWidth={2} />
         </View>
       </View>
     </Pressable>
@@ -255,8 +280,14 @@ function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }
     : provisional
       ? 'PLACEMENT'
       : grade?.libelle?.toUpperCase() || 'NON CLASSÉ';
-  const frags = loading ? '—' : formatNumber(hub.frags?.frags ?? 0);
+  const frags = loading || !hub.frags ? '—' : formatNumber(hub.frags.frags);
   const accent = provisional || !grade?.classe ? colors.volt : gradeAccent(grade);
+  const placementGoal = grade?.objectif_placements ?? 5;
+  const placementsRemaining = grade?.placements_restants ?? hub.frags?.placements_restants ?? placementGoal;
+  const placementsDone = Math.max(0, placementGoal - placementsRemaining);
+  const seasonContext = provisional
+    ? `${placementsDone}/${placementGoal} MATCHS DE PLACEMENT`
+    : (hub.seasonName?.toUpperCase() ?? 'SAISON EN COURS');
 
   return (
     <Pressable
@@ -265,65 +296,20 @@ function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }
       onPress={() => router.push('/(tabs)/rank')}
       style={({ pressed }) => [styles.seasonCard, pressed && styles.pressed]}
     >
-      <View style={[styles.seasonEmblem, loading && styles.seasonEmblemLoading]}>
-        <SeasonRankMark accent={accent} />
+      <View style={[styles.seasonEmblem, { borderColor: accent }, loading && styles.seasonEmblemLoading]}>
+        <Medal color={accent} size={23} strokeWidth={2} />
       </View>
       <View style={styles.seasonIdentity}>
-        <Text style={styles.seasonKicker}>RANK ACTUEL</Text>
-        <Text adjustsFontSizeToFit minimumFontScale={0.68} numberOfLines={1} style={styles.seasonGrade}>{gradeLabel}</Text>
+        <Text style={styles.seasonKicker}>CLASSEMENT ACTUEL</Text>
+        <Text numberOfLines={1} style={[styles.seasonGrade, { color: accent }]}>{gradeLabel}</Text>
+        <Text numberOfLines={1} style={styles.seasonContext}>{seasonContext}</Text>
       </View>
-      <View style={styles.seasonDivider} />
-      <View style={styles.seasonLevel}>
-        <Text style={styles.seasonKicker}>NIVEAU</Text>
-        <View style={styles.seasonLevelValueRow}>
-          <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={styles.seasonLevelValue}>{frags}</Text>
-          <Text style={styles.seasonLevelUnit}>FRAGS</Text>
-        </View>
+      <View style={styles.seasonMetric}>
+        <Text style={styles.seasonMetricLabel}>RATING FRAGS</Text>
+        <Text adjustsFontSizeToFit minimumFontScale={0.76} numberOfLines={1} style={styles.seasonMetricValue}>{frags}</Text>
       </View>
-      <Text style={styles.seasonArrow}>›</Text>
+      <ChevronRight color="#78838D" size={19} strokeWidth={2} />
     </Pressable>
-  );
-}
-
-function SeasonRankMark({ accent }: { accent: string }) {
-  const chevrons = [
-    'M6 16 L31 0 L58 18 L58 30 L31 12 L6 29 Z',
-    'M6 35 L31 19 L58 37 L58 49 L31 31 L6 48 Z',
-    'M6 54 L31 38 L58 56 L58 68 L31 50 L6 67 Z',
-  ];
-
-  return (
-    <Svg height={56} viewBox="0 0 64 72" width={50}>
-      <Defs>
-        <SvgLinearGradient id="rank-metal" x1="0" x2="1" y1="0" y2="1">
-          <Stop offset="0" stopColor="#F7FAFC" />
-          <Stop offset="0.28" stopColor={accent} />
-          <Stop offset="0.62" stopColor="#68727B" />
-          <Stop offset="1" stopColor="#272D33" />
-        </SvgLinearGradient>
-        <SvgLinearGradient id="rank-edge" x1="0" x2="1" y1="0" y2="0">
-          <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.76} />
-          <Stop offset="0.45" stopColor={accent} stopOpacity={0.72} />
-          <Stop offset="1" stopColor="#11161A" stopOpacity={0.9} />
-        </SvgLinearGradient>
-      </Defs>
-      <G opacity={0.88} transform="translate(0 3)">
-        {chevrons.map((path) => <Path d={path} fill="#020507" key={`shadow-${path}`} />)}
-      </G>
-      {chevrons.map((path) => (
-        <Path
-          d={path}
-          fill="url(#rank-metal)"
-          key={path}
-          stroke="url(#rank-edge)"
-          strokeLinejoin="round"
-          strokeWidth={0.85}
-        />
-      ))}
-      <Path d="M8 17 L31 2 L31 11 L8 27 Z" fill="#FFFFFF" opacity={0.18} />
-      <Path d="M8 36 L31 21 L31 30 L8 46 Z" fill="#FFFFFF" opacity={0.14} />
-      <Path d="M8 55 L31 40 L31 49 L8 65 Z" fill="#FFFFFF" opacity={0.1} />
-    </Svg>
   );
 }
 
@@ -376,22 +362,17 @@ const styles = StyleSheet.create({
   callActionText: { color: '#07090B', fontFamily: fonts.display, fontSize: 21, lineHeight: 23, letterSpacing: .55 },
   callActionTextLocked: { color: colors.volt },
   callActionArrow: { position: 'absolute', right: 20, color: '#07090B', fontSize: 31, lineHeight: 33, fontWeight: '300' },
-  missionCard: { minHeight: 132, marginHorizontal: spacing.md, padding: 13, borderRadius: 21, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#090E12', borderWidth: 1, borderColor: '#29343D' },
-  missionIcon: { width: 58, height: 70, alignItems: 'center', justifyContent: 'center', borderRadius: 16, backgroundColor: '#11170A', borderWidth: 1, borderColor: '#4B5B16' },
-  missionIconRing: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: 17, borderWidth: 3, borderColor: colors.volt },
-  missionIconCore: { width: 15, height: 15, borderRadius: 8, borderWidth: 2, borderColor: colors.volt },
+  missionCard: { minHeight: 118, marginHorizontal: spacing.md, padding: 15, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 13, backgroundColor: '#0C1116', borderWidth: 1, borderColor: '#28323B' },
+  missionIcon: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: 'rgba(232,255,61,.07)', borderWidth: 1, borderColor: 'rgba(232,255,61,.22)' },
+  missionIconCompleted: { backgroundColor: colors.volt, borderColor: colors.volt },
   missionCopy: { flex: 1, minWidth: 0 },
   missionTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  missionKicker: { ...typography.eyebrow, flex: 1, color: colors.textMuted, letterSpacing: .45 },
-  missionCount: { ...typography.label, color: colors.volt },
-  missionTitle: { color: colors.text, fontFamily: fonts.display, marginTop: 4, fontSize: 20, lineHeight: 22, letterSpacing: .1 },
-  missionHint: { ...typography.caption, marginTop: 3, color: colors.textMuted },
-  missionBottom: { marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  missionTrack: { flex: 1, height: 6, overflow: 'hidden', borderRadius: 3, backgroundColor: '#222B32' },
-  missionProgress: { height: '100%', borderRadius: 3, backgroundColor: colors.volt, boxShadow: '0 0 7px rgba(232,255,61,.35)' },
-  missionAction: { minHeight: 34, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: '#0C120D', borderWidth: 1, borderColor: '#596A1A' },
-  missionActionDone: { opacity: .55 },
-  missionActionText: { ...typography.action, color: colors.volt, fontSize: 9, letterSpacing: .3 },
+  missionKicker: { flex: 1, color: '#A0AAB3', fontFamily: fonts.bold, fontSize: 11, lineHeight: 14, letterSpacing: .55 },
+  missionCount: { color: colors.volt, fontFamily: fonts.bold, fontSize: 12, lineHeight: 15 },
+  missionTitle: { color: colors.text, fontFamily: fonts.display, marginTop: 5, fontSize: 21, lineHeight: 23, letterSpacing: .05 },
+  missionHint: { marginTop: 3, color: '#A8B1B9', fontFamily: fonts.body, fontSize: 12, lineHeight: 16 },
+  missionBottom: { marginTop: 11, flexDirection: 'row', alignItems: 'center', gap: 9 },
+  missionTrack: { flex: 1 },
   upNextSection: { gap: 10 },
   sectionHead: { marginHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   sectionKicker: { color: colors.volt, fontFamily: fonts.bold, fontSize: 14, lineHeight: 17, letterSpacing: .5 },
@@ -411,18 +392,16 @@ const styles = StyleSheet.create({
   railDots: { height: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
   railDot: { width: 12, height: 4, borderRadius: 2, backgroundColor: '#263039' },
   railDotActive: { width: 24, backgroundColor: colors.volt },
-  seasonCard: { minHeight: 84, marginHorizontal: spacing.md, paddingHorizontal: 11, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8, overflow: 'hidden', borderRadius: 12, backgroundColor: '#03080B', borderWidth: 1, borderColor: '#3B4850', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.35), 0 8px 24px rgba(0,0,0,.18)' },
-  seasonEmblem: { width: 52, height: 60, alignItems: 'center', justifyContent: 'center' },
+  seasonCard: { minHeight: 88, marginHorizontal: spacing.md, paddingHorizontal: 14, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 11, overflow: 'hidden', borderRadius: 18, backgroundColor: '#0C1116', borderWidth: 1, borderColor: '#28323B' },
+  seasonEmblem: { width: 44, height: 44, flexShrink: 0, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: '#10171C', borderWidth: 1 },
   seasonEmblemLoading: { opacity: .35 },
-  seasonIdentity: { width: 82, minWidth: 0, justifyContent: 'center' },
-  seasonKicker: { color: '#7F8893', fontFamily: fonts.display, fontSize: 10, lineHeight: 12, letterSpacing: .2 },
-  seasonGrade: { marginTop: 5, color: colors.volt, fontFamily: fonts.display, fontSize: 25, lineHeight: 27, letterSpacing: 0 },
-  seasonDivider: { width: 1, height: 47, marginHorizontal: 1, backgroundColor: '#354049' },
-  seasonLevel: { flex: 1, minWidth: 0, justifyContent: 'center' },
-  seasonLevelValueRow: { marginTop: 4, flexDirection: 'row', alignItems: 'baseline', gap: 3 },
-  seasonLevelValue: { flexShrink: 1, color: colors.text, fontFamily: fonts.display, fontSize: 28, lineHeight: 30, letterSpacing: 0 },
-  seasonLevelUnit: { color: '#737C86', fontFamily: fonts.display, fontSize: 8, lineHeight: 11 },
-  seasonArrow: { color: '#B9C0C6', fontSize: 32, lineHeight: 34, fontWeight: '300' },
+  seasonIdentity: { flex: 1, minWidth: 0, justifyContent: 'center' },
+  seasonKicker: { color: '#A0AAB3', fontFamily: fonts.bold, fontSize: 11, lineHeight: 13, letterSpacing: .45 },
+  seasonGrade: { marginTop: 3, fontFamily: fonts.display, fontSize: 23, lineHeight: 25, letterSpacing: .05 },
+  seasonContext: { marginTop: 2, color: '#909BA5', fontFamily: fonts.bold, fontSize: 9, lineHeight: 12, letterSpacing: .25 },
+  seasonMetric: { width: 78, flexShrink: 0, alignItems: 'flex-end', justifyContent: 'center' },
+  seasonMetricLabel: { color: '#929DA7', fontFamily: fonts.bold, fontSize: 9, lineHeight: 12, letterSpacing: .35 },
+  seasonMetricValue: { maxWidth: '100%', marginTop: 3, color: colors.text, fontFamily: fonts.display, fontSize: 26, lineHeight: 28 },
   emptyTicket: { position: 'relative', minHeight: 220, padding: 19, overflow: 'hidden', justifyContent: 'flex-end', borderRadius: 17, backgroundColor: '#080D11', borderWidth: 1, borderColor: '#39444E' },
   emptyKicker: { ...typography.eyebrow, zIndex: 1, color: colors.volt, letterSpacing: 1 },
   emptyTitle: { zIndex: 1, maxWidth: 310, marginTop: 7, color: colors.text, fontFamily: fonts.display, fontSize: 29, lineHeight: 31 },
