@@ -67,7 +67,7 @@ export const Button = forwardRef<View, ButtonProps>(function Button({
   }
 
   return (
-    <Animated.View ref={ref} style={[styles.wrapper, fullWidth && styles.fullWidth, animatedStyle]}>
+    <Animated.View style={[styles.wrapper, fullWidth && styles.fullWidth, animatedStyle]}>
       <Pressable
         accessibilityHint={accessibilityHint}
         accessibilityLabel={accessibilityLabel ?? label}
@@ -77,6 +77,7 @@ export const Button = forwardRef<View, ButtonProps>(function Button({
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
+        ref={ref}
         style={({ pressed }) => [
           styles.base,
           size === 'compact' ? styles.compact : styles.default,

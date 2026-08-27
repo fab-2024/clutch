@@ -1,8 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
-  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -12,14 +10,18 @@ import {
 
 import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { Screen } from '@/src/components/layout/Screen';
+import { Button } from '@/src/components/ui/Button';
+import { StateView } from '@/src/components/ui/StateView';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { createDuel } from '@/src/features/social/duels/api';
+import { errorFeedback, impactFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors } from '@/src/theme';
 
 import { submitRankedPrediction } from '../api';
 import { useMatchCenterData } from '../hooks/useMatchCenterData';
+import { returnFromMatchCenter } from '../matchCenterNavigation';
 import type { MatchCenterData } from '../types';
 import { gameLabel, matchPhase, predictionIsOpen } from '../utils';
 import {
@@ -35,6 +37,7 @@ import {
   formatTime,
 } from './MatchCenterSections';
 import { styles } from './MatchCenterScreen.styles';
+import { PredictionConfirmationSheet } from './PredictionConfirmationSheet';
 
 type MatchCenterScreenProps = {
   previewData?: MatchCenterData;
@@ -57,10 +60,13 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
   const [selected, setSelected] = useState<'a' | 'b' | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [duelBusy, setDuelBusy] = useState(false);
-  const [webConfirmationOpen, setWebConfirmationOpen] = useState(false);
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [restoreConfirmationFocus, setRestoreConfirmationFocus] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [duelError, setDuelError] = useState<string | null>(null);
   const callStartedRef = useRef<string | null>(null);
+  const confirmationTriggerRef = useRef<View>(null);
+  const clearSelectionOnCloseRef = useRef(false);
   const { data, error, load, loading, refreshing } = useMatchCenterData({
     matchId,
     onResolved: refreshEconomy,
@@ -70,9 +76,11 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
 
   useEffect(() => {
     callStartedRef.current = null;
+    clearSelectionOnCloseRef.current = false;
     setSelected(null);
     setSubmitError(null);
-    setWebConfirmationOpen(false);
+    setConfirmationOpen(false);
+    setRestoreConfirmationFocus(true);
   }, [matchId, previewData]);
 
   const match = data?.match ?? null;
@@ -101,6 +109,7 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
   }, [match?.id, previewData, session?.user.id]);
 
   function selectPrediction(choice: 'a' | 'b') {
+    selectionFeedback();
     if (!previewData && match?.id && callStartedRef.current !== match.id) {
       callStartedRef.current = match.id;
       void trackAnalyticsEvent({
@@ -112,55 +121,62 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
     }
     setSelected(choice);
     setSubmitError(null);
-    setWebConfirmationOpen(false);
+    setConfirmationOpen(false);
   }
 
-  async function confirmPrediction() {
+  function reviewPrediction() {
     if (!match || !selected || !selectedChoice || submitting) return;
-    const team = selected === 'a' ? match.equipe_a : match.equipe_b;
-    const confirmation = `${team}\n+${Math.abs(selectedChoice.gain)} Frags si correct · −${Math.abs(selectedChoice.perte)} si faux.`;
-
-    if (Platform.OS === 'web') {
-      setWebConfirmationOpen(true);
-      return;
-    }
-
-    Alert.alert(
-      'Verrouiller ce pronostic ?',
-      confirmation,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Verrouiller',
-          onPress: () => void lockPrediction(match.id, selected),
-        },
-      ],
-    );
+    clearSelectionOnCloseRef.current = false;
+    setRestoreConfirmationFocus(true);
+    setConfirmationOpen(true);
   }
 
   async function lockPrediction(targetMatchId: string, choice: 'a' | 'b') {
-    setWebConfirmationOpen(false);
+    impactFeedback();
     setSubmitting(true);
     setSubmitError(null);
     try {
       await submitRankedPrediction(targetMatchId, choice);
+      successFeedback();
       void trackAnalyticsEvent({
         type: 'call_verrouille',
         idempotencyKey: `match:${targetMatchId}:call-locked`,
       }).catch(() => undefined);
-      setSelected(null);
+      clearSelectionOnCloseRef.current = true;
+      setRestoreConfirmationFocus(false);
+      setConfirmationOpen(false);
       await load();
       if (duelToken) {
         router.replace({ pathname: '/duel/[token]', params: { token: duelToken } });
       }
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'Réessaie dans un instant.';
+      errorFeedback();
       setSubmitError(message);
-      if (Platform.OS !== 'web') Alert.alert('Pronostic impossible', message);
     } finally {
       setSubmitting(false);
     }
   }
+
+  const closeConfirmation = useCallback(() => {
+    clearSelectionOnCloseRef.current = false;
+    setRestoreConfirmationFocus(true);
+    setConfirmationOpen(false);
+  }, []);
+
+  const changeChoiceFromConfirmation = useCallback(() => {
+    clearSelectionOnCloseRef.current = true;
+    setRestoreConfirmationFocus(false);
+    setConfirmationOpen(false);
+  }, []);
+
+  const finishConfirmationClose = useCallback(() => {
+    if (clearSelectionOnCloseRef.current) {
+      setSelected(null);
+      setSubmitError(null);
+    }
+    clearSelectionOnCloseRef.current = false;
+  }, []);
 
   async function launchDuel() {
     if (!match || duelBusy) return;
@@ -174,11 +190,7 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
   }
 
   function returnToArena() {
-    if (duelToken) {
-      router.replace({ pathname: '/duel/[token]', params: { token: duelToken } });
-      return;
-    }
-    router.replace('/(tabs)/matches');
+    returnFromMatchCenter(duelToken);
   }
 
   return (
@@ -191,10 +203,10 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topBar}>
-          <Pressable accessibilityLabel={`Retour ${duelToken ? 'au duel' : 'à l’Arena'}`} accessibilityRole="button" onPress={returnToArena} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
+          <Pressable accessibilityLabel={duelToken ? 'Retour au duel' : 'Revenir à l’écran précédent'} accessibilityRole="button" onPress={returnToArena} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
             <Text style={[styles.backArrow, predictionPickerOpen && styles.pickerBackArrow]}>←</Text>
             <Text style={[styles.backText, predictionPickerOpen && styles.pickerBackText]}>
-              {predictionPickerOpen && match ? `${match.tag_a} VS ${match.tag_b}` : duelToken ? 'DUEL' : 'ARENA'}
+              {predictionPickerOpen && match ? `${match.tag_a} VS ${match.tag_b}` : duelToken ? 'DUEL' : 'RETOUR'}
             </Text>
           </Pressable>
           {predictionPickerOpen ? null : <GriffLockup width={92} />}
@@ -203,11 +215,13 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
         {loading ? <LoadingCard /> : null}
 
         {error ? (
-          <View style={styles.errorCard}>
-            <Text style={styles.errorTitle}>Match Center indisponible</Text>
-            <Text style={styles.errorCopy}>{error}</Text>
-            <Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable>
-          </View>
+          <StateView
+            action={{ label: 'RÉESSAYER', onPress: () => void load() }}
+            compact
+            description={error}
+            title="Match Center indisponible"
+            variant="error"
+          />
         ) : null}
 
         {match ? (
@@ -298,53 +312,24 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
             {selectedChoice && !prediction ? (
               <View style={styles.ticket}>
                 {submitError ? <View style={styles.submitError}><Text style={styles.submitErrorTitle}>PRONOSTIC NON ENREGISTRÉ</Text><Text style={styles.submitErrorCopy}>{submitError}</Text></View> : null}
-
-                {Platform.OS === 'web' && webConfirmationOpen && selected ? (
-                  <View style={styles.webConfirmation}>
-                    <Text style={styles.webConfirmationTitle}>CONFIRMER CE PRONOSTIC ?</Text>
-                    <Text style={styles.webConfirmationCopy}>
-                      {selected === 'a' ? match.equipe_a : match.equipe_b} · +{Math.abs(selectedChoice.gain)} si correct · −{Math.abs(selectedChoice.perte)} si faux.
-                    </Text>
-                    <View style={styles.webConfirmationActions}>
-                      <Pressable
-                        accessibilityRole="button"
-                        onPress={() => setWebConfirmationOpen(false)}
-                        style={({ pressed }) => [styles.webCancelButton, pressed && styles.confirmPressed]}
-                      >
-                        <Text style={styles.webCancelText}>ANNULER</Text>
-                      </Pressable>
-                      <Pressable
-                        accessibilityRole="button"
-                        disabled={submitting}
-                        onPress={() => void lockPrediction(match.id, selected)}
-                        style={({ pressed }) => [styles.webLockButton, pressed && styles.confirmPressed, submitting && styles.disabled]}
-                      >
-                        <Text style={styles.webLockText}>{submitting ? 'VERROUILLAGE…' : 'VERROUILLER'}</Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                ) : (
-                  <Pressable
-                    accessibilityRole="button"
-                    disabled={submitting}
-                    onPress={() => void confirmPrediction()}
-                    style={({ pressed }) => [styles.confirmButton, pressed && styles.confirmPressed, submitting && styles.disabled]}
-                  >
-                    <Text style={styles.confirmText}>{submitting ? 'VERROUILLAGE…' : 'VERROUILLER MON CALL'}</Text>
-                    <Text style={styles.confirmArrow}>→</Text>
-                  </Pressable>
-                )}
-                <Pressable
-                  accessibilityLabel="Modifier mon choix plus tard"
-                  accessibilityRole="button"
+                <Button
+                  accessibilityHint="Ouvre le récapitulatif avant le verrouillage définitif"
+                  fullWidth
+                  label="VERROUILLER MON CALL"
+                  onPress={reviewPrediction}
+                  ref={confirmationTriggerRef}
+                  testID="prediction-review-trigger"
+                />
+                <Button
+                  fullWidth
+                  label="CHANGER MON CHOIX"
                   onPress={() => {
                     setSelected(null);
-                    setWebConfirmationOpen(false);
+                    setSubmitError(null);
                   }}
-                  style={({ pressed }) => [styles.deferButton, pressed && styles.confirmPressed]}
-                >
-                  <Text style={styles.deferText}>Modifier plus tard</Text>
-                </Pressable>
+                  size="compact"
+                  variant="ghost"
+                />
               </View>
             ) : null}
 
@@ -362,6 +347,23 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
           </>
         ) : null}
       </ScrollView>
+
+      {match && selected && selectedChoice ? (
+        <PredictionConfirmationSheet
+          error={submitError}
+          gain={selectedChoice.gain}
+          loss={selectedChoice.perte}
+          onChangeChoice={changeChoiceFromConfirmation}
+          onClose={closeConfirmation}
+          onClosed={finishConfirmationClose}
+          onConfirm={() => void lockPrediction(match.id, selected)}
+          returnFocusRef={restoreConfirmationFocus ? confirmationTriggerRef : undefined}
+          submitting={submitting}
+          teamName={selected === 'a' ? match.equipe_a : match.equipe_b}
+          teamTag={selected === 'a' ? match.tag_a : match.tag_b}
+          visible={confirmationOpen}
+        />
+      ) : null}
     </Screen>
   );
 }

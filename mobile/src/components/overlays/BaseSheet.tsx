@@ -56,14 +56,14 @@ export function BaseSheet({
 }: BaseSheetProps) {
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
-  const titleRef = useRef<Text>(null);
+  const titleRef = useRef<View>(null);
   const [rendered, setRendered] = useState(visible);
+  const [titleFocused, setTitleFocused] = useState(false);
   const progress = useSharedValue(visible ? 1 : 0);
 
   const finishClose = useCallback(() => {
     setRendered(false);
-    const returnHandle = findNodeHandle(returnFocusRef?.current ?? null);
-    if (returnHandle != null) AccessibilityInfo.setAccessibilityFocus(returnHandle);
+    focusAccessibilityTarget(returnFocusRef?.current ?? null);
     onClosed?.();
   }, [onClosed, returnFocusRef]);
 
@@ -96,8 +96,7 @@ export function BaseSheet({
   }, [dismissible, onClose]);
 
   const focusTitle = useCallback(() => {
-    const titleHandle = findNodeHandle(titleRef.current);
-    if (titleHandle != null) AccessibilityInfo.setAccessibilityFocus(titleHandle);
+    focusAccessibilityTarget(titleRef.current);
   }, []);
 
   if (!rendered) return null;
@@ -141,7 +140,16 @@ export function BaseSheet({
           <View style={styles.header}>
             <View style={styles.heading}>
               {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-              <Text accessibilityRole="header" ref={titleRef} style={styles.title}>{title}</Text>
+              <Pressable
+                accessibilityRole="header"
+                onBlur={() => setTitleFocused(false)}
+                onFocus={() => setTitleFocused(true)}
+                ref={titleRef}
+                style={[styles.titleFocusTarget, titleFocused && styles.titleFocused]}
+                tabIndex={-1}
+              >
+                <Text style={styles.title}>{title}</Text>
+              </Pressable>
             </View>
             <Pressable
               accessibilityLabel={`Fermer ${title}`}
@@ -231,6 +239,16 @@ const styles = StyleSheet.create({
     ...typography.sectionTitle,
     color: colors.text,
   },
+  titleFocusTarget: {
+    alignSelf: 'flex-start',
+  },
+  titleFocused: {
+    borderRadius: 4,
+    outlineColor: colors.focus,
+    outlineOffset: 2,
+    outlineStyle: 'solid',
+    outlineWidth: 2,
+  },
   close: {
     width: layout.minTouchTarget,
     height: layout.minTouchTarget,
@@ -269,3 +287,14 @@ const sizeStyles: Record<BaseSheetSize, object> = {
   medium: styles.medium,
   large: styles.large,
 };
+
+function focusAccessibilityTarget(target: View | null) {
+  if (!target) return;
+  if (Platform.OS === 'web') {
+    (target as View & { focus?: () => void }).focus?.();
+    return;
+  }
+
+  const handle = findNodeHandle(target);
+  if (handle != null) AccessibilityInfo.setAccessibilityFocus(handle);
+}

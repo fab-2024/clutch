@@ -3,7 +3,7 @@ import { Redirect } from 'expo-router';
 import type { MatchCenterData } from '../types';
 import MatchCenterScreen from './MatchCenterScreen';
 
-const PREVIEW_MATCH_CENTER: MatchCenterData = {
+export const PREVIEW_MATCH_CENTER: MatchCenterData = {
   match: {
     id: 'preview-open-g2-fnc',
     saison_id: 'preview-season',
