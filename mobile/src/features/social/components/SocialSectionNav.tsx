@@ -8,7 +8,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, layout, typography } from '@/src/theme';
 
 type SocialSectionKey = 'faction' | 'circle' | 'challenges';
-type SocialSubsectionKey = 'friends' | 'requests' | 'leagues' | 'missions' | 'duels';
+type SocialSubsectionKey = 'friends' | 'leagues' | 'missions' | 'duels';
 
 const SECTIONS: {
   href: string;
@@ -28,7 +28,6 @@ const SUBSECTIONS: Partial<Record<SocialSectionKey, {
 }[]>> = {
   circle: [
     { key: 'friends', label: 'Amis', href: '/(tabs)/social/friends' },
-    { key: 'requests', label: 'Demandes', href: '/(tabs)/social/requests' },
     { key: 'leagues', label: 'Ligue', href: '/(tabs)/social/leagues' },
   ],
   challenges: [
@@ -108,8 +107,7 @@ function sectionFromPath(pathname: string): SocialSectionKey {
 }
 
 function subsectionFromPath(pathname: string): SocialSubsectionKey | null {
-  if (pathname.includes('/social/friends')) return 'friends';
-  if (pathname.includes('/social/requests')) return 'requests';
+  if (pathname.includes('/social/friends') || pathname.includes('/social/requests')) return 'friends';
   if (pathname.includes('/social/leagues')) return 'leagues';
   if (pathname.includes('/social/missions')) return 'missions';
   if (pathname.includes('/social/duels')) return 'duels';

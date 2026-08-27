@@ -18,17 +18,16 @@ import type { CircleWeeklyData, CircleWeeklyRow, FriendRow, FriendsData, PlayerS
 
 const EMPTY: FriendsData = { amis: [], recues: [], envoyees: [], weekly: null };
 const RANKING_PAGE_SIZE = 10;
-type CircleView = 'friends' | 'requests';
 
 export default function FriendsScreen() {
-  return <CirclePeopleScreen view="friends" />;
+  return <CirclePeopleScreen />;
 }
 
 export function FriendRequestsScreen() {
-  return <CirclePeopleScreen view="requests" />;
+  return <CirclePeopleScreen />;
 }
 
-function CirclePeopleScreen({ view }: { view: CircleView }) {
+function CirclePeopleScreen() {
   const [data, setData] = useState<FriendsData>(EMPTY);
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<PlayerSearchRow[]>([]);
@@ -71,7 +70,6 @@ function CirclePeopleScreen({ view }: { view: CircleView }) {
   }, []);
 
   useEffect(() => {
-    if (view !== 'friends') return undefined;
     const value = search.trim();
     if (value.length < 2) {
       searchRequest.current += 1;
@@ -82,7 +80,7 @@ function CirclePeopleScreen({ view }: { view: CircleView }) {
     }
     const timer = setTimeout(() => { void runSearch(value); }, 280);
     return () => clearTimeout(timer);
-  }, [runSearch, search, view]);
+  }, [runSearch, search]);
 
   async function act(id: string, kind: 'add' | 'accept' | 'reject' | 'remove' | 'cancel') {
     setBusy(id); setError(null);
@@ -93,7 +91,7 @@ function CirclePeopleScreen({ view }: { view: CircleView }) {
       else await removeFriend(id);
       setConfirmRemoveId(null);
       await load();
-      if (view === 'friends' && search.trim().length >= 2) await runSearch(search.trim());
+      if (search.trim().length >= 2) await runSearch(search.trim());
     } catch (caught) { setError(caught instanceof Error ? caught.message : 'Action impossible.'); }
     finally { setBusy(null); }
   }
@@ -138,98 +136,137 @@ function CirclePeopleScreen({ view }: { view: CircleView }) {
     >
       <View style={styles.intro}>
         <Text style={styles.eyebrow}>SOCIAL // TON CERCLE</Text>
-        <Text style={styles.title}>{view === 'friends' ? 'LES GENS DERRIÈRE LES PSEUDOS.' : 'QUI ENTRE DANS TON CERCLE ?'}</Text>
-        <Text style={styles.subtitle}>{view === 'friends' ? 'Retrouve tes amis, compare vos ratings et construis vos prochaines rivalités.' : 'Accepte les nouvelles connexions et garde un œil sur les invitations déjà envoyées.'}</Text>
+        <Text style={styles.title}>LES GENS DERRIÈRE LES PSEUDOS.</Text>
+        <Text style={styles.subtitle}>Gère tes amis et tes demandes au même endroit, compare vos ratings et construis vos prochaines rivalités.</Text>
       </View>
 
       {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text></View> : null}
 
-      {view === 'friends' ? (
+      <FriendRequestsInbox
+        busy={busy}
+        data={data}
+        loading={loading}
+        onAccept={(id) => void act(id, 'accept')}
+        onCancel={(id) => void act(id, 'cancel')}
+        onOpen={openProfile}
+        onReject={(id) => void act(id, 'reject')}
+      />
+
+      {loading ? <View style={styles.weeklySkeleton} /> : <WeeklyPerformanceCard weekly={data.weekly} onShare={() => void sharePerformance()} />}
+      {shareMessage ? <Text style={styles.shareMessage}>{shareMessage}</Text> : null}
+
+      <WeeklyRanking weekly={data.weekly} onChallenge={challengePlayer} onOpen={openProfile} />
+
+      <View style={styles.searchShell}>
+        <Text style={styles.searchEyebrow}>TROUVER UN JOUEUR</Text>
+        <Text style={styles.searchTitle}>Ajoute quelqu’un à ton cercle.</Text>
+        <TextInput accessibilityLabel="Chercher un joueur par pseudo" value={search} onChangeText={setSearch} placeholder="Chercher un pseudo…" placeholderTextColor="#596570" style={styles.searchInput} />
+        {searching ? <Text style={styles.searchState}>RECHERCHE…</Text> : null}
+        {searchError ? <Text style={styles.searchError}>{searchError}</Text> : null}
+        {!searching && search.trim().length >= 2 && !searchError && !results.length ? <Text style={styles.searchState}>AUCUN JOUEUR TROUVÉ</Text> : null}
+        {results.map((player) => (
+          <SearchRow
+            key={player.id}
+            player={player}
+            disabled={busy === player.id}
+            onAction={() => void act(
+              player.id,
+              player.relation === 'demande_recue'
+                ? 'accept'
+                : player.relation === 'demande_envoyee'
+                  ? 'cancel'
+                  : 'add',
+            )}
+            onOpen={() => openProfile(player.pseudo)}
+          />
+        ))}
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>TES AMIS</Text><Text style={styles.sectionMeta}>{data.amis.length}</Text></View>
+        {loading ? <View style={styles.skeleton} /> : data.amis.length ? data.amis.map((friend, index) => (
+          <FriendCard
+            key={friend.id}
+            friend={friend}
+            rank={index + 1}
+            disabled={busy === friend.id}
+            confirming={confirmRemoveId === friend.id}
+            onOpen={() => openProfile(friend.pseudo)}
+            onRemove={() => confirmRemoveId === friend.id ? void act(friend.id, 'remove') : setConfirmRemoveId(friend.id)}
+          />
+        )) : <EmptyFriends />}
+      </View>
+    </ScrollView>
+  );
+}
+
+function FriendRequestsInbox({
+  busy,
+  data,
+  loading,
+  onAccept,
+  onCancel,
+  onOpen,
+  onReject,
+}: {
+  busy: string | null;
+  data: FriendsData;
+  loading: boolean;
+  onAccept: (id: string) => void;
+  onCancel: (id: string) => void;
+  onOpen: (pseudo: string) => void;
+  onReject: (id: string) => void;
+}) {
+  const pendingCount = data.recues.length + data.envoyees.length;
+
+  return (
+    <View style={styles.requestsInbox}>
+      <View style={styles.requestsInboxHeading}>
+        <View style={styles.requestsInboxCopy}>
+          <Text style={styles.requestsInboxEyebrow}>DEMANDES</Text>
+          <Text style={styles.requestsInboxTitle}>QUI ENTRE DANS TON CERCLE ?</Text>
+        </View>
+        <View style={styles.requestsInboxCount}>
+          <Text style={styles.requestsInboxCountText}>{loading ? '—' : pendingCount}</Text>
+        </View>
+      </View>
+
+      {loading ? <View style={styles.requestsSkeleton} /> : (
         <>
-          {loading ? <View style={styles.weeklySkeleton} /> : <WeeklyPerformanceCard weekly={data.weekly} onShare={() => void sharePerformance()} />}
-          {shareMessage ? <Text style={styles.shareMessage}>{shareMessage}</Text> : null}
+          {data.recues.length ? (
+            <View style={styles.requestGroup}>
+              <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>REÇUES</Text><Text style={styles.sectionMeta}>{data.recues.length}</Text></View>
+              {data.recues.map((friend) => (
+                <RequestCard
+                  key={friend.id}
+                  friend={friend}
+                  disabled={busy === friend.id}
+                  onAccept={() => onAccept(friend.id)}
+                  onOpen={() => onOpen(friend.pseudo)}
+                  onReject={() => onReject(friend.id)}
+                />
+              ))}
+            </View>
+          ) : null}
 
-          <WeeklyRanking weekly={data.weekly} onChallenge={challengePlayer} onOpen={openProfile} />
-
-          <View style={styles.searchShell}>
-            <Text style={styles.searchEyebrow}>TROUVER UN JOUEUR</Text>
-            <Text style={styles.searchTitle}>Ajoute quelqu’un à ton cercle.</Text>
-            <TextInput accessibilityLabel="Chercher un joueur par pseudo" value={search} onChangeText={setSearch} placeholder="Chercher un pseudo…" placeholderTextColor="#596570" style={styles.searchInput} />
-            {searching ? <Text style={styles.searchState}>RECHERCHE…</Text> : null}
-            {searchError ? <Text style={styles.searchError}>{searchError}</Text> : null}
-            {!searching && search.trim().length >= 2 && !searchError && !results.length ? <Text style={styles.searchState}>AUCUN JOUEUR TROUVÉ</Text> : null}
-            {results.map((player) => (
-              <SearchRow
-                key={player.id}
-                player={player}
-                disabled={busy === player.id}
-                onAction={() => void act(
-                  player.id,
-                  player.relation === 'demande_recue'
-                    ? 'accept'
-                    : player.relation === 'demande_envoyee'
-                      ? 'cancel'
-                      : 'add',
-                )}
-                onOpen={() => openProfile(player.pseudo)}
-              />
-            ))}
-          </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>TES AMIS</Text><Text style={styles.sectionMeta}>{data.amis.length}</Text></View>
-            {loading ? <View style={styles.skeleton} /> : data.amis.length ? data.amis.map((friend, index) => (
-              <FriendCard
-                key={friend.id}
-                friend={friend}
-                rank={index + 1}
-                disabled={busy === friend.id}
-                confirming={confirmRemoveId === friend.id}
-                onOpen={() => openProfile(friend.pseudo)}
-                onRemove={() => confirmRemoveId === friend.id ? void act(friend.id, 'remove') : setConfirmRemoveId(friend.id)}
-              />
-            )) : <EmptyFriends />}
-          </View>
-        </>
-      ) : (
-        <>
-          <View style={styles.hero}>
-            <Text style={styles.heroCount}>{loading ? '—' : data.recues.length}</Text>
-            <Text style={styles.heroLabel}>DEMANDE{data.recues.length > 1 ? 'S' : ''} À TRAITER</Text>
-            <View style={styles.heroLine} />
-            <Text style={styles.heroCopy}>Les demandes reçues restent séparées de ta liste d’amis, pour garder le cercle lisible.</Text>
-          </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>REÇUES</Text><Text style={styles.sectionMeta}>{data.recues.length}</Text></View>
-            {loading ? <View style={styles.skeleton} /> : data.recues.length ? data.recues.map((friend) => (
-              <RequestCard
-                key={friend.id}
-                friend={friend}
-                disabled={busy === friend.id}
-                onAccept={() => void act(friend.id, 'accept')}
-                onOpen={() => openProfile(friend.pseudo)}
-                onReject={() => void act(friend.id, 'reject')}
-              />
-            )) : <EmptyRequests text="Aucune demande reçue pour le moment." />}
-          </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>ENVOYÉES</Text><Text style={styles.sectionMeta}>{data.envoyees.length}</Text></View>
-            {data.envoyees.length ? (
+          {data.envoyees.length ? (
+            <View style={styles.requestGroup}>
+              <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>ENVOYÉES</Text><Text style={styles.sectionMeta}>{data.envoyees.length}</Text></View>
               <View style={styles.pendingCard}>{data.envoyees.slice(0, 8).map((friend) => (
                 <View key={friend.id} style={styles.pendingRow}>
-                  <Pressable accessibilityRole="button" accessibilityLabel={`Voir le profil de ${friend.pseudo}`} onPress={() => openProfile(friend.pseudo)} style={styles.pendingCopy}>
+                  <Pressable accessibilityRole="button" accessibilityLabel={`Voir le profil de ${friend.pseudo}`} onPress={() => onOpen(friend.pseudo)} style={styles.pendingCopy}>
                     <Text style={styles.pendingName}>{friend.pseudo}</Text><Text style={styles.pendingState}>DEMANDE ENVOYÉE</Text>
                   </Pressable>
-                  <Pressable accessibilityRole="button" disabled={busy === friend.id} onPress={() => void act(friend.id, 'cancel')} style={({ pressed }) => [styles.cancel, busy === friend.id && styles.disabled, pressed && styles.pressed]}><Text style={styles.cancelText}>ANNULER</Text></Pressable>
+                  <Pressable accessibilityRole="button" disabled={busy === friend.id} onPress={() => onCancel(friend.id)} style={({ pressed }) => [styles.cancel, busy === friend.id && styles.disabled, pressed && styles.pressed]}><Text style={styles.cancelText}>ANNULER</Text></Pressable>
                 </View>
               ))}</View>
-            ) : <EmptyRequests text="Aucune demande envoyée en attente." />}
-          </View>
+            </View>
+          ) : null}
+
+          {!pendingCount ? <EmptyRequests text="Aucune demande en attente pour le moment." /> : null}
         </>
       )}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -436,7 +473,15 @@ const styles = StyleSheet.create({
   weeklyIdentity: { flex: 1, minWidth: 0, minHeight: 74, flexDirection: 'row', alignItems: 'center', gap: 9 }, weeklyPlayerCopy: { flex: 1, minWidth: 0 }, weeklyPlayerName: { ...typography.bodyStrong, color: colors.text }, weeklyPlayerMeta: { ...typography.caption, marginTop: 3, color: colors.textMuted },
   weeklyDelta: { ...typography.bodyStrong, minWidth: 32, color: colors.volt, textAlign: 'right' }, weeklyDeltaLoss: { color: '#FF8E99' },
   challengeButton: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#1A220F', borderWidth: 1, borderColor: '#48551F' }, challengeButtonText: { color: colors.volt, fontSize: 17 },
-  hero: { minHeight: 184, padding: 20, borderRadius: 29, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#252E36' }, heroCount: { ...typography.metricLarge, color: colors.text, fontSize: 58, lineHeight: 60, letterSpacing: -3 }, heroLabel: { ...typography.eyebrow, marginTop: 4, color: colors.volt, letterSpacing: .9 }, heroLine: { width: 42, height: 3, marginVertical: 13, backgroundColor: colors.volt }, heroCopy: { ...typography.body, maxWidth: 310, color: colors.textMuted },
+  requestsInbox: { padding: 14, borderRadius: 25, backgroundColor: '#0A100D', borderWidth: 1, borderColor: '#334019', gap: 14 },
+  requestsInboxHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  requestsInboxCopy: { flex: 1, minWidth: 0 },
+  requestsInboxEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .9 },
+  requestsInboxTitle: { ...typography.cardTitle, marginTop: 5, color: colors.text },
+  requestsInboxCount: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: '#18200F', borderWidth: 1, borderColor: '#4B5A20' },
+  requestsInboxCountText: { ...typography.cardTitle, color: colors.volt },
+  requestGroup: { gap: 8 },
+  requestsSkeleton: { height: 112, borderRadius: 20, backgroundColor: '#121A16' },
   section: { gap: 9 }, sectionHeading: { flexDirection: 'row', justifyContent: 'space-between' }, sectionLabel: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .9 }, sectionMeta: { ...typography.label, color: colors.textMuted },
   searchShell: { padding: 17, borderRadius: 25, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, gap: 9 }, searchEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .8 }, searchTitle: { ...typography.cardTitle, color: colors.text }, searchInput: { ...typography.bodyStrong, minHeight: 52, paddingHorizontal: 14, borderRadius: 15, backgroundColor: '#070B0F', borderWidth: 1, borderColor: '#263039', color: colors.text }, searchState: { ...typography.caption, paddingVertical: 5, color: colors.textMuted, textAlign: 'center' }, searchError: { ...typography.body, color: '#FF9AA2' },
   searchRow: { minHeight: 66, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 11, borderRadius: 14, backgroundColor: '#0D1319', borderWidth: 1, borderColor: '#1D2730' }, searchIdentity: { flex: 1, minWidth: 0, minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 10 }, avatarSmall: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E' }, avatarSmallText: { ...typography.label, color: colors.volt }, searchName: { ...typography.bodyStrong, flex: 1, color: colors.text }, searchAction: { minHeight: 40, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: colors.volt }, searchActionSecondary: { backgroundColor: '#11161C', borderWidth: 1, borderColor: '#303A43' }, searchActionText: { ...typography.action, color: '#080A0C' }, searchActionTextSecondary: { color: colors.textMuted }, relation: { ...typography.label, color: colors.textMuted },
