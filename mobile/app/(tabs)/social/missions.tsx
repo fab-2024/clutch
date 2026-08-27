@@ -1,1 +1,1 @@
-export { MissionsScreen as default } from '@/src/features/social/missions';
+export { DuelsScreen as default } from '@/src/features/social/duels';

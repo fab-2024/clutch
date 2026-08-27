@@ -8,7 +8,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, layout, typography } from '@/src/theme';
 
 type SocialSectionKey = 'faction' | 'circle' | 'challenges';
-type SocialSubsectionKey = 'friends' | 'leagues' | 'missions' | 'duels';
+type SocialSubsectionKey = 'friends' | 'leagues' | 'duels';
 
 const SECTIONS: {
   href: string;
@@ -18,7 +18,7 @@ const SECTIONS: {
 }[] = [
   { key: 'faction', label: 'Faction', icon: Shield, href: '/(tabs)/social' },
   { key: 'circle', label: 'Cercle', icon: UsersRound, href: '/(tabs)/social/friends' },
-  { key: 'challenges', label: 'Défis', icon: Swords, href: '/(tabs)/social/missions' },
+  { key: 'challenges', label: 'Défis', icon: Swords, href: '/(tabs)/social/duels' },
 ];
 
 const SUBSECTIONS: Partial<Record<SocialSectionKey, {
@@ -31,7 +31,6 @@ const SUBSECTIONS: Partial<Record<SocialSectionKey, {
     { key: 'leagues', label: 'Ligue', href: '/(tabs)/social/leagues' },
   ],
   challenges: [
-    { key: 'missions', label: 'Missions', href: '/(tabs)/social/missions' },
     { key: 'duels', label: 'Duels', href: '/(tabs)/social/duels' },
   ],
 };
@@ -109,8 +108,7 @@ function sectionFromPath(pathname: string): SocialSectionKey {
 function subsectionFromPath(pathname: string): SocialSubsectionKey | null {
   if (pathname.includes('/social/friends') || pathname.includes('/social/requests')) return 'friends';
   if (pathname.includes('/social/leagues')) return 'leagues';
-  if (pathname.includes('/social/missions')) return 'missions';
-  if (pathname.includes('/social/duels')) return 'duels';
+  if (pathname.includes('/social/missions') || pathname.includes('/social/duels')) return 'duels';
   return null;
 }
 
