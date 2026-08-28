@@ -7,6 +7,7 @@ import type { ComponentType } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { GriffProgress } from '@/src/components/ui/GriffProgress';
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { Surface } from '@/src/components/ui/Surface';
 import { colors, spacing, typography } from '@/src/theme';
 
@@ -93,27 +94,21 @@ export function HubContextSlot({ context, now = Date.now() }: HubContextSlotProp
 export function HubContextSkeleton() {
   return (
     <Surface
-      accessibilityLabel="Chargement du contexte du Hub"
-      accessibilityLiveRegion="polite"
-      accessibilityRole="progressbar"
-      accessibilityState={{ busy: true }}
-      aria-busy
-      accessible
       border="subtle"
       layout={{ minHeight: 148, width: '100%' }}
       padding="md"
       radius="lg"
       tone="low"
     >
-      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.skeletonContent}>
+      <SkeletonGroup label="Chargement du contexte du Hub" style={styles.skeletonContent}>
         <View style={styles.skeletonTop}>
-          <View style={styles.skeletonIcon} />
-          <View style={styles.skeletonEyebrow} />
+          <Skeleton height={40} radius="md" width={40} />
+          <Skeleton height={12} radius="pill" width="36%" />
         </View>
-        <View style={styles.skeletonTitle} />
-        <View style={styles.skeletonCopy} />
-        <View style={styles.skeletonFooter} />
-      </View>
+        <Skeleton height={16} radius="pill" width="72%" />
+        <Skeleton height={12} radius="pill" tone="subtle" width="88%" />
+        <Skeleton height={12} radius="pill" tone="subtle" width="42%" />
+      </SkeletonGroup>
     </Surface>
   );
 }
@@ -370,35 +365,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-  },
-  skeletonIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 16,
-    backgroundColor: colors.surfaceRaised,
-  },
-  skeletonEyebrow: {
-    width: '36%',
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.surfaceRaised,
-  },
-  skeletonTitle: {
-    width: '72%',
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: colors.surfaceRaised,
-  },
-  skeletonCopy: {
-    width: '88%',
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.surfaceRaised,
-  },
-  skeletonFooter: {
-    width: '42%',
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.surfaceRaised,
   },
 });

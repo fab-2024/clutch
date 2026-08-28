@@ -24,12 +24,14 @@ jest.mock('react-native-reanimated', () => {
   return {
     __esModule: true,
     default: { View: ReactNative.View },
-    Easing: { cubic: identity, out: () => identity, quad: identity },
+    cancelAnimation: jest.fn(),
+    Easing: { cubic: identity, inOut: () => identity, out: () => identity, quad: identity },
     FadeIn: { duration: () => undefined },
     runOnJS: (callback: () => void) => callback,
     useAnimatedStyle: (factory: () => object) => factory(),
     useReducedMotion: () => true,
     useSharedValue: (value: number) => ({ value }),
+    withRepeat: (value: number) => value,
     withTiming: (value: number, _config: object, callback?: (finished: boolean) => void) => {
       callback?.(true);
       return value;
@@ -97,6 +99,16 @@ jest.mock('@/src/providers/EconomyProvider', () => ({
 }));
 
 describe('AtelierShopScreen interactions', () => {
+  it('keeps a structured preview in place while the Atelier loads', async () => {
+    const screen = await render(
+      <AtelierShopScreen previewData={makeData(1280)} previewState={{ loading: true }} />,
+    );
+
+    expect(screen.getByRole('progressbar').props.accessibilityLabel).toBe('Chargement de l’aperçu Atelier');
+    expect(screen.getByTestId('atelier-scene-loading')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-scene')).toBeNull();
+  });
+
   it('reviews a purchase before debiting and equips it after confirmation', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 

@@ -10,6 +10,21 @@ jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, 
 jest.mock('lucide-react-native/icons/sparkles', () => ({ __esModule: true, default: 'Sparkles' }));
 jest.mock('lucide-react-native/icons/target', () => ({ __esModule: true, default: 'Target' }));
 jest.mock('lucide-react-native/icons/trophy', () => ({ __esModule: true, default: 'Trophy' }));
+jest.mock('react-native-reanimated', () => {
+  const ReactNative = jest.requireActual('react-native');
+  const identity = (value: number) => value;
+  return {
+    __esModule: true,
+    default: { View: ReactNative.View },
+    cancelAnimation: jest.fn(),
+    Easing: { inOut: () => identity, quad: identity },
+    useAnimatedStyle: (factory: () => object) => factory(),
+    useReducedMotion: () => true,
+    useSharedValue: (value: number) => ({ value }),
+    withRepeat: (value: number) => value,
+    withTiming: (value: number) => value,
+  };
+});
 
 const NOW = Date.parse('2026-08-28T12:00:00.000Z');
 

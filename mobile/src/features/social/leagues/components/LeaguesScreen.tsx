@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { Skeleton as SkeletonBlock, SkeletonGroup } from '@/src/components/ui/Skeleton';
+import { colors, layout, radius, spacing, typography } from '@/src/theme';
+
 import { createLeague, joinLeague, loadLeagues } from '../api';
 import type { LeagueSummary } from '../types';
-import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
 export default function LeaguesScreen() {
   const [leagues, setLeagues] = useState<LeagueSummary[]>([]);
@@ -115,7 +117,22 @@ function LeagueCard({ league, index }: { league: LeagueSummary; index: number })
   );
 }
 
-function Skeleton() { return <View style={styles.skeleton}>{[0, 1, 2].map((item) => <View key={item} style={styles.skeletonRow} />)}</View>; }
+function Skeleton() {
+  return (
+    <SkeletonGroup label="Chargement des ligues" style={styles.skeleton} testID="leagues-loading">
+      {[0, 1, 2].map((item) => (
+        <View key={item} style={styles.skeletonRow}>
+          <SkeletonBlock height={44} radius="md" width={44} />
+          <View style={styles.skeletonCopy}>
+            <SkeletonBlock height={15} radius="pill" width="62%" />
+            <SkeletonBlock height={9} radius="pill" tone="subtle" width="48%" />
+          </View>
+          <SkeletonBlock height={18} radius="sm" tone="subtle" width={22} />
+        </View>
+      ))}
+    </SkeletonGroup>
+  );
+}
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', padding: spacing.md, paddingBottom: layout.tabBarContentInset, gap: 16 },
@@ -155,5 +172,6 @@ const styles = StyleSheet.create({
   secondaryButtonText: { ...typography.action, color: colors.volt, letterSpacing: .5 },
   pressed: { opacity: 0.72 },
   skeleton: { gap: 9, marginTop: 16 },
-  skeletonRow: { height: 62, borderRadius: 14, backgroundColor: '#10161D' },
+  skeletonRow: { minHeight: 82, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: radius.lg, backgroundColor: '#0C1117', borderWidth: 1, borderColor: '#1D2730' },
+  skeletonCopy: { flex: 1, minWidth: 0, gap: spacing.xs },
 });

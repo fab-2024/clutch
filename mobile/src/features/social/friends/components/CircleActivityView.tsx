@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { StateView } from '@/src/components/ui/StateView';
 import { Surface } from '@/src/components/ui/Surface';
 import { CosmeticAvatar } from '@/src/features/shop/components/CosmeticRenderer';
@@ -56,17 +57,60 @@ export default function CircleActivityView(props: CircleActivityViewProps) {
 
 function CircleActivitySkeleton() {
   return (
-    <View
-      accessibilityLabel="Chargement de l’activité du Cercle"
-      accessibilityRole="progressbar"
-      accessibilityState={{ busy: true }}
+    <SkeletonGroup
+      label="Chargement de l’activité du Cercle"
       style={styles.activity}
       testID="circle-activity-loading"
     >
-      <View style={[styles.skeleton, styles.performanceSkeleton]} />
-      <View style={[styles.skeleton, styles.requestsSkeleton]} />
-      <View style={[styles.skeleton, styles.rankingSkeleton]} />
-    </View>
+      <View style={[styles.skeleton, styles.performanceSkeleton]}>
+        <View style={styles.skeletonHeading}>
+          <Skeleton height={9} radius="pill" width={84} />
+          <Skeleton height={9} radius="pill" tone="subtle" width={74} />
+        </View>
+        <View style={styles.skeletonRank}>
+          <Skeleton height={58} radius="md" width={78} />
+          <Skeleton height={24} radius="sm" tone="subtle" width={88} />
+        </View>
+        <View style={styles.skeletonMetrics}>
+          {[0, 1, 2].map((item) => <Skeleton height={48} key={item} radius="md" width="29%" />)}
+        </View>
+        <Skeleton height={44} radius="md" width="100%" />
+      </View>
+      <View style={[styles.skeleton, styles.requestsSkeleton]}>
+        <View style={styles.skeletonHeading}>
+          <Skeleton height={10} radius="pill" width={112} />
+          <Skeleton height={24} radius="pill" width={34} />
+        </View>
+        <View style={styles.skeletonRequestRow}>
+          <Skeleton height={44} radius="pill" width={44} />
+          <View style={styles.skeletonRequestCopy}>
+            <Skeleton height={14} radius="pill" width="62%" />
+            <Skeleton height={8} radius="pill" tone="subtle" width="42%" />
+          </View>
+          <Skeleton height={38} radius="md" width={84} />
+        </View>
+      </View>
+      <View style={[styles.skeleton, styles.rankingSkeleton]}>
+        <View style={styles.skeletonHeading}>
+          <View style={styles.skeletonRequestCopy}>
+            <Skeleton height={9} radius="pill" width={96} />
+            <Skeleton height={20} radius="sm" width={164} />
+          </View>
+          <Skeleton height={10} radius="pill" tone="subtle" width={54} />
+        </View>
+        {[0, 1, 2].map((item) => (
+          <View key={item} style={styles.skeletonRankingRow}>
+            <Skeleton height={24} radius="sm" width={30} />
+            <Skeleton height={40} radius="pill" width={40} />
+            <View style={styles.skeletonRequestCopy}>
+              <Skeleton height={13} radius="pill" width="58%" />
+              <Skeleton height={8} radius="pill" tone="subtle" width="36%" />
+            </View>
+            <Skeleton height={20} radius="sm" width={48} />
+          </View>
+        ))}
+      </View>
+    </SkeletonGroup>
   );
 }
 
@@ -705,17 +749,29 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSubtle,
   },
   performanceSkeleton: {
-    height: 268,
+    minHeight: 268,
+    padding: spacing.md,
+    justifyContent: 'space-between',
     borderRadius: radius.lg,
   },
   requestsSkeleton: {
-    height: 138,
+    minHeight: 138,
+    padding: spacing.md,
+    justifyContent: 'space-between',
     borderRadius: radius.lg,
   },
   rankingSkeleton: {
-    height: 250,
+    minHeight: 250,
+    padding: spacing.md,
+    gap: spacing.sm,
     borderRadius: radius.lg,
   },
+  skeletonHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  skeletonRank: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm },
+  skeletonMetrics: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  skeletonRequestRow: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  skeletonRequestCopy: { flex: 1, minWidth: 0, gap: spacing.xs },
+  skeletonRankingRow: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   pressed: {
     opacity: 0.76,
   },

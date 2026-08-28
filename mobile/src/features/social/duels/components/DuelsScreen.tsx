@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { StateView } from '@/src/components/ui/StateView';
 import { DuelMissionsSection } from '@/src/features/social/missions/components/DuelMissionsSection';
 import { MissionsSheet } from '@/src/features/social/missions/components/MissionsSheet';
@@ -133,17 +134,7 @@ export default function DuelsScreen({
           <DuelRefreshNotice message={error} onRetry={() => void load(true)} />
         ) : null}
 
-        {loading ? (
-          <View
-            accessibilityLabel="Chargement des défis"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="progressbar"
-            accessibilityState={{ busy: true }}
-            aria-busy
-            accessible
-            style={styles.skeleton}
-          />
-        ) : featured ? <DuelHero duel={featured} onOpen={() => openDuel(featured.token)} /> : error ? null : <EmptyDuelHero />}
+        {loading ? <DuelHeroSkeleton /> : featured ? <DuelHero duel={featured} onOpen={() => openDuel(featured.token)} /> : error ? null : <EmptyDuelHero />}
 
         <DuelMissionsSection
           data={missions}
@@ -201,7 +192,7 @@ export default function DuelsScreen({
 
         <View style={styles.section}>
           <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>TES RIVALITÉS</Text><Text style={styles.sectionMeta}>{duels.length}</Text></View>
-          {loading ? <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.listSkeleton} /> : duels.length ? duels.map((duel) => <DuelCard key={duel.token} duel={duel} onOpen={() => openDuel(duel.token)} />) : error ? null : <View style={styles.emptyList}><Text style={styles.emptyListText}>Ton premier duel apparaîtra ici après un challenge.</Text></View>}
+          {loading ? <DuelListSkeleton /> : duels.length ? duels.map((duel) => <DuelCard key={duel.token} duel={duel} onOpen={() => openDuel(duel.token)} />) : error ? null : <View style={styles.emptyList}><Text style={styles.emptyListText}>Ton premier duel apparaîtra ici après un challenge.</Text></View>}
         </View>
       </ScrollView>
 
@@ -312,6 +303,52 @@ function DuelRefreshNotice({ message, onRetry }: { message: string; onRetry: () 
   );
 }
 
+function DuelHeroSkeleton() {
+  return (
+    <SkeletonGroup label="Chargement des défis" style={styles.heroSkeleton} testID="duels-loading">
+      <View style={styles.heroSkeletonTop}>
+        <Skeleton height={9} radius="pill" tone="subtle" width="54%" />
+        <Skeleton height={32} radius="pill" width={94} />
+      </View>
+      <Skeleton height={9} radius="pill" tone="subtle" style={styles.heroSkeletonKicker} width={86} />
+      <View style={styles.heroSkeletonFaceoff}>
+        <View style={styles.heroSkeletonPlayer}>
+          <Skeleton height={76} radius="lg" width={76} />
+          <Skeleton height={16} radius="pill" width="88%" />
+          <Skeleton height={8} radius="pill" tone="subtle" width="48%" />
+        </View>
+        <View style={styles.heroSkeletonVersus}>
+          <Skeleton height={42} radius="sm" width={48} />
+          <Skeleton height={3} radius="pill" width={26} />
+        </View>
+        <View style={[styles.heroSkeletonPlayer, styles.heroSkeletonPlayerRight]}>
+          <Skeleton height={76} radius="lg" width={76} />
+          <Skeleton height={16} radius="pill" width="88%" />
+          <Skeleton height={8} radius="pill" tone="subtle" width="48%" />
+        </View>
+      </View>
+      <Skeleton height={9} radius="pill" tone="subtle" style={styles.heroSkeletonDate} width={104} />
+    </SkeletonGroup>
+  );
+}
+
+function DuelListSkeleton() {
+  return (
+    <SkeletonGroup style={styles.listSkeleton} testID="duels-list-loading">
+      {[0, 1].map((item) => (
+        <View key={item} style={styles.listSkeletonRow}>
+          <View style={styles.listSkeletonCopy}>
+            <Skeleton height={8} radius="pill" tone="subtle" width="38%" />
+            <Skeleton height={17} radius="pill" width="72%" />
+            <Skeleton height={8} radius="pill" tone="subtle" width="54%" />
+          </View>
+          <Skeleton height={34} radius="pill" width={88} />
+        </View>
+      ))}
+    </SkeletonGroup>
+  );
+}
+
 function gameLabel(value?: string) { const game = String(value || '').toLowerCase(); if (game.includes('lol')) return 'LOL'; if (game.includes('valorant')) return 'VAL'; if (game.includes('cs')) return 'CS2'; return 'ESPORT'; }
 function formatDate(value?: string) { if (!value) return 'Date à venir'; const date = new Date(value); if (!Number.isFinite(date.getTime())) return 'Date à venir'; return date.toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
 function effectiveStatus(duel: DuelRow): DuelStatus { return duel.statut === 'en_attente' && duel.debut && new Date(duel.debut).getTime() <= Date.now() ? 'expire' : duel.statut; }
@@ -324,7 +361,14 @@ const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', padding: spacing.md, paddingBottom: layout.tabBarContentInset, gap: 22 },
   intro: { gap: 8, paddingTop: 4 }, eyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.1 }, title: { ...typography.displayMedium, maxWidth: 365, color: colors.text }, subtitle: { ...typography.body, maxWidth: 360, color: colors.textMuted },
   error: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: 12, borderRadius: radius.md, backgroundColor: colors.liveSurface, borderWidth: 1, borderColor: colors.liveBorder }, errorCopy: { flex: 1, minWidth: 0 }, errorTitle: { ...typography.control, color: colors.liveText }, errorText: { ...typography.metadata, marginTop: 2, color: colors.textSecondary },
-  skeleton: { height: 340, borderRadius: 30, backgroundColor: '#10161D' },
+  heroSkeleton: { minHeight: 340, padding: 18, justifyContent: 'space-between', borderRadius: 30, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#28323B' },
+  heroSkeletonTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  heroSkeletonKicker: { alignSelf: 'center' },
+  heroSkeletonFaceoff: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  heroSkeletonPlayer: { width: '38%', alignItems: 'flex-start', gap: 8 },
+  heroSkeletonPlayerRight: { alignItems: 'flex-end' },
+  heroSkeletonVersus: { width: 54, alignItems: 'center', gap: 6 },
+  heroSkeletonDate: { alignSelf: 'center' },
   hero: { position: 'relative', overflow: 'hidden', minHeight: 340, padding: 18, borderRadius: 30, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#28323B' }, heroBlue: { position: 'absolute', left: -70, bottom: -60, width: 260, height: 260, borderRadius: 130, backgroundColor: '#123A67', opacity: 0.55 }, heroRed: { position: 'absolute', right: -70, bottom: -60, width: 260, height: 260, borderRadius: 130, backgroundColor: '#5B173C', opacity: 0.5 },
   heroTop: { zIndex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }, heroMeta: { ...typography.label, flex: 1, color: colors.textMuted, letterSpacing: .35 }, heroKicker: { ...typography.eyebrow, zIndex: 2, marginTop: 30, color: colors.textMuted, letterSpacing: 1.4, textAlign: 'center' },
   faceoff: { zIndex: 2, marginTop: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, player: { width: '38%', alignItems: 'flex-start' }, playerRight: { alignItems: 'flex-end' }, playerMark: { width: 76, height: 76, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: '#101C27', borderWidth: 1, borderColor: '#315B7A' }, playerMarkRight: { backgroundColor: '#23121D', borderColor: '#78345A' }, playerTag: { ...typography.metricSmall, color: colors.text }, playerPseudo: { ...typography.cardTitle, width: '100%', marginTop: 10, color: colors.text }, playerRole: { ...typography.eyebrow, marginTop: 3, color: colors.textMuted, letterSpacing: .4 },
@@ -336,5 +380,9 @@ const styles = StyleSheet.create({
   section: { gap: 9 }, sectionHeading: { flexDirection: 'row', justifyContent: 'space-between' }, sectionLabel: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .8 }, sectionMeta: { ...typography.label, color: colors.textMuted },
   card: { minHeight: 92, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 13, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, cardMain: { flex: 1, minWidth: 0 }, cardEyebrow: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .4 }, cardTitle: { ...typography.cardTitle, marginTop: 4, color: colors.text }, cardVs: { color: colors.volt }, cardDate: { ...typography.caption, marginTop: 4, color: colors.textMuted },
   emptyHero: { minHeight: 280, justifyContent: 'center', padding: 24, borderRadius: 30, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: colors.border, gap: 10 }, emptyEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .8 }, emptyTitle: { ...typography.displaySmall, maxWidth: 320, color: colors.text }, emptyText: { ...typography.body, maxWidth: 330, color: colors.textMuted },
-  emptyList: { padding: 18, borderRadius: 20, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, emptyListText: { ...typography.body, color: colors.textMuted }, listSkeleton: { height: 180, borderRadius: 24, backgroundColor: '#10161D' }, disabled: { opacity: 0.45 }, pressed: { opacity: 0.75 },
+  emptyList: { padding: 18, borderRadius: 20, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, emptyListText: { ...typography.body, color: colors.textMuted },
+  listSkeleton: { gap: 9 },
+  listSkeletonRow: { minHeight: 92, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 22, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border },
+  listSkeletonCopy: { flex: 1, minWidth: 0, gap: 7 },
+  disabled: { opacity: 0.45 }, pressed: { opacity: 0.75 },
 });

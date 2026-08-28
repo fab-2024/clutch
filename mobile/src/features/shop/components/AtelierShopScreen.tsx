@@ -2,7 +2,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import {
-  ActivityIndicator,
   Image,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -20,6 +19,7 @@ import { Screen } from '@/src/components/layout/Screen';
 import { Button } from '@/src/components/ui/Button';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { SegmentedControl, type SegmentedControlItem } from '@/src/components/ui/SegmentedControl';
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import ShowcaseRoomScene from '@/src/features/profile/components/showcase/ShowcaseRoomScene';
 import { loadProfileData } from '@/src/features/profile/api';
 import {
@@ -439,25 +439,23 @@ export default function AtelierShopScreen({
                   </View>
 
                   <View style={styles.sceneFrame}>
-                    <ShowcaseRoomScene
-                      cosmetics={cosmetics}
-                      data={profileData}
-                      jerseyPresentation={scene.jerseyPresentation}
-                      lighting={scene.lighting}
-                      loading={loading}
-                      mode="preview"
-                      pedestal={scene.pedestal}
-                      rankAccent={rankAccent}
-                      rankLabel={rankLabel}
-                      style={compactHeight ? styles.compactScene : undefined}
-                      theme={scene.theme}
-                    />
                     {loading ? (
-                      <View style={styles.sceneLoading}>
-                        <ActivityIndicator color={colors.volt} />
-                        <Text style={styles.sceneLoadingText}>INSTALLATION DE LA VITRINE…</Text>
-                      </View>
-                    ) : null}
+                      <AtelierSceneSkeleton compact={compactHeight} />
+                    ) : (
+                      <ShowcaseRoomScene
+                        cosmetics={cosmetics}
+                        data={profileData}
+                        jerseyPresentation={scene.jerseyPresentation}
+                        lighting={scene.lighting}
+                        loading={false}
+                        mode="preview"
+                        pedestal={scene.pedestal}
+                        rankAccent={rankAccent}
+                        rankLabel={rankLabel}
+                        style={compactHeight ? styles.compactScene : undefined}
+                        theme={scene.theme}
+                      />
+                    )}
                     {trialActive ? (
                       <View accessible accessibilityLabel="Aperçu temporaire, non sauvegardé" style={styles.trialStatus}>
                         <Text style={styles.trialStatusText}>APERÇU · NON SAUVEGARDÉ</Text>
@@ -581,6 +579,25 @@ function AtelierHeader({ balance, compact, loading }: { balance: number; compact
         </View>
       </View>
     </View>
+  );
+}
+
+function AtelierSceneSkeleton({ compact }: { compact: boolean }) {
+  return (
+    <SkeletonGroup
+      label="Chargement de l’aperçu Atelier"
+      style={[styles.sceneSkeleton, compact && styles.compactScene]}
+      testID="atelier-scene-loading"
+    >
+      <Skeleton height="72%" radius="md" style={styles.sceneSkeletonLeft} tone="subtle" width="24%" />
+      <View style={styles.sceneSkeletonCenter}>
+        <Skeleton height={compact ? 58 : 72} radius="lg" width={compact ? 58 : 72} />
+        <Skeleton height={12} radius="pill" width="68%" />
+        <Skeleton height={8} radius="pill" tone="subtle" width="48%" />
+      </View>
+      <Skeleton height="68%" radius="md" style={styles.sceneSkeletonRight} tone="subtle" width="25%" />
+      <Skeleton height={10} radius="pill" style={styles.sceneSkeletonPlaque} width="22%" />
+    </SkeletonGroup>
   );
 }
 
@@ -1010,21 +1027,11 @@ const styles = StyleSheet.create({
   compactScene: {
     aspectRatio: 2.3,
   },
-  sceneLoading: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    backgroundColor: 'rgba(4,7,9,.68)',
-  },
-  sceneLoadingText: {
-    ...typography.metadata,
-    color: colors.textSecondary,
-  },
+  sceneSkeleton: { position: 'relative', overflow: 'hidden', aspectRatio: 1.84, backgroundColor: '#090D12' },
+  sceneSkeletonLeft: { position: 'absolute', left: '4%', bottom: '10%' },
+  sceneSkeletonCenter: { position: 'absolute', top: '18%', left: '34%', width: '32%', alignItems: 'center', gap: spacing.xs },
+  sceneSkeletonRight: { position: 'absolute', right: '4%', bottom: '11%' },
+  sceneSkeletonPlaque: { position: 'absolute', bottom: '7%', left: '39%' },
   trialStatus: {
     position: 'absolute',
     top: spacing.sm,

@@ -13,6 +13,7 @@ import {
 
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors, fonts, layout, spacing, typography } from '@/src/theme';
 
@@ -203,10 +204,19 @@ function LedgerHeader({
           <View style={styles.currencyMark}><CurrencyIcon kind="volts" size={42} /></View>
           <Text style={styles.heroLabel}>SOLDE DISPONIBLE</Text>
         </View>
-        <Text accessibilityLabel={`${formatNumber(ledger?.balance ?? 0)} Volts disponibles`} style={styles.balance}>
-          {loading && !ledger ? '—' : formatNumber(ledger?.balance ?? 0)}
-        </Text>
-        <Text style={styles.balanceUnit}>VOLTS</Text>
+        {loading && !ledger ? (
+          <SkeletonGroup style={styles.balanceSkeleton} testID="volt-balance-loading">
+            <Skeleton height={58} radius="md" width={184} />
+            <Skeleton height={9} radius="pill" width={58} />
+          </SkeletonGroup>
+        ) : (
+          <>
+            <Text accessibilityLabel={`${formatNumber(ledger?.balance ?? 0)} Volts disponibles`} style={styles.balance}>
+              {formatNumber(ledger?.balance ?? 0)}
+            </Text>
+            <Text style={styles.balanceUnit}>VOLTS</Text>
+          </>
+        )}
         <Text style={styles.heroCopy}>Chaque gain et chaque dépense laisse une trace. Ton classement reste complètement séparé.</Text>
         <View style={styles.guardrailRow}>
           <Guardrail label="0 CONVERSION FRAGS" />
@@ -341,11 +351,8 @@ const MovementRow = memo(function MovementRow({
 
 function LedgerSkeleton() {
   return (
-    <View
-      accessibilityLabel="Chargement du journal des Volts"
-      accessibilityLiveRegion="polite"
-      accessibilityRole="progressbar"
-      accessibilityState={{ busy: true }}
+    <SkeletonGroup
+      label="Chargement du journal des Volts"
       style={styles.ledgerSkeleton}
       testID="volt-ledger-loading"
     >
@@ -356,16 +363,16 @@ function LedgerSkeleton() {
           key={item}
           style={[styles.skeletonRow, item > 0 && styles.skeletonRowBorder]}
         >
-          <View style={styles.skeletonMark} />
+          <Skeleton height={45} radius="md" width={45} />
           <View style={styles.skeletonCopy}>
-            <View style={styles.skeletonLabel} />
-            <View style={styles.skeletonTitle} />
-            <View style={styles.skeletonDetail} />
+            <Skeleton height={7} radius="pill" tone="subtle" width="38%" />
+            <Skeleton height={12} radius="pill" width="76%" />
+            <Skeleton height={8} radius="pill" tone="subtle" width="54%" />
           </View>
-          <View style={styles.skeletonAmount} />
+          <Skeleton height={24} radius="sm" width={55} />
         </View>
       ))}
-    </View>
+    </SkeletonGroup>
   );
 }
 
@@ -422,6 +429,7 @@ const styles = StyleSheet.create({
   heroLabel: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: 1.1 },
   balance: { zIndex: 1, marginTop: 17, color: colors.text, fontFamily: fonts.display, fontSize: 68, lineHeight: 66, letterSpacing: -2.5 },
   balanceUnit: { zIndex: 1, marginTop: 2, color: colors.volt, fontFamily: fonts.bold, fontSize: 11, letterSpacing: 2.2 },
+  balanceSkeleton: { zIndex: 1, minHeight: 77, marginTop: 17, justifyContent: 'space-between' },
   heroCopy: { zIndex: 1, maxWidth: 345, marginTop: 14, ...typography.body, color: colors.textSubtle },
   guardrailRow: { zIndex: 1, marginTop: 18, flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   guardrail: { minHeight: 31, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 11, backgroundColor: '#080D09', borderWidth: 1, borderColor: '#29351A' },
@@ -462,12 +470,7 @@ const styles = StyleSheet.create({
   ledgerSkeleton: { marginHorizontal: spacing.md, paddingHorizontal: 14, borderRadius: 25, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderSubtle },
   skeletonRow: { minHeight: 92, flexDirection: 'row', alignItems: 'center', gap: 11 },
   skeletonRowBorder: { borderTopWidth: 1, borderTopColor: colors.borderSubtle },
-  skeletonMark: { width: 45, height: 45, borderRadius: 15, backgroundColor: colors.surfaceRaised },
   skeletonCopy: { flex: 1, minWidth: 0, gap: 7 },
-  skeletonLabel: { width: '38%', height: 7, borderRadius: 4, backgroundColor: colors.borderStrong },
-  skeletonTitle: { width: '76%', height: 12, borderRadius: 6, backgroundColor: colors.surfaceRaised },
-  skeletonDetail: { width: '54%', height: 8, borderRadius: 4, backgroundColor: colors.borderSubtle },
-  skeletonAmount: { width: 55, height: 24, borderRadius: 8, backgroundColor: colors.surfaceRaised },
   moreButton: { minHeight: 50, marginHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 17, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#3A461D' },
   moreText: { ...typography.action, color: colors.volt, letterSpacing: .55 },
   promiseCard: { marginHorizontal: spacing.md, padding: 16, flexDirection: 'row', alignItems: 'flex-start', gap: 13, borderRadius: 23, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#232D36' },

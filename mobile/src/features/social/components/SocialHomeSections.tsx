@@ -6,6 +6,7 @@ import { Platform, Pressable, Share, StyleSheet, Text, View, type LayoutRectangl
 import { useReducedMotion, useSharedValue } from 'react-native-reanimated';
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Path, Stop } from 'react-native-svg';
 
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { publicAppUrl } from '@/src/config/release';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { relicSignatureTheme } from '@/src/features/shop/components/CosmeticRenderer';
@@ -555,8 +556,92 @@ export function EmptyFactions() {
   );
 }
 
-export function FactionHeroSkeleton() {
-  return <View style={styles.heroSkeleton}><View style={styles.skeletonTitle} /><View style={styles.skeletonRelic} /><View style={styles.skeletonLine} /></View>;
+export function SocialHomeSkeleton() {
+  return (
+    <SkeletonGroup label="Chargement du QG Social" style={styles.socialSkeleton} testID="social-home-loading">
+      <View style={styles.heroSkeleton}>
+        <View style={styles.heroSkeletonTop}>
+          <View style={styles.heroSkeletonHeading}>
+            <Skeleton height={9} radius="pill" width={118} />
+            <Skeleton height={30} radius="sm" width={205} />
+          </View>
+          <Skeleton height={27} radius="pill" width={96} />
+        </View>
+        <Skeleton height={226} radius="pill" style={styles.skeletonRelic} width={226} />
+        <View style={styles.heroSkeletonIdentity}>
+          <Skeleton height={42} radius="md" width={42} />
+          <View style={styles.heroSkeletonIdentityCopy}>
+            <Skeleton height={13} radius="pill" width="56%" />
+            <Skeleton height={8} radius="pill" tone="subtle" width="76%" />
+          </View>
+          <Skeleton height={18} radius="pill" width={62} />
+        </View>
+        <View style={styles.heroSkeletonProgress}>
+          <View style={styles.heroSkeletonProgressTop}>
+            <Skeleton height={8} radius="pill" width={92} />
+            <Skeleton height={10} radius="pill" width={74} />
+          </View>
+          <Skeleton height={4} radius="pill" width="100%" />
+          <Skeleton height={8} radius="pill" tone="subtle" width="64%" />
+        </View>
+        <Skeleton height={44} radius="md" tone="highlight" width="100%" />
+      </View>
+
+      <View style={styles.warSkeletonSection}>
+        <View style={styles.skeletonSectionHeading}>
+          <View style={styles.skeletonSectionCopy}>
+            <Skeleton height={9} radius="pill" width={136} />
+            <Skeleton height={24} radius="sm" width={224} />
+          </View>
+          <Skeleton height={10} radius="pill" width={42} />
+        </View>
+        <View style={styles.warSkeletonBoard}>
+          <View style={styles.warSkeletonPodium}>
+            {[0, 1, 2].map((item) => (
+              <View key={item} style={[styles.warSkeletonSlot, item === 1 && styles.warSkeletonSlotLeader]}>
+                <Skeleton height={item === 1 ? 92 : 72} radius="lg" width={item === 1 ? 92 : 72} />
+                <Skeleton height={item === 1 ? 150 : 122} radius="sm" width="100%" />
+              </View>
+            ))}
+          </View>
+          {[0, 1].map((item) => (
+            <View key={item} style={styles.warSkeletonRow}>
+              <Skeleton height={22} radius="sm" width={26} />
+              <Skeleton height={44} radius="pill" width={44} />
+              <View style={styles.warSkeletonRowCopy}>
+                <Skeleton height={12} radius="pill" width="64%" />
+                <Skeleton height={8} radius="pill" tone="subtle" width="42%" />
+              </View>
+              <Skeleton height={18} radius="pill" width={54} />
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.memberSkeletonSection}>
+        <View style={styles.skeletonSectionHeading}>
+          <View style={styles.skeletonSectionCopy}>
+            <Skeleton height={9} radius="pill" width={104} />
+            <Skeleton height={24} radius="sm" width={198} />
+          </View>
+          <Skeleton height={12} radius="pill" width={52} />
+        </View>
+        <View style={styles.memberSkeletonPanel}>
+          <View style={styles.memberSkeletonRow}>
+            <Skeleton height={28} radius="sm" width={42} />
+            <Skeleton height={54} radius="pill" width={54} />
+            <View style={styles.memberSkeletonCopy}>
+              <Skeleton height={16} radius="pill" width="58%" />
+              <Skeleton height={9} radius="pill" tone="subtle" width="28%" />
+            </View>
+          </View>
+          <View style={styles.memberSkeletonStats}>
+            {[0, 1, 2].map((item) => <Skeleton height={48} key={item} radius="md" width="29%" />)}
+          </View>
+        </View>
+      </View>
+    </SkeletonGroup>
+  );
 }
 
 function fallbackActivity(me: CommunityMe): CommunityActivity {

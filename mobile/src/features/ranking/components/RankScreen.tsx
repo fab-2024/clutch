@@ -13,6 +13,7 @@ import {
 
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
@@ -160,7 +161,7 @@ function RankHeader({
         <Text style={styles.subtitle}>Ton rating Frags mesure ta saison. Les Volts restent un solde cosmétique séparé.</Text>
       </View>
 
-      {!loading && dashboard?.state ? (
+      {loading ? <RankSnapshotSkeleton /> : dashboard?.state ? (
         <RankSnapshot seasonName={dashboard.season?.name} state={dashboard.state} />
       ) : null}
 
@@ -583,12 +584,51 @@ function EmptyState({ title, copy }: { title: string; copy: string }) {
 
 function RankSkeleton() {
   return (
-    <View style={styles.skeleton}>
-      <View style={styles.skeletonLine} />
-      <View style={styles.skeletonEmblem} />
-      <View style={styles.skeletonMetric} />
-      <View style={styles.skeletonLine} />
-    </View>
+    <SkeletonGroup style={styles.skeleton} testID="rank-season-loading">
+      <View style={styles.skeletonJourneyHeader}>
+        <Skeleton height={12} radius="pill" width={96} />
+        <Skeleton height={10} radius="pill" tone="subtle" width={104} />
+      </View>
+      <View style={styles.skeletonJourney}>
+        {[0, 1, 2].map((item) => (
+          <View key={item} style={styles.skeletonTier}>
+            <View style={styles.skeletonTierCopy}>
+              <Skeleton height={10} radius="pill" width={62 + item * 8} />
+              <Skeleton height={7} radius="pill" tone="subtle" width={88} />
+            </View>
+            <Skeleton height={82} radius="lg" width={82} />
+          </View>
+        ))}
+      </View>
+      <View style={styles.skeletonMetrics}>
+        <View style={styles.skeletonMetricColumn}>
+          <Skeleton height={9} radius="pill" tone="subtle" width={76} />
+          <Skeleton height={35} radius="sm" width={92} />
+        </View>
+        <View style={styles.skeletonMetricColumn}>
+          <Skeleton height={9} radius="pill" tone="subtle" width={104} />
+          <Skeleton height={7} radius="pill" width="100%" />
+        </View>
+      </View>
+    </SkeletonGroup>
+  );
+}
+
+function RankSnapshotSkeleton() {
+  return (
+    <SkeletonGroup label="Chargement du classement" style={styles.snapshotSkeleton} testID="rank-snapshot-loading">
+      <Skeleton height={66} radius="lg" width={66} />
+      <View style={styles.snapshotSkeletonCopy}>
+        <Skeleton height={8} radius="pill" tone="subtle" width="44%" />
+        <Skeleton height={20} radius="sm" width="72%" />
+        <Skeleton height={4} radius="pill" width="100%" />
+        <Skeleton height={8} radius="pill" tone="subtle" width="84%" />
+      </View>
+      <View style={styles.snapshotSkeletonRank}>
+        <Skeleton height={32} radius="sm" width={58} />
+        <Skeleton height={8} radius="pill" tone="subtle" width={50} />
+      </View>
+    </SkeletonGroup>
   );
 }
 
@@ -1191,31 +1231,21 @@ const styles = StyleSheet.create({
     minHeight: 520,
     marginHorizontal: spacing.md,
     padding: 18,
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 14,
     borderRadius: 30,
     backgroundColor: '#0D1218',
     borderWidth: 1,
     borderColor: colors.border,
   },
-  skeletonLine: {
-    width: '58%',
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#1A222A',
-  },
-  skeletonEmblem: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#161E26',
-  },
-  skeletonMetric: {
-    width: '72%',
-    height: 78,
-    borderRadius: 18,
-    backgroundColor: '#161E26',
-  },
+  snapshotSkeleton: { minHeight: 128, marginHorizontal: spacing.md, paddingVertical: spacing.md, paddingHorizontal: spacing.sm, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radius.lg, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderSubtle },
+  snapshotSkeletonCopy: { flex: 1, minWidth: 0, gap: 8 },
+  snapshotSkeletonRank: { width: 66, alignItems: 'flex-end', gap: 7 },
+  skeletonJourneyHeader: { minHeight: 32, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
+  skeletonJourney: { flex: 1, justifyContent: 'space-around' },
+  skeletonTier: { minHeight: 98, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 18, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
+  skeletonTierCopy: { flex: 1, gap: 8 },
+  skeletonMetrics: { minHeight: 94, paddingTop: 14, flexDirection: 'row', gap: 24, borderTopWidth: 1, borderTopColor: colors.borderSubtle },
+  skeletonMetricColumn: { flex: 1, justifyContent: 'center', gap: 12 },
   pressed: {
     opacity: 0.72,
   },

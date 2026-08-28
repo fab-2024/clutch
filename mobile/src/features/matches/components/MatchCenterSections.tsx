@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { colors } from '@/src/theme';
 
@@ -409,21 +410,40 @@ export function RiskCell({ label, value, positive = false }: { label: string; va
 
 export function LoadingCard() {
   return (
-    <View
-      accessibilityLabel="Chargement du Match Center"
-      accessibilityLiveRegion="polite"
-      accessibilityRole="progressbar"
-      accessibilityState={{ busy: true }}
-      aria-busy
-      accessible
-      style={styles.loadingCard}
-    >
-      <View style={styles.loadingLineWide} />
-      <View style={styles.loadingLine} />
-      <View style={styles.loadingDuel}>
-        <View style={styles.loadingCircle} /><View style={styles.loadingCircle} />
+    <SkeletonGroup label="Chargement du Match Center" style={styles.loadingStack} testID="match-center-loading">
+      <View style={styles.loadingCard}>
+        <View style={styles.loadingMeta}>
+          <Skeleton height={9} radius="pill" width="48%" />
+          <Skeleton height={24} radius="pill" width={52} />
+        </View>
+        <Skeleton height={9} radius="pill" tone="subtle" width="38%" />
+        <View style={styles.loadingDuel}>
+          <View style={styles.loadingTeam}>
+            <Skeleton height={72} radius="lg" width={72} />
+            <Skeleton height={18} radius="pill" width={54} />
+            <Skeleton height={9} radius="pill" tone="subtle" width={72} />
+          </View>
+          <View style={styles.loadingVersus}>
+            <Skeleton height={8} radius="pill" tone="subtle" width={38} />
+            <Skeleton height={34} radius="sm" width={46} />
+            <Skeleton height={9} radius="pill" tone="subtle" width={34} />
+          </View>
+          <View style={styles.loadingTeam}>
+            <Skeleton height={72} radius="lg" width={72} />
+            <Skeleton height={18} radius="pill" width={54} />
+            <Skeleton height={9} radius="pill" tone="subtle" width={72} />
+          </View>
+        </View>
       </View>
-    </View>
+      <View style={styles.loadingMarket}>
+        <Skeleton height={22} radius="sm" width="68%" />
+        <View style={styles.loadingChoices}>
+          <Skeleton height={126} radius="lg" width="48%" />
+          <Skeleton height={126} radius="lg" width="48%" />
+        </View>
+        <Skeleton height={10} radius="pill" tone="subtle" width="82%" />
+      </View>
+    </SkeletonGroup>
   );
 }
 

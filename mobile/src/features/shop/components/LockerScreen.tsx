@@ -14,6 +14,7 @@ import {
 
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { FounderPackBanner } from '@/src/features/purchases';
 import { loadProfileData } from '@/src/features/profile/api';
@@ -532,7 +533,7 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
         {message ? <Text style={styles.message}>{message}</Text> : null}
 
         {profileCollectionActive && (profileLoading || ringEquipment.loading || badgeEquipment.loading || levelFrameEquipment.loading) ? (
-          <View style={styles.loading}><ActivityIndicator color={colors.volt} /><Text style={styles.loadingText}>Lecture de tes accomplissements…</Text></View>
+          <LockerContentSkeleton label="Chargement de tes accomplissements" />
         ) : badgeActive ? (
           <AchievementBadgeCollection
             badges={badgeCollection}
@@ -555,7 +556,7 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
             onEquip={handleLevelFrameEquip}
           />
         ) : loading ? (
-          <View style={styles.loading}><ActivityIndicator color={colors.volt} /><Text style={styles.loadingText}>Ouverture du Locker…</Text></View>
+          <LockerContentSkeleton label="Chargement du Locker" />
         ) : visibleItems.length ? (
           <View style={styles.grid}>
             {visibleItems.map((item) => <ItemCard balance={data?.balance ?? 0} confirming={confirmingId === item.id} item={item} key={item.id} pending={pendingId === item.id} pseudo={pseudo} onAction={() => void handleItem(item)} onOpen={() => openItem(item)} />)}
@@ -642,6 +643,27 @@ function ItemCard({ balance, confirming, item, onAction, onOpen, pending, pseudo
   );
 }
 
+function LockerContentSkeleton({ label }: { label: string }) {
+  return (
+    <SkeletonGroup label={label} style={styles.grid} testID="locker-content-loading">
+      {[0, 1, 2, 3].map((item) => (
+        <View key={item} style={styles.itemSkeleton}>
+          <Skeleton height={154} radius="md" tone="highlight" width="100%" />
+          <View style={styles.itemSkeletonTopline}>
+            <Skeleton height={8} radius="pill" width="42%" />
+            <Skeleton height={8} radius="pill" tone="subtle" width={34} />
+          </View>
+          <Skeleton height={34} radius="sm" width="82%" />
+          <Skeleton height={22} radius="sm" tone="subtle" width="100%" />
+          <Skeleton height={8} radius="pill" tone="subtle" width="64%" />
+          <Skeleton height={22} radius="sm" width={72} />
+          <Skeleton height={44} radius="md" style={styles.itemSkeletonAction} width="100%" />
+        </View>
+      ))}
+    </SkeletonGroup>
+  );
+}
+
 function ActionButton({ balance, confirming, item, onPress, pending }: { balance: number; confirming: boolean; item: CosmeticItem; onPress: () => void; pending: boolean }) {
   const missing = Math.max(0, item.price - balance);
   const locked = !item.owned && !item.acquirable;
@@ -708,8 +730,11 @@ const styles = StyleSheet.create({
   tabs: { gap: 9, paddingHorizontal: spacing.md }, tab: { width: 143, minHeight: 68, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 9, borderRadius: 19, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222C35' }, tabActive: { backgroundColor: '#141B0F', borderColor: '#596725' }, tabGlyph: { width: 29, color: '#65717D', fontFamily: fonts.display, fontSize: 22, textAlign: 'center' }, tabGlyphActive: { color: colors.volt }, tabCopy: { flex: 1, minWidth: 0 }, tabLabel: { ...typography.bodyStrong, color: colors.textMuted }, tabLabelActive: { color: colors.text }, tabEquipped: { ...typography.caption, marginTop: 2, color: '#64707B' },
   sectionHead: { minHeight: 86, marginHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: 12 }, sectionMark: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, sectionMarkText: { color: '#080A0C', fontFamily: fonts.display, fontSize: 26 }, sectionCopy: { flex: 1, minWidth: 0 }, sectionEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 }, sectionTitle: { ...typography.sectionTitle, marginTop: 2, color: colors.text }, sectionPromise: { ...typography.caption, marginTop: 3, color: colors.textMuted }, filterToggle: { minHeight: 39, paddingHorizontal: 9, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: '#0D1318', borderWidth: 1, borderColor: '#29343D' }, filterToggleActive: { backgroundColor: '#19210F', borderColor: '#526022' }, filterToggleText: { ...typography.label, color: colors.textMuted, fontSize: 9 }, filterToggleTextActive: { color: colors.volt },
   filters: { marginHorizontal: spacing.md, padding: 14, gap: 13, borderRadius: 22, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#27313A' }, filterRow: { gap: 7 }, filterLabel: { ...typography.eyebrow, color: '#77838E', letterSpacing: .6 }, filterOptions: { gap: 7 }, filterChip: { minHeight: 34, paddingHorizontal: 11, alignItems: 'center', justifyContent: 'center', borderRadius: 17, backgroundColor: '#10161C', borderWidth: 1, borderColor: '#28323B' }, filterChipActive: { backgroundColor: '#1A220F', borderColor: '#566424' }, filterChipText: { ...typography.label, color: colors.textMuted }, filterChipTextActive: { color: colors.volt }, clearFilters: { minHeight: 38, alignItems: 'center', justifyContent: 'center', borderTopWidth: 1, borderTopColor: '#202A32' }, clearFiltersText: { ...typography.action, color: colors.textMuted },
-  error: { marginHorizontal: spacing.md, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 17, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' }, errorText: { ...typography.body, flex: 1, color: '#FF9AA2' }, retry: { ...typography.action, color: colors.volt }, message: { ...typography.label, marginHorizontal: spacing.md, padding: 11, color: colors.volt, textAlign: 'center', borderRadius: 14, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#3F4B1D' }, loading: { minHeight: 300, marginHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 26, backgroundColor: '#0B1015' }, loadingText: { ...typography.body, color: colors.textMuted },
+  error: { marginHorizontal: spacing.md, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 17, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' }, errorText: { ...typography.body, flex: 1, color: '#FF9AA2' }, retry: { ...typography.action, color: colors.volt }, message: { ...typography.label, marginHorizontal: spacing.md, padding: 11, color: colors.volt, textAlign: 'center', borderRadius: 14, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#3F4B1D' },
   grid: { paddingHorizontal: spacing.md, flexDirection: 'row', flexWrap: 'wrap', gap: 12 }, itemCard: { width: '48%', minHeight: 382, padding: 12, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222C35' }, itemTopline: { marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }, rarity: { ...typography.eyebrow, letterSpacing: .5 }, itemLevel: { ...typography.label, color: colors.textMuted, fontSize: 9 }, itemName: { ...typography.cardTitle, minHeight: 40, marginTop: 5, color: colors.text }, itemDescription: { ...typography.caption, minHeight: 31, marginTop: 4, color: colors.textMuted }, itemProvenance: { ...typography.eyebrow, minHeight: 15, marginTop: 5, color: '#71808C', fontSize: 8, letterSpacing: .45 }, itemPrice: { minHeight: 29, marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 5 }, includedDot: { color: colors.volt, fontSize: 9 }, itemPriceText: { ...typography.bodyStrong, color: colors.text }, itemAction: { minHeight: 44, marginTop: 'auto', paddingHorizontal: 7, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: colors.volt }, itemActionEquipped: { backgroundColor: '#17200E', borderWidth: 1, borderColor: '#546225' }, itemActionConfirm: { backgroundColor: '#FFCB45' }, itemActionMissing: { backgroundColor: '#11171D', borderWidth: 1, borderColor: '#29343D' }, itemActionText: { ...typography.action, color: '#080A0C', textAlign: 'center' }, itemActionTextRemove: { color: colors.volt }, itemActionTextMuted: { color: colors.textMuted },
+  itemSkeleton: { width: '48%', minHeight: 382, padding: 12, gap: 9, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222C35' },
+  itemSkeletonTopline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
+  itemSkeletonAction: { marginTop: 'auto' },
   empty: { minHeight: 240, marginHorizontal: spacing.md, padding: 22, alignItems: 'center', justifyContent: 'center', borderRadius: 27, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#252F38' }, emptyGlyph: { color: colors.volt, fontFamily: fonts.display, fontSize: 38 }, emptyTitle: { ...typography.displaySmall, maxWidth: 310, marginTop: 9, color: colors.text, textAlign: 'center' }, emptyText: { ...typography.body, maxWidth: 310, marginTop: 7, color: colors.textMuted, textAlign: 'center' }, emptyAction: { minHeight: 44, marginTop: 17, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: colors.volt }, emptyActionText: { ...typography.action, color: '#080A0C' },
   rules: { marginHorizontal: spacing.md, padding: 16, gap: 14, borderRadius: 23, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#26313A' }, rulesHeader: { minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 12 }, rulesIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E' }, rulesCopy: { flex: 1, minWidth: 0 }, rulesEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .6 }, rulesTitle: { ...typography.bodyStrong, color: colors.text }, rulesText: { ...typography.caption, marginTop: 4, color: colors.textMuted }, ruleList: { borderTopWidth: 1, borderTopColor: '#202A32' }, ruleRow: { minHeight: 67, paddingVertical: 11, flexDirection: 'row', gap: 10, borderBottomWidth: 1, borderBottomColor: '#182128' }, ruleCheck: { width: 20, color: colors.volt, fontFamily: fonts.bold, fontSize: 15 }, ruleCopy: { flex: 1, minWidth: 0 }, ruleLabel: { ...typography.label, color: colors.text, letterSpacing: .35 }, ruleDetail: { ...typography.caption, marginTop: 3, color: colors.textMuted },
   modalRoot: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(2,5,7,.76)' }, sheet: { width: '100%', maxWidth: layout.contentMaxWidth, maxHeight: '92%', alignSelf: 'center', padding: 18, paddingBottom: 28, gap: 13, borderTopLeftRadius: 31, borderTopRightRadius: 31, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#303B44' }, sheetHandle: { width: 42, height: 4, alignSelf: 'center', borderRadius: 2, backgroundColor: '#414C55' }, sheetTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }, sheetEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 }, sheetTitle: { ...typography.sectionTitle, marginTop: 3, color: colors.text }, sheetClose: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#151B21', borderWidth: 1, borderColor: '#303A43' }, sheetCloseText: { color: colors.text, fontSize: 24, lineHeight: 25 }, sheetTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 }, sheetTag: { minHeight: 27, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 14, borderWidth: 1 }, sheetTagText: { ...typography.label, letterSpacing: .35 }, sheetDescription: { ...typography.body, color: colors.textMuted }, provenance: { overflow: 'hidden', borderRadius: 17, backgroundColor: '#080C10', borderWidth: 1, borderColor: '#222C35' }, detailRow: { minHeight: 39, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#232C34' }, detailLabel: { ...typography.label, color: '#68747F', letterSpacing: .35 }, detailValue: { ...typography.caption, flex: 1, color: colors.text, textAlign: 'right' }, pressed: { opacity: .76 },

@@ -22,10 +22,10 @@ import { colors } from '@/src/theme';
 
 import {
   EmptyFactions,
-  FactionHeroSkeleton,
   FactionMemberRanking,
   FactionRelicHero,
   FactionWar,
+  SocialHomeSkeleton,
 } from './SocialHomeSections';
 import FactionRelicHeroV2 from './FactionRelicHeroV2';
 import { styles } from './SocialHomeScreen.styles';
@@ -142,7 +142,7 @@ export function SocialHomeExperience({
       ) : null}
 
       <Animated.View entering={entrance(20)}>
-        {loading ? <FactionHeroSkeleton /> : (
+        {loading ? <SocialHomeSkeleton /> : (
           <RelicHero
             faction={faction}
             me={data.moi}

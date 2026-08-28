@@ -6,6 +6,21 @@ import VoltLedgerScreen from '../VoltLedgerScreen';
 
 jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
 jest.mock('../../api', () => ({ loadVoltLedger: jest.fn() }));
+jest.mock('react-native-reanimated', () => {
+  const ReactNative = jest.requireActual('react-native');
+  const identity = (value: number) => value;
+  return {
+    __esModule: true,
+    default: { View: ReactNative.View },
+    cancelAnimation: jest.fn(),
+    Easing: { inOut: () => identity, quad: identity },
+    useAnimatedStyle: (factory: () => object) => factory(),
+    useReducedMotion: () => true,
+    useSharedValue: (value: number) => ({ value }),
+    withRepeat: (value: number) => value,
+    withTiming: (value: number) => value,
+  };
+});
 jest.mock('react-native-safe-area-context', () => {
   const ReactNative = jest.requireActual('react-native');
   return { SafeAreaView: ReactNative.View };

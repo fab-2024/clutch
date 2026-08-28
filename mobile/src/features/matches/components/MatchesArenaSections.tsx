@@ -12,6 +12,7 @@ import {
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import GameLogo from '@/src/features/onboarding/components/GameLogo';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import type { GameId } from '@/src/features/onboarding/types';
@@ -290,7 +291,36 @@ export function EmptyArena({ callsOnly, query, status }: { callsOnly: boolean; q
 }
 
 export function MatchSkeleton() {
-  return <View style={styles.skeleton}><View style={styles.skeletonHead} /><View style={styles.skeletonRow} /><View style={styles.skeletonRow} /></View>;
+  return (
+    <SkeletonGroup label="Chargement des matchs" style={styles.skeleton} testID="matches-loading">
+      <View style={styles.skeletonHead}>
+        <View style={styles.skeletonHeadCopy}>
+          <Skeleton height={8} radius="pill" tone="subtle" width={92} />
+          <Skeleton height={24} radius="sm" width={178} />
+        </View>
+        <Skeleton height={27} radius="pill" width={46} />
+      </View>
+      <View style={styles.skeletonList}>
+        {[0, 1, 2].map((item) => (
+          <View key={item} style={[styles.skeletonRow, item > 0 && styles.skeletonRowDivider]}>
+            <View style={styles.skeletonWhen}>
+              <Skeleton height={13} radius="pill" width={38} />
+              <Skeleton height={8} radius="pill" tone="subtle" width={26} />
+            </View>
+            <View style={styles.skeletonLogos}>
+              <Skeleton height={34} radius="md" width={34} />
+              <Skeleton height={34} radius="md" style={styles.skeletonLogoOverlap} width={34} />
+            </View>
+            <View style={styles.skeletonRowCopy}>
+              <Skeleton height={8} radius="pill" tone="subtle" width="62%" />
+              <Skeleton height={13} radius="pill" width="86%" />
+            </View>
+            <Skeleton height={10} radius="pill" width={46} />
+          </View>
+        ))}
+      </View>
+    </SkeletonGroup>
+  );
 }
 
 function SearchIcon({ color, size }: { color: string; size: number }) {

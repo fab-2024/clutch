@@ -15,10 +15,12 @@ jest.mock('react-native-reanimated', () => {
   return {
     __esModule: true,
     default: { View: ReactNative.View },
-    Easing: { cubic: (value: number) => value, out: () => (value: number) => value, quad: (value: number) => value },
+    cancelAnimation: jest.fn(),
+    Easing: { cubic: (value: number) => value, inOut: () => (value: number) => value, out: () => (value: number) => value, quad: (value: number) => value },
     useAnimatedStyle: (factory: () => object) => factory(),
     useReducedMotion: () => true,
     useSharedValue: (value: number) => ({ value }),
+    withRepeat: (value: number) => value,
     withTiming: (value: number) => value,
   };
 });

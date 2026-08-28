@@ -148,7 +148,8 @@ export const styles = StyleSheet.create({
   emptyTitle: { color: colors.text, fontSize: 18, fontWeight: '900', textAlign: 'center' },
   emptyCopy: { color: colors.textMuted, fontSize: 12, lineHeight: 18, textAlign: 'center' },
   skeleton: { minHeight: 460, padding: 18, borderRadius: 28, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: colors.border, gap: 16 },
-  skeletonHeader: { width: '62%', height: 28, borderRadius: 10, backgroundColor: '#141B22' },
-  skeletonRelic: { width: 150, height: 190, borderRadius: 60, alignSelf: 'center', backgroundColor: '#11181F' },
-  skeletonLine: { width: '100%', height: 12, borderRadius: 6, backgroundColor: '#141B22' },
+  skeletonHeaderRow: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  skeletonHeaderCopy: { flex: 1, minWidth: 0, gap: 7 },
+  skeletonRelic: { alignSelf: 'center' },
+  skeletonMetrics: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
 });

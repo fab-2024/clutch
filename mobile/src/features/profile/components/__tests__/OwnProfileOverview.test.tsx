@@ -14,10 +14,12 @@ jest.mock('react-native-reanimated', () => {
   return {
     __esModule: true,
     default: { View: ReactNative.View },
-    Easing: { cubic: identity, out: () => identity, quad: identity },
+    cancelAnimation: jest.fn(),
+    Easing: { cubic: identity, inOut: () => identity, out: () => identity, quad: identity },
     useAnimatedStyle: (factory: () => object) => factory(),
     useReducedMotion: () => true,
     useSharedValue: (value: number) => ({ value }),
+    withRepeat: (value: number) => value,
     withTiming: (value: number) => value,
   };
 });
@@ -218,13 +220,14 @@ describe('OwnProfileOverview', () => {
     expect(screen.queryByText('RELIQUE')).toBeNull();
   });
 
-  it('does not display demonstration values while loading', async () => {
+  it('uses a structured busy state without demonstration values while loading', async () => {
     const screen = await renderHub({ data: null, loading: true });
 
     expect(screen.queryByText(/NIVEAU 42/)).toBeNull();
     expect(screen.queryByText('DIAMANT')).toBeNull();
     expect(screen.queryByText('5 BADGES')).toBeNull();
     expect(screen.queryByText('4 TROPHÉES')).toBeNull();
-    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+    expect(screen.getByRole('progressbar').props.accessibilityLabel).toBe('Chargement du profil');
+    expect(screen.getByTestId('profile-overview-loading')).toBeTruthy();
   });
 });

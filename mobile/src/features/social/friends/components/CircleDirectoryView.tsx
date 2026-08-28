@@ -6,6 +6,7 @@ import type { ListRenderItemInfo } from 'react-native';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { StateView } from '@/src/components/ui/StateView';
 import { Surface } from '@/src/components/ui/Surface';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
@@ -284,15 +285,23 @@ const FriendListRow = memo(function FriendListRow({
 
 function DirectorySkeleton() {
   return (
-    <View
-      accessibilityLabel="Chargement de la liste d’amis"
-      accessibilityRole="progressbar"
-      accessibilityState={{ busy: true }}
+    <SkeletonGroup
+      label="Chargement de la liste d’amis"
       style={styles.directorySkeleton}
       testID="circle-directory-loading"
     >
-      {[0, 1, 2].map((item) => <View key={item} style={styles.skeletonRow} />)}
-    </View>
+      {[0, 1, 2].map((item) => (
+        <View key={item} style={styles.skeletonRow}>
+          <Skeleton height={44} radius="pill" width={44} />
+          <View style={styles.skeletonCopy}>
+            <Skeleton height={14} radius="pill" width="54%" />
+            <Skeleton height={9} radius="pill" tone="subtle" width="72%" />
+          </View>
+          <Skeleton height={30} radius="sm" width={58} />
+          <Skeleton height={44} radius="md" tone="subtle" width={44} />
+        </View>
+      ))}
+    </SkeletonGroup>
   );
 }
 
@@ -498,9 +507,18 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   skeletonRow: {
-    height: 82,
+    minHeight: 82,
+    paddingHorizontal: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     borderRadius: radius.md,
     backgroundColor: colors.surfaceLow,
+  },
+  skeletonCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.xs,
   },
   disabled: {
     opacity: 0.48,

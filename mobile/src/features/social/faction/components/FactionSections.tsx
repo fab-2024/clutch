@@ -1,5 +1,6 @@
 import { ScrollView, Text, View } from 'react-native';
 
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { teamHue } from '@/src/utils/teams';
 
 import { COMMUNITY_FORMS } from '../constants';
@@ -398,12 +399,24 @@ export function EmptyCommunity() {
 
 export function CommunitySkeleton() {
   return (
-    <View style={styles.skeleton}>
-      <View style={styles.skeletonHeader} />
-      <View style={styles.skeletonRelic} />
-      <View style={styles.skeletonLine} />
-      <View style={[styles.skeletonLine, { width: '68%' }]} />
-    </View>
+    <SkeletonGroup label="Chargement de la faction" style={styles.skeleton} testID="faction-loading">
+      <View style={styles.skeletonHeaderRow}>
+        <Skeleton height={58} radius="lg" width={58} />
+        <View style={styles.skeletonHeaderCopy}>
+          <Skeleton height={9} radius="pill" width="42%" />
+          <Skeleton height={24} radius="sm" width="72%" />
+          <Skeleton height={8} radius="pill" tone="subtle" width="48%" />
+        </View>
+        <Skeleton height={36} radius="pill" width={46} />
+      </View>
+      <Skeleton height={190} radius="lg" style={styles.skeletonRelic} width={150} />
+      <View style={styles.skeletonMetrics}>
+        <Skeleton height={12} radius="pill" width="46%" />
+        <Skeleton height={28} radius="sm" width={72} />
+      </View>
+      <Skeleton height={7} radius="pill" width="100%" />
+      <Skeleton height={10} radius="pill" tone="subtle" width="68%" />
+    </SkeletonGroup>
   );
 }
 

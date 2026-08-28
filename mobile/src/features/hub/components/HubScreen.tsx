@@ -17,6 +17,7 @@ import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated'
 
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
@@ -355,7 +356,33 @@ function EmptyHero() {
 }
 
 function HeroSkeleton() {
-  return <View style={styles.matchFeature}><View style={styles.skeleton}><View style={styles.skeletonLine} /><View style={styles.skeletonDuel} /><View style={styles.skeletonLine} /></View><View style={styles.skeletonAction} /></View>;
+  return (
+    <SkeletonGroup label="Chargement de l’affiche principale" style={styles.matchFeature}>
+      <View style={styles.skeleton}>
+        <View style={styles.skeletonTop}>
+          <Skeleton height={10} radius="pill" width="38%" />
+          <Skeleton height={24} radius="pill" width={54} />
+        </View>
+        <Skeleton height={12} radius="pill" tone="subtle" width="52%" />
+        <View style={styles.skeletonDuel}>
+          <View style={styles.skeletonTeam}>
+            <Skeleton height={62} radius="lg" width={62} />
+            <Skeleton height={13} radius="pill" width={48} />
+          </View>
+          <View style={styles.skeletonVersus}>
+            <Skeleton height={8} radius="pill" tone="subtle" width={32} />
+            <Skeleton height={26} radius="sm" width={42} />
+          </View>
+          <View style={styles.skeletonTeam}>
+            <Skeleton height={62} radius="lg" width={62} />
+            <Skeleton height={13} radius="pill" width={48} />
+          </View>
+        </View>
+        <Skeleton height={10} radius="pill" tone="subtle" width="46%" />
+      </View>
+      <Skeleton height={57} radius="md" tone="highlight" width="100%" />
+    </SkeletonGroup>
+  );
 }
 
 function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
@@ -431,8 +458,9 @@ const styles = StyleSheet.create({
   emptyTitle: { zIndex: 1, maxWidth: 310, marginTop: 7, color: colors.text, fontFamily: fonts.display, fontSize: 29, lineHeight: 31 },
   emptyCopy: { ...typography.body, zIndex: 1, maxWidth: 300, marginTop: 6, color: '#A2ABB2' },
   skeleton: { minHeight: 245, padding: 16, justifyContent: 'space-between', borderRadius: 17, backgroundColor: '#0D1218', borderWidth: 1, borderColor: colors.border },
-  skeletonLine: { width: '58%', height: 10, borderRadius: 5, backgroundColor: '#1B242C' },
-  skeletonDuel: { width: '82%', height: 74, alignSelf: 'center', borderRadius: 18, backgroundColor: '#151D24' },
-  skeletonAction: { height: 57, borderRadius: 13, backgroundColor: '#1A2214' },
+  skeletonTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  skeletonDuel: { minHeight: 96, alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', gap: 12 },
+  skeletonTeam: { width: 78, alignItems: 'center', gap: 8 },
+  skeletonVersus: { width: 48, alignItems: 'center', gap: 8 },
   pressed: { opacity: .78, transform: [{ scale: .997 }] },
 });

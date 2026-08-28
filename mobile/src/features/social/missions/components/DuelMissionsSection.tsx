@@ -4,6 +4,7 @@ import Zap from 'lucide-react-native/icons/zap';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { StateView } from '@/src/components/ui/StateView';
 import { Surface } from '@/src/components/ui/Surface';
 import { colors, radius, spacing, typography } from '@/src/theme';
@@ -32,23 +33,18 @@ export const DuelMissionsSection = forwardRef<View, DuelMissionsSectionProps>(
 
     if (loading) {
       return (
-        <View
-          accessibilityLabel="Chargement de la mission contextuelle"
-          accessibilityLiveRegion="polite"
-          accessibilityRole="progressbar"
-          accessibilityState={{ busy: true }}
-          aria-busy
-          accessible
+        <SkeletonGroup
+          label="Chargement de la mission contextuelle"
           style={styles.section}
           testID="duel-missions-loading"
         >
           <SectionHeading count={null} />
           <Surface border="subtle" layout={{ minHeight: 132, width: '100%' }} radius="lg" tone="low">
-            <View style={styles.skeletonTitle} />
-            <View style={styles.skeletonCopy} />
-            <View style={styles.skeletonTrack} />
+            <Skeleton height={12} radius="pill" width="42%" />
+            <Skeleton height={18} radius="sm" style={styles.skeletonCopy} width="78%" />
+            <Skeleton height={6} radius="pill" style={styles.skeletonTrack} width="100%" />
           </Surface>
-        </View>
+        </SkeletonGroup>
       );
     }
 
@@ -355,24 +351,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     color: colors.volt,
   },
-  skeletonTitle: {
-    width: '42%',
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.surfaceRaised,
-  },
   skeletonCopy: {
-    width: '78%',
-    height: 18,
     marginTop: spacing.md,
-    borderRadius: 8,
-    backgroundColor: colors.surfaceRaised,
   },
   skeletonTrack: {
-    width: '100%',
-    height: 6,
     marginTop: spacing.lg,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceRaised,
   },
 });
