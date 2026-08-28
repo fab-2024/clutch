@@ -56,6 +56,7 @@ type FactionRelicHeroV2Props = {
   relicLabMode?: boolean;
   relicMotionCommand?: RelicMotionCommand | null;
   relicProgressOverride?: FactionProgress;
+  relicSceneActive?: boolean;
   supporterContribution?: SupporterContributionPresentation | null;
 };
 
@@ -75,6 +76,7 @@ export default function FactionRelicHeroV2({
   relicLabMode,
   relicMotionCommand,
   relicProgressOverride,
+  relicSceneActive,
   supporterContribution,
 }: FactionRelicHeroV2Props) {
   const systemReduceMotion = useReducedMotion();
@@ -165,6 +167,7 @@ export default function FactionRelicHeroV2({
         onSupporterContributionPresented={onSupporterContributionPresented}
         progress={progress}
         reduceMotionOverride={reduceMotionOverride}
+        sceneActive={relicSceneActive}
         supporterArrivalPhase={supporterArrivalPhase}
         supporterContribution={supporterContribution}
       />

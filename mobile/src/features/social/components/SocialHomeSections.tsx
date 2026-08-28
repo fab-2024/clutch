@@ -48,6 +48,7 @@ export function FactionRelicHero({
   relicLabMode,
   relicMotionCommand,
   relicProgressOverride,
+  relicSceneActive,
   instabilityPreviewOverride,
   motionPreviewOverride,
   onRelicDiagnosticsChange,
@@ -65,6 +66,7 @@ export function FactionRelicHero({
   relicLabMode?: boolean;
   relicMotionCommand?: RelicMotionCommand | null;
   relicProgressOverride?: FactionProgress;
+  relicSceneActive?: boolean;
   instabilityPreviewOverride?: { charge: number; objective: number };
   motionPreviewOverride?: RelicMotionPreview;
   onRelicDiagnosticsChange?: (diagnostics: RelicMotionDiagnostics) => void;
@@ -161,6 +163,7 @@ export function FactionRelicHero({
         onSupporterContributionPresented={onSupporterContributionPresented}
         progress={progress}
         reduceMotionOverride={reduceMotionOverride}
+        sceneActive={relicSceneActive}
         supporterArrivalPhase={supporterArrivalPhase}
         supporterContribution={supporterContribution}
       />

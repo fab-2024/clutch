@@ -283,17 +283,23 @@ describe('relic mutation timeline', () => {
 
   it('cleans the impact and finalization timers on interruption', () => {
     jest.useFakeTimers();
+    const conclusion = jest.fn();
     const impact = jest.fn();
     const finish = jest.fn();
+    const skip = jest.fn();
     const timers: RelicMutationTimers = {
+      conclusion: setTimeout(conclusion, 2_180) as unknown as ReturnType<typeof setTimeout>,
       impact: setTimeout(impact, 1_100) as unknown as ReturnType<typeof setTimeout>,
       finish: setTimeout(finish, MUTATION_DURATION_MS) as unknown as ReturnType<typeof setTimeout>,
+      skip: setTimeout(skip, 420) as unknown as ReturnType<typeof setTimeout>,
     };
     clearRelicMutationTimerHandles(timers);
     jest.advanceTimersByTime(MUTATION_DURATION_MS + 100);
+    expect(conclusion).not.toHaveBeenCalled();
     expect(impact).not.toHaveBeenCalled();
     expect(finish).not.toHaveBeenCalled();
-    expect(timers).toEqual({ impact: null, finish: null });
+    expect(skip).not.toHaveBeenCalled();
+    expect(timers).toEqual({ conclusion: null, impact: null, finish: null, skip: null });
     jest.useRealTimers();
   });
 });

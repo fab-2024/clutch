@@ -94,8 +94,10 @@ export type RelicMutationTransition = {
 };
 
 export type RelicMutationTimers = {
+  conclusion: ReturnType<typeof setTimeout> | null;
   impact: ReturnType<typeof setTimeout> | null;
   finish: ReturnType<typeof setTimeout> | null;
+  skip: ReturnType<typeof setTimeout> | null;
 };
 
 export type RelicMutationTimelineStage =
@@ -327,10 +329,14 @@ export function mutationElapsedMs(phase: number, reducedMotion = false) {
 }
 
 export function clearRelicMutationTimerHandles(timers: RelicMutationTimers) {
+  if (timers.conclusion) clearTimeout(timers.conclusion);
   if (timers.impact) clearTimeout(timers.impact);
   if (timers.finish) clearTimeout(timers.finish);
+  if (timers.skip) clearTimeout(timers.skip);
+  timers.conclusion = null;
   timers.impact = null;
   timers.finish = null;
+  timers.skip = null;
 }
 
 export function shouldEnterMutationReady(

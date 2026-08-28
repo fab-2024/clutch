@@ -76,6 +76,7 @@ const MUTATION_TRANSITIONS = [
   { fromLevel: 2, toLevel: 3 },
   { fromLevel: 3, toLevel: 4 },
   { fromLevel: 4, toLevel: 5 },
+  { fromLevel: 5, toLevel: 6 },
   { fromLevel: 1, toLevel: 5 },
 ] as const;
 
@@ -142,6 +143,7 @@ export default function SocialHomePreviewScreen({
     mutationEventId: null,
     mutationEventPresented: false,
   });
+  const previewSessionId = useRef(Date.now().toString(36));
   const eventSequence = useRef(0);
   const motionSequence = useRef(0);
   const previewScenarioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -191,7 +193,7 @@ export default function SocialHomePreviewScreen({
       const target = communityFormForLevel(requestedMutationTo);
       eventSequence.current += 1;
       const nextMutation = {
-        id: `preview-query-mutation-${eventSequence.current}`,
+        id: `preview-query-mutation-${previewSessionId.current}-${eventSequence.current}`,
         from_level: requestedMutationFrom,
         to_level: requestedMutationTo,
         name: target.name,
@@ -243,7 +245,7 @@ export default function SocialHomePreviewScreen({
     setSelectedMutation({ fromLevel, toLevel });
     setPresentedMutationEventId(null);
     setMutation({
-      id: `preview-mutation-${eventSequence.current}`,
+      id: `preview-mutation-${previewSessionId.current}-${eventSequence.current}`,
       from_level: fromLevel,
       to_level: toLevel,
       name: target.name,
@@ -683,7 +685,7 @@ function chargeForInstability(level: number, percent: number | null) {
 
 function previewMutationLevel(value: string) {
   const numeric = Number(value);
-  if (Number.isFinite(numeric) && numeric >= 1 && numeric <= 5) return Math.floor(numeric);
+  if (Number.isFinite(numeric) && numeric >= 1 && numeric <= 6) return Math.floor(numeric);
   const container = relicContainerForPreview(value.toLowerCase());
   return TESTABLE_FORMS.find((form) => form.container === container)?.level ?? 1;
 }

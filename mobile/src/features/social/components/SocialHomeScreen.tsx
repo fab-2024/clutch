@@ -1,10 +1,13 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Pressable,
   RefreshControl,
   ScrollView,
   Text,
   View,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 
@@ -17,6 +20,7 @@ import type {
   SupporterContributionPresentation,
 } from '@/src/features/social/faction/relicMotion';
 import type { CommunityData, CommunityMutationPresentation, FactionProgress } from '@/src/features/social/faction/types';
+import { relicSceneVisibleAtOffset } from '@/src/features/social/faction/relicMutationMastering';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors } from '@/src/theme';
 
@@ -110,6 +114,9 @@ export function SocialHomeExperience({
 }: SocialHomeExperienceProps) {
   const systemReduceMotion = useReducedMotion();
   const reduceMotion = reduceMotionOverride ?? systemReduceMotion;
+  const relicHeroHeightRef = useRef(480);
+  const relicSceneActiveRef = useRef(true);
+  const [relicSceneActive, setRelicSceneActive] = useState(true);
   const rankedFactions = useMemo(
     () => [...data.factions].sort((a, b) => (
       b.membres - a.membres
@@ -126,12 +133,28 @@ export function SocialHomeExperience({
   );
   const entrance = (delay: number) => reduceMotion ? undefined : FadeInDown.delay(delay).duration(380);
   const RelicHero = factionHeroVariant === 'v2' ? FactionRelicHeroV2 : FactionRelicHero;
+  const updateRelicSceneVisibility = useCallback((visible: boolean) => {
+    if (relicSceneActiveRef.current === visible) return;
+    relicSceneActiveRef.current = visible;
+    setRelicSceneActive(visible);
+  }, []);
+  const handleRelicHeroLayout = useCallback((event: LayoutChangeEvent) => {
+    relicHeroHeightRef.current = Math.max(1, event.nativeEvent.layout.height);
+  }, []);
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    updateRelicSceneVisibility(relicSceneVisibleAtOffset(
+      event.nativeEvent.contentOffset.y,
+      relicHeroHeightRef.current,
+    ));
+  }, [updateRelicSceneVisibility]);
 
   return (
     <ScrollView
       style={styles.root}
       contentContainerStyle={styles.content}
+      onScroll={handleScroll}
       showsVerticalScrollIndicator={false}
+      scrollEventThrottle={64}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
     >
       {error ? (
@@ -141,7 +164,7 @@ export function SocialHomeExperience({
         </View>
       ) : null}
 
-      <Animated.View entering={entrance(20)}>
+      <Animated.View entering={entrance(20)} onLayout={handleRelicHeroLayout}>
         {loading ? <SocialHomeSkeleton /> : (
           <RelicHero
             faction={faction}
@@ -153,6 +176,7 @@ export function SocialHomeExperience({
             relicLabMode={relicLabMode}
             relicMotionCommand={relicMotionCommand}
             relicProgressOverride={relicProgressOverride}
+            relicSceneActive={relicSceneActive}
             instabilityPreviewOverride={instabilityPreviewOverride}
             motionPreviewOverride={motionPreviewOverride}
             onRelicDiagnosticsChange={onRelicDiagnosticsChange}

@@ -2,7 +2,17 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Platform, Pressable, Text, View, type LayoutChangeEvent, type LayoutRectangle } from 'react-native';
+import {
+  AppState,
+  Image,
+  Platform,
+  Pressable,
+  Text,
+  View,
+  type AppStateStatus,
+  type LayoutChangeEvent,
+  type LayoutRectangle,
+} from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -24,6 +34,7 @@ import {
   mutationElapsedMs,
   mutationSegment,
   observeSupporterCharge,
+  REDUCED_MUTATION_DURATION_MS,
   RELIC_RESONANCE_MIN_MS,
   RELIC_TAP_MAX_MS,
   resolveRelicGesture,
@@ -42,6 +53,11 @@ import {
   type SupporterContributionBatch,
   type SupporterContributionPresentation,
 } from '@/src/features/social/faction/relicMotion';
+import {
+  relicMutationMasteringTimeline,
+  resolveRelicMutationConclusion,
+  shouldRunRelicScene,
+} from '@/src/features/social/faction/relicMutationMastering';
 import {
   RELIC_HEART_ASSET,
   RELIC_STAGE_ARTWORK,
@@ -135,6 +151,7 @@ type CollectiveRelicProps = {
   motionPreviewOverride?: RelicMotionPreview;
   progress: FactionProgress;
   reduceMotionOverride?: boolean;
+  sceneActive?: boolean;
   supporterArrivalPhase?: SharedValue<number>;
   supporterContribution?: SupporterContributionPresentation | null;
 };
@@ -159,6 +176,7 @@ export default function CollectiveRelic({
   onSupporterContributionPresented,
   progress,
   reduceMotionOverride,
+  sceneActive = true,
   supporterArrivalPhase,
   supporterContribution,
 }: CollectiveRelicProps) {
@@ -169,9 +187,14 @@ export default function CollectiveRelic({
   const [displayForm, setDisplayForm] = useState<CommunityForm>(progress.current);
   const [mutationActive, setMutationActive] = useState(false);
   const [activeMutation, setActiveMutation] = useState<ActiveRelicMutation | null>(null);
+  const [canSkipMutation, setCanSkipMutation] = useState(false);
+  const [mutationConclusionVisible, setMutationConclusionVisible] = useState(false);
   const [activeContribution, setActiveContribution] = useState<SupporterContributionBatch | null>(null);
   const [pendingContribution, setPendingContribution] = useState<SupporterContributionBatch | null>(null);
   const routeActiveRef = useRef(false);
+  const routeFocusedRef = useRef(false);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const sceneActiveRef = useRef(sceneActive);
   const motionStateRef = useRef<RelicMotionState>('idle');
   const activeMutationRef = useRef<ActiveRelicMutation | null>(null);
   const presentedMutationIdsRef = useRef(PRESENTED_MUTATION_EVENT_IDS);
@@ -189,7 +212,12 @@ export default function CollectiveRelic({
   const chargeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mutationTimersRef = useRef<RelicMutationTimers>({ impact: null, finish: null });
+  const mutationTimersRef = useRef<RelicMutationTimers>({
+    conclusion: null,
+    impact: null,
+    finish: null,
+    skip: null,
+  });
   const contributionFinishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const beginSupporterArrivalRef = useRef<(batch: SupporterContributionBatch) => void>(() => undefined);
   const stageLayoutRef = useRef<LayoutRectangle | null>(null);
@@ -218,6 +246,10 @@ export default function CollectiveRelic({
   const instabilityEnergy = instabilityEnergyFor(instability.tier, instability.localIntensity);
   const idlePulseCount = idlePulseCountFor(instability.tier, instability.localIntensity);
   const persistentLiquidLift = Math.min(18, Math.max(0, progress.progress * 15));
+  const mutationTimeline = relicMutationMasteringTimeline(reduceMotion);
+  const mutationPreviewDuration = reduceMotion
+    ? REDUCED_MUTATION_DURATION_MS
+    : MUTATION_DURATION_MS;
   const artworkRegistry = animationPreset === 'skia'
     ? SKIA_RELIC_STAGE_ARTWORK
     : RELIC_STAGE_ARTWORK;
@@ -239,6 +271,13 @@ export default function CollectiveRelic({
   const mutationToMetrics = mutationToArtwork
     ? mutationArtworkMetrics(mutationToArtwork)
     : null;
+  const mutationConclusion = useMemo(
+    () => activeMutation ? resolveRelicMutationConclusion(activeMutation.event) : null,
+    [activeMutation],
+  );
+  const [tensionEnterStart, tensionEnterEnd, tensionExitStart, tensionExitEnd] = mutationTimeline.tension;
+  const [ruptureEnterStart, ruptureEnterEnd, ruptureExitStart, ruptureExitEnd] = mutationTimeline.rupture;
+  const [reconstructionEnterStart, reconstructionEnterEnd, reconstructionExitStart, reconstructionExitEnd] = mutationTimeline.reconstruction;
 
   const stageLabel = faction
     ? `Relique ${progress.current.name} de ${faction.nom}, ${progress.charge} supporter${progress.charge > 1 ? 's' : ''} sur ${progress.objective}`
@@ -323,6 +362,8 @@ export default function CollectiveRelic({
     mutationPhase.value = 0;
     mutationReadyPhase.value = 0;
     supporterPhase.value = 0;
+    setCanSkipMutation(false);
+    setMutationConclusionVisible(false);
     updateActiveContribution(null);
     updatePendingContribution(null);
   }, [clearContributionTimer, clearInteractionTimers, clearMutationTimers, idlePhase, motionCode, mutationPhase, mutationReadyPhase, pressCharge, resonancePhase, supporterPhase, tapPhase, updateActiveContribution, updatePendingContribution]);
@@ -459,6 +500,8 @@ export default function CollectiveRelic({
     mutationActiveRef.current = false;
     setActiveMutation(null);
     setMutationActive(false);
+    setCanSkipMutation(false);
+    setMutationConclusionVisible(false);
     setMotion('idle');
     acknowledgeMutation(current.event.id);
 
@@ -570,28 +613,64 @@ export default function CollectiveRelic({
     lifecycleStopAnimationsRef.current = stopAnimations;
   }, [startIdle, stopAnimations]);
 
-  useFocusEffect(useCallback(() => {
+  const activateRelicLifecycle = useCallback(() => {
+    if (
+      routeActiveRef.current
+      || !shouldRunRelicScene(
+        routeFocusedRef.current,
+        appStateRef.current === 'active',
+        sceneActiveRef.current,
+      )
+    ) return;
+
     routeActiveRef.current = true;
     contributionBaselineReadyRef.current = false;
     contributionBaselineRef.current = { factionId: null, charge: null };
     setRouteActive(true);
     lifecycleStartIdleRef.current();
-    return () => {
-      routeActiveRef.current = false;
-      finishMutationRef.current(true);
-      lifecycleStopAnimationsRef.current();
-      setRouteActive(false);
-      setMutationActive(false);
-      setActiveMutation(null);
-      setMotionState('idle');
-    };
-  }, []));
+  }, []);
 
-  useEffect(() => () => {
+  const deactivateRelicLifecycle = useCallback(() => {
+    if (!routeActiveRef.current) return;
     routeActiveRef.current = false;
     finishMutationRef.current(true);
     lifecycleStopAnimationsRef.current();
+    setRouteActive(false);
+    setMutationActive(false);
+    setActiveMutation(null);
+    setMotionState('idle');
   }, []);
+
+  useFocusEffect(useCallback(() => {
+    routeFocusedRef.current = true;
+    activateRelicLifecycle();
+    return () => {
+      routeFocusedRef.current = false;
+      deactivateRelicLifecycle();
+    };
+  }, [activateRelicLifecycle, deactivateRelicLifecycle]));
+
+  useEffect(() => {
+    sceneActiveRef.current = sceneActive;
+    if (sceneActive) activateRelicLifecycle();
+    else deactivateRelicLifecycle();
+  }, [activateRelicLifecycle, deactivateRelicLifecycle, sceneActive]);
+
+  useEffect(() => {
+    function handleAppState(nextState: AppStateStatus) {
+      appStateRef.current = nextState;
+      if (nextState === 'active') activateRelicLifecycle();
+      else deactivateRelicLifecycle();
+    }
+
+    const subscription = AppState.addEventListener('change', handleAppState);
+    return () => subscription.remove();
+  }, [activateRelicLifecycle, deactivateRelicLifecycle]);
+
+  useEffect(() => () => {
+    routeFocusedRef.current = false;
+    deactivateRelicLifecycle();
+  }, [deactivateRelicLifecycle]);
 
   useEffect(() => {
     if (mutationActiveRef.current) return;
@@ -662,7 +741,7 @@ export default function CollectiveRelic({
   useEffect(() => {
     const frozenElapsed = mutationPreviewMs === null || mutationPreviewMs === undefined
       ? 0
-      : Math.max(0, Math.min(MUTATION_DURATION_MS, mutationPreviewMs));
+      : Math.max(0, Math.min(mutationPreviewDuration, mutationPreviewMs));
     const activeEventId = activeMutation?.event.id ?? mutation?.id ?? null;
     onDiagnosticsChange?.({
       state: motionState,
@@ -677,10 +756,10 @@ export default function CollectiveRelic({
       mutationEventPresented: Boolean(
         activeEventId
         && (presentedMutationIdsRef.current.has(activeEventId)
-          || (activeMutation && mutationPreviewMs !== null && mutationPreviewMs !== undefined && frozenElapsed >= MUTATION_DURATION_MS)),
+          || (activeMutation && mutationPreviewMs !== null && mutationPreviewMs !== undefined && frozenElapsed >= mutationPreviewDuration)),
       ),
     });
-  }, [activeContribution?.count, activeMutation, instability.ratio, instability.tier, motionState, mutation?.id, mutationPreviewMs, onDiagnosticsChange, pendingContribution?.amount, pendingContribution?.count]);
+  }, [activeContribution?.count, activeMutation, instability.ratio, instability.tier, motionState, mutation?.id, mutationPreviewDuration, mutationPreviewMs, onDiagnosticsChange, pendingContribution?.amount, pendingContribution?.count]);
 
   useEffect(() => {
     if (!routeActive || !motionPreviewOverride) return undefined;
@@ -773,8 +852,14 @@ export default function CollectiveRelic({
     const current = activeMutationRef.current;
     if (current?.event.id === mutation.id) {
       if (mutationPreviewMs !== null && mutationPreviewMs !== undefined) {
+        const frozenElapsed = Math.max(0, Math.min(mutationPreviewDuration, mutationPreviewMs));
         cancelAnimation(mutationPhase);
-        mutationPhase.value = Math.max(0, Math.min(1, mutationPreviewMs / MUTATION_DURATION_MS));
+        mutationPhase.value = frozenElapsed / mutationPreviewDuration;
+        setCanSkipMutation(
+          frozenElapsed >= mutationTimeline.skipUnlockMs
+          && frozenElapsed < mutationTimeline.conclusionStartMs,
+        );
+        setMutationConclusionVisible(frozenElapsed >= mutationTimeline.conclusionStartMs);
       }
       return;
     }
@@ -807,11 +892,19 @@ export default function CollectiveRelic({
     activeMutationRef.current = nextActive;
     setMutationActive(true);
     setActiveMutation(nextActive);
+    setCanSkipMutation(false);
+    setMutationConclusionVisible(false);
     setDisplayForm(communityFormForLevel(transition.fromLevel));
     setMotion('mutating');
 
     if (mutationPreviewMs !== null && mutationPreviewMs !== undefined) {
-      mutationPhase.value = Math.max(0, Math.min(1, mutationPreviewMs / MUTATION_DURATION_MS));
+      const frozenElapsed = Math.max(0, Math.min(transition.durationMs, mutationPreviewMs));
+      mutationPhase.value = frozenElapsed / transition.durationMs;
+      setCanSkipMutation(
+        frozenElapsed >= mutationTimeline.skipUnlockMs
+        && frozenElapsed < mutationTimeline.conclusionStartMs,
+      );
+      setMutationConclusionVisible(frozenElapsed >= mutationTimeline.conclusionStartMs);
       return;
     }
 
@@ -820,17 +913,30 @@ export default function CollectiveRelic({
       easing: Easing.linear,
     });
 
+    mutationTimersRef.current.skip = setTimeout(() => {
+      mutationTimersRef.current.skip = null;
+      if (activeMutationRef.current?.event.id !== mutation.id) return;
+      setCanSkipMutation(true);
+    }, mutationTimeline.skipUnlockMs);
+
     mutationTimersRef.current.impact = setTimeout(() => {
       mutationTimersRef.current.impact = null;
       if (activeMutationRef.current?.event.id !== mutation.id) return;
       haptic(reduceMotion ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Heavy);
     }, reduceMotion ? 400 : 1_100);
 
+    mutationTimersRef.current.conclusion = setTimeout(() => {
+      mutationTimersRef.current.conclusion = null;
+      if (activeMutationRef.current?.event.id !== mutation.id) return;
+      setCanSkipMutation(false);
+      setMutationConclusionVisible(true);
+    }, mutationTimeline.conclusionStartMs);
+
     mutationTimersRef.current.finish = setTimeout(() => {
       mutationTimersRef.current.finish = null;
       if (activeMutationRef.current?.event.id === mutation.id) finishMutationRef.current(false);
     }, transition.durationMs + 18);
-  }, [clearInteractionTimers, clearMutationTimers, haptic, idlePhase, mutation, mutationActive, mutationPhase, mutationPreviewMs, pauseContributionForMutation, pressCharge, reduceMotion, resonancePhase, routeActive, setMotion, tapPhase]);
+  }, [clearInteractionTimers, clearMutationTimers, haptic, idlePhase, mutation, mutationActive, mutationPhase, mutationPreviewDuration, mutationPreviewMs, mutationTimeline.conclusionStartMs, mutationTimeline.skipUnlockMs, pauseContributionForMutation, pressCharge, reduceMotion, resonancePhase, routeActive, setMotion, tapPhase]);
 
   useEffect(() => {
     if (!routeActive || !activeMutationRef.current || mutation) return;
@@ -841,6 +947,33 @@ export default function CollectiveRelic({
     if (!mutationInterruptSignal || !activeMutationRef.current) return;
     finishMutationRef.current(true);
   }, [mutationInterruptSignal]);
+
+  const skipMutation = useCallback(() => {
+    const current = activeMutationRef.current;
+    if (!current || !canSkipMutation) return;
+
+    clearMutationTimers();
+    cancelAnimation(mutationPhase);
+    const conclusionPhase = Math.min(
+      1,
+      mutationTimeline.conclusionStartMs / Math.max(1, current.transition.durationMs),
+    );
+    mutationPhase.value = conclusionPhase;
+    mutationPhase.value = withTiming(1, {
+      duration: mutationTimeline.skipSettleMs,
+      easing: Easing.out(Easing.cubic),
+    });
+    haptic(Haptics.ImpactFeedbackStyle.Light);
+    setCanSkipMutation(false);
+    setMutationConclusionVisible(true);
+
+    mutationTimersRef.current.finish = setTimeout(() => {
+      mutationTimersRef.current.finish = null;
+      if (activeMutationRef.current?.event.id === current.event.id) {
+        finishMutationRef.current(true);
+      }
+    }, mutationTimeline.skipSettleMs + 18);
+  }, [canSkipMutation, clearMutationTimers, haptic, mutationPhase, mutationTimeline.conclusionStartMs, mutationTimeline.skipSettleMs]);
 
   const ambientMotion = useAnimatedStyle(() => {
     const breath = instabilityBreath(idlePhase.value, idlePulseCount, instability.tier === 'critical' ? .16 : 0);
@@ -1260,19 +1393,49 @@ export default function CollectiveRelic({
     };
   }, [mutationActive, mutationFromArtwork?.contactWidth, mutationToArtwork?.contactWidth, reduceMotion]);
 
-  const mutationRevealMotion = useAnimatedStyle(() => {
+  const mutationTensionCopyMotion = useAnimatedStyle(() => {
     const elapsed = mutationElapsedMs(mutationPhase.value, reduceMotion);
-    const enter = reduceMotion
-      ? mutationSegment(elapsed, 500, 590)
-      : mutationSegment(elapsed, 2_200, 2_340);
-    const exit = reduceMotion
-      ? mutationSegment(elapsed, 680, 780)
-      : mutationSegment(elapsed, 2_480, 2_600);
+    const enter = mutationSegment(elapsed, tensionEnterStart, tensionEnterEnd);
+    const exit = mutationSegment(elapsed, tensionExitStart, tensionExitEnd);
     return {
       opacity: enter * (1 - exit),
-      transform: [{ translateY: (1 - enter) * 8 - exit * 4 }],
+      transform: [{ translateY: reduceMotion ? 0 : (1 - enter) * 5 - exit * 3 }],
     };
-  }, [reduceMotion]);
+  }, [reduceMotion, tensionEnterEnd, tensionEnterStart, tensionExitEnd, tensionExitStart]);
+
+  const mutationRuptureCopyMotion = useAnimatedStyle(() => {
+    const elapsed = mutationElapsedMs(mutationPhase.value, reduceMotion);
+    const enter = mutationSegment(elapsed, ruptureEnterStart, ruptureEnterEnd);
+    const exit = mutationSegment(elapsed, ruptureExitStart, ruptureExitEnd);
+    return {
+      opacity: reduceMotion ? 0 : enter * (1 - exit),
+      transform: [{ translateY: (1 - enter) * 5 - exit * 3 }],
+    };
+  }, [reduceMotion, ruptureEnterEnd, ruptureEnterStart, ruptureExitEnd, ruptureExitStart]);
+
+  const mutationReconstructionCopyMotion = useAnimatedStyle(() => {
+    const elapsed = mutationElapsedMs(mutationPhase.value, reduceMotion);
+    const enter = mutationSegment(elapsed, reconstructionEnterStart, reconstructionEnterEnd);
+    const exit = mutationSegment(elapsed, reconstructionExitStart, reconstructionExitEnd);
+    return {
+      opacity: enter * (1 - exit),
+      transform: [{ translateY: reduceMotion ? 0 : (1 - enter) * 5 - exit * 3 }],
+    };
+  }, [reconstructionEnterEnd, reconstructionEnterStart, reconstructionExitEnd, reconstructionExitStart, reduceMotion]);
+
+  const mutationConclusionMotion = useAnimatedStyle(() => {
+    const elapsed = mutationElapsedMs(mutationPhase.value, reduceMotion);
+    const enterDuration = reduceMotion ? 90 : 150;
+    const enter = mutationSegment(
+      elapsed,
+      mutationTimeline.conclusionStartMs,
+      mutationTimeline.conclusionStartMs + enterDuration,
+    );
+    return {
+      opacity: enter,
+      transform: [{ translateY: reduceMotion ? 0 : (1 - enter) * 10 }],
+    };
+  }, [mutationTimeline.conclusionStartMs, reduceMotion]);
 
   const alternateVesselMotion = useAnimatedStyle(() => {
     const breath = instabilityBreath(idlePhase.value, idlePulseCount, instability.tier === 'critical' ? .16 : 0);
@@ -1552,19 +1715,38 @@ export default function CollectiveRelic({
   ) : null;
   const presentedVessel = animationPreset === 'skia' ? skiaVessel : mutationScene ?? vessel;
   const showLegacyScene = animationPreset !== 'skia';
+  const stageDisabled = progress.level === 0
+    || motionState === 'supporterArrival'
+    || instability.tier === 'mutationReady'
+    || (mutationActive && !canSkipMutation);
+  const stageAccessibilityLabel = mutationConclusionVisible && mutationConclusion
+    ? mutationConclusion.accessibilityLabel
+    : canSkipMutation && mutationToForm
+      ? `Mutation vers ${mutationToForm.name}. Passer la séquence.`
+      : stageLabel;
+  const stageAccessibilityHint = canSkipMutation
+    ? 'Active pour rejoindre la conclusion de la mutation'
+    : mutationActive
+      ? 'La mutation collective est en cours'
+      : progress.level === 0
+        ? 'La première charge collective est nécessaire'
+        : 'Touche rapidement pour une réaction, ou maintiens pour faire résonner le cœur';
 
   return (
     <Pressable
-      accessibilityHint={progress.level === 0 ? 'La première charge collective est nécessaire' : 'Touche rapidement pour une réaction, ou maintiens pour faire résonner le cœur'}
-      accessibilityLabel={stageLabel}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: progress.level === 0 || mutationActive || motionState === 'supporterArrival' || instability.tier === 'mutationReady' }}
+      accessibilityHint={stageAccessibilityHint}
+      accessibilityLabel={stageAccessibilityLabel}
+      accessibilityLiveRegion={mutationConclusionVisible ? 'polite' : 'none'}
+      accessibilityRole={mutationConclusionVisible ? 'summary' : 'button'}
+      accessibilityState={mutationConclusionVisible ? undefined : { disabled: stageDisabled }}
       accessibilityValue={{ text: motionState }}
-      disabled={progress.level === 0 || mutationActive || motionState === 'supporterArrival' || instability.tier === 'mutationReady'}
+      disabled={stageDisabled}
       onLayout={handleStageLayout}
+      onPress={skipMutation}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       style={[styles.stage, compact && styles.stageCompact]}
+      testID="collective-relic-stage"
     >
       <LinearGradient
         colors={animationPreset === 'skia'
@@ -1574,6 +1756,50 @@ export default function CollectiveRelic({
         style={styles.sceneBackdrop}
       />
       <Animated.View pointerEvents="none" style={[styles.mutationBackdrop, mutationBackdropMotion]} />
+
+      {mutationActive && mutationToForm ? (
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          pointerEvents="none"
+          style={[styles.mutationNarrative, compact && styles.mutationNarrativeCompact]}
+        >
+          <Animated.View style={[styles.mutationNarrativeItem, mutationTensionCopyMotion]}>
+            <View style={styles.mutationNarrativeRule} />
+            <View>
+              <Text style={styles.mutationNarrativeEyebrow}>TENSION</Text>
+              <Text style={styles.mutationNarrativeText}>LE CŒUR CONCENTRE LA CHARGE</Text>
+            </View>
+          </Animated.View>
+          <Animated.View style={[styles.mutationNarrativeItem, mutationRuptureCopyMotion]}>
+            <View style={[styles.mutationNarrativeRule, styles.mutationNarrativeRuleRupture]} />
+            <View>
+              <Text style={[styles.mutationNarrativeEyebrow, styles.mutationNarrativeEyebrowRupture]}>RUPTURE</Text>
+              <Text style={styles.mutationNarrativeText}>L’ANCIENNE FORME CÈDE</Text>
+            </View>
+          </Animated.View>
+          <Animated.View style={[styles.mutationNarrativeItem, mutationReconstructionCopyMotion]}>
+            <View style={[styles.mutationNarrativeRule, { backgroundColor: mutationConclusion?.signature.accent }]} />
+            <View>
+              <Text style={[styles.mutationNarrativeEyebrow, { color: mutationConclusion?.signature.accent }]}>RECONSTRUCTION</Text>
+              <Text style={styles.mutationNarrativeText}>PALIER {mutationToForm.code} EN FORMATION</Text>
+            </View>
+          </Animated.View>
+        </View>
+      ) : null}
+
+      {canSkipMutation && !mutationConclusionVisible ? (
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          pointerEvents="none"
+          style={[styles.mutationSkip, compact && styles.mutationSkipCompact]}
+          testID="relic-mutation-skip-label"
+        >
+          <Text style={styles.mutationSkipText}>PASSER</Text>
+          <Text style={styles.mutationSkipGlyph}>››</Text>
+        </View>
+      ) : null}
 
       {showLegacyScene ? <View pointerEvents="none" style={styles.haloCanvas}>
         <Animated.View style={[styles.ambientEnergy, ambientMotion]}>
@@ -1655,10 +1881,36 @@ export default function CollectiveRelic({
         <RelicPedestal accent={accent} faction={faction} />
       </> : null}
 
-      {activeMutation && mutationToForm ? (
-        <Animated.View accessibilityLiveRegion="polite" style={[styles.reveal, labMode && styles.labReveal, mutationRevealMotion]}>
-          <Text style={styles.revealEyebrow}>MUTATION ACCOMPLIE</Text>
-          <Text style={styles.revealName}>{mutationToForm.name.toUpperCase()}</Text>
+      {mutationConclusionVisible && mutationConclusion ? (
+        <Animated.View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          pointerEvents="none"
+          style={[
+            styles.mutationConclusion,
+            compact && styles.mutationConclusionCompact,
+            labMode && styles.labMutationConclusion,
+            mutationConclusionMotion,
+          ]}
+          testID="relic-mutation-conclusion"
+        >
+          <View style={[styles.mutationConclusionWash, { backgroundColor: mutationConclusion.signature.wash }]} />
+          <View style={[styles.mutationConclusionRule, { backgroundColor: mutationConclusion.signature.accent }]} />
+          <View style={styles.mutationConclusionBody}>
+            <Text style={[styles.mutationConclusionEyebrow, { color: mutationConclusion.signature.accent }]}>
+              {mutationConclusion.signature.eyebrow} · PALIER {mutationConclusion.formCode}
+            </Text>
+            <View style={styles.mutationConclusionHeadline}>
+              <Text numberOfLines={1} style={styles.mutationConclusionName}>{mutationConclusion.formName}</Text>
+              <Text numberOfLines={1} style={[styles.mutationConclusionReward, { color: mutationConclusion.signature.accent }]}>
+                {mutationConclusion.rewardValue}
+              </Text>
+            </View>
+            <View style={styles.mutationConclusionMeta}>
+              <Text style={styles.mutationConclusionLabel}>{mutationConclusion.rewardLabel}</Text>
+              <Text numberOfLines={1} style={styles.mutationConclusionNext}>SUIVANT · {mutationConclusion.nextObjective}</Text>
+            </View>
+          </View>
         </Animated.View>
       ) : null}
     </Pressable>
