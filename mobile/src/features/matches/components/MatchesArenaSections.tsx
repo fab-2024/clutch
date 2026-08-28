@@ -12,6 +12,7 @@ import {
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
+import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import GameLogo from '@/src/features/onboarding/components/GameLogo';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
@@ -72,8 +73,10 @@ export function ScheduleHero({
   status,
   visualGame,
 }: ScheduleHeroProps) {
+  const { isShortLandscape } = useResponsiveLayout();
+
   return (
-    <View style={styles.scheduleHero}>
+    <View style={[styles.scheduleHero, isShortLandscape && styles.scheduleHeroLandscape]}>
       <Animated.View entering={FadeIn.duration(260)} key={visualGame} style={StyleSheet.absoluteFill}>
         <Image resizeMode="cover" source={GAME_BACKGROUNDS[visualGame]} style={styles.scheduleBackdrop} />
       </Animated.View>
@@ -119,8 +122,8 @@ export function ScheduleHero({
         </View>
       </View>
 
-      <View style={styles.scheduleCopy}>
-        <Text style={styles.scheduleTitle}>{status === 'upcoming' ? 'PROCHAINS MATCHS' : 'SCORES & RÉSULTATS'}</Text>
+      <View style={[styles.scheduleCopy, isShortLandscape && styles.scheduleCopyLandscape]}>
+        <Text style={[styles.scheduleTitle, isShortLandscape && styles.scheduleTitleLandscape]}>{status === 'upcoming' ? 'PROCHAINS MATCHS' : 'SCORES & RÉSULTATS'}</Text>
         <Text style={styles.scheduleMonth}>{monthLabel}</Text>
       </View>
 
@@ -136,7 +139,7 @@ export function ScheduleHero({
               accessibilityState={{ selected: active }}
               key={key}
               onPress={() => onSelectDay(key)}
-              style={({ pressed }) => [styles.dayButton, active && styles.dayButtonActive, pressed && styles.dayButtonPressed]}
+              style={({ pressed }) => [styles.dayButton, isShortLandscape && styles.dayButtonLandscape, active && styles.dayButtonActive, pressed && styles.dayButtonPressed]}
             >
               <Text style={[styles.dayName, active && styles.dayTextActive]}>{formatWeekday(day)}</Text>
               <Text style={[styles.dayNumber, active && styles.dayTextActive]}>{day.getDate()}</Text>

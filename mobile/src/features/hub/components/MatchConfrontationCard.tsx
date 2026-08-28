@@ -16,6 +16,7 @@ import MatchConfrontationCanvas from './MatchConfrontationCanvas';
 import { MATCH_PLATE_OUTWARD_SHIFT } from './matchConfrontationLayout';
 
 type MatchConfrontationCardProps = {
+  compactLandscape?: boolean;
   match: HubMatch;
   onPress: () => void;
   onPressIn?: () => void;
@@ -26,10 +27,12 @@ type MatchConfrontationCardProps = {
 const CARD_ASPECT_RATIO = 1.43;
 const CARD_SIDE_INSET = spacing.sm;
 
-export function MatchConfrontationCard({ match, onPress, onPressIn, reduceMotion, state }: MatchConfrontationCardProps) {
+export function MatchConfrontationCard({ compactLandscape = false, match, onPress, onPressIn, reduceMotion, state }: MatchConfrontationCardProps) {
   const { width } = useWindowDimensions();
-  const compact = width < 360;
-  const cardWidth = Math.max(288, Math.min(width, layout.contentMaxWidth) - CARD_SIDE_INSET * 2);
+  const compact = width < layout.compactWidthBreakpoint || compactLandscape;
+  const cardWidth = compactLandscape
+    ? Math.min(320, Math.max(240, width * .56))
+    : Math.max(288, Math.min(width, layout.contentMaxWidth) - CARD_SIDE_INSET * 2);
   const cardHeight = cardWidth / CARD_ASPECT_RATIO;
   const sceneScale = cardWidth / 400;
   const statusAccent = state.phase === 'live'

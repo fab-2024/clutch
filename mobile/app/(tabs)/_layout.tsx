@@ -8,19 +8,21 @@ import UserRound from 'lucide-react-native/icons/user-round';
 import UsersRound from 'lucide-react-native/icons/users-round';
 import { StyleSheet, View } from 'react-native';
 
+import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { colors, layout, typography } from '@/src/theme';
 
 type TabIconProps = {
+  compact?: boolean;
   focused: boolean;
   icon: LucideIcon;
 };
 
-function TabIcon({ focused, icon: Icon }: TabIconProps) {
+function TabIcon({ compact = false, focused, icon: Icon }: TabIconProps) {
   return (
-    <View style={styles.iconWrap}>
+    <View style={[styles.iconWrap, compact && styles.iconWrapCompact]}>
       <Icon
         color={focused ? colors.volt : '#77838F'}
-        size={21}
+        size={compact ? 19 : 21}
         strokeWidth={focused ? 2.25 : 1.8}
       />
     </View>
@@ -38,6 +40,8 @@ function SmokedGlassBackground() {
 }
 
 export default function TabsLayout() {
+  const { isShortLandscape } = useResponsiveLayout();
+
   return (
     <Tabs
       screenOptions={{
@@ -47,22 +51,22 @@ export default function TabsLayout() {
         tabBarActiveBackgroundColor: 'rgba(232, 255, 61, 0.075)',
         tabBarBackground: SmokedGlassBackground,
         tabBarHideOnKeyboard: true,
-        tabBarStyle: styles.tabBar,
-        tabBarLabelStyle: styles.label,
-        tabBarItemStyle: styles.item,
+        tabBarStyle: [styles.tabBar, isShortLandscape && styles.tabBarLandscape],
+        tabBarLabelStyle: [styles.label, isShortLandscape && styles.labelLandscape],
+        tabBarItemStyle: [styles.item, isShortLandscape && styles.itemLandscape],
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Hub', tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon={House} /> }} />
-      <Tabs.Screen name="matches" options={{ title: 'Matchs', tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon={CalendarDays} /> }} />
-      <Tabs.Screen name="social" options={{ title: 'Social', tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon={UsersRound} /> }} />
-      <Tabs.Screen name="rank" options={{ title: 'Rank', tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon={Trophy} /> }} />
+      <Tabs.Screen name="index" options={{ title: 'Hub', tabBarIcon: ({ focused }) => <TabIcon compact={isShortLandscape} focused={focused} icon={House} /> }} />
+      <Tabs.Screen name="matches" options={{ title: 'Matchs', tabBarIcon: ({ focused }) => <TabIcon compact={isShortLandscape} focused={focused} icon={CalendarDays} /> }} />
+      <Tabs.Screen name="social" options={{ title: 'Social', tabBarIcon: ({ focused }) => <TabIcon compact={isShortLandscape} focused={focused} icon={UsersRound} /> }} />
+      <Tabs.Screen name="rank" options={{ title: 'Rank', tabBarIcon: ({ focused }) => <TabIcon compact={isShortLandscape} focused={focused} icon={Trophy} /> }} />
       <Tabs.Screen
         name="room"
         options={{
           href: null,
         }}
       />
-      <Tabs.Screen name="profile" options={{ title: 'Moi', tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon={UserRound} /> }} />
+      <Tabs.Screen name="profile" options={{ title: 'Moi', tabBarIcon: ({ focused }) => <TabIcon compact={isShortLandscape} focused={focused} icon={UserRound} /> }} />
       <Tabs.Screen name="community" options={{ href: null }} />
     </Tabs>
   );
@@ -90,6 +94,14 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 12,
   },
+  tabBarLandscape: {
+    bottom: 6,
+    height: 58,
+    paddingHorizontal: 4,
+    paddingTop: 2,
+    paddingBottom: 2,
+    borderRadius: 19,
+  },
   item: {
     minHeight: 60,
     marginHorizontal: 1,
@@ -97,11 +109,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingTop: 3,
   },
+  itemLandscape: {
+    minHeight: layout.controlHeight,
+    borderRadius: 15,
+    paddingTop: 1,
+  },
   iconWrap: {
     height: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconWrapCompact: { height: 23 },
   label: {
     ...typography.label,
     marginTop: 2,
@@ -109,6 +127,7 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     letterSpacing: 0.15,
   },
+  labelLandscape: { marginTop: 0, fontSize: 10, lineHeight: 12 },
   glassBackground: {
     flex: 1,
     overflow: 'hidden',

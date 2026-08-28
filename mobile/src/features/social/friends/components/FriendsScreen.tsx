@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 
 import { BaseSheet } from '@/src/components/overlays/BaseSheet';
+import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { Button } from '@/src/components/ui/Button';
 import { SegmentedControl, type SegmentedControlItem } from '@/src/components/ui/SegmentedControl';
 import { StateView } from '@/src/components/ui/StateView';
@@ -52,6 +53,7 @@ export function CirclePeopleScreen({
   initialView?: CircleView;
   previewState?: CirclePreviewState;
 }) {
+  const { isShortLandscape } = useResponsiveLayout();
   const previewMode = previewState !== undefined;
   const [view, setView] = useState<CircleView>(initialView);
   const [data, setData] = useState<FriendsData>(previewState?.data ?? EMPTY);
@@ -250,7 +252,7 @@ export function CirclePeopleScreen({
     <View style={styles.root}>
       {view === 'activity' ? (
         <ScrollView
-          contentContainerStyle={styles.activityContent}
+          contentContainerStyle={[styles.activityContent, isShortLandscape && styles.activityContentLandscape]}
           refreshControl={(
             <RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />
           )}
@@ -371,6 +373,7 @@ function CircleHeader({
   onChange: (view: CircleView) => void;
   view: CircleView;
 }) {
+  const { isShortLandscape } = useResponsiveLayout();
   const title = view === 'friends'
     ? 'TOUS TES AMIS.'
     : focusRequests
@@ -383,19 +386,21 @@ function CircleHeader({
       : 'Ta semaine, les nouvelles demandes et les rivalités qui progressent.';
 
   return (
-    <View style={styles.header}>
-      <View style={styles.headerCopy}>
+    <View style={[styles.header, isShortLandscape && styles.headerLandscape]}>
+      <View style={[styles.headerCopy, isShortLandscape && styles.headerCopyLandscape]}>
         <Text style={styles.eyebrow}>SOCIAL // CERCLE</Text>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
+        <Text style={[styles.title, isShortLandscape && styles.titleLandscape]}>{title}</Text>
+        <Text numberOfLines={isShortLandscape ? 2 : undefined} style={styles.subtitle}>{subtitle}</Text>
       </View>
-      <SegmentedControl
-        accessibilityLabel="Vue du Cercle"
-        items={items}
-        onChange={onChange}
-        testID="circle-view-switch"
-        value={view}
-      />
+      <View style={[styles.segmentWrap, isShortLandscape && styles.segmentWrapLandscape]}>
+        <SegmentedControl
+          accessibilityLabel="Vue du Cercle"
+          items={items}
+          onChange={onChange}
+          testID="circle-view-switch"
+          value={view}
+        />
+      </View>
     </View>
   );
 }
@@ -469,13 +474,24 @@ const styles = StyleSheet.create({
     paddingBottom: layout.tabBarContentInset,
     gap: spacing.lg,
   },
+  activityContentLandscape: {
+    maxWidth: layout.wideContentMaxWidth,
+    gap: 12,
+  },
   header: {
     gap: spacing.md,
     paddingTop: spacing.sm,
   },
+  headerLandscape: {
+    paddingTop: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.md,
+  },
   headerCopy: {
     gap: spacing.xs,
   },
+  headerCopyLandscape: { flex: 1, minWidth: 0 },
   eyebrow: {
     ...typography.control,
     color: colors.volt,
@@ -485,11 +501,14 @@ const styles = StyleSheet.create({
     maxWidth: 390,
     color: colors.text,
   },
+  titleLandscape: { fontSize: 32, lineHeight: 34 },
   subtitle: {
     ...typography.bodyComfort,
     maxWidth: 390,
     color: colors.textSecondary,
   },
+  segmentWrap: { width: '100%' },
+  segmentWrapLandscape: { width: 220, flexShrink: 0 },
   sheetActions: {
     gap: spacing.sm,
   },

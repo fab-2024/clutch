@@ -1,10 +1,12 @@
 import { StyleSheet } from 'react-native';
 
-import { colors, radius, spacing, typography } from '@/src/theme';
+import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
 export const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: 430, alignSelf: 'center', paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: 60, gap: spacing.lg },
+  contentLandscape: { maxWidth: layout.wideContentMaxWidth, paddingTop: 4, paddingBottom: 34, gap: 12 },
   topBar: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  topBarLandscape: { minHeight: 40 },
   backButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 10 },
   backArrow: { color: colors.text, fontSize: 19, fontWeight: '800' },
   backText: { ...typography.control, color: colors.textMuted, letterSpacing: .5 },
@@ -74,16 +76,23 @@ export const styles = StyleSheet.create({
   contractSourceValue: { ...typography.caption, color: colors.text },
   contractSourceReference: { ...typography.eyebrow, maxWidth: '100%', marginTop: 2, color: colors.textSubtle, letterSpacing: .2 },
   market: { gap: spacing.md },
+  marketLandscape: { gap: 10 },
   marketTitle: { ...typography.displaySmall, color: colors.text, fontSize: 31, lineHeight: 33, letterSpacing: -.35 },
+  marketTitleLandscape: { fontSize: 27, lineHeight: 29 },
   marketCopy: { ...typography.body, paddingHorizontal: 8, color: colors.textMuted, textAlign: 'center' },
   choiceGrid: { flexDirection: 'row', gap: 12 },
+  choiceGridLandscape: { gap: 10 },
   choice: { position: 'relative', flex: 1, minWidth: 0, minHeight: 224, overflow: 'hidden', paddingHorizontal: 10, paddingVertical: 18, borderRadius: 18, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#53606B', alignItems: 'center', justifyContent: 'flex-end', gap: 12, outlineStyle: 'solid', outlineWidth: 2, outlineColor: 'transparent' },
+  choiceLandscape: { minHeight: 145, paddingVertical: 10, borderRadius: 16, gap: 6 },
   choiceFocused: { outlineColor: '#96A2AD' },
   choiceSelected: { borderWidth: 1.5, borderColor: colors.volt, outlineColor: colors.volt, boxShadow: `0 0 22px ${colors.volt}28` },
   choiceGradient: { ...StyleSheet.absoluteFill },
   choiceCheck: { position: 'absolute', top: 12, right: 12, width: 21, height: 21, borderRadius: 11, backgroundColor: colors.volt, alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 12px ${colors.volt}55` },
+  choiceCheckLandscape: { top: 8, right: 8 },
   choiceLogo: { flex: 1, minHeight: 118, alignItems: 'center', justifyContent: 'center' },
+  choiceLogoLandscape: { minHeight: 76 },
   choiceTag: { ...typography.displaySmall, color: colors.text, fontSize: 28, lineHeight: 30 },
+  choiceTagLandscape: { fontSize: 23, lineHeight: 25 },
   selectionOutcome: { overflow: 'hidden', borderRadius: 18, backgroundColor: '#0B100D', borderWidth: 1, borderColor: '#303A24' },
   selectionOutcomeHeader: { minHeight: 42, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, borderBottomWidth: 1, borderBottomColor: '#252D20' },
   selectionOutcomeEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .8 },

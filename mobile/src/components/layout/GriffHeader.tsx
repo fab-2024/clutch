@@ -1,7 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { GriffLockup, GriffMark } from '@/src/components/brand/GriffLogo';
+import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
 import type { PlayerEconomy } from '@/src/features/economy/types';
 import { useEconomy } from '@/src/providers/EconomyProvider';
@@ -14,15 +15,23 @@ type Props = {
 };
 
 export function GriffHeader({ compact = false, economy, variant = 'default' }: Props = {}) {
-  const { width } = useWindowDimensions();
+  const { isCompactWidth, isShortLandscape } = useResponsiveLayout();
   const { frags, volts } = useEconomy();
   const displayedFrags = economy?.frags ?? frags;
   const displayedVolts = economy?.volts ?? volts;
   const social = variant === 'social';
-  const narrowSocial = social && width < 360;
+  const narrowSocial = social && isCompactWidth;
+  const compactPresentation = compact || isShortLandscape;
 
   return (
-    <View style={[styles.root, social && styles.rootSocial, social && compact && styles.rootSocialCompact, narrowSocial && styles.rootSocialNarrow]}>
+    <View style={[
+      styles.root,
+      social && styles.rootSocial,
+      social && compact && styles.rootSocialCompact,
+      social && isShortLandscape && styles.rootSocialLandscape,
+      social && compact && isShortLandscape && styles.rootSocialCompactLandscape,
+      narrowSocial && styles.rootSocialNarrow,
+    ]}>
       {social ? (
         <LinearGradient
           colors={['rgba(8,18,25,.92)', 'rgba(5,10,14,.72)', 'rgba(2,5,8,0)']}
@@ -34,17 +43,17 @@ export function GriffHeader({ compact = false, economy, variant = 'default' }: P
       ) : null}
 
       {social ? (
-        <View accessibilityLabel="GRIFF" accessibilityRole="image" style={[styles.socialBrand, compact && styles.socialBrandCompact]}>
+        <View accessibilityLabel="GRIFF" accessibilityRole="image" style={[styles.socialBrand, compactPresentation && styles.socialBrandCompact]}>
           <LinearGradient
             colors={['#18191A', '#090B0D', '#030405']}
             end={{ x: 1, y: 1 }}
             start={{ x: 0, y: 0 }}
-            style={[styles.socialMark, compact && styles.socialMarkCompact]}
+            style={[styles.socialMark, compactPresentation && styles.socialMarkCompact]}
           >
-            <GriffMark size={compact ? 32 : 35} style={[styles.socialMarkImage, compact && styles.socialMarkImageCompact]} />
+            <GriffMark size={compactPresentation ? 32 : 35} style={[styles.socialMarkImage, compactPresentation && styles.socialMarkImageCompact]} />
           </LinearGradient>
-          {narrowSocial ? null : <Text style={[styles.socialWord, compact && styles.socialWordCompact]}>GRIFF</Text>}
-          {narrowSocial ? null : <View style={[styles.socialDot, compact && styles.socialDotCompact]} />}
+          {narrowSocial ? null : <Text style={[styles.socialWord, compactPresentation && styles.socialWordCompact]}>GRIFF</Text>}
+          {narrowSocial ? null : <View style={[styles.socialDot, compactPresentation && styles.socialDotCompact]} />}
         </View>
       ) : (
         <View style={styles.brandRow}>
@@ -56,7 +65,7 @@ export function GriffHeader({ compact = false, economy, variant = 'default' }: P
         accessible
         accessibilityLabel={`${formatBalance(displayedFrags)} Frags, ${formatBalance(displayedVolts)} Volts`}
         accessibilityRole="summary"
-        style={[styles.wallet, social && styles.walletSocial, social && compact && styles.walletSocialCompact, narrowSocial && styles.walletSocialNarrow]}
+        style={[styles.wallet, social && styles.walletSocial, social && compactPresentation && styles.walletSocialCompact, narrowSocial && styles.walletSocialNarrow]}
       >
         {social ? (
           <LinearGradient
@@ -136,6 +145,14 @@ const styles = StyleSheet.create({
     paddingRight: 70,
     paddingBottom: 10,
     paddingLeft: 14,
+  },
+  rootSocialLandscape: {
+    minHeight: 68,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  rootSocialCompactLandscape: {
+    paddingRight: 70,
   },
   rootSocialNarrow: {
     paddingHorizontal: 16,

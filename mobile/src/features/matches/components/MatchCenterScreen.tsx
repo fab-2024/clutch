@@ -10,6 +10,7 @@ import {
 
 import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { Screen } from '@/src/components/layout/Screen';
+import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { Button } from '@/src/components/ui/Button';
 import { StateView } from '@/src/components/ui/StateView';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
@@ -53,6 +54,7 @@ type MatchCenterScreenProps = {
 
 export default function MatchCenterScreen({ previewData, previewLoadingSnapshot }: MatchCenterScreenProps) {
   const { session } = useAuth();
+  const { isShortLandscape } = useResponsiveLayout();
   const { refresh: refreshEconomy } = useEconomy();
   const params = useLocalSearchParams<MatchJourneySearchParams & {
     id?: string | string[];
@@ -208,13 +210,13 @@ export default function MatchCenterScreen({ previewData, previewLoadingSnapshot 
   return (
     <Screen>
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, isShortLandscape && styles.contentLandscape]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />
         }
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.topBar}>
+        <View style={[styles.topBar, isShortLandscape && styles.topBarLandscape]}>
           <Pressable accessibilityLabel={`Revenir à ${returnLabel}`} accessibilityRole="button" onPress={returnToArena} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
             <Text style={[styles.backArrow, predictionPickerOpen && styles.pickerBackArrow]}>←</Text>
             <Text style={[styles.backText, predictionPickerOpen && styles.pickerBackText]}>

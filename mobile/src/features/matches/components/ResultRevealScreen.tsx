@@ -16,6 +16,7 @@ import Animated, {
 
 import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { Screen } from '@/src/components/layout/Screen';
+import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
@@ -25,7 +26,7 @@ import { errorFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
-import { colors, fonts, radius, spacing, typography } from '@/src/theme';
+import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 import { teamHue } from '@/src/utils/teams';
 
 import {
@@ -57,6 +58,7 @@ type ExitTarget = 'calls' | 'history';
 export default function ResultRevealScreen({ previewData, previewTransition, previewTransitionSource }: ResultRevealScreenProps) {
   const { profile, session } = useAuth();
   const { equipped } = useCosmetics();
+  const { isShortLandscape } = useResponsiveLayout();
   const params = useLocalSearchParams<MatchJourneySearchParams & { id?: string | string[] }>();
   const routeMatchId = Array.isArray(params.id) ? params.id[0] : params.id;
   const matchId = previewData?.match_id ?? routeMatchId;
@@ -200,8 +202,8 @@ export default function ResultRevealScreen({ previewData, previewTransition, pre
       <View pointerEvents="none" style={styles.pageAuraClip}>
         <Animated.View style={[styles.pageAura, auraStyle, { backgroundColor: tone }]} />
       </View>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.topBar}>
+      <ScrollView contentContainerStyle={[styles.content, isShortLandscape && styles.contentLandscape]} showsVerticalScrollIndicator={false}>
+        <View style={[styles.topBar, isShortLandscape && styles.topBarLandscape]}>
           {replay && !previewData ? (
             <Pressable accessibilityLabel={`Revenir à ${returnLabel}`} accessibilityRole="button" onPress={() => returnFromMatchResult({
               id: result.match_id,
@@ -223,30 +225,36 @@ export default function ResultRevealScreen({ previewData, previewTransition, pre
           <View style={styles.officialPill}><View style={[styles.officialDot, { backgroundColor: tone }]} /><Text style={styles.officialText}>{replay ? 'HISTORIQUE' : 'RÉSULTAT OFFICIEL'}</Text></View>
         </View>
 
-        <Animated.View entering={reduceMotion ? undefined : FadeIn.duration(420)} style={styles.hero}>
+        <Animated.View entering={reduceMotion ? undefined : FadeIn.duration(420)} style={[styles.hero, isShortLandscape && styles.heroLandscape]}>
           <LinearGradient colors={[`${tone}24`, 'rgba(8,12,16,.96)', '#080C10']} style={StyleSheet.absoluteFill} />
           <View style={[styles.heroGlow, { backgroundColor: tone }]} />
           <Text style={[styles.resultKicker, { color: tone }]}>{won ? 'CALL VALIDÉ' : 'CALL MANQUÉ'}</Text>
-          <Text accessibilityRole="header" style={styles.resultTitle}>{won ? 'BIEN LU.' : 'PAS CETTE FOIS.'}</Text>
-          <Text numberOfLines={1} style={styles.eventLine}>{gameLabel(result.jeu)} · {result.evenement} · BO{result.format}</Text>
+          <Text accessibilityRole="header" style={[styles.resultTitle, isShortLandscape && styles.resultTitleLandscape]}>{won ? 'BIEN LU.' : 'PAS CETTE FOIS.'}</Text>
+          <Text numberOfLines={1} style={[styles.eventLine, isShortLandscape && styles.eventLineLandscape]}>{gameLabel(result.jeu)} · {result.evenement} · BO{result.format}</Text>
 
-          <View style={styles.revealIdentity}><SupporterIdentity compact cosmetics={equipped} meta="SIGNATURE DU VERDICT" pseudo={pseudo} /></View>
+          {!isShortLandscape ? <View style={styles.revealIdentity}><SupporterIdentity compact cosmetics={equipped} meta="SIGNATURE DU VERDICT" pseudo={pseudo} /></View> : null}
 
-          <Animated.View entering={reduceMotion ? undefined : FadeIn.delay(120).duration(360)} style={styles.scoreboard}>
-            <RevealTeam accent={teamAColor} chosen={result.choix === 'a'} name={result.equipe_a} tag={result.tag_a} winner={result.score_a > result.score_b} />
+          <Animated.View entering={reduceMotion ? undefined : FadeIn.delay(120).duration(360)} style={[styles.scoreboard, isShortLandscape && styles.scoreboardLandscape]}>
+            <RevealTeam accent={teamAColor} chosen={result.choix === 'a'} compact={isShortLandscape} name={result.equipe_a} tag={result.tag_a} winner={result.score_a > result.score_b} />
             <View style={styles.scoreCenter}>
-              <Text style={styles.score}>{result.score_a}<Text style={styles.scoreDash}> — </Text>{result.score_b}</Text>
+              <Text style={[styles.score, isShortLandscape && styles.scoreLandscape]}>{result.score_a}<Text style={[styles.scoreDash, isShortLandscape && styles.scoreDashLandscape]}> — </Text>{result.score_b}</Text>
               <View style={styles.finalPill}><Text style={styles.finalText}>FINAL</Text></View>
             </View>
-            <RevealTeam accent={teamBColor} chosen={result.choix === 'b'} name={result.equipe_b} tag={result.tag_b} winner={result.score_b > result.score_a} />
+            <RevealTeam accent={teamBColor} chosen={result.choix === 'b'} compact={isShortLandscape} name={result.equipe_b} tag={result.tag_b} winner={result.score_b > result.score_a} />
           </Animated.View>
 
-          <View style={styles.choiceReceipt}>
+          <View style={[styles.choiceReceipt, isShortLandscape && styles.choiceReceiptLandscape]}>
             <View style={[styles.choiceMark, { borderColor: tone, backgroundColor: `${tone}16` }]}><Text style={[styles.choiceGlyph, { color: tone }]}>{won ? '✓' : '×'}</Text></View>
             <View style={styles.choiceCopy}><Text style={styles.choiceLabel}>TON CHOIX</Text><Text numberOfLines={1} style={styles.choiceName}>{choiceTag} · {choiceName}</Text></View>
             <Text style={[styles.verdictWord, { color: tone }]}>{won ? 'JUSTE' : 'FAUX'}</Text>
           </View>
         </Animated.View>
+
+        {isShortLandscape ? (
+          <Animated.View entering={entrance(180)} style={styles.revealIdentityOutside}>
+            <SupporterIdentity compact cosmetics={equipped} meta="SIGNATURE DU VERDICT" pseudo={pseudo} />
+          </Animated.View>
+        ) : null}
 
         <Animated.View entering={entrance(220)} style={styles.ratingCard}>
           <View style={styles.sectionHeader}><View><Text style={styles.sectionEyebrow}>RATING SAISONNIER</Text><Text style={styles.sectionTitle}>Tes Frags ont parlé.</Text></View><View style={[styles.deltaPill, { backgroundColor: `${tone}18`, borderColor: `${tone}66` }]}><CurrencyIcon color={tone} kind="frags" size={14} /><Text style={[styles.deltaText, { color: tone }]}>{signed(result.delta_frags)}</Text></View></View>
@@ -304,6 +312,7 @@ function ResultTransitionState({
   snapshot: MatchJourneySnapshot;
   source: MatchJourneySource;
 }) {
+  const { isShortLandscape } = useResponsiveLayout();
   const teamAColor = teamColor(snapshot.tagA, snapshot.teamA);
   const teamBColor = teamColor(snapshot.tagB, snapshot.teamB);
   const scoreReady = snapshot.scoreA !== null && snapshot.scoreB !== null;
@@ -317,25 +326,25 @@ function ResultTransitionState({
   return (
     <Screen>
       <LinearGradient colors={['#080D11', '#06090D', '#080A0D']} style={StyleSheet.absoluteFill} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.topBar}>
+      <ScrollView contentContainerStyle={[styles.content, isShortLandscape && styles.contentLandscape]} showsVerticalScrollIndicator={false}>
+        <View style={[styles.topBar, isShortLandscape && styles.topBarLandscape]}>
           <View style={styles.brand}><GriffLockup width={100} /></View>
           <View style={styles.officialPill}><View style={[styles.officialDot, { backgroundColor: colors.volt }]} /><Text style={styles.officialText}>VÉRIFICATION</Text></View>
         </View>
 
-        <View style={[styles.hero, styles.transitionHero]}>
+        <View style={[styles.hero, styles.transitionHero, isShortLandscape && styles.heroLandscape, isShortLandscape && styles.transitionHeroLandscape]}>
           <LinearGradient colors={['rgba(232,255,61,.08)', 'rgba(8,12,16,.96)', '#080C10']} style={StyleSheet.absoluteFill} />
           <Text style={styles.transitionKicker}>{origin}</Text>
-          <Text accessibilityRole="header" style={styles.transitionTitle}>VERDICT EN APPROCHE.</Text>
-          {context ? <Text numberOfLines={1} style={styles.eventLine}>{context}</Text> : null}
+          <Text accessibilityRole="header" style={[styles.transitionTitle, isShortLandscape && styles.transitionTitleLandscape]}>VERDICT EN APPROCHE.</Text>
+          {context ? <Text numberOfLines={1} style={[styles.eventLine, isShortLandscape && styles.eventLineLandscape]}>{context}</Text> : null}
 
-          <View style={styles.scoreboard}>
-            <RevealTeam accent={teamAColor} chosen={false} name={snapshot.teamA} tag={snapshot.tagA} winner={false} />
+          <View style={[styles.scoreboard, isShortLandscape && styles.scoreboardLandscape]}>
+            <RevealTeam accent={teamAColor} chosen={false} compact={isShortLandscape} name={snapshot.teamA} tag={snapshot.tagA} winner={false} />
             <View style={styles.scoreCenter}>
-              <Text style={styles.score}>{scoreReady ? `${snapshot.scoreA} — ${snapshot.scoreB}` : 'VS'}</Text>
+              <Text style={[styles.score, isShortLandscape && styles.scoreLandscape]}>{scoreReady ? `${snapshot.scoreA} — ${snapshot.scoreB}` : 'VS'}</Text>
               <View style={styles.finalPill}><Text style={styles.finalText}>{scoreReady ? 'FINAL' : 'SYNCHRO'}</Text></View>
             </View>
-            <RevealTeam accent={teamBColor} chosen={false} name={snapshot.teamB} tag={snapshot.tagB} winner={false} />
+            <RevealTeam accent={teamBColor} chosen={false} compact={isShortLandscape} name={snapshot.teamB} tag={snapshot.tagB} winner={false} />
           </View>
         </View>
 
@@ -357,10 +366,10 @@ function ResultTransitionState({
   );
 }
 
-function RevealTeam({ accent, chosen, name, tag, winner }: { accent: string; chosen: boolean; name: string; tag: string; winner: boolean }) {
+function RevealTeam({ accent, chosen, compact, name, tag, winner }: { accent: string; chosen: boolean; compact: boolean; name: string; tag: string; winner: boolean }) {
   return (
-    <View accessibilityLabel={`${name}${winner ? ', vainqueur' : ''}${chosen ? ', ton choix' : ''}`} style={styles.team}>
-      <View style={[styles.teamLogoWrap, chosen && { borderColor: accent }]}><TeamLogo accent={accent} name={name} size={62} tag={tag} /></View>
+    <View accessibilityLabel={`${name}${winner ? ', vainqueur' : ''}${chosen ? ', ton choix' : ''}`} style={[styles.team, compact && styles.teamLandscape]}>
+      <View style={[styles.teamLogoWrap, compact && styles.teamLogoWrapLandscape, chosen && { borderColor: accent }]}><TeamLogo accent={accent} name={name} size={compact ? 58 : 62} tag={tag} /></View>
       <Text style={[styles.teamTag, winner && { color: accent }]}>{tag}</Text>
       <Text numberOfLines={1} style={styles.teamName}>{name}</Text>
       {chosen ? <View style={[styles.yourChoice, { backgroundColor: accent }]}><Text style={styles.yourChoiceText}>TON CALL</Text></View> : null}
@@ -398,9 +407,11 @@ function messageFrom(value: unknown, fallback: string) { return value instanceof
 
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: 430, alignSelf: 'center', paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: 42, gap: 14 },
+  contentLandscape: { maxWidth: layout.wideContentMaxWidth, paddingTop: 4, paddingBottom: 34, gap: 10 },
   pageAuraClip: { position: 'absolute', inset: 0, overflow: 'hidden' },
   pageAura: { position: 'absolute', alignSelf: 'center', top: -180, width: 480, height: 480, borderRadius: 240, filter: 'blur(70px)' },
   topBar: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  topBarLandscape: { minHeight: 40 },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   brandMark: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
   brandGlyph: { color: '#06090C', fontFamily: fonts.display, fontSize: 21, lineHeight: 23, letterSpacing: -2 },
@@ -411,28 +422,40 @@ const styles = StyleSheet.create({
   officialDot: { width: 6, height: 6, borderRadius: 3 },
   officialText: { ...typography.label, color: colors.textSubtle, letterSpacing: .4 },
   hero: { position: 'relative', overflow: 'hidden', minHeight: 420, padding: 18, borderRadius: 31, alignItems: 'center', backgroundColor: '#0A0F13', borderWidth: 1, borderColor: '#273039' },
+  heroLandscape: { minHeight: 315, padding: 14, borderRadius: 25 },
   transitionHero: { minHeight: 360, justifyContent: 'flex-start' },
+  transitionHeroLandscape: { minHeight: 235 },
   transitionKicker: { ...typography.eyebrow, marginTop: 5, color: colors.volt, letterSpacing: 1.1 },
   transitionTitle: { ...typography.displayMedium, marginTop: 6, color: colors.text, textAlign: 'center' },
+  transitionTitleLandscape: { marginTop: 3, fontSize: 31, lineHeight: 33 },
   transitionSkeletonCopy: { gap: 7 },
   heroGlow: { position: 'absolute', top: -150, width: 360, height: 300, borderRadius: 180, opacity: .18 },
   resultKicker: { ...typography.eyebrow, marginTop: 5, letterSpacing: 1.4 },
   resultTitle: { ...typography.displayLarge, marginTop: 6, color: colors.text, textAlign: 'center' },
+  resultTitleLandscape: { marginTop: 3, fontSize: 36, lineHeight: 38 },
   eventLine: { ...typography.caption, maxWidth: '92%', marginTop: 8, color: colors.textMuted, textAlign: 'center' },
+  eventLineLandscape: { marginTop: 4 },
   revealIdentity: { width: '100%', marginTop: 13 },
+  revealIdentityOutside: { width: '100%' },
   scoreboard: { width: '100%', minHeight: 190, marginTop: 17, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  scoreboardLandscape: { minHeight: 130, marginTop: 8, paddingVertical: 6 },
   team: { width: 92, alignItems: 'center', gap: 5 },
+  teamLandscape: { width: 78, gap: 3 },
   teamLogoWrap: { padding: 3, borderRadius: 23, borderWidth: 1, borderColor: 'transparent', backgroundColor: '#060A0D' },
+  teamLogoWrapLandscape: { borderRadius: 21 },
   teamTag: { ...typography.cardTitle, color: colors.text, textAlign: 'center' },
   teamName: { ...typography.caption, width: '100%', color: colors.textMuted, textAlign: 'center' },
   yourChoice: { minHeight: 20, marginTop: 2, paddingHorizontal: 7, borderRadius: 7, justifyContent: 'center' },
   yourChoiceText: { ...typography.eyebrow, color: '#070A0D', fontSize: 8, lineHeight: 10, letterSpacing: .3 },
   scoreCenter: { flex: 1, alignItems: 'center', gap: 8 },
   score: { color: colors.text, fontFamily: fonts.display, fontSize: 48, lineHeight: 50, letterSpacing: -2, fontVariant: ['tabular-nums'] },
+  scoreLandscape: { fontSize: 40, lineHeight: 42 },
   scoreDash: { color: '#4F5963', fontSize: 28 },
+  scoreDashLandscape: { fontSize: 23 },
   finalPill: { minHeight: 23, paddingHorizontal: 9, borderRadius: radius.pill, justifyContent: 'center', backgroundColor: '#151C22', borderWidth: 1, borderColor: '#303B45' },
   finalText: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .7 },
   choiceReceipt: { width: '100%', minHeight: 67, marginTop: 'auto', padding: 10, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 18, backgroundColor: 'rgba(5,9,12,.72)', borderWidth: 1, borderColor: '#26313A' },
+  choiceReceiptLandscape: { minHeight: 56, borderRadius: 16 },
   choiceMark: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   choiceGlyph: { fontSize: 20, lineHeight: 22, fontWeight: '900' },
   choiceCopy: { flex: 1, minWidth: 0 },

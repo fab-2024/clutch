@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Screen } from '@/src/components/layout/Screen';
+import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import type { ClutchProfile } from '@/src/features/auth/types';
 import { signOut } from '@/src/features/auth/api';
 import { loadTeamOrganizations } from '@/src/features/onboarding/api';
@@ -24,7 +25,7 @@ import {
 import { errorFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useSnackbar } from '@/src/providers/SnackbarProvider';
-import { colors, radius, spacing, typography } from '@/src/theme';
+import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
 import { saveFavoriteTeam, saveProfilePreferences } from '../api';
 import { useQueuedAutosave, type AutosaveStatus } from '../hooks/useQueuedAutosave';
@@ -48,6 +49,7 @@ type ProfilePreferencesDraft = {
 
 export default function ProfileSettingsScreen({ previewState }: ProfileSettingsScreenProps = {}) {
   const { profile, refreshProfile, session } = useAuth();
+  const { isCompactWidth, isShortLandscape } = useResponsiveLayout();
   const { showSnackbar } = useSnackbar();
   const activeProfile = previewState?.profile ?? profile;
   const userId = previewState?.profile.id ?? session?.user.id;
@@ -311,26 +313,31 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
 
   return (
     <Screen>
-      <ScrollView style={styles.root} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
+      <ScrollView style={styles.root} contentContainerStyle={[styles.content, isShortLandscape && styles.contentLandscape]} showsVerticalScrollIndicator={false}>
+        <View style={[styles.header, isShortLandscape && styles.headerLandscape]}>
           <Pressable accessibilityLabel="Revenir au profil" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><Text style={styles.backText}>← MOI</Text></Pressable>
           <View style={styles.headerMark}><Text style={styles.headerMarkText}>⚙</Text></View>
         </View>
 
-        <View style={styles.intro}>
-          <Text style={styles.eyebrow}>MOI // PARAMÈTRES</Text>
-          <Text style={styles.title}>RÈGLE TON TERRAIN.</Text>
-          <Text style={styles.subtitle}>Tes choix alimentent le Hub, les matchs proposés et l’identité publique de ton profil.</Text>
-        </View>
+        <View style={[styles.introStatus, isShortLandscape && styles.introStatusLandscape]}>
+          <View style={[styles.intro, isShortLandscape && styles.introLandscape]}>
+            <Text style={styles.eyebrow}>MOI // PARAMÈTRES</Text>
+            <Text style={styles.title}>RÈGLE TON TERRAIN.</Text>
+            <Text style={styles.subtitle}>Tes choix alimentent le Hub, les matchs proposés et l’identité publique de ton profil.</Text>
+          </View>
 
-        <AutosaveIndicator
-          blocked={!games.length}
-          onRetry={() => {
-            if (profileAutosave.status === 'error') profileAutosave.retry();
-            if (notificationAutosave.status === 'error') notificationAutosave.retry();
-          }}
-          status={syncStatus}
-        />
+          <View style={[styles.syncWrap, isShortLandscape && styles.syncWrapLandscape]}>
+            <AutosaveIndicator
+              blocked={!games.length}
+              compact={isShortLandscape}
+              onRetry={() => {
+                if (profileAutosave.status === 'error') profileAutosave.retry();
+                if (notificationAutosave.status === 'error') notificationAutosave.retry();
+              }}
+              status={syncStatus}
+            />
+          </View>
+        </View>
         {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text></View> : null}
 
         <View style={styles.section}>
@@ -358,7 +365,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
                 >
                   <View style={[styles.gameMark, { borderColor: game.accent }, active && { backgroundColor: `${game.accent}22` }]}><Text style={[styles.gameCode, { color: game.accent }]}>{game.code}</Text></View>
                   <Text style={styles.gameShort}>{game.short}</Text>
-                  <Text numberOfLines={1} style={styles.gameName}>{game.name}</Text>
+                  <Text numberOfLines={isCompactWidth ? 2 : 1} style={[styles.gameName, isCompactWidth && styles.gameNameCompact]}>{game.name}</Text>
                   <Text style={[styles.gameState, active && styles.gameStateActive]}>{active ? 'SUIVI ✓' : 'AJOUTER'}</Text>
                 </Pressable>
               );
@@ -537,10 +544,12 @@ function notificationSignature(preferences: NotificationPreferences | null) {
 
 function AutosaveIndicator({
   blocked,
+  compact = false,
   onRetry,
   status,
 }: {
   blocked: boolean;
+  compact?: boolean;
   onRetry: () => void;
   status: AutosaveStatus;
 }) {
@@ -556,7 +565,7 @@ function AutosaveIndicator({
   const content = (
     <>
       <AutosaveIcon tone={presentation.tone} />
-      <Text numberOfLines={1} style={[styles.syncLabel, presentation.tone === 'error' && styles.syncLabelError]}>{presentation.label}</Text>
+      <Text numberOfLines={compact ? 2 : 1} style={[styles.syncLabel, presentation.tone === 'error' && styles.syncLabelError]}>{presentation.label}</Text>
       {presentation.tone === 'error' && !blocked ? <Text style={styles.syncRetry}>RÉESSAYER</Text> : null}
     </>
   );
@@ -567,7 +576,7 @@ function AutosaveIndicator({
         accessibilityLabel="Synchronisation interrompue, réessayer"
         accessibilityRole="button"
         onPress={onRetry}
-        style={({ pressed }) => [styles.syncStatus, styles.syncStatusError, pressed && styles.pressed]}
+        style={({ pressed }) => [styles.syncStatus, compact && styles.syncStatusLandscape, styles.syncStatusError, pressed && styles.pressed]}
       >
         {content}
       </Pressable>
@@ -579,7 +588,7 @@ function AutosaveIndicator({
       accessibilityLiveRegion="polite"
       accessible
       accessibilityLabel={presentation.label}
-      style={[styles.syncStatus, blocked && styles.syncStatusError]}
+      style={[styles.syncStatus, compact && styles.syncStatusLandscape, blocked && styles.syncStatusError]}
     >
       {content}
     </View>
@@ -637,12 +646,21 @@ function AccountLink({ label, onPress }: { label: string; onPress: () => void })
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { width: '100%', maxWidth: 430, alignSelf: 'center', paddingHorizontal: spacing.md, paddingBottom: 72, gap: 25 },
+  contentLandscape: { maxWidth: layout.wideContentMaxWidth, paddingBottom: 40, gap: 16 },
   header: { minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#171D23' },
+  headerLandscape: { minHeight: 56 },
   back: { minHeight: 38, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' },
   backText: { ...typography.action, color: colors.text, letterSpacing: .4 },
   headerMark: { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, headerMarkText: { color: '#080A0C', fontSize: 17, fontWeight: '900' },
-  intro: { gap: 8 }, eyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.1 }, title: { ...typography.displayMedium, maxWidth: 360, color: colors.text }, subtitle: { ...typography.body, maxWidth: 360, color: colors.textMuted },
+  introStatus: { gap: 25 },
+  introStatusLandscape: { flexDirection: 'row', alignItems: 'flex-end', gap: 16 },
+  intro: { gap: 8 },
+  introLandscape: { flex: 1, minWidth: 0 },
+  syncWrap: { width: '100%' },
+  syncWrapLandscape: { width: 210, flexShrink: 0 },
+  eyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.1 }, title: { ...typography.displayMedium, maxWidth: 360, color: colors.text }, subtitle: { ...typography.body, maxWidth: 360, color: colors.textMuted },
   syncStatus: { minHeight: 44, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 9, borderRadius: radius.md, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderSubtle },
+  syncStatusLandscape: { minHeight: 52 },
   syncStatusError: { backgroundColor: '#1A1012', borderColor: '#4A2027' },
   syncIcon: { width: 18, alignItems: 'center', justifyContent: 'center' },
   syncLabel: { ...typography.metadata, flex: 1, color: colors.textSecondary, letterSpacing: .25 },
@@ -652,7 +670,7 @@ const styles = StyleSheet.create({
   section: { gap: 12 }, sectionHeading: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }, sectionEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .8 }, sectionTitle: { ...typography.sectionTitle, marginTop: 4, color: colors.text }, sectionMeta: { ...typography.label, color: colors.textMuted }, sectionCopy: { ...typography.body, color: colors.textMuted },
   gamesGrid: { flexDirection: 'row', gap: 8 },
   gameCard: { flex: 1, minHeight: 170, padding: 11, borderRadius: 21, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, outlineStyle: 'solid', outlineWidth: 2, outlineColor: 'transparent' }, gameCardActive: { backgroundColor: '#11170E', borderColor: '#48541E' },
-  gameMark: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, backgroundColor: '#0A0F14' }, gameCode: { ...typography.cardTitle }, gameShort: { ...typography.bodyStrong, marginTop: 15, color: colors.text }, gameName: { ...typography.caption, marginTop: 3, color: colors.textMuted }, gameState: { ...typography.label, marginTop: 'auto', color: '#65717D', letterSpacing: .3 }, gameStateActive: { color: colors.volt },
+  gameMark: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, backgroundColor: '#0A0F14' }, gameCode: { ...typography.cardTitle }, gameShort: { ...typography.bodyStrong, marginTop: 15, color: colors.text }, gameName: { ...typography.caption, marginTop: 3, color: colors.textMuted }, gameNameCompact: { minHeight: 28 }, gameState: { ...typography.label, marginTop: 'auto', color: '#65717D', letterSpacing: .3 }, gameStateActive: { color: colors.volt },
   validation: { ...typography.caption, color: '#FF9AA2' },
   teamRail: { gap: 9, paddingRight: spacing.md }, teamSkeleton: { height: 182, borderRadius: 24, backgroundColor: '#10161D' },
   teamCard: { width: 154, minHeight: 182, padding: 13, borderRadius: 23, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, outlineStyle: 'solid', outlineWidth: 2, outlineColor: 'transparent' }, teamCardActive: { backgroundColor: '#11170E', borderColor: '#48541E' },

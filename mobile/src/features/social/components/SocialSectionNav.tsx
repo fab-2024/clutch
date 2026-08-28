@@ -5,6 +5,7 @@ import Swords from 'lucide-react-native/icons/swords';
 import UsersRound from 'lucide-react-native/icons/users-round';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { colors, layout, typography } from '@/src/theme';
 
 type SocialSectionKey = 'faction' | 'circle' | 'challenges';
@@ -42,14 +43,15 @@ export default function SocialSectionNav({
   variant?: 'default' | 'v2';
 }) {
   const pathname = usePathname();
+  const { isShortLandscape } = useResponsiveLayout();
   const active = activeOverride ?? sectionFromPath(pathname);
   const activeSubsection = activeSubsectionOverride ?? subsectionFromPath(pathname);
   const subsections = active ? SUBSECTIONS[active] ?? [] : [];
   const refined = variant === 'v2' || pathname.includes('/social/v2');
 
   return (
-    <View style={styles.outer}>
-      <View accessibilityRole="tablist" style={[styles.rail, refined && styles.railRefined]} testID="social-primary-tablist">
+    <View style={[styles.outer, isShortLandscape && styles.outerLandscape]}>
+      <View accessibilityRole="tablist" style={[styles.rail, refined && styles.railRefined, isShortLandscape && styles.railLandscape]} testID="social-primary-tablist">
         {SECTIONS.map((item) => {
           const selected = active === item.key;
           const Icon = item.icon;
@@ -77,7 +79,7 @@ export default function SocialSectionNav({
       </View>
 
       {subsections.length ? (
-        <View accessibilityRole="tablist" style={styles.subRail} testID="social-secondary-tablist">
+        <View accessibilityRole="tablist" style={[styles.subRail, isShortLandscape && styles.subRailLandscape]} testID="social-secondary-tablist">
           {subsections.map((item) => {
             const selected = activeSubsection === item.key;
             return (
@@ -122,6 +124,14 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
     backgroundColor: colors.background,
   },
+  outerLandscape: {
+    maxWidth: layout.wideContentMaxWidth,
+    paddingTop: 3,
+    paddingBottom: 3,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 7,
+  },
   rail: {
     minHeight: 52,
     padding: 4,
@@ -132,6 +142,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#202A33',
   },
+  railLandscape: { flex: 3, minWidth: 0 },
   railRefined: { backgroundColor: '#080D11', borderColor: '#25323A' },
   item: {
     position: 'relative',
@@ -173,6 +184,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#202831',
   },
+  subRailLandscape: { flex: 2, minWidth: 0, marginTop: 0 },
   subItem: {
     flex: 1,
     minHeight: 44,

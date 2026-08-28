@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import {
   Image,
   Pressable,
@@ -17,6 +17,7 @@ import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated'
 
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
+import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
@@ -121,6 +122,7 @@ export function HubExperience({
   userId,
 }: HubExperienceProps) {
   const reduceMotion = useReducedMotion();
+  const { isCompactWidth, isShortLandscape } = useResponsiveLayout();
   const entrance = (delay: number) => reduceMotion ? undefined : FadeInDown.delay(delay).duration(420);
   const phase = hub.nextMatch ? getHubMatchPhase(hub.nextMatch) : null;
   const live = phase === 'live';
@@ -129,38 +131,69 @@ export function HubExperience({
   const contextualItem = loading ? null : selectHubContext(hub);
   const headlineKicker = live ? 'LE MATCH EST LANCÉ' : finished ? 'LE VERDICT EST TOMBÉ' : callLocked ? 'TON CALL EST VERROUILLÉ' : 'À TOI DE JOUER';
   const headline = live ? 'SUIS LE MATCH EN DIRECT.' : finished ? 'CONSULTE LE RÉSULTAT.' : callLocked ? 'TON CALL EST POSÉ.' : 'TON PROCHAIN CALL.';
+  const embeddedHeadline = Boolean(isShortLandscape && !loading && hub.nextMatch);
+  const headlineView = (
+    <Animated.View entering={entrance(30)} style={[
+      styles.headline,
+      isShortLandscape && styles.headlineLandscape,
+      embeddedHeadline && styles.headlineEmbeddedLandscape,
+    ]}>
+      <Text style={styles.headlineKicker}>{headlineKicker}</Text>
+      <Text
+        adjustsFontSizeToFit={!isCompactWidth && !isShortLandscape}
+        minimumFontScale={0.72}
+        numberOfLines={isCompactWidth || isShortLandscape ? 2 : 1}
+        style={[
+          styles.headlineTitle,
+          isCompactWidth && styles.headlineTitleCompact,
+          isShortLandscape && styles.headlineTitleLandscape,
+          embeddedHeadline && styles.headlineTitleEmbeddedLandscape,
+        ]}
+      >
+        {headline}
+      </Text>
+    </Animated.View>
+  );
+  const errorView = error ? (
+    <View accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.errorCard}>
+      <Text style={styles.errorText}>{error}</Text>
+      <Pressable
+        accessibilityLabel="Réessayer de charger le Hub"
+        accessibilityRole="button"
+        onPress={onRetry}
+        style={({ pressed }) => [styles.retryAction, pressed && styles.pressed]}
+      >
+        <Text style={styles.retryText}>RÉESSAYER</Text>
+      </Pressable>
+    </View>
+  ) : null;
 
   return (
     <Screen>
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, isShortLandscape && styles.contentLandscape]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
         showsVerticalScrollIndicator={false}
       >
         <GriffHeader economy={headerEconomy} variant="social" />
 
-        <Animated.View entering={entrance(30)} style={styles.headline}>
-          <Text style={styles.headlineKicker}>{headlineKicker}</Text>
-          <Text adjustsFontSizeToFit minimumFontScale={0.62} numberOfLines={1} style={styles.headlineTitle}>{headline}</Text>
-        </Animated.View>
+        {!embeddedHeadline ? headlineView : null}
 
-        {error ? (
-          <View accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.errorCard}>
-            <Text style={styles.errorText}>{error}</Text>
-            <Pressable
-              accessibilityLabel="Réessayer de charger le Hub"
-              accessibilityRole="button"
-              onPress={onRetry}
-              style={({ pressed }) => [styles.retryAction, pressed && styles.pressed]}
-            >
-              <Text style={styles.retryText}>RÉESSAYER</Text>
-            </Pressable>
-          </View>
-        ) : null}
+        {!embeddedHeadline ? errorView : null}
 
         <Animated.View entering={entrance(90)}>
-          {loading ? <HeroSkeleton /> : hub.nextMatch ? <MatchHero match={hub.nextMatch} prediction={hub.nextMatchPrediction} reduceMotion={reduceMotion} userId={userId} /> : <EmptyHero />}
+          {loading ? <HeroSkeleton /> : hub.nextMatch ? (
+            <MatchHero
+              landscapeHeadline={embeddedHeadline ? headlineView : undefined}
+              match={hub.nextMatch}
+              prediction={hub.nextMatchPrediction}
+              reduceMotion={reduceMotion}
+              userId={userId}
+            />
+          ) : <EmptyHero />}
         </Animated.View>
+
+        {embeddedHeadline ? errorView : null}
 
         {loading || contextualItem ? (
           <Animated.View entering={entrance(150)} style={styles.contextSlot}>
@@ -182,7 +215,19 @@ export function HubExperience({
   );
 }
 
-function MatchHero({ match, prediction, reduceMotion, userId }: { match: HubMatch; prediction: HubPrediction | null; reduceMotion: boolean; userId?: string }) {
+function MatchHero({
+  landscapeHeadline,
+  match,
+  prediction,
+  reduceMotion,
+  userId,
+}: {
+  landscapeHeadline?: ReactNode;
+  match: HubMatch;
+  prediction: HubPrediction | null;
+  reduceMotion: boolean;
+  userId?: string;
+}) {
   const confrontation = getMatchConfrontationState(match, prediction);
   const callLocked = Boolean(confrontation.predictionTag);
   const prepare = useCallback(() => prepareMatchCenter(match, userId), [match, userId]);
@@ -193,20 +238,43 @@ function MatchHero({ match, prediction, reduceMotion, userId }: { match: HubMatc
   }, [prepare]);
 
   return (
-    <View style={styles.matchFeature}>
-      <MatchConfrontationCard match={match} onPress={open} onPressIn={prepare} reduceMotion={reduceMotion} state={confrontation} />
+    <View style={[styles.matchFeature, Boolean(landscapeHeadline) && styles.matchFeatureLandscape]}>
+      {landscapeHeadline ? (
+        <View style={styles.landscapeHeroCopy}>
+          {landscapeHeadline}
+          <MatchCallAction callLocked={callLocked} label={confrontation.action} onPress={open} onPressIn={prepare} />
+        </View>
+      ) : null}
 
-      <Pressable
-        accessibilityLabel={confrontation.action}
-        accessibilityRole="button"
-        onPress={open}
-        onPressIn={prepare}
-        style={({ pressed }) => [styles.callAction, callLocked && styles.callActionLocked, pressed && styles.pressed]}
-      >
-        <Text style={[styles.callActionText, callLocked && styles.callActionTextLocked]}>{confrontation.action}</Text>
-        <Text style={[styles.callActionArrow, callLocked && styles.callActionTextLocked]}>›</Text>
-      </Pressable>
+      <MatchConfrontationCard compactLandscape={Boolean(landscapeHeadline)} match={match} onPress={open} onPressIn={prepare} reduceMotion={reduceMotion} state={confrontation} />
+
+      {!landscapeHeadline ? <MatchCallAction callLocked={callLocked} label={confrontation.action} onPress={open} onPressIn={prepare} /> : null}
     </View>
+  );
+}
+
+function MatchCallAction({
+  callLocked,
+  label,
+  onPress,
+  onPressIn,
+}: {
+  callLocked: boolean;
+  label: string;
+  onPress: () => void;
+  onPressIn: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      onPress={onPress}
+      onPressIn={onPressIn}
+      style={({ pressed }) => [styles.callAction, callLocked && styles.callActionLocked, pressed && styles.pressed]}
+    >
+      <Text style={[styles.callActionText, callLocked && styles.callActionTextLocked]}>{label}</Text>
+      <Text style={[styles.callActionArrow, callLocked && styles.callActionTextLocked]}>›</Text>
+    </Pressable>
   );
 }
 
@@ -408,14 +476,22 @@ function upNextLogoContentScale(name: string) {
 
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 16 },
+  contentLandscape: { maxWidth: layout.wideContentMaxWidth, gap: 12 },
   headline: { marginHorizontal: spacing.md, paddingTop: 3 },
+  headlineLandscape: { paddingTop: 0 },
+  headlineEmbeddedLandscape: { marginHorizontal: 0 },
   headlineKicker: { color: colors.volt, fontFamily: fonts.bold, fontSize: 12, lineHeight: 15, letterSpacing: 1.05 },
   headlineTitle: { marginTop: 5, color: colors.text, fontFamily: fonts.display, fontSize: 40, lineHeight: 43, letterSpacing: -.7 },
+  headlineTitleCompact: { fontSize: 35, lineHeight: 37 },
+  headlineTitleLandscape: { marginTop: 3, fontSize: 34, lineHeight: 36 },
+  headlineTitleEmbeddedLandscape: { fontSize: 32, lineHeight: 34 },
   errorCard: { marginHorizontal: spacing.md, padding: 13, borderRadius: radius.md, backgroundColor: colors.liveSurface, borderWidth: 1, borderColor: colors.liveBorder, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   errorText: { ...typography.bodyComfort, flex: 1, color: colors.liveText },
   retryAction: { minHeight: layout.minTouchTarget, paddingHorizontal: spacing.sm, alignItems: 'center', justifyContent: 'center' },
   retryText: { ...typography.control, color: colors.volt, letterSpacing: .5 },
   matchFeature: { marginHorizontal: spacing.md, gap: 10 },
+  matchFeatureLandscape: { flexDirection: 'row', alignItems: 'stretch' },
+  landscapeHeroCopy: { flex: 1, minWidth: 0, paddingVertical: 4, justifyContent: 'space-between' },
   contextSlot: { marginHorizontal: spacing.md },
   matchBackdrop: { position: 'absolute', inset: 0, width: '100%', height: '100%' },
   callAction: { minHeight: 57, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: colors.volt, boxShadow: '0 10px 24px rgba(232,255,61,.16)' },

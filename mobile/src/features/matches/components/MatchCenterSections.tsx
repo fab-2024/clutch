@@ -5,6 +5,7 @@ import Lock from 'lucide-react-native/icons/lock';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
@@ -27,6 +28,7 @@ export function PredictionZone({
   selected: 'a' | 'b' | null;
   onSelect: (choice: 'a' | 'b') => void;
 }) {
+  const { isShortLandscape } = useResponsiveLayout();
   const { match, projection } = data;
   const lockCountdown = useLockCountdown(data.callContext.ferme_le);
 
@@ -49,11 +51,11 @@ export function PredictionZone({
   const selectedTag = selected === 'a' ? match.tag_a : selected === 'b' ? match.tag_b : null;
 
   return (
-    <View style={styles.market}>
-      <Text style={styles.marketTitle}>QUI GAGNE CE BO{match.format} ?</Text>
-      <View style={styles.choiceGrid}>
-        {a ? <ChoiceCard choice="a" team={match.equipe_a} tag={match.tag_a} projection={a} selected={selected === 'a'} onPress={() => onSelect('a')} /> : null}
-        {b ? <ChoiceCard choice="b" team={match.equipe_b} tag={match.tag_b} projection={b} selected={selected === 'b'} onPress={() => onSelect('b')} /> : null}
+    <View style={[styles.market, isShortLandscape && styles.marketLandscape]}>
+      <Text style={[styles.marketTitle, isShortLandscape && styles.marketTitleLandscape]}>QUI GAGNE CE BO{match.format} ?</Text>
+      <View style={[styles.choiceGrid, isShortLandscape && styles.choiceGridLandscape]}>
+        {a ? <ChoiceCard choice="a" compact={isShortLandscape} team={match.equipe_a} tag={match.tag_a} projection={a} selected={selected === 'a'} onPress={() => onSelect('a')} /> : null}
+        {b ? <ChoiceCard choice="b" compact={isShortLandscape} team={match.equipe_b} tag={match.tag_b} projection={b} selected={selected === 'b'} onPress={() => onSelect('b')} /> : null}
       </View>
 
       {selectedProjection && selectedTag ? (
@@ -88,6 +90,7 @@ export function PredictionZone({
 
 function ChoiceCard({
   choice,
+  compact,
   team,
   tag,
   projection,
@@ -95,6 +98,7 @@ function ChoiceCard({
   onPress,
 }: {
   choice: 'a' | 'b';
+  compact: boolean;
   team: string;
   tag: string;
   projection: ProjectionChoice;
@@ -113,7 +117,7 @@ function ChoiceCard({
       onBlur={() => setFocused(false)}
       onFocus={() => setFocused(true)}
       onPress={onPress}
-      style={({ pressed }) => [styles.choice, focused && styles.choiceFocused, selected && styles.choiceSelected, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.choice, compact && styles.choiceLandscape, focused && styles.choiceFocused, selected && styles.choiceSelected, pressed && styles.pressed]}
     >
       <LinearGradient
         colors={selected ? ['#27300D', '#11170C', '#080D11'] : ['#151B21', '#0C1217', '#080C10']}
@@ -122,18 +126,18 @@ function ChoiceCard({
         start={{ x: .2, y: 0 }}
         style={styles.choiceGradient}
       />
-      {selected ? <View style={styles.choiceCheck}><Check color="#080B0F" size={15} strokeWidth={3.2} /></View> : null}
-      <View style={styles.choiceLogo}>
+      {selected ? <View style={[styles.choiceCheck, compact && styles.choiceCheckLandscape]}><Check color="#080B0F" size={15} strokeWidth={3.2} /></View> : null}
+      <View style={[styles.choiceLogo, compact && styles.choiceLogoLandscape]}>
         <TeamLogo
           accent={selected ? colors.volt : '#DDE5EC'}
           contentScale={1.2}
           frameless
           name={team}
-          size={112}
+          size={compact ? 78 : 112}
           tag={tag}
         />
       </View>
-      <Text adjustsFontSizeToFit numberOfLines={1} style={styles.choiceTag}>{tag}</Text>
+      <Text adjustsFontSizeToFit numberOfLines={1} style={[styles.choiceTag, compact && styles.choiceTagLandscape]}>{tag}</Text>
     </Pressable>
   );
 }
