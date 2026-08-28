@@ -1,9 +1,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import {
   ActivityIndicator,
   Image,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -12,9 +14,13 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 
 import { Screen } from '@/src/components/layout/Screen';
+import { Button } from '@/src/components/ui/Button';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
+import { SegmentedControl, type SegmentedControlItem } from '@/src/components/ui/SegmentedControl';
+import ShowcaseRoomScene from '@/src/features/profile/components/showcase/ShowcaseRoomScene';
 import { loadProfileData } from '@/src/features/profile/api';
 import {
   resolveLevelFrameCollection,
@@ -22,19 +28,18 @@ import {
 } from '@/src/features/profile/levelFrames/catalog';
 import LevelFrameGallery from '@/src/features/profile/levelFrames/components/LevelFrameGallery';
 import { useLevelFrameEquipment } from '@/src/features/profile/levelFrames/useLevelFrameEquipment';
-import ShowcaseRoomScene from '@/src/features/profile/components/showcase/ShowcaseRoomScene';
 import type { ProfileData } from '@/src/features/profile/types';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
+import { errorFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
-import { colors, fonts, typography } from '@/src/theme';
+import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
 import { equipCosmetic, loadCosmeticShop, purchaseCosmetic } from '../api';
 import {
   ATELIER_CATEGORIES,
   ATELIER_CATEGORY_META,
-  ATELIER_DISCOVERY_ENTRIES,
   atelierProductById,
   atelierProducts,
   type AtelierCategory,
@@ -50,34 +55,86 @@ import {
   type AtelierTrySelection,
 } from '../atelierState';
 import type { CosmeticItem, CosmeticShopData } from '../types';
+import { AtelierPurchaseSheet } from './AtelierPurchaseSheet';
+
+type AtelierDivision = 'showcase' | 'levelFrames';
+type AtelierNotice = { text: string; tone: 'error' | 'info' | 'success' };
+
+export type AtelierPreviewState = {
+  error?: string | null;
+  loading?: boolean;
+  productId?: string;
+  purchaseOpen?: boolean;
+};
 
 export type AtelierShopScreenProps = {
   previewData?: CosmeticShopData;
   previewProfile?: ProfileData;
+  previewState?: AtelierPreviewState;
 };
 
-export default function AtelierShopScreen({ previewData, previewProfile }: AtelierShopScreenProps) {
+const DIVISION_ITEMS: readonly SegmentedControlItem<AtelierDivision>[] = [
+  { label: 'VITRINE', value: 'showcase' },
+  { label: 'CADRES', value: 'levelFrames' },
+];
+
+const CATEGORY_ITEMS: readonly SegmentedControlItem<AtelierCategory>[] = ATELIER_CATEGORIES.map((value) => ({
+  label: ATELIER_CATEGORY_META[value].shortLabel,
+  value,
+}));
+
+const COMPACT_CATEGORY_LABELS: Readonly<Record<AtelierCategory, string>> = {
+  jerseys: 'MAIL.',
+  lighting: 'LUM.',
+  materials: 'MAT.',
+  supports: 'SOCLES',
+};
+
+const COMPACT_CATEGORY_ITEMS: readonly SegmentedControlItem<AtelierCategory>[] = ATELIER_CATEGORIES.map((value) => ({
+  accessibilityLabel: ATELIER_CATEGORY_META[value].shortLabel,
+  label: COMPACT_CATEGORY_LABELS[value],
+  value,
+}));
+
+export default function AtelierShopScreen({
+  previewData,
+  previewProfile,
+  previewState,
+}: AtelierShopScreenProps) {
   const params = useLocalSearchParams<{ category?: string | string[] }>();
-  const { width } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
+  const reduceMotion = useReducedMotion();
   const { profile, session } = useAuth();
   const { refresh: refreshEconomy, volts } = useEconomy();
   const { refresh: refreshCosmetics } = useCosmetics();
+  const previewProduct = atelierProductById(previewState?.productId);
+  const initialProduct = previewProduct ?? atelierProductById('material_graphite');
   const [data, setData] = useState<CosmeticShopData | null>(previewData ?? null);
   const [profileData, setProfileData] = useState<ProfileData | null>(previewProfile ?? null);
-  const [category, setCategory] = useState<AtelierCategory>('materials');
-  const [division, setDivision] = useState<'showcase' | 'levelFrames'>(() => levelFrameCategoryFromParam(params.category));
-  const [selectedId, setSelectedId] = useState('material_graphite');
+  const [category, setCategory] = useState<AtelierCategory>(initialProduct?.category ?? 'materials');
+  const [division, setDivision] = useState<AtelierDivision>(() => levelFrameCategoryFromParam(params.category));
+  const [selectedId, setSelectedId] = useState(initialProduct?.id ?? 'material_graphite');
   const [trial, setTrial] = useState<AtelierTrySelection>({});
-  const [loading, setLoading] = useState(!previewData);
+  const [loading, setLoading] = useState(previewState?.loading ?? !previewData);
   const [refreshing, setRefreshing] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(previewState?.error ?? null);
+  const [notice, setNotice] = useState<AtelierNotice | null>(null);
+  const [purchaseId, setPurchaseId] = useState<string | null>(
+    previewState?.purchaseOpen ? previewProduct?.id ?? null : null,
+  );
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const productTrackRef = useRef<ScrollView>(null);
+  const purchaseTriggerRef = useRef<View>(null);
   const requestRef = useRef(0);
   const cachedDataRef = useRef<CosmeticShopData | null>(previewData ?? null);
   const cachedProfileRef = useRef<ProfileData | null>(previewProfile ?? null);
   const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
-  const cardWidth = Math.min(170, Math.max(154, width * 0.42));
+  const compactHeight = height < 700;
+  const compactWidth = width < 360;
+  const cardWidth = Math.min(344, Math.max(240, width - 64));
+  const previewLoading = previewState?.loading ?? false;
+  const previewError = previewState?.error ?? null;
 
   const load = useCallback(async (refresh = false) => {
     if (previewData) {
@@ -85,7 +142,8 @@ export default function AtelierShopScreen({ previewData, previewProfile }: Ateli
       setProfileData(previewProfile ?? null);
       cachedDataRef.current = previewData;
       cachedProfileRef.current = previewProfile ?? null;
-      setLoading(false);
+      setLoadError(previewError);
+      setLoading(previewLoading);
       setRefreshing(false);
       return;
     }
@@ -93,7 +151,7 @@ export default function AtelierShopScreen({ previewData, previewProfile }: Ateli
     const requestId = ++requestRef.current;
     if (refresh) setRefreshing(true);
     else setLoading(true);
-    setError(null);
+    setLoadError(null);
 
     try {
       const [nextData, nextProfile] = await Promise.all([
@@ -111,44 +169,77 @@ export default function AtelierShopScreen({ previewData, previewProfile }: Ateli
         setData(cachedDataRef.current);
         setProfileData(cachedProfileRef.current);
       }
-      setError(caught instanceof Error ? caught.message : 'Impossible d’ouvrir l’Atelier.');
+      setLoadError(caught instanceof Error ? caught.message : 'Impossible d’ouvrir l’Atelier.');
     } finally {
       if (requestId === requestRef.current) {
         setLoading(false);
         setRefreshing(false);
       }
     }
-  }, [previewData, previewProfile, pseudo]);
+  }, [previewData, previewError, previewLoading, previewProfile, pseudo]);
+
+  const syncAfterMutation = useCallback((fallback: CosmeticShopData) => {
+    if (previewData) return;
+    const requestId = ++requestRef.current;
+    void Promise.allSettled([
+      loadCosmeticShop(),
+      refreshEconomy(),
+      refreshCosmetics(),
+    ]).then(([shopResult]) => {
+      if (requestId !== requestRef.current) return;
+      if (shopResult.status === 'fulfilled') {
+        cachedDataRef.current = shopResult.value;
+        setData(shopResult.value);
+      } else {
+        cachedDataRef.current = fallback;
+        setData(fallback);
+      }
+    });
+  }, [previewData, refreshCosmetics, refreshEconomy]);
 
   useEffect(() => {
     void load();
     return () => { requestRef.current += 1; };
   }, [load]);
 
+  useEffect(() => {
+    setDivision(levelFrameCategoryFromParam(params.category));
+  }, [params.category]);
+
+  useEffect(() => {
+    if (!previewProduct) return;
+    setCategory(previewProduct.category);
+    setSelectedId(previewProduct.id);
+    setPurchaseId(previewState?.purchaseOpen ? previewProduct.id : null);
+  }, [previewProduct, previewState?.purchaseOpen]);
+
   const runtimeById = useMemo(
     () => new Map((data?.items ?? []).map((item) => [item.id, item])),
     [data?.items],
   );
   const products = useMemo(() => atelierProducts(category), [category]);
-  const selectedProduct = atelierProductById(selectedId) ?? products[0] ?? null;
-  const selectedItem = selectedProduct ? runtimeById.get(selectedProduct.id) ?? null : null;
-  const balance = data?.balance ?? volts ?? 0;
-  const action = selectedItem ? atelierPrimaryAction(selectedItem, balance) : 'unavailable';
-  const scene = resolveAtelierSceneConfig(data?.equipped ?? profileData?.cosmetics, trial);
   const equippedIds = useMemo(
     () => equippedAtelierIds(data?.equipped ?? profileData?.cosmetics),
     [data?.equipped, profileData?.cosmetics],
   );
-  const equippedIdsRef = useRef(equippedIds);
+  const selectedProduct = products.find((product) => product.id === selectedId)
+    ?? products.find((product) => product.id === (trial[category] ?? equippedIds[category]))
+    ?? products[0]
+    ?? null;
+  const selectedItem = selectedProduct ? runtimeById.get(selectedProduct.id) ?? null : null;
+  const selectedIndex = Math.max(0, products.findIndex((product) => product.id === selectedProduct?.id));
+  const balance = data?.balance ?? volts ?? 0;
+  const action = selectedItem ? atelierPrimaryAction(selectedItem, balance) : 'unavailable';
+  const scene = resolveAtelierSceneConfig(data?.equipped ?? profileData?.cosmetics, trial);
   const cosmetics = data?.equipped ?? profileData?.cosmetics ?? null;
   const grade = profileData?.ranking.grade;
-  const rankLabel = loading
-    ? 'SYNCHRO'
-    : grade?.libelle?.toUpperCase() ?? 'BRONZE';
+  const rankLabel = loading ? 'SYNCHRO' : grade?.libelle?.toUpperCase() ?? 'BRONZE';
   const rankAccent = profileData && isZeroRank(profileData.ranking.frags)
     ? ZERO_RANK_ACCENT
     : gradeAccent(grade);
   const trialActive = Object.keys(trial).length > 0;
+  const purchaseProduct = atelierProductById(purchaseId);
+  const purchaseItem = purchaseProduct ? runtimeById.get(purchaseProduct.id) ?? null : null;
   const ownedLevelFrames = useMemo(
     () => resolveOwnedLevelFrames({ founder: profileData?.founder, preview: Boolean(previewData) }),
     [previewData, profileData?.founder],
@@ -162,363 +253,601 @@ export default function AtelierShopScreen({ previewData, previewProfile }: Ateli
     [levelFrameEquipment.variant, ownedLevelFrames],
   );
 
-  useEffect(() => {
-    equippedIdsRef.current = equippedIds;
-  }, [equippedIds]);
+  function handleDivisionChange(nextDivision: AtelierDivision) {
+    selectionFeedback();
+    setDivision(nextDivision);
+    setNotice(null);
+    setPurchaseId(null);
+    setPurchaseError(null);
+  }
 
-  useEffect(() => {
-    setDivision(levelFrameCategoryFromParam(params.category));
-  }, [params.category]);
+  function handleCategoryChange(nextCategory: AtelierCategory) {
+    selectionFeedback();
+    const nextProducts = atelierProducts(nextCategory);
+    const nextId = trial[nextCategory] ?? equippedIds[nextCategory];
+    setCategory(nextCategory);
+    setSelectedId(nextProducts.some((product) => product.id === nextId) ? nextId : nextProducts[0]?.id ?? '');
+    setNotice(null);
+  }
 
-  useEffect(() => {
-    const persistedId = equippedIdsRef.current[category];
-    const nextId = products.some((product) => product.id === persistedId)
-      ? persistedId
-      : products[0]?.id;
-    if (nextId) setSelectedId(nextId);
-  }, [category, products]); // Equipment updates must not pull the carousel away from the user's selection.
+  function handleProductSelection(productId: string) {
+    if (productId === selectedProduct?.id) return;
+    selectionFeedback();
+    setSelectedId(productId);
+    setNotice(null);
+  }
 
-  async function handlePrimaryAction() {
+  function handleProductScrollEnd(event: NativeSyntheticEvent<NativeScrollEvent>) {
+    const interval = cardWidth + spacing.sm;
+    const index = Math.max(0, Math.min(products.length - 1, Math.round(event.nativeEvent.contentOffset.x / interval)));
+    const product = products[index];
+    if (product) handleProductSelection(product.id);
+  }
+
+  function handleTry() {
+    if (!selectedProduct) return;
+    selectionFeedback();
+    setTrial((current) => applyAtelierTry(current, selectedProduct.category, selectedProduct.id));
+    setNotice({ tone: 'info', text: `${selectedProduct.name} est visible en aperçu. Rien n’est encore sauvegardé.` });
+  }
+
+  function handlePrimaryAction() {
     if (!selectedItem || !selectedProduct || pendingId) return;
     const nextAction = atelierPrimaryAction(selectedItem, balance);
-    if (nextAction === 'equipped' || nextAction === 'unavailable') return;
-    if (nextAction === 'insufficient') {
-      setMessage(`Il te manque ${formatNumber(selectedItem.price - balance)} Volts.`);
+    if (nextAction === 'buy') {
+      selectionFeedback();
+      setPurchaseError(null);
+      setPurchaseId(selectedItem.id);
       return;
     }
+    if (nextAction === 'equip') {
+      void equipSelected(selectedItem, selectedProduct);
+    }
+  }
 
-    setPendingId(selectedItem.id);
-    setError(null);
-    setMessage(null);
+  async function equipSelected(item: CosmeticItem, product: AtelierProduct) {
+    if (!data || pendingId) return;
+    const previousData = data;
+    const previousTrial = trial;
+    const optimistic = applyPreviewAtelierAction(data, item.id);
+    setPendingId(item.id);
+    setLoadError(null);
+    setNotice({ tone: 'info', text: `${product.name} est appliqué. Synchronisation en cours…` });
+    setData(optimistic);
+    cachedDataRef.current = optimistic;
+    setTrial((current) => withoutTrialCategory(current, product.category));
+
     try {
-      if (previewData) {
-        const next = applyPreviewAtelierAction(data ?? previewData, selectedItem.id);
-        cachedDataRef.current = next;
-        setData(next);
-      } else {
-        if (nextAction === 'buy') await purchaseCosmetic(selectedItem.id);
-        else await equipCosmetic(selectedItem.id);
-        const [next] = await Promise.all([
-          loadCosmeticShop(),
-          refreshEconomy(),
-          refreshCosmetics(),
-        ]);
-        cachedDataRef.current = next;
-        setData(next);
-      }
-      setTrial((current) => {
-        const next = { ...current };
-        delete next[selectedProduct.category];
-        return next;
-      });
-      setMessage(nextAction === 'buy'
-        ? `${selectedProduct.name} rejoint ta Vitrine et est maintenant équipé.`
-        : `${selectedProduct.name} est maintenant équipé.`);
+      if (!previewData) await equipCosmetic(item.id);
+      setNotice({ tone: 'success', text: `${product.name} équipe maintenant ta Vitrine.` });
+      successFeedback();
+      syncAfterMutation(optimistic);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Cette action n’a pas pu être réalisée.');
+      cachedDataRef.current = previousData;
+      setData(previousData);
+      setTrial(previousTrial);
+      setNotice({
+        tone: 'error',
+        text: friendlyMutationError(caught, 'L’équipement n’a pas pu être enregistré. Ta configuration précédente est restaurée.'),
+      });
+      errorFeedback();
     } finally {
       setPendingId(null);
     }
   }
 
-  function handleTry() {
-    if (!selectedProduct) return;
-    setTrial((current) => applyAtelierTry(current, selectedProduct.category, selectedProduct.id));
-    setMessage(`${selectedProduct.name} est appliqué en essai. Rien n’est sauvegardé.`);
+  async function confirmPurchase() {
+    if (!data || !purchaseItem || !purchaseProduct || pendingId) return;
+    if (atelierPrimaryAction(purchaseItem, balance) !== 'buy') {
+      setPurchaseError('Le prix ou ton solde a changé. Ferme ce panneau puis réessaie.');
+      errorFeedback();
+      return;
+    }
+
+    setPendingId(purchaseItem.id);
+    setPurchaseError(null);
+    try {
+      if (!previewData) await purchaseCosmetic(purchaseItem.id);
+      const purchased = applyPreviewAtelierAction(data, purchaseItem.id);
+      cachedDataRef.current = purchased;
+      setData(purchased);
+      setTrial((current) => withoutTrialCategory(current, purchaseProduct.category));
+      setPurchaseId(null);
+      setNotice({
+        tone: 'success',
+        text: `${purchaseProduct.name} rejoint ta collection et équipe maintenant ta Vitrine.`,
+      });
+      successFeedback();
+      syncAfterMutation(purchased);
+    } catch (caught) {
+      setPurchaseError(friendlyMutationError(caught, 'Cette acquisition n’a pas pu être finalisée.'));
+      errorFeedback();
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  function closePurchase() {
+    if (pendingId === purchaseId) return;
+    setPurchaseId(null);
+    setPurchaseError(null);
   }
 
   return (
     <Screen>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl onRefresh={() => void load(true)} refreshing={refreshing} tintColor={colors.volt} />}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Pressable
-            accessibilityLabel="Revenir au profil"
-            accessibilityRole="button"
-            onPress={() => router.back()}
-            style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
-          >
-            <Text style={styles.backIcon}>‹</Text>
-          </Pressable>
-          <View style={styles.headerCopy}>
-            <Text style={styles.headerEyebrow}>BOUTIQUE // {division === 'levelFrames' ? 'IDENTITÉ' : 'VITRINE'}</Text>
-            <Text style={styles.headerTitle}>{division === 'levelFrames' ? 'CADRES' : 'ATELIER'}</Text>
-          </View>
-          <View accessible accessibilityLabel={`${formatNumber(balance)} Volts`} style={styles.balancePill}>
-            <CurrencyIcon kind="volts" size={17} />
-            <View><Text style={styles.balanceLabel}>VOLTS</Text><Text style={styles.balanceValue}>{loading ? '—' : formatNumber(balance)}</Text></View>
-          </View>
-        </View>
-
-        {error ? (
-          <View accessibilityRole="alert" style={styles.errorBanner}>
-            <View style={styles.errorCopy}><Text style={styles.errorTitle}>ATELIER INDISPONIBLE</Text><Text numberOfLines={2} style={styles.errorText}>{friendlyError(error)}</Text></View>
-            <Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable>
-          </View>
-        ) : null}
-
-        <View style={styles.divisionTabs}>
-          <Pressable accessibilityRole="tab" accessibilityState={{ selected: division === 'showcase' }} onPress={() => setDivision('showcase')} style={({ pressed }) => [styles.divisionTab, division === 'showcase' && styles.divisionTabActive, pressed && styles.pressed]}>
-            <Text style={[styles.divisionTabText, division === 'showcase' && styles.divisionTabTextActive]}>ATELIER VITRINE</Text>
-          </Pressable>
-          <Pressable accessibilityRole="tab" accessibilityState={{ selected: division === 'levelFrames' }} onPress={() => setDivision('levelFrames')} style={({ pressed }) => [styles.divisionTab, division === 'levelFrames' && styles.divisionTabActive, pressed && styles.pressed]}>
-            <Text style={[styles.divisionTabText, division === 'levelFrames' && styles.divisionTabTextActive]}>CADRES DE NIVEAU</Text>
-          </Pressable>
-        </View>
-
-        {division === 'levelFrames' ? (
-          <LevelFrameGallery
-            entries={levelFrameCollection}
-            level={profileData?.level.level ?? 42}
-            mode="shop"
-          />
-        ) : (
-          <>
-
-        <View style={styles.livePanel}>
-          <LinearGradient colors={['rgba(11,18,24,.98)', 'rgba(5,9,13,.98)']} style={StyleSheet.absoluteFill} />
-          <View style={styles.panelHeading}>
-            <View><Text style={styles.panelEyebrow}>APERÇU EN DIRECT</Text><Text style={styles.panelTitle}>TA VITRINE, EN TEMPS RÉEL.</Text></View>
-            <Pressable
-              accessibilityLabel="Ouvrir la Vitrine en paysage"
-              accessibilityRole="button"
-              onPress={() => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
-              style={({ pressed }) => [styles.openShowcase, pressed && styles.pressed]}
-            >
-              <Text style={styles.openShowcaseText}>OUVRIR ↗</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.sceneFrame}>
-            <ShowcaseRoomScene
-              cosmetics={cosmetics}
-              data={profileData}
-              jerseyPresentation={scene.jerseyPresentation}
-              lighting={scene.lighting}
-              loading={loading}
-              mode="preview"
-              pedestal={scene.pedestal}
-              rankAccent={rankAccent}
-              rankLabel={rankLabel}
-              theme={scene.theme}
-            />
-            {loading ? <View style={styles.sceneLoading}><ActivityIndicator color={colors.volt} /></View> : null}
-            {trialActive ? <View style={styles.trialPill}><Text style={styles.trialPillText}>ESSAI TEMPORAIRE</Text></View> : null}
-          </View>
-
-          <ScrollView contentContainerStyle={styles.equippedRow} horizontal showsHorizontalScrollIndicator={false}>
-            {ATELIER_CATEGORIES.map((itemCategory) => {
-              const product = atelierProductById(equippedIds[itemCategory]);
-              return (
-                <View key={itemCategory} style={styles.equippedChip}>
-                  <Text style={styles.equippedLabel}>{ATELIER_CATEGORY_META[itemCategory].shortLabel}</Text>
-                  <Text numberOfLines={1} style={styles.equippedValue}>{product?.name ?? 'Origine'}</Text>
-                </View>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        <View style={styles.categorySection}>
-          <Text style={styles.sectionEyebrow}>PERSONNALISER // 04 CATÉGORIES</Text>
-          <View style={styles.categoryRow}>
-            {ATELIER_CATEGORIES.map((itemCategory) => {
-              const active = itemCategory === category;
-              const meta = ATELIER_CATEGORY_META[itemCategory];
-              return (
-                <Pressable
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: active }}
-                  key={itemCategory}
-                  onPress={() => { setCategory(itemCategory); setMessage(null); }}
-                  style={({ pressed }) => [styles.categoryButton, active && styles.categoryButtonActive, pressed && styles.pressed]}
-                >
-                  <Text style={[styles.categoryGlyph, active && styles.categoryGlyphActive]}>{meta.glyph}</Text>
-                  <Text numberOfLines={1} style={[styles.categoryLabel, active && styles.categoryLabelActive]}>{meta.label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        <View style={styles.productsHeader}>
-          <View><Text style={styles.sectionEyebrow}>CATALOGUE // {ATELIER_CATEGORY_META[category].label}</Text><Text style={styles.productsTitle}>CHOISIS TA FINITION.</Text></View>
-          <Text style={styles.productsCount}>{String(products.length).padStart(2, '0')}</Text>
-        </View>
-
+      <View style={styles.root}>
         <ScrollView
-          contentContainerStyle={styles.productTrack}
-          decelerationRate="fast"
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          snapToInterval={cardWidth + 10}
-        >
-          {products.map((product) => (
-            <ProductCard
-              item={runtimeById.get(product.id) ?? null}
-              key={product.id}
-              onPress={() => { setSelectedId(product.id); setMessage(null); }}
-              product={product}
-              selected={selectedProduct?.id === product.id}
-              width={cardWidth}
+          contentContainerStyle={[styles.scrollContent, compactHeight && styles.scrollContentCompact]}
+          refreshControl={(
+            <RefreshControl
+              onRefresh={() => void load(true)}
+              refreshing={refreshing}
+              tintColor={colors.volt}
             />
-          ))}
+          )}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={[styles.content, compactHeight && styles.contentCompact]}>
+            <AtelierHeader balance={balance} compact={compactHeight} loading={loading} />
+
+            {loadError ? (
+              <View accessible accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.errorBanner}>
+                <View style={styles.errorCopy}>
+                  <Text style={styles.errorTitle}>ATELIER INDISPONIBLE</Text>
+                  <Text style={styles.errorText}>{friendlyLoadError(loadError)}</Text>
+                </View>
+                <Button label="RÉESSAYER" onPress={() => void load()} size="compact" variant="secondary" />
+              </View>
+            ) : null}
+
+            <SegmentedControl
+              accessibilityLabel="Choisir une section de la boutique"
+              items={DIVISION_ITEMS}
+              onChange={handleDivisionChange}
+              value={division}
+            />
+
+            {division === 'levelFrames' ? (
+              <LevelFrameGallery
+                entries={levelFrameCollection}
+                level={profileData?.level.level ?? 42}
+                mode="shop"
+              />
+            ) : (
+              <>
+                <View style={[styles.livePanel, compactHeight && styles.livePanelCompact]}>
+                  <LinearGradient
+                    colors={['rgba(18,25,32,.98)', 'rgba(7,10,14,.99)']}
+                    end={{ x: 1, y: 1 }}
+                    start={{ x: 0, y: 0 }}
+                    style={StyleSheet.absoluteFill}
+                  />
+                  <View style={styles.panelHeading}>
+                    <View style={styles.panelCopy}>
+                      <Text style={styles.sectionEyebrow}>APERÇU EN DIRECT</Text>
+                      <Text numberOfLines={1} style={styles.panelDescription}>
+                        {trialActive ? 'Aperçu temporaire' : 'Configuration équipée'}
+                      </Text>
+                    </View>
+                    <Button
+                      accessibilityLabel="Ouvrir la Vitrine en paysage"
+                      label="OUVRIR ↗"
+                      onPress={() => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
+                      size="compact"
+                      variant="ghost"
+                    />
+                  </View>
+
+                  <View style={styles.sceneFrame}>
+                    <ShowcaseRoomScene
+                      cosmetics={cosmetics}
+                      data={profileData}
+                      jerseyPresentation={scene.jerseyPresentation}
+                      lighting={scene.lighting}
+                      loading={loading}
+                      mode="preview"
+                      pedestal={scene.pedestal}
+                      rankAccent={rankAccent}
+                      rankLabel={rankLabel}
+                      style={compactHeight ? styles.compactScene : undefined}
+                      theme={scene.theme}
+                    />
+                    {loading ? (
+                      <View style={styles.sceneLoading}>
+                        <ActivityIndicator color={colors.volt} />
+                        <Text style={styles.sceneLoadingText}>INSTALLATION DE LA VITRINE…</Text>
+                      </View>
+                    ) : null}
+                    {trialActive ? (
+                      <View accessible accessibilityLabel="Aperçu temporaire, non sauvegardé" style={styles.trialStatus}>
+                        <Text style={styles.trialStatusText}>APERÇU · NON SAUVEGARDÉ</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </View>
+
+                <View style={[styles.composer, compactHeight && styles.composerCompact]}>
+                  <View style={[styles.composerHeading, compactHeight && styles.composerHeadingCompact]}>
+                    <View>
+                      <Text style={styles.sectionEyebrow}>COMPOSER LA VITRINE</Text>
+                      <Text style={styles.composerTitle}>CHOISIS UNE FINITION.</Text>
+                    </View>
+                    <Text accessibilityLabel={`${selectedIndex + 1} sur ${products.length}`} style={styles.counter}>
+                      {String(selectedIndex + 1).padStart(2, '0')} / {String(products.length).padStart(2, '0')}
+                    </Text>
+                  </View>
+
+                  <SegmentedControl
+                    accessibilityLabel="Choisir une catégorie de finition"
+                    items={compactWidth ? COMPACT_CATEGORY_ITEMS : CATEGORY_ITEMS}
+                    onChange={handleCategoryChange}
+                    testID="atelier-category-control"
+                    value={category}
+                  />
+
+                  <Animated.View key={category} entering={reduceMotion ? undefined : FadeIn.duration(180)}>
+                    <ScrollView
+                      contentOffset={{ x: selectedIndex * (cardWidth + spacing.sm), y: 0 }}
+                      contentContainerStyle={styles.productTrack}
+                      decelerationRate="fast"
+                      horizontal
+                      onContentSizeChange={() => productTrackRef.current?.scrollTo({
+                        animated: false,
+                        x: selectedIndex * (cardWidth + spacing.sm),
+                        y: 0,
+                      })}
+                      onMomentumScrollEnd={handleProductScrollEnd}
+                      ref={productTrackRef}
+                      showsHorizontalScrollIndicator={false}
+                      snapToAlignment="start"
+                      snapToInterval={cardWidth + spacing.sm}
+                      testID="atelier-product-list"
+                    >
+                      {products.map((product, index) => (
+                        <View key={product.id} style={index < products.length - 1 ? styles.productItem : undefined}>
+                          <ProductCard
+                            item={runtimeById.get(product.id) ?? null}
+                            onPress={() => handleProductSelection(product.id)}
+                            previewed={trial[category] === product.id}
+                            product={product}
+                            selected={selectedProduct?.id === product.id}
+                            width={cardWidth}
+                          />
+                        </View>
+                      ))}
+                    </ScrollView>
+                  </Animated.View>
+                </View>
+
+                <View style={styles.discoveryLine}>
+                  <Text style={styles.discoveryLabel}>PROCHAINEMENT</Text>
+                  <Text style={styles.discoveryValue}>PACKS ÉQUIPES · COLLABS</Text>
+                </View>
+              </>
+            )}
+          </View>
         </ScrollView>
 
-        {selectedProduct ? (
-          <SelectionPanel
+        {division === 'showcase' && selectedProduct ? (
+          <AtelierActionDock
             action={action}
             balance={balance}
             item={selectedItem}
-            message={message}
-            onPrimary={() => void handlePrimaryAction()}
+            notice={notice}
+            onPrimary={handlePrimaryAction}
             onTry={handleTry}
             pending={pendingId === selectedProduct.id}
+            primaryRef={purchaseTriggerRef}
             product={selectedProduct}
           />
-        ) : (
-          <View style={styles.emptyState}><Text style={styles.emptyTitle}>CATALOGUE EN COURS DE SYNCHRONISATION.</Text><Text style={styles.emptyText}>Réessaie dans un instant pour retrouver les finitions de la Vitrine.</Text></View>
-        )}
+        ) : null}
 
-        <View style={styles.discovery}>
-          {ATELIER_DISCOVERY_ENTRIES.map((entry) => (
-            <View accessible accessibilityLabel={`${entry.label}, bientôt`} key={entry.kind} style={styles.discoveryCard}>
-              <View style={styles.discoveryGlyph}><Text style={styles.discoveryGlyphText}>{entry.glyph}</Text></View>
-              <View style={styles.discoveryCopy}><Text style={styles.discoveryTitle}>{entry.label}</Text><Text numberOfLines={1} style={styles.discoveryText}>{entry.description}</Text></View>
-              <Text style={styles.discoverySoon}>BIENTÔT</Text>
-            </View>
-          ))}
-        </View>
-          </>
-        )}
-      </ScrollView>
+        <AtelierPurchaseSheet
+          balance={balance}
+          error={purchaseError}
+          onClose={closePurchase}
+          onConfirm={() => void confirmPurchase()}
+          pending={Boolean(purchaseId && pendingId === purchaseId)}
+          price={purchaseItem?.price ?? purchaseProduct?.price ?? 0}
+          product={purchaseProduct}
+          returnFocusRef={purchaseTriggerRef}
+          visible={Boolean(purchaseProduct && purchaseItem)}
+        />
+      </View>
     </Screen>
+  );
+}
+
+function AtelierHeader({ balance, compact, loading }: { balance: number; compact: boolean; loading: boolean }) {
+  return (
+    <View style={[styles.header, compact && styles.headerCompact]}>
+      <Pressable
+        accessibilityLabel="Revenir au profil"
+        accessibilityRole="button"
+        onPress={() => router.back()}
+        style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+      >
+        <Text style={styles.backIcon}>‹</Text>
+      </Pressable>
+      <View style={styles.headerCopy}>
+        <Text style={styles.headerEyebrow}>BOUTIQUE // VITRINE</Text>
+        <Text style={styles.headerTitle}>ATELIER</Text>
+      </View>
+      <View accessible accessibilityLabel={`${formatNumber(balance)} Volts disponibles`} style={styles.balance} testID="atelier-balance">
+        <CurrencyIcon kind="volts" size={17} />
+        <View>
+          <Text style={styles.balanceLabel}>SOLDE</Text>
+          <Text style={styles.balanceValue}>{loading ? '—' : formatNumber(balance)}</Text>
+        </View>
+      </View>
+    </View>
   );
 }
 
 function ProductCard({
   item,
   onPress,
+  previewed,
   product,
   selected,
   width,
 }: {
   item: CosmeticItem | null;
   onPress: () => void;
+  previewed: boolean;
   product: AtelierProduct;
   selected: boolean;
   width: number;
 }) {
   return (
     <Pressable
-      accessibilityLabel={`${product.name}, ${productState(item, product)}`}
+      accessibilityHint="Sélectionne cette finition pour afficher ses actions"
+      accessibilityLabel={`${product.name}, ${productStateLabel(item, product, previewed)}`}
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={({ pressed }) => [styles.productCard, { width }, selected && styles.productCardSelected, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.productCard,
+        { width },
+        selected && styles.productCardSelected,
+        pressed && styles.pressed,
+      ]}
       testID={`atelier-product-${product.id}`}
     >
-      <View style={styles.productVisual}>
-        <Image blurRadius={8} resizeMode="cover" source={product.image} style={styles.productVisualBackdrop} />
-        <View style={styles.productVisualShade} />
-        <Image resizeMode="contain" source={product.image} style={styles.productVisualImage} />
-        {selected ? <View style={styles.selectedMark}><Text style={styles.selectedMarkText}>SÉLECTION</Text></View> : null}
+      <View style={[styles.productAccent, { backgroundColor: product.accent }]} />
+      <View style={[styles.productVisual, { backgroundColor: `${product.accent}0D` }]}>
+        <Image resizeMode="contain" source={product.image} style={styles.productImage} />
+        {selected && item?.equipped ? (
+          <View style={styles.selectedMark}><Text style={styles.selectedMarkText}>✓</Text></View>
+        ) : selected ? (
+          <View style={styles.selectedChoice}><Text style={styles.selectedChoiceText}>CHOIX</Text></View>
+        ) : null}
       </View>
       <View style={styles.productCopy}>
+        <View style={styles.productTopline}>
+          <Text style={[styles.rarity, { color: product.accent }]}>{rarityLabel(product.rarity)}</Text>
+          <ProductState item={item} previewed={previewed} product={product} />
+        </View>
         <Text numberOfLines={1} style={styles.productName}>{product.name}</Text>
-        <ProductState item={item} product={product} />
+        <Text numberOfLines={2} style={styles.productDescription}>{product.description}</Text>
       </View>
     </Pressable>
   );
 }
 
-function ProductState({ item, product }: { item: CosmeticItem | null; product: AtelierProduct }) {
+function ProductState({
+  item,
+  previewed,
+  product,
+}: {
+  item: CosmeticItem | null;
+  previewed: boolean;
+  product: AtelierProduct;
+}) {
+  if (previewed && !item?.equipped) return <Text style={styles.statePreview}>APERÇU</Text>;
   if (item?.equipped) return <Text style={styles.stateEquipped}>● ÉQUIPÉ</Text>;
   if (item?.owned) return <Text style={styles.stateOwned}>POSSÉDÉ</Text>;
   if (!item) return <Text style={styles.stateMuted}>SYNCHRO</Text>;
-  return <View style={styles.priceRow}><CurrencyIcon kind="volts" size={13} /><Text style={styles.priceText}>{formatNumber(product.price)}</Text></View>;
+  return (
+    <View style={styles.priceRow}>
+      <CurrencyIcon kind="volts" size={13} />
+      <Text style={styles.priceText}>{formatNumber(item.price || product.price)}</Text>
+    </View>
+  );
 }
 
-function SelectionPanel({
+function AtelierActionDock({
   action,
   balance,
   item,
-  message,
+  notice,
   onPrimary,
   onTry,
   pending,
+  primaryRef,
   product,
 }: {
   action: AtelierPrimaryAction;
   balance: number;
   item: CosmeticItem | null;
-  message: string | null;
+  notice: AtelierNotice | null;
   onPrimary: () => void;
   onTry: () => void;
   pending: boolean;
+  primaryRef: RefObject<View | null>;
   product: AtelierProduct;
 }) {
-  const primaryDisabled = pending || action === 'equipped' || action === 'insufficient' || action === 'unavailable';
+  const disabled = pending || action === 'equipped' || action === 'insufficient' || action === 'unavailable';
+  const contextualNotice = notice ?? defaultActionNotice(action, balance, item, product);
+  const price = item?.price ?? product.price;
+
   return (
-    <View style={styles.selectionPanel}>
-      <View style={styles.selectionTop}>
-        <View style={styles.selectionThumb}>
-          <Image resizeMode="cover" source={product.image} style={styles.selectionThumbBackdrop} />
-          <View style={styles.selectionThumbShade} />
-          <Image resizeMode="contain" source={product.image} style={styles.selectionThumbImage} />
-        </View>
-        <View style={styles.selectionCopy}>
-          <Text style={styles.selectionEyebrow}>{ATELIER_CATEGORY_META[product.category].label}</Text>
-          <Text numberOfLines={1} style={styles.selectionName}>{product.name}</Text>
-          <Text numberOfLines={2} style={styles.selectionDescription}>{product.description}</Text>
-        </View>
+    <View style={styles.dockShell} testID="atelier-action">
+      <View style={styles.actionDock}>
+        {action === 'equipped' && !pending ? (
+          <View accessible accessibilityLabel={`${product.name}, configuration active`} style={styles.activeConfiguration}>
+            <View style={styles.activeCopy}>
+              <Text style={styles.actionEyebrow}>{ATELIER_CATEGORY_META[product.category].label}</Text>
+              <Text numberOfLines={1} style={styles.actionName}>{product.name}</Text>
+            </View>
+            <View style={styles.activeState}>
+              <Text style={styles.activeMark}>✓</Text>
+              <Text style={styles.activeText}>ACTIVE</Text>
+            </View>
+          </View>
+        ) : (
+          <>
+            <View style={styles.actionHeading}>
+              <View style={styles.actionCopy}>
+                <Text style={styles.actionEyebrow}>{ATELIER_CATEGORY_META[product.category].label}</Text>
+                <Text numberOfLines={1} style={styles.actionName}>{product.name}</Text>
+              </View>
+              <Text style={styles.actionState}>
+                {action === 'insufficient' ? `${formatNumber(price)} VOLTS` : actionStateLabel(action)}
+              </Text>
+            </View>
+            <View style={styles.actions}>
+              <View style={styles.tryAction}>
+                <Button
+                  accessibilityLabel={`Essayer ${product.name}`}
+                  disabled={pending}
+                  fullWidth
+                  label="ESSAYER"
+                  onPress={onTry}
+                  variant="secondary"
+                />
+              </View>
+              <View style={styles.primaryAction}>
+                <Button
+                  accessibilityHint={action === 'buy' ? 'Ouvre le récapitulatif avant de débiter tes Volts' : undefined}
+                  accessibilityLabel={primaryAccessibilityLabel(action, product, price, balance)}
+                  disabled={disabled}
+                  fullWidth
+                  label={primaryLabel(action, item, product, balance)}
+                  loading={pending}
+                  onPress={onPrimary}
+                  ref={primaryRef}
+                  testID="atelier-action-primary"
+                />
+              </View>
+            </View>
+          </>
+        )}
+
+        {contextualNotice ? (
+          <View
+            accessible
+            accessibilityLiveRegion={contextualNotice.tone === 'error' ? 'assertive' : 'polite'}
+            accessibilityRole={contextualNotice.tone === 'error' ? 'alert' : undefined}
+            style={styles.notice}
+            testID="atelier-feedback"
+          >
+            <View style={[styles.noticeMark, noticeToneStyle[contextualNotice.tone]]} />
+            <Text style={[styles.noticeText, contextualNotice.tone === 'error' && styles.noticeTextError]}>
+              {contextualNotice.text}
+            </Text>
+          </View>
+        ) : null}
       </View>
-      <View style={styles.actions}>
-        <Pressable accessibilityLabel={`Essayer ${product.name}`} accessibilityRole="button" onPress={onTry} style={({ pressed }) => [styles.tryButton, pressed && styles.pressed]}>
-          <Text style={styles.tryButtonText}>ESSAYER</Text>
-        </Pressable>
-        <Pressable
-          accessibilityLabel={primaryLabel(action, product)}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: primaryDisabled, selected: action === 'equipped' }}
-          disabled={primaryDisabled}
-          onPress={onPrimary}
-          style={({ pressed }) => [styles.primaryButton, primaryDisabled && styles.primaryButtonDisabled, pressed && styles.pressed]}
-        >
-          {pending ? <ActivityIndicator color="#070A0C" size="small" /> : <Text style={[styles.primaryButtonText, primaryDisabled && styles.primaryButtonTextDisabled]}>{primaryLabel(action, product)}</Text>}
-        </Pressable>
-      </View>
-      {action === 'insufficient' ? <Text style={styles.insufficient}>Solde insuffisant · il manque {formatNumber(product.price - balance)} Volts.</Text> : null}
-      {action === 'unavailable' && !item ? <Text style={styles.syncNote}>La migration du catalogue Atelier doit être appliquée avant l’achat réel.</Text> : null}
-      {message ? <Text accessibilityRole="alert" style={styles.message}>{message}</Text> : null}
     </View>
   );
 }
 
-function primaryLabel(action: AtelierPrimaryAction, product: AtelierProduct) {
-  if (action === 'equip') return 'ÉQUIPER';
-  if (action === 'equipped') return 'ÉQUIPÉ';
-  if (action === 'unavailable') return 'BIENTÔT';
-  return `ACHETER · ${formatNumber(product.price)}`;
+function defaultActionNotice(
+  action: AtelierPrimaryAction,
+  balance: number,
+  item: CosmeticItem | null,
+  product: AtelierProduct,
+): AtelierNotice | null {
+  if (action === 'insufficient') {
+    return {
+      tone: 'error',
+      text: `Il manque ${formatNumber((item?.price ?? product.price) - balance)} Volts pour cette finition.`,
+    };
+  }
+  if (action === 'unavailable') {
+    return {
+      tone: 'info',
+      text: item
+        ? 'Cette finition n’est pas disponible à l’acquisition.'
+        : 'Le catalogue Atelier est encore en cours de synchronisation.',
+    };
+  }
+  return null;
 }
 
-function productState(item: CosmeticItem | null, product: AtelierProduct) {
+function primaryLabel(
+  action: AtelierPrimaryAction,
+  item: CosmeticItem | null,
+  product: AtelierProduct,
+  balance: number,
+) {
+  const price = item?.price ?? product.price;
+  if (action === 'equip') return 'ÉQUIPER';
+  if (action === 'equipped') return 'ÉQUIPÉ';
+  if (action === 'insufficient') return 'SOLDE INSUFFISANT';
+  if (action === 'unavailable') return item ? 'INDISPONIBLE' : 'SYNCHRONISATION';
+  return `DÉBLOQUER · ${formatNumber(price)}`;
+}
+
+function primaryAccessibilityLabel(
+  action: AtelierPrimaryAction,
+  product: AtelierProduct,
+  price: number,
+  balance: number,
+) {
+  if (action === 'buy') return `Débloquer ${product.name} pour ${formatNumber(price)} Volts`;
+  if (action === 'equip') return `Équiper ${product.name}`;
+  if (action === 'equipped') return `${product.name} est équipé`;
+  if (action === 'insufficient') return `Solde insuffisant. Il manque ${formatNumber(price - balance)} Volts pour ${product.name}`;
+  return `${product.name} est indisponible`;
+}
+
+function actionStateLabel(action: AtelierPrimaryAction) {
+  if (action === 'equipped') return 'ÉQUIPÉ';
+  if (action === 'equip') return 'POSSÉDÉ';
+  if (action === 'buy') return 'À DÉBLOQUER';
+  if (action === 'insufficient') return 'SOLDE INSUFFISANT';
+  return 'INDISPONIBLE';
+}
+
+function productStateLabel(item: CosmeticItem | null, product: AtelierProduct, previewed: boolean) {
+  if (previewed && !item?.equipped) return 'en aperçu temporaire';
   if (item?.equipped) return 'équipé';
   if (item?.owned) return 'possédé';
   if (!item) return 'en synchronisation';
-  return `${product.price} Volts`;
+  return `${formatNumber(item.price || product.price)} Volts`;
+}
+
+function rarityLabel(rarity: AtelierProduct['rarity']) {
+  if (rarity === 'legendaire') return 'LÉGENDAIRE';
+  if (rarity === 'epique') return 'ÉPIQUE';
+  if (rarity === 'rare') return 'RARE';
+  return 'COMMUN';
+}
+
+function withoutTrialCategory(selection: AtelierTrySelection, category: AtelierCategory) {
+  const next = { ...selection };
+  delete next[category];
+  return next;
 }
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat('fr-FR').format(Math.max(0, Math.round(value)));
 }
 
-function friendlyError(value: string) {
-  if (/network|fetch|hors connexion/i.test(value)) return 'Connexion indisponible. La dernière configuration connue reste affichée.';
+function friendlyLoadError(value: string) {
+  if (/network|fetch|hors connexion|offline/i.test(value)) {
+    return 'Connexion indisponible. La dernière configuration connue reste affichée.';
+  }
   return value;
+}
+
+function friendlyMutationError(caught: unknown, fallback: string) {
+  const value = caught instanceof Error ? caught.message : fallback;
+  if (/solde insuffisant/i.test(value)) return 'Ton solde a changé. Recharge l’Atelier avant de confirmer.';
+  if (/network|fetch|hors connexion|offline/i.test(value)) return 'Connexion indisponible. Réessaie sans quitter ta composition.';
+  return value || fallback;
 }
 
 function levelFrameCategoryFromParam(value?: string | string[]) {
@@ -528,99 +857,451 @@ function levelFrameCategoryFromParam(value?: string | string[]) {
     : 'showcase';
 }
 
+const noticeToneStyle = StyleSheet.create({
+  error: { backgroundColor: colors.danger },
+  info: { backgroundColor: colors.info },
+  success: { backgroundColor: colors.success },
+});
+
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: 14, paddingTop: 10, paddingBottom: 30, gap: 15, backgroundColor: '#05080B' },
-  header: { minHeight: 61, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  backButton: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderRadius: 12, borderWidth: 1, borderColor: '#2A3640', backgroundColor: '#0A0F13' },
-  backIcon: { marginTop: -3, color: '#D9E0E5', fontSize: 31, lineHeight: 31 },
-  headerCopy: { flex: 1, minWidth: 0 },
-  headerEyebrow: { ...typography.eyebrow, color: colors.volt, fontSize: 8, letterSpacing: 0.65 },
-  headerTitle: { marginTop: 1, color: '#F4F6F4', fontFamily: fonts.display, fontSize: 29, lineHeight: 30 },
-  balancePill: { minWidth: 92, height: 42, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 13, borderWidth: 1, borderColor: '#445120', backgroundColor: '#0D130A' },
-  balanceLabel: { ...typography.label, color: '#7F8A92', fontSize: 6, letterSpacing: 0.4 },
-  balanceValue: { color: '#F2F5F5', fontFamily: fonts.display, fontSize: 16, lineHeight: 17 },
-  divisionTabs: { minHeight: 48, padding: 4, flexDirection: 'row', gap: 4, borderRadius: 14, borderWidth: 1, borderColor: '#26323B', backgroundColor: '#070B0F' },
-  divisionTab: { flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
-  divisionTabActive: { borderWidth: 1, borderColor: '#596725', backgroundColor: '#151D0E' },
-  divisionTabText: { ...typography.label, color: '#75818B', fontSize: 7.5, letterSpacing: .28 },
-  divisionTabTextActive: { color: colors.volt },
-  livePanel: { position: 'relative', overflow: 'hidden', padding: 10, borderRadius: 18, borderWidth: 1, borderColor: '#2B3944', backgroundColor: '#081017' },
-  panelHeading: { minHeight: 43, marginBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-  panelEyebrow: { ...typography.eyebrow, color: colors.volt, fontSize: 8, letterSpacing: 0.6 },
-  panelTitle: { marginTop: 2, color: '#F1F3F2', fontFamily: fonts.display, fontSize: 18, lineHeight: 19 },
-  openShowcase: { minWidth: 76, minHeight: 32, paddingHorizontal: 9, alignItems: 'center', justifyContent: 'center', borderRadius: 9, borderWidth: 1, borderColor: '#52641C', backgroundColor: '#11180B' },
-  openShowcaseText: { ...typography.action, color: colors.volt, fontSize: 8 },
-  sceneFrame: { position: 'relative', overflow: 'hidden', borderRadius: 12 },
-  sceneLoading: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(4,7,9,.62)' },
-  trialPill: { position: 'absolute', top: 7, right: 7, minHeight: 22, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, borderColor: '#DDEB4A', backgroundColor: 'rgba(12,16,7,.88)' },
-  trialPillText: { ...typography.label, color: colors.volt, fontSize: 6.5, letterSpacing: 0.3 },
-  equippedRow: { paddingTop: 8, gap: 7 },
-  equippedChip: { width: 105, minHeight: 34, paddingHorizontal: 8, justifyContent: 'center', borderRadius: 9, borderWidth: 1, borderColor: '#222D35', backgroundColor: '#080D11' },
-  equippedLabel: { ...typography.label, color: '#6F7C86', fontSize: 6, letterSpacing: 0.35 },
-  equippedValue: { ...typography.caption, marginTop: 2, color: '#D3D9DD', fontSize: 8 },
-  categorySection: { gap: 8 },
-  sectionEyebrow: { ...typography.eyebrow, color: colors.volt, fontSize: 8, letterSpacing: 0.58 },
-  categoryRow: { flexDirection: 'row', gap: 6 },
-  categoryButton: { flex: 1, minWidth: 0, minHeight: 59, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: 12, borderWidth: 1, borderColor: '#26323B', backgroundColor: '#080D11' },
-  categoryButtonActive: { borderColor: '#82951B', backgroundColor: '#141C0D', boxShadow: '0 0 10px rgba(232,255,61,.08)' },
-  categoryGlyph: { color: '#76828C', fontSize: 15, lineHeight: 16 },
-  categoryGlyphActive: { color: colors.volt },
-  categoryLabel: { ...typography.label, maxWidth: '100%', color: '#7B8791', fontSize: 6.1, letterSpacing: 0.15 },
-  categoryLabelActive: { color: colors.volt },
-  productsHeader: { minHeight: 42, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 },
-  productsTitle: { marginTop: 2, color: '#F1F3F2', fontFamily: fonts.display, fontSize: 21, lineHeight: 22 },
-  productsCount: { color: '#3F4A53', fontFamily: fonts.display, fontSize: 28, lineHeight: 28 },
-  productTrack: { paddingRight: 24, gap: 10 },
-  productCard: { overflow: 'hidden', borderRadius: 15, borderWidth: 1, borderColor: '#28343D', backgroundColor: '#090E12' },
-  productCardSelected: { borderColor: colors.volt, boxShadow: '0 0 12px rgba(232,255,61,.16)' },
-  productVisual: { position: 'relative', overflow: 'hidden', height: 188, alignItems: 'center', justifyContent: 'center', backgroundColor: '#020405' },
-  productVisualBackdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, width: '100%', height: '100%', opacity: 0.35, transform: [{ scale: 1.14 }] },
-  productVisualShade: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(2,4,6,.34)' },
-  productVisualImage: { width: '100%', height: '100%' },
-  selectedMark: { position: 'absolute', top: 7, left: 7, minHeight: 21, paddingHorizontal: 7, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: colors.volt },
-  selectedMarkText: { ...typography.label, color: '#080A0B', fontSize: 6 },
-  productCopy: { minHeight: 63, padding: 10, justifyContent: 'space-between' },
-  productName: { color: '#EDF0EF', fontFamily: fonts.display, fontSize: 17, lineHeight: 18 },
-  stateEquipped: { ...typography.label, color: colors.volt, fontSize: 7.5 },
-  stateOwned: { ...typography.label, color: '#C1C9CF', fontSize: 7.5 },
-  stateMuted: { ...typography.label, color: '#69757F', fontSize: 7.5 },
-  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  priceText: { color: '#F1F4F3', fontFamily: fonts.display, fontSize: 14 },
-  selectionPanel: { padding: 11, borderRadius: 16, borderWidth: 1, borderColor: '#303D47', backgroundColor: '#0A0F13' },
-  selectionTop: { flexDirection: 'row', gap: 11 },
-  selectionThumb: { position: 'relative', overflow: 'hidden', width: 76, height: 92, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, borderColor: '#26323A', backgroundColor: '#030506' },
-  selectionThumbBackdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, width: '100%', height: '100%', opacity: 0.28 },
-  selectionThumbShade: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(2,4,6,.25)' },
-  selectionThumbImage: { width: '100%', height: '100%' },
-  selectionCopy: { flex: 1, minWidth: 0, justifyContent: 'center' },
-  selectionEyebrow: { ...typography.eyebrow, color: colors.volt, fontSize: 7 },
-  selectionName: { marginTop: 2, color: '#F3F5F4', fontFamily: fonts.display, fontSize: 21, lineHeight: 22 },
-  selectionDescription: { ...typography.caption, marginTop: 4, color: '#929DA6', fontSize: 9, lineHeight: 12 },
-  actions: { marginTop: 10, flexDirection: 'row', gap: 8 },
-  tryButton: { width: 96, minHeight: 43, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, borderColor: '#53616B', backgroundColor: '#0B1116' },
-  tryButtonText: { ...typography.action, color: '#D7DDE1', fontSize: 9 },
-  primaryButton: { flex: 1, minHeight: 43, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: colors.volt },
-  primaryButtonDisabled: { borderWidth: 1, borderColor: '#2B353D', backgroundColor: '#11171C' },
-  primaryButtonText: { ...typography.action, color: '#080A0B', fontSize: 10 },
-  primaryButtonTextDisabled: { color: '#707B84' },
-  insufficient: { ...typography.caption, marginTop: 7, color: '#F1A27A', fontSize: 8.5 },
-  syncNote: { ...typography.caption, marginTop: 7, color: '#74818A', fontSize: 8.5 },
-  message: { ...typography.caption, marginTop: 7, color: '#C9DA38', fontSize: 8.5 },
-  discovery: { gap: 8 },
-  discoveryCard: { minHeight: 62, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, borderWidth: 1, borderColor: '#28343D', backgroundColor: '#080D11' },
-  discoveryGlyph: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, borderColor: '#43501D', backgroundColor: '#11170B' },
-  discoveryGlyphText: { color: colors.volt, fontSize: 15 },
-  discoveryCopy: { flex: 1, minWidth: 0 },
-  discoveryTitle: { color: '#EDF0EF', fontFamily: fonts.display, fontSize: 16, lineHeight: 17 },
-  discoveryText: { ...typography.caption, marginTop: 2, color: '#6E7A84', fontSize: 8 },
-  discoverySoon: { ...typography.label, color: '#7F8A92', fontSize: 7 },
-  errorBanner: { minHeight: 54, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 12, borderWidth: 1, borderColor: '#6E3840', backgroundColor: '#1B0D11' },
-  errorCopy: { flex: 1, minWidth: 0 },
-  errorTitle: { ...typography.eyebrow, color: '#FF8995', fontSize: 7 },
-  errorText: { ...typography.caption, marginTop: 2, color: '#DCA4AA', fontSize: 8 },
-  retry: { ...typography.action, color: '#FF9AA3', fontSize: 8 },
-  emptyState: { minHeight: 110, padding: 16, alignItems: 'center', justifyContent: 'center', borderRadius: 15, borderWidth: 1, borderColor: '#28343D', backgroundColor: '#080D11' },
-  emptyTitle: { color: '#E8ECEB', fontFamily: fonts.display, fontSize: 17, textAlign: 'center' },
-  emptyText: { ...typography.caption, marginTop: 5, color: '#7C8892', textAlign: 'center' },
-  pressed: { opacity: 0.72 },
+  root: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollContent: {
+    alignItems: 'center',
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
+  },
+  scrollContentCompact: {
+    paddingTop: spacing.xs,
+  },
+  content: {
+    width: '100%',
+    maxWidth: layout.contentMaxWidth,
+    paddingHorizontal: spacing.md,
+    gap: spacing.md,
+  },
+  contentCompact: {
+    gap: spacing.sm,
+  },
+  header: {
+    minHeight: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  headerCompact: {
+    minHeight: 52,
+  },
+  backButton: {
+    width: layout.minTouchTarget,
+    height: layout.minTouchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surfaceLow,
+  },
+  backIcon: {
+    marginTop: -3,
+    color: colors.text,
+    fontSize: 31,
+    lineHeight: 31,
+  },
+  headerCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  headerEyebrow: {
+    ...typography.eyebrow,
+    color: colors.volt,
+  },
+  headerTitle: {
+    ...typography.displaySmall,
+    marginTop: 1,
+    color: colors.text,
+  },
+  balance: {
+    minWidth: 96,
+    minHeight: layout.minTouchTarget,
+    paddingHorizontal: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: `${colors.volt}52`,
+    backgroundColor: colors.surfaceLow,
+  },
+  balanceLabel: {
+    ...typography.metadata,
+    color: colors.textSecondary,
+  },
+  balanceValue: {
+    ...typography.metricSmall,
+    color: colors.text,
+  },
+  errorBanner: {
+    minHeight: 72,
+    padding: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: `${colors.danger}66`,
+    backgroundColor: `${colors.danger}12`,
+  },
+  errorCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  errorTitle: {
+    ...typography.control,
+    color: colors.danger,
+  },
+  errorText: {
+    ...typography.body,
+    marginTop: spacing.xs,
+    color: colors.textSecondary,
+  },
+  livePanel: {
+    position: 'relative',
+    overflow: 'hidden',
+    padding: spacing.sm,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surfaceRaised,
+  },
+  livePanelCompact: {
+    paddingTop: spacing.xs,
+  },
+  panelHeading: {
+    minHeight: layout.minTouchTarget,
+    marginBottom: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  panelCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  sectionEyebrow: {
+    ...typography.eyebrow,
+    color: colors.volt,
+  },
+  panelDescription: {
+    ...typography.metadata,
+    marginTop: 2,
+    color: colors.textSecondary,
+  },
+  sceneFrame: {
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius: radius.md,
+    backgroundColor: colors.background,
+  },
+  compactScene: {
+    aspectRatio: 2.3,
+  },
+  sceneLoading: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: 'rgba(4,7,9,.68)',
+  },
+  sceneLoadingText: {
+    ...typography.metadata,
+    color: colors.textSecondary,
+  },
+  trialStatus: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    minHeight: 28,
+    paddingHorizontal: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: `${colors.volt}8A`,
+    backgroundColor: 'rgba(9,13,7,.92)',
+  },
+  trialStatusText: {
+    ...typography.metadata,
+    color: colors.volt,
+  },
+  composer: {
+    gap: spacing.sm,
+  },
+  composerCompact: {
+    gap: spacing.xs,
+  },
+  composerHeading: {
+    minHeight: 46,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  composerHeadingCompact: {
+    minHeight: 38,
+  },
+  composerTitle: {
+    ...typography.sectionTitle,
+    marginTop: 2,
+    color: colors.text,
+  },
+  counter: {
+    ...typography.metricSmall,
+    color: colors.textMuted,
+  },
+  productTrack: {
+    paddingRight: spacing.xl,
+  },
+  productItem: {
+    marginRight: spacing.sm,
+  },
+  productCard: {
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    backgroundColor: colors.surfaceLow,
+  },
+  productCardSelected: {
+    borderColor: colors.volt,
+    backgroundColor: colors.surfaceRaised,
+  },
+  productAccent: {
+    height: 2,
+    opacity: 0.8,
+  },
+  productVisual: {
+    position: 'relative',
+    height: 150,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
+  },
+  selectedMark: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    backgroundColor: colors.volt,
+  },
+  selectedMarkText: {
+    ...typography.control,
+    color: colors.background,
+  },
+  selectedChoice: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    minWidth: 48,
+    height: 28,
+    paddingHorizontal: spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.volt,
+    backgroundColor: colors.surfaceRaised,
+  },
+  selectedChoiceText: {
+    ...typography.metadata,
+    color: colors.volt,
+  },
+  productCopy: {
+    minHeight: 112,
+    padding: spacing.sm,
+  },
+  productTopline: {
+    minHeight: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  rarity: {
+    ...typography.metadata,
+    fontFamily: fonts.bold,
+  },
+  statePreview: {
+    ...typography.metadata,
+    color: colors.info,
+  },
+  stateEquipped: {
+    ...typography.metadata,
+    color: colors.volt,
+  },
+  stateOwned: {
+    ...typography.metadata,
+    color: colors.textSecondary,
+  },
+  stateMuted: {
+    ...typography.metadata,
+    color: colors.textMuted,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  priceText: {
+    ...typography.metricSmall,
+    color: colors.text,
+  },
+  productName: {
+    ...typography.metricSmall,
+    marginTop: spacing.xs,
+    color: colors.text,
+  },
+  productDescription: {
+    ...typography.body,
+    marginTop: spacing.xs,
+    color: colors.textSecondary,
+  },
+  discoveryLine: {
+    minHeight: layout.minTouchTarget,
+    paddingTop: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSubtle,
+  },
+  discoveryLabel: {
+    ...typography.metadata,
+    color: colors.textMuted,
+  },
+  discoveryValue: {
+    ...typography.metadata,
+    flex: 1,
+    color: colors.textSecondary,
+    textAlign: 'right',
+  },
+  dockShell: {
+    borderTopWidth: 1,
+    borderTopColor: colors.borderStrong,
+    backgroundColor: colors.surfaceRaised,
+  },
+  actionDock: {
+    width: '100%',
+    maxWidth: layout.contentMaxWidth,
+    alignSelf: 'center',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
+    gap: spacing.sm,
+  },
+  actionHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  actionCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  actionEyebrow: {
+    ...typography.metadata,
+    color: colors.textSecondary,
+  },
+  actionName: {
+    ...typography.cardTitle,
+    marginTop: 1,
+    color: colors.text,
+  },
+  actionState: {
+    ...typography.metadata,
+    maxWidth: '42%',
+    color: colors.volt,
+    textAlign: 'right',
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  tryAction: {
+    width: 108,
+  },
+  primaryAction: {
+    flex: 1,
+    minWidth: 0,
+  },
+  activeConfiguration: {
+    minHeight: layout.controlHeight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: `${colors.volt}52`,
+    backgroundColor: `${colors.volt}0D`,
+  },
+  activeMark: {
+    ...typography.control,
+    color: colors.volt,
+  },
+  activeText: {
+    ...typography.control,
+    color: colors.volt,
+  },
+  activeCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  activeState: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  notice: {
+    minHeight: 20,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  noticeMark: {
+    width: 6,
+    height: 6,
+    marginTop: 6,
+    borderRadius: radius.pill,
+  },
+  noticeText: {
+    ...typography.body,
+    flex: 1,
+    color: colors.textSecondary,
+  },
+  noticeTextError: {
+    color: colors.danger,
+  },
+  pressed: {
+    opacity: 0.76,
+  },
 });

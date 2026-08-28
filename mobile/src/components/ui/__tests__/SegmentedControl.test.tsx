@@ -15,7 +15,7 @@ describe('SegmentedControl', () => {
         accessibilityLabel="Vue du Cercle"
         items={[
           { value: 'activity', label: 'ACTIVITÉ', badge: 120 },
-          { value: 'friends', label: 'TOUS LES AMIS' },
+          { value: 'friends', label: 'AMIS', accessibilityLabel: 'TOUS LES AMIS' },
         ]}
         onChange={onChange}
         value="activity"

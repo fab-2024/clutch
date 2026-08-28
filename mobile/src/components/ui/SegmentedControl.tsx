@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
 export type SegmentedControlItem<Value extends string> = {
+  accessibilityLabel?: string;
   badge?: number;
   label: string;
   value: Value;
@@ -34,7 +35,9 @@ export function SegmentedControl<Value extends string>({
         const selected = item.value === value;
         return (
           <Pressable
-            accessibilityLabel={item.badge ? `${item.label}, ${item.badge}` : item.label}
+            accessibilityLabel={item.badge
+              ? `${item.accessibilityLabel ?? item.label}, ${item.badge}`
+              : item.accessibilityLabel ?? item.label}
             accessibilityRole="tab"
             accessibilityState={{ selected }}
             aria-selected={selected}

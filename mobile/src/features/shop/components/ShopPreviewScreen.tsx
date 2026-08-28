@@ -1,8 +1,9 @@
-import { Redirect } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 
+import { previewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
 import { PREVIEW_PROFILE } from '@/src/features/profile/components/ProfilePreviewScreen';
 
-import { createAtelierPreviewItems } from '../atelierCatalog';
+import { atelierProductById, createAtelierPreviewItems } from '../atelierCatalog';
 import {
   COSMETIC_FAMILY_BY_SLOT,
   DEFAULT_MONETIZATION_CONTRACT,
@@ -92,6 +93,53 @@ function previewEquipped(items: CosmeticItem[], slot: CosmeticSlot): EquippedCos
 }
 
 export default function ShopPreviewScreen() {
-  if (!__DEV__) return <Redirect href="/" />;
-  return <ShopScreen previewData={PREVIEW_SHOP} previewProfile={PREVIEW_PROFILE} />;
+  const params = useLocalSearchParams<{
+    product?: string | string[];
+    state?: string | string[];
+  }>();
+  if (!previewRoutesEnabled) return <Redirect href="/" />;
+  const state = previewState(readParam(params.state));
+  const requestedProduct = atelierProductById(readParam(params.product));
+  const productId = requestedProduct?.id
+    ?? (state === 'purchase' || state === 'insufficient' || state === 'equip' ? 'material_steel' : undefined);
+  const data = previewDataForState(state);
+
+  return (
+    <ShopScreen
+      previewAtelierState={{
+        error: state === 'error' ? 'Connexion indisponible. La dernière configuration reste visible.' : null,
+        loading: state === 'loading',
+        productId,
+        purchaseOpen: state === 'purchase',
+      }}
+      previewData={data}
+      previewProfile={PREVIEW_PROFILE}
+    />
+  );
+}
+
+type ShopPreviewState = 'default' | 'equip' | 'error' | 'insufficient' | 'loading' | 'purchase';
+
+function previewState(value?: string): ShopPreviewState {
+  if (value === 'equip' || value === 'error' || value === 'insufficient' || value === 'loading' || value === 'purchase') {
+    return value;
+  }
+  return 'default';
+}
+
+function previewDataForState(state: ShopPreviewState): CosmeticShopData {
+  if (state === 'insufficient') return { ...PREVIEW_SHOP, balance: 60 };
+  if (state === 'equip') {
+    return {
+      ...PREVIEW_SHOP,
+      items: PREVIEW_SHOP.items.map((item) => item.id === 'material_steel'
+        ? { ...item, equipped: false, owned: true }
+        : item),
+    };
+  }
+  return PREVIEW_SHOP;
+}
+
+function readParam(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
 }
