@@ -51,7 +51,14 @@ export function StateView({
 
   return (
     <View
+      accessibilityLabel={variant === 'loading'
+        ? [title, description].filter(Boolean).join('. ')
+        : undefined}
       accessibilityLiveRegion={liveRegion}
+      accessibilityRole={variant === 'loading' ? 'progressbar' : undefined}
+      accessibilityState={variant === 'loading' ? { busy: true } : undefined}
+      aria-busy={variant === 'loading' ? true : undefined}
+      accessible={variant === 'loading'}
       style={[styles.root, compact && styles.compact]}
       testID={testID}
     >

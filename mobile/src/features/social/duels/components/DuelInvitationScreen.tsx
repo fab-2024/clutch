@@ -13,6 +13,7 @@ import {
 
 import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { Screen } from '@/src/components/layout/Screen';
+import { Button } from '@/src/components/ui/Button';
 import { publicAppUrl } from '@/src/config/release';
 import { colors, radius, spacing, typography } from '@/src/theme';
 
@@ -29,16 +30,19 @@ export default function DuelInvitationScreen() {
   const [busy, setBusy] = useState<'accept' | 'cancel' | 'share' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [failedAction, setFailedAction] = useState<'accept' | 'cancel' | 'load' | 'share' | null>(null);
 
   const load = useCallback(async (refresh = false) => {
     if (!token) {
       setError('Cette invitation est incomplète.');
+      setFailedAction(null);
       setLoading(false);
       return;
     }
     if (refresh) setRefreshing(true);
     else setLoading(true);
     setError(null);
+    setFailedAction(null);
     try {
       const invitation = await loadDuelInvitation(token);
       setDuel(invitation);
@@ -51,6 +55,7 @@ export default function DuelInvitationScreen() {
       setDuel(null);
       setResult(null);
       setError(errorMessage(caught, 'Impossible de charger cette invitation.'));
+      setFailedAction('load');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -77,25 +82,27 @@ export default function DuelInvitationScreen() {
 
   async function onAccept() {
     if (!duel || busy) return;
-    setBusy('accept'); setError(null); setMessage(null);
+    setBusy('accept'); setError(null); setFailedAction(null); setMessage(null);
     try {
       await acceptDuel(duel.token);
       setMessage('Duel accepté. Les deux camps sont verrouillés.');
       await load();
     } catch (caught) {
       setError(errorMessage(caught, 'Le duel n’a pas pu être accepté.'));
+      setFailedAction('accept');
     } finally { setBusy(null); }
   }
 
   async function onCancel() {
     if (!duel || busy) return;
-    setBusy('cancel'); setError(null); setMessage(null);
+    setBusy('cancel'); setError(null); setFailedAction(null); setMessage(null);
     try {
       await cancelDuel(duel.token);
       setMessage('Invitation annulée.');
       await load();
     } catch (caught) {
       setError(errorMessage(caught, 'Le duel n’a pas pu être annulé.'));
+      setFailedAction('cancel');
     } finally { setBusy(null); }
   }
 
@@ -103,9 +110,10 @@ export default function DuelInvitationScreen() {
     if (!duel || busy) return;
     if (!invitationUrl) {
       setError('Le domaine HTTPS public doit être configuré avant de partager cette invitation.');
+      setFailedAction(null);
       return;
     }
-    setBusy('share'); setError(null); setMessage(null);
+    setBusy('share'); setError(null); setFailedAction(null); setMessage(null);
     const shareText = `${duel.createur_pseudo} te défie sur ${duel.tag_a} vs ${duel.tag_b}. Rejoins le camp ${duel.tag_oppose} : ${invitationUrl}`;
     try {
       if (Platform.OS === 'web' && globalThis.navigator?.clipboard) {
@@ -115,14 +123,22 @@ export default function DuelInvitationScreen() {
         await Share.share({ message: shareText, url: invitationUrl });
         setMessage('Invitation prête à être partagée.');
       }
-    } catch {
-      setMessage(`Copie ce lien : ${invitationUrl}`);
+    } catch (caught) {
+      setError(errorMessage(caught, 'Le partage de l’invitation a échoué.'));
+      setFailedAction('share');
     } finally { setBusy(null); }
   }
 
   function openMatch() {
     if (!duel) return;
     router.push({ pathname: '/match/[id]', params: { id: duel.match_id, duel: duel.token } });
+  }
+
+  function retryFailedAction() {
+    if (failedAction === 'accept') void onAccept();
+    else if (failedAction === 'cancel') void onCancel();
+    else if (failedAction === 'share') void onShare();
+    else if (failedAction === 'load') void load();
   }
 
   return (
@@ -133,14 +149,29 @@ export default function DuelInvitationScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
       >
         <View style={styles.topBar}>
-          <Pressable accessibilityRole="button" onPress={() => router.replace('/(tabs)/social/duels')} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
+          <Pressable
+            accessibilityLabel="Retour aux défis"
+            accessibilityRole="button"
+            onPress={() => router.replace('/(tabs)/social/duels')}
+            style={({ pressed }) => [styles.back, pressed && styles.pressed]}
+          >
             <Text style={styles.backText}>← DÉFIS</Text>
           </Pressable>
           <GriffLockup width={92} />
         </View>
 
-        {loading ? <View style={styles.skeleton} /> : null}
-        {error ? <Notice tone="error" text={error} /> : null}
+        {loading ? (
+          <View
+            accessibilityLabel="Chargement de l’invitation au duel"
+            accessibilityLiveRegion="polite"
+            accessibilityRole="progressbar"
+            accessibilityState={{ busy: true }}
+            aria-busy
+            accessible
+            style={styles.skeleton}
+          />
+        ) : null}
+        {error ? <Notice onRetry={failedAction ? retryFailedAction : undefined} tone="error" text={error} /> : null}
         {message ? <Notice tone="success" text={message} /> : null}
 
         {duel ? (
@@ -220,8 +251,28 @@ function ActionPanel({ duel, canAccept, wrongCamp, busy, invitationUrl, onAccept
         <Text style={styles.actionEyebrow}>TON INVITATION EST OUVERTE</Text>
         <Text style={styles.actionTitle}>{duel.cible_pseudo ? `${duel.cible_pseudo} a reçu ton défi.` : `Envoie le camp ${duel.tag_oppose} à ton rival.`}</Text>
         <Text numberOfLines={1} style={styles.inviteUrl}>{invitationUrl}</Text>
-        <Pressable accessibilityRole="button" disabled={Boolean(busy)} onPress={onShare} style={({ pressed }) => [styles.primary, (pressed || busy) && styles.pressed]}><Text style={styles.primaryText}>{busy === 'share' ? 'PRÉPARATION…' : 'PARTAGER L’INVITATION'}</Text></Pressable>
-        <Pressable accessibilityRole="button" disabled={Boolean(busy)} onPress={onCancel} style={({ pressed }) => [styles.danger, (pressed || busy) && styles.pressed]}><Text style={styles.dangerText}>{busy === 'cancel' ? 'ANNULATION…' : 'ANNULER LE DUEL'}</Text></Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ busy: busy === 'share', disabled: Boolean(busy) }}
+          aria-busy={busy === 'share'}
+          aria-disabled={Boolean(busy)}
+          disabled={Boolean(busy)}
+          onPress={onShare}
+          style={({ pressed }) => [styles.primary, (pressed || busy) && styles.pressed]}
+        >
+          <Text style={styles.primaryText}>{busy === 'share' ? 'PRÉPARATION…' : 'PARTAGER L’INVITATION'}</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ busy: busy === 'cancel', disabled: Boolean(busy) }}
+          aria-busy={busy === 'cancel'}
+          aria-disabled={Boolean(busy)}
+          disabled={Boolean(busy)}
+          onPress={onCancel}
+          style={({ pressed }) => [styles.danger, (pressed || busy) && styles.pressed]}
+        >
+          <Text style={styles.dangerText}>{busy === 'cancel' ? 'ANNULATION…' : 'ANNULER LE DUEL'}</Text>
+        </Pressable>
       </View>
     );
   }
@@ -246,7 +297,17 @@ function ActionPanel({ duel, canAccept, wrongCamp, busy, invitationUrl, onAccept
       <Text style={styles.actionEyebrow}>CAMP OPPOSÉ VALIDÉ</Text>
       <Text style={styles.actionTitle}>Tu représentes {duel.tag_oppose}.</Text>
       <Text style={styles.actionCopy}>Une fois accepté, le face-à-face restera verrouillé jusqu’au verdict.</Text>
-      <Pressable accessibilityRole="button" disabled={!canAccept || Boolean(busy)} onPress={onAccept} style={({ pressed }) => [styles.primary, (!canAccept || busy) && styles.disabled, pressed && styles.pressed]}><Text style={styles.primaryText}>{busy === 'accept' ? 'VERROUILLAGE…' : 'ACCEPTER LE DUEL'}</Text></Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ busy: busy === 'accept', disabled: !canAccept || Boolean(busy) }}
+        aria-busy={busy === 'accept'}
+        aria-disabled={!canAccept || Boolean(busy)}
+        disabled={!canAccept || Boolean(busy)}
+        onPress={onAccept}
+        style={({ pressed }) => [styles.primary, (!canAccept || busy) && styles.disabled, pressed && styles.pressed]}
+      >
+        <Text style={styles.primaryText}>{busy === 'accept' ? 'VERROUILLAGE…' : 'ACCEPTER LE DUEL'}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -260,7 +321,22 @@ function Status({ status }: { status: DuelStatus }) {
   return <View style={[styles.status, active && styles.statusActive]}><View style={[styles.statusDot, active && styles.statusDotActive]} /><Text style={[styles.statusText, active && styles.statusTextActive]}>{labels[status]}</Text></View>;
 }
 function ClosedPanel({ title, copy }: { title: string; copy: string }) { return <View style={styles.closedPanel}><Text style={styles.closedTitle}>{title}</Text><Text style={styles.closedCopy}>{copy}</Text></View>; }
-function Notice({ tone, text }: { tone: 'error' | 'success'; text: string }) { return <View style={[styles.notice, tone === 'success' && styles.noticeSuccess]}><Text style={[styles.noticeText, tone === 'success' && styles.noticeSuccessText]}>{text}</Text></View>; }
+function Notice({ onRetry, tone, text }: { onRetry?: () => void; tone: 'error' | 'success'; text: string }) {
+  return (
+    <View
+      accessibilityLiveRegion={tone === 'error' ? 'assertive' : 'polite'}
+      style={[styles.notice, tone === 'success' && styles.noticeSuccess]}
+    >
+      <Text
+        accessibilityRole={tone === 'error' ? 'alert' : 'summary'}
+        style={[styles.noticeText, tone === 'success' && styles.noticeSuccessText]}
+      >
+        {text}
+      </Text>
+      {onRetry ? <Button label="RÉESSAYER" onPress={onRetry} size="compact" variant="secondary" /> : null}
+    </View>
+  );
+}
 function choiceTag(duel: DuelInvitation, choice: 'a' | 'b') { return choice === 'a' ? duel.tag_a : duel.tag_b; }
 function gameLabel(value: string) { const game = value.toLowerCase(); if (game.includes('lol')) return 'LOL'; if (game.includes('valorant')) return 'VAL'; if (game.includes('cs')) return 'CS2'; return 'ESPORT'; }
 function formatDate(value: string) { return new Date(value).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
@@ -268,16 +344,16 @@ function errorMessage(caught: unknown, fallback: string) { return caught instanc
 
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: 430, alignSelf: 'center', padding: spacing.md, paddingBottom: 110, gap: 16 },
-  topBar: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, back: { minHeight: 40, justifyContent: 'center', paddingRight: 14 }, backText: { ...typography.action, color: colors.textMuted, letterSpacing: .5 }, brand: { ...typography.bodyStrong, color: colors.volt, fontSize: 15, letterSpacing: 1.4 },
+  topBar: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, back: { minHeight: 44, justifyContent: 'center', paddingRight: 14 }, backText: { ...typography.control, color: colors.textMuted, letterSpacing: .5 }, brand: { ...typography.bodyStrong, color: colors.volt, fontSize: 15, letterSpacing: 1.4 },
   skeleton: { height: 340, borderRadius: 30, backgroundColor: '#10161D' },
-  notice: { padding: 13, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' }, noticeSuccess: { backgroundColor: '#0D1A13', borderColor: '#214C32' }, noticeText: { ...typography.body, color: '#FF9AA2' }, noticeSuccessText: { color: colors.success },
+  notice: { gap: spacing.sm, padding: 13, borderRadius: radius.md, backgroundColor: colors.liveSurface, borderWidth: 1, borderColor: colors.liveBorder }, noticeSuccess: { backgroundColor: '#0D1A13', borderColor: '#214C32' }, noticeText: { ...typography.bodyComfort, color: colors.liveText }, noticeSuccessText: { color: colors.success },
   hero: { position: 'relative', overflow: 'hidden', minHeight: 372, padding: 19, borderRadius: 30, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#303A44' }, blueGlow: { position: 'absolute', left: -80, bottom: -65, width: 280, height: 280, borderRadius: 140, backgroundColor: '#123A67', opacity: 0.55 }, redGlow: { position: 'absolute', right: -80, bottom: -65, width: 280, height: 280, borderRadius: 140, backgroundColor: '#5B173C', opacity: 0.5 },
   heroTop: { zIndex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }, meta: { ...typography.label, flex: 1, color: colors.textMuted, letterSpacing: .35 }, kicker: { ...typography.eyebrow, zIndex: 2, marginTop: 31, color: colors.textMuted, letterSpacing: 1.4, textAlign: 'center' },
   marketPill: { zIndex: 2, alignSelf: 'flex-start', minHeight: 28, marginTop: 13, paddingHorizontal: 9, flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 14, backgroundColor: '#17200F', borderWidth: 1, borderColor: '#44511E' }, marketDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.volt }, marketText: { ...typography.label, color: colors.volt, letterSpacing: .35 },
   faceoff: { zIndex: 2, marginTop: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, fighter: { width: '38%', alignItems: 'flex-start' }, fighterRight: { alignItems: 'flex-end' }, fighterMark: { width: 78, height: 78, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: '#101C27', borderWidth: 1, borderColor: '#315B7A' }, fighterMarkRight: { backgroundColor: '#23121D', borderColor: '#78345A' }, fighterTag: { ...typography.metricSmall, color: colors.text }, fighterName: { ...typography.cardTitle, width: '100%', marginTop: 10, color: colors.text }, fighterRole: { ...typography.eyebrow, marginTop: 3, color: colors.textMuted, letterSpacing: .4 },
   vsBlock: { width: 54, alignItems: 'center' }, vs: { ...typography.metricLarge, color: colors.text, fontSize: 39, lineHeight: 42 }, vsLine: { width: 26, height: 3, marginTop: 6, backgroundColor: colors.volt }, date: { ...typography.caption, zIndex: 2, marginTop: 28, color: colors.textMuted, textAlign: 'center' }, matchScore: { ...typography.cardTitle, zIndex: 2, marginTop: 13, color: colors.text, textAlign: 'center' },
-  status: { minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 9, borderRadius: 999, backgroundColor: '#11161C', borderWidth: 1, borderColor: '#242D35' }, statusActive: { backgroundColor: '#171E0E', borderColor: '#3D491D' }, statusDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#596570' }, statusDotActive: { backgroundColor: colors.volt }, statusText: { ...typography.label, color: colors.textMuted, letterSpacing: .2 }, statusTextActive: { color: colors.volt },
-  actionPanel: { padding: 18, borderRadius: 26, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#313A43', gap: 11 }, actionEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .9 }, actionTitle: { ...typography.sectionTitle, color: colors.text }, actionCopy: { ...typography.body, color: colors.textMuted }, inviteUrl: { ...typography.caption, padding: 11, borderRadius: 12, backgroundColor: '#070B0F', color: colors.textMuted }, primary: { minHeight: 50, alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: colors.volt }, primaryText: { ...typography.action, color: '#080A0C', letterSpacing: .4 }, danger: { minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#181014', borderWidth: 1, borderColor: '#47252D' }, dangerText: { ...typography.action, color: '#FF9AA2', letterSpacing: .3 },
+  status: { minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 9, borderRadius: 999, backgroundColor: '#11161C', borderWidth: 1, borderColor: '#242D35' }, statusActive: { backgroundColor: '#171E0E', borderColor: '#3D491D' }, statusDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.textMuted }, statusDotActive: { backgroundColor: colors.volt }, statusText: { ...typography.metadata, color: colors.textMuted, letterSpacing: .2 }, statusTextActive: { color: colors.volt },
+  actionPanel: { padding: 18, borderRadius: 26, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#313A43', gap: 11 }, actionEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .9 }, actionTitle: { ...typography.sectionTitle, color: colors.text }, actionCopy: { ...typography.body, color: colors.textMuted }, inviteUrl: { ...typography.metadata, padding: 11, borderRadius: 12, backgroundColor: '#070B0F', color: colors.textMuted }, primary: { minHeight: 50, alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: colors.volt }, primaryText: { ...typography.control, color: '#080A0C', letterSpacing: .4 }, danger: { minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#181014', borderWidth: 1, borderColor: '#47252D' }, dangerText: { ...typography.control, color: colors.liveText, letterSpacing: .3 },
   closedPanel: { padding: 19, borderRadius: 25, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, gap: 7 }, closedTitle: { ...typography.cardTitle, color: colors.text }, closedCopy: { ...typography.body, color: colors.textMuted },
   resultCard: { padding: 19, borderRadius: 26, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#414D1E', alignItems: 'center' }, resultEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1 }, resultTitle: { ...typography.sectionTitle, marginTop: 9, color: colors.text, textAlign: 'center' }, resultScore: { ...typography.metricLarge, marginTop: 12, color: colors.volt }, resultMeta: { ...typography.caption, marginTop: 3, color: colors.textMuted },
   rules: { padding: 18, borderRadius: 24, backgroundColor: '#090E13', borderWidth: 1, borderColor: colors.border }, rulesEyebrow: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .8 }, rulesTitle: { ...typography.cardTitle, marginTop: 7, color: colors.text }, rulesCopy: { ...typography.body, marginTop: 7, color: colors.textMuted },

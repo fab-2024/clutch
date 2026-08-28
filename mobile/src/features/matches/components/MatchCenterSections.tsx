@@ -69,7 +69,12 @@ export function PredictionZone({
         <Text style={styles.marketCopy}>Sélectionne une équipe pour afficher exactement ce que ton call peut te faire gagner ou perdre.</Text>
       )}
 
-      <View style={styles.lockCountdown}>
+      <View
+        accessibilityLabel={`Verrouillage dans ${lockCountdown}`}
+        accessibilityRole="timer"
+        accessible
+        style={styles.lockCountdown}
+      >
         <Lock color={colors.textMuted} size={14} strokeWidth={1.8} />
         <Text style={styles.lockCountdownLabel}>VERROUILLAGE DANS</Text>
         <Text style={styles.lockCountdownValue}>{lockCountdown}</Text>
@@ -101,6 +106,7 @@ function ChoiceCard({
       accessibilityHint={`Camp ${choice.toUpperCase()}`}
       accessibilityRole="button"
       accessibilityState={{ selected }}
+      aria-selected={selected}
       onBlur={() => setFocused(false)}
       onFocus={() => setFocused(true)}
       onPress={onPress}
@@ -208,11 +214,17 @@ export function LockedPrediction({ data }: { data: MatchCenterData }) {
 
       <View style={styles.lockedActions}>
         {settled ? (
-          <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/result/[id]', params: { id: match.id } })} style={({ pressed }) => [styles.lockedPrimaryAction, pressed && styles.confirmPressed]}>
+          <Pressable
+            accessibilityLabel="Revoir le verdict du call"
+            accessibilityRole="button"
+            onPress={() => router.push({ pathname: '/result/[id]', params: { id: match.id } })}
+            style={({ pressed }) => [styles.lockedPrimaryAction, pressed && styles.confirmPressed]}
+          >
             <Text style={styles.lockedPrimaryText}>REVOIR LE VERDICT</Text>
           </Pressable>
         ) : null}
         <Pressable
+          accessibilityLabel={settled ? 'Choisir un prochain call' : 'Suivre ce call dans mes calls'}
           accessibilityRole="button"
           onPress={() => router.push({ pathname: '/(tabs)/matches', params: { view: 'calls' } })}
           style={({ pressed }) => [settled ? styles.lockedSecondaryAction : styles.lockedPrimaryAction, pressed && styles.confirmPressed]}
@@ -395,7 +407,15 @@ export function RiskCell({ label, value, positive = false }: { label: string; va
 
 export function LoadingCard() {
   return (
-    <View style={styles.loadingCard}>
+    <View
+      accessibilityLabel="Chargement du Match Center"
+      accessibilityLiveRegion="polite"
+      accessibilityRole="progressbar"
+      accessibilityState={{ busy: true }}
+      aria-busy
+      accessible
+      style={styles.loadingCard}
+    >
       <View style={styles.loadingLineWide} />
       <View style={styles.loadingLine} />
       <View style={styles.loadingDuel}>

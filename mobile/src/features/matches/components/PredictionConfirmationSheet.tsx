@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   teamEyebrow: {
-    ...typography.eyebrow,
+    ...typography.metadata,
     color: colors.textSecondary,
   },
   teamName: {
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.borderSubtle,
   },
   riskLabel: {
-    ...typography.eyebrow,
+    ...typography.metadata,
     color: colors.textSecondary,
     textAlign: 'center',
   },
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     borderColor: `${colors.danger}66`,
   },
   errorTitle: {
-    ...typography.eyebrow,
+    ...typography.control,
     color: colors.danger,
   },
   errorCopy: {

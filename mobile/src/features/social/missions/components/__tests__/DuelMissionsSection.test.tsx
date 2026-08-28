@@ -24,6 +24,21 @@ jest.mock('react-native-reanimated', () => {
 });
 
 describe('DuelMissionsSection', () => {
+  it('announces its loading skeleton as busy', async () => {
+    const screen = await render(
+      <DuelMissionsSection
+        data={EMPTY_FRIEND_MISSIONS_FIXTURE}
+        error={null}
+        loading
+        onOpen={jest.fn()}
+        onRetry={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('progressbar').props.accessibilityState).toEqual({ busy: true });
+    expect(screen.getByLabelText('Chargement de la mission contextuelle')).toBeTruthy();
+  });
+
   it('shows one contextual mission and opens the complete mission surface', async () => {
     const onOpen = jest.fn();
     const screen = await render(

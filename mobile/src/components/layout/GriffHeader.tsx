@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { GriffLockup, GriffMark } from '@/src/components/brand/GriffLogo';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
@@ -14,13 +14,15 @@ type Props = {
 };
 
 export function GriffHeader({ compact = false, economy, variant = 'default' }: Props = {}) {
+  const { width } = useWindowDimensions();
   const { frags, volts } = useEconomy();
   const displayedFrags = economy?.frags ?? frags;
   const displayedVolts = economy?.volts ?? volts;
   const social = variant === 'social';
+  const narrowSocial = social && width < 360;
 
   return (
-    <View style={[styles.root, social && styles.rootSocial, social && compact && styles.rootSocialCompact]}>
+    <View style={[styles.root, social && styles.rootSocial, social && compact && styles.rootSocialCompact, narrowSocial && styles.rootSocialNarrow]}>
       {social ? (
         <LinearGradient
           colors={['rgba(8,18,25,.92)', 'rgba(5,10,14,.72)', 'rgba(2,5,8,0)']}
@@ -41,8 +43,8 @@ export function GriffHeader({ compact = false, economy, variant = 'default' }: P
           >
             <GriffMark size={compact ? 32 : 35} style={[styles.socialMarkImage, compact && styles.socialMarkImageCompact]} />
           </LinearGradient>
-          <Text style={[styles.socialWord, compact && styles.socialWordCompact]}>GRIFF</Text>
-          <View style={[styles.socialDot, compact && styles.socialDotCompact]} />
+          {narrowSocial ? null : <Text style={[styles.socialWord, compact && styles.socialWordCompact]}>GRIFF</Text>}
+          {narrowSocial ? null : <View style={[styles.socialDot, compact && styles.socialDotCompact]} />}
         </View>
       ) : (
         <View style={styles.brandRow}>
@@ -54,7 +56,7 @@ export function GriffHeader({ compact = false, economy, variant = 'default' }: P
         accessible
         accessibilityLabel={`${formatBalance(displayedFrags)} Frags, ${formatBalance(displayedVolts)} Volts`}
         accessibilityRole="summary"
-        style={[styles.wallet, social && styles.walletSocial, social && compact && styles.walletSocialCompact]}
+        style={[styles.wallet, social && styles.walletSocial, social && compact && styles.walletSocialCompact, narrowSocial && styles.walletSocialNarrow]}
       >
         {social ? (
           <LinearGradient
@@ -135,6 +137,10 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     paddingLeft: 14,
   },
+  rootSocialNarrow: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
   socialAtmosphere: {
     position: 'absolute',
     top: 0,
@@ -212,6 +218,7 @@ const styles = StyleSheet.create({
     boxShadow: '0 5px 20px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,217,183,.12)',
   },
   walletSocialCompact: { width: 170, minHeight: 52, borderRadius: 19 },
+  walletSocialNarrow: { flexShrink: 0 },
   walletSurface: {
     position: 'absolute',
     top: 0,
@@ -269,10 +276,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   balanceLabelCompact: {
+    ...typography.metadata,
     color: '#858A93',
     fontFamily: fonts.bold,
-    fontSize: 8,
-    lineHeight: 9,
     letterSpacing: 0.8,
   },
   balanceValue: {

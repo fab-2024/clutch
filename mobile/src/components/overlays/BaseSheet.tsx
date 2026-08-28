@@ -155,6 +155,7 @@ export function BaseSheet({
               accessibilityLabel={`Fermer ${title}`}
               accessibilityRole="button"
               accessibilityState={{ disabled: !dismissible }}
+              aria-disabled={!dismissible}
               disabled={!dismissible}
               onPress={requestClose}
               style={({ pressed }) => [

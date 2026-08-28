@@ -32,7 +32,16 @@ export const DuelMissionsSection = forwardRef<View, DuelMissionsSectionProps>(
 
     if (loading) {
       return (
-        <View style={styles.section} testID="duel-missions-loading">
+        <View
+          accessibilityLabel="Chargement de la mission contextuelle"
+          accessibilityLiveRegion="polite"
+          accessibilityRole="progressbar"
+          accessibilityState={{ busy: true }}
+          aria-busy
+          accessible
+          style={styles.section}
+          testID="duel-missions-loading"
+        >
           <SectionHeading count={null} />
           <Surface border="subtle" layout={{ minHeight: 132, width: '100%' }} radius="lg" tone="low">
             <View style={styles.skeletonTitle} />

@@ -225,6 +225,15 @@ describe('MatchCenterScreen prediction confirmation', () => {
     expect(screen.getByTestId('prediction-review-trigger')).toBeTruthy();
   });
 
+  it('provides a recoverable empty state for an incomplete match link', async () => {
+    const replace = jest.requireMock('expo-router').router.replace as jest.Mock;
+    const screen = await render(<MatchCenterScreen />);
+
+    expect(screen.getByText('Match introuvable')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'RETOUR AUX MATCHS' }));
+    expect(replace).toHaveBeenCalledWith('/(tabs)/matches');
+  });
+
   it('locks the selected team once and closes after success', async () => {
     const screen = await renderOpenMatch();
 

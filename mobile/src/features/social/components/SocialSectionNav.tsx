@@ -47,15 +47,16 @@ export default function SocialSectionNav({
 
   return (
     <View style={styles.outer}>
-      <View style={[styles.rail, refined && styles.railRefined]}>
+      <View accessibilityRole="tablist" style={[styles.rail, refined && styles.railRefined]} testID="social-primary-tablist">
         {SECTIONS.map((item) => {
           const selected = active === item.key;
           const Icon = item.icon;
           return (
             <Pressable
               accessibilityLabel={`Ouvrir ${item.label.toLowerCase()}`}
-              accessibilityRole="button"
+              accessibilityRole="tab"
               accessibilityState={{ selected }}
+              aria-selected={selected}
               key={item.key}
               onPress={() => router.replace(item.href as never)}
               style={({ pressed }) => [
@@ -74,14 +75,15 @@ export default function SocialSectionNav({
       </View>
 
       {subsections.length ? (
-        <View style={styles.subRail}>
+        <View accessibilityRole="tablist" style={styles.subRail} testID="social-secondary-tablist">
           {subsections.map((item) => {
             const selected = activeSubsection === item.key;
             return (
               <Pressable
                 accessibilityLabel={`Ouvrir ${item.label.toLowerCase()}`}
-                accessibilityRole="button"
+                accessibilityRole="tab"
                 accessibilityState={{ selected }}
+                aria-selected={selected}
                 key={item.key}
                 onPress={() => router.replace(item.href as never)}
                 style={({ pressed }) => [styles.subItem, selected && styles.subItemActive, pressed && styles.pressed]}
@@ -119,7 +121,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   rail: {
-    minHeight: 48,
+    minHeight: 52,
     padding: 4,
     borderRadius: 17,
     flexDirection: 'row',
@@ -133,7 +135,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     flex: 1,
     minWidth: 0,
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: 10,
     borderRadius: 13,
     flexDirection: 'row',
@@ -143,7 +145,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   itemRefined: {
-    minHeight: 40,
+    minHeight: 44,
     borderRadius: 13,
   },
   itemActive: {
@@ -153,15 +155,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(232,255,61,.08)',
   },
   label: {
-    ...typography.label,
+    ...typography.control,
     color: '#7F8A95',
-    fontSize: 11,
-    lineHeight: 14,
     letterSpacing: .15,
   },
   labelActive: { color: colors.volt },
   subRail: {
-    minHeight: 44,
+    minHeight: 52,
     marginTop: 7,
     padding: 4,
     borderRadius: 15,
@@ -173,13 +173,13 @@ const styles = StyleSheet.create({
   },
   subItem: {
     flex: 1,
-    minHeight: 36,
+    minHeight: 44,
     borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
   },
   subItemActive: { backgroundColor: '#181F11' },
-  subLabel: { ...typography.label, color: colors.textMuted, letterSpacing: .35 },
+  subLabel: { ...typography.control, color: colors.textMuted, letterSpacing: .35 },
   subLabelActive: { color: colors.volt },
   pressed: { opacity: .72 },
 });

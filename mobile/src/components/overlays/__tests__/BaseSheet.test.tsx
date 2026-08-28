@@ -39,6 +39,7 @@ describe('BaseSheet', () => {
     );
 
     expect(screen.getByTestId('sheet').props.accessibilityViewIsModal).toBe(true);
+    expect(StyleSheet.flatten(screen.getByTestId('sheet').props.style).transform).toEqual([{ translateY: 0 }]);
     expect(screen.getByRole('header')).toHaveTextContent('Confirmer');
     fireEvent.press(screen.getByRole('button', { name: 'Fermer Confirmer' }));
     expect(onClose).toHaveBeenCalledTimes(1);

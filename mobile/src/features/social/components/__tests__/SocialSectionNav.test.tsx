@@ -1,6 +1,9 @@
 /// <reference types="jest" />
 
 import { render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
+
+import { layout } from '@/src/theme';
 
 import SocialSectionNav from '../SocialSectionNav';
 
@@ -15,11 +18,29 @@ jest.mock('lucide-react-native/icons/swords', () => ({ __esModule: true, default
 jest.mock('lucide-react-native/icons/users-round', () => ({ __esModule: true, default: 'UsersRound' }));
 
 describe('SocialSectionNav', () => {
+  beforeEach(() => {
+    mockPathname = '/social/duels';
+  });
+
   it.each(['/social/duels', '/social/missions'])('keeps Défis selected on %s without a redundant Duels rail', async (pathname) => {
     mockPathname = pathname;
     const screen = await render(<SocialSectionNav />);
 
-    expect(screen.getByRole('button', { name: 'Ouvrir défis' }).props.accessibilityState).toEqual({ selected: true });
-    expect(screen.queryByRole('button', { name: 'Ouvrir duels' })).toBeNull();
+    expect(screen.getByRole('tab', { name: 'Ouvrir défis' }).props.accessibilityState).toEqual({ selected: true });
+    expect(screen.queryByRole('tab', { name: 'Ouvrir duels' })).toBeNull();
+  });
+
+  it('exposes both navigation levels as tablists with 44 point targets', async () => {
+    mockPathname = '/social/leagues';
+    const screen = await render(<SocialSectionNav />);
+
+    expect(screen.getByTestId('social-primary-tablist').props.accessibilityRole).toBe('tablist');
+    expect(screen.getByTestId('social-secondary-tablist').props.accessibilityRole).toBe('tablist');
+    expect(screen.getByRole('tab', { name: 'Ouvrir cercle' }).props.accessibilityState).toEqual({ selected: true });
+    expect(screen.getByRole('tab', { name: 'Ouvrir ligue' }).props.accessibilityState).toEqual({ selected: true });
+
+    for (const tab of screen.getAllByRole('tab')) {
+      expect(StyleSheet.flatten(tab.props.style).minHeight).toBeGreaterThanOrEqual(layout.minTouchTarget);
+    }
   });
 });

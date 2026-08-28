@@ -45,6 +45,7 @@ describe('StateView', () => {
     const screen = await render(<StateView testID="state" title="Chargement" variant="loading" />);
 
     expect(screen.getByTestId('state').props.accessibilityLiveRegion).toBe('polite');
+    expect(screen.getByRole('progressbar').props.accessibilityState).toEqual({ busy: true });
     expect(screen.getByText('Chargement')).toBeTruthy();
   });
 });

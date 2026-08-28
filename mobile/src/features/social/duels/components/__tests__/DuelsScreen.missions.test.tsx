@@ -112,6 +112,9 @@ describe('DuelsScreen missions integration', () => {
       <DuelsScreen previewData={{ duels: [DUEL_FIXTURE], missions: FRIEND_MISSIONS_FIXTURE }} />,
     );
 
+    const invitationButtonBeforeInput = screen.getByRole('button', { name: 'OUVRIR L’INVITATION' });
+    expect(invitationButtonBeforeInput.props.accessibilityState).toEqual({ disabled: true });
+
     await act(async () => {
       fireEvent.changeText(
         screen.getByLabelText('Code ou lien d’invitation au duel'),
@@ -120,6 +123,7 @@ describe('DuelsScreen missions integration', () => {
     });
     const invitationButton = screen.getByRole('button', { name: 'OUVRIR L’INVITATION' });
     expect(invitationButton.props.disabled).not.toBe(true);
+    expect(invitationButton.props.accessibilityState).toEqual({ disabled: false });
     await act(async () => {
       fireEvent.press(invitationButton);
     });
@@ -129,4 +133,19 @@ describe('DuelsScreen missions integration', () => {
       params: { token: 'a4d5e6f789ab1234' },
     });
   }, 10_000);
+
+  it('announces a duel loading failure and exposes an explicit retry', async () => {
+    loadDuelRows.mockRejectedValue(new Error('Réseau indisponible'));
+    const screen = await render(<DuelsScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Défis indisponibles');
+    });
+    expect(screen.getByText('Réseau indisponible')).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole('button', { name: 'RÉESSAYER' }));
+    });
+    await waitFor(() => expect(loadDuelRows).toHaveBeenCalledTimes(2));
+  });
 });

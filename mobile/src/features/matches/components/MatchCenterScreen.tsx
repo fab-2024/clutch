@@ -224,6 +224,16 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
           />
         ) : null}
 
+        {!loading && !error && !match ? (
+          <StateView
+            action={{ label: 'RETOUR AUX MATCHS', onPress: () => router.replace('/(tabs)/matches') }}
+            compact
+            description="Ce match n’est plus disponible ou le lien est incomplet."
+            title="Match introuvable"
+            variant="empty"
+          />
+        ) : null}
+
         {match ? (
           <>
             {predictionPickerOpen ? (
@@ -295,7 +305,15 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
                   <Text style={styles.duelActionTitle}>Ton camp est verrouillé.</Text>
                   <Text style={styles.duelActionText}>Retourne au face-à-face pour rejoindre le rival.</Text>
                 </View>
-                <Pressable accessibilityRole="button" onPress={returnToArena} style={({ pressed }) => [styles.duelActionButton, pressed && styles.confirmPressed]}><Text style={styles.duelActionButtonText}>REJOINDRE LE DUEL →</Text></Pressable>
+                <Pressable
+                  accessibilityHint="Revient au face-à-face associé à ce call"
+                  accessibilityLabel="Rejoindre le duel"
+                  accessibilityRole="button"
+                  onPress={returnToArena}
+                  style={({ pressed }) => [styles.duelActionButton, pressed && styles.confirmPressed]}
+                >
+                  <Text style={styles.duelActionButtonText}>REJOINDRE LE DUEL →</Text>
+                </Pressable>
               </View>
             ) : prediction && open && prediction.statut === 'en_cours' ? (
               <View style={styles.duelAction}>
@@ -304,18 +322,41 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
                   <Text style={styles.duelActionTitle}>{duelRivalId ? `Défie ${duelRivalPseudo || 'ton rival'} sur ce call.` : 'Quelqu’un assume le camp opposé ?'}</Text>
                   <Text style={styles.duelActionText}>{duelRivalId ? 'L’invitation apparaîtra dans son Cercle et déclenchera une alerte s’il l’a autorisée.' : 'Crée une invitation liée à ce vrai pronostic et partage-la à ton rival.'}</Text>
                 </View>
-                {duelError ? <Text style={styles.duelActionError}>{duelError}</Text> : null}
-                <Pressable accessibilityRole="button" disabled={duelBusy} onPress={() => void launchDuel()} style={({ pressed }) => [styles.duelActionButton, (pressed || duelBusy) && styles.confirmPressed]}><Text style={styles.duelActionButtonText}>{duelBusy ? 'CRÉATION…' : duelRivalId ? `DÉFIER ${(duelRivalPseudo || 'CE RIVAL').toUpperCase()} →` : 'DÉFIER UN RIVAL →'}</Text></Pressable>
+                {duelError ? (
+                  <View accessibilityLiveRegion="assertive" accessibilityRole="alert">
+                    <Text style={styles.duelActionError}>{duelError}</Text>
+                  </View>
+                ) : null}
+                <Pressable
+                  accessibilityHint={duelError ? 'Réessaie de créer cette invitation de duel' : 'Crée une invitation liée à ce match'}
+                  accessibilityLabel={duelError ? 'Réessayer de créer le duel' : duelRivalId ? `Défier ${duelRivalPseudo || 'ce rival'}` : 'Défier un rival'}
+                  accessibilityRole="button"
+                  accessibilityState={{ busy: duelBusy, disabled: duelBusy }}
+                  aria-busy={duelBusy}
+                  aria-disabled={duelBusy}
+                  disabled={duelBusy}
+                  onPress={() => void launchDuel()}
+                  style={({ pressed }) => [styles.duelActionButton, (pressed || duelBusy) && styles.confirmPressed]}
+                >
+                  <Text style={styles.duelActionButtonText}>
+                    {duelBusy ? 'CRÉATION…' : duelError ? 'RÉESSAYER →' : duelRivalId ? `DÉFIER ${(duelRivalPseudo || 'CE RIVAL').toUpperCase()} →` : 'DÉFIER UN RIVAL →'}
+                  </Text>
+                </Pressable>
               </View>
             ) : null}
 
             {selectedChoice && !prediction ? (
               <View style={styles.ticket}>
-                {submitError ? <View style={styles.submitError}><Text style={styles.submitErrorTitle}>PRONOSTIC NON ENREGISTRÉ</Text><Text style={styles.submitErrorCopy}>{submitError}</Text></View> : null}
+                {submitError ? (
+                  <View accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.submitError}>
+                    <Text style={styles.submitErrorTitle}>PRONOSTIC NON ENREGISTRÉ</Text>
+                    <Text style={styles.submitErrorCopy}>{submitError}</Text>
+                  </View>
+                ) : null}
                 <Button
                   accessibilityHint="Ouvre le récapitulatif avant le verrouillage définitif"
                   fullWidth
-                  label="VERROUILLER MON CALL"
+                  label={submitError ? 'RÉESSAYER LE VERROUILLAGE' : 'VERROUILLER MON CALL'}
                   onPress={reviewPrediction}
                   ref={confirmationTriggerRef}
                   testID="prediction-review-trigger"
