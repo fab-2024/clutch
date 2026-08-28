@@ -150,7 +150,9 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             levelFrameVariant={levelFrameEquipment.variant}
             onModify={() => router.push('/settings/profile')}
             onOpenActivations={() => router.push((previewData ? '/campaign-preview' : '/campaign/nova-week') as never)}
+            onOpenFaction={() => router.push('/(tabs)/social/faction')}
             onOpenLocker={() => router.push({ pathname: previewData ? '/shop-preview' : '/shop', params: { scope: 'owned' } } as never)}
+            onOpenRank={() => router.push('/(tabs)/rank')}
             onOpenShop={() => router.push({ pathname: previewData ? '/shop-preview' : '/shop', params: { scope: 'catalog' } } as never)}
             onOpenShowcase={() => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
             onOpenVisitor={() => router.push({ pathname: '/u/[pseudo]', params: { pseudo: data?.pseudo || pseudo } })}

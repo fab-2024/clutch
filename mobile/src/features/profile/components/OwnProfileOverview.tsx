@@ -1,12 +1,8 @@
-import { StyleSheet, View } from 'react-native';
-
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 import type { LevelFrameVariant } from '@/src/features/profile/levelFrames/types';
 
 import type { ProfileData } from '../types';
-import ProfileIdentityCard from './ProfileIdentityCard';
-import ProfileShortcut from './ProfileShortcut';
-import ProfileSignatureCard, { signatureEquippedCount } from './ProfileSignatureCard';
+import ProfileOverviewSections from './ProfileOverviewSections';
 import ProfileVitrinePreviewCard from './ProfileVitrinePreviewCard';
 
 type OwnProfileOverviewProps = {
@@ -16,7 +12,9 @@ type OwnProfileOverviewProps = {
   levelFrameVariant: LevelFrameVariant;
   onModify: () => void;
   onOpenActivations: () => void;
+  onOpenFaction: () => void;
   onOpenLocker: () => void;
+  onOpenRank: () => void;
   onOpenShop: () => void;
   onOpenShowcase: () => void;
   onOpenVisitor: () => void;
@@ -33,7 +31,9 @@ export default function OwnProfileOverview({
   levelFrameVariant,
   onModify,
   onOpenActivations,
+  onOpenFaction,
   onOpenLocker,
+  onOpenRank,
   onOpenShop,
   onOpenShowcase,
   onOpenVisitor,
@@ -42,66 +42,36 @@ export default function OwnProfileOverview({
   rankAccent,
   rankLabel,
 }: OwnProfileOverviewProps) {
-  const equippedCount = signatureEquippedCount(cosmetics);
-
   return (
     <>
-      <ProfileIdentityCard
-        cosmetics={cosmetics}
-        data={data}
-        loading={loading}
-        levelFrameVariant={levelFrameVariant}
-        onModify={onModify}
-        pseudo={pseudo}
-      />
       <ProfileVitrinePreviewCard
         cosmetics={cosmetics}
         data={data}
+        levelFrameVariant={levelFrameVariant}
         loading={loading}
         onOpenShowcase={onOpenShowcase}
+        onOpenVisibility={onModify}
         onOpenVisitor={onOpenVisitor}
         preview={preview}
         pseudo={pseudo}
         rankAccent={rankAccent}
         rankLabel={rankLabel}
       />
-      <ProfileSignatureCard
+      <ProfileOverviewSections
         cosmetics={cosmetics}
-        level={data?.level.level ?? 0}
+        data={data}
         levelFrameVariant={levelFrameVariant}
         loading={loading}
+        onModify={onModify}
+        onOpenActivations={onOpenActivations}
+        onOpenFaction={onOpenFaction}
         onOpenLocker={onOpenLocker}
+        onOpenRank={onOpenRank}
+        onOpenShop={onOpenShop}
         pseudo={pseudo}
-        relicLevel={data?.favoriteTeam?.relique_niveau ?? 1}
+        rankAccent={rankAccent}
+        rankLabel={rankLabel}
       />
-      <View style={styles.shortcuts}>
-        <ProfileShortcut
-          accessibilityLabel="Ouvrir mes objets dans le Locker"
-          glyph="▤"
-          label="LOCKER"
-          meta={loading ? '—' : `${equippedCount} ÉQUIPÉ${equippedCount === 1 ? '' : 'S'}`}
-          onPress={onOpenLocker}
-        />
-        <ProfileShortcut
-          accessibilityLabel="Ouvrir le catalogue de la Boutique"
-          glyph="⌁"
-          label="BOUTIQUE"
-          meta="COSMÉTIQUES"
-          onPress={onOpenShop}
-        />
-        <ProfileShortcut
-          accent="#A982FF"
-          accessibilityLabel="Ouvrir les activations"
-          glyph="ϟ"
-          label="ACTIVATIONS"
-          meta="NOVA WEEK"
-          onPress={onOpenActivations}
-        />
-      </View>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  shortcuts: { marginHorizontal: 16, flexDirection: 'row', gap: 6 },
-});

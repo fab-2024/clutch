@@ -8,6 +8,26 @@ import type { ProfileData } from '../../types';
 import OwnProfileOverview from '../OwnProfileOverview';
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
+jest.mock('react-native-reanimated', () => {
+  const ReactNative = jest.requireActual('react-native');
+  const identity = (value: number) => value;
+  return {
+    __esModule: true,
+    default: { View: ReactNative.View },
+    Easing: { cubic: identity, out: () => identity, quad: identity },
+    useAnimatedStyle: (factory: () => object) => factory(),
+    useReducedMotion: () => true,
+    useSharedValue: (value: number) => ({ value }),
+    withTiming: (value: number) => value,
+  };
+});
+jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, default: 'ChevronRight' }));
+jest.mock('lucide-react-native/icons/expand', () => ({ __esModule: true, default: 'Expand' }));
+jest.mock('lucide-react-native/icons/eye', () => ({ __esModule: true, default: 'Eye' }));
+jest.mock('lucide-react-native/icons/layers-2', () => ({ __esModule: true, default: 'Layers2' }));
+jest.mock('lucide-react-native/icons/shopping-bag', () => ({ __esModule: true, default: 'ShoppingBag' }));
+jest.mock('lucide-react-native/icons/sparkles', () => ({ __esModule: true, default: 'Sparkles' }));
+jest.mock('lucide-react-native/icons/users-round', () => ({ __esModule: true, default: 'UsersRound' }));
 
 const PROFILE: ProfileData = {
   pseudo: 'TesteurGRIFF',
@@ -70,12 +90,24 @@ async function renderHub({
   cosmetics = EMPTY_EQUIPPED_COSMETICS,
   data = PROFILE,
   loading = false,
+  onModify = jest.fn(),
+  onOpenActivations = jest.fn(),
+  onOpenFaction = jest.fn(),
+  onOpenLocker = jest.fn(),
+  onOpenRank = jest.fn(),
+  onOpenShop = jest.fn(),
   onOpenShowcase = jest.fn(),
   onOpenVisitor = jest.fn(),
 }: {
   cosmetics?: EquippedCosmetics;
   data?: ProfileData | null;
   loading?: boolean;
+  onModify?: jest.Mock;
+  onOpenActivations?: jest.Mock;
+  onOpenFaction?: jest.Mock;
+  onOpenLocker?: jest.Mock;
+  onOpenRank?: jest.Mock;
+  onOpenShop?: jest.Mock;
   onOpenShowcase?: jest.Mock;
   onOpenVisitor?: jest.Mock;
 } = {}) {
@@ -85,10 +117,12 @@ async function renderHub({
       data={data}
       loading={loading}
       levelFrameVariant="signalAscendant"
-      onModify={jest.fn()}
-      onOpenActivations={jest.fn()}
-      onOpenLocker={jest.fn()}
-      onOpenShop={jest.fn()}
+      onModify={onModify}
+      onOpenActivations={onOpenActivations}
+      onOpenFaction={onOpenFaction}
+      onOpenLocker={onOpenLocker}
+      onOpenRank={onOpenRank}
+      onOpenShop={onOpenShop}
       onOpenShowcase={onOpenShowcase}
       onOpenVisitor={onOpenVisitor}
       pseudo={data?.pseudo ?? 'TesteurGRIFF'}
@@ -109,29 +143,64 @@ describe('OwnProfileOverview', () => {
   it('renders level and rank from profile data', async () => {
     const screen = await renderHub();
 
-    expect(screen.getByText('NIVEAU 7 · 432 XP')).toBeTruthy();
+    expect(screen.getByLabelText(/Rang PLATINE.*niveau 7.*568 XP/)).toBeTruthy();
     expect(screen.getAllByText('PLATINE').length).toBeGreaterThan(0);
+  });
+
+  it('keeps the progression, collection and social actions wired', async () => {
+    const onOpenActivations = jest.fn();
+    const onOpenLocker = jest.fn();
+    const onOpenRank = jest.fn();
+    const onOpenShop = jest.fn();
+    const screen = await renderHub({
+      onOpenActivations,
+      onOpenLocker,
+      onOpenRank,
+      onOpenShop,
+    });
+
+    await fireEvent.press(screen.getByTestId('profile-section-progression'));
+    await fireEvent.press(screen.getByLabelText('Ouvrir mes objets dans le Locker'));
+    await fireEvent.press(screen.getByLabelText('Ouvrir le catalogue de la Boutique'));
+    await fireEvent.press(screen.getByLabelText('Ouvrir les activations'));
+
+    expect(onOpenRank).toHaveBeenCalledTimes(1);
+    expect(onOpenLocker).toHaveBeenCalledTimes(1);
+    expect(onOpenShop).toHaveBeenCalledTimes(1);
+    expect(onOpenActivations).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses profile settings when no faction is selected', async () => {
+    const onModify = jest.fn();
+    const screen = await renderHub({ onModify });
+
+    await fireEvent.press(screen.getByLabelText('Choisir mon équipe favorite et rejoindre une faction'));
+
+    expect(onModify).toHaveBeenCalledTimes(1);
   });
 
   it('uses the Vitrine callback for the landscape CTA', async () => {
     const onOpenShowcase = jest.fn();
     const screen = await renderHub({ onOpenShowcase });
 
-    fireEvent.press(screen.getByLabelText('Ouvrir ma Vitrine en paysage'));
+    await fireEvent.press(screen.getByLabelText('Ouvrir ma Vitrine en paysage'));
 
     expect(onOpenShowcase).toHaveBeenCalledTimes(1);
   });
 
-  it('disables the visitor CTA for a private profile', async () => {
+  it('opens visibility settings from a private profile', async () => {
+    const onModify = jest.fn();
     const onOpenVisitor = jest.fn();
     const screen = await renderHub({
       data: { ...PROFILE, publicProfile: false },
+      onModify,
       onOpenVisitor,
     });
-    const button = screen.getByLabelText('Voir comme visiteur, indisponible pour un profil privé');
+    const button = screen.getByLabelText('Modifier la visibilité de mon profil');
 
-    expect(button.props.accessibilityState).toMatchObject({ disabled: true });
-    fireEvent.press(button);
+    expect(button.props.accessibilityState).toMatchObject({ disabled: false });
+    await fireEvent.press(button);
+    expect(onModify).toHaveBeenCalledTimes(1);
     expect(onOpenVisitor).not.toHaveBeenCalled();
   });
 
@@ -139,10 +208,10 @@ describe('OwnProfileOverview', () => {
     const screen = await renderHub();
 
     expect(screen.getByLabelText('Cadre de niveau, Signal Ascendant')).toBeTruthy();
-    expect(screen.getByLabelText('Cadre d’avatar, Origine')).toBeTruthy();
-    expect(screen.getByLabelText('Titre, Origine')).toBeTruthy();
-    expect(screen.getByLabelText('Bannière de profil, Origine')).toBeTruthy();
-    expect(screen.getByLabelText('Relique, Origine')).toBeTruthy();
+    expect(screen.getByLabelText('Cadre d’avatar, emplacement vide')).toBeTruthy();
+    expect(screen.getByLabelText('Titre, emplacement vide')).toBeTruthy();
+    expect(screen.getByLabelText('Bannière de profil, emplacement vide')).toBeTruthy();
+    expect(screen.getByLabelText('Relique, emplacement vide')).toBeTruthy();
     expect(screen.queryByText('CADRE')).toBeNull();
     expect(screen.queryByText('TITRE')).toBeNull();
     expect(screen.queryByText('BANNIÈRE')).toBeNull();

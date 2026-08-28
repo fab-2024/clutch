@@ -1,4 +1,7 @@
-import { Redirect } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
+
+import { previewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
+import { EMPTY_EQUIPPED_COSMETICS } from '@/src/features/shop/types';
 
 import { evaluateBadges, resolveBadgeSelection } from '../badges';
 import type { ProfileData, ProfileRanking } from '../types';
@@ -134,6 +137,42 @@ export const PREVIEW_PROFILE: ProfileData = {
 };
 
 export default function ProfilePreviewScreen() {
-  if (!__DEV__) return <Redirect href="/" />;
-  return <ProfileScreen previewData={PREVIEW_PROFILE} />;
+  const params = useLocalSearchParams<{ variant?: string | string[] }>();
+  if (!previewRoutesEnabled) return <Redirect href="/" />;
+  return <ProfileScreen previewData={profileForPreview(normalizePreviewVariant(params.variant))} />;
+}
+
+type ProfilePreviewVariant = 'default' | 'long' | 'minimal' | 'private';
+
+function normalizePreviewVariant(value?: string | string[]): ProfilePreviewVariant {
+  const variant = Array.isArray(value) ? value[0] : value;
+  return variant === 'long' || variant === 'minimal' || variant === 'private' ? variant : 'default';
+}
+
+function profileForPreview(variant: ProfilePreviewVariant): ProfileData {
+  if (variant === 'long') {
+    return {
+      ...PREVIEW_PROFILE,
+      pseudo: 'NorthwindCommander',
+      profileTitle: 'Stratège des finales internationales',
+      cosmetics: {
+        ...PREVIEW_PROFILE.cosmetics,
+        title: PREVIEW_PROFILE.cosmetics?.title
+          ? { ...PREVIEW_PROFILE.cosmetics.title, name: 'Stratège des finales internationales' }
+          : null,
+      },
+    };
+  }
+  if (variant === 'private') return { ...PREVIEW_PROFILE, publicProfile: false };
+  if (variant === 'minimal') {
+    return {
+      ...PREVIEW_PROFILE,
+      favoriteTeam: null,
+      badges: [],
+      pinnedBadges: [],
+      arsenalBadges: [],
+      cosmetics: EMPTY_EQUIPPED_COSMETICS,
+    };
+  }
+  return PREVIEW_PROFILE;
 }
