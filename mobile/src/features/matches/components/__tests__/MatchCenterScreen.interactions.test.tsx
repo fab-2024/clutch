@@ -33,10 +33,13 @@ jest.mock('expo-router', () => ({
 jest.mock('react-native-reanimated', () => {
   const ReactNative = jest.requireActual('react-native');
   const identity = (value: number) => value;
+  const animation = { delay: () => animation, duration: () => animation };
   return {
     __esModule: true,
     default: { View: ReactNative.View },
     Easing: { cubic: identity, out: () => identity, quad: identity },
+    FadeIn: animation,
+    FadeInDown: animation,
     runOnJS: (callback: () => void) => callback,
     useAnimatedStyle: (factory: () => object) => factory(),
     useReducedMotion: () => true,
@@ -118,6 +121,7 @@ jest.mock('../MatchCenterSections', () => {
     formatTime: () => '20:00',
   };
 });
+jest.mock('../MatchArenaHero', () => ({ MatchArenaHero: () => null }));
 jest.mock('../PredictionConfirmationSheet', () => {
   const React = jest.requireActual('react');
   const ReactNative = jest.requireActual('react-native');

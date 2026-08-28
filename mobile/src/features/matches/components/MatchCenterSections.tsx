@@ -419,6 +419,15 @@ export function LoadingCard({ snapshot }: { snapshot?: MatchJourneySnapshot | nu
     : 'Chargement du Match Center';
   const loadingHero = (
     <View style={styles.loadingCard}>
+      {snapshot ? (
+        <LinearGradient
+          colors={[`${snapshot.accentA ?? '#5BABFF'}20`, '#0D1218', `${snapshot.accentB ?? '#FF6375'}1C`]}
+          end={{ x: 1, y: .55 }}
+          pointerEvents="none"
+          start={{ x: 0, y: .45 }}
+          style={styles.loadingArenaBackdrop}
+        />
+      ) : null}
       <View style={styles.loadingMeta}>
         {snapshot?.event ? <Text numberOfLines={1} style={styles.loadingEvent}>{snapshot.event}</Text> : <Skeleton height={9} radius="pill" width="48%" />}
         {snapshot?.format ? <Text style={styles.loadingFormat}>BO{snapshot.format}</Text> : <Skeleton height={24} radius="pill" width={52} />}
@@ -426,7 +435,7 @@ export function LoadingCard({ snapshot }: { snapshot?: MatchJourneySnapshot | nu
       {snapshot?.game ? <Text style={styles.loadingGame}>{gameLabel(snapshot.game)}</Text> : <Skeleton height={9} radius="pill" tone="subtle" width="38%" />}
       <View style={styles.loadingDuel}>
         <View style={styles.loadingTeam}>
-          {snapshot ? <><View style={styles.loadingTeamMark}><Text adjustsFontSizeToFit numberOfLines={1} style={styles.loadingTeamTag}>{snapshot.tagA}</Text></View><Text numberOfLines={2} style={styles.loadingTeamName}>{snapshot.teamA}</Text></> : <><Skeleton height={72} radius="lg" width={72} /><Skeleton height={18} radius="pill" width={54} /><Skeleton height={9} radius="pill" tone="subtle" width={72} /></>}
+          {snapshot ? <><View style={[styles.loadingTeamMark, { borderColor: `${snapshot.accentA ?? '#5BABFF'}70` }]}><TeamLogo accent={snapshot.accentA ?? '#5BABFF'} contentScale={1.02} frameless name={snapshot.teamA} size={62} tag={snapshot.tagA} uri={snapshot.logoA} /></View><Text adjustsFontSizeToFit numberOfLines={1} style={styles.loadingTeamTag}>{snapshot.tagA}</Text><Text numberOfLines={2} style={styles.loadingTeamName}>{snapshot.teamA}</Text></> : <><Skeleton height={72} radius="lg" width={72} /><Skeleton height={18} radius="pill" width={54} /><Skeleton height={9} radius="pill" tone="subtle" width={72} /></>}
         </View>
         <View style={styles.loadingVersus}>
           <Skeleton height={8} radius="pill" tone="subtle" width={38} />
@@ -434,7 +443,7 @@ export function LoadingCard({ snapshot }: { snapshot?: MatchJourneySnapshot | nu
           <Skeleton height={9} radius="pill" tone="subtle" width={34} />
         </View>
         <View style={styles.loadingTeam}>
-          {snapshot ? <><View style={styles.loadingTeamMark}><Text adjustsFontSizeToFit numberOfLines={1} style={styles.loadingTeamTag}>{snapshot.tagB}</Text></View><Text numberOfLines={2} style={styles.loadingTeamName}>{snapshot.teamB}</Text></> : <><Skeleton height={72} radius="lg" width={72} /><Skeleton height={18} radius="pill" width={54} /><Skeleton height={9} radius="pill" tone="subtle" width={72} /></>}
+          {snapshot ? <><View style={[styles.loadingTeamMark, { borderColor: `${snapshot.accentB ?? '#FF6375'}70` }]}><TeamLogo accent={snapshot.accentB ?? '#FF6375'} contentScale={1.02} frameless name={snapshot.teamB} size={62} tag={snapshot.tagB} uri={snapshot.logoB} /></View><Text adjustsFontSizeToFit numberOfLines={1} style={styles.loadingTeamTag}>{snapshot.tagB}</Text><Text numberOfLines={2} style={styles.loadingTeamName}>{snapshot.teamB}</Text></> : <><Skeleton height={72} radius="lg" width={72} /><Skeleton height={18} radius="pill" width={54} /><Skeleton height={9} radius="pill" tone="subtle" width={72} /></>}
         </View>
       </View>
     </View>

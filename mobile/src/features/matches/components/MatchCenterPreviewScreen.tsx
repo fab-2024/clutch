@@ -56,20 +56,71 @@ export const PREVIEW_MATCH_CENTER: MatchCenterData = {
 export default function MatchCenterPreviewScreen() {
   const params = useLocalSearchParams<{ state?: string | string[] }>();
   const state = Array.isArray(params.state) ? params.state[0] : params.state;
+  const previewData = state === 'handoff-locked'
+    ? lockedPreview(PREVIEW_MATCH_CENTER)
+    : PREVIEW_MATCH_CENTER;
+  const snapshot = previewSnapshot(previewData);
+  const arenaMotion = Boolean(state?.startsWith('handoff'));
+  const previewProgress = handoffPreviewProgress(state);
   if (!__DEV__) return <Redirect href="/" />;
   return (
     <MatchCenterScreen
-      previewData={PREVIEW_MATCH_CENTER}
-      previewLoadingSnapshot={state === 'transition' ? previewSnapshot(PREVIEW_MATCH_CENTER) : undefined}
+      previewArenaMotion={arenaMotion}
+      previewArenaProgress={previewProgress}
+      previewData={previewData}
+      previewJourneySnapshot={arenaMotion ? snapshot : undefined}
+      previewJourneySource={arenaMotion ? 'hub' : undefined}
+      previewLoadingSnapshot={state === 'transition' ? snapshot : undefined}
+      previewReduceMotion={state === 'handoff-reduced' ? true : arenaMotion ? false : undefined}
     />
   );
 }
 
+function handoffPreviewProgress(state?: string) {
+  if (state === 'handoff-start') return 0;
+  if (state === 'handoff-mid') return .52;
+  if (state === 'handoff-final' || state === 'handoff-locked') return 1;
+  return undefined;
+}
+
+function lockedPreview(data: MatchCenterData): MatchCenterData {
+  const prediction = {
+    id: 'preview-prediction-g2',
+    match_id: data.match.id,
+    choix: 'a' as const,
+    statut: 'verrouille',
+    proba_figee: .57,
+    proba_scoring: .57,
+    k_frags: 40,
+    delta_frags: null,
+    cree_le: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+    regle_le: null,
+  };
+  return {
+    ...data,
+    callContext: { ...data.callContext, prediction },
+    match: {
+      ...data.match,
+      prediction: {
+        choix: prediction.choix,
+        delta_frags: prediction.delta_frags,
+        match_id: prediction.match_id,
+        statut: prediction.statut,
+      },
+    },
+    prediction,
+  };
+}
+
 function previewSnapshot(data: MatchCenterData): MatchJourneySnapshot {
   return {
+    accentA: '#69A7FF',
+    accentB: '#FF5900',
     event: data.match.evenement,
     format: data.match.format,
     game: data.match.jeu,
+    logoA: null,
+    logoB: null,
     matchId: data.match.id,
     scoreA: data.match.score_a,
     scoreB: data.match.score_b,

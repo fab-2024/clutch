@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 
 import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { Screen } from '@/src/components/layout/Screen';
@@ -26,36 +27,49 @@ import { returnFromMatchCenter } from '../matchCenterNavigation';
 import {
   matchJourneySource,
   matchJourneySourceLabel,
+  matchJourneyUsesArenaMotion,
   readMatchJourneySnapshot,
   type MatchJourneySearchParams,
   type MatchJourneySnapshot,
+  type MatchJourneySource,
 } from '../matchJourney';
 import type { MatchCenterData } from '../types';
-import { gameLabel, matchPhase, predictionIsOpen } from '../utils';
+import { matchPhase, predictionIsOpen } from '../utils';
 import {
   CallContract,
-  HeroTeam,
   LoadingCard,
   LockedPrediction,
   PredictionZone,
-  ProbabilityBar,
-  ProjectionMeta,
   RelatedMatches,
-  formatMatchDate,
-  formatTime,
 } from './MatchCenterSections';
+import { MatchArenaHero } from './MatchArenaHero';
 import { styles } from './MatchCenterScreen.styles';
 import { PredictionConfirmationSheet } from './PredictionConfirmationSheet';
 
 type MatchCenterScreenProps = {
+  previewArenaMotion?: boolean;
+  previewArenaProgress?: number;
   previewData?: MatchCenterData;
+  previewJourneySnapshot?: MatchJourneySnapshot;
+  previewJourneySource?: MatchJourneySource;
   previewLoadingSnapshot?: MatchJourneySnapshot;
+  previewReduceMotion?: boolean;
 };
 
-export default function MatchCenterScreen({ previewData, previewLoadingSnapshot }: MatchCenterScreenProps) {
+export default function MatchCenterScreen({
+  previewArenaMotion,
+  previewArenaProgress,
+  previewData,
+  previewJourneySnapshot,
+  previewJourneySource,
+  previewLoadingSnapshot,
+  previewReduceMotion,
+}: MatchCenterScreenProps) {
   const { session } = useAuth();
   const { isShortLandscape } = useResponsiveLayout();
   const { refresh: refreshEconomy } = useEconomy();
+  const systemReduceMotion = useReducedMotion();
+  const reduceMotion = previewReduceMotion ?? systemReduceMotion;
   const params = useLocalSearchParams<MatchJourneySearchParams & {
     id?: string | string[];
     duel?: string | string[];
@@ -67,8 +81,11 @@ export default function MatchCenterScreen({ previewData, previewLoadingSnapshot 
   const duelToken = Array.isArray(params.duel) ? params.duel[0] : params.duel;
   const duelRivalId = Array.isArray(params.duelRivalId) ? params.duelRivalId[0] : params.duelRivalId;
   const duelRivalPseudo = Array.isArray(params.duelRivalPseudo) ? params.duelRivalPseudo[0] : params.duelRivalPseudo;
-  const journeySource = matchJourneySource(params.journeyFrom);
-  const journeySnapshot = previewLoadingSnapshot ?? readMatchJourneySnapshot(matchId, params);
+  const journeySource = previewJourneySource ?? matchJourneySource(params.journeyFrom);
+  const journeySnapshot = previewLoadingSnapshot
+    ?? previewJourneySnapshot
+    ?? readMatchJourneySnapshot(matchId, params);
+  const arenaMotion = previewArenaMotion ?? matchJourneyUsesArenaMotion(params.journeyMotion);
   const returnLabel = duelToken ? 'DUEL' : matchJourneySourceLabel(journeySource);
   const [selected, setSelected] = useState<'a' | 'b' | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -113,6 +130,11 @@ export default function MatchCenterScreen({ previewData, previewLoadingSnapshot 
     [projection],
   );
   const selectedChoice = selected === 'a' ? choiceA : selected === 'b' ? choiceB : null;
+  const pickerEntrance = arenaMotion
+    ? reduceMotion
+      ? FadeIn.duration(REDUCED_PICKER_ENTRANCE_MS)
+      : FadeInDown.delay(160).duration(260)
+    : undefined;
 
   useEffect(() => {
     if (!session?.user.id || previewData || !match?.id) return;
@@ -251,56 +273,45 @@ export default function MatchCenterScreen({ previewData, previewLoadingSnapshot 
         {match ? (
           <>
             {predictionPickerOpen ? (
-              <PredictionZone
-                data={data!}
-                open={open}
-                selected={selected}
-                onSelect={selectPrediction}
-              />
+              <>
+                <MatchArenaHero
+                  choiceA={choiceA}
+                  choiceB={choiceB}
+                  compact={isShortLandscape}
+                  key={match.id}
+                  match={match}
+                  mode="picker"
+                  motionEnabled={arenaMotion}
+                  phase={phase ?? matchPhase(match)}
+                  previewProgress={previewArenaProgress}
+                  projection={projection}
+                  reduceMotion={reduceMotion}
+                  snapshot={journeySnapshot}
+                />
+                <Animated.View entering={pickerEntrance}>
+                  <PredictionZone
+                    data={data!}
+                    open={open}
+                    selected={selected}
+                    onSelect={selectPrediction}
+                  />
+                </Animated.View>
+              </>
             ) : (
               <>
-                <View style={styles.hero}>
-                  <View style={styles.heroAccent} />
-                  <View style={styles.metaRow}>
-                    <View style={styles.metaLeft}>
-                      <View style={styles.gameDot} />
-                      <Text style={styles.metaText}>{gameLabel(match.jeu)}</Text>
-                      <Text style={styles.metaDivider}>·</Text>
-                      <Text numberOfLines={1} style={styles.eventText}>{match.evenement}</Text>
-                    </View>
-                    <View style={styles.boPill}><Text style={styles.boText}>BO{match.format}</Text></View>
-                  </View>
-
-                  <Text style={[styles.dateText, phase === 'live' && styles.dateLive]}>{formatMatchDate(match)}</Text>
-
-                  <View style={styles.duel}>
-                    <HeroTeam
-                      tag={match.tag_a}
-                      name={match.equipe_a}
-                      probability={choiceA?.proba}
-                      score={match.score_a}
-                      winner={match.statut === 'termine' && Number(match.score_a) > Number(match.score_b)}
-                    />
-                    <View style={styles.duelCenter}>
-                      <Text style={styles.vsLabel}>{phase === 'finished' ? 'FINAL' : phase === 'cancelled' ? 'ANNULÉ' : phase === 'live' ? 'LIVE' : 'VERSUS'}</Text>
-                      <Text style={styles.vs}>{phase === 'finished' || phase === 'cancelled' ? '—' : 'VS'}</Text>
-                      <Text style={styles.kickoff}>{formatTime(match.debut)}</Text>
-                    </View>
-                    <HeroTeam
-                      tag={match.tag_b}
-                      name={match.equipe_b}
-                      probability={choiceB?.proba}
-                      score={match.score_b}
-                      winner={match.statut === 'termine' && Number(match.score_b) > Number(match.score_a)}
-                    />
-                  </View>
-
-                  {choiceA && choiceB && phase !== 'finished' && phase !== 'cancelled' ? (
-                    <ProbabilityBar a={choiceA} b={choiceB} tagA={match.tag_a} tagB={match.tag_b} />
-                  ) : null}
-
-                  {projection && phase !== 'finished' && phase !== 'cancelled' ? <ProjectionMeta projection={projection} /> : null}
-                </View>
+                <MatchArenaHero
+                  choiceA={choiceA}
+                  choiceB={choiceB}
+                  compact={isShortLandscape}
+                  key={match.id}
+                  match={match}
+                  motionEnabled={arenaMotion}
+                  phase={phase ?? matchPhase(match)}
+                  previewProgress={previewArenaProgress}
+                  projection={projection}
+                  reduceMotion={reduceMotion}
+                  snapshot={journeySnapshot}
+                />
 
                 <CallContract data={data!} />
 
@@ -422,3 +433,5 @@ export default function MatchCenterScreen({ previewData, previewLoadingSnapshot 
     </Screen>
   );
 }
+
+const REDUCED_PICKER_ENTRANCE_MS = 140;

@@ -52,6 +52,7 @@ const journeyParams = {
   journeyFormat: '5',
   journeyFrom: 'matches',
   journeyGame: 'lol',
+  journeyLogoA: 'https://cdn.example/g2.png',
   journeyTagA: 'G2',
   journeyTagB: 'FNC',
   journeyTeamA: 'G2 Esports',
@@ -113,6 +114,7 @@ describe('returnFromMatchCenter', () => {
       params: {
         id: 'match-42',
         ...journeyParams,
+        journeyMotion: 'arena',
         duelRivalId: 'rival-1',
         duelRivalPseudo: 'Nova',
       },
@@ -129,6 +131,7 @@ describe('returnFromMatchCenter', () => {
         id: 'match-42',
         ...journeyParams,
         journeyFrom: 'hub',
+        journeyMotion: 'arena',
       },
     });
   });

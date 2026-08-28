@@ -13,8 +13,6 @@ export type MatchCenterTarget = {
   equipe_a: string;
   equipe_b: string;
   id: string;
-  logo_a?: string | null;
-  logo_b?: string | null;
 } & MatchJourneyTarget;
 
 type MatchCenterNavigationOptions = {
@@ -46,6 +44,7 @@ export function openMatchCenter(
     params: {
       id: target.id,
       ...buildMatchJourneyParams(target, source),
+      journeyMotion: 'arena',
       ...(rivalId ? { duelRivalId: rivalId, duelRivalPseudo: rivalPseudo ?? '' } : {}),
     },
   });
@@ -70,7 +69,7 @@ export function replaceMatchCenter(
   warmMatchCenter(target);
   router.replace({
     pathname: '/match/[id]',
-    params: { id: target.id, ...buildMatchJourneyParams(target, source) },
+    params: { id: target.id, ...buildMatchJourneyParams(target, source), journeyMotion: 'arena' },
   });
 }
 

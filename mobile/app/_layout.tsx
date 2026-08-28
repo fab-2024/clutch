@@ -81,7 +81,7 @@ function RootNavigator() {
       >
         <Stack.Protected guard={Boolean(session)}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="match/[id]" options={{ animation: reduceMotion ? 'none' : 'slide_from_right' }} />
+          <Stack.Screen name="match/[id]" options={{ animation: reduceMotion ? 'none' : 'fade' }} />
           <Stack.Screen name="result/[id]" options={{ animation: reduceMotion ? 'none' : 'fade_from_bottom', presentation: 'fullScreenModal' }} />
           <Stack.Screen name="duel/[token]" />
           <Stack.Screen name="settings/profile" />

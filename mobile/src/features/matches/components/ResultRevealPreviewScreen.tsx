@@ -86,9 +86,13 @@ export default function ResultRevealPreviewScreen() {
 
 function previewSnapshot(result: MatchResultReveal): MatchJourneySnapshot {
   return {
+    accentA: null,
+    accentB: null,
     event: result.evenement,
     format: result.format,
     game: result.jeu,
+    logoA: null,
+    logoB: null,
     matchId: result.match_id,
     scoreA: result.score_a,
     scoreB: result.score_b,

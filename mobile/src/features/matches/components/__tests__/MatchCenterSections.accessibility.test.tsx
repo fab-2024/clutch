@@ -65,9 +65,13 @@ describe('MatchCenterSections accessibility states', () => {
 
   it('keeps the selected fixture visible while the Match Center resolves', async () => {
     const screen = await render(<LoadingCard snapshot={{
+      accentA: '#69A7FF',
+      accentB: '#FF5900',
       event: 'LEC Summer',
       format: 5,
       game: 'lol',
+      logoA: null,
+      logoB: null,
       matchId: 'match-1',
       scoreA: null,
       scoreB: null,

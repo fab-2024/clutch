@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   Image,
   Pressable,
@@ -23,7 +23,7 @@ import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import { prefetchMatchCenterData } from '@/src/features/matches/matchCenterCache';
-import { openMatchCenter, warmMatchCenter } from '@/src/features/matches/matchCenterNavigation';
+import { openMatchCenter, warmMatchCenter, type MatchCenterTarget } from '@/src/features/matches/matchCenterNavigation';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
@@ -230,8 +230,15 @@ function MatchHero({
 }) {
   const confrontation = getMatchConfrontationState(match, prediction);
   const callLocked = Boolean(confrontation.predictionTag);
-  const prepare = useCallback(() => prepareMatchCenter(match, userId), [match, userId]);
-  const open = useCallback(() => openMatchCenter(match, { source: 'hub' }), [match]);
+  const transitionTarget = useMemo<MatchCenterTarget>(() => ({
+    ...match,
+    couleur_a: confrontation.teamA.accent,
+    couleur_b: confrontation.teamB.accent,
+    logo_a: confrontation.teamA.logo,
+    logo_b: confrontation.teamB.logo,
+  }), [confrontation.teamA.accent, confrontation.teamA.logo, confrontation.teamB.accent, confrontation.teamB.logo, match]);
+  const prepare = useCallback(() => prepareMatchCenter(transitionTarget, userId), [transitionTarget, userId]);
+  const open = useCallback(() => openMatchCenter(transitionTarget, { source: 'hub' }), [transitionTarget]);
 
   useEffect(() => {
     prepare();
@@ -298,6 +305,13 @@ function UpNext({ matches, userId }: { matches: HubMatch[]; userId?: string }) {
 
 function UpNextMatchCard({ cardWidth, match, userId }: { cardWidth: number; match: HubMatch; userId?: string }) {
   const confrontation = getMatchConfrontationState(match, null);
+  const transitionTarget: MatchCenterTarget = {
+    ...match,
+    couleur_a: confrontation.teamA.accent,
+    couleur_b: confrontation.teamB.accent,
+    logo_a: confrontation.teamA.logo,
+    logo_b: confrontation.teamB.logo,
+  };
   const cardHeight = Math.round(cardWidth / 1.78);
   const logoSize = Math.round(cardWidth * .28);
   const formatValue = Number(match.format);
@@ -307,8 +321,8 @@ function UpNextMatchCard({ cardWidth, match, userId }: { cardWidth: number; matc
     <Pressable
       accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}, ${formatMatchSchedule(match.debut)}`}
       accessibilityRole="button"
-      onPress={() => openMatchCenter(match, { source: 'hub' })}
-      onPressIn={() => prepareMatchCenter(match, userId)}
+      onPress={() => openMatchCenter(transitionTarget, { source: 'hub' })}
+      onPressIn={() => prepareMatchCenter(transitionTarget, userId)}
       style={({ pressed }) => [styles.upNextCard, { height: cardHeight, width: cardWidth }, pressed && styles.pressed]}
     >
       <Image resizeMode="cover" source={GAME_BACKGROUNDS[gameKey(match.jeu)]} style={styles.upNextBackdrop} />
@@ -454,7 +468,7 @@ function HeroSkeleton() {
 }
 
 function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
-function prepareMatchCenter(match: HubMatch, userId?: string) {
+function prepareMatchCenter(match: MatchCenterTarget, userId?: string) {
   warmMatchCenter(match);
   if (userId) {
     void prefetchMatchCenterData({ matchId: match.id, userId }).catch(() => undefined);
