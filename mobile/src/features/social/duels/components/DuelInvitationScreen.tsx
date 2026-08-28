@@ -134,7 +134,7 @@ export default function DuelInvitationScreen() {
       >
         <View style={styles.topBar}>
           <Pressable accessibilityRole="button" onPress={() => router.replace('/(tabs)/social/duels')} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
-            <Text style={styles.backText}>← DUELS</Text>
+            <Text style={styles.backText}>← DÉFIS</Text>
           </Pressable>
           <GriffLockup width={92} />
         </View>

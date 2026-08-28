@@ -1,29 +1,68 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { DuelMissionsSection } from '@/src/features/social/missions/components/DuelMissionsSection';
+import { MissionsSheet } from '@/src/features/social/missions/components/MissionsSheet';
+import { useFriendMissions } from '@/src/features/social/missions/hooks/useFriendMissions';
+import type { FriendQuestsData } from '@/src/features/social/missions/types';
+import { selectionFeedback } from '@/src/lib/feedback';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
 import { loadDuels } from '../api';
 import type { DuelRow, DuelStatus } from '../types';
 
-export default function DuelsScreen() {
-  const [duels, setDuels] = useState<DuelRow[]>([]);
-  const [loading, setLoading] = useState(true);
+export type DuelsMissionsPreviewData = {
+  duels: DuelRow[];
+  missions: FriendQuestsData;
+};
+
+type DuelsScreenProps = {
+  initialMissionsOpen?: boolean;
+  onMissionsClosed?: () => void;
+  previewData?: DuelsMissionsPreviewData;
+};
+
+export default function DuelsScreen({
+  initialMissionsOpen = false,
+  onMissionsClosed,
+  previewData,
+}: DuelsScreenProps = {}) {
+  const [duels, setDuels] = useState<DuelRow[]>(() => previewData?.duels ?? []);
+  const [loading, setLoading] = useState(!previewData);
   const [refreshing, setRefreshing] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [missionsOpen, setMissionsOpen] = useState(initialMissionsOpen);
+  const missionTriggerRef = useRef<View>(null);
+  const {
+    data: missions,
+    error: missionsError,
+    loading: missionsLoading,
+    refreshing: missionsRefreshing,
+    reload: reloadMissions,
+  } = useFriendMissions({
+    enabled: !previewData,
+    initialData: previewData?.missions,
+  });
 
   const load = useCallback(async (refresh = false) => {
+    if (previewData) return;
     if (refresh) setRefreshing(true);
     else setLoading(true);
     setError(null);
     try { setDuels(await loadDuels()); }
     catch (caught) { setError(caught instanceof Error ? caught.message : 'Impossible de charger tes duels.'); }
     finally { setLoading(false); setRefreshing(false); }
-  }, []);
+  }, [previewData]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    if (!previewData) void load();
+  }, [load, previewData]);
+
+  useEffect(() => {
+    if (initialMissionsOpen) setMissionsOpen(true);
+  }, [initialMissionsOpen]);
 
   const active = duels.filter((duel) => {
     const status = effectiveStatus(duel);
@@ -43,57 +82,101 @@ export default function DuelsScreen() {
     openDuel(token);
   }
 
+  const refreshAll = useCallback(async () => {
+    await Promise.all([load(true), reloadMissions(true)]);
+  }, [load, reloadMissions]);
+
+  const openMissions = useCallback(() => {
+    selectionFeedback();
+    setMissionsOpen(true);
+  }, []);
+
+  const closeMissions = useCallback(() => {
+    setMissionsOpen(false);
+  }, []);
+
+  const finishMissionsClose = useCallback(() => {
+    if (initialMissionsOpen) onMissionsClosed?.();
+  }, [initialMissionsOpen, onMissionsClosed]);
+
+  const retryMissions = useCallback(() => {
+    const hasContent = missions.actives.length > 0 || missions.duos.length > 0 || missions.historique.length > 0;
+    void reloadMissions(hasContent);
+  }, [missions, reloadMissions]);
+
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
-    >
-      <View style={styles.intro}>
-        <Text style={styles.eyebrow}>⚔ SOCIAL // DUELS</Text>
-        <Text style={styles.title}>UN CALL. DEUX JOUEURS.</Text>
-        <Text style={styles.subtitle}>Le même marché classé « vainqueur de la série », deux camps opposés et aucune mise supplémentaire.</Text>
-      </View>
+    <>
+      <ScrollView
+        style={styles.root}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing || missionsRefreshing} onRefresh={() => void refreshAll()} tintColor={colors.volt} />}
+      >
+        <View style={styles.intro}>
+          <Text style={styles.eyebrow}>SOCIAL // DÉFIS</Text>
+          <Text style={styles.title}>UN CALL. DEUX JOUEURS.</Text>
+          <Text style={styles.subtitle}>Le même marché classé « vainqueur de la série », deux camps opposés et aucune mise supplémentaire.</Text>
+        </View>
 
-      {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text></View> : null}
+        {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text></View> : null}
 
-      {loading ? <View style={styles.skeleton} /> : featured ? <DuelHero duel={featured} onOpen={() => openDuel(featured.token)} /> : <EmptyDuelHero />}
+        {loading ? <View style={styles.skeleton} /> : featured ? <DuelHero duel={featured} onOpen={() => openDuel(featured.token)} /> : <EmptyDuelHero />}
 
-      <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/matches')} style={({ pressed }) => [styles.newDuel, pressed && styles.pressed]}>
-        <View><Text style={styles.newDuelEyebrow}>NOUVEAU DUEL CLASSÉ</Text><Text style={styles.newDuelTitle}>Choisis ton match.</Text><Text style={styles.newDuelCopy}>Pose ton call puis cible un ami du Cercle ou partage une invitation ouverte.</Text></View>
-        <View style={styles.newDuelArrow}><Text style={styles.newDuelArrowText}>→</Text></View>
-      </Pressable>
-
-      <View style={styles.inviteCard}>
-        <View style={styles.inviteCopy}><Text style={styles.inviteEyebrow}>REJOINDRE UN RIVAL</Text><Text style={styles.inviteTitle}>Tu as reçu un code ?</Text></View>
-        <TextInput
-          accessibilityLabel="Code ou lien d’invitation au duel"
-          autoCapitalize="none"
-          autoCorrect={false}
-          onChangeText={setInviteCode}
-          onSubmitEditing={openInvitation}
-          placeholder="Colle le code ou le lien"
-          placeholderTextColor="#596570"
-          value={inviteCode}
-          style={styles.inviteInput}
+        <DuelMissionsSection
+          data={missions}
+          error={missionsError}
+          loading={missionsLoading}
+          onOpen={openMissions}
+          onRetry={retryMissions}
+          ref={missionTriggerRef}
         />
-        <Pressable accessibilityRole="button" disabled={!extractToken(inviteCode)} onPress={openInvitation} style={({ pressed }) => [styles.inviteButton, !extractToken(inviteCode) && styles.disabled, pressed && styles.pressed]}><Text style={styles.inviteButtonText}>OUVRIR L’INVITATION</Text></Pressable>
-      </View>
 
-      <View style={styles.stats}>
-        <View style={styles.stat}><Text style={styles.statValue}>{active.length}</Text><Text style={styles.statLabel}>ACTIFS</Text></View>
-        <View style={styles.divider} />
-        <View style={styles.stat}><Text style={styles.statValue}>{finished.length}</Text><Text style={styles.statLabel}>TERMINÉS</Text></View>
-        <View style={styles.divider} />
-        <View style={styles.stat}><Text style={styles.statValue}>{duels.length}</Text><Text style={styles.statLabel}>TOTAL</Text></View>
-      </View>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/matches')} style={({ pressed }) => [styles.newDuel, pressed && styles.pressed]}>
+          <View><Text style={styles.newDuelEyebrow}>NOUVEAU DUEL CLASSÉ</Text><Text style={styles.newDuelTitle}>Choisis ton match.</Text><Text style={styles.newDuelCopy}>Pose ton call puis cible un ami du Cercle ou partage une invitation ouverte.</Text></View>
+          <View style={styles.newDuelArrow}><Text style={styles.newDuelArrowText}>→</Text></View>
+        </Pressable>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>TES RIVALITÉS</Text><Text style={styles.sectionMeta}>{duels.length}</Text></View>
-        {loading ? <View style={styles.listSkeleton} /> : duels.length ? duels.map((duel) => <DuelCard key={duel.token} duel={duel} onOpen={() => openDuel(duel.token)} />) : <View style={styles.emptyList}><Text style={styles.emptyListText}>Ton premier duel apparaîtra ici après un challenge.</Text></View>}
-      </View>
-    </ScrollView>
+        <View style={styles.inviteCard}>
+          <View style={styles.inviteCopy}><Text style={styles.inviteEyebrow}>REJOINDRE UN RIVAL</Text><Text style={styles.inviteTitle}>Tu as reçu un code ?</Text></View>
+          <TextInput
+            accessibilityLabel="Code ou lien d’invitation au duel"
+            autoCapitalize="none"
+            autoCorrect={false}
+            onChangeText={setInviteCode}
+            onSubmitEditing={openInvitation}
+            placeholder="Colle le code ou le lien"
+            placeholderTextColor="#596570"
+            value={inviteCode}
+            style={styles.inviteInput}
+          />
+          <Pressable accessibilityRole="button" disabled={!extractToken(inviteCode)} onPress={openInvitation} style={({ pressed }) => [styles.inviteButton, !extractToken(inviteCode) && styles.disabled, pressed && styles.pressed]}><Text style={styles.inviteButtonText}>OUVRIR L’INVITATION</Text></Pressable>
+        </View>
+
+        <View style={styles.stats}>
+          <View style={styles.stat}><Text style={styles.statValue}>{active.length}</Text><Text style={styles.statLabel}>ACTIFS</Text></View>
+          <View style={styles.divider} />
+          <View style={styles.stat}><Text style={styles.statValue}>{finished.length}</Text><Text style={styles.statLabel}>TERMINÉS</Text></View>
+          <View style={styles.divider} />
+          <View style={styles.stat}><Text style={styles.statValue}>{duels.length}</Text><Text style={styles.statLabel}>TOTAL</Text></View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeading}><Text style={styles.sectionLabel}>TES RIVALITÉS</Text><Text style={styles.sectionMeta}>{duels.length}</Text></View>
+          {loading ? <View style={styles.listSkeleton} /> : duels.length ? duels.map((duel) => <DuelCard key={duel.token} duel={duel} onOpen={() => openDuel(duel.token)} />) : <View style={styles.emptyList}><Text style={styles.emptyListText}>Ton premier duel apparaîtra ici après un challenge.</Text></View>}
+        </View>
+      </ScrollView>
+
+      <MissionsSheet
+        data={missions}
+        error={missionsError}
+        loading={missionsLoading}
+        onClose={closeMissions}
+        onClosed={finishMissionsClose}
+        onRetry={retryMissions}
+        returnFocusRef={missionTriggerRef}
+        visible={missionsOpen}
+      />
+    </>
   );
 }
 
