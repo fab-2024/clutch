@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
+  gradeDefinition,
   gradeTransition,
   isZeroRank,
   normalizeGradeState,
@@ -45,5 +46,13 @@ describe('rank without placement matches', () => {
     expect(gradeTransition(bronze, silver).kind).toBe('promotion');
     expect(gradeTransition(silver, bronze).kind).toBe('demotion');
     expect(gradeTransition(bronze, bronze).kind).toBe('stable');
+  });
+
+  it('links a promoted grade to its seasonal reward contract', () => {
+    expect(gradeDefinition('platine')).toMatchObject({
+      minimum: 1250,
+      rewardName: 'Réserve Platine',
+      rewardType: 'VOLTS',
+    });
   });
 });

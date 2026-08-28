@@ -77,11 +77,46 @@ export default function ResultRevealPreviewScreen() {
   if (!__DEV__) return <Redirect href="/" />;
   return (
     <ResultRevealScreen
-      previewData={PREVIEW_RESULT}
+      previewCeremonyProgress={ceremonyProgressForState(state)}
+      previewData={previewResultForState(state)}
+      previewReduceMotion={state === 'promotion-reduced'}
       previewTransition={state === 'transition' ? previewSnapshot(PREVIEW_RESULT) : undefined}
       previewTransitionSource="match"
     />
   );
+}
+
+function ceremonyProgressForState(state?: string) {
+  switch (state) {
+    case 'promotion-verdict': return .21;
+    case 'promotion-frags': return .42;
+    case 'promotion-threshold': return .62;
+    case 'promotion-emblem': return .82;
+    case 'promotion-final': return 1;
+    default: return undefined;
+  }
+}
+
+function previewResultForState(state?: string): MatchResultReveal {
+  if (state === 'replay') {
+    return { ...PREVIEW_RESULT, revele_le: new Date().toISOString() };
+  }
+  if (state === 'stable' || state === 'loss') {
+    const loss = state === 'loss';
+    return {
+      ...PREVIEW_RESULT,
+      statut: loss ? 'perdu' : 'gagne',
+      delta_frags: loss ? -12 : 4,
+      frags_apres: loss ? 1231 : 1247,
+      score_a: loss ? 1 : PREVIEW_RESULT.score_a,
+      score_b: loss ? 2 : PREVIEW_RESULT.score_b,
+      grade_apres: {
+        ...PREVIEW_RESULT.grade_avant,
+        progression: loss ? .905 : .985,
+      },
+    };
+  }
+  return PREVIEW_RESULT;
 }
 
 function previewSnapshot(result: MatchResultReveal): MatchJourneySnapshot {

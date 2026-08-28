@@ -13,6 +13,7 @@ import type {
 import { gradeAccent, ZERO_RANK_ACCENT } from '../grades';
 
 type Props = {
+  decorative?: boolean;
   grade?: SeasonalGradeState | SeasonalGradeSummary | null;
   size?: number;
   starting?: boolean;
@@ -30,13 +31,16 @@ const RANK_ASSETS: Record<SeasonalGradeKey, ImageSourcePropType> = {
 };
 
 /** Shared premium rank artwork used at every scale across the Rank experience. */
-export function RankEmblem({ grade, size = 72, starting = false }: Props) {
+export function RankEmblem({ decorative = false, grade, size = 72, starting = false }: Props) {
   const accent = starting ? ZERO_RANK_ACCENT : gradeAccent(grade);
   const key = grade?.cle ?? 'bronze';
 
   return (
     <View
-      accessibilityLabel={starting ? 'Emblème de départ, zéro Frag' : 'Emblème ' + (grade?.libelle ?? 'classé')}
+      accessibilityElementsHidden={decorative || undefined}
+      accessibilityLabel={decorative ? undefined : starting ? 'Emblème de départ, zéro Frag' : 'Emblème ' + (grade?.libelle ?? 'classé')}
+      accessible={!decorative}
+      importantForAccessibility={decorative ? 'no-hide-descendants' : undefined}
       style={[styles.root, { height: size, width: size }]}
     >
       <View

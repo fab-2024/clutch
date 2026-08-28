@@ -22,7 +22,7 @@ import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { SupporterIdentity } from '@/src/features/shop/components/CosmeticRenderer';
-import { errorFeedback, successFeedback } from '@/src/lib/feedback';
+import { errorFeedback, impactFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
@@ -46,16 +46,30 @@ import {
 } from '../matchJourney';
 import type { MatchResultReveal } from '../types';
 import { gameLabel } from '../utils';
+import { PromotionAscensionCard, PromotionCeremony } from './PromotionAscension';
 
 type ResultRevealScreenProps = {
+  previewCeremonyProgress?: number;
   previewData?: MatchResultReveal;
+  previewReduceMotion?: boolean;
   previewTransition?: MatchJourneySnapshot;
   previewTransitionSource?: MatchJourneySource;
 };
 
 type ExitTarget = 'calls' | 'history';
 
-export default function ResultRevealScreen({ previewData, previewTransition, previewTransitionSource }: ResultRevealScreenProps) {
+const PROMOTION_DURATION_MS = 1_600;
+const PROMOTION_THRESHOLD_MS = 910;
+const PROMOTION_ANNOUNCEMENT_MS = 1_080;
+const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
+
+export default function ResultRevealScreen({
+  previewCeremonyProgress,
+  previewData,
+  previewReduceMotion,
+  previewTransition,
+  previewTransitionSource,
+}: ResultRevealScreenProps) {
   const { profile, session } = useAuth();
   const { equipped } = useCosmetics();
   const { isShortLandscape } = useResponsiveLayout();
@@ -65,15 +79,26 @@ export default function ResultRevealScreen({ previewData, previewTransition, pre
   const journeySource = matchJourneySource(params.journeyFrom);
   const journeySnapshot = readMatchJourneySnapshot(matchId, params);
   const { refresh: refreshEconomy } = useEconomy();
-  const reduceMotion = useReducedMotion();
+  const systemReduceMotion = useReducedMotion();
+  const reduceMotion = previewReduceMotion ?? systemReduceMotion;
   const [result, setResult] = useState<MatchResultReveal | null>(previewData ?? null);
   const [loading, setLoading] = useState(!previewData);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [promotionAnnouncement, setPromotionAnnouncement] = useState(false);
   const requestRef = useRef(0);
   const feedbackIdRef = useRef<string | null>(null);
+  const promotionImpactIdRef = useRef<string | null>(null);
   const revealProgress = useSharedValue(reduceMotion ? 1 : 0);
+  const ceremonyProgress = useSharedValue(1);
   const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
+
+  const transition = useMemo(
+    () => result ? gradeTransition(result.grade_avant, result.grade_apres) : null,
+    [result],
+  );
+  const replay = Boolean(result?.revele_le);
+  const promotion = transition?.kind === 'promotion';
 
   const load = useCallback(async () => {
     if (previewData) {
@@ -110,20 +135,64 @@ export default function ResultRevealScreen({ previewData, previewTransition, pre
 
   useEffect(() => {
     if (!result || previewTransition) return;
-    revealProgress.value = reduceMotion ? 1 : 0;
-    if (!reduceMotion) {
+    const fixedCeremonyProgress = previewCeremonyProgress == null
+      ? null
+      : Math.max(0, Math.min(1, previewCeremonyProgress));
+    const staticReveal = reduceMotion || replay;
+    let announcementTimer: ReturnType<typeof setTimeout> | undefined;
+    let impactTimer: ReturnType<typeof setTimeout> | undefined;
+
+    revealProgress.value = staticReveal ? 1 : 0;
+    ceremonyProgress.value = 1;
+    setPromotionAnnouncement(false);
+
+    if (!staticReveal) {
       revealProgress.value = withDelay(
         260,
         withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) }),
       );
     }
-    if (feedbackIdRef.current !== result.id) {
+
+    if (promotion && !replay) {
+      if (reduceMotion) {
+        setPromotionAnnouncement(true);
+      } else if (fixedCeremonyProgress !== null) {
+        ceremonyProgress.value = fixedCeremonyProgress;
+        setPromotionAnnouncement(fixedCeremonyProgress >= .68);
+      } else {
+        ceremonyProgress.value = 0;
+        ceremonyProgress.value = withTiming(1, {
+          duration: PROMOTION_DURATION_MS,
+          easing: Easing.linear,
+        });
+        announcementTimer = setTimeout(() => setPromotionAnnouncement(true), PROMOTION_ANNOUNCEMENT_MS);
+      }
+    }
+
+    if (!previewData && !replay && feedbackIdRef.current !== result.id) {
       feedbackIdRef.current = result.id;
-      if (result.statut === 'gagne') successFeedback();
+      if (promotion || result.statut === 'gagne') successFeedback();
       else errorFeedback();
     }
-    return () => cancelAnimation(revealProgress);
-  }, [previewTransition, reduceMotion, result, revealProgress]);
+
+    if (
+      !previewData
+      && promotion
+      && !replay
+      && fixedCeremonyProgress === null
+      && promotionImpactIdRef.current !== result.id
+    ) {
+      promotionImpactIdRef.current = result.id;
+      impactTimer = setTimeout(impactFeedback, reduceMotion ? 220 : PROMOTION_THRESHOLD_MS);
+    }
+
+    return () => {
+      cancelAnimation(revealProgress);
+      cancelAnimation(ceremonyProgress);
+      if (announcementTimer) clearTimeout(announcementTimer);
+      if (impactTimer) clearTimeout(impactTimer);
+    };
+  }, [ceremonyProgress, previewCeremonyProgress, previewData, previewTransition, promotion, reduceMotion, replay, result, revealProgress]);
 
   useEffect(() => {
     if (!session?.user.id || previewData || !result) return;
@@ -132,11 +201,6 @@ export default function ResultRevealScreen({ previewData, previewTransition, pre
       idempotencyKey: `result:${result.id}:view`,
     }).catch(() => undefined);
   }, [previewData, result, session?.user.id]);
-
-  const transition = useMemo(
-    () => result ? gradeTransition(result.grade_avant, result.grade_apres) : null,
-    [result],
-  );
 
   const auraStyle = useAnimatedStyle(() => ({
     opacity: 0.12 + revealProgress.value * 0.22,
@@ -192,9 +256,20 @@ export default function ResultRevealScreen({ previewData, previewTransition, pre
   const choiceTag = result.choix === 'a' ? result.tag_a : result.tag_b;
   const choiceName = result.choix === 'a' ? result.equipe_a : result.equipe_b;
   const remaining = Math.max(0, result.restants - 1);
-  const replay = Boolean(result.revele_le);
   const returnLabel = matchJourneySourceLabel(journeySource);
-  const entrance = (delay: number) => reduceMotion ? undefined : FadeInDown.delay(delay).duration(460);
+  const entrance = (delay: number) => reduceMotion || replay ? undefined : FadeInDown.delay(delay).duration(460);
+  const heroEntrance = replay
+    ? undefined
+    : reduceMotion && promotion
+      ? FadeIn.duration(170)
+      : reduceMotion
+        ? undefined
+        : FadeIn.duration(420);
+  const promotionEntrance = replay
+    ? undefined
+    : reduceMotion
+      ? FadeIn.delay(130).duration(180)
+      : entrance(310);
 
   return (
     <Screen>
@@ -225,7 +300,7 @@ export default function ResultRevealScreen({ previewData, previewTransition, pre
           <View style={styles.officialPill}><View style={[styles.officialDot, { backgroundColor: tone }]} /><Text style={styles.officialText}>{replay ? 'HISTORIQUE' : 'RÉSULTAT OFFICIEL'}</Text></View>
         </View>
 
-        <Animated.View entering={reduceMotion ? undefined : FadeIn.duration(420)} style={[styles.hero, isShortLandscape && styles.heroLandscape]}>
+        <Animated.View entering={heroEntrance} style={[styles.hero, isShortLandscape && styles.heroLandscape]}>
           <LinearGradient colors={[`${tone}24`, 'rgba(8,12,16,.96)', '#080C10']} style={StyleSheet.absoluteFill} />
           <View style={[styles.heroGlow, { backgroundColor: tone }]} />
           <Text style={[styles.resultKicker, { color: tone }]}>{won ? 'CALL VALIDÉ' : 'CALL MANQUÉ'}</Text>
@@ -267,7 +342,19 @@ export default function ResultRevealScreen({ previewData, previewTransition, pre
           <Text style={styles.ratingRule}>Calcul serveur figé · probabilité du call {Math.round(result.proba_figee * 100)} %</Text>
         </Animated.View>
 
-        {transition ? (
+        {transition ? transition.kind === 'promotion' ? (
+          <Animated.View entering={promotionEntrance}>
+            <PromotionAscensionCard
+              announce={promotionAnnouncement}
+              delta={result.delta_frags}
+              fragsAfter={result.frags_apres}
+              fragsBefore={result.frags_avant}
+              rankAfter={result.rang_apres}
+              rankBefore={result.rang_avant}
+              transition={transition}
+            />
+          </Animated.View>
+        ) : (
           <Animated.View entering={entrance(310)} style={styles.rankingCard}>
             <GradeHeadline transition={transition} />
             <View style={styles.rankFlow}>
@@ -301,6 +388,15 @@ export default function ResultRevealScreen({ previewData, previewTransition, pre
           {!replay ? <Text style={styles.seenHint}>Le verdict sera archivé après avoir continué.</Text> : null}
         </Animated.View>
       </ScrollView>
+      {promotion && transition && !replay && !reduceMotion ? (
+        <PromotionCeremony
+          delta={result.delta_frags}
+          fragsAfter={result.frags_apres}
+          fragsBefore={result.frags_avant}
+          progress={ceremonyProgress}
+          transition={transition}
+        />
+      ) : null}
     </Screen>
   );
 }
@@ -401,7 +497,7 @@ function RevealState({ action, copy, onPress, title }: { action?: string; copy: 
 
 function teamColor(tag: string, name: string) { return `hsl(${teamHue(tag, name)}, 72%, 59%)`; }
 function signed(value: number) { return `${value >= 0 ? '+' : '−'}${formatNumber(Math.abs(value))}`; }
-function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
+function formatNumber(value: number) { return NUMBER_FORMATTER.format(Number(value || 0)); }
 function formatResolutionDate(value: string) { return new Date(value).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).replace('.', '').toUpperCase(); }
 function messageFrom(value: unknown, fallback: string) { return value instanceof Error && value.message ? value.message : fallback; }
 
