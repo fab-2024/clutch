@@ -1,10 +1,12 @@
 /// <reference types="jest" />
 
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
 
 import type { FriendsData } from '../../types';
 import { CirclePeopleScreen } from '../FriendsScreen';
+
+const mockShowSnackbar = jest.fn();
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('expo-router', () => ({
@@ -50,6 +52,9 @@ jest.mock('@/src/providers/CosmeticsProvider', () => ({
       title: null,
     },
   }),
+}));
+jest.mock('@/src/providers/SnackbarProvider', () => ({
+  useSnackbar: () => ({ showSnackbar: mockShowSnackbar }),
 }));
 jest.mock('../../api', () => ({
   answerFriendRequest: jest.fn(),
@@ -119,7 +124,10 @@ const previewData: FriendsData = {
 const previewState = { data: previewData };
 
 describe('CirclePeopleScreen', () => {
-  beforeEach(() => push.mockClear());
+  beforeEach(() => {
+    push.mockClear();
+    mockShowSnackbar.mockClear();
+  });
 
   it('opens on a focused activity hierarchy with requests and weekly performance', async () => {
     const screen = await render(<CirclePeopleScreen previewState={previewState} />);
@@ -179,5 +187,9 @@ describe('CirclePeopleScreen', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'Confirmer le retrait de Nova' }));
     expect(screen.queryByRole('button', { name: 'Actions pour Nova' })).toBeNull();
+    await waitFor(() => expect(mockShowSnackbar).toHaveBeenCalledWith({
+      message: 'Nova a été retiré de ton Cercle.',
+      tone: 'success',
+    }));
   });
 });

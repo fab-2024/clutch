@@ -20,6 +20,7 @@ import { PrivacyConsentGate } from '@/src/features/safety';
 import { AuthProvider, useAuth } from '@/src/providers/AuthProvider';
 import { CosmeticsProvider } from '@/src/providers/CosmeticsProvider';
 import { EconomyProvider } from '@/src/providers/EconomyProvider';
+import { SnackbarProvider } from '@/src/providers/SnackbarProvider';
 import { colors, typography } from '@/src/theme';
 
 function RootNavigator() {
@@ -136,14 +137,16 @@ export default function RootLayout() {
 
   return (
     <AppErrorBoundary>
-      <AuthProvider>
-        <EconomyProvider>
-          <CosmeticsProvider>
-            <StatusBar style="light" />
-            <RootNavigator />
-          </CosmeticsProvider>
-        </EconomyProvider>
-      </AuthProvider>
+      <SnackbarProvider>
+        <AuthProvider>
+          <EconomyProvider>
+            <CosmeticsProvider>
+              <StatusBar style="light" />
+              <RootNavigator />
+            </CosmeticsProvider>
+          </EconomyProvider>
+        </AuthProvider>
+      </SnackbarProvider>
     </AppErrorBoundary>
   );
 }

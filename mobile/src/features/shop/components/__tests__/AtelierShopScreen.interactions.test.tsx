@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 import { createAtelierPreviewItems } from '../../atelierCatalog';
@@ -12,6 +12,8 @@ import {
   type EquippedCosmetic,
 } from '../../types';
 import AtelierShopScreen from '../AtelierShopScreen';
+
+const mockShowSnackbar = jest.fn();
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('expo-router', () => ({
@@ -97,8 +99,13 @@ jest.mock('@/src/providers/CosmeticsProvider', () => ({
 jest.mock('@/src/providers/EconomyProvider', () => ({
   useEconomy: () => ({ refresh: jest.fn().mockResolvedValue(undefined), volts: 1280 }),
 }));
+jest.mock('@/src/providers/SnackbarProvider', () => ({
+  useSnackbar: () => ({ showSnackbar: mockShowSnackbar }),
+}));
 
 describe('AtelierShopScreen interactions', () => {
+  beforeEach(() => mockShowSnackbar.mockClear());
+
   it('keeps a structured preview in place while the Atelier loads', async () => {
     const screen = await render(
       <AtelierShopScreen previewData={makeData(1280)} previewState={{ loading: true }} />,
@@ -125,9 +132,12 @@ describe('AtelierShopScreen interactions', () => {
     fireEvent.press(screen.getByTestId('atelier-purchase-confirm'));
 
     await waitFor(() => {
-      expect(screen.getByText('Acier brossé rejoint ta collection et équipe maintenant ta Vitrine.')).toBeTruthy();
       expect(screen.getByLabelText('1 160 Volts disponibles')).toBeTruthy();
       expect(screen.getByLabelText('Acier brossé, configuration active')).toBeTruthy();
+      expect(mockShowSnackbar).toHaveBeenCalledWith({
+        message: 'Acier brossé rejoint ta collection et équipe maintenant ta Vitrine.',
+        tone: 'success',
+      });
     });
   });
 
@@ -140,7 +150,26 @@ describe('AtelierShopScreen interactions', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('atelier-scene').props.theme).toBe('steel');
-      expect(screen.getByText('Acier brossé équipe maintenant ta Vitrine.')).toBeTruthy();
+    });
+
+    const success = mockShowSnackbar.mock.calls.at(-1)?.[0];
+    expect(success).toMatchObject({
+      action: {
+        accessibilityLabel: 'Rétablir Graphite mat',
+        label: 'ANNULER',
+      },
+      message: 'Acier brossé équipe ta Vitrine.',
+      tone: 'success',
+    });
+
+    await act(async () => success.action.onPress());
+
+    await waitFor(() => {
+      expect(screen.getByTestId('atelier-scene').props.theme).toBe('graphite');
+      expect(mockShowSnackbar).toHaveBeenLastCalledWith({
+        message: 'Graphite mat restauré sur ta Vitrine.',
+        tone: 'success',
+      });
     });
   });
 

@@ -34,6 +34,7 @@ import { errorFeedback, selectionFeedback, successFeedback } from '@/src/lib/fee
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
+import { useSnackbar } from '@/src/providers/SnackbarProvider';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
 import { equipCosmetic, loadCosmeticShop, purchaseCosmetic } from '../api';
@@ -107,6 +108,7 @@ export default function AtelierShopScreen({
   const { profile, session } = useAuth();
   const { refresh: refreshEconomy, volts } = useEconomy();
   const { refresh: refreshCosmetics } = useCosmetics();
+  const { showSnackbar } = useSnackbar();
   const previewProduct = atelierProductById(previewState?.productId);
   const initialProduct = previewProduct ?? atelierProductById('material_graphite');
   const [data, setData] = useState<CosmeticShopData | null>(previewData ?? null);
@@ -309,6 +311,7 @@ export default function AtelierShopScreen({
     if (!data || pendingId) return;
     const previousData = data;
     const previousTrial = trial;
+    const previousItem = data.items.find((candidate) => candidate.slot === item.slot && candidate.equipped) ?? null;
     const optimistic = applyPreviewAtelierAction(data, item.id);
     setPendingId(item.id);
     setLoadError(null);
@@ -319,8 +322,47 @@ export default function AtelierShopScreen({
 
     try {
       if (!previewData) await equipCosmetic(item.id);
-      setNotice({ tone: 'success', text: `${product.name} équipe maintenant ta Vitrine.` });
+      setNotice(null);
       successFeedback();
+      showSnackbar({
+        action: previousItem && previousItem.id !== item.id ? {
+          accessibilityLabel: `Rétablir ${previousItem.name}`,
+          label: 'ANNULER',
+          onPress: async () => {
+            requestRef.current += 1;
+            setPendingId(previousItem.id);
+            setLoadError(null);
+            setNotice({ tone: 'info', text: `Restauration de ${previousItem.name}…` });
+            cachedDataRef.current = previousData;
+            setData(previousData);
+            setTrial(withoutTrialCategory(previousTrial, product.category));
+            try {
+              if (!previewData) await equipCosmetic(previousItem.id);
+              setNotice(null);
+              successFeedback();
+              showSnackbar({
+                message: `${previousItem.name} restauré sur ta Vitrine.`,
+                tone: 'success',
+              });
+              syncAfterMutation(previousData);
+            } catch (caught) {
+              cachedDataRef.current = optimistic;
+              setData(optimistic);
+              setNotice(null);
+              errorFeedback();
+              showSnackbar({
+                message: friendlyMutationError(caught, `${product.name} reste équipé. L’annulation n’a pas pu être synchronisée.`),
+                tone: 'error',
+              });
+              syncAfterMutation(optimistic);
+            } finally {
+              setPendingId(null);
+            }
+          },
+        } : undefined,
+        message: `${product.name} équipe ta Vitrine.`,
+        tone: 'success',
+      });
       syncAfterMutation(optimistic);
     } catch (caught) {
       cachedDataRef.current = previousData;
@@ -353,9 +395,10 @@ export default function AtelierShopScreen({
       setData(purchased);
       setTrial((current) => withoutTrialCategory(current, purchaseProduct.category));
       setPurchaseId(null);
-      setNotice({
+      setNotice(null);
+      showSnackbar({
+        message: `${purchaseProduct.name} rejoint ta collection et équipe maintenant ta Vitrine.`,
         tone: 'success',
-        text: `${purchaseProduct.name} rejoint ta collection et équipe maintenant ta Vitrine.`,
       });
       successFeedback();
       syncAfterMutation(purchased);

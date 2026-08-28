@@ -7,6 +7,7 @@ import { Button } from '@/src/components/ui/Button';
 import { SegmentedControl, type SegmentedControlItem } from '@/src/components/ui/SegmentedControl';
 import { StateView } from '@/src/components/ui/StateView';
 import { publicAppUrl } from '@/src/config/release';
+import { useSnackbar } from '@/src/providers/SnackbarProvider';
 import { colors, layout, spacing, typography } from '@/src/theme';
 
 import {
@@ -62,11 +63,11 @@ export function CirclePeopleScreen({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(previewState?.error ?? null);
   const [searchError, setSearchError] = useState<string | null>(previewState?.searchError ?? null);
-  const [shareMessage, setShareMessage] = useState<string | null>(null);
   const [selectedFriend, setSelectedFriend] = useState<FriendRow | null>(null);
   const [confirmRemoval, setConfirmRemoval] = useState(false);
   const searchRequest = useRef(0);
   const actionReturnRef = useRef<View | null>(null);
+  const { showSnackbar } = useSnackbar();
 
   const load = useCallback(async (refresh = false) => {
     if (previewState) {
@@ -128,13 +129,17 @@ export function CirclePeopleScreen({
   }, [previewMode, runSearch, search]);
 
   async function act(id: string, kind: 'add' | 'accept' | 'reject' | 'remove' | 'cancel') {
+    const searchPlayer = results.find((result) => result.id === id);
+    const player = searchPlayer
+      ?? [...data.amis, ...data.recues, ...data.envoyees].find((candidate) => candidate.id === id);
+    const pseudo = player?.pseudo ?? 'Ce joueur';
     setBusy(id);
     setError(null);
     try {
       if (previewMode) {
-        const player = results.find((result) => result.id === id);
-        setData((current) => applyPreviewAction(current, id, kind, player));
+        setData((current) => applyPreviewAction(current, id, kind, searchPlayer));
         setResults((current) => updatePreviewResults(current, id, kind));
+        showSnackbar({ message: circleActionMessage(kind, pseudo), tone: 'success' });
         return true;
       }
       if (kind === 'add') await requestFriend(id);
@@ -143,9 +148,13 @@ export function CirclePeopleScreen({
       else await removeFriend(id);
       await load();
       if (search.trim().length >= 2) await runSearch(search.trim());
+      showSnackbar({ message: circleActionMessage(kind, pseudo), tone: 'success' });
       return true;
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Action impossible.');
+      showSnackbar({
+        message: caught instanceof Error ? caught.message : 'Cette action n’a pas pu être synchronisée.',
+        tone: 'error',
+      });
       return false;
     } finally {
       setBusy(null);
@@ -202,13 +211,13 @@ export function CirclePeopleScreen({
     try {
       if (Platform.OS === 'web' && globalThis.navigator?.clipboard) {
         await globalThis.navigator.clipboard.writeText(shareText);
-        setShareMessage('CARTE COPIÉE · PRÊTE À ÊTRE PARTAGÉE.');
+        showSnackbar({ message: 'Carte copiée, prête à être partagée.', tone: 'success' });
       } else {
         await Share.share({ message: shareText, ...(url ? { url } : {}) });
-        setShareMessage('CARTE PRÊTE À ÊTRE PARTAGÉE.');
+        showSnackbar({ message: 'Ta carte est prête à être partagée.', tone: 'success' });
       }
     } catch {
-      setShareMessage(message);
+      showSnackbar({ message: 'Le partage a été interrompu. Réessaie depuis ta semaine.', tone: 'error' });
     }
   }
 
@@ -263,7 +272,6 @@ export function CirclePeopleScreen({
               onOpenProfile={openProfile}
               onReject={(id) => void act(id, 'reject')}
               onShare={() => void sharePerformance()}
-              shareMessage={shareMessage}
             />
           ) : null}
         </ScrollView>
@@ -416,6 +424,17 @@ function applyPreviewAction(
     };
   }
   return data;
+}
+
+function circleActionMessage(
+  kind: 'add' | 'accept' | 'reject' | 'remove' | 'cancel',
+  pseudo: string,
+) {
+  if (kind === 'add') return `Demande envoyée à ${pseudo}.`;
+  if (kind === 'accept') return `${pseudo} rejoint ton Cercle.`;
+  if (kind === 'reject') return `Demande de ${pseudo} refusée.`;
+  if (kind === 'remove') return `${pseudo} a été retiré de ton Cercle.`;
+  return `Demande à ${pseudo} annulée.`;
 }
 
 function updatePreviewResults(

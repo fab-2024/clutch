@@ -26,7 +26,6 @@ type CircleActivityViewProps = {
   onOpenProfile: (pseudo: string) => void;
   onReject: (id: string) => void;
   onShare: () => void;
-  shareMessage: string | null;
 };
 
 export default function CircleActivityView(props: CircleActivityViewProps) {
@@ -36,7 +35,6 @@ export default function CircleActivityView(props: CircleActivityViewProps) {
     <WeeklyPerformanceCard
       onOpenMatches={props.onOpenMatches}
       onShare={props.onShare}
-      shareMessage={props.shareMessage}
       weekly={props.data.weekly}
     />
   );
@@ -117,12 +115,10 @@ function CircleActivitySkeleton() {
 function WeeklyPerformanceCard({
   onOpenMatches,
   onShare,
-  shareMessage,
   weekly,
 }: {
   onOpenMatches: () => void;
   onShare: () => void;
-  shareMessage: string | null;
   weekly: CircleWeeklyData | null;
 }) {
   const me = weekly?.moi;
@@ -178,9 +174,6 @@ function WeeklyPerformanceCard({
         size="compact"
         variant="secondary"
       />
-      {shareMessage ? (
-        <Text accessibilityLiveRegion="polite" style={styles.shareMessage}>{shareMessage}</Text>
-      ) : null}
     </View>
   );
 }
@@ -551,11 +544,6 @@ const styles = StyleSheet.create({
     width: 1,
     height: 32,
     backgroundColor: colors.borderSubtle,
-  },
-  shareMessage: {
-    ...typography.metadata,
-    color: colors.success,
-    textAlign: 'center',
   },
   section: {
     gap: spacing.sm,

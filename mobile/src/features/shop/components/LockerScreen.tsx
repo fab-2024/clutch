@@ -42,6 +42,7 @@ import type { ProfileData } from '@/src/features/profile/types';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
+import { useSnackbar } from '@/src/providers/SnackbarProvider';
 import { colors, fonts, layout, spacing, typography } from '@/src/theme';
 
 import { equipCosmetic, loadCosmeticShop, purchaseCosmetic } from '../api';
@@ -107,6 +108,7 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
   const { profile, session } = useAuth();
   const { refresh: refreshEconomy } = useEconomy();
   const { refresh: refreshCosmetics } = useCosmetics();
+  const { showSnackbar } = useSnackbar();
   const pseudo = previewProfile?.pseudo || profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
   const [data, setData] = useState<CosmeticShopData | null>(previewData ?? null);
   const [profileData, setProfileData] = useState<ProfileData | null>(previewProfile ?? null);
@@ -121,7 +123,6 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
   const [refreshing, setRefreshing] = useState(false);
   const [offline, setOffline] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(!previewProfile);
@@ -227,7 +228,6 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
 
   useEffect(() => {
     setConfirmingId(null);
-    setMessage(null);
     setSelectedId(null);
   }, [slot]);
 
@@ -312,36 +312,90 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
   }, [activeSlot, collectionFilter, data?.items, rarityFilter, scope, teamFilter]);
 
   async function handleRingEquip(family: ShowcaseRingFamily | null) {
+    const previousFamily = ringEquipment.family;
     try {
       await ringEquipment.equip(family);
-      setMessage(family
-        ? `Anneau ${SHOWCASE_RING_CATALOG[family].name} équipé dans ta Vitrine.`
-        : 'Anneau retiré de ta Vitrine.');
+      showEquipmentResult(
+        family
+          ? `Anneau ${SHOWCASE_RING_CATALOG[family].name} équipé dans ta Vitrine.`
+          : 'Anneau retiré de ta Vitrine.',
+        previousFamily !== family ? {
+          label: previousFamily ? `l’anneau ${SHOWCASE_RING_CATALOG[previousFamily].name}` : 'la Vitrine sans anneau',
+          run: () => ringEquipment.equip(previousFamily),
+        } : undefined,
+      );
     } catch {
-      setMessage('L’anneau n’a pas pu être enregistré sur cet appareil.');
+      showSnackbar({ message: 'L’anneau n’a pas pu être enregistré sur cet appareil.', tone: 'error' });
     }
   }
 
   async function handleBadgeEquip(slotIndex: number, badgeId: BadgeId | null) {
+    const previousBadgeId = badgeEquipment.slots[slotIndex] ?? null;
     try {
       await badgeEquipment.equip(slotIndex, badgeId, badgeCollection);
-      setMessage(badgeId
-        ? `${badgeCollection.find((badge) => badge.id === badgeId)?.name ?? 'Badge'} exposé sur le socle ${slotIndex + 1}.`
-        : `Socle ${slotIndex + 1} libéré.`);
+      showEquipmentResult(
+        badgeId
+          ? `${badgeCollection.find((badge) => badge.id === badgeId)?.name ?? 'Badge'} exposé sur le socle ${slotIndex + 1}.`
+          : `Socle ${slotIndex + 1} libéré.`,
+        previousBadgeId !== badgeId ? {
+          label: previousBadgeId
+            ? badgeCollection.find((badge) => badge.id === previousBadgeId)?.name ?? 'le badge précédent'
+            : `le socle ${slotIndex + 1} vide`,
+          run: () => badgeEquipment.equip(slotIndex, previousBadgeId, badgeCollection),
+        } : undefined,
+      );
     } catch (caught) {
-      setMessage(caught instanceof Error ? caught.message : 'Le badge n’a pas pu être enregistré sur cet appareil.');
+      showSnackbar({
+        message: caught instanceof Error ? caught.message : 'Le badge n’a pas pu être enregistré sur cet appareil.',
+        tone: 'error',
+      });
       throw caught;
     }
   }
 
   async function handleLevelFrameEquip(variant: LevelFrameVariant) {
+    const previousVariant = levelFrameEquipment.variant;
     try {
       await levelFrameEquipment.equip(variant);
-      setMessage(`${levelFrameCollection.find((entry) => entry.variant === variant)?.name ?? 'Cadre'} équipe maintenant ton niveau.`);
+      showEquipmentResult(
+        `${levelFrameCollection.find((entry) => entry.variant === variant)?.name ?? 'Cadre'} équipe maintenant ton niveau.`,
+        previousVariant !== variant ? {
+          label: levelFrameCollection.find((entry) => entry.variant === previousVariant)?.name ?? 'le cadre précédent',
+          run: () => levelFrameEquipment.equip(previousVariant),
+        } : undefined,
+      );
     } catch (caught) {
-      setMessage(caught instanceof Error ? caught.message : 'Le cadre de niveau n’a pas pu être enregistré.');
+      showSnackbar({
+        message: caught instanceof Error ? caught.message : 'Le cadre de niveau n’a pas pu être enregistré.',
+        tone: 'error',
+      });
       throw caught;
     }
+  }
+
+  function showEquipmentResult(
+    message: string,
+    undo?: { label: string; run: () => Promise<void> | void },
+  ) {
+    showSnackbar({
+      action: undo ? {
+        accessibilityLabel: `Rétablir ${undo.label}`,
+        label: 'ANNULER',
+        onPress: async () => {
+          try {
+            await undo.run();
+            showSnackbar({ message: 'Configuration précédente restaurée.', tone: 'success' });
+          } catch (caught) {
+            showSnackbar({
+              message: caught instanceof Error ? caught.message : 'La configuration précédente n’a pas pu être restaurée.',
+              tone: 'error',
+            });
+          }
+        },
+      } : undefined,
+      message,
+      tone: 'success',
+    });
   }
 
   function clearFilters() {
@@ -371,32 +425,42 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
     if (!item.owned) {
       if (!item.acquirable) {
         setConfirmingId(null);
-        setMessage(acquisitionMessage(item));
+        showSnackbar({ message: acquisitionMessage(item), tone: 'info' });
         return;
       }
       if (data.balance < item.price) {
-        setMessage(`Il te manque ${formatNumber(item.price - data.balance)} Volts pour ${item.name}.`);
+        showSnackbar({
+          message: `Il te manque ${formatNumber(item.price - data.balance)} Volts pour ${item.name}.`,
+          tone: 'error',
+        });
         return;
       }
       if (confirmingId !== item.id) {
         setConfirmingId(item.id);
-        setMessage('Confirme une seconde fois : les Volts seront débités immédiatement.');
+        showSnackbar({ message: 'Confirme une seconde fois : les Volts seront débités immédiatement.', tone: 'info' });
         return;
       }
     }
 
     const target = fallback ?? item;
+    const previousData = data;
+    const previousItem = data.items.find((candidate) => candidate.slot === item.slot && candidate.equipped) ?? null;
     setPendingId(item.id);
     setConfirmingId(null);
     setError(null);
-    setMessage(null);
 
     try {
       if (previewData) {
         const next = applyPreviewAction(data, item, target);
         cachedDataRef.current = next;
         setData(next);
-        setMessage(fallback ? `${item.name} a été retiré.` : `${item.name} est maintenant équipé.`);
+        showEquipmentResult(
+          fallback ? `${item.name} a été retiré.` : `${item.name} est maintenant équipé.`,
+          item.owned && previousItem && previousItem.id !== target.id ? {
+            label: previousItem.name,
+            run: () => undoIdentityEquip(previousData, next, previousItem),
+          } : undefined,
+        );
       } else {
         if (!item.owned) {
           void trackAnalyticsEvent({
@@ -415,11 +479,17 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
         cachedDataRef.current = next;
         setData(next);
         setOffline(false);
-        setMessage(fallback
-          ? `${item.name} a été retiré.`
-          : mutation.purchased
-            ? `${item.name} rejoint ta collection.`
-            : `${item.name} est maintenant équipé.`);
+        showEquipmentResult(
+          fallback
+            ? `${item.name} a été retiré.`
+            : mutation.purchased
+              ? `${item.name} rejoint ta collection.`
+              : `${item.name} est maintenant équipé.`,
+          !mutation.purchased && previousItem && previousItem.id !== target.id ? {
+            label: previousItem.name,
+            run: () => undoIdentityEquip(previousData, next, previousItem),
+          } : undefined,
+        );
       }
     } catch (caught) {
       const detail = caught instanceof Error ? caught.message : 'Cette action n’a pas pu être réalisée.';
@@ -427,6 +497,41 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
       setError(detail);
     } finally {
       setPendingId(null);
+    }
+  }
+
+  async function undoIdentityEquip(
+    previousData: CosmeticShopData,
+    fallbackData: CosmeticShopData,
+    previousItem: CosmeticItem,
+  ) {
+    const requestId = ++requestRef.current;
+    setPendingId(previousItem.id);
+    setError(null);
+    cachedDataRef.current = previousData;
+    setData(previousData);
+
+    try {
+      if (previewData) return;
+      await equipCosmetic(previousItem.id);
+      const [shopResult] = await Promise.allSettled([
+        loadCosmeticShop(),
+        refreshEconomy(),
+        refreshCosmetics(),
+      ]);
+      if (requestId !== requestRef.current) return;
+      const restored = shopResult.status === 'fulfilled' ? shopResult.value : previousData;
+      cachedDataRef.current = restored;
+      setData(restored);
+      setOffline(false);
+    } catch (caught) {
+      if (requestId === requestRef.current) {
+        cachedDataRef.current = fallbackData;
+        setData(fallbackData);
+      }
+      throw caught;
+    } finally {
+      if (requestId === requestRef.current) setPendingId(null);
     }
   }
 
@@ -530,8 +635,6 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
 
         {error && !profileCollectionActive ? <View style={styles.error}><Text style={styles.errorText}>{friendlyError(error)}</Text><Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
         {profileError && profileCollectionActive ? <View style={styles.error}><Text style={styles.errorText}>Les données d’accomplissement ne sont pas synchronisées. Les objets déjà connus restent visibles.</Text><Pressable accessibilityRole="button" onPress={() => void loadRingProfile()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
-        {message ? <Text style={styles.message}>{message}</Text> : null}
-
         {profileCollectionActive && (profileLoading || ringEquipment.loading || badgeEquipment.loading || levelFrameEquipment.loading) ? (
           <LockerContentSkeleton label="Chargement de tes accomplissements" />
         ) : badgeActive ? (
@@ -730,7 +833,7 @@ const styles = StyleSheet.create({
   tabs: { gap: 9, paddingHorizontal: spacing.md }, tab: { width: 143, minHeight: 68, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 9, borderRadius: 19, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222C35' }, tabActive: { backgroundColor: '#141B0F', borderColor: '#596725' }, tabGlyph: { width: 29, color: '#65717D', fontFamily: fonts.display, fontSize: 22, textAlign: 'center' }, tabGlyphActive: { color: colors.volt }, tabCopy: { flex: 1, minWidth: 0 }, tabLabel: { ...typography.bodyStrong, color: colors.textMuted }, tabLabelActive: { color: colors.text }, tabEquipped: { ...typography.caption, marginTop: 2, color: '#64707B' },
   sectionHead: { minHeight: 86, marginHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: 12 }, sectionMark: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, sectionMarkText: { color: '#080A0C', fontFamily: fonts.display, fontSize: 26 }, sectionCopy: { flex: 1, minWidth: 0 }, sectionEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 }, sectionTitle: { ...typography.sectionTitle, marginTop: 2, color: colors.text }, sectionPromise: { ...typography.caption, marginTop: 3, color: colors.textMuted }, filterToggle: { minHeight: 39, paddingHorizontal: 9, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: '#0D1318', borderWidth: 1, borderColor: '#29343D' }, filterToggleActive: { backgroundColor: '#19210F', borderColor: '#526022' }, filterToggleText: { ...typography.label, color: colors.textMuted, fontSize: 9 }, filterToggleTextActive: { color: colors.volt },
   filters: { marginHorizontal: spacing.md, padding: 14, gap: 13, borderRadius: 22, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#27313A' }, filterRow: { gap: 7 }, filterLabel: { ...typography.eyebrow, color: '#77838E', letterSpacing: .6 }, filterOptions: { gap: 7 }, filterChip: { minHeight: 34, paddingHorizontal: 11, alignItems: 'center', justifyContent: 'center', borderRadius: 17, backgroundColor: '#10161C', borderWidth: 1, borderColor: '#28323B' }, filterChipActive: { backgroundColor: '#1A220F', borderColor: '#566424' }, filterChipText: { ...typography.label, color: colors.textMuted }, filterChipTextActive: { color: colors.volt }, clearFilters: { minHeight: 38, alignItems: 'center', justifyContent: 'center', borderTopWidth: 1, borderTopColor: '#202A32' }, clearFiltersText: { ...typography.action, color: colors.textMuted },
-  error: { marginHorizontal: spacing.md, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 17, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' }, errorText: { ...typography.body, flex: 1, color: '#FF9AA2' }, retry: { ...typography.action, color: colors.volt }, message: { ...typography.label, marginHorizontal: spacing.md, padding: 11, color: colors.volt, textAlign: 'center', borderRadius: 14, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#3F4B1D' },
+  error: { marginHorizontal: spacing.md, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 17, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' }, errorText: { ...typography.body, flex: 1, color: '#FF9AA2' }, retry: { ...typography.action, color: colors.volt },
   grid: { paddingHorizontal: spacing.md, flexDirection: 'row', flexWrap: 'wrap', gap: 12 }, itemCard: { width: '48%', minHeight: 382, padding: 12, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222C35' }, itemTopline: { marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }, rarity: { ...typography.eyebrow, letterSpacing: .5 }, itemLevel: { ...typography.label, color: colors.textMuted, fontSize: 9 }, itemName: { ...typography.cardTitle, minHeight: 40, marginTop: 5, color: colors.text }, itemDescription: { ...typography.caption, minHeight: 31, marginTop: 4, color: colors.textMuted }, itemProvenance: { ...typography.eyebrow, minHeight: 15, marginTop: 5, color: '#71808C', fontSize: 8, letterSpacing: .45 }, itemPrice: { minHeight: 29, marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 5 }, includedDot: { color: colors.volt, fontSize: 9 }, itemPriceText: { ...typography.bodyStrong, color: colors.text }, itemAction: { minHeight: 44, marginTop: 'auto', paddingHorizontal: 7, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: colors.volt }, itemActionEquipped: { backgroundColor: '#17200E', borderWidth: 1, borderColor: '#546225' }, itemActionConfirm: { backgroundColor: '#FFCB45' }, itemActionMissing: { backgroundColor: '#11171D', borderWidth: 1, borderColor: '#29343D' }, itemActionText: { ...typography.action, color: '#080A0C', textAlign: 'center' }, itemActionTextRemove: { color: colors.volt }, itemActionTextMuted: { color: colors.textMuted },
   itemSkeleton: { width: '48%', minHeight: 382, padding: 12, gap: 9, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#222C35' },
   itemSkeletonTopline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
