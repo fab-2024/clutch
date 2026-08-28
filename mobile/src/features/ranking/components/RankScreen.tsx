@@ -1,6 +1,15 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { memo, useCallback, useEffect, useState, type ReactNode } from 'react';
+import {
+  FlatList,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type ListRenderItemInfo,
+} from 'react-native';
 
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
@@ -23,6 +32,7 @@ import type {
   RankScope,
 } from '../types';
 import { RankEmblem } from './RankEmblem';
+import { RankSnapshot } from './RankSnapshot';
 import { SeasonJourneyCard } from './SeasonJourneyCard';
 
 type Section = 'season' | 'leaderboards' | 'rewards';
@@ -38,6 +48,7 @@ const SCOPES: { key: RankScope; label: string }[] = [
   { key: 'cercle', label: 'Cercle' },
   { key: 'faction', label: 'Faction' },
 ];
+const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
 
 type RankScreenProps = {
   previewData?: RankDashboard;
@@ -79,6 +90,32 @@ export default function RankScreen({ previewData, previewReduceMotion }: RankScr
     void trackAnalyticsEvent({ type: 'rank_consulte', idempotencyKey: 'rank:' + day }).catch(() => undefined);
   }, [previewData]);
 
+  const header = (
+    <RankHeader
+      dashboard={dashboard}
+      error={error}
+      loading={loading}
+      onRetry={() => void load()}
+      onSection={setSection}
+      section={section}
+    />
+  );
+
+  if (!loading && dashboard && section === 'leaderboards') {
+    return (
+      <Screen>
+        <LeaderboardList
+          dashboard={dashboard}
+          header={header}
+          onRefresh={() => void load(true)}
+          onScope={setScope}
+          refreshing={refreshing}
+          scope={scope}
+        />
+      </Screen>
+    );
+  }
+
   return (
     <Screen>
       <ScrollView
@@ -86,47 +123,70 @@ export default function RankScreen({ previewData, previewReduceMotion }: RankScr
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
         showsVerticalScrollIndicator={false}
       >
-        <GriffHeader variant="social" />
-
-        <View style={styles.intro}>
-          <Text style={styles.eyebrow}>RANK // SAISON</Text>
-          <Text style={styles.title}>LAISSE TA TRACE.</Text>
-          <Text style={styles.subtitle}>Ton rating Frags mesure ta saison. Les Volts restent un solde cosmétique séparé.</Text>
-        </View>
-
-        <View accessibilityRole="tablist" style={styles.tabs}>
-          {SECTIONS.map((item) => (
-            <Pressable
-              key={item.key}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: section === item.key }}
-              onPress={() => setSection(item.key)}
-              style={[styles.tab, section === item.key && styles.tabActive]}
-            >
-              <Text style={[styles.tabText, section === item.key && styles.tabTextActive]}>{item.label}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {error ? (
-          <View style={styles.error}>
-            <Text style={styles.errorText}>{error}</Text>
-            <Pressable accessibilityRole="button" onPress={() => void load()}>
-              <Text style={styles.retry}>RÉESSAYER</Text>
-            </Pressable>
-          </View>
-        ) : null}
+        {header}
 
         {loading ? <RankSkeleton /> : null}
         {!loading && dashboard && section === 'season' ? (
           <SeasonSection dashboard={dashboard} reduceMotionOverride={previewReduceMotion} />
         ) : null}
-        {!loading && dashboard && section === 'leaderboards' ? (
-          <LeaderboardSection dashboard={dashboard} scope={scope} onScope={setScope} />
-        ) : null}
         {!loading && dashboard && section === 'rewards' ? <RewardsSection dashboard={dashboard} /> : null}
       </ScrollView>
     </Screen>
+  );
+}
+
+function RankHeader({
+  dashboard,
+  error,
+  loading,
+  onRetry,
+  onSection,
+  section,
+}: {
+  dashboard: RankDashboard | null;
+  error: string | null;
+  loading: boolean;
+  onRetry: () => void;
+  onSection: (section: Section) => void;
+  section: Section;
+}) {
+  return (
+    <View style={styles.headerStack}>
+      <GriffHeader variant="social" />
+
+      <View style={styles.intro}>
+        <Text style={styles.eyebrow}>RANK // SAISON</Text>
+        <Text style={styles.title}>LAISSE TA TRACE.</Text>
+        <Text style={styles.subtitle}>Ton rating Frags mesure ta saison. Les Volts restent un solde cosmétique séparé.</Text>
+      </View>
+
+      {!loading && dashboard?.state ? (
+        <RankSnapshot seasonName={dashboard.season?.name} state={dashboard.state} />
+      ) : null}
+
+      <View accessibilityRole="tablist" style={styles.tabs}>
+        {SECTIONS.map((item) => (
+          <Pressable
+            key={item.key}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: section === item.key }}
+            onPress={() => onSection(item.key)}
+            style={[styles.tab, section === item.key && styles.tabActive]}
+          >
+            <Text style={[styles.tabText, section === item.key && styles.tabTextActive]}>{item.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {error ? (
+        <View accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.error}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Pressable accessibilityRole="button" onPress={onRetry}>
+            <Text style={styles.retry}>RÉESSAYER</Text>
+          </Pressable>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -245,50 +305,109 @@ function MovementRow({ movement }: { movement: RankMovement }) {
   );
 }
 
-function LeaderboardSection({
+function LeaderboardList({
   dashboard,
+  header,
+  onRefresh,
   scope,
   onScope,
+  refreshing,
 }: {
   dashboard: RankDashboard;
+  header: ReactNode;
+  onRefresh: () => void;
   scope: RankScope;
   onScope: (scope: RankScope) => void;
+  refreshing: boolean;
 }) {
   const rows = dashboard.leaderboards[scope];
   const me = rows.find((row) => row.me) ?? null;
   const scopeLabel = SCOPES.find((item) => item.key === scope)?.label ?? scope;
+  const renderRow = useCallback(({ index, item }: ListRenderItemInfo<RankLeaderboardRow>) => (
+    <LeaderboardRow
+      first={index === 0}
+      last={index === rows.length - 1}
+      row={item}
+    />
+  ), [rows.length]);
 
   return (
-    <View style={styles.sectionStack}>
-      <View accessibilityRole="tablist" style={styles.scopeTabs}>
-        {SCOPES.map((item) => (
-          <Pressable
-            key={item.key}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: scope === item.key }}
-            onPress={() => onScope(item.key)}
-            style={[styles.scopeTab, scope === item.key && styles.scopeTabActive]}
-          >
-            <Text style={[styles.scopeText, scope === item.key && styles.scopeTextActive]}>{item.label}</Text>
-          </Pressable>
-        ))}
-      </View>
+    <FlatList
+      contentContainerStyle={styles.listContent}
+      data={rows}
+      initialNumToRender={10}
+      keyExtractor={(row) => row.id}
+      ListEmptyComponent={<LeaderboardEmpty scope={scope} />}
+      ListFooterComponent={(
+        <Text style={styles.boardRule}>TRIÉ PAR FRAGS · PRÉCISION UTILISÉE UNIQUEMENT EN CAS D’ÉGALITÉ</Text>
+      )}
+      ListHeaderComponent={(
+        <>
+          {header}
+          <View style={styles.leaderboardHeader}>
+            <View accessibilityRole="tablist" style={styles.scopeTabs}>
+              {SCOPES.map((item) => (
+                <Pressable
+                  key={item.key}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: scope === item.key }}
+                  onPress={() => onScope(item.key)}
+                  style={[styles.scopeTab, scope === item.key && styles.scopeTabActive]}
+                >
+                  <Text style={[styles.scopeText, scope === item.key && styles.scopeTextActive]}>{item.label}</Text>
+                </Pressable>
+              ))}
+            </View>
 
-      {me ? <MyPositionCard row={me} scope={scopeLabel} /> : null}
+            {me ? <MyPositionCard row={me} scope={scopeLabel} /> : null}
 
-      <View style={styles.board}>
-        {rows.map((row) => <LeaderboardRow key={row.id} row={row} />)}
-        {!rows.length ? (
-          <Text style={styles.emptyBoard}>
-            {scope === 'cercle'
-              ? 'Ajoute des amis pour créer ton classement de Cercle.'
-              : scope === 'faction'
-                ? 'Choisis une faction pour rejoindre ce classement.'
-                : 'Aucun joueur classé pour le moment.'}
-          </Text>
-        ) : null}
-      </View>
-      <Text style={styles.boardRule}>TRIÉ PAR FRAGS · PRÉCISION UTILISÉE UNIQUEMENT EN CAS D’ÉGALITÉ</Text>
+            <View style={styles.boardHeading}>
+              <View>
+                <Text style={styles.cardEyebrow}>LADDER · {scopeLabel.toUpperCase()}</Text>
+                <Text style={styles.cardTitle}>LE CLASSEMENT.</Text>
+              </View>
+              <Text style={styles.boardCount}>{rows.length}</Text>
+            </View>
+          </View>
+        </>
+      )}
+      maxToRenderPerBatch={10}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
+      removeClippedSubviews
+      renderItem={renderRow}
+      showsVerticalScrollIndicator={false}
+      testID="rank-leaderboard-list"
+      windowSize={7}
+    />
+  );
+}
+
+function LeaderboardEmpty({ scope }: { scope: RankScope }) {
+  const copy = scope === 'cercle'
+    ? 'Ajoute des amis pour créer ton classement de Cercle.'
+    : scope === 'faction'
+      ? 'Choisis une faction pour rejoindre ce classement.'
+      : 'Les premiers joueurs classés apparaîtront après leur prochain verdict.';
+  const action = scope === 'cercle'
+    ? { label: 'OUVRIR LE CERCLE', route: '/(tabs)/social/friends' as const }
+    : scope === 'faction'
+      ? { label: 'VOIR LES FACTIONS', route: '/(tabs)/social/faction' as const }
+      : null;
+
+  return (
+    <View style={styles.emptyBoard}>
+      <Text style={styles.emptyBoardTitle}>LE LADDER SE CONSTRUIT.</Text>
+      <Text style={styles.emptyBoardCopy}>{copy}</Text>
+      {action ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push(action.route)}
+          style={({ pressed }) => [styles.emptyBoardAction, pressed && styles.pressed]}
+        >
+          <Text style={styles.emptyBoardActionText}>{action.label}</Text>
+          <Text style={styles.emptyBoardArrow}>›</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -315,14 +434,28 @@ function MyPositionCard({ row, scope }: { row: RankLeaderboardRow; scope: string
   );
 }
 
-function LeaderboardRow({ row }: { row: RankLeaderboardRow }) {
+const LeaderboardRow = memo(function LeaderboardRow({
+  first,
+  last,
+  row,
+}: {
+  first: boolean;
+  last: boolean;
+  row: RankLeaderboardRow;
+}) {
   const starting = isZeroRank(row.frags);
   const accent = starting ? ZERO_RANK_ACCENT : gradeAccent(row.grade);
   return (
     <Pressable
       accessibilityRole="button"
       onPress={() => router.push({ pathname: '/u/[pseudo]', params: { pseudo: row.pseudo } })}
-      style={({ pressed }) => [styles.boardRow, row.me && styles.boardRowMe, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.boardRow,
+        first && styles.boardRowFirst,
+        last && styles.boardRowLast,
+        row.me && styles.boardRowMe,
+        pressed && styles.pressed,
+      ]}
     >
       <Text style={[styles.boardRank, row.me && styles.boardRankMe]}>{row.rank ? String(row.rank) : '—'}</Text>
       <RankEmblem grade={row.grade} size={46} starting={starting} />
@@ -336,7 +469,7 @@ function LeaderboardRow({ row }: { row: RankLeaderboardRow }) {
       </View>
     </Pressable>
   );
-}
+});
 
 function RewardsSection({ dashboard }: { dashboard: RankDashboard }) {
   const state = dashboard.state;
@@ -460,7 +593,7 @@ function RankSkeleton() {
 }
 
 function formatNumber(value: number) {
-  return new Intl.NumberFormat('fr-FR').format(Number(value || 0));
+  return NUMBER_FORMATTER.format(Number(value || 0));
 }
 
 function gradeRange(grade: SeasonalGradeDefinition) {
@@ -474,6 +607,14 @@ const styles = StyleSheet.create({
     maxWidth: layout.contentMaxWidth,
     alignSelf: 'center',
     paddingBottom: layout.tabBarContentInset,
+    gap: 17,
+  },
+  listContent: {
+    width: '100%',
+    maxWidth: layout.contentMaxWidth,
+    alignSelf: 'center',
+  },
+  headerStack: {
     gap: 17,
   },
   intro: {
@@ -746,6 +887,24 @@ const styles = StyleSheet.create({
   scopeTextActive: {
     color: colors.volt,
   },
+  leaderboardHeader: {
+    marginHorizontal: spacing.md,
+    paddingTop: 17,
+    paddingBottom: 13,
+    gap: 13,
+  },
+  boardHeading: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  boardCount: {
+    ...typography.metricSmall,
+    color: colors.textSecondary,
+    fontVariant: ['tabular-nums'],
+  },
   meCard: {
     position: 'relative',
     minHeight: 126,
@@ -797,21 +956,28 @@ const styles = StyleSheet.create({
     marginTop: 2,
     color: colors.textMuted,
   },
-  board: {
-    overflow: 'hidden',
-    borderRadius: 23,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
   boardRow: {
     minHeight: 75,
+    marginHorizontal: spacing.md,
     paddingHorizontal: 11,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#0B1015',
+    backgroundColor: colors.surfaceLow,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: colors.borderSubtle,
     borderBottomWidth: 1,
-    borderBottomColor: '#1C242C',
+    borderBottomColor: colors.borderSubtle,
+  },
+  boardRowFirst: {
+    borderTopWidth: 1,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+  },
+  boardRowLast: {
+    borderBottomLeftRadius: radius.lg,
+    borderBottomRightRadius: radius.lg,
   },
   boardRowMe: {
     backgroundColor: '#11170E',
@@ -851,13 +1017,50 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   emptyBoard: {
-    ...typography.body,
-    padding: 18,
-    color: colors.textMuted,
-    backgroundColor: '#0B1015',
+    minHeight: 190,
+    marginHorizontal: spacing.md,
+    padding: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.lg,
+    backgroundColor: colors.surfaceLow,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  emptyBoardTitle: {
+    ...typography.cardTitle,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  emptyBoardCopy: {
+    ...typography.bodyComfort,
+    maxWidth: 320,
+    marginTop: spacing.xs,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  emptyBoardAction: {
+    minHeight: layout.minTouchTarget,
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  emptyBoardActionText: {
+    ...typography.action,
+    color: colors.volt,
+  },
+  emptyBoardArrow: {
+    color: colors.volt,
+    fontSize: 20,
   },
   boardRule: {
     ...typography.eyebrow,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingBottom: layout.tabBarContentInset,
     color: colors.textSubtle,
     textAlign: 'center',
   },

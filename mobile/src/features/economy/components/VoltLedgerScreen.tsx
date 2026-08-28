@@ -1,13 +1,14 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   View,
+  type ListRenderItemInfo,
 } from 'react-native';
 
 import { Screen } from '@/src/components/layout/Screen';
@@ -28,6 +29,13 @@ type SourceMeta = {
 };
 
 const PAGE_SIZE = 24;
+const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
+  day: '2-digit',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
 const SOURCE_META: Record<VoltMovementSource, SourceMeta> = {
   onboarding: { label: 'BIENVENUE', glyph: '✦', tone: colors.volt, detail: 'Entrée dans GRIFF' },
   progression: { label: 'PROGRESSION', glyph: '↗', tone: '#68B8FF', detail: 'Progression et saison' },
@@ -104,10 +112,45 @@ export default function VoltLedgerScreen({ previewData }: VoltLedgerScreenProps)
     return () => { requestRef.current += 1; };
   }, [load]);
 
+  const movements = ledger?.movements ?? [];
+  const renderMovement = useCallback(({ index, item }: ListRenderItemInfo<VoltMovement>) => (
+    <MovementRow
+      first={index === 0}
+      last={index === movements.length - 1}
+      movement={item}
+    />
+  ), [movements.length]);
+
   return (
     <Screen>
-      <ScrollView
+      <FlatList
         contentContainerStyle={styles.content}
+        data={movements}
+        initialNumToRender={10}
+        keyExtractor={(movement) => movement.id}
+        ListEmptyComponent={(
+          <LedgerEmpty
+            error={error}
+            ledger={ledger}
+            loading={loading}
+          />
+        )}
+        ListFooterComponent={(
+          <LedgerFooter
+            hasMore={ledger?.hasMore === true}
+            loadingMore={loadingMore}
+            onLoadMore={() => void load('more')}
+          />
+        )}
+        ListHeaderComponent={(
+          <LedgerHeader
+            error={error}
+            ledger={ledger}
+            loading={loading}
+            onRetry={() => void load('refresh')}
+          />
+        )}
+        maxToRenderPerBatch={10}
         refreshControl={(
           <RefreshControl
             onRefresh={() => void load('refresh')}
@@ -115,103 +158,135 @@ export default function VoltLedgerScreen({ previewData }: VoltLedgerScreenProps)
             tintColor={colors.volt}
           />
         )}
+        removeClippedSubviews
+        renderItem={renderMovement}
         showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Pressable
-            accessibilityLabel="Revenir au profil"
-            accessibilityRole="button"
-            onPress={() => router.back()}
-            style={({ pressed }) => [styles.back, pressed && styles.pressed]}
-          >
-            <Text style={styles.backText}>← MOI</Text>
-          </Pressable>
-          <View style={styles.headerCopy}>
-            <Text style={styles.headerEyebrow}>ÉCONOMIE PERSONNELLE</Text>
-            <Text style={styles.headerTitle}>JOURNAL DES VOLTS</Text>
-          </View>
-          <View style={styles.liveBadge}><View style={styles.liveDot} /><Text style={styles.liveText}>TRAÇABLE</Text></View>
-        </View>
-
-        <View style={styles.hero}>
-          <View style={styles.heroGlow} />
-          <View style={styles.heroTop}>
-            <View style={styles.currencyMark}><CurrencyIcon kind="volts" size={42} /></View>
-            <Text style={styles.heroLabel}>SOLDE DISPONIBLE</Text>
-          </View>
-          <Text accessibilityLabel={`${formatNumber(ledger?.balance ?? 0)} Volts disponibles`} style={styles.balance}>
-            {loading && !ledger ? '—' : formatNumber(ledger?.balance ?? 0)}
-          </Text>
-          <Text style={styles.balanceUnit}>VOLTS</Text>
-          <Text style={styles.heroCopy}>Chaque gain et chaque dépense laisse une trace. Ton classement reste complètement séparé.</Text>
-          <View style={styles.guardrailRow}>
-            <Guardrail label="0 CONVERSION FRAGS" />
-            <Guardrail label="0 IMPACT CLASSEMENT" />
-          </View>
-        </View>
-
-        <View style={styles.sectionHeading}>
-          <View>
-            <Text style={styles.sectionEyebrow}>REGISTRE PERSONNEL</Text>
-            <Text style={styles.sectionTitle}>TES MOUVEMENTS.</Text>
-          </View>
-          <Text style={styles.sectionMeta}>{ledger ? `${ledger.movements.length} AFFICHÉ${ledger.movements.length > 1 ? 'S' : ''}` : '—'}</Text>
-        </View>
-
-        {error ? (
-          <View style={styles.errorCard}>
-            <View style={styles.errorCopy}><Text style={styles.errorTitle}>SYNCHRONISATION INTERROMPUE</Text><Text style={styles.errorText}>{error}</Text></View>
-            <Pressable accessibilityRole="button" onPress={() => void load('refresh')}><Text style={styles.retry}>RÉESSAYER</Text></Pressable>
-          </View>
-        ) : null}
-
-        {loading && !ledger ? (
-          <View style={styles.loadingCard}><ActivityIndicator color={colors.volt} /><Text style={styles.loadingText}>Lecture du registre…</Text></View>
-        ) : null}
-
-        {!loading && ledger && !ledger.movements.length ? (
-          <View style={styles.emptyCard}>
-            <View style={styles.emptyMark}><CurrencyIcon kind="volts" size={36} /></View>
-            <Text style={styles.emptyEyebrow}>REGISTRE VIERGE</Text>
-            <Text style={styles.emptyTitle}>Ton premier mouvement apparaîtra ici.</Text>
-            <Text style={styles.emptyText}>Termine l’onboarding, progresse ou accomplis une mission pour recevoir tes premiers Volts.</Text>
-          </View>
-        ) : null}
-
-        {ledger?.movements.length ? (
-          <View style={styles.ledgerCard}>
-            {ledger.movements.map((movement, index) => (
-              <MovementRow
-                first={index === 0}
-                key={movement.id}
-                movement={movement}
-              />
-            ))}
-          </View>
-        ) : null}
-
-        {ledger?.hasMore ? (
-          <Pressable
-            accessibilityRole="button"
-            disabled={loadingMore}
-            onPress={() => void load('more')}
-            style={({ pressed }) => [styles.moreButton, loadingMore && styles.disabled, pressed && styles.pressed]}
-          >
-            {loadingMore ? <ActivityIndicator color={colors.volt} size="small" /> : null}
-            <Text style={styles.moreText}>{loadingMore ? 'CHARGEMENT…' : 'AFFICHER LA SUITE'}</Text>
-          </Pressable>
-        ) : null}
-
-        <View style={styles.promiseCard}>
-          <View style={styles.promiseMark}><Text style={styles.promiseGlyph}>◇</Text></View>
-          <View style={styles.promiseCopy}>
-            <Text style={styles.promiseEyebrow}>PACTE GRIFF</Text>
-            <Text style={styles.promiseTitle}>L’identité du supporter. Jamais ses performances.</Text>
-            <Text style={styles.promiseText}>Les Volts servent uniquement aux objets visuels connus à l’avance. Ils ne deviennent ni Frags, ni rang, ni avantage.</Text>
-          </View>
-        </View>
-      </ScrollView>
+        testID="volt-ledger-list"
+        windowSize={7}
+      />
     </Screen>
+  );
+}
+
+function LedgerHeader({
+  error,
+  ledger,
+  loading,
+  onRetry,
+}: {
+  error: string | null;
+  ledger: VoltLedger | null;
+  loading: boolean;
+  onRetry: () => void;
+}) {
+  return (
+    <View style={styles.headerStack}>
+      <View style={styles.header}>
+        <Pressable
+          accessibilityLabel="Revenir au profil"
+          accessibilityRole="button"
+          onPress={() => router.back()}
+          style={({ pressed }) => [styles.back, pressed && styles.pressed]}
+        >
+          <Text style={styles.backText}>← MOI</Text>
+        </Pressable>
+        <View style={styles.headerCopy}>
+          <Text style={styles.headerEyebrow}>ÉCONOMIE PERSONNELLE</Text>
+          <Text style={styles.headerTitle}>JOURNAL DES VOLTS</Text>
+        </View>
+        <View style={styles.liveBadge}><View style={styles.liveDot} /><Text style={styles.liveText}>TRAÇABLE</Text></View>
+      </View>
+
+      <View style={styles.hero}>
+        <View style={styles.heroGlow} />
+        <View style={styles.heroTop}>
+          <View style={styles.currencyMark}><CurrencyIcon kind="volts" size={42} /></View>
+          <Text style={styles.heroLabel}>SOLDE DISPONIBLE</Text>
+        </View>
+        <Text accessibilityLabel={`${formatNumber(ledger?.balance ?? 0)} Volts disponibles`} style={styles.balance}>
+          {loading && !ledger ? '—' : formatNumber(ledger?.balance ?? 0)}
+        </Text>
+        <Text style={styles.balanceUnit}>VOLTS</Text>
+        <Text style={styles.heroCopy}>Chaque gain et chaque dépense laisse une trace. Ton classement reste complètement séparé.</Text>
+        <View style={styles.guardrailRow}>
+          <Guardrail label="0 CONVERSION FRAGS" />
+          <Guardrail label="0 IMPACT CLASSEMENT" />
+        </View>
+      </View>
+
+      <View style={styles.sectionHeading}>
+        <View>
+          <Text style={styles.sectionEyebrow}>REGISTRE PERSONNEL</Text>
+          <Text style={styles.sectionTitle}>TES MOUVEMENTS.</Text>
+        </View>
+        <Text style={styles.sectionMeta}>{ledger ? `${ledger.movements.length} AFFICHÉ${ledger.movements.length > 1 ? 'S' : ''}` : '—'}</Text>
+      </View>
+
+      {error ? (
+        <View accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.errorCard}>
+          <View style={styles.errorCopy}><Text style={styles.errorTitle}>SYNCHRONISATION INTERROMPUE</Text><Text style={styles.errorText}>{error}</Text></View>
+          <Pressable accessibilityRole="button" onPress={onRetry}><Text style={styles.retry}>RÉESSAYER</Text></Pressable>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function LedgerEmpty({
+  error,
+  ledger,
+  loading,
+}: {
+  error: string | null;
+  ledger: VoltLedger | null;
+  loading: boolean;
+}) {
+  if (loading && !ledger) return <LedgerSkeleton />;
+  if (error || !ledger) return null;
+
+  return (
+    <View style={styles.emptyCard}>
+      <View style={styles.emptyMark}><CurrencyIcon kind="volts" size={36} /></View>
+      <Text style={styles.emptyEyebrow}>REGISTRE VIERGE</Text>
+      <Text style={styles.emptyTitle}>Ton premier mouvement apparaîtra ici.</Text>
+      <Text style={styles.emptyText}>Termine l’onboarding, progresse ou accomplis une mission pour recevoir tes premiers Volts.</Text>
+    </View>
+  );
+}
+
+function LedgerFooter({
+  hasMore,
+  loadingMore,
+  onLoadMore,
+}: {
+  hasMore: boolean;
+  loadingMore: boolean;
+  onLoadMore: () => void;
+}) {
+  return (
+    <View style={styles.footerStack}>
+      {hasMore ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ busy: loadingMore, disabled: loadingMore }}
+          disabled={loadingMore}
+          onPress={onLoadMore}
+          style={({ pressed }) => [styles.moreButton, loadingMore && styles.disabled, pressed && styles.pressed]}
+        >
+          {loadingMore ? <ActivityIndicator color={colors.volt} size="small" /> : null}
+          <Text style={styles.moreText}>{loadingMore ? 'CHARGEMENT…' : 'AFFICHER LA SUITE'}</Text>
+        </Pressable>
+      ) : null}
+
+      <View style={styles.promiseCard}>
+        <View style={styles.promiseMark}><Text style={styles.promiseGlyph}>◇</Text></View>
+        <View style={styles.promiseCopy}>
+          <Text style={styles.promiseEyebrow}>PACTE GRIFF</Text>
+          <Text style={styles.promiseTitle}>L’identité du supporter. Jamais ses performances.</Text>
+          <Text style={styles.promiseText}>Les Volts servent uniquement aux objets visuels connus à l’avance. Ils ne deviennent ni Frags, ni rang, ni avantage.</Text>
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -219,7 +294,15 @@ function Guardrail({ label }: { label: string }) {
   return <View style={styles.guardrail}><Text style={styles.guardrailGlyph}>✓</Text><Text style={styles.guardrailText}>{label}</Text></View>;
 }
 
-function MovementRow({ first, movement }: { first: boolean; movement: VoltMovement }) {
+const MovementRow = memo(function MovementRow({
+  first,
+  last,
+  movement,
+}: {
+  first: boolean;
+  last: boolean;
+  movement: VoltMovement;
+}) {
   const meta = SOURCE_META[movement.source];
   const positive = movement.amount > 0;
   const title = movementTitle(movement);
@@ -232,7 +315,13 @@ function MovementRow({ first, movement }: { first: boolean; movement: VoltMoveme
   return (
     <View
       accessibilityLabel={`${meta.label}, ${title}, ${positive ? 'plus' : 'moins'} ${formatNumber(Math.abs(movement.amount))} Volts, solde ${formatNumber(movement.balanceAfter)}`}
-      style={[styles.movement, !first && styles.movementBorder]}
+      accessible
+      style={[
+        styles.movement,
+        first && styles.movementFirst,
+        !first && styles.movementBorder,
+        last && styles.movementLast,
+      ]}
     >
       <View style={[styles.movementMark, { borderColor: `${meta.tone}66`, backgroundColor: `${meta.tone}12` }]}>
         <Text style={[styles.movementGlyph, { color: meta.tone }]}>{meta.glyph}</Text>
@@ -246,6 +335,36 @@ function MovementRow({ first, movement }: { first: boolean; movement: VoltMoveme
         <View style={styles.amountRow}><CurrencyIcon color={positive ? colors.volt : '#FF9B78'} kind="volts" size={13} /><Text style={[styles.amount, positive ? styles.credit : styles.debit]}>{positive ? '+' : '−'}{formatNumber(Math.abs(movement.amount))}</Text></View>
         <Text style={styles.balanceAfter}>SOLDE {formatNumber(movement.balanceAfter)}</Text>
       </View>
+    </View>
+  );
+});
+
+function LedgerSkeleton() {
+  return (
+    <View
+      accessibilityLabel="Chargement du journal des Volts"
+      accessibilityLiveRegion="polite"
+      accessibilityRole="progressbar"
+      accessibilityState={{ busy: true }}
+      style={styles.ledgerSkeleton}
+      testID="volt-ledger-loading"
+    >
+      {[0, 1, 2, 3].map((item) => (
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          key={item}
+          style={[styles.skeletonRow, item > 0 && styles.skeletonRowBorder]}
+        >
+          <View style={styles.skeletonMark} />
+          <View style={styles.skeletonCopy}>
+            <View style={styles.skeletonLabel} />
+            <View style={styles.skeletonTitle} />
+            <View style={styles.skeletonDetail} />
+          </View>
+          <View style={styles.skeletonAmount} />
+        </View>
+      ))}
     </View>
   );
 }
@@ -274,22 +393,19 @@ function humanize(value: string) {
 }
 
 function formatNumber(value: number) {
-  return new Intl.NumberFormat('fr-FR').format(Number(value || 0));
+  return NUMBER_FORMATTER.format(Number(value || 0));
 }
 
 function formatDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'DATE INCONNUE';
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date).replace('.', '').toUpperCase();
+  return DATE_FORMATTER.format(date).replace('.', '').toUpperCase();
 }
 
 const styles = StyleSheet.create({
-  content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: 54, gap: 20 },
+  content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: 54 },
+  headerStack: { gap: 20, paddingBottom: 20 },
+  footerStack: { gap: 20, paddingTop: 20 },
   header: { minHeight: 82, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: 11, borderBottomWidth: 1, borderBottomColor: '#171D23' },
   back: { minHeight: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' },
   backText: { ...typography.action, color: colors.text, letterSpacing: .5 },
@@ -320,16 +436,15 @@ const styles = StyleSheet.create({
   errorTitle: { ...typography.eyebrow, color: '#FF9AA2' },
   errorText: { ...typography.caption, marginTop: 4, color: colors.textMuted },
   retry: { ...typography.action, color: colors.volt },
-  loadingCard: { minHeight: 150, marginHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 24, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  loadingText: { ...typography.body, color: colors.textMuted },
   emptyCard: { minHeight: 230, marginHorizontal: spacing.md, padding: 24, alignItems: 'center', justifyContent: 'center', borderRadius: 27, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border },
   emptyMark: { width: 58, height: 58, marginBottom: 15, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: '#151C0E', borderWidth: 1, borderColor: '#3A461D' },
   emptyEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .8 },
   emptyTitle: { ...typography.cardTitle, marginTop: 7, color: colors.text, textAlign: 'center' },
   emptyText: { ...typography.body, maxWidth: 330, marginTop: 7, color: colors.textMuted, textAlign: 'center' },
-  ledgerCard: { marginHorizontal: spacing.md, paddingHorizontal: 14, borderRadius: 25, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border },
-  movement: { minHeight: 92, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 11 },
+  movement: { minHeight: 92, marginHorizontal: spacing.md, paddingHorizontal: 14, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: colors.surfaceLow, borderLeftWidth: 1, borderRightWidth: 1, borderColor: colors.borderSubtle },
+  movementFirst: { borderTopWidth: 1, borderTopLeftRadius: 25, borderTopRightRadius: 25 },
   movementBorder: { borderTopWidth: 1, borderTopColor: '#1C242C' },
+  movementLast: { borderBottomWidth: 1, borderBottomLeftRadius: 25, borderBottomRightRadius: 25 },
   movementMark: { width: 45, height: 45, borderRadius: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   movementGlyph: { fontSize: 16, fontWeight: '900' },
   movementCopy: { flex: 1, minWidth: 0 },
@@ -344,6 +459,15 @@ const styles = StyleSheet.create({
   credit: { color: colors.volt },
   debit: { color: '#FF9B78' },
   balanceAfter: { ...typography.caption, marginTop: 3, color: '#69747E' },
+  ledgerSkeleton: { marginHorizontal: spacing.md, paddingHorizontal: 14, borderRadius: 25, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderSubtle },
+  skeletonRow: { minHeight: 92, flexDirection: 'row', alignItems: 'center', gap: 11 },
+  skeletonRowBorder: { borderTopWidth: 1, borderTopColor: colors.borderSubtle },
+  skeletonMark: { width: 45, height: 45, borderRadius: 15, backgroundColor: colors.surfaceRaised },
+  skeletonCopy: { flex: 1, minWidth: 0, gap: 7 },
+  skeletonLabel: { width: '38%', height: 7, borderRadius: 4, backgroundColor: colors.borderStrong },
+  skeletonTitle: { width: '76%', height: 12, borderRadius: 6, backgroundColor: colors.surfaceRaised },
+  skeletonDetail: { width: '54%', height: 8, borderRadius: 4, backgroundColor: colors.borderSubtle },
+  skeletonAmount: { width: 55, height: 24, borderRadius: 8, backgroundColor: colors.surfaceRaised },
   moreButton: { minHeight: 50, marginHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 17, backgroundColor: '#11170E', borderWidth: 1, borderColor: '#3A461D' },
   moreText: { ...typography.action, color: colors.volt, letterSpacing: .55 },
   promiseCard: { marginHorizontal: spacing.md, padding: 16, flexDirection: 'row', alignItems: 'flex-start', gap: 13, borderRadius: 23, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#232D36' },
