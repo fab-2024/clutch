@@ -24,8 +24,10 @@ import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
 import { loadHubData } from '../api';
+import { selectHubContext } from '../hubContext';
 import { formatMatchSchedule, getHubMatchPhase, getMatchConfrontationState, withAlpha } from '../matchPresentation';
 import type { HubData, HubMatch, HubPrediction } from '../types';
+import { HubContextSkeleton, HubContextSlot } from './HubContextSlot';
 import { MatchConfrontationCard } from './MatchConfrontationCard';
 
 type HubGame = 'lol' | 'valorant' | 'cs2';
@@ -118,6 +120,7 @@ export function HubExperience({
   const live = phase === 'live';
   const finished = phase === 'finished';
   const callLocked = Boolean(hub.nextMatchPrediction);
+  const contextualItem = loading ? null : selectHubContext(hub);
   const headlineKicker = live ? 'LE MATCH EST LANCÉ' : finished ? 'LE VERDICT EST TOMBÉ' : callLocked ? 'TON CALL EST VERROUILLÉ' : 'À TOI DE JOUER';
   const headline = live ? 'SUIS LE MATCH EN DIRECT.' : finished ? 'CONSULTE LE RÉSULTAT.' : callLocked ? 'TON CALL EST POSÉ.' : 'TON PROCHAIN CALL.';
 
@@ -136,9 +139,16 @@ export function HubExperience({
         </Animated.View>
 
         {error ? (
-          <View style={styles.errorCard}>
+          <View accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.errorCard}>
             <Text style={styles.errorText}>{error}</Text>
-            <Pressable accessibilityRole="button" onPress={onRetry}><Text style={styles.retryText}>RÉESSAYER</Text></Pressable>
+            <Pressable
+              accessibilityLabel="Réessayer de charger le Hub"
+              accessibilityRole="button"
+              onPress={onRetry}
+              style={({ pressed }) => [styles.retryAction, pressed && styles.pressed]}
+            >
+              <Text style={styles.retryText}>RÉESSAYER</Text>
+            </Pressable>
           </View>
         ) : null}
 
@@ -146,12 +156,18 @@ export function HubExperience({
           {loading ? <HeroSkeleton /> : hub.nextMatch ? <MatchHero match={hub.nextMatch} prediction={hub.nextMatchPrediction} reduceMotion={reduceMotion} /> : <EmptyHero />}
         </Animated.View>
 
-        <Animated.View entering={entrance(150)}>
+        {loading || contextualItem ? (
+          <Animated.View entering={entrance(150)} style={styles.contextSlot}>
+            {loading ? <HubContextSkeleton /> : contextualItem ? <HubContextSlot context={contextualItem} /> : null}
+          </Animated.View>
+        ) : null}
+
+        <Animated.View entering={entrance(210)}>
           <SeasonProgressCard hub={hub} loading={loading} />
         </Animated.View>
 
         {!loading && hub.upNext.length ? (
-          <Animated.View entering={entrance(210)}>
+          <Animated.View entering={entrance(270)}>
             <UpNext matches={hub.upNext} />
           </Animated.View>
         ) : null}
@@ -350,10 +366,12 @@ const styles = StyleSheet.create({
   headline: { marginHorizontal: spacing.md, paddingTop: 3 },
   headlineKicker: { color: colors.volt, fontFamily: fonts.bold, fontSize: 12, lineHeight: 15, letterSpacing: 1.05 },
   headlineTitle: { marginTop: 5, color: colors.text, fontFamily: fonts.display, fontSize: 40, lineHeight: 43, letterSpacing: -.7 },
-  errorCard: { marginHorizontal: spacing.md, padding: 13, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  errorText: { ...typography.body, flex: 1, color: '#FF9AA2' },
-  retryText: { ...typography.action, color: colors.volt, letterSpacing: .5 },
+  errorCard: { marginHorizontal: spacing.md, padding: 13, borderRadius: radius.md, backgroundColor: colors.liveSurface, borderWidth: 1, borderColor: colors.liveBorder, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  errorText: { ...typography.bodyComfort, flex: 1, color: colors.liveText },
+  retryAction: { minHeight: layout.minTouchTarget, paddingHorizontal: spacing.sm, alignItems: 'center', justifyContent: 'center' },
+  retryText: { ...typography.control, color: colors.volt, letterSpacing: .5 },
   matchFeature: { marginHorizontal: spacing.md, gap: 10 },
+  contextSlot: { marginHorizontal: spacing.md },
   matchBackdrop: { position: 'absolute', inset: 0, width: '100%', height: '100%' },
   callAction: { minHeight: 57, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: colors.volt, boxShadow: '0 10px 24px rgba(232,255,61,.16)' },
   callActionLocked: { backgroundColor: '#10170D', borderWidth: 1, borderColor: '#53631B' },

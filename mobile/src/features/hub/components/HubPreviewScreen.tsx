@@ -95,6 +95,7 @@ const PREVIEW_HUB: HubData = {
 
 export default function HubPreviewScreen() {
   const params = useLocalSearchParams<{
+    context?: string | string[];
     rank?: string | string[];
     score?: string | string[];
     state?: string | string[];
@@ -104,9 +105,11 @@ export default function HubPreviewScreen() {
   const previewState = normalizePreviewState(params.state);
   const previewTeams = normalizePreviewTeams(params.teams);
   const previewScore = normalizePreviewScore(params.score);
+  const previewContext = normalizePreviewContext(params.context);
   const nextMatch = matchForPreviewState(previewState, previewTeams, previewScore);
   const previewHub: HubData = {
     ...PREVIEW_HUB,
+    ...contextForPreview(previewContext),
     nextMatch,
     nextMatchPrediction: previewState === 'upcoming'
       ? { matchId: nextMatch.id, choice: 'a' }
@@ -128,6 +131,26 @@ export default function HubPreviewScreen() {
 type PreviewMatchState = 'open' | 'upcoming' | 'live' | 'finished' | 'cancelled' | 'fallback';
 type PreviewScoreMode = 'score' | 'none';
 type PreviewTeams = 'g2-fnatic' | 'kc-vitality' | 'light-pair';
+type PreviewContext = 'auto' | 'mission' | 'none' | 'result' | 'reward';
+
+function normalizePreviewContext(value?: string | string[]): PreviewContext {
+  const context = Array.isArray(value) ? value[0] : value;
+  return context === 'mission' || context === 'none' || context === 'result' || context === 'reward'
+    ? context
+    : 'auto';
+}
+
+function contextForPreview(context: PreviewContext): Pick<HubData, 'factionMission' | 'latestReward' | 'recentResult'> {
+  if (context === 'none') return { factionMission: null, latestReward: null, recentResult: null };
+  if (context === 'result') return { factionMission: null, latestReward: null, recentResult: PREVIEW_HUB.recentResult };
+  if (context === 'mission') return { factionMission: PREVIEW_HUB.factionMission, latestReward: null, recentResult: null };
+  if (context === 'reward') return { factionMission: null, latestReward: PREVIEW_HUB.latestReward, recentResult: null };
+  return {
+    factionMission: PREVIEW_HUB.factionMission,
+    latestReward: PREVIEW_HUB.latestReward,
+    recentResult: PREVIEW_HUB.recentResult,
+  };
+}
 
 function normalizePreviewState(value?: string | string[]): PreviewMatchState {
   const state = Array.isArray(value) ? value[0] : value;
