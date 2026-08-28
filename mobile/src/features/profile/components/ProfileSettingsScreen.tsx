@@ -1,8 +1,13 @@
 import { router } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import CircleCheck from 'lucide-react-native/icons/circle-check';
+import CloudUpload from 'lucide-react-native/icons/cloud-upload';
+import Save from 'lucide-react-native/icons/save';
+import TriangleAlert from 'lucide-react-native/icons/triangle-alert';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Screen } from '@/src/components/layout/Screen';
+import type { ClutchProfile } from '@/src/features/auth/types';
 import { signOut } from '@/src/features/auth/api';
 import { loadTeamOrganizations } from '@/src/features/onboarding/api';
 import { GAMES } from '@/src/features/onboarding/constants';
@@ -16,39 +21,122 @@ import {
   detectedTimezone,
   type NotificationPreferences,
 } from '@/src/features/notifications';
+import { errorFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
+import { useSnackbar } from '@/src/providers/SnackbarProvider';
 import { colors, radius, spacing, typography } from '@/src/theme';
 
-import { saveProfileSettings } from '../api';
+import { saveFavoriteTeam, saveProfilePreferences } from '../api';
+import { useQueuedAutosave, type AutosaveStatus } from '../hooks/useQueuedAutosave';
+import { FavoriteTeamConfirmationSheet } from './FavoriteTeamConfirmationSheet';
 
-export default function ProfileSettingsScreen() {
+export type ProfileSettingsPreviewState = {
+  notifications: NotificationPreferences;
+  organizations: TeamOrganization[];
+  profile: ClutchProfile;
+  saveDelayMs?: number;
+};
+
+type ProfileSettingsScreenProps = {
+  previewState?: ProfileSettingsPreviewState;
+};
+
+type ProfilePreferencesDraft = {
+  games: GameId[];
+  publicProfile: boolean;
+};
+
+export default function ProfileSettingsScreen({ previewState }: ProfileSettingsScreenProps = {}) {
   const { profile, refreshProfile, session } = useAuth();
-  const initialGames = useMemo(
-    () => GAMES.map((game) => game.id).filter((id) => profile?.jeux_suivis.includes(id)),
-    [profile?.jeux_suivis],
-  );
-  const [games, setGames] = useState<GameId[]>(initialGames);
-  const [organizations, setOrganizations] = useState<TeamOrganization[]>([]);
+  const { showSnackbar } = useSnackbar();
+  const activeProfile = previewState?.profile ?? profile;
+  const userId = previewState?.profile.id ?? session?.user.id;
+  const initialGames = GAMES.map((game) => game.id).filter((id) => activeProfile?.jeux_suivis.includes(id));
+  const initialProfileDraft = { games: initialGames, publicProfile: activeProfile?.profil_public !== false };
+  const [games, setGames] = useState<GameId[]>(() => initialGames);
+  const [organizations, setOrganizations] = useState<TeamOrganization[]>(() => previewState?.organizations ?? []);
   const [selectedOrganization, setSelectedOrganization] = useState<string | null>(null);
-  const [publicProfile, setPublicProfile] = useState(profile?.profil_public !== false);
-  const [loadingTeams, setLoadingTeams] = useState(true);
-  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences | null>(null);
-  const [savedNotificationPreferences, setSavedNotificationPreferences] = useState<NotificationPreferences | null>(null);
-  const [loadingNotifications, setLoadingNotifications] = useState(true);
+  const [pendingOrganization, setPendingOrganization] = useState<TeamOrganization | null>(null);
+  const [publicProfile, setPublicProfile] = useState(activeProfile?.profil_public !== false);
+  const [loadingTeams, setLoadingTeams] = useState(!previewState);
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences | null>(previewState?.notifications ?? null);
+  const [loadingNotifications, setLoadingNotifications] = useState(!previewState);
   const [pushBusy, setPushBusy] = useState(false);
   const [pushMessage, setPushMessage] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [teamSaving, setTeamSaving] = useState(false);
+  const [teamError, setTeamError] = useState<string | null>(null);
+  const [focusedCard, setFocusedCard] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const teamRequest = useRef(0);
+  const teamReturnFocusRef = useRef<View | null>(null);
+  const teamCardRefs = useRef(new Map<string, View>());
+  const pointerFocus = useRef(false);
+  const profileDraftRef = useRef<ProfilePreferencesDraft>(initialProfileDraft);
+
+  const profileAutosave = useQueuedAutosave({
+    initialValue: initialProfileDraft,
+    onError: (caught, retry) => {
+      errorFeedback();
+      showSnackbar({
+        action: {
+          accessibilityLabel: 'Réessayer la synchronisation du profil',
+          label: 'RÉESSAYER',
+          onPress: retry,
+        },
+        message: settingsError(caught),
+        tone: 'error',
+      });
+    },
+    save: async (draft: ProfilePreferencesDraft) => {
+      if (previewState) {
+        await previewSaveDelay(previewState.saveDelayMs);
+        return draft;
+      }
+      if (!userId) throw new Error('La session ne permet plus de modifier ce profil.');
+      const result = await saveProfilePreferences(userId, draft.games, draft.publicProfile);
+      void refreshProfile().catch(() => undefined);
+      return result;
+    },
+    signature: profilePreferencesSignature,
+  });
+
+  const notificationAutosave = useQueuedAutosave({
+    initialValue: previewState?.notifications ?? null,
+    onError: (caught, retry) => {
+      errorFeedback();
+      showSnackbar({
+        action: {
+          accessibilityLabel: 'Réessayer la synchronisation des notifications',
+          label: 'RÉESSAYER',
+          onPress: retry,
+        },
+        message: notificationSettingsError(caught),
+        tone: 'error',
+      });
+    },
+    save: async (preferences: NotificationPreferences | null) => {
+      if (!preferences) throw new Error('Les préférences de notification ne sont pas disponibles.');
+      if (previewState) {
+        await previewSaveDelay(previewState.saveDelayMs);
+        return preferences;
+      }
+      return saveNotificationPreferences(preferences);
+    },
+    signature: notificationSignature,
+  });
+  const resetNotificationAutosave = notificationAutosave.reset;
 
   useEffect(() => {
-    setPublicProfile(profile?.profil_public !== false);
-  }, [profile?.profil_public]);
+    if (previewState) {
+      const localized = { ...previewState.notifications, timezone: detectedTimezone() };
+      setNotificationPreferences(localized);
+      resetNotificationAutosave(localized);
+      setLoadingNotifications(false);
+      return;
+    }
 
-  useEffect(() => {
     let active = true;
     setLoadingNotifications(true);
     loadNotificationPreferences()
@@ -56,7 +144,7 @@ export default function ProfileSettingsScreen() {
         if (!active) return;
         const localized = { ...preferences, timezone: detectedTimezone() };
         setNotificationPreferences(localized);
-        setSavedNotificationPreferences(localized);
+        resetNotificationAutosave(localized);
       })
       .catch(() => {
         if (active) setError('Impossible de charger les préférences de notification.');
@@ -65,13 +153,26 @@ export default function ProfileSettingsScreen() {
         if (active) setLoadingNotifications(false);
       });
     return () => { active = false; };
-  }, []);
+  }, [previewState, resetNotificationAutosave]);
 
   useEffect(() => {
     const requestId = ++teamRequest.current;
     if (!games.length) {
       setOrganizations([]);
       setSelectedOrganization(null);
+      setLoadingTeams(false);
+      return;
+    }
+
+    if (previewState) {
+      const next = previewState.organizations.filter((organization) => (
+        organization.games.some((game) => games.includes(game))
+      ));
+      setOrganizations(next);
+      setSelectedOrganization((current) => {
+        if (current && next.some((organization) => organization.key === current)) return current;
+        return next.find((organization) => organization.teams.some((team) => team.id === activeProfile?.equipe_favorite_id))?.key ?? null;
+      });
       setLoadingTeams(false);
       return;
     }
@@ -84,7 +185,7 @@ export default function ProfileSettingsScreen() {
         setOrganizations(next);
         setSelectedOrganization((current) => {
           if (current && next.some((organization) => organization.key === current)) return current;
-          return next.find((organization) => organization.teams.some((team) => team.id === profile?.equipe_favorite_id))?.key ?? null;
+          return next.find((organization) => organization.teams.some((team) => team.id === activeProfile?.equipe_favorite_id))?.key ?? null;
         });
       })
       .catch(() => {
@@ -96,72 +197,82 @@ export default function ProfileSettingsScreen() {
       .finally(() => {
         if (requestId === teamRequest.current) setLoadingTeams(false);
       });
-  }, [games, profile?.equipe_favorite_id]);
+  }, [activeProfile?.equipe_favorite_id, games, previewState]);
 
-  const selectedTeamId = useMemo(() => {
-    const organization = organizations.find((item) => item.key === selectedOrganization);
-    return organization ? teamIdForOrganization(organization, games) : null;
-  }, [games, organizations, selectedOrganization]);
-
-  const originalGames = useMemo(
-    () => [...(profile?.jeux_suivis ?? [])].sort().join('|'),
-    [profile?.jeux_suivis],
-  );
-  const currentGames = useMemo(() => [...games].sort().join('|'), [games]);
-  const profileDirty = currentGames !== originalGames
-    || selectedTeamId !== profile?.equipe_favorite_id
-    || publicProfile !== (profile?.profil_public !== false);
-  const notificationDirty = notificationSignature(notificationPreferences)
-    !== notificationSignature(savedNotificationPreferences);
-  const dirty = profileDirty || notificationDirty;
-  const canSave = Boolean(
-    session?.user.id
-      && games.length
-      && selectedTeamId
-      && dirty
-      && !loadingTeams
-      && !loadingNotifications
-      && !saving,
-  );
+  const currentOrganization = organizations.find((organization) => organization.key === selectedOrganization) ?? null;
+  const syncStatus = aggregateAutosaveStatus(profileAutosave.status, notificationAutosave.status);
 
   function toggleGame(id: GameId) {
-    setSaved(false);
-    setGames((current) => current.includes(id)
-      ? current.filter((game) => game !== id)
-      : [...current, id]);
+    const nextGames = games.includes(id)
+      ? games.filter((game) => game !== id)
+      : [...games, id];
+    const draft = { ...profileDraftRef.current, games: nextGames };
+    profileDraftRef.current = draft;
+    setGames(nextGames);
+    if (nextGames.length) profileAutosave.commit(draft);
   }
 
-  async function save() {
-    if (!session?.user.id || !selectedTeamId || !canSave) return;
-    setSaving(true);
-    setError(null);
-    setSaved(false);
-    try {
-      const [, nextNotifications] = await Promise.all([
-        profileDirty
-          ? saveProfileSettings(session.user.id, games, selectedTeamId, publicProfile)
-          : Promise.resolve(null),
-        notificationDirty && notificationPreferences
-          ? saveNotificationPreferences(notificationPreferences)
-          : Promise.resolve(null),
-      ]);
-      if (profileDirty) await refreshProfile();
-      if (nextNotifications) {
-        setNotificationPreferences(nextNotifications);
-        setSavedNotificationPreferences(nextNotifications);
-      }
-      setSaved(true);
-    } catch (caught) {
-      setError(settingsError(caught));
-    } finally {
-      setSaving(false);
-    }
+  function toggleVisibility() {
+    const draft = { ...profileDraftRef.current, publicProfile: !profileDraftRef.current.publicProfile };
+    profileDraftRef.current = draft;
+    setPublicProfile(draft.publicProfile);
+    if (draft.games.length) profileAutosave.commit(draft);
   }
 
   function toggleNotification(key: NotificationToggleKey) {
-    setSaved(false);
     setPushMessage(null);
-    setNotificationPreferences((current) => current ? { ...current, [key]: !current[key] } : current);
+    setNotificationPreferences((current) => {
+      if (!current) return current;
+      const next = { ...current, [key]: !current[key] };
+      notificationAutosave.commit(next);
+      return next;
+    });
+  }
+
+  function openTeamConfirmation(organization: TeamOrganization) {
+    if (organization.key === selectedOrganization || teamSaving) return;
+    teamReturnFocusRef.current = teamCardRefs.current.get(organization.key) ?? null;
+    setTeamError(null);
+    setPendingOrganization(organization);
+  }
+
+  function handleCardFocus(key: string) {
+    if (!pointerFocus.current) setFocusedCard(key);
+  }
+
+  function handleCardBlur(key: string) {
+    setFocusedCard((current) => current === key ? null : current);
+  }
+
+  function closeTeamConfirmation() {
+    if (teamSaving) return;
+    setPendingOrganization(null);
+    setTeamError(null);
+  }
+
+  async function confirmTeamChange() {
+    if (!pendingOrganization || !userId || teamSaving) return;
+    const teamId = teamIdForOrganization(pendingOrganization, games);
+    if (!teamId) return;
+    setTeamSaving(true);
+    setTeamError(null);
+    try {
+      if (previewState) await previewSaveDelay(previewState.saveDelayMs);
+      else await saveFavoriteTeam(userId, teamId);
+      setSelectedOrganization(pendingOrganization.key);
+      setPendingOrganization(null);
+      successFeedback();
+      showSnackbar({
+        message: `${pendingOrganization.name} devient ta faction pour les 7 prochains jours.`,
+        tone: 'success',
+      });
+      if (!previewState) void refreshProfile().catch(() => undefined);
+    } catch (caught) {
+      errorFeedback();
+      setTeamError(settingsError(caught));
+    } finally {
+      setTeamSaving(false);
+    }
   }
 
   async function enablePushOnDevice() {
@@ -171,7 +282,6 @@ export default function ProfileSettingsScreen() {
     const result = await requestAndRegisterPushToken();
     if (result.status === 'registered') {
       setNotificationPreferences((current) => current ? { ...current, activeDevices: result.activeDevices } : current);
-      setSavedNotificationPreferences((current) => current ? { ...current, activeDevices: result.activeDevices } : current);
       setPushMessage('APPAREIL ENREGISTRÉ · LES ALERTES GRIFF SONT ACTIVES.');
     } else if (result.status === 'denied') {
       setPushMessage('AUTORISATION REFUSÉE · ACTIVE-LA DANS LES RÉGLAGES DU TÉLÉPHONE.');
@@ -213,21 +323,38 @@ export default function ProfileSettingsScreen() {
           <Text style={styles.subtitle}>Tes choix alimentent le Hub, les matchs proposés et l’identité publique de ton profil.</Text>
         </View>
 
+        <AutosaveIndicator
+          blocked={!games.length}
+          onRetry={() => {
+            if (profileAutosave.status === 'error') profileAutosave.retry();
+            if (notificationAutosave.status === 'error') notificationAutosave.retry();
+          }}
+          status={syncStatus}
+        />
         {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text></View> : null}
-        {saved ? <View style={styles.success}><Text style={styles.successText}>PARAMÈTRES ENREGISTRÉS · TOUT GRIFF EST À JOUR.</Text></View> : null}
 
         <View style={styles.section}>
           <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>01 // JEUX SUIVIS</Text><Text style={styles.sectionTitle}>TES TERRAINS.</Text></View><Text style={styles.sectionMeta}>{games.length}/3</Text></View>
           <View style={styles.gamesGrid}>
             {GAMES.map((game) => {
               const active = games.includes(game.id);
+              const focusKey = `game:${game.id}`;
               return (
                 <Pressable
                   key={game.id}
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: active }}
+                  onBlur={() => handleCardBlur(focusKey)}
+                  onFocus={() => handleCardFocus(focusKey)}
+                  onPointerDown={() => {
+                    pointerFocus.current = true;
+                    setFocusedCard(null);
+                  }}
+                  onPointerUp={() => { pointerFocus.current = false; }}
                   onPress={() => toggleGame(game.id)}
-                  style={({ pressed }) => [styles.gameCard, active && styles.gameCardActive, pressed && styles.pressed]}
+                  onPressIn={() => { pointerFocus.current = true; }}
+                  onPressOut={() => { pointerFocus.current = false; }}
+                  style={({ pressed }) => [styles.gameCard, active && styles.gameCardActive, focusedCard === focusKey && styles.cardFocused, pressed && styles.pressed]}
                 >
                   <View style={[styles.gameMark, { borderColor: game.accent }, active && { backgroundColor: `${game.accent}22` }]}><Text style={[styles.gameCode, { color: game.accent }]}>{game.code}</Text></View>
                   <Text style={styles.gameShort}>{game.short}</Text>
@@ -242,18 +369,33 @@ export default function ProfileSettingsScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>02 // ÉQUIPE FAVORITE</Text><Text style={styles.sectionTitle}>TA COULEUR.</Text></View></View>
-          <Text style={styles.sectionCopy}>Changer de faction est limité à une fois tous les 7 jours.</Text>
+          <Text style={styles.sectionCopy}>Ce choix n’est jamais enregistré automatiquement : une confirmation explicite déclenche le verrouillage de 7 jours.</Text>
           {loadingTeams ? <View style={styles.teamSkeleton} /> : organizations.length ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.teamRail}>
               {organizations.map((organization) => {
                 const active = selectedOrganization === organization.key;
+                const focusKey = `team:${organization.key}`;
                 return (
                   <Pressable
                     key={organization.key}
+                    accessibilityHint={active ? 'Faction actuellement active' : 'Ouvre la confirmation du verrouillage de 7 jours'}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: active }}
-                    onPress={() => { setSelectedOrganization(organization.key); setSaved(false); }}
-                    style={({ pressed }) => [styles.teamCard, active && styles.teamCardActive, pressed && styles.pressed]}
+                    onBlur={() => handleCardBlur(focusKey)}
+                    onFocus={() => handleCardFocus(focusKey)}
+                    onPointerDown={() => {
+                      pointerFocus.current = true;
+                      setFocusedCard(null);
+                    }}
+                    onPointerUp={() => { pointerFocus.current = false; }}
+                    onPress={() => openTeamConfirmation(organization)}
+                    onPressIn={() => { pointerFocus.current = true; }}
+                    onPressOut={() => { pointerFocus.current = false; }}
+                    ref={(node) => {
+                      if (node) teamCardRefs.current.set(organization.key, node);
+                      else teamCardRefs.current.delete(organization.key);
+                    }}
+                    style={({ pressed }) => [styles.teamCard, active && styles.teamCardActive, focusedCard === focusKey && styles.cardFocused, pressed && styles.pressed]}
                   >
                     <View style={[styles.teamMark, active && styles.teamMarkActive]}><Text style={[styles.teamTag, active && styles.teamTagActive]}>{organization.tag.slice(0, 4)}</Text></View>
                     <Text numberOfLines={2} style={styles.teamName}>{organization.name}</Text>
@@ -271,7 +413,7 @@ export default function ProfileSettingsScreen() {
             accessibilityLabel="Profil public"
             accessibilityRole="switch"
             accessibilityState={{ checked: publicProfile }}
-            onPress={() => { setPublicProfile((current) => !current); setSaved(false); }}
+            onPress={toggleVisibility}
             style={({ pressed }) => [styles.visibilityCard, pressed && styles.pressed]}
           >
             <View style={styles.visibilityCopy}><Text style={styles.visibilityTitle}>{publicProfile ? 'PROFIL PUBLIC' : 'PROFIL PRIVÉ'}</Text><Text style={styles.visibilityMeta}>{publicProfile ? 'Les joueurs peuvent ouvrir ton identité GRIFF.' : 'Toi seul peux consulter ton profil complet.'}</Text></View>
@@ -331,11 +473,17 @@ export default function ProfileSettingsScreen() {
           </Pressable>
           {signOutError ? <Text accessibilityLiveRegion="polite" accessibilityRole="alert" style={styles.signOutError}>{signOutError}</Text> : null}
         </View>
-
-        <Pressable accessibilityRole="button" disabled={!canSave} onPress={() => void save()} style={({ pressed }) => [styles.save, !canSave && styles.disabled, pressed && canSave && styles.pressed]}>
-          <Text style={styles.saveText}>{saving ? 'ENREGISTREMENT…' : dirty ? 'ENREGISTRER LES PARAMÈTRES' : 'PARAMÈTRES À JOUR'}</Text><Text style={styles.saveArrow}>{saving ? '·' : '→'}</Text>
-        </Pressable>
       </ScrollView>
+
+      <FavoriteTeamConfirmationSheet
+        busy={teamSaving}
+        currentOrganization={currentOrganization}
+        error={teamError}
+        onClose={closeTeamConfirmation}
+        onConfirm={() => void confirmTeamChange()}
+        organization={pendingOrganization}
+        returnFocusRef={teamReturnFocusRef}
+      />
     </Screen>
   );
 }
@@ -345,6 +493,26 @@ function settingsError(caught: unknown) {
   if (message.includes('Changement de faction bloqué')) return message;
   if (message.toLowerCase().includes('row-level security')) return 'La session ne permet plus de modifier ce profil. Reconnecte-toi puis réessaie.';
   return message || 'Impossible d’enregistrer les paramètres.';
+}
+
+function notificationSettingsError(caught: unknown) {
+  const message = caught instanceof Error ? caught.message : '';
+  return message || 'Les préférences de notification n’ont pas pu être synchronisées.';
+}
+
+function profilePreferencesSignature(value: ProfilePreferencesDraft) {
+  return `${[...value.games].sort().join('|')}::${value.publicProfile}`;
+}
+
+function aggregateAutosaveStatus(...statuses: AutosaveStatus[]): AutosaveStatus {
+  if (statuses.includes('error')) return 'error';
+  if (statuses.includes('saving')) return 'saving';
+  if (statuses.includes('saved')) return 'saved';
+  return 'idle';
+}
+
+async function previewSaveDelay(duration = 520) {
+  await new Promise((resolve) => setTimeout(resolve, duration));
 }
 
 function gameLabel(game: GameId) {
@@ -365,6 +533,69 @@ function notificationSignature(preferences: NotificationPreferences | null) {
     preferences.mutation,
     preferences.duelReceived,
   ].join('|');
+}
+
+function AutosaveIndicator({
+  blocked,
+  onRetry,
+  status,
+}: {
+  blocked: boolean;
+  onRetry: () => void;
+  status: AutosaveStatus;
+}) {
+  const presentation = blocked
+    ? { label: 'CHOISIS AU MOINS UN JEU', tone: 'error' as const }
+    : status === 'error'
+      ? { label: 'ÉCHEC D’ENREGISTREMENT', tone: 'error' as const }
+      : status === 'saving'
+        ? { label: 'ENREGISTREMENT…', tone: 'saving' as const }
+        : status === 'saved'
+          ? { label: 'ENREGISTRÉ', tone: 'saved' as const }
+          : { label: 'ENREGISTREMENT AUTO ACTIF', tone: 'idle' as const };
+  const content = (
+    <>
+      <AutosaveIcon tone={presentation.tone} />
+      <Text numberOfLines={1} style={[styles.syncLabel, presentation.tone === 'error' && styles.syncLabelError]}>{presentation.label}</Text>
+      {presentation.tone === 'error' && !blocked ? <Text style={styles.syncRetry}>RÉESSAYER</Text> : null}
+    </>
+  );
+
+  if (presentation.tone === 'error' && !blocked) {
+    return (
+      <Pressable
+        accessibilityLabel="Synchronisation interrompue, réessayer"
+        accessibilityRole="button"
+        onPress={onRetry}
+        style={({ pressed }) => [styles.syncStatus, styles.syncStatusError, pressed && styles.pressed]}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+
+  return (
+    <View
+      accessibilityLiveRegion="polite"
+      accessible
+      accessibilityLabel={presentation.label}
+      style={[styles.syncStatus, blocked && styles.syncStatusError]}
+    >
+      {content}
+    </View>
+  );
+}
+
+function AutosaveIcon({ tone }: { tone: 'error' | 'idle' | 'saved' | 'saving' }) {
+  const iconProps = { size: 16, strokeWidth: 2.2 };
+  return (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.syncIcon}>
+      {tone === 'error' ? <TriangleAlert {...iconProps} color={colors.danger} /> : null}
+      {tone === 'saving' ? <CloudUpload {...iconProps} color={colors.info} /> : null}
+      {tone === 'saved' ? <CircleCheck {...iconProps} color={colors.success} /> : null}
+      {tone === 'idle' ? <Save {...iconProps} color={colors.textMuted} /> : null}
+    </View>
+  );
 }
 
 function NotificationToggle({
@@ -411,15 +642,21 @@ const styles = StyleSheet.create({
   backText: { ...typography.action, color: colors.text, letterSpacing: .4 },
   headerMark: { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, headerMarkText: { color: '#080A0C', fontSize: 17, fontWeight: '900' },
   intro: { gap: 8 }, eyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.1 }, title: { ...typography.displayMedium, maxWidth: 360, color: colors.text }, subtitle: { ...typography.body, maxWidth: 360, color: colors.textMuted },
+  syncStatus: { minHeight: 44, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 9, borderRadius: radius.md, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderSubtle },
+  syncStatusError: { backgroundColor: '#1A1012', borderColor: '#4A2027' },
+  syncIcon: { width: 18, alignItems: 'center', justifyContent: 'center' },
+  syncLabel: { ...typography.metadata, flex: 1, color: colors.textSecondary, letterSpacing: .25 },
+  syncLabelError: { color: '#FF9AA2' },
+  syncRetry: { ...typography.action, color: colors.volt },
   error: { padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' }, errorText: { ...typography.body, color: '#FF9AA2' },
-  success: { padding: 12, borderRadius: radius.md, backgroundColor: '#0E1C14', borderWidth: 1, borderColor: '#23583A' }, successText: { ...typography.label, color: colors.success, letterSpacing: .3 },
   section: { gap: 12 }, sectionHeading: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }, sectionEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .8 }, sectionTitle: { ...typography.sectionTitle, marginTop: 4, color: colors.text }, sectionMeta: { ...typography.label, color: colors.textMuted }, sectionCopy: { ...typography.body, color: colors.textMuted },
   gamesGrid: { flexDirection: 'row', gap: 8 },
-  gameCard: { flex: 1, minHeight: 170, padding: 11, borderRadius: 21, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, gameCardActive: { backgroundColor: '#11170E', borderColor: '#48541E' },
+  gameCard: { flex: 1, minHeight: 170, padding: 11, borderRadius: 21, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, outlineStyle: 'solid', outlineWidth: 2, outlineColor: 'transparent' }, gameCardActive: { backgroundColor: '#11170E', borderColor: '#48541E' },
   gameMark: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, backgroundColor: '#0A0F14' }, gameCode: { ...typography.cardTitle }, gameShort: { ...typography.bodyStrong, marginTop: 15, color: colors.text }, gameName: { ...typography.caption, marginTop: 3, color: colors.textMuted }, gameState: { ...typography.label, marginTop: 'auto', color: '#65717D', letterSpacing: .3 }, gameStateActive: { color: colors.volt },
   validation: { ...typography.caption, color: '#FF9AA2' },
   teamRail: { gap: 9, paddingRight: spacing.md }, teamSkeleton: { height: 182, borderRadius: 24, backgroundColor: '#10161D' },
-  teamCard: { width: 154, minHeight: 182, padding: 13, borderRadius: 23, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, teamCardActive: { backgroundColor: '#11170E', borderColor: '#48541E' },
+  teamCard: { width: 154, minHeight: 182, padding: 13, borderRadius: 23, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, outlineStyle: 'solid', outlineWidth: 2, outlineColor: 'transparent' }, teamCardActive: { backgroundColor: '#11170E', borderColor: '#48541E' },
+  cardFocused: { outlineColor: colors.focus, outlineOffset: 2 },
   teamMark: { width: 50, height: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111820', borderWidth: 1, borderColor: '#303A43' }, teamMarkActive: { backgroundColor: colors.volt, borderColor: colors.volt }, teamTag: { ...typography.action, color: colors.text }, teamTagActive: { color: '#080A0C' }, teamName: { ...typography.bodyStrong, marginTop: 16, color: colors.text }, teamGames: { ...typography.label, marginTop: 'auto', color: colors.textMuted }, teamGamesActive: { color: colors.volt },
   visibilityCard: { minHeight: 116, padding: 15, flexDirection: 'row', alignItems: 'center', gap: 15, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, visibilityCopy: { flex: 1, minWidth: 0 }, visibilityTitle: { ...typography.cardTitle, color: colors.text }, visibilityMeta: { ...typography.body, marginTop: 5, color: colors.textMuted },
   notificationSkeleton: { height: 390, borderRadius: 24, backgroundColor: '#10161D' },
@@ -446,6 +683,5 @@ const styles = StyleSheet.create({
   logoutArrow: { color: '#FF8B96', fontSize: 18, fontWeight: '900' },
   signOutError: { ...typography.body, color: '#FF9AA2' },
   switchTrack: { width: 52, height: 30, padding: 3, borderRadius: 16, justifyContent: 'center', backgroundColor: '#242D35' }, switchTrackActive: { backgroundColor: colors.volt }, switchThumb: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#75808C' }, switchThumbActive: { alignSelf: 'flex-end', backgroundColor: '#080A0C' },
-  save: { minHeight: 58, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 18, backgroundColor: colors.volt }, saveText: { ...typography.action, color: '#080A0C', letterSpacing: .3 }, saveArrow: { color: '#080A0C', fontSize: 18, fontWeight: '900' },
   disabled: { opacity: 0.42 }, pressed: { opacity: 0.74 },
 });

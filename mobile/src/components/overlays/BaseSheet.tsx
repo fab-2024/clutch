@@ -58,7 +58,6 @@ export function BaseSheet({
   const reduceMotion = useReducedMotion();
   const titleRef = useRef<View>(null);
   const [rendered, setRendered] = useState(visible);
-  const [titleFocused, setTitleFocused] = useState(false);
   const progress = useSharedValue(visible ? 1 : 0);
 
   const finishClose = useCallback(() => {
@@ -142,10 +141,8 @@ export function BaseSheet({
               {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
               <Pressable
                 accessibilityRole="header"
-                onBlur={() => setTitleFocused(false)}
-                onFocus={() => setTitleFocused(true)}
                 ref={titleRef}
-                style={[styles.titleFocusTarget, titleFocused && styles.titleFocused]}
+                style={styles.titleFocusTarget}
                 tabIndex={-1}
               >
                 <Text style={styles.title}>{title}</Text>
@@ -242,13 +239,9 @@ const styles = StyleSheet.create({
   },
   titleFocusTarget: {
     alignSelf: 'flex-start',
-  },
-  titleFocused: {
-    borderRadius: 4,
-    outlineColor: colors.focus,
-    outlineOffset: 2,
+    outlineColor: 'transparent',
     outlineStyle: 'solid',
-    outlineWidth: 2,
+    outlineWidth: 0,
   },
   close: {
     width: layout.minTouchTarget,

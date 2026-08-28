@@ -69,21 +69,31 @@ export async function loadProfileData(pseudo: string): Promise<ProfileData> {
   };
 }
 
-export async function saveProfileSettings(
+export async function saveProfilePreferences(
   userId: string,
   games: GameId[],
-  teamId: string,
   publicProfile: boolean,
 ) {
   const { data, error } = await supabase
     .from('profils')
     .update({
       jeux_suivis: games,
-      equipe_favorite_id: teamId,
       profil_public: publicProfile,
     })
     .eq('id', userId)
-    .select('jeux_suivis,equipe_favorite_id,profil_public')
+    .select('jeux_suivis,profil_public')
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function saveFavoriteTeam(userId: string, teamId: string) {
+  const { data, error } = await supabase
+    .from('profils')
+    .update({ equipe_favorite_id: teamId })
+    .eq('id', userId)
+    .select('equipe_favorite_id')
     .single();
 
   if (error) throw error;
