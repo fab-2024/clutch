@@ -100,28 +100,63 @@ export default function ShopPreviewScreen() {
   if (!previewRoutesEnabled) return <Redirect href="/" />;
   const state = previewState(readParam(params.state));
   const requestedProduct = atelierProductById(readParam(params.product));
+  const defaultProduct = defaultProductForState(state);
   const productId = requestedProduct?.id
-    ?? (state === 'purchase' || state === 'insufficient' || state === 'equip' ? 'material_steel' : undefined);
+    ?? defaultProduct;
   const data = previewDataForState(state);
+  const atelierReveal = isAtelierRevealState(state);
+  const lockerAcquisitionId = state === 'reveal-legendary'
+    ? 'preview-core-eclipse'
+    : state === 'reveal-hub'
+      ? 'preview-frame-volt'
+      : undefined;
 
   return (
     <ShopScreen
       previewAtelierState={{
+        acquisitionProductId: atelierReveal ? productId : undefined,
         error: state === 'error' ? 'Connexion indisponible. La dernière configuration reste visible.' : null,
+        forceReduceMotion: state === 'reveal-reduced',
         loading: state === 'loading',
         productId,
         purchaseOpen: state === 'purchase',
       }}
       previewData={data}
+      previewLockerState={lockerAcquisitionId ? {
+        acquisitionId: lockerAcquisitionId,
+        origin: state === 'reveal-hub' ? 'hub' : 'locker',
+      } : undefined}
       previewProfile={PREVIEW_PROFILE}
     />
   );
 }
 
-type ShopPreviewState = 'default' | 'equip' | 'error' | 'insufficient' | 'loading' | 'purchase';
+type ShopPreviewState =
+  | 'default'
+  | 'equip'
+  | 'error'
+  | 'insufficient'
+  | 'loading'
+  | 'purchase'
+  | 'reveal-epic'
+  | 'reveal-hub'
+  | 'reveal-legendary'
+  | 'reveal-rare'
+  | 'reveal-reduced';
 
 function previewState(value?: string): ShopPreviewState {
-  if (value === 'equip' || value === 'error' || value === 'insufficient' || value === 'loading' || value === 'purchase') {
+  if (
+    value === 'equip'
+    || value === 'error'
+    || value === 'insufficient'
+    || value === 'loading'
+    || value === 'purchase'
+    || value === 'reveal-epic'
+    || value === 'reveal-hub'
+    || value === 'reveal-legendary'
+    || value === 'reveal-rare'
+    || value === 'reveal-reduced'
+  ) {
     return value;
   }
   return 'default';
@@ -137,7 +172,46 @@ function previewDataForState(state: ShopPreviewState): CosmeticShopData {
         : item),
     };
   }
+  const acquisitionId = state === 'reveal-legendary'
+    ? 'preview-core-eclipse'
+    : state === 'reveal-hub'
+      ? 'preview-frame-volt'
+      : isAtelierRevealState(state)
+        ? defaultProductForState(state)
+        : undefined;
+  if (acquisitionId) {
+    const acquired = PREVIEW_SHOP.items.find((item) => item.id === acquisitionId);
+    if (acquired) {
+      return {
+        ...PREVIEW_SHOP,
+        items: PREVIEW_SHOP.items.map((item) => item.slot === acquired.slot
+          ? {
+              ...item,
+              equipped: item.id === acquisitionId,
+              owned: item.owned || item.id === acquisitionId,
+              source: state === 'reveal-hub' && item.id === acquisitionId ? 'mission' : item.source,
+            }
+          : item),
+      };
+    }
+  }
   return PREVIEW_SHOP;
+}
+
+function defaultProductForState(state: ShopPreviewState) {
+  if (state === 'reveal-epic') return 'material_carbon';
+  if (
+    state === 'equip'
+    || state === 'insufficient'
+    || state === 'purchase'
+    || state === 'reveal-rare'
+    || state === 'reveal-reduced'
+  ) return 'material_steel';
+  return undefined;
+}
+
+function isAtelierRevealState(state: ShopPreviewState) {
+  return state === 'reveal-rare' || state === 'reveal-epic' || state === 'reveal-reduced';
 }
 
 function readParam(value?: string | string[]) {

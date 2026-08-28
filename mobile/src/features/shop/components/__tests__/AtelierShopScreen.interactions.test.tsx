@@ -28,7 +28,9 @@ jest.mock('react-native-reanimated', () => {
     default: { View: ReactNative.View },
     cancelAnimation: jest.fn(),
     Easing: { cubic: identity, inOut: () => identity, out: () => identity, quad: identity },
+    Extrapolation: { CLAMP: 'clamp' },
     FadeIn: { duration: () => undefined },
+    interpolate: (_value: number, _input: number[], output: number[]) => output.at(-1) ?? 0,
     runOnJS: (callback: () => void) => callback,
     useAnimatedStyle: (factory: () => object) => factory(),
     useReducedMotion: () => true,
@@ -48,21 +50,30 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 jest.mock('@/src/components/overlays/BaseSheet', () => {
+  const React = jest.requireActual('react');
   const ReactNative = jest.requireActual('react-native');
   return {
-    BaseSheet: ({ children, footer, testID, title, visible }: {
+    BaseSheet: ({ children, footer, onClosed, testID, title, visible }: {
       children: ReactNode;
       footer?: ReactNode;
+      onClosed?: () => void;
       testID?: string;
       title: string;
       visible: boolean;
-    }) => visible ? (
-      <ReactNative.View testID={testID}>
-        <ReactNative.Text accessibilityRole="header">{title}</ReactNative.Text>
-        {children}
-        {footer}
-      </ReactNative.View>
-    ) : null,
+    }) => {
+      const wasVisible = React.useRef(visible);
+      React.useEffect(() => {
+        if (wasVisible.current && !visible) onClosed?.();
+        wasVisible.current = visible;
+      }, [onClosed, visible]);
+      return visible ? (
+        <ReactNative.View testID={testID}>
+          <ReactNative.Text accessibilityRole="header">{title}</ReactNative.Text>
+          {children}
+          {footer}
+        </ReactNative.View>
+      ) : null;
+    },
   };
 });
 jest.mock('@/src/features/profile/components/showcase/ShowcaseRoomScene', () => {
@@ -104,7 +115,7 @@ jest.mock('@/src/providers/SnackbarProvider', () => ({
 }));
 
 describe('AtelierShopScreen interactions', () => {
-  beforeEach(() => mockShowSnackbar.mockClear());
+  beforeEach(() => jest.clearAllMocks());
 
   it('keeps a structured preview in place while the Atelier loads', async () => {
     const screen = await render(
@@ -116,7 +127,7 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.queryByTestId('atelier-scene')).toBeNull();
   });
 
-  it('reviews a purchase before debiting and equips it after confirmation', async () => {
+  it('reviews a rare purchase before debiting then opens its dedicated reveal', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 
     fireEvent.press(screen.getByTestId('atelier-product-material_steel'));
@@ -129,16 +140,41 @@ describe('AtelierShopScreen interactions', () => {
     )).toBeTruthy();
     expect(screen.getByLabelText('1 280 Volts disponibles')).toBeTruthy();
 
-    fireEvent.press(screen.getByTestId('atelier-purchase-confirm'));
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('atelier-purchase-confirm'));
+    });
 
     await waitFor(() => {
       expect(screen.getByLabelText('1 160 Volts disponibles')).toBeTruthy();
       expect(screen.getByLabelText('Acier brossé, configuration active')).toBeTruthy();
-      expect(mockShowSnackbar).toHaveBeenCalledWith({
-        message: 'Acier brossé rejoint ta collection et équipe maintenant ta Vitrine.',
-        tone: 'success',
-      });
+      expect(screen.getByTestId('rare-acquisition-reveal')).toBeTruthy();
+      expect(screen.getByText('SIGNAL RARE')).toBeTruthy();
     });
+    expect(mockShowSnackbar).not.toHaveBeenCalledWith(expect.objectContaining({ tone: 'success' }));
+    expect(jest.requireMock('@/src/lib/feedback').successFeedback).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('rare-acquisition-showcase'));
+    });
+    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/showcase-preview');
+    await waitFor(() => expect(screen.queryByTestId('rare-acquisition-reveal')).toBeNull());
+  });
+
+  it('returns from a preview reveal to the preserved Atelier context', async () => {
+    const screen = await render(
+      <AtelierShopScreen
+        previewData={makeData(1280)}
+        previewState={{ acquisitionProductId: 'material_carbon' }}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('PIÈCE ÉPIQUE')).toBeTruthy());
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('rare-acquisition-continue'));
+    });
+
+    await waitFor(() => expect(screen.queryByTestId('rare-acquisition-reveal')).toBeNull());
+    expect(screen.getByText('CHOISIS UNE FINITION.')).toBeTruthy();
   });
 
   it('applies owned equipment immediately to the live scene', async () => {

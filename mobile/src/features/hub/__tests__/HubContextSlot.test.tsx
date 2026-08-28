@@ -127,6 +127,30 @@ describe('HubContextSlot', () => {
 
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
       pathname: '/shop',
+      params: {
+        acquisitionEvent: 'hub:reward-1:2026-08-28T10:00:00.000Z',
+        acquisitionId: 'reward-1',
+        acquisitionOrigin: 'hub',
+        scope: 'owned',
+      },
+    });
+  });
+
+  it('keeps a common reward on the lightweight collection path', async () => {
+    const screen = await render(
+      <HubContextSlot
+        context={{
+          ...REWARD_CONTEXT,
+          reward: { ...REWARD_CONTEXT.reward, rarity: 'commun' },
+        }}
+        now={NOW}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('hub-context-reward'));
+
+    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
+      pathname: '/shop',
       params: { scope: 'owned' },
     });
   });

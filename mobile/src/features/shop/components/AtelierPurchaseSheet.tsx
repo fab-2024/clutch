@@ -13,6 +13,7 @@ type AtelierPurchaseSheetProps = {
   balance: number;
   error?: string | null;
   onClose: () => void;
+  onClosed?: () => void;
   onConfirm: () => void;
   pending: boolean;
   price: number;
@@ -25,6 +26,7 @@ export function AtelierPurchaseSheet({
   balance,
   error,
   onClose,
+  onClosed,
   onConfirm,
   pending,
   price,
@@ -62,6 +64,7 @@ export function AtelierPurchaseSheet({
         </View>
       ) : null}
       onClose={onClose}
+      onClosed={onClosed}
       returnFocusRef={returnFocusRef}
       size={compactHeight ? 'large' : 'medium'}
       testID="atelier-purchase-sheet"

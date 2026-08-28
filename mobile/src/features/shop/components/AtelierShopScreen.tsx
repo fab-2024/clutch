@@ -55,14 +55,21 @@ import {
   type AtelierPrimaryAction,
   type AtelierTrySelection,
 } from '../atelierState';
+import {
+  createRareAcquisitionEvent,
+  type RareAcquisitionEvent,
+} from '../rareAcquisition';
 import type { CosmeticItem, CosmeticShopData } from '../types';
 import { AtelierPurchaseSheet } from './AtelierPurchaseSheet';
+import { RareAcquisitionReveal } from './RareAcquisitionReveal';
 
 type AtelierDivision = 'showcase' | 'levelFrames';
 type AtelierNotice = { text: string; tone: 'error' | 'info' | 'success' };
 
 export type AtelierPreviewState = {
+  acquisitionProductId?: string;
   error?: string | null;
+  forceReduceMotion?: boolean;
   loading?: boolean;
   productId?: string;
   purchaseOpen?: boolean;
@@ -126,11 +133,14 @@ export default function AtelierShopScreen({
     previewState?.purchaseOpen ? previewProduct?.id ?? null : null,
   );
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [acquisition, setAcquisition] = useState<RareAcquisitionEvent | null>(null);
+  const [pendingAcquisition, setPendingAcquisition] = useState<RareAcquisitionEvent | null>(null);
   const productTrackRef = useRef<ScrollView>(null);
   const purchaseTriggerRef = useRef<View>(null);
   const requestRef = useRef(0);
   const cachedDataRef = useRef<CosmeticShopData | null>(previewData ?? null);
   const cachedProfileRef = useRef<ProfileData | null>(previewProfile ?? null);
+  const previewAcquisitionRef = useRef('');
   const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
   const compactHeight = height < 700;
   const compactWidth = width < 360;
@@ -254,6 +264,16 @@ export default function AtelierShopScreen({
     () => resolveLevelFrameCollection(levelFrameEquipment.variant, ownedLevelFrames),
     [levelFrameEquipment.variant, ownedLevelFrames],
   );
+
+  useEffect(() => {
+    const product = atelierProductById(previewState?.acquisitionProductId);
+    const item = product ? runtimeById.get(product.id) ?? null : null;
+    if (!product || !item) return;
+    const eventKey = `preview:atelier:${product.id}`;
+    if (previewAcquisitionRef.current === eventKey) return;
+    previewAcquisitionRef.current = eventKey;
+    setAcquisition(createRareAcquisitionEvent({ eventKey, item, origin: 'atelier', product }));
+  }, [previewState?.acquisitionProductId, runtimeById]);
 
   function handleDivisionChange(nextDivision: AtelierDivision) {
     selectionFeedback();
@@ -389,18 +409,28 @@ export default function AtelierShopScreen({
     setPendingId(purchaseItem.id);
     setPurchaseError(null);
     try {
-      if (!previewData) await purchaseCosmetic(purchaseItem.id);
+      const mutation = previewData ? null : await purchaseCosmetic(purchaseItem.id);
       const purchased = applyPreviewAtelierAction(data, purchaseItem.id);
       cachedDataRef.current = purchased;
       setData(purchased);
       setTrial((current) => withoutTrialCategory(current, purchaseProduct.category));
       setPurchaseId(null);
       setNotice(null);
-      showSnackbar({
-        message: `${purchaseProduct.name} rejoint ta collection et équipe maintenant ta Vitrine.`,
-        tone: 'success',
+      const reveal = createRareAcquisitionEvent({
+        eventKey: `purchase:atelier:${purchaseItem.id}:${Date.now()}`,
+        item: { ...purchaseItem, owned: true, equipped: true },
+        origin: 'atelier',
+        product: purchaseProduct,
       });
-      successFeedback();
+      if (reveal && (previewData || mutation?.purchased)) {
+        setPendingAcquisition(reveal);
+      } else {
+        showSnackbar({
+          message: `${purchaseProduct.name} rejoint ta collection et équipe maintenant ta Vitrine.`,
+          tone: 'success',
+        });
+        successFeedback();
+      }
       syncAfterMutation(purchased);
     } catch (caught) {
       setPurchaseError(friendlyMutationError(caught, 'Cette acquisition n’a pas pu être finalisée.'));
@@ -414,6 +444,21 @@ export default function AtelierShopScreen({
     if (pendingId === purchaseId) return;
     setPurchaseId(null);
     setPurchaseError(null);
+  }
+
+  function finishPurchaseSheetClose() {
+    if (!pendingAcquisition) return;
+    setAcquisition(pendingAcquisition);
+    setPendingAcquisition(null);
+  }
+
+  function continueAfterAcquisition() {
+    setAcquisition(null);
+  }
+
+  function viewAcquisitionInShowcase() {
+    setAcquisition(null);
+    router.push((previewData ? '/showcase-preview' : '/showcase') as never);
   }
 
   return (
@@ -587,12 +632,20 @@ export default function AtelierShopScreen({
           balance={balance}
           error={purchaseError}
           onClose={closePurchase}
+          onClosed={finishPurchaseSheetClose}
           onConfirm={() => void confirmPurchase()}
           pending={Boolean(purchaseId && pendingId === purchaseId)}
           price={purchaseItem?.price ?? purchaseProduct?.price ?? 0}
           product={purchaseProduct}
           returnFocusRef={purchaseTriggerRef}
           visible={Boolean(purchaseProduct && purchaseItem)}
+        />
+
+        <RareAcquisitionReveal
+          event={acquisition}
+          forceReduceMotion={previewState?.forceReduceMotion}
+          onContinueAtelier={continueAfterAcquisition}
+          onViewShowcase={viewAcquisitionInShowcase}
         />
       </View>
     </Screen>

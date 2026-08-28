@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -46,6 +47,12 @@ import { useSnackbar } from '@/src/providers/SnackbarProvider';
 import { colors, fonts, layout, spacing, typography } from '@/src/theme';
 
 import { equipCosmetic, loadCosmeticShop, purchaseCosmetic } from '../api';
+import {
+  claimRareAcquisitionPresentation,
+  createRareAcquisitionEvent,
+  type RareAcquisitionEvent,
+  type RareAcquisitionOrigin,
+} from '../rareAcquisition';
 import { collectionScopeFromParam, type CollectionScope } from '../scope';
 import type {
   CosmeticItem,
@@ -57,10 +64,18 @@ import type {
 } from '../types';
 import { DEFAULT_MONETIZATION_CONTRACT, IDENTITY_COSMETIC_SLOTS } from '../types';
 import { CosmeticItemPreview, SupporterIdentity } from './CosmeticRenderer';
+import { RareAcquisitionReveal } from './RareAcquisitionReveal';
+
+export type LockerPreviewState = {
+  acquisitionId?: string;
+  forceReduceMotion?: boolean;
+  origin?: RareAcquisitionOrigin;
+};
 
 export type LockerScreenProps = {
   previewData?: CosmeticShopData;
   previewProfile?: ProfileData;
+  previewState?: LockerPreviewState;
 };
 
 type LockerTab = IdentityCosmeticSlot | 'showcase_ring' | 'achievement_badge' | 'level_frame';
@@ -94,8 +109,11 @@ const LEVEL_FRAME_TAB_META = {
   short: 'CADRES DE NIVEAU',
 } as const;
 
-export default function LockerScreen({ previewData, previewProfile }: LockerScreenProps) {
+export default function LockerScreen({ previewData, previewProfile, previewState }: LockerScreenProps) {
   const params = useLocalSearchParams<{
+    acquisitionEvent?: string | string[];
+    acquisitionId?: string | string[];
+    acquisitionOrigin?: string | string[];
     badge?: string | string[];
     badgeFilter?: string | string[];
     scope?: string | string[];
@@ -105,6 +123,8 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
   const requestedTab = collectionTabFromParam(params.tab);
   const requestedBadgeFilter = badgeFilterFromParam(params.badgeFilter);
   const requestedBadgeId = badgeIdFromParam(params.badge);
+  const previewAcquisitionId = previewState?.acquisitionId;
+  const previewAcquisitionOrigin = previewState?.origin;
   const { profile, session } = useAuth();
   const { refresh: refreshEconomy } = useEconomy();
   const { refresh: refreshCosmetics } = useCosmetics();
@@ -127,10 +147,12 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(!previewProfile);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [acquisition, setAcquisition] = useState<RareAcquisitionEvent | null>(null);
   const requestRef = useRef(0);
   const profileRequestRef = useRef(0);
   const cachedDataRef = useRef<CosmeticShopData | null>(previewData ?? null);
   const collectionEventRef = useRef('');
+  const acquisitionEventRef = useRef('');
 
   const ringEquipment = useShowcaseRingEquipment(
     previewData ? `preview-${pseudo}` : pseudo,
@@ -311,6 +333,42 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
       .sort((a, b) => Number(b.equipped) - Number(a.equipped) || Number(b.owned) - Number(a.owned) || a.level - b.level);
   }, [activeSlot, collectionFilter, data?.items, rarityFilter, scope, teamFilter]);
 
+  useEffect(() => {
+    if (loading || !data) return;
+    const acquisitionId = previewAcquisitionId ?? readParam(params.acquisitionId);
+    if (!acquisitionId) return;
+    const eventKey = previewAcquisitionId
+      ? `preview:${previewAcquisitionOrigin ?? 'locker'}:${acquisitionId}`
+      : readParam(params.acquisitionEvent) ?? `route:${acquisitionId}`;
+    if (acquisitionEventRef.current === eventKey) return;
+    acquisitionEventRef.current = eventKey;
+
+    if (!previewAcquisitionId) {
+      consumeAcquisitionRouteParams();
+    }
+
+    const item = data.items.find((candidate) => candidate.id === acquisitionId);
+    if (!item) return;
+    const originParam = readParam(params.acquisitionOrigin);
+    const origin: RareAcquisitionOrigin = previewAcquisitionOrigin
+      ?? (originParam === 'hub' ? 'hub' : 'locker');
+    const reveal = createRareAcquisitionEvent({ eventKey, item, origin });
+    if (!reveal) return;
+    if (!previewAcquisitionId && !claimRareAcquisitionPresentation(eventKey)) return;
+    setSelectedId(null);
+    setScope('owned');
+    if (isIdentityCosmeticItem(item)) setSlot(item.slot);
+    setAcquisition(reveal);
+  }, [
+    data,
+    loading,
+    params.acquisitionEvent,
+    params.acquisitionId,
+    params.acquisitionOrigin,
+    previewAcquisitionId,
+    previewAcquisitionOrigin,
+  ]);
+
   async function handleRingEquip(family: ShowcaseRingFamily | null) {
     const previousFamily = ringEquipment.family;
     try {
@@ -443,6 +501,7 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
     }
 
     const target = fallback ?? item;
+    const purchasing = !item.owned;
     const previousData = data;
     const previousItem = data.items.find((candidate) => candidate.slot === item.slot && candidate.equipped) ?? null;
     setPendingId(item.id);
@@ -454,13 +513,24 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
         const next = applyPreviewAction(data, item, target);
         cachedDataRef.current = next;
         setData(next);
-        showEquipmentResult(
-          fallback ? `${item.name} a été retiré.` : `${item.name} est maintenant équipé.`,
-          item.owned && previousItem && previousItem.id !== target.id ? {
-            label: previousItem.name,
-            run: () => undoIdentityEquip(previousData, next, previousItem),
-          } : undefined,
-        );
+        const acquiredItem = next.items.find((candidate) => candidate.id === item.id) ?? item;
+        const reveal = purchasing ? createRareAcquisitionEvent({
+          eventKey: `purchase:locker:${item.id}:${Date.now()}`,
+          item: acquiredItem,
+          origin: 'locker',
+        }) : null;
+        if (reveal) {
+          setSelectedId(null);
+          setAcquisition(reveal);
+        } else {
+          showEquipmentResult(
+            fallback ? `${item.name} a été retiré.` : `${item.name} est maintenant équipé.`,
+            item.owned && previousItem && previousItem.id !== target.id ? {
+              label: previousItem.name,
+              run: () => undoIdentityEquip(previousData, next, previousItem),
+            } : undefined,
+          );
+        }
       } else {
         if (!item.owned) {
           void trackAnalyticsEvent({
@@ -479,17 +549,28 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
         cachedDataRef.current = next;
         setData(next);
         setOffline(false);
-        showEquipmentResult(
-          fallback
-            ? `${item.name} a été retiré.`
-            : mutation.purchased
-              ? `${item.name} rejoint ta collection.`
-              : `${item.name} est maintenant équipé.`,
-          !mutation.purchased && previousItem && previousItem.id !== target.id ? {
-            label: previousItem.name,
-            run: () => undoIdentityEquip(previousData, next, previousItem),
-          } : undefined,
-        );
+        const acquiredItem = next.items.find((candidate) => candidate.id === item.id) ?? item;
+        const reveal = mutation.purchased ? createRareAcquisitionEvent({
+          eventKey: `purchase:locker:${mutation.itemId}:${Date.now()}`,
+          item: acquiredItem,
+          origin: 'locker',
+        }) : null;
+        if (reveal) {
+          setSelectedId(null);
+          setAcquisition(reveal);
+        } else {
+          showEquipmentResult(
+            fallback
+              ? `${item.name} a été retiré.`
+              : mutation.purchased
+                ? `${item.name} rejoint ta collection.`
+                : `${item.name} est maintenant équipé.`,
+            !mutation.purchased && previousItem && previousItem.id !== target.id ? {
+              label: previousItem.name,
+              run: () => undoIdentityEquip(previousData, next, previousItem),
+            } : undefined,
+          );
+        }
       }
     } catch (caught) {
       const detail = caught instanceof Error ? caught.message : 'Cette action n’a pas pu être réalisée.';
@@ -533,6 +614,16 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
     } finally {
       if (requestId === requestRef.current) setPendingId(null);
     }
+  }
+
+  function continueAfterAcquisition() {
+    setAcquisition(null);
+    router.replace((previewData ? '/shop-preview' : '/shop') as never);
+  }
+
+  function viewAcquisitionInShowcase() {
+    setAcquisition(null);
+    router.push((previewData ? '/showcase-preview' : '/showcase') as never);
   }
 
   return (
@@ -695,6 +786,13 @@ export default function LockerScreen({ previewData, previewProfile }: LockerScre
           ) : null}
         </View>
       </Modal>
+
+      <RareAcquisitionReveal
+        event={acquisition}
+        forceReduceMotion={previewState?.forceReduceMotion}
+        onContinueAtelier={continueAfterAcquisition}
+        onViewShowcase={viewAcquisitionInShowcase}
+      />
     </Screen>
   );
 }
@@ -817,6 +915,26 @@ function collectionTabFromParam(value?: string | string[]): 'showcase_ring' | 'a
 function badgeIdFromParam(value?: string | string[]): BadgeId | null {
   const normalized = Array.isArray(value) ? value[0] : value;
   return BADGE_IDS.includes(normalized as BadgeId) ? normalized as BadgeId : null;
+}
+
+function readParam(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function consumeAcquisitionRouteParams() {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('acquisitionEvent');
+    url.searchParams.delete('acquisitionId');
+    url.searchParams.delete('acquisitionOrigin');
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+    return;
+  }
+  router.setParams({
+    acquisitionEvent: '',
+    acquisitionId: '',
+    acquisitionOrigin: '',
+  });
 }
 
 function isIdentityTab(value: LockerTab): value is IdentityCosmeticSlot {

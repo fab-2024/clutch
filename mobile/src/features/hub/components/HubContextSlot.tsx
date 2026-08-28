@@ -179,7 +179,9 @@ function rewardPresentation(reward: HubReward, now: number): ContextPresentation
     description: `${category} · ${rewardSource(reward.source)}`,
     eyebrow: 'NOUVELLE RÉCOMPENSE',
     footer: formatPastTime(reward.acquiredAt, now),
-    hint: 'Ouvre ta collection dans l’Atelier',
+    hint: isRewardRevealRarity(reward.rarity)
+      ? 'Ouvre la révélation de cette récompense puis ta collection'
+      : 'Ouvre ta collection dans l’Atelier',
     Icon: Sparkles,
     metric: rarity,
     metricLabel: 'OBTENU',
@@ -206,7 +208,18 @@ function openContext(context: HubContextItem) {
     router.push('/(tabs)/social/missions');
     return;
   }
-  router.push({ pathname: '/shop', params: { scope: 'owned' } });
+  const { reward } = context;
+  router.push({
+    pathname: '/shop',
+    params: isRewardRevealRarity(reward.rarity)
+      ? {
+          acquisitionEvent: `hub:${reward.id}:${reward.acquiredAt}`,
+          acquisitionId: reward.id,
+          acquisitionOrigin: 'hub',
+          scope: 'owned',
+        }
+      : { scope: 'owned' },
+  });
 }
 
 function formatPastTime(value: string, now: number) {
@@ -247,6 +260,10 @@ function rewardSource(source: string) {
   if (source === 'founder_pack') return 'Founder Pack';
   if (source === 'partenaire') return 'Activation partenaire';
   return humanize(source || 'Collection GRIFF');
+}
+
+function isRewardRevealRarity(rarity: string) {
+  return rarity === 'rare' || rarity === 'epique' || rarity === 'legendaire';
 }
 
 function gameLabel(game: string) {
