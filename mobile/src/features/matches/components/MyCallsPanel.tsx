@@ -10,6 +10,7 @@ import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, fonts, radius, typography } from '@/src/theme';
 
+import { openMatchCenter, warmMatchCenter, type MatchCenterTarget } from '../matchCenterNavigation';
 import type { MyCallItem, MyCallsDashboard, MyCallState } from '../types';
 import { gameLabel } from '../utils';
 
@@ -19,6 +20,7 @@ type Props = {
   dashboard: MyCallsDashboard;
   followedGames: string[];
   game: GameFilter;
+  onPrepareMatch?: (match: MatchCenterTarget) => void;
   query: string;
 };
 
@@ -36,7 +38,7 @@ const INITIAL_VISIBLE: Record<MyCallState, number> = {
   manque: CALL_PAGE_SIZE,
 };
 
-export function MyCallsPanel({ dashboard, followedGames, game, query }: Props) {
+export function MyCallsPanel({ dashboard, followedGames, game, onPrepareMatch, query }: Props) {
   const { profile, session } = useAuth();
   const { equipped } = useCosmetics();
   const initialState = dashboard.verrouilles.length
@@ -94,7 +96,7 @@ export function MyCallsPanel({ dashboard, followedGames, game, query }: Props) {
 
       {calls.length ? (
         <View style={styles.list}>
-          {visibleCalls.map((call) => <CallCard call={call} key={call.id} />)}
+          {visibleCalls.map((call) => <CallCard call={call} key={call.id} onPrepareMatch={onPrepareMatch} />)}
           {hiddenCount ? (
             <Pressable
               accessibilityLabel={`Afficher ${Math.min(CALL_PAGE_SIZE, hiddenCount)} calls supplémentaires`}
@@ -121,7 +123,7 @@ export function MyCallsPanel({ dashboard, followedGames, game, query }: Props) {
   );
 }
 
-function CallCard({ call }: { call: MyCallItem }) {
+function CallCard({ call, onPrepareMatch }: { call: MyCallItem; onPrepareMatch?: (match: MatchCenterTarget) => void }) {
   const selectedTag = call.choix === 'a' ? call.tag_a : call.choix === 'b' ? call.tag_b : null;
   const resolved = call.etat === 'reussi' || call.etat === 'manque';
   const won = call.etat === 'reussi';
@@ -131,13 +133,24 @@ function CallCard({ call }: { call: MyCallItem }) {
     : resolved
       ? 'REVOIR LE VERDICT'
       : 'OUVRIR LE MATCH CENTER';
+  const matchTarget = {
+    equipe_a: call.equipe_a,
+    equipe_b: call.equipe_b,
+    id: call.match_id,
+  };
+  const prepare = () => {
+    if (resolved) return;
+    if (onPrepareMatch) onPrepareMatch(matchTarget);
+    else warmMatchCenter(matchTarget);
+  };
 
   function open() {
     if (resolved) {
       router.push({ pathname: '/result/[id]', params: { id: call.match_id } });
       return;
     }
-    router.push({ pathname: '/match/[id]', params: { id: call.match_id } });
+    prepare();
+    openMatchCenter(matchTarget);
   }
 
   return (
@@ -145,6 +158,7 @@ function CallCard({ call }: { call: MyCallItem }) {
       accessibilityLabel={`${call.equipe_a} contre ${call.equipe_b}, ${stateLabel(call.etat)}`}
       accessibilityRole="button"
       onPress={open}
+      onPressIn={prepare}
       style={({ pressed }) => [styles.card, { borderColor: `${accent}45` }, pressed && styles.pressed]}
     >
       <View style={styles.cardTop}>

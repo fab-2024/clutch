@@ -18,6 +18,7 @@ import { MATCH_PLATE_OUTWARD_SHIFT } from './matchConfrontationLayout';
 type MatchConfrontationCardProps = {
   match: HubMatch;
   onPress: () => void;
+  onPressIn?: () => void;
   reduceMotion: boolean;
   state: MatchConfrontationState;
 };
@@ -25,7 +26,7 @@ type MatchConfrontationCardProps = {
 const CARD_ASPECT_RATIO = 1.43;
 const CARD_SIDE_INSET = spacing.sm;
 
-export function MatchConfrontationCard({ match, onPress, reduceMotion, state }: MatchConfrontationCardProps) {
+export function MatchConfrontationCard({ match, onPress, onPressIn, reduceMotion, state }: MatchConfrontationCardProps) {
   const { width } = useWindowDimensions();
   const compact = width < 360;
   const cardWidth = Math.max(288, Math.min(width, layout.contentMaxWidth) - CARD_SIDE_INSET * 2);
@@ -51,6 +52,7 @@ export function MatchConfrontationCard({ match, onPress, reduceMotion, state }: 
         accessibilityLabel={`${state.teamA.name} contre ${state.teamB.name}, ${state.status}${scoreCopy}`}
         accessibilityRole="button"
         onPress={onPress}
+        onPressIn={onPressIn}
         style={({ pressed }) => [styles.ticketSurface, pressed && styles.pressed]}
         testID="match-confrontation-card"
       >

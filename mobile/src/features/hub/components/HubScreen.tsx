@@ -20,6 +20,8 @@ import { Screen } from '@/src/components/layout/Screen';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
+import { prefetchMatchCenterData } from '@/src/features/matches/matchCenterCache';
+import { openMatchCenter, warmMatchCenter } from '@/src/features/matches/matchCenterNavigation';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
@@ -89,6 +91,7 @@ export default function HomeScreen() {
       hub={hub}
       loading={loading}
       refreshing={refreshing}
+      userId={session?.user.id}
       onRefresh={() => void load(true)}
       onRetry={() => void load()}
     />
@@ -103,6 +106,7 @@ type HubExperienceProps = {
   refreshing: boolean;
   onRefresh: () => void;
   onRetry: () => void;
+  userId?: string;
 };
 
 export function HubExperience({
@@ -113,6 +117,7 @@ export function HubExperience({
   refreshing,
   onRefresh,
   onRetry,
+  userId,
 }: HubExperienceProps) {
   const reduceMotion = useReducedMotion();
   const entrance = (delay: number) => reduceMotion ? undefined : FadeInDown.delay(delay).duration(420);
@@ -153,7 +158,7 @@ export function HubExperience({
         ) : null}
 
         <Animated.View entering={entrance(90)}>
-          {loading ? <HeroSkeleton /> : hub.nextMatch ? <MatchHero match={hub.nextMatch} prediction={hub.nextMatchPrediction} reduceMotion={reduceMotion} /> : <EmptyHero />}
+          {loading ? <HeroSkeleton /> : hub.nextMatch ? <MatchHero match={hub.nextMatch} prediction={hub.nextMatchPrediction} reduceMotion={reduceMotion} userId={userId} /> : <EmptyHero />}
         </Animated.View>
 
         {loading || contextualItem ? (
@@ -168,7 +173,7 @@ export function HubExperience({
 
         {!loading && hub.upNext.length ? (
           <Animated.View entering={entrance(270)}>
-            <UpNext matches={hub.upNext} />
+            <UpNext matches={hub.upNext} userId={userId} />
           </Animated.View>
         ) : null}
       </ScrollView>
@@ -176,18 +181,25 @@ export function HubExperience({
   );
 }
 
-function MatchHero({ match, prediction, reduceMotion }: { match: HubMatch; prediction: HubPrediction | null; reduceMotion: boolean }) {
+function MatchHero({ match, prediction, reduceMotion, userId }: { match: HubMatch; prediction: HubPrediction | null; reduceMotion: boolean; userId?: string }) {
   const confrontation = getMatchConfrontationState(match, prediction);
   const callLocked = Boolean(confrontation.predictionTag);
+  const prepare = useCallback(() => prepareMatchCenter(match, userId), [match, userId]);
+  const open = useCallback(() => openMatchCenter(match), [match]);
+
+  useEffect(() => {
+    prepare();
+  }, [prepare]);
 
   return (
     <View style={styles.matchFeature}>
-      <MatchConfrontationCard match={match} onPress={() => openMatch(match.id)} reduceMotion={reduceMotion} state={confrontation} />
+      <MatchConfrontationCard match={match} onPress={open} onPressIn={prepare} reduceMotion={reduceMotion} state={confrontation} />
 
       <Pressable
         accessibilityLabel={confrontation.action}
         accessibilityRole="button"
-        onPress={() => openMatch(match.id)}
+        onPress={open}
+        onPressIn={prepare}
         style={({ pressed }) => [styles.callAction, callLocked && styles.callActionLocked, pressed && styles.pressed]}
       >
         <Text style={[styles.callActionText, callLocked && styles.callActionTextLocked]}>{confrontation.action}</Text>
@@ -197,7 +209,7 @@ function MatchHero({ match, prediction, reduceMotion }: { match: HubMatch; predi
   );
 }
 
-function UpNext({ matches }: { matches: HubMatch[] }) {
+function UpNext({ matches, userId }: { matches: HubMatch[]; userId?: string }) {
   const { width } = useWindowDimensions();
   const dots = Math.min(matches.length, 4);
   const cardWidth = Math.min(310, Math.max(276, width - spacing.md * 2));
@@ -208,14 +220,14 @@ function UpNext({ matches }: { matches: HubMatch[] }) {
         <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/matches')}><Text style={styles.sectionLink}>TOUT VOIR →</Text></Pressable>
       </View>
       <ScrollView horizontal contentContainerStyle={styles.upNextRail} showsHorizontalScrollIndicator={false}>
-        {matches.map((match) => <UpNextMatchCard cardWidth={cardWidth} key={match.id} match={match} />)}
+        {matches.map((match) => <UpNextMatchCard cardWidth={cardWidth} key={match.id} match={match} userId={userId} />)}
       </ScrollView>
       {dots > 1 ? <View style={styles.railDots}>{Array.from({ length: dots }, (_, index) => <View key={index} style={[styles.railDot, index === 0 && styles.railDotActive]} />)}</View> : null}
     </View>
   );
 }
 
-function UpNextMatchCard({ cardWidth, match }: { cardWidth: number; match: HubMatch }) {
+function UpNextMatchCard({ cardWidth, match, userId }: { cardWidth: number; match: HubMatch; userId?: string }) {
   const confrontation = getMatchConfrontationState(match, null);
   const cardHeight = Math.round(cardWidth / 1.78);
   const logoSize = Math.round(cardWidth * .28);
@@ -226,7 +238,8 @@ function UpNextMatchCard({ cardWidth, match }: { cardWidth: number; match: HubMa
     <Pressable
       accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}, ${formatMatchSchedule(match.debut)}`}
       accessibilityRole="button"
-      onPress={() => openMatch(match.id)}
+      onPress={() => openMatchCenter(match)}
+      onPressIn={() => prepareMatchCenter(match, userId)}
       style={({ pressed }) => [styles.upNextCard, { height: cardHeight, width: cardWidth }, pressed && styles.pressed]}
     >
       <Image resizeMode="cover" source={GAME_BACKGROUNDS[gameKey(match.jeu)]} style={styles.upNextBackdrop} />
@@ -346,7 +359,12 @@ function HeroSkeleton() {
 }
 
 function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
-function openMatch(id: string) { router.push({ pathname: '/match/[id]', params: { id } }); }
+function prepareMatchCenter(match: HubMatch, userId?: string) {
+  warmMatchCenter(match);
+  if (userId) {
+    void prefetchMatchCenterData({ matchId: match.id, userId }).catch(() => undefined);
+  }
+}
 function gameKey(game: string): HubGame {
   const key = String(game || '').toLowerCase();
   if (key.includes('valorant')) return 'valorant';

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { loadMatchCenter } from '../api';
+import { loadCachedMatchCenter, peekMatchCenterData } from '../matchCenterCache';
 import type { MatchCenterData } from '../types';
 
 type Options = {
@@ -11,8 +11,11 @@ type Options = {
 };
 
 export function useMatchCenterData({ matchId, onResolved, previewData, userId }: Options) {
-  const [data, setData] = useState<MatchCenterData | null>(previewData ?? null);
-  const [loading, setLoading] = useState(!previewData);
+  const initialCachedData = !previewData && matchId && userId
+    ? peekMatchCenterData({ matchId, userId })
+    : null;
+  const [data, setData] = useState<MatchCenterData | null>(previewData ?? initialCachedData);
+  const [loading, setLoading] = useState(!previewData && !initialCachedData);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestRef = useRef(0);
@@ -31,11 +34,21 @@ export function useMatchCenterData({ matchId, onResolved, previewData, userId }:
       return;
     }
     const requestId = ++requestRef.current;
-    if (refresh) setRefreshing(true);
-    else setLoading(true);
+    const cachedData = refresh ? null : peekMatchCenterData({ matchId, userId });
+    if (cachedData) {
+      setData(cachedData);
+      setLoading(false);
+    } else if (refresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
     try {
-      const nextData = await loadMatchCenter(matchId);
+      const nextData = await loadCachedMatchCenter(
+        { matchId, userId },
+        { force: refresh },
+      );
       if (requestId !== requestRef.current) return;
       setData(nextData);
       if (nextData.prediction?.statut === 'gagne' || nextData.prediction?.statut === 'perdu') {
@@ -54,10 +67,14 @@ export function useMatchCenterData({ matchId, onResolved, previewData, userId }:
   }, [matchId, onResolved, previewData, userId]);
 
   useEffect(() => {
-    setData(previewData ?? null);
+    const cachedData = !previewData && matchId && userId
+      ? peekMatchCenterData({ matchId, userId })
+      : null;
+    setData(previewData ?? cachedData);
+    setLoading(!previewData && !cachedData);
     void load();
     return () => { requestRef.current += 1; };
-  }, [load, previewData]);
+  }, [load, matchId, previewData, userId]);
 
   return { data, error, load, loading, refreshing };
 }

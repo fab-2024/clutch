@@ -25,3 +25,7 @@ export const TEAM_LOGOS: Record<string, string> = {
   'Team Vitality': 'https://static.cdnlogo.com/logos/t/89/team-vitality.svg',
   'Virtus.pro': 'https://www.google.com/s2/favicons?domain=virtus.pro&sz=256',
 };
+
+export function resolveTeamLogoUri(name: string, uri?: string | null) {
+  return uri || TEAM_LOGOS[name] || null;
+}

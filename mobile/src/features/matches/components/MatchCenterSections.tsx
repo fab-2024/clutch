@@ -9,6 +9,7 @@ import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { colors } from '@/src/theme';
 
+import { warmMatchCenter } from '../matchCenterNavigation';
 import type { ArenaMatch, MatchCenterData, MatchProjection, ProjectionChoice } from '../types';
 import { formatPredictionCountdown, gameLabel, matchPhase } from '../utils';
 import { styles } from './MatchCenterScreen.styles';
@@ -366,6 +367,7 @@ export function RelatedMatches({ matches }: { matches: ArenaMatch[] }) {
             accessibilityRole="button"
             key={match.id}
             onPress={() => router.replace({ pathname: '/match/[id]', params: { id: match.id } })}
+            onPressIn={() => warmMatchCenter(match)}
             style={({ pressed }) => [styles.relatedCard, pressed && styles.pressed]}
           >
             <View style={styles.relatedTop}>

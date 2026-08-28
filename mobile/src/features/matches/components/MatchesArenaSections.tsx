@@ -15,6 +15,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import GameLogo from '@/src/features/onboarding/components/GameLogo';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import type { GameId } from '@/src/features/onboarding/types';
+import { openMatchCenter, warmMatchCenter, type MatchCenterTarget } from '../matchCenterNavigation';
 import type { ArenaMatch } from '../types';
 import { gameKey, gameLabel, matchPhase, predictionIsOpen } from '../utils';
 import { styles } from './MatchesScreen.styles';
@@ -233,11 +234,12 @@ export function SectionHead({ callsOnly, count, date, status }: { callsOnly: boo
   );
 }
 
-export function LiveMatchCard({ match, rivalId, rivalPseudo }: { match: ArenaMatch; rivalId?: string; rivalPseudo?: string }) {
+export function LiveMatchCard({ match, onPrepareMatch, rivalId, rivalPseudo }: { match: ArenaMatch; onPrepareMatch?: (match: MatchCenterTarget) => void; rivalId?: string; rivalPseudo?: string }) {
   const game = toGameId(match.jeu) ?? 'lol';
   const callTag = predictionTag(match);
+  const prepare = () => onPrepareMatch ? onPrepareMatch(match) : warmMatchCenter(match);
   return (
-    <Pressable accessibilityHint="Ouvre le Match Center" accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}, en direct`} accessibilityRole="button" onPress={() => openMatch(match.id, rivalId, rivalPseudo)} style={({ pressed }) => [styles.liveCard, pressed && styles.pressed]}>
+    <Pressable accessibilityHint="Ouvre le Match Center" accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}, en direct`} accessibilityRole="button" onPress={() => { prepare(); openMatchCenter(match, { rivalId, rivalPseudo }); }} onPressIn={prepare} style={({ pressed }) => [styles.liveCard, pressed && styles.pressed]}>
       <Image resizeMode="cover" source={GAME_BACKGROUNDS[game]} style={styles.liveBackdrop} />
       <LinearGradient colors={['rgba(3,6,9,.25)', 'rgba(3,6,9,.73)', 'rgba(3,6,9,.98)']} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
       <View style={styles.liveTop}>
@@ -258,15 +260,16 @@ function LiveTeam({ accent, name, tag }: { accent: string; name: string; tag: st
   return <View style={styles.liveTeam}><TeamLogo accent={accent} name={name} size={56} tag={tag} /><Text numberOfLines={1} style={styles.liveTeamTag}>{tag}</Text></View>;
 }
 
-export function MatchRow({ match, rivalId, rivalPseudo }: { match: ArenaMatch; rivalId?: string; rivalPseudo?: string }) {
+export function MatchRow({ match, onPrepareMatch, rivalId, rivalPseudo }: { match: ArenaMatch; onPrepareMatch?: (match: MatchCenterTarget) => void; rivalId?: string; rivalPseudo?: string }) {
   const phase = matchPhase(match);
   const finished = phase === 'finished';
   const callTag = predictionTag(match);
   const verdict = predictionVerdict(match);
   const open = predictionIsOpen(match);
   const state = verdict || (callTag ? `CALL · ${callTag}` : finished ? 'FINAL' : open ? 'OUVERT' : 'CLOS');
+  const prepare = () => onPrepareMatch ? onPrepareMatch(match) : warmMatchCenter(match);
   return (
-    <Pressable accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}${callTag ? `, ton call ${callTag}` : ''}`} accessibilityRole="button" onPress={() => openMatch(match.id, rivalId, rivalPseudo)} style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}>
+    <Pressable accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}${callTag ? `, ton call ${callTag}` : ''}`} accessibilityRole="button" onPress={() => { prepare(); openMatchCenter(match, { rivalId, rivalPseudo }); }} onPressIn={prepare} style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}>
       <View style={styles.rowWhen}><Text style={styles.rowTime}>{finished ? 'FINAL' : formatTime(match.debut)}</Text><Text style={styles.rowGame}>{gameLabel(match.jeu)}</Text></View>
       <View style={styles.rowLogos}><TeamLogo accent="#5BABFF" name={match.equipe_a} size={34} tag={match.tag_a} /><View style={styles.rowLogoOverlap}><TeamLogo accent="#FF6375" name={match.equipe_b} size={34} tag={match.tag_b} /></View></View>
       <View style={styles.rowMain}><Text numberOfLines={1} style={styles.rowEvent}>{match.evenement} · BO{match.format}</Text><Text numberOfLines={1} style={styles.rowTeams}>{match.tag_a}  {finished ? `${match.score_a ?? 0} — ${match.score_b ?? 0}` : 'VS'}  {match.tag_b}</Text></View>
@@ -405,11 +408,4 @@ function predictionVerdict(match: ArenaMatch) {
   if (!prediction || (prediction.statut !== 'gagne' && prediction.statut !== 'perdu')) return null;
   const delta = Number(prediction.delta_frags ?? 0);
   return `${delta >= 0 ? '+' : '−'}${Math.abs(delta)} FRAGS`;
-}
-
-function openMatch(id: string, rivalId?: string, rivalPseudo?: string) {
-  router.push({
-    pathname: '/match/[id]',
-    params: rivalId ? { id, duelRivalId: rivalId, duelRivalPseudo: rivalPseudo ?? '' } : { id },
-  });
 }

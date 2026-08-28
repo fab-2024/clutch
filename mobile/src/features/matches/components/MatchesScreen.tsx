@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Pressable,
   RefreshControl,
@@ -13,6 +13,8 @@ import { Screen } from '@/src/components/layout/Screen';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors } from '@/src/theme';
 
+import { prefetchMatchCenterData } from '../matchCenterCache';
+import { warmMatchCenter, type MatchCenterTarget } from '../matchCenterNavigation';
 import type { ArenaMatch, MyCallsDashboard } from '../types';
 import { useMatchesDashboard } from '../hooks/useMatchesDashboard';
 import { matchPhase } from '../utils';
@@ -47,6 +49,7 @@ type MatchesExperienceProps = {
   onRetry: () => void;
   refreshing: boolean;
   upcoming: ArenaMatch[];
+  userId?: string;
   calls: MyCallsDashboard;
 };
 
@@ -68,6 +71,7 @@ export default function MatchesScreen() {
       onRetry={() => void load()}
       refreshing={refreshing}
       upcoming={upcoming}
+      userId={session?.user.id}
     />
   );
 }
@@ -84,6 +88,7 @@ export function MatchesExperience({
   onRetry,
   refreshing,
   upcoming,
+  userId,
 }: MatchesExperienceProps) {
   const reduceMotion = useReducedMotion();
   const params = useLocalSearchParams<{
@@ -134,6 +139,12 @@ export function MatchesExperience({
   const standardMatches = visibleMatches.filter((match) => matchPhase(match) !== 'live');
   const activeDate = calendarDays.find((day) => dateKey(day) === activeDayKey) ?? calendarDays[0];
   const entrance = (delay: number) => reduceMotion ? undefined : FadeInDown.delay(delay).duration(380);
+  const prepareMatch = useCallback((match: MatchCenterTarget) => {
+    warmMatchCenter(match);
+    if (userId) {
+      void prefetchMatchCenterData({ matchId: match.id, userId }).catch(() => undefined);
+    }
+  }, [userId]);
 
   function changeStatus(nextStatus: StatusFilter) {
     setStatus(nextStatus);
@@ -208,19 +219,19 @@ export function MatchesExperience({
           <MatchSkeleton />
         ) : callsOnly ? (
           <Animated.View entering={entrance(150)}>
-            <MyCallsPanel dashboard={calls} followedGames={followedGames} game={game} query={query} />
+            <MyCallsPanel dashboard={calls} followedGames={followedGames} game={game} onPrepareMatch={prepareMatch} query={query} />
           </Animated.View>
         ) : visibleMatches.length ? (
           <Animated.View entering={entrance(150)} style={styles.matchesSection}>
             <SectionHead callsOnly={callsOnly} count={visibleMatches.length} date={activeDate} status={status} />
             {liveMatches.length ? (
               <View style={styles.liveStack}>
-                {liveMatches.map((match) => <LiveMatchCard key={match.id} match={match} rivalId={duelRivalId} rivalPseudo={duelRivalPseudo} />)}
+                {liveMatches.map((match) => <LiveMatchCard key={match.id} match={match} onPrepareMatch={prepareMatch} rivalId={duelRivalId} rivalPseudo={duelRivalPseudo} />)}
               </View>
             ) : null}
             {standardMatches.length ? (
               <View style={styles.matchList}>
-                {standardMatches.map((match) => <MatchRow key={match.id} match={match} rivalId={duelRivalId} rivalPseudo={duelRivalPseudo} />)}
+                {standardMatches.map((match) => <MatchRow key={match.id} match={match} onPrepareMatch={prepareMatch} rivalId={duelRivalId} rivalPseudo={duelRivalPseudo} />)}
               </View>
             ) : null}
           </Animated.View>

@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Image, Platform, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { SvgUri } from 'react-native-svg';
 
+import { RemoteImage } from '@/src/components/ui/RemoteImage';
 import { fonts } from '@/src/theme';
 
-import { TEAM_LOGOS } from '../teamLogos';
+import { resolveTeamLogoUri } from '../teamLogos';
 
 const LIGHT_MONOCHROME_LOGOS = new Set(['G2 Esports', 'Karmine Corp', 'SK Gaming']);
 
@@ -20,15 +21,15 @@ type TeamLogoProps = {
 };
 
 export default function TeamLogo({ accent, contentScale, frameless = false, name, size, tag, tintColor: tintOverride, uri }: TeamLogoProps) {
-  const [failed, setFailed] = useState(false);
-  const source = uri || TEAM_LOGOS[name];
+  const [failure, setFailure] = useState<{ mode: 'svg' | 'tag'; source: string } | null>(null);
+  const source = resolveTeamLogoUri(name, uri);
   const isSvg = source ? /\.svg(?:$|\?)/i.test(source) : false;
-  const showImage = Boolean(source && !failed);
+  const fallback = source && failure?.source === source ? failure.mode : 'none';
+  const showImage = Boolean(source && fallback === 'none');
+  const showSvgFallback = Boolean(source && fallback === 'svg');
   const markSize = Math.round(size * (contentScale ?? (frameless ? 0.86 : 0.72)));
   const defaultTintColor = LIGHT_MONOCHROME_LOGOS.has(name) ? '#F6F8F3' : undefined;
   const tintColor = tintOverride === null ? undefined : (tintOverride ?? defaultTintColor);
-
-  useEffect(() => { setFailed(false); }, [source]);
 
   return (
     <View
@@ -39,16 +40,17 @@ export default function TeamLogo({ accent, contentScale, frameless = false, name
         frameless && styles.frameless,
       ]}
     >
-      {showImage && isSvg && Platform.OS !== 'web' ? (
-        <SvgUri color={tintColor} fill={tintColor} height={markSize} onError={() => setFailed(true)} uri={source} width={markSize} />
-      ) : showImage ? (
-        <Image
-          onError={() => setFailed(true)}
-          resizeMode="contain"
-          source={{ uri: source }}
+      {showImage && source ? (
+        <RemoteImage
+          contentFit="contain"
+          onError={() => setFailure({ mode: isSvg && Platform.OS !== 'web' ? 'svg' : 'tag', source })}
+          placeholderColor="transparent"
           style={{ width: markSize, height: markSize }}
           tintColor={tintColor}
+          uri={source}
         />
+      ) : showSvgFallback && source ? (
+        <SvgUri color={tintColor} fill={tintColor} height={markSize} onError={() => setFailure({ mode: 'tag', source })} uri={source} width={markSize} />
       ) : (
         <Text
           adjustsFontSizeToFit

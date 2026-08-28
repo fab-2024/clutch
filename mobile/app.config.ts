@@ -6,6 +6,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ...config,
     name: config.name ?? 'GRIFF',
     slug: config.slug ?? 'clutch-mobile',
+    plugins: [...(config.plugins ?? []), 'expo-image'],
     ios: {
       ...config.ios,
       associatedDomains: host ? [`applinks:${host}`] : [],

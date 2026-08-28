@@ -145,7 +145,7 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
       clearSelectionOnCloseRef.current = true;
       setRestoreConfirmationFocus(false);
       setConfirmationOpen(false);
-      await load();
+      await load(true);
       if (duelToken) {
         router.replace({ pathname: '/duel/[token]', params: { token: duelToken } });
       }
