@@ -106,7 +106,7 @@ export function SupporterIdentity({
   );
 }
 
-export function CosmeticItemPreview({ item, pseudo = 'PLAYER_01' }: { item: CosmeticItem; pseudo?: string }) {
+export function CosmeticItemPreview({ item, pseudo = 'JOUEUR_01' }: { item: CosmeticItem; pseudo?: string }) {
   if (item.slot === 'cadre_profil') {
     return (
       <View style={styles.preview}>

@@ -4,7 +4,7 @@ import type { PartnerCampaignData, PartnerCampaignReport } from '../types';
 import PartnerCampaignReportScreen from './PartnerCampaignReportScreen';
 import PartnerCampaignScreen from './PartnerCampaignScreen';
 
-const PREVIEW_CAMPAIGN: PartnerCampaignData = {
+export const PREVIEW_CAMPAIGN: PartnerCampaignData = {
   campaign: {
     key: 'nova-week',
     name: 'Nova Week',
@@ -44,7 +44,7 @@ const PREVIEW_CAMPAIGN: PartnerCampaignData = {
   callAccuracyRewarded: false,
 };
 
-const PREVIEW_REPORT: PartnerCampaignReport = {
+export const PREVIEW_REPORT: PartnerCampaignReport = {
   campaign: {
     key: 'nova-week',
     name: 'Nova Week',

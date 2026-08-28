@@ -86,22 +86,22 @@ export default function PartnerCampaignReportScreen({ previewReport }: PartnerCa
       >
         <View style={styles.header}>
           <Pressable accessibilityLabel="Revenir à Nova Week" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.headerBack, pressed && styles.pressed]}><Text style={styles.headerBackText}>← NOVA</Text></Pressable>
-          <View style={styles.headerCopy}><Text style={styles.headerEyebrow}>PARTNER LAB // INTERNE</Text><Text style={styles.headerTitle}>CAMPAIGN REPORT</Text></View>
+          <View style={styles.headerCopy}><Text style={styles.headerEyebrow}>PARTENAIRE // INTERNE</Text><Text style={styles.headerTitle}>BILAN CAMPAGNE</Text></View>
           <View style={styles.privatePill}><Text style={styles.privatePillText}>AGRÉGÉ</Text></View>
         </View>
 
         <View style={styles.hero}>
           <LinearGradient colors={['#291A50', '#100E1B', '#080B10']} end={{ x: 1, y: 1 }} start={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
           <View style={styles.heroGlow} />
-          <View style={styles.heroTop}><Text style={styles.heroKicker}>{report.campaign.partner.toUpperCase()}{' // ACTIVATION'}</Text><Text style={styles.fictionTag}>{report.campaign.fictionalPartner ? 'FICTIONAL DEMO' : 'PARTNER'}</Text></View>
+          <View style={styles.heroTop}><Text style={styles.heroKicker}>{report.campaign.partner.toUpperCase()}{' // ACTIVATION'}</Text><Text style={styles.fictionTag}>{report.campaign.fictionalPartner ? 'DÉMO FICTIVE' : 'PARTENAIRE'}</Text></View>
           <Text style={styles.heroTitle}>{report.campaign.name.toUpperCase()}</Text>
-          <Text style={styles.heroSubtitle}>Une lecture commerciale claire, sans profil, email, pseudo ni identifiant utilisateur exposé.</Text>
-          <View style={styles.heroFacts}><HeroFact label="PÉRIODE" value={dateRange(report.campaign.startsAt, report.campaign.endsAt)} /><View style={styles.factDivider} /><HeroFact label="EXPORT" value={report.partnerExport.publishable ? 'PRÊT' : 'MASQUÉ'} /><View style={styles.factDivider} /><HeroFact label="SEUIL" value={`${report.partnerExport.privacyThreshold} USERS`} /></View>
+          <Text style={styles.heroSubtitle}>Une lecture commerciale claire, sans profil, e-mail, pseudo ni identifiant utilisateur exposé.</Text>
+          <View style={styles.heroFacts}><HeroFact label="PÉRIODE" value={dateRange(report.campaign.startsAt, report.campaign.endsAt)} /><View style={styles.factDivider} /><HeroFact label="EXPORT" value={report.partnerExport.publishable ? 'PRÊT' : 'MASQUÉ'} /><View style={styles.factDivider} /><HeroFact label="SEUIL" value={`${report.partnerExport.privacyThreshold} JOUEURS`} /></View>
         </View>
 
         <View style={styles.modeTabs}>
           <ModeButton active={mode === 'demonstration'} label="DÉMO COMMERCIALE" onPress={() => setMode('demonstration')} />
-          <ModeButton active={mode === 'live'} label="PILOTE LIVE" onPress={() => setMode('live')} />
+          <ModeButton active={mode === 'live'} label="PILOTE RÉEL" onPress={() => setMode('live')} />
         </View>
         <View style={styles.modeNotice}><View style={[styles.modeDot, mode === 'live' && styles.modeDotLive]} /><Text style={styles.modeNoticeText}>{modeLabel} · {mode === 'live' ? 'AGRÉGATS OBSERVÉS' : 'DONNÉES 100% SYNTHÉTIQUES'}</Text></View>
 
@@ -116,7 +116,7 @@ export default function PartnerCampaignReportScreen({ previewReport }: PartnerCa
           <MetricCard label="OBJET ÉQUIPÉ" value={formatNumber(metrics.usersWithEquippedItem)} detail="supporters actifs" accent />
         </View>
 
-        <SectionTitle eyebrow="FUNNEL // ACTIVATION" title="DE L’IMPRESSION À L’IDENTITÉ." />
+        <SectionTitle eyebrow="PARCOURS // ACTIVATION" title="DE L’IMPRESSION À L’IDENTITÉ." />
         <View style={styles.funnel}>
           <FunnelRow base={metrics.eligibleUsers} label="ÉLIGIBLES" value={metrics.eligibleUsers} />
           <FunnelRow base={metrics.eligibleUsers} label="IMPRESSION UNIQUE" value={metrics.uniqueImpressions} />
@@ -134,11 +134,11 @@ export default function PartnerCampaignReportScreen({ previewReport }: PartnerCa
 
         <View style={[styles.exportCard, report.partnerExport.publishable && styles.exportCardReady]}>
           <View style={styles.exportMark}><Text style={styles.exportMarkText}>{report.partnerExport.publishable ? '✓' : '⌁'}</Text></View>
-          <View style={styles.exportCopy}><Text style={styles.exportEyebrow}>EXPORT PARTENAIRE</Text><Text style={styles.exportTitle}>{report.partnerExport.publishable ? 'Cohorte publiable.' : 'Cohorte live masquée.'}</Text><Text style={styles.exportText}>{report.partnerExport.publishable ? 'Les indicateurs respectent le seuil minimum et peuvent être exportés sous forme agrégée.' : `Le pilote reste visible en interne, mais aucun export partenaire n’est produit sous ${report.partnerExport.privacyThreshold} utilisateurs éligibles.`}</Text></View>
+          <View style={styles.exportCopy}><Text style={styles.exportEyebrow}>EXPORT PARTENAIRE</Text><Text style={styles.exportTitle}>{report.partnerExport.publishable ? 'Cohorte publiable.' : 'Cohorte pilote masquée.'}</Text><Text style={styles.exportText}>{report.partnerExport.publishable ? 'Les indicateurs respectent le seuil minimum et peuvent être exportés sous forme agrégée.' : `Le pilote reste visible en interne, mais aucun export partenaire n’est produit sous ${report.partnerExport.privacyThreshold} utilisateurs éligibles.`}</Text></View>
         </View>
 
         <View style={styles.privacyCard}>
-          <View style={styles.privacyHeader}><View><Text style={styles.privacyEyebrow}>PRIVACY CONTRACT // V1</Text><Text style={styles.privacyTitle}>AGRÉGATS, RIEN D’AUTRE.</Text></View><Text style={styles.privacyShield}>◇</Text></View>
+          <View style={styles.privacyHeader}><View><Text style={styles.privacyEyebrow}>CONFIDENTIALITÉ // V1</Text><Text style={styles.privacyTitle}>AGRÉGATS, RIEN D’AUTRE.</Text></View><Text style={styles.privacyShield}>◇</Text></View>
           <PrivacyRow label="Données personnelles dans le rapport" safe={!report.privacy.personalData} />
           <PrivacyRow label="Identifiants ou pseudos" safe={!report.privacy.userIdentifiers} />
           <PrivacyRow label="Cohortes faibles masquées" safe={report.privacy.smallCohortsMasked} />

@@ -100,8 +100,8 @@ export default function LoginScreen() {
       subtitle={mode === 'signin'
         ? 'Retrouve tes pronostics, tes duels et ta faction.'
         : 'Crée ton identité GRIFF. Tu choisiras ensuite tes jeux et ton équipe.'}
-      title={mode === 'signin' ? 'Reprends ta place.' : 'Entre dans le game.'}
-      visual={<GriffCore compact label="AUTH // READY" size={170} />}
+      title={mode === 'signin' ? 'Reprends ta place.' : 'Entre en jeu.'}
+      visual={<GriffCore compact label="ACCÈS // PRÊT" size={170} />}
     >
       <View style={styles.authContent}>
         <View style={styles.modeSwitch}>
@@ -243,7 +243,7 @@ export default function LoginScreen() {
         )}
 
         <View style={styles.trustRow}>
-          <TrustItem label="Données live" />
+          <TrustItem label="Données en direct" />
           <TrustItem label="Sans mise" />
           <TrustItem label="Compte privé" />
         </View>
@@ -277,12 +277,16 @@ function TrustItem({ label }: { label: string }) {
 }
 
 function ModeButton({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) {
+  const [focused, setFocused] = useState(false);
+
   return (
     <Pressable
       accessibilityRole="tab"
       accessibilityState={{ selected: active }}
+      onBlur={() => setFocused(false)}
+      onFocus={() => setFocused(true)}
       onPress={onPress}
-      style={[styles.modeButton, active && styles.modeButtonActive]}
+      style={[styles.modeButton, active && styles.modeButtonActive, focused && styles.modeButtonFocused]}
     >
       <Text style={[styles.modeText, active && styles.modeTextActive]}>{label}</Text>
     </Pressable>
@@ -318,8 +322,9 @@ function AuthField({
 const styles = StyleSheet.create({
   authContent: { gap: 14 },
   modeSwitch: { flexDirection: 'row', padding: 4, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  modeButton: { flex: 1, minHeight: 42, paddingHorizontal: 8, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  modeButton: { flex: 1, minHeight: 42, paddingHorizontal: 8, borderRadius: 12, alignItems: 'center', justifyContent: 'center', outlineStyle: 'solid', outlineWidth: 2, outlineColor: 'transparent' },
   modeButtonActive: { backgroundColor: colors.volt },
+  modeButtonFocused: { outlineColor: colors.focus, outlineOffset: 2 },
   modeText: { ...typography.action, color: colors.textMuted, letterSpacing: 0.3 },
   modeTextActive: { color: '#080B0F' },
   form: { gap: spacing.md },

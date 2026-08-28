@@ -156,7 +156,7 @@ export default function PartnerCampaignScreen({ previewData }: PartnerCampaignSc
         <View style={styles.header}>
           <Pressable accessibilityLabel="Revenir au Locker" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><Text style={styles.backText}>← LOCKER</Text></Pressable>
           <View style={styles.headerCopy}><Text style={styles.headerEyebrow}>ACTIVATION // PROTOTYPE</Text><Text style={styles.headerTitle}>{data.campaign.partner.toUpperCase()}</Text></View>
-          <Pressable accessibilityLabel="Actualiser la progression" accessibilityRole="button" disabled={refreshing} onPress={() => void load(true)} style={({ pressed }) => [styles.sync, pressed && styles.pressed]}><Text style={styles.syncText}>SYNC</Text></Pressable>
+          <Pressable accessibilityLabel="Actualiser la progression" accessibilityRole="button" disabled={refreshing} onPress={() => void load(true)} style={({ pressed }) => [styles.sync, pressed && styles.pressed]}><Text style={styles.syncText}>SYNCHRO</Text></Pressable>
         </View>
 
         <View style={styles.hero}>
@@ -245,7 +245,7 @@ export default function PartnerCampaignScreen({ previewData }: PartnerCampaignSc
         </View>
 
         {profile?.est_admin || previewData ? (
-          <Pressable accessibilityLabel="Voir le rapport partenaire agrégé" accessibilityRole="button" onPress={() => router.push((previewData ? '/campaign-report-preview' : `/admin/campaigns/${data.campaign.key}`) as never)} style={({ pressed }) => [styles.reportLink, pressed && styles.pressed]}><View><Text style={styles.reportEyebrow}>PARTNER LAB // INTERNE</Text><Text style={styles.reportTitle}>Voir le rapport agrégé</Text></View><Text style={styles.reportArrow}>→</Text></Pressable>
+          <Pressable accessibilityLabel="Voir le rapport partenaire agrégé" accessibilityRole="button" onPress={() => router.push((previewData ? '/campaign-report-preview' : `/admin/campaigns/${data.campaign.key}`) as never)} style={({ pressed }) => [styles.reportLink, pressed && styles.pressed]}><View><Text style={styles.reportEyebrow}>PARTENAIRE // INTERNE</Text><Text style={styles.reportTitle}>Voir le rapport agrégé</Text></View><Text style={styles.reportArrow}>→</Text></Pressable>
         ) : null}
       </ScrollView>
     </Screen>
@@ -312,7 +312,7 @@ function RewardCard({ reward }: { reward: PartnerCampaignReward }) {
 
 function RewardVisual({ reward }: { reward: PartnerCampaignReward }) {
   if (reward.slot === 'cadre_profil') return <View style={[styles.rewardVisual, styles.frameVisual, { borderColor: reward.accent }]}><View style={[styles.frameCore, { backgroundColor: `${reward.accent}2A` }]}><Text style={[styles.frameCoreText, { color: reward.accent }]}>N</Text></View><View style={[styles.frameCorner, { borderColor: reward.accent }]} /></View>;
-  if (reward.slot === 'titre_profil') return <View style={styles.rewardVisual}><Text style={styles.titlePseudo}>PLAYER_01</Text><Text style={[styles.titleValue, { color: reward.accent }]}>{reward.name.toUpperCase()}</Text><View style={[styles.titleLine, { backgroundColor: reward.accent }]} /></View>;
+  if (reward.slot === 'titre_profil') return <View style={styles.rewardVisual}><Text style={styles.titlePseudo}>JOUEUR_01</Text><Text style={[styles.titleValue, { color: reward.accent }]}>{reward.name.toUpperCase()}</Text><View style={[styles.titleLine, { backgroundColor: reward.accent }]} /></View>;
   return <View style={styles.rewardVisual}><View style={[styles.relicAura, { backgroundColor: `${reward.accent}20` }]} /><View style={[styles.relicNeck, { borderColor: reward.accent }]} /><View style={[styles.relicBody, { borderColor: reward.accent }]}><View style={[styles.relicLiquid, { backgroundColor: `${reward.accent}4A` }]} /><View style={[styles.relicHeart, { backgroundColor: reward.accent, boxShadow: `0 0 14px ${reward.accent}` }]} /></View></View>;
 }
 
