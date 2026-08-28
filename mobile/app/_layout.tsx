@@ -9,6 +9,7 @@ import { router, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 
 import { AnalyticsBridge } from '@/src/features/analytics';
 import AppErrorBoundary from '@/src/components/errors/AppErrorBoundary';
@@ -25,6 +26,7 @@ import { colors, typography } from '@/src/theme';
 
 function RootNavigator() {
   const { session, profile, status } = useAuth();
+  const reduceMotion = useReducedMotion();
   const segments = useSegments();
   const loading = status === 'loading';
   const userId = session?.user.id;
@@ -79,8 +81,8 @@ function RootNavigator() {
       >
         <Stack.Protected guard={Boolean(session)}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="match/[id]" />
-          <Stack.Screen name="result/[id]" options={{ animation: 'fade', presentation: 'fullScreenModal' }} />
+          <Stack.Screen name="match/[id]" options={{ animation: reduceMotion ? 'none' : 'slide_from_right' }} />
+          <Stack.Screen name="result/[id]" options={{ animation: reduceMotion ? 'none' : 'fade_from_bottom', presentation: 'fullScreenModal' }} />
           <Stack.Screen name="duel/[token]" />
           <Stack.Screen name="settings/profile" />
           <Stack.Screen name="settings/account" />

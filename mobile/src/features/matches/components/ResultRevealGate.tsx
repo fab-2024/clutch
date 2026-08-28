@@ -1,10 +1,12 @@
-import { router, useSegments } from 'expo-router';
+import { useSegments } from 'expo-router';
 import { useCallback, useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { useAuth } from '@/src/providers/AuthProvider';
 
 import { loadNextUnseenMatchResult } from '../api';
+import { openMatchResult } from '../matchCenterNavigation';
+import { matchJourneySourceFromSegments } from '../matchJourney';
 
 export default function ResultRevealGate() {
   const { profile, session, status } = useAuth();
@@ -37,7 +39,10 @@ export default function ResultRevealGate() {
       const next = await loadNextUnseenMatchResult();
       if (!next || next.id === lastPushedIdRef.current) return;
       lastPushedIdRef.current = next.id;
-      router.push({ pathname: '/result/[id]', params: { id: next.match_id } });
+      openMatchResult(
+        { id: next.match_id },
+        { source: matchJourneySourceFromSegments(segmentsRef.current) },
+      );
     } catch (caught) {
       console.warn('Révélation après-match indisponible', caught);
     } finally {

@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -10,7 +9,7 @@ import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, fonts, radius, typography } from '@/src/theme';
 
-import { openMatchCenter, warmMatchCenter, type MatchCenterTarget } from '../matchCenterNavigation';
+import { openMatchCenter, openMatchResult, warmMatchCenter, type MatchCenterTarget } from '../matchCenterNavigation';
 import type { MyCallItem, MyCallsDashboard, MyCallState } from '../types';
 import { gameLabel } from '../utils';
 
@@ -136,7 +135,14 @@ function CallCard({ call, onPrepareMatch }: { call: MyCallItem; onPrepareMatch?:
   const matchTarget = {
     equipe_a: call.equipe_a,
     equipe_b: call.equipe_b,
+    evenement: call.evenement,
+    format: call.format,
     id: call.match_id,
+    jeu: call.jeu,
+    score_a: call.score_a,
+    score_b: call.score_b,
+    tag_a: call.tag_a,
+    tag_b: call.tag_b,
   };
   const prepare = () => {
     if (resolved) return;
@@ -146,11 +152,11 @@ function CallCard({ call, onPrepareMatch }: { call: MyCallItem; onPrepareMatch?:
 
   function open() {
     if (resolved) {
-      router.push({ pathname: '/result/[id]', params: { id: call.match_id } });
+      openMatchResult(matchTarget, { source: 'calls' });
       return;
     }
     prepare();
-    openMatchCenter(matchTarget);
+    openMatchCenter(matchTarget, { source: 'calls' });
   }
 
   return (

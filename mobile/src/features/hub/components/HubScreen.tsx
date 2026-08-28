@@ -186,7 +186,7 @@ function MatchHero({ match, prediction, reduceMotion, userId }: { match: HubMatc
   const confrontation = getMatchConfrontationState(match, prediction);
   const callLocked = Boolean(confrontation.predictionTag);
   const prepare = useCallback(() => prepareMatchCenter(match, userId), [match, userId]);
-  const open = useCallback(() => openMatchCenter(match), [match]);
+  const open = useCallback(() => openMatchCenter(match, { source: 'hub' }), [match]);
 
   useEffect(() => {
     prepare();
@@ -239,7 +239,7 @@ function UpNextMatchCard({ cardWidth, match, userId }: { cardWidth: number; matc
     <Pressable
       accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}, ${formatMatchSchedule(match.debut)}`}
       accessibilityRole="button"
-      onPress={() => openMatchCenter(match)}
+      onPress={() => openMatchCenter(match, { source: 'hub' })}
       onPressIn={() => prepareMatchCenter(match, userId)}
       style={({ pressed }) => [styles.upNextCard, { height: cardHeight, width: cardWidth }, pressed && styles.pressed]}
     >

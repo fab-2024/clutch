@@ -12,12 +12,12 @@ import Animated, {
   useSharedValue,
   withDelay,
   withTiming,
-  ZoomIn,
 } from 'react-native-reanimated';
 
 import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
+import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { SupporterIdentity } from '@/src/features/shop/components/CosmeticRenderer';
@@ -34,21 +34,34 @@ import {
   markMatchResultRevealed,
 } from '../api';
 import { gradeAccent, gradeTransition, type GradeTransition } from '../grades';
+import { openMatchResult, returnFromMatchResult } from '../matchCenterNavigation';
+import {
+  matchJourneySource,
+  matchJourneySourceLabel,
+  readMatchJourneySnapshot,
+  type MatchJourneySearchParams,
+  type MatchJourneySnapshot,
+  type MatchJourneySource,
+} from '../matchJourney';
 import type { MatchResultReveal } from '../types';
 import { gameLabel } from '../utils';
 
 type ResultRevealScreenProps = {
   previewData?: MatchResultReveal;
+  previewTransition?: MatchJourneySnapshot;
+  previewTransitionSource?: MatchJourneySource;
 };
 
 type ExitTarget = 'calls' | 'history';
 
-export default function ResultRevealScreen({ previewData }: ResultRevealScreenProps) {
+export default function ResultRevealScreen({ previewData, previewTransition, previewTransitionSource }: ResultRevealScreenProps) {
   const { profile, session } = useAuth();
   const { equipped } = useCosmetics();
-  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  const params = useLocalSearchParams<MatchJourneySearchParams & { id?: string | string[] }>();
   const routeMatchId = Array.isArray(params.id) ? params.id[0] : params.id;
   const matchId = previewData?.match_id ?? routeMatchId;
+  const journeySource = matchJourneySource(params.journeyFrom);
+  const journeySnapshot = readMatchJourneySnapshot(matchId, params);
   const { refresh: refreshEconomy } = useEconomy();
   const reduceMotion = useReducedMotion();
   const [result, setResult] = useState<MatchResultReveal | null>(previewData ?? null);
@@ -94,7 +107,7 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
   }, [load, previewData]);
 
   useEffect(() => {
-    if (!result) return;
+    if (!result || previewTransition) return;
     revealProgress.value = reduceMotion ? 1 : 0;
     if (!reduceMotion) {
       revealProgress.value = withDelay(
@@ -108,7 +121,7 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
       else errorFeedback();
     }
     return () => cancelAnimation(revealProgress);
-  }, [reduceMotion, result, revealProgress]);
+  }, [previewTransition, reduceMotion, result, revealProgress]);
 
   useEffect(() => {
     if (!session?.user.id || previewData || !result) return;
@@ -131,6 +144,10 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
     width: `${Math.max(4, revealProgress.value * 100)}%`,
   }));
 
+  if (previewTransition) {
+    return <ResultTransitionState snapshot={previewTransition} source={previewTransitionSource ?? 'match'} />;
+  }
+
   async function leaveReveal(target: ExitTarget) {
     if (!result || busy) return;
     setBusy(true);
@@ -149,7 +166,7 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
       if (!previewData && !result.revele_le && result.restants > 1) {
         const next = await loadNextUnseenMatchResult();
         if (next && next.id !== result.id) {
-          router.replace({ pathname: '/result/[id]', params: { id: next.match_id } });
+          openMatchResult({ id: next.match_id }, { replace: true, source: 'system' });
           return;
         }
       }
@@ -161,7 +178,9 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
     }
   }
 
-  if (loading) return <RevealState title="VERDICT EN APPROCHE…" copy="GRIFF vérifie le score et ton rating." />;
+  if (loading) return journeySnapshot
+    ? <ResultTransitionState snapshot={journeySnapshot} source={journeySource} />
+    : <RevealState title="VERDICT EN APPROCHE…" copy="GRIFF vérifie le score et ton rating." />;
   if (!result) return <RevealState title="AUCUN VERDICT À RÉVÉLER." copy={error || 'Ce résultat n’est pas disponible dans ton historique.'} action="RETOUR AUX MATCHS" onPress={() => router.replace('/(tabs)/matches')} />;
 
   const won = result.statut === 'gagne';
@@ -172,17 +191,31 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
   const choiceName = result.choix === 'a' ? result.equipe_a : result.equipe_b;
   const remaining = Math.max(0, result.restants - 1);
   const replay = Boolean(result.revele_le);
+  const returnLabel = matchJourneySourceLabel(journeySource);
   const entrance = (delay: number) => reduceMotion ? undefined : FadeInDown.delay(delay).duration(460);
 
   return (
     <Screen>
       <LinearGradient colors={['#080D11', '#06090D', '#080A0D']} style={StyleSheet.absoluteFill} />
-      <Animated.View style={[styles.pageAura, auraStyle, { backgroundColor: tone, pointerEvents: 'none' }]} />
+      <View pointerEvents="none" style={styles.pageAuraClip}>
+        <Animated.View style={[styles.pageAura, auraStyle, { backgroundColor: tone }]} />
+      </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topBar}>
           {replay && !previewData ? (
-            <Pressable accessibilityLabel="Retour" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
-              <Text style={styles.backText}>← RETOUR</Text>
+            <Pressable accessibilityLabel={`Revenir à ${returnLabel}`} accessibilityRole="button" onPress={() => returnFromMatchResult({
+              id: result.match_id,
+              equipe_a: result.equipe_a,
+              equipe_b: result.equipe_b,
+              evenement: result.evenement,
+              format: result.format,
+              jeu: result.jeu,
+              score_a: result.score_a,
+              score_b: result.score_b,
+              tag_a: result.tag_a,
+              tag_b: result.tag_b,
+            }, journeySource)} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
+              <Text style={styles.backText}>← {returnLabel}</Text>
             </Pressable>
           ) : (
             <View style={styles.brand}><GriffLockup width={100} /></View>
@@ -199,7 +232,7 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
 
           <View style={styles.revealIdentity}><SupporterIdentity compact cosmetics={equipped} meta="SIGNATURE DU VERDICT" pseudo={pseudo} /></View>
 
-          <Animated.View entering={reduceMotion ? undefined : ZoomIn.delay(140).duration(520)} style={styles.scoreboard}>
+          <Animated.View entering={reduceMotion ? undefined : FadeIn.delay(120).duration(360)} style={styles.scoreboard}>
             <RevealTeam accent={teamAColor} chosen={result.choix === 'a'} name={result.equipe_a} tag={result.tag_a} winner={result.score_a > result.score_b} />
             <View style={styles.scoreCenter}>
               <Text style={styles.score}>{result.score_a}<Text style={styles.scoreDash}> — </Text>{result.score_b}</Text>
@@ -264,6 +297,66 @@ export default function ResultRevealScreen({ previewData }: ResultRevealScreenPr
   );
 }
 
+function ResultTransitionState({
+  snapshot,
+  source,
+}: {
+  snapshot: MatchJourneySnapshot;
+  source: MatchJourneySource;
+}) {
+  const teamAColor = teamColor(snapshot.tagA, snapshot.teamA);
+  const teamBColor = teamColor(snapshot.tagB, snapshot.teamB);
+  const scoreReady = snapshot.scoreA !== null && snapshot.scoreB !== null;
+  const context = [
+    snapshot.game ? gameLabel(snapshot.game) : null,
+    snapshot.event,
+    snapshot.format ? `BO${snapshot.format}` : null,
+  ].filter(Boolean).join(' · ');
+  const origin = source === 'system' ? 'RÉSULTAT OFFICIEL' : `DEPUIS ${matchJourneySourceLabel(source)}`;
+
+  return (
+    <Screen>
+      <LinearGradient colors={['#080D11', '#06090D', '#080A0D']} style={StyleSheet.absoluteFill} />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.topBar}>
+          <View style={styles.brand}><GriffLockup width={100} /></View>
+          <View style={styles.officialPill}><View style={[styles.officialDot, { backgroundColor: colors.volt }]} /><Text style={styles.officialText}>VÉRIFICATION</Text></View>
+        </View>
+
+        <View style={[styles.hero, styles.transitionHero]}>
+          <LinearGradient colors={['rgba(232,255,61,.08)', 'rgba(8,12,16,.96)', '#080C10']} style={StyleSheet.absoluteFill} />
+          <Text style={styles.transitionKicker}>{origin}</Text>
+          <Text accessibilityRole="header" style={styles.transitionTitle}>VERDICT EN APPROCHE.</Text>
+          {context ? <Text numberOfLines={1} style={styles.eventLine}>{context}</Text> : null}
+
+          <View style={styles.scoreboard}>
+            <RevealTeam accent={teamAColor} chosen={false} name={snapshot.teamA} tag={snapshot.tagA} winner={false} />
+            <View style={styles.scoreCenter}>
+              <Text style={styles.score}>{scoreReady ? `${snapshot.scoreA} — ${snapshot.scoreB}` : 'VS'}</Text>
+              <View style={styles.finalPill}><Text style={styles.finalText}>{scoreReady ? 'FINAL' : 'SYNCHRO'}</Text></View>
+            </View>
+            <RevealTeam accent={teamBColor} chosen={false} name={snapshot.teamB} tag={snapshot.tagB} winner={false} />
+          </View>
+        </View>
+
+        <SkeletonGroup label={`Chargement du verdict, ${snapshot.teamA} contre ${snapshot.teamB}`} style={styles.ratingCard} testID="result-transition-loading">
+          <View style={styles.sectionHeader}>
+            <View style={styles.transitionSkeletonCopy}><Skeleton height={9} radius="pill" tone="subtle" width={118} /><Skeleton height={24} radius="sm" width={186} /></View>
+            <Skeleton height={39} radius="md" width={70} />
+          </View>
+          <View style={styles.ratingFlow}>
+            <Skeleton height={62} radius="md" width="42%" />
+            <View style={styles.ratingArrow}><Text style={styles.ratingArrowText}>→</Text></View>
+            <Skeleton height={62} radius="md" width="42%" />
+          </View>
+          <Skeleton height={4} radius="pill" tone="highlight" width="100%" />
+          <Skeleton height={10} radius="pill" tone="subtle" width="72%" />
+        </SkeletonGroup>
+      </ScrollView>
+    </Screen>
+  );
+}
+
 function RevealTeam({ accent, chosen, name, tag, winner }: { accent: string; chosen: boolean; name: string; tag: string; winner: boolean }) {
   return (
     <View accessibilityLabel={`${name}${winner ? ', vainqueur' : ''}${chosen ? ', ton choix' : ''}`} style={styles.team}>
@@ -305,6 +398,7 @@ function messageFrom(value: unknown, fallback: string) { return value instanceof
 
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: 430, alignSelf: 'center', paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: 42, gap: 14 },
+  pageAuraClip: { position: 'absolute', inset: 0, overflow: 'hidden' },
   pageAura: { position: 'absolute', alignSelf: 'center', top: -180, width: 480, height: 480, borderRadius: 240, filter: 'blur(70px)' },
   topBar: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -317,6 +411,10 @@ const styles = StyleSheet.create({
   officialDot: { width: 6, height: 6, borderRadius: 3 },
   officialText: { ...typography.label, color: colors.textSubtle, letterSpacing: .4 },
   hero: { position: 'relative', overflow: 'hidden', minHeight: 420, padding: 18, borderRadius: 31, alignItems: 'center', backgroundColor: '#0A0F13', borderWidth: 1, borderColor: '#273039' },
+  transitionHero: { minHeight: 360, justifyContent: 'flex-start' },
+  transitionKicker: { ...typography.eyebrow, marginTop: 5, color: colors.volt, letterSpacing: 1.1 },
+  transitionTitle: { ...typography.displayMedium, marginTop: 6, color: colors.text, textAlign: 'center' },
+  transitionSkeletonCopy: { gap: 7 },
   heroGlow: { position: 'absolute', top: -150, width: 360, height: 300, borderRadius: 180, opacity: .18 },
   resultKicker: { ...typography.eyebrow, marginTop: 5, letterSpacing: 1.4 },
   resultTitle: { ...typography.displayLarge, marginTop: 6, color: colors.text, textAlign: 'center' },

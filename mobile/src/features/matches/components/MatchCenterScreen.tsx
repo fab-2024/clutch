@@ -22,6 +22,13 @@ import { colors } from '@/src/theme';
 import { submitRankedPrediction } from '../api';
 import { useMatchCenterData } from '../hooks/useMatchCenterData';
 import { returnFromMatchCenter } from '../matchCenterNavigation';
+import {
+  matchJourneySource,
+  matchJourneySourceLabel,
+  readMatchJourneySnapshot,
+  type MatchJourneySearchParams,
+  type MatchJourneySnapshot,
+} from '../matchJourney';
 import type { MatchCenterData } from '../types';
 import { gameLabel, matchPhase, predictionIsOpen } from '../utils';
 import {
@@ -41,12 +48,13 @@ import { PredictionConfirmationSheet } from './PredictionConfirmationSheet';
 
 type MatchCenterScreenProps = {
   previewData?: MatchCenterData;
+  previewLoadingSnapshot?: MatchJourneySnapshot;
 };
 
-export default function MatchCenterScreen({ previewData }: MatchCenterScreenProps) {
+export default function MatchCenterScreen({ previewData, previewLoadingSnapshot }: MatchCenterScreenProps) {
   const { session } = useAuth();
   const { refresh: refreshEconomy } = useEconomy();
-  const params = useLocalSearchParams<{
+  const params = useLocalSearchParams<MatchJourneySearchParams & {
     id?: string | string[];
     duel?: string | string[];
     duelRivalId?: string | string[];
@@ -57,6 +65,9 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
   const duelToken = Array.isArray(params.duel) ? params.duel[0] : params.duel;
   const duelRivalId = Array.isArray(params.duelRivalId) ? params.duelRivalId[0] : params.duelRivalId;
   const duelRivalPseudo = Array.isArray(params.duelRivalPseudo) ? params.duelRivalPseudo[0] : params.duelRivalPseudo;
+  const journeySource = matchJourneySource(params.journeyFrom);
+  const journeySnapshot = previewLoadingSnapshot ?? readMatchJourneySnapshot(matchId, params);
+  const returnLabel = duelToken ? 'DUEL' : matchJourneySourceLabel(journeySource);
   const [selected, setSelected] = useState<'a' | 'b' | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [duelBusy, setDuelBusy] = useState(false);
@@ -83,7 +94,8 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
     setRestoreConfirmationFocus(true);
   }, [matchId, previewData]);
 
-  const match = data?.match ?? null;
+  const loadingState = Boolean(previewLoadingSnapshot || loading);
+  const match = previewLoadingSnapshot ? null : data?.match ?? null;
   const projection = data?.projection ?? null;
   const prediction = data?.prediction ?? null;
   const phase = match ? matchPhase(match) : null;
@@ -190,7 +202,7 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
   }
 
   function returnToArena() {
-    returnFromMatchCenter(duelToken);
+    returnFromMatchCenter(duelToken, journeySource);
   }
 
   return (
@@ -203,16 +215,16 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topBar}>
-          <Pressable accessibilityLabel={duelToken ? 'Retour au duel' : 'Revenir à l’écran précédent'} accessibilityRole="button" onPress={returnToArena} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
+          <Pressable accessibilityLabel={`Revenir à ${returnLabel}`} accessibilityRole="button" onPress={returnToArena} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
             <Text style={[styles.backArrow, predictionPickerOpen && styles.pickerBackArrow]}>←</Text>
             <Text style={[styles.backText, predictionPickerOpen && styles.pickerBackText]}>
-              {predictionPickerOpen && match ? `${match.tag_a} VS ${match.tag_b}` : duelToken ? 'DUEL' : 'RETOUR'}
+              {predictionPickerOpen && match ? `${match.tag_a} VS ${match.tag_b}` : returnLabel}
             </Text>
           </Pressable>
           {predictionPickerOpen ? null : <GriffLockup width={92} />}
         </View>
 
-        {loading ? <LoadingCard /> : null}
+        {loadingState ? <LoadingCard snapshot={journeySnapshot} /> : null}
 
         {error ? (
           <StateView
@@ -224,7 +236,7 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
           />
         ) : null}
 
-        {!loading && !error && !match ? (
+        {!loadingState && !error && !match ? (
           <StateView
             action={{ label: 'RETOUR AUX MATCHS', onPress: () => router.replace('/(tabs)/matches') }}
             compact
@@ -384,7 +396,7 @@ export default function MatchCenterScreen({ previewData }: MatchCenterScreenProp
               </Text>
             </View>
 
-            {data?.related.length ? <RelatedMatches matches={data.related} /> : null}
+            {data?.related.length ? <RelatedMatches matches={data.related} source={journeySource} /> : null}
           </>
         ) : null}
       </ScrollView>

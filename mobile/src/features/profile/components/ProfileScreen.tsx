@@ -6,6 +6,7 @@ import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
+import { openMatchResult } from '@/src/features/matches/matchCenterNavigation';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import AchievementBadgeArtwork from '@/src/features/profile/achievementBadges/components/AchievementBadgeArtwork';
 import { resolveOwnedLevelFrames } from '@/src/features/profile/levelFrames/catalog';
@@ -377,7 +378,17 @@ function VerdictRow({ item }: { item: RecentPrediction }) {
   const choice = item.choix === 'a' ? item.tag_a : item.tag_b;
   const delta = Math.abs(Number(item.delta_frags ?? 0));
   return (
-    <Pressable accessibilityLabel={`Ouvrir le verdict ${choice}, ${item.evenement}, ${won ? 'plus' : 'moins'} ${formatNumber(delta)} Frags`} accessibilityRole="button" onPress={() => router.push({ pathname: '/result/[id]', params: { id: item.match_id } })} style={({ pressed }) => [styles.verdictRow, pressed && styles.pressed]}>
+    <Pressable accessibilityLabel={`Ouvrir le verdict ${choice}, ${item.evenement}, ${won ? 'plus' : 'moins'} ${formatNumber(delta)} Frags`} accessibilityRole="button" onPress={() => openMatchResult({
+      id: item.match_id,
+      equipe_a: item.equipe_a,
+      equipe_b: item.equipe_b,
+      evenement: item.evenement,
+      jeu: item.jeu,
+      score_a: item.score_a,
+      score_b: item.score_b,
+      tag_a: item.tag_a,
+      tag_b: item.tag_b,
+    }, { source: 'profile' })} style={({ pressed }) => [styles.verdictRow, pressed && styles.pressed]}>
       <View style={[styles.verdictMark, won ? styles.verdictMarkWin : styles.verdictMarkLoss]}><Text style={[styles.verdictLetter, won ? styles.verdictWin : styles.verdictLoss]}>{won ? 'W' : 'L'}</Text></View>
       <View style={styles.verdictCopy}><Text style={styles.verdictTitle}>{choice} · {item.evenement}</Text><Text style={styles.verdictMeta}>{gameName(item.jeu)} · {item.tag_a} vs {item.tag_b}</Text></View>
       <View style={styles.deltaRow}>

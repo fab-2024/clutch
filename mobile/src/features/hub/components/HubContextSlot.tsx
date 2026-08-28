@@ -10,6 +10,7 @@ import { GriffProgress } from '@/src/components/ui/GriffProgress';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { Surface } from '@/src/components/ui/Surface';
 import { colors, spacing, typography } from '@/src/theme';
+import { openMatchResult } from '@/src/features/matches/matchCenterNavigation';
 
 import type { HubContextItem } from '../hubContext';
 import type { HubFactionMission, HubRecentResult, HubReward } from '../types';
@@ -188,7 +189,17 @@ function rewardPresentation(reward: HubReward, now: number): ContextPresentation
 
 function openContext(context: HubContextItem) {
   if (context.kind === 'result') {
-    router.push({ pathname: '/result/[id]', params: { id: context.result.matchId } });
+    openMatchResult({
+      id: context.result.matchId,
+      equipe_a: context.result.teamA,
+      equipe_b: context.result.teamB,
+      evenement: context.result.event,
+      jeu: context.result.game,
+      score_a: context.result.scoreA,
+      score_b: context.result.scoreB,
+      tag_a: context.result.tagA,
+      tag_b: context.result.tagB,
+    }, { source: 'hub' });
     return;
   }
   if (context.kind === 'mission') {

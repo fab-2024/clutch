@@ -1,6 +1,7 @@
-import { Redirect } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 
 import type { MatchCenterData } from '../types';
+import type { MatchJourneySnapshot } from '../matchJourney';
 import MatchCenterScreen from './MatchCenterScreen';
 
 export const PREVIEW_MATCH_CENTER: MatchCenterData = {
@@ -53,6 +54,28 @@ export const PREVIEW_MATCH_CENTER: MatchCenterData = {
 };
 
 export default function MatchCenterPreviewScreen() {
+  const params = useLocalSearchParams<{ state?: string | string[] }>();
+  const state = Array.isArray(params.state) ? params.state[0] : params.state;
   if (!__DEV__) return <Redirect href="/" />;
-  return <MatchCenterScreen previewData={PREVIEW_MATCH_CENTER} />;
+  return (
+    <MatchCenterScreen
+      previewData={PREVIEW_MATCH_CENTER}
+      previewLoadingSnapshot={state === 'transition' ? previewSnapshot(PREVIEW_MATCH_CENTER) : undefined}
+    />
+  );
+}
+
+function previewSnapshot(data: MatchCenterData): MatchJourneySnapshot {
+  return {
+    event: data.match.evenement,
+    format: data.match.format,
+    game: data.match.jeu,
+    matchId: data.match.id,
+    scoreA: data.match.score_a,
+    scoreB: data.match.score_b,
+    tagA: data.match.tag_a,
+    tagB: data.match.tag_b,
+    teamA: data.match.equipe_a,
+    teamB: data.match.equipe_b,
+  };
 }

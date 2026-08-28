@@ -10,7 +10,8 @@ import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { colors } from '@/src/theme';
 
-import { warmMatchCenter } from '../matchCenterNavigation';
+import { openMatchResult, replaceMatchCenter, warmMatchCenter } from '../matchCenterNavigation';
+import type { MatchJourneySnapshot, MatchJourneySource } from '../matchJourney';
 import type { ArenaMatch, MatchCenterData, MatchProjection, ProjectionChoice } from '../types';
 import { formatPredictionCountdown, gameLabel, matchPhase } from '../utils';
 import { styles } from './MatchCenterScreen.styles';
@@ -219,7 +220,7 @@ export function LockedPrediction({ data }: { data: MatchCenterData }) {
           <Pressable
             accessibilityLabel="Revoir le verdict du call"
             accessibilityRole="button"
-            onPress={() => router.push({ pathname: '/result/[id]', params: { id: match.id } })}
+            onPress={() => openMatchResult(match, { source: 'match' })}
             style={({ pressed }) => [styles.lockedPrimaryAction, pressed && styles.confirmPressed]}
           >
             <Text style={styles.lockedPrimaryText}>REVOIR LE VERDICT</Text>
@@ -354,7 +355,7 @@ export function CallContract({ data }: { data: MatchCenterData }) {
   );
 }
 
-export function RelatedMatches({ matches }: { matches: ArenaMatch[] }) {
+export function RelatedMatches({ matches, source }: { matches: ArenaMatch[]; source: MatchJourneySource }) {
   return (
     <View style={styles.relatedSection}>
       <View>
@@ -367,7 +368,7 @@ export function RelatedMatches({ matches }: { matches: ArenaMatch[] }) {
             accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}`}
             accessibilityRole="button"
             key={match.id}
-            onPress={() => router.replace({ pathname: '/match/[id]', params: { id: match.id } })}
+            onPress={() => replaceMatchCenter(match, source)}
             onPressIn={() => warmMatchCenter(match)}
             style={({ pressed }) => [styles.relatedCard, pressed && styles.pressed]}
           >
@@ -408,41 +409,65 @@ export function RiskCell({ label, value, positive = false }: { label: string; va
   );
 }
 
-export function LoadingCard() {
+export function LoadingCard({ snapshot }: { snapshot?: MatchJourneySnapshot | null }) {
+  const accessibleLabel = snapshot
+    ? `Chargement du Match Center, ${snapshot.teamA} contre ${snapshot.teamB}`
+    : 'Chargement du Match Center';
+  const loadingHero = (
+    <View style={styles.loadingCard}>
+      <View style={styles.loadingMeta}>
+        {snapshot?.event ? <Text numberOfLines={1} style={styles.loadingEvent}>{snapshot.event}</Text> : <Skeleton height={9} radius="pill" width="48%" />}
+        {snapshot?.format ? <Text style={styles.loadingFormat}>BO{snapshot.format}</Text> : <Skeleton height={24} radius="pill" width={52} />}
+      </View>
+      {snapshot?.game ? <Text style={styles.loadingGame}>{gameLabel(snapshot.game)}</Text> : <Skeleton height={9} radius="pill" tone="subtle" width="38%" />}
+      <View style={styles.loadingDuel}>
+        <View style={styles.loadingTeam}>
+          {snapshot ? <><View style={styles.loadingTeamMark}><Text adjustsFontSizeToFit numberOfLines={1} style={styles.loadingTeamTag}>{snapshot.tagA}</Text></View><Text numberOfLines={2} style={styles.loadingTeamName}>{snapshot.teamA}</Text></> : <><Skeleton height={72} radius="lg" width={72} /><Skeleton height={18} radius="pill" width={54} /><Skeleton height={9} radius="pill" tone="subtle" width={72} /></>}
+        </View>
+        <View style={styles.loadingVersus}>
+          <Skeleton height={8} radius="pill" tone="subtle" width={38} />
+          {snapshot ? <Text style={styles.loadingVs}>VS</Text> : <Skeleton height={34} radius="sm" width={46} />}
+          <Skeleton height={9} radius="pill" tone="subtle" width={34} />
+        </View>
+        <View style={styles.loadingTeam}>
+          {snapshot ? <><View style={styles.loadingTeamMark}><Text adjustsFontSizeToFit numberOfLines={1} style={styles.loadingTeamTag}>{snapshot.tagB}</Text></View><Text numberOfLines={2} style={styles.loadingTeamName}>{snapshot.teamB}</Text></> : <><Skeleton height={72} radius="lg" width={72} /><Skeleton height={18} radius="pill" width={54} /><Skeleton height={9} radius="pill" tone="subtle" width={72} /></>}
+        </View>
+      </View>
+    </View>
+  );
+  const loadingMarket = (
+    <View style={styles.loadingMarket}>
+      <Skeleton height={22} radius="sm" width="68%" />
+      <View style={styles.loadingChoices}>
+        <Skeleton height={126} radius="lg" width="48%" />
+        <Skeleton height={126} radius="lg" width="48%" />
+      </View>
+      <Skeleton height={10} radius="pill" tone="subtle" width="82%" />
+    </View>
+  );
+
+  if (snapshot) {
+    return (
+      <View
+        accessibilityLabel={accessibleLabel}
+        accessibilityLiveRegion="polite"
+        accessibilityRole="progressbar"
+        accessibilityState={{ busy: true }}
+        accessible
+        aria-busy
+        style={styles.loadingStack}
+        testID="match-center-loading"
+      >
+        {loadingHero}
+        <SkeletonGroup>{loadingMarket}</SkeletonGroup>
+      </View>
+    );
+  }
+
   return (
-    <SkeletonGroup label="Chargement du Match Center" style={styles.loadingStack} testID="match-center-loading">
-      <View style={styles.loadingCard}>
-        <View style={styles.loadingMeta}>
-          <Skeleton height={9} radius="pill" width="48%" />
-          <Skeleton height={24} radius="pill" width={52} />
-        </View>
-        <Skeleton height={9} radius="pill" tone="subtle" width="38%" />
-        <View style={styles.loadingDuel}>
-          <View style={styles.loadingTeam}>
-            <Skeleton height={72} radius="lg" width={72} />
-            <Skeleton height={18} radius="pill" width={54} />
-            <Skeleton height={9} radius="pill" tone="subtle" width={72} />
-          </View>
-          <View style={styles.loadingVersus}>
-            <Skeleton height={8} radius="pill" tone="subtle" width={38} />
-            <Skeleton height={34} radius="sm" width={46} />
-            <Skeleton height={9} radius="pill" tone="subtle" width={34} />
-          </View>
-          <View style={styles.loadingTeam}>
-            <Skeleton height={72} radius="lg" width={72} />
-            <Skeleton height={18} radius="pill" width={54} />
-            <Skeleton height={9} radius="pill" tone="subtle" width={72} />
-          </View>
-        </View>
-      </View>
-      <View style={styles.loadingMarket}>
-        <Skeleton height={22} radius="sm" width="68%" />
-        <View style={styles.loadingChoices}>
-          <Skeleton height={126} radius="lg" width="48%" />
-          <Skeleton height={126} radius="lg" width="48%" />
-        </View>
-        <Skeleton height={10} radius="pill" tone="subtle" width="82%" />
-      </View>
+    <SkeletonGroup label={accessibleLabel} style={styles.loadingStack} testID="match-center-loading">
+      {loadingHero}
+      {loadingMarket}
     </SkeletonGroup>
   );
 }

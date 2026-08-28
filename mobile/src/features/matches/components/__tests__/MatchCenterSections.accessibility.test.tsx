@@ -62,4 +62,24 @@ describe('MatchCenterSections accessibility states', () => {
     expect(screen.getByRole('progressbar').props.accessibilityState).toEqual({ busy: true });
     expect(screen.getByLabelText('Chargement du Match Center')).toBeTruthy();
   });
+
+  it('keeps the selected fixture visible while the Match Center resolves', async () => {
+    const screen = await render(<LoadingCard snapshot={{
+      event: 'LEC Summer',
+      format: 5,
+      game: 'lol',
+      matchId: 'match-1',
+      scoreA: null,
+      scoreB: null,
+      tagA: 'G2',
+      tagB: 'FNC',
+      teamA: 'G2 Esports',
+      teamB: 'Fnatic',
+    }} />);
+
+    expect(screen.getByLabelText('Chargement du Match Center, G2 Esports contre Fnatic')).toBeTruthy();
+    expect(screen.getByText('G2')).toBeTruthy();
+    expect(screen.getByText('FNC')).toBeTruthy();
+    expect(screen.getByText('LEC Summer')).toBeTruthy();
+  });
 });

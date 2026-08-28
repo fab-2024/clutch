@@ -92,7 +92,18 @@ describe('HubContextSlot', () => {
 
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
       pathname: '/result/[id]',
-      params: { id: 'match-1' },
+      params: {
+        id: 'match-1',
+        journeyEvent: 'LEC',
+        journeyFrom: 'hub',
+        journeyGame: 'lol',
+        journeyScoreA: '2',
+        journeyScoreB: '1',
+        journeyTagA: 'G2',
+        journeyTagB: 'FNC',
+        journeyTeamA: 'G2 Esports',
+        journeyTeamB: 'Fnatic',
+      },
     });
   });
 

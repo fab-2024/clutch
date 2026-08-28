@@ -1,5 +1,6 @@
-import { Redirect } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 
+import type { MatchJourneySnapshot } from '../matchJourney';
 import type { MatchResultReveal } from '../types';
 import ResultRevealScreen from './ResultRevealScreen';
 
@@ -71,6 +72,29 @@ const PREVIEW_RESULT: MatchResultReveal = {
 };
 
 export default function ResultRevealPreviewScreen() {
+  const params = useLocalSearchParams<{ state?: string | string[] }>();
+  const state = Array.isArray(params.state) ? params.state[0] : params.state;
   if (!__DEV__) return <Redirect href="/" />;
-  return <ResultRevealScreen previewData={PREVIEW_RESULT} />;
+  return (
+    <ResultRevealScreen
+      previewData={PREVIEW_RESULT}
+      previewTransition={state === 'transition' ? previewSnapshot(PREVIEW_RESULT) : undefined}
+      previewTransitionSource="match"
+    />
+  );
+}
+
+function previewSnapshot(result: MatchResultReveal): MatchJourneySnapshot {
+  return {
+    event: result.evenement,
+    format: result.format,
+    game: result.jeu,
+    matchId: result.match_id,
+    scoreA: result.score_a,
+    scoreB: result.score_b,
+    tagA: result.tag_a,
+    tagB: result.tag_b,
+    teamA: result.equipe_a,
+    teamB: result.equipe_b,
+  };
 }

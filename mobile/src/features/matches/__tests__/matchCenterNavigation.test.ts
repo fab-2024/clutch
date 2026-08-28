@@ -3,7 +3,14 @@
 import { router } from 'expo-router';
 
 import { prefetchRemoteImages } from '@/src/lib/imageCache';
-import { openMatchCenter, returnFromMatchCenter, warmMatchCenter } from '../matchCenterNavigation';
+import {
+  openMatchCenter,
+  openMatchResult,
+  replaceMatchCenter,
+  returnFromMatchCenter,
+  returnFromMatchResult,
+  warmMatchCenter,
+} from '../matchCenterNavigation';
 
 jest.mock('expo-router', () => ({
   router: {
@@ -31,8 +38,24 @@ const prefetchImages = prefetchRemoteImages as jest.Mock;
 const target = {
   equipe_a: 'G2 Esports',
   equipe_b: 'Fnatic',
+  evenement: 'LEC Summer',
+  format: 5,
   id: 'match-42',
+  jeu: 'lol',
   logo_a: 'https://cdn.example/g2.png',
+  tag_a: 'G2',
+  tag_b: 'FNC',
+};
+
+const journeyParams = {
+  journeyEvent: 'LEC Summer',
+  journeyFormat: '5',
+  journeyFrom: 'matches',
+  journeyGame: 'lol',
+  journeyTagA: 'G2',
+  journeyTagB: 'FNC',
+  journeyTeamA: 'G2 Esports',
+  journeyTeamB: 'Fnatic',
 };
 
 describe('returnFromMatchCenter', () => {
@@ -89,9 +112,56 @@ describe('returnFromMatchCenter', () => {
       pathname: '/match/[id]',
       params: {
         id: 'match-42',
+        ...journeyParams,
         duelRivalId: 'rival-1',
         duelRivalPseudo: 'Nova',
       },
     });
+  });
+
+  it('preserves the journey snapshot when replacing a related Match Center', () => {
+    replaceMatchCenter(target, 'hub');
+
+    expect(prefetch).toHaveBeenCalledTimes(1);
+    expect(replace).toHaveBeenCalledWith({
+      pathname: '/match/[id]',
+      params: {
+        id: 'match-42',
+        ...journeyParams,
+        journeyFrom: 'hub',
+      },
+    });
+  });
+
+  it('opens and replaces a result with its origin and match snapshot', () => {
+    openMatchResult({ ...target, score_a: 2, score_b: 1 }, { source: 'match' });
+    openMatchResult({ id: 'match-next' }, { replace: true, source: 'system' });
+
+    expect(push).toHaveBeenCalledWith({
+      pathname: '/result/[id]',
+      params: {
+        id: 'match-42',
+        ...journeyParams,
+        journeyFrom: 'match',
+        journeyScoreA: '2',
+        journeyScoreB: '1',
+      },
+    });
+    expect(replace).toHaveBeenCalledWith({
+      pathname: '/result/[id]',
+      params: { id: 'match-next', journeyFrom: 'system' },
+    });
+  });
+
+  it('returns a replay to its source and provides a deep-link fallback', () => {
+    returnFromMatchResult(target, 'profile');
+    expect(back).toHaveBeenCalledTimes(1);
+
+    jest.clearAllMocks();
+    canGoBack.mockReturnValue(false);
+    returnFromMatchResult(target, 'profile');
+
+    expect(back).not.toHaveBeenCalled();
+    expect(replace).toHaveBeenCalledWith('/(tabs)/profile');
   });
 });
