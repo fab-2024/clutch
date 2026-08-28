@@ -43,4 +43,14 @@ describe('SocialSectionNav', () => {
       expect(StyleSheet.flatten(tab.props.style).minHeight).toBeGreaterThanOrEqual(layout.minTouchTarget);
     }
   });
+
+  it('supports a deterministic subsection override for isolated previews', async () => {
+    mockPathname = '/social-circle-preview';
+    const screen = await render(
+      <SocialSectionNav activeOverride="circle" activeSubsectionOverride="friends" />,
+    );
+
+    expect(screen.getByRole('tab', { name: 'Ouvrir cercle' }).props.accessibilityState).toEqual({ selected: true });
+    expect(screen.getByRole('tab', { name: 'Ouvrir amis' }).props.accessibilityState).toEqual({ selected: true });
+  });
 });

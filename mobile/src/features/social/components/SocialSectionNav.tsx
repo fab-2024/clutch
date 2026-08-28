@@ -34,14 +34,16 @@ const SUBSECTIONS: Partial<Record<SocialSectionKey, {
 
 export default function SocialSectionNav({
   activeOverride,
+  activeSubsectionOverride,
   variant = 'default',
 }: {
   activeOverride?: SocialSectionKey;
+  activeSubsectionOverride?: SocialSubsectionKey;
   variant?: 'default' | 'v2';
 }) {
   const pathname = usePathname();
   const active = activeOverride ?? sectionFromPath(pathname);
-  const activeSubsection = subsectionFromPath(pathname);
+  const activeSubsection = activeSubsectionOverride ?? subsectionFromPath(pathname);
   const subsections = active ? SUBSECTIONS[active] ?? [] : [];
   const refined = variant === 'v2' || pathname.includes('/social/v2');
 
