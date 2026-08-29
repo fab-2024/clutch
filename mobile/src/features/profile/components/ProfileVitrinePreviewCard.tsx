@@ -1,23 +1,15 @@
 import Expand from 'lucide-react-native/icons/expand';
 import Eye from 'lucide-react-native/icons/eye';
-import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
-import { resolveEquippedAchievementBadges } from '@/src/features/profile/achievementBadges/equipment';
-import { useAchievementBadgeEquipment } from '@/src/features/profile/achievementBadges/useAchievementBadgeEquipment';
 import LevelFrame from '@/src/features/profile/levelFrames/components/LevelFrame';
 import type { LevelFrameVariant } from '@/src/features/profile/levelFrames/types';
-import {
-  adaptShowcaseRingStats,
-  resolveEquippedShowcaseRing,
-} from '@/src/features/profile/showcaseRings/progression';
-import { useShowcaseRingEquipment } from '@/src/features/profile/showcaseRings/useShowcaseRingEquipment';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 import { colors, radius, spacing, typography } from '@/src/theme';
 
 import type { ProfileData } from '../types';
-import ShowcaseRoomScene from './showcase/ShowcaseRoomScene';
+import ProfileVitrinePreviewStage from './ProfileVitrinePreviewStage';
 import { SHOWCASE_PALETTE } from './showcase/showcasePalette';
 
 type ProfileVitrinePreviewCardProps = {
@@ -28,7 +20,6 @@ type ProfileVitrinePreviewCardProps = {
   onOpenShowcase: () => void;
   onOpenVisibility: () => void;
   onOpenVisitor: () => void;
-  preview?: boolean;
   pseudo: string;
   rankAccent: string;
   rankLabel: string;
@@ -42,32 +33,10 @@ export default function ProfileVitrinePreviewCard({
   onOpenShowcase,
   onOpenVisibility,
   onOpenVisitor,
-  preview = false,
   pseudo,
   rankAccent,
   rankLabel,
 }: ProfileVitrinePreviewCardProps) {
-  const ringEquipment = useShowcaseRingEquipment(
-    preview ? `preview-${pseudo}` : pseudo,
-    preview ? 'rank' : null,
-  );
-  const ringStats = useMemo(() => adaptShowcaseRingStats(data), [data]);
-  const equippedRing = useMemo(
-    () => resolveEquippedShowcaseRing(ringStats, ringEquipment.family),
-    [ringEquipment.family, ringStats],
-  );
-  const fallbackBadgeIds = useMemo(
-    () => data?.pinnedBadges.map((badge) => badge.id) ?? [],
-    [data?.pinnedBadges],
-  );
-  const badgeEquipment = useAchievementBadgeEquipment(
-    preview ? `preview-${pseudo}` : pseudo,
-    fallbackBadgeIds,
-  );
-  const equippedBadges = useMemo(
-    () => resolveEquippedAchievementBadges(data?.badges ?? [], badgeEquipment.slots),
-    [badgeEquipment.slots, data?.badges],
-  );
   const level = loading ? '—' : data?.level.level ?? '—';
   const displayedRank = loading ? '—' : rankLabel;
   const publicProfile = !loading && Boolean(data?.publicProfile);
@@ -110,16 +79,11 @@ export default function ProfileVitrinePreviewCard({
         </View>
       </View>
 
-      <ShowcaseRoomScene
-        cosmetics={cosmetics}
+      <ProfileVitrinePreviewStage
         data={data}
-        equippedBadges={equippedBadges}
-        equippedRing={equippedRing}
         loading={loading}
-        mode="preview"
         rankAccent={rankAccent}
         rankLabel={displayedRank}
-        style={styles.scene}
       />
 
       <View style={styles.actions}>
@@ -208,10 +172,6 @@ const styles = StyleSheet.create({
   statusText: {
     ...typography.metadata,
     fontFamily: typography.control.fontFamily,
-  },
-  scene: {
-    marginTop: spacing.md,
-    borderRadius: radius.md,
   },
   actions: {
     marginTop: spacing.md,

@@ -5,6 +5,8 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'r
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
+import { FeatureStateView } from '@/src/components/ui/FeatureStateView';
+import { StateView } from '@/src/components/ui/StateView';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { openMatchResult } from '@/src/features/matches/matchCenterNavigation';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
@@ -142,9 +144,19 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             volts={volts ?? (previewData ? 300 : null)}
           />
 
-          {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text><Pressable accessibilityLabel="Réessayer de charger mon profil" accessibilityRole="button" onPress={() => void load()} style={styles.retryButton}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
+          {error ? (
+            <FeatureStateView
+              compact
+              domain="profile"
+              onRetry={() => void load()}
+              presentation={data ? 'inline' : 'panel'}
+              style={styles.stateInset}
+              testID="profile-error-state"
+              variant="error"
+            />
+          ) : null}
 
-          <OwnProfileOverview
+          {error && !data ? null : <OwnProfileOverview
             cosmetics={cosmetics}
             data={data}
             loading={loading}
@@ -157,11 +169,10 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             onOpenShop={() => router.push({ pathname: previewData ? '/shop-preview' : '/shop', params: { scope: 'catalog' } } as never)}
             onOpenShowcase={() => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
             onOpenVisitor={() => router.push({ pathname: '/u/[pseudo]', params: { pseudo: data?.pseudo || pseudo } })}
-            preview={Boolean(previewData)}
             pseudo={data?.pseudo || pseudo}
             rankAccent={rankColor}
             rankLabel={rankLabel}
-          />
+          />}
         </ScrollView>
       </Screen>
     );
@@ -176,7 +187,17 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
       >
         <ProfileHeader publicProfile={data?.publicProfile !== false} publicView={publicView} />
 
-        {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text><Pressable onPress={() => void load()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
+        {error ? (
+          <FeatureStateView
+            compact
+            domain="profile"
+            onRetry={() => void load()}
+            presentation={data ? 'inline' : 'panel'}
+            style={styles.stateInset}
+            testID="public-profile-error-state"
+            variant="error"
+          />
+        ) : null}
 
         {publicView ? <ProfileSafetyActions onBlocked={handlePublicBlocked} pseudo={pseudo} /> : null}
 
@@ -247,9 +268,16 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             <View style={styles.factionCopy}><Text style={styles.factionEyebrow}>RELIQUE · FORME {roman(data.favoriteTeam.relique_niveau)}</Text><Text style={styles.factionName}>{data.favoriteTeam.nom}</Text><Text style={styles.factionMeta}>{data.favoriteTeam.relique} · {formatNumber(data.favoriteTeam.supporters)} supporter{data.favoriteTeam.supporters > 1 ? 's' : ''}</Text></View>
             <Text style={styles.arrow}>→</Text>
           </Pressable>
-        ) : (
-          <View style={styles.emptyCard}><Text style={styles.emptyEyebrow}>SANS FACTION</Text><Text style={styles.emptyTitle}>Ton étendard attend encore une couleur.</Text><Text style={styles.emptyText}>Choisis ton équipe favorite pour faire apparaître la relique ici.</Text></View>
-        )}
+        ) : !loading ? (
+          <StateView
+            compact
+            description="Aucune équipe favorite n’est affichée sur ce profil."
+            style={styles.stateInset}
+            testID="profile-faction-empty"
+            title="Aucune faction affichée"
+            variant="empty"
+          />
+        ) : null}
 
         <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>ARSENAL</Text><Text style={styles.sectionTitle}>CE QUE TU AS DÉCROCHÉ.</Text></View><Text style={styles.sectionCount}>{obtained.length}/{data?.badges.length ?? 0}</Text></View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.arsenalRail}>
@@ -258,10 +286,21 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
         </ScrollView>
 
         <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>VERDICTS</Text><Text style={styles.sectionTitle}>TA FORME RÉCENTE.</Text></View>{data?.bestGame ? <Text style={styles.sectionCount}>{gameName(data.bestGame.jeu)} · {Math.round(data.bestGame.precision_pct)}%</Text> : null}</View>
-        <View style={styles.verdicts}>
-          {(data?.recent ?? []).slice(0, 5).map((item) => <VerdictRow key={item.id} item={item} />)}
-          {!loading && !data?.recent.length ? <View style={styles.emptyCard}><Text style={styles.emptyEyebrow}>AUCUN VERDICT</Text><Text style={styles.emptyTitle}>Ton historique commence avec ton premier call.</Text><Pressable onPress={() => router.push('/(tabs)/matches')}><Text style={styles.inlineAction}>ENTRER DANS L’ARENA →</Text></Pressable></View> : null}
-        </View>
+        {data?.recent.length ? (
+          <View style={styles.verdicts}>
+            {data.recent.slice(0, 5).map((item) => <VerdictRow key={item.id} item={item} />)}
+          </View>
+        ) : !loading ? (
+          <StateView
+            action={{ label: 'VOIR LES MATCHS', onPress: () => router.push('/(tabs)/matches') }}
+            compact
+            description="Les verdicts réglés apparaîtront ici."
+            style={styles.stateInset}
+            testID="profile-verdicts-empty"
+            title="Aucun verdict récent"
+            variant="empty"
+          />
+        ) : null}
 
       </ScrollView>
     </Screen>
@@ -416,7 +455,7 @@ const styles = StyleSheet.create({
   privateHeader: { position: 'relative', zIndex: 2 },
   privateHeaderSettings: { position: 'absolute', top: 14, right: 14, width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderStrong },
   header: { minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, back: { minHeight: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { ...typography.action, color: colors.text, letterSpacing: 0.6 }, headerActions: { flexDirection: 'row', alignItems: 'center', gap: 6 }, visibility: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { ...typography.label, color: colors.text, letterSpacing: 0.5 }, headerSettings: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, headerSettingsGlyph: { color: colors.text, fontSize: 17, lineHeight: 20, fontWeight: '900' },
-  error: { marginHorizontal: spacing.md, padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'space-between' }, errorText: { ...typography.body, flex: 1, color: '#FF9AA2' }, retryButton: { minHeight: 44, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' }, retry: { ...typography.action, color: colors.volt },
+  stateInset: { marginHorizontal: spacing.md },
   profileTools: { marginHorizontal: spacing.md, gap: 9 },
   toolEntry: { marginHorizontal: 0, marginTop: 0 },
   settingsEntry: { minHeight: 82, marginHorizontal: spacing.md, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 21, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, settingsMark: { width: 43, height: 43, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E', borderWidth: 1, borderColor: '#3A461D' }, settingsGlyph: { color: colors.volt, fontSize: 16, fontWeight: '900' }, settingsCopy: { flex: 1 }, settingsLabel: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 }, settingsTitle: { ...typography.bodyStrong, marginTop: 4, color: colors.text }, settingsArrow: { color: colors.volt, fontSize: 17, fontWeight: '900' },
@@ -454,6 +493,5 @@ const styles = StyleSheet.create({
   factionCard: { position: 'relative', overflow: 'hidden', minHeight: 126, marginHorizontal: spacing.md, padding: 15, borderRadius: 25, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, teamMark: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#090E12', borderWidth: 1 }, teamMarkText: { ...typography.bodyStrong }, factionCopy: { flex: 1 }, factionEyebrow: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: 0.6 }, factionName: { ...typography.cardTitle, marginTop: 4, color: colors.text }, factionMeta: { ...typography.caption, marginTop: 4, color: colors.textMuted }, arrow: { color: colors.volt, fontSize: 18, fontWeight: '900' },
   arsenalRail: { gap: 10, paddingHorizontal: spacing.md }, arsenalCard: { width: 148, minHeight: 184, padding: 14, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, arsenalArtwork: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 20, backgroundColor: '#080D11' }, arsenalName: { ...typography.bodyStrong, marginTop: 11, color: colors.text }, arsenalRarity: { ...typography.eyebrow, marginTop: 'auto', letterSpacing: 0.5 }, arsenalEmpty: { width: 270, minHeight: 166, justifyContent: 'center', padding: 18, borderRadius: 24, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, arsenalEmptyTitle: { ...typography.cardTitle, color: colors.text }, arsenalEmptyText: { ...typography.body, marginTop: 7, color: colors.textMuted },
   verdicts: { marginHorizontal: spacing.md, overflow: 'hidden', borderRadius: 23, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border }, verdictRow: { minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 13, borderBottomWidth: 1, borderBottomColor: '#192129' }, verdictMark: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1 }, verdictMarkWin: { backgroundColor: '#0E1C14', borderColor: '#23583A' }, verdictMarkLoss: { backgroundColor: '#1A1012', borderColor: '#5A2730' }, verdictLetter: { ...typography.bodyStrong }, verdictWin: { color: colors.success }, verdictLoss: { color: colors.danger }, verdictCopy: { flex: 1, minWidth: 0 }, verdictTitle: { ...typography.bodyStrong, color: colors.text }, verdictMeta: { ...typography.caption, marginTop: 3, color: colors.textMuted }, deltaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 }, delta: { ...typography.bodyStrong },
-  emptyCard: { marginHorizontal: spacing.md, minHeight: 176, justifyContent: 'center', padding: 20, borderRadius: 25, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border, gap: 8 }, emptyEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 }, emptyTitle: { ...typography.cardTitle, maxWidth: 320, color: colors.text }, emptyText: { ...typography.body, color: colors.textMuted }, inlineAction: { ...typography.action, marginTop: 5, color: colors.volt },
   disabled: { opacity: 0.48 }, pressed: { opacity: 0.74 },
 });

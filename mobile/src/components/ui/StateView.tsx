@@ -2,7 +2,14 @@ import type { LucideIcon } from 'lucide-react-native';
 import CircleAlert from 'lucide-react-native/icons/circle-alert';
 import CircleCheck from 'lucide-react-native/icons/circle-check';
 import Inbox from 'lucide-react-native/icons/inbox';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { colors, radius, spacing, typography } from '@/src/theme';
 
@@ -10,16 +17,18 @@ import { Button } from './Button';
 
 export type StateViewVariant = 'empty' | 'error' | 'loading' | 'success';
 
-type StateAction = {
+export type StateAction = {
   accessibilityHint?: string;
   label: string;
   onPress: () => void;
 };
 
-type StateViewProps = {
+export type StateViewProps = {
   action?: StateAction;
   compact?: boolean;
   description?: string;
+  presentation?: 'inline' | 'panel';
+  style?: StyleProp<ViewStyle>;
   testID?: string;
   title: string;
   variant: StateViewVariant;
@@ -42,12 +51,15 @@ export function StateView({
   action,
   compact = false,
   description,
+  presentation = 'panel',
+  style,
   testID,
   title,
   variant,
 }: StateViewProps) {
   const Icon = ICONS[variant];
   const liveRegion = variant === 'error' ? 'assertive' : 'polite';
+  const inline = presentation === 'inline';
 
   return (
     <View
@@ -59,10 +71,10 @@ export function StateView({
       accessibilityState={variant === 'loading' ? { busy: true } : undefined}
       aria-busy={variant === 'loading' ? true : undefined}
       accessible={variant === 'loading'}
-      style={[styles.root, compact && styles.compact]}
+      style={[styles.root, compact && styles.compact, inline && styles.inline, style]}
       testID={testID}
     >
-      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.icon}>
+      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.icon, inline && styles.iconInline]}>
         {variant === 'loading' ? (
           <ActivityIndicator color={ICON_COLORS.loading} size="small" />
         ) : Icon ? (
@@ -70,9 +82,9 @@ export function StateView({
         ) : null}
       </View>
 
-      <View style={styles.copy}>
-        <Text accessibilityRole={variant === 'error' ? 'alert' : undefined} style={styles.title}>{title}</Text>
-        {description ? <Text style={styles.description}>{description}</Text> : null}
+      <View style={[styles.copy, inline && styles.copyInline]}>
+        <Text accessibilityRole={variant === 'error' ? 'alert' : undefined} style={[styles.title, inline && styles.titleInline]}>{title}</Text>
+        {description ? <Text style={[styles.description, inline && styles.descriptionInline]}>{description}</Text> : null}
       </View>
 
       {action ? (
@@ -104,6 +116,15 @@ const styles = StyleSheet.create({
     minHeight: 144,
     padding: spacing.md,
   },
+  inline: {
+    minHeight: 72,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: radius.md,
+  },
   icon: {
     width: 44,
     height: 44,
@@ -112,19 +133,40 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.surfaceRaised,
   },
+  iconInline: {
+    width: 36,
+    height: 36,
+    flexShrink: 0,
+    backgroundColor: 'transparent',
+  },
   copy: {
     maxWidth: 330,
     alignItems: 'center',
     gap: spacing.xs,
+  },
+  copyInline: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'flex-start',
+    gap: 2,
   },
   title: {
     ...typography.cardTitle,
     color: colors.text,
     textAlign: 'center',
   },
+  titleInline: {
+    ...typography.bodyStrong,
+    textAlign: 'left',
+  },
   description: {
     ...typography.bodyComfort,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  descriptionInline: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    textAlign: 'left',
   },
 });

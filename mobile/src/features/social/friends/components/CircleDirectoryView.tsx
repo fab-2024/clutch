@@ -6,8 +6,8 @@ import type { ListRenderItemInfo } from 'react-native';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
+import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
-import { StateView } from '@/src/components/ui/StateView';
 import { Surface } from '@/src/components/ui/Surface';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
@@ -71,11 +71,10 @@ export default function CircleDirectoryView({
       ListEmptyComponent={loading ? (
         <DirectorySkeleton />
       ) : hasError ? null : (
-        <StateView
+        <FeatureStateView
           action={{ label: 'CHERCHER UN JOUEUR', onPress: () => inputRef.current?.focus() }}
-          description="Recherche un pseudo pour lancer ta première rivalité."
+          domain="circle"
           testID="circle-friends-empty"
-          title="Ton Cercle attend son premier allié."
           variant="empty"
         />
       )}
@@ -286,7 +285,7 @@ const FriendListRow = memo(function FriendListRow({
 function DirectorySkeleton() {
   return (
     <SkeletonGroup
-      label="Chargement de la liste d’amis"
+      label={FEATURE_STATE_COPY.circle.loading.title}
       style={styles.directorySkeleton}
       testID="circle-directory-loading"
     >

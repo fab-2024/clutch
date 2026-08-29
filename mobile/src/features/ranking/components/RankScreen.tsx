@@ -13,6 +13,7 @@ import {
 
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
+import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
@@ -180,12 +181,15 @@ function RankHeader({
       </View>
 
       {error ? (
-        <View accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.error}>
-          <Text style={styles.errorText}>{error}</Text>
-          <Pressable accessibilityRole="button" onPress={onRetry}>
-            <Text style={styles.retry}>RÉESSAYER</Text>
-          </Pressable>
-        </View>
+        <FeatureStateView
+          compact
+          domain="rank"
+          onRetry={onRetry}
+          presentation="inline"
+          style={styles.stateInset}
+          testID="rank-error-state"
+          variant="error"
+        />
       ) : null}
     </View>
   );
@@ -396,20 +400,16 @@ function LeaderboardEmpty({ scope }: { scope: RankScope }) {
       : null;
 
   return (
-    <View style={styles.emptyBoard}>
-      <Text style={styles.emptyBoardTitle}>LE LADDER SE CONSTRUIT.</Text>
-      <Text style={styles.emptyBoardCopy}>{copy}</Text>
-      {action ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push(action.route)}
-          style={({ pressed }) => [styles.emptyBoardAction, pressed && styles.pressed]}
-        >
-          <Text style={styles.emptyBoardActionText}>{action.label}</Text>
-          <Text style={styles.emptyBoardArrow}>›</Text>
-        </Pressable>
-      ) : null}
-    </View>
+    <FeatureStateView
+      action={action ? { label: action.label, onPress: () => router.push(action.route) } : undefined}
+      compact
+      description={copy}
+      domain="rank"
+      style={styles.stateInset}
+      testID="rank-leaderboard-empty"
+      title="Aucun joueur dans ce classement"
+      variant="empty"
+    />
   );
 }
 
@@ -583,7 +583,7 @@ function EmptyState({ title, copy }: { title: string; copy: string }) {
 
 function RankSkeleton() {
   return (
-    <SkeletonGroup style={styles.skeleton} testID="rank-season-loading">
+    <SkeletonGroup label={FEATURE_STATE_COPY.rank.loading.title} style={styles.skeleton} testID="rank-season-loading">
       <View style={styles.skeletonJourneyHeader}>
         <Skeleton height={12} radius="pill" width={96} />
         <Skeleton height={10} radius="pill" tone="subtle" width={104} />
@@ -615,7 +615,7 @@ function RankSkeleton() {
 
 function RankSnapshotSkeleton() {
   return (
-    <SkeletonGroup label="Chargement du classement" style={styles.snapshotSkeleton} testID="rank-snapshot-loading">
+    <SkeletonGroup label={FEATURE_STATE_COPY.rank.loading.title} style={styles.snapshotSkeleton} testID="rank-snapshot-loading">
       <Skeleton height={66} radius="lg" width={66} />
       <View style={styles.snapshotSkeletonCopy}>
         <Skeleton height={8} radius="pill" tone="subtle" width="44%" />
@@ -702,26 +702,7 @@ const styles = StyleSheet.create({
   tabTextActive: {
     color: '#080A0C',
   },
-  error: {
-    marginHorizontal: spacing.md,
-    padding: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
-    borderRadius: radius.md,
-    backgroundColor: '#1A1012',
-    borderWidth: 1,
-    borderColor: '#4A2027',
-  },
-  errorText: {
-    ...typography.body,
-    flex: 1,
-    color: '#FF9AA2',
-  },
-  retry: {
-    ...typography.action,
-    color: colors.volt,
-  },
+  stateInset: { marginHorizontal: spacing.md },
   sectionStack: {
     gap: 13,
     marginHorizontal: spacing.md,
@@ -1035,46 +1016,6 @@ const styles = StyleSheet.create({
   boardUnit: {
     ...typography.eyebrow,
     color: colors.textMuted,
-  },
-  emptyBoard: {
-    minHeight: 190,
-    marginHorizontal: spacing.md,
-    padding: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.lg,
-    backgroundColor: colors.surfaceLow,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  emptyBoardTitle: {
-    ...typography.cardTitle,
-    color: colors.text,
-    textAlign: 'center',
-  },
-  emptyBoardCopy: {
-    ...typography.bodyComfort,
-    maxWidth: 320,
-    marginTop: spacing.xs,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  emptyBoardAction: {
-    minHeight: layout.minTouchTarget,
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-  },
-  emptyBoardActionText: {
-    ...typography.action,
-    color: colors.volt,
-  },
-  emptyBoardArrow: {
-    color: colors.volt,
-    fontSize: 20,
   },
   boardRule: {
     ...typography.eyebrow,

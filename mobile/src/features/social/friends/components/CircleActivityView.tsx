@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
+import { FEATURE_STATE_COPY } from '@/src/components/ui/FeatureStateView';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { StateView } from '@/src/components/ui/StateView';
 import { Surface } from '@/src/components/ui/Surface';
@@ -56,7 +57,7 @@ export default function CircleActivityView(props: CircleActivityViewProps) {
 function CircleActivitySkeleton() {
   return (
     <SkeletonGroup
-      label="Chargement de l’activité du Cercle"
+      label={FEATURE_STATE_COPY.circle.loading.title}
       style={styles.activity}
       testID="circle-activity-loading"
     >

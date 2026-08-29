@@ -1,15 +1,14 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
-  Pressable,
   RefreshControl,
   ScrollView,
-  Text,
   View,
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
 
+import { FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { useCommunityDashboard } from '@/src/features/social/faction/hooks/useCommunityDashboard';
 import type { RelicAnimationPreset } from '@/src/features/social/faction/components/CollectiveRelic';
 import type {
@@ -154,14 +153,18 @@ export function SocialHomeExperience({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
     >
       {error ? (
-        <View style={styles.error}>
-          <Text style={styles.errorText}>{error}</Text>
-          <Pressable accessibilityRole="button" onPress={onRetry}><Text style={styles.retry}>RÉESSAYER</Text></Pressable>
-        </View>
+        <FeatureStateView
+          compact
+          domain="social"
+          onRetry={onRetry}
+          presentation="inline"
+          testID="social-error-state"
+          variant="error"
+        />
       ) : null}
 
       <View onLayout={handleRelicHeroLayout}>
-        {loading ? <SocialHomeSkeleton /> : (
+        {loading ? <SocialHomeSkeleton /> : error && !faction && !rankedFactions.length ? null : (
           <RelicHero
             faction={faction}
             me={data.moi}
@@ -196,7 +199,7 @@ export function SocialHomeExperience({
         </View>
       ) : null}
 
-      {!loading && !rankedFactions.length ? <EmptyFactions /> : null}
+      {!loading && !error && !rankedFactions.length ? <EmptyFactions /> : null}
     </ScrollView>
   );
 }

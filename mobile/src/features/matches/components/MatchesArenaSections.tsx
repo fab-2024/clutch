@@ -13,6 +13,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
+import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import GameLogo from '@/src/features/onboarding/components/GameLogo';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
@@ -291,17 +292,21 @@ export function MatchRow({ match, onPrepareMatch, rivalId, rivalPseudo }: { matc
 export function EmptyArena({ callsOnly, query, status }: { callsOnly: boolean; query: string; status: StatusFilter }) {
   const filtered = Boolean(query.trim()) || callsOnly;
   return (
-    <View style={styles.emptyCard}>
-      <Text style={styles.emptyEyebrow}>{filtered ? 'FILTRE ACTIF' : status === 'upcoming' ? 'CALENDRIER' : 'HISTORIQUE'}</Text>
-      <Text style={styles.emptyTitle}>{filtered ? 'AUCUN MATCH NE CORRESPOND.' : status === 'upcoming' ? 'JOURNÉE SANS AFFICHE.' : 'AUCUN VERDICT CE JOUR-LÀ.'}</Text>
-      <Text style={styles.emptyCopy}>{filtered ? 'Change de jeu, de date ou désactive Mes calls.' : 'Choisis une autre date dans le calendrier.'}</Text>
-    </View>
+    <FeatureStateView
+      compact
+      description={filtered ? 'Change de jeu, de date ou désactive Mes Calls.' : 'Choisis une autre date dans le calendrier.'}
+      domain="matches"
+      style={styles.stateInset}
+      testID="matches-empty-state"
+      title={filtered ? 'Aucun match ne correspond' : status === 'upcoming' ? 'Aucun match ce jour-là' : 'Aucun verdict ce jour-là'}
+      variant="empty"
+    />
   );
 }
 
 export function MatchSkeleton() {
   return (
-    <SkeletonGroup label="Chargement des matchs" style={styles.skeleton} testID="matches-loading">
+    <SkeletonGroup label={FEATURE_STATE_COPY.matches.loading.title} style={styles.skeleton} testID="matches-loading">
       <View style={styles.skeletonHead}>
         <View style={styles.skeletonHeadCopy}>
           <Skeleton height={8} radius="pill" tone="subtle" width={92} />

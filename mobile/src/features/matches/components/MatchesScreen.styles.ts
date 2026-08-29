@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
+import { colors, fonts, layout, spacing, typography } from '@/src/theme';
 
 export const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 14 },
@@ -58,9 +58,7 @@ export const styles = StyleSheet.create({
   adminLink: { minHeight: 34, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#202832' },
   adminLinkText: { ...typography.action, color: colors.textMuted, letterSpacing: .5 },
   adminLinkArrow: { color: colors.volt, fontSize: 14 },
-  errorCard: { marginHorizontal: spacing.md, padding: 13, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027', flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
-  errorText: { ...typography.body, flex: 1, color: '#FF9AA2' },
-  retry: { ...typography.action, color: colors.volt },
+  stateInset: { marginHorizontal: spacing.md },
   matchesSection: { marginHorizontal: spacing.md, gap: 12 },
   sectionHead: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 },
   sectionEyebrow: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: 1.1 },
@@ -100,10 +98,6 @@ export const styles = StyleSheet.create({
   rowStateAccent: { color: colors.volt },
   rowStateLoss: { color: colors.danger },
   rowArrow: { color: colors.volt, fontSize: 16 },
-  emptyCard: { minHeight: 210, marginHorizontal: spacing.md, justifyContent: 'center', padding: 24, borderRadius: 26, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#252E37' },
-  emptyEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.3 },
-  emptyTitle: { ...typography.displaySmall, marginTop: 10, color: colors.text },
-  emptyCopy: { ...typography.body, marginTop: 10, color: colors.textMuted },
   skeleton: { marginHorizontal: spacing.md, gap: 10 },
   skeletonHead: { minHeight: 43, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 },
   skeletonHeadCopy: { flex: 1, gap: 6 },

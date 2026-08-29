@@ -146,7 +146,7 @@ describe('OwnProfileOverview', () => {
     const screen = await renderHub();
 
     expect(screen.getByLabelText(/Rang PLATINE.*niveau 7.*568 XP/)).toBeTruthy();
-    expect(screen.getAllByText('PLATINE').length).toBeGreaterThan(0);
+    expect(screen.getByLabelText(/Aperçu Vitrine.*rang PLATINE/)).toBeTruthy();
   });
 
   it('keeps the progression, collection and social actions wired', async () => {
@@ -188,6 +188,17 @@ describe('OwnProfileOverview', () => {
     await fireEvent.press(screen.getByLabelText('Ouvrir ma Vitrine en paysage'));
 
     expect(onOpenShowcase).toHaveBeenCalledTimes(1);
+  });
+
+  it('teases the Vitrine with exactly three fixed artifacts instead of the full room', async () => {
+    const screen = await renderHub();
+
+    expect(screen.getByTestId('profile-vitrine-stage')).toBeTruthy();
+    expect(screen.getAllByTestId(/^profile-vitrine-artifact-/, { includeHiddenElements: true })).toHaveLength(3);
+    expect(screen.getByTestId('profile-vitrine-artifact-badge', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByTestId('profile-vitrine-artifact-rank', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByTestId('profile-vitrine-artifact-team', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.queryByTestId('showcase-room-preview')).toBeNull();
   });
 
   it('opens visibility settings from a private profile', async () => {

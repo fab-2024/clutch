@@ -6,6 +6,7 @@ import { Platform, Pressable, Share, StyleSheet, Text, View, type LayoutRectangl
 import { useReducedMotion, useSharedValue } from 'react-native-reanimated';
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Path, Stop } from 'react-native-svg';
 
+import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { publicAppUrl } from '@/src/config/release';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
@@ -541,17 +542,13 @@ function FactionMemberRow({ accent, person }: { accent: string; person: Communit
 
 export function EmptyFactions() {
   return (
-    <View style={styles.emptyCard}>
-      <Text style={styles.emptyMark}>✦</Text>
-      <Text style={styles.emptyTitle}>LA GUERRE N’A PAS ENCORE COMMENCÉ.</Text>
-      <Text style={styles.emptyText}>Les factions et leur classement apparaîtront ici dès que les premières équipes seront actives.</Text>
-    </View>
+    <FeatureStateView compact domain="social" testID="social-empty-state" variant="empty" />
   );
 }
 
 export function SocialHomeSkeleton() {
   return (
-    <SkeletonGroup label="Chargement du QG Social" style={styles.socialSkeleton} testID="social-home-loading">
+    <SkeletonGroup label={FEATURE_STATE_COPY.social.loading.title} style={styles.socialSkeleton} testID="social-home-loading">
       <View style={styles.heroSkeleton}>
         <View style={styles.heroSkeletonTop}>
           <View style={styles.heroSkeletonHeading}>

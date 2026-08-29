@@ -1,13 +1,10 @@
 import { StyleSheet } from 'react-native';
 
-import { colors, fonts, layout, radius, typography } from '@/src/theme';
+import { colors, fonts, layout, typography } from '@/src/theme';
 
 export const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingHorizontal: 18, paddingTop: 6, paddingBottom: layout.tabBarContentInset + 12, gap: 10 },
-  error: { minHeight: 48, padding: 12, borderRadius: radius.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' },
-  errorText: { ...typography.body, flex: 1, color: '#FF9AA2' },
-  retry: { ...typography.action, color: colors.volt },
   factionHero: { position: 'relative', minHeight: 544, overflow: 'hidden', padding: 12, borderRadius: 22, backgroundColor: '#06111A', borderWidth: 1, borderColor: '#284553' },
   heroTop: { zIndex: 6, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
   heroHeading: { flex: 1, minWidth: 0 },
@@ -111,10 +108,6 @@ export const styles = StyleSheet.create({
   memberCopy: { flex: 1, minWidth: 0 },
   memberName: { color: '#F0F2F3', fontFamily: fonts.bold, fontSize: 17, lineHeight: 21 },
   memberMeta: { marginTop: 3, color: colors.volt, fontFamily: fonts.medium, fontSize: 11, lineHeight: 14 },
-  emptyCard: { minHeight: 190, padding: 22, borderRadius: 28, justifyContent: 'center', backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#252E36' },
-  emptyMark: { color: colors.volt, fontSize: 24 },
-  emptyTitle: { ...typography.displaySmall, maxWidth: 320, marginTop: 12, color: '#F2F4F4' },
-  emptyText: { ...typography.body, maxWidth: 330, marginTop: 9, color: '#7A858E' },
   socialSkeleton: { gap: 10 },
   heroSkeleton: { minHeight: 544, padding: 12, borderRadius: 22, justifyContent: 'space-between', backgroundColor: '#09131A', borderWidth: 1, borderColor: '#263844' },
   heroSkeletonTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },

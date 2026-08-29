@@ -5,6 +5,12 @@ jest.mock(
   () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
+// StateView is consumed across feature suites. Keep its Lucide boundary as a
+// lightweight host so Jest never has to parse the package's ESM icon modules.
+jest.mock('lucide-react-native/icons/circle-alert', () => 'CircleAlert');
+jest.mock('lucide-react-native/icons/circle-check', () => 'CircleCheck');
+jest.mock('lucide-react-native/icons/inbox', () => 'Inbox');
+
 // Skia ships an ESM-native renderer. Unit tests exercise the adaptive atmosphere
 // rules directly and replace only this visual boundary with a lightweight host.
 jest.mock('./src/features/profile/components/showcase/ShowcaseAtmosphereLayer', () => {

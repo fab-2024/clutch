@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
+import { FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors } from '@/src/theme';
 
@@ -206,15 +207,20 @@ export function MatchesExperience({
         </View>
 
         {error ? (
-          <View style={styles.errorCard}>
-            <Text style={styles.errorText}>{error}</Text>
-            <Pressable accessibilityRole="button" onPress={onRetry}><Text style={styles.retry}>RÉESSAYER</Text></Pressable>
-          </View>
+          <FeatureStateView
+            compact
+            domain="matches"
+            onRetry={onRetry}
+            presentation="inline"
+            style={styles.stateInset}
+            testID="matches-error-state"
+            variant="error"
+          />
         ) : null}
 
         {loading ? (
           <MatchSkeleton />
-        ) : callsOnly ? (
+        ) : error && !source.length ? null : callsOnly ? (
           <View>
             <MyCallsPanel dashboard={calls} followedGames={followedGames} game={game} onPrepareMatch={prepareMatch} query={query} />
           </View>

@@ -18,6 +18,7 @@ import { useReducedMotion } from 'react-native-reanimated';
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
+import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
@@ -25,7 +26,7 @@ import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/rankin
 import { prefetchMatchCenterData } from '@/src/features/matches/matchCenterCache';
 import { openMatchCenter, warmMatchCenter, type MatchCenterTarget } from '@/src/features/matches/matchCenterNavigation';
 import { useAuth } from '@/src/providers/AuthProvider';
-import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
+import { colors, fonts, layout, spacing, typography } from '@/src/theme';
 
 import { loadHubData } from '../api';
 import { selectHubContext } from '../hubContext';
@@ -154,17 +155,15 @@ export function HubExperience({
     </View>
   );
   const errorView = error ? (
-    <View accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.errorCard}>
-      <Text style={styles.errorText}>{error}</Text>
-      <Pressable
-        accessibilityLabel="Réessayer de charger le Hub"
-        accessibilityRole="button"
-        onPress={onRetry}
-        style={({ pressed }) => [styles.retryAction, pressed && styles.pressed]}
-      >
-        <Text style={styles.retryText}>RÉESSAYER</Text>
-      </Pressable>
-    </View>
+    <FeatureStateView
+      compact
+      domain="hub"
+      onRetry={onRetry}
+      presentation="inline"
+      style={styles.stateInset}
+      testID="hub-error-state"
+      variant="error"
+    />
   ) : null;
 
   return (
@@ -422,21 +421,20 @@ function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }
 function EmptyHero() {
   return (
     <View style={styles.matchFeature}>
-      <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/matches')} style={({ pressed }) => [styles.emptyTicket, pressed && styles.pressed]}>
-        <Image resizeMode="cover" source={GAME_BACKGROUNDS.lol} style={styles.matchBackdrop} />
-        <LinearGradient colors={['rgba(3,6,9,.45)', 'rgba(3,6,9,.97)']} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
-        <Text style={styles.emptyKicker}>PROCHAINE AFFICHE</Text>
-        <Text style={styles.emptyTitle}>LE CALME AVANT LE PROCHAIN MATCH.</Text>
-        <Text style={styles.emptyCopy}>Le Hub se réactivera dès qu’un match sera programmé.</Text>
-      </Pressable>
-      <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/matches')} style={({ pressed }) => [styles.callAction, pressed && styles.pressed]}><Text style={styles.callActionText}>VOIR TOUS LES MATCHS</Text><Text style={styles.callActionArrow}>›</Text></Pressable>
+      <FeatureStateView
+        action={{ label: 'VOIR LES MATCHS', onPress: () => router.push('/(tabs)/matches') }}
+        compact
+        domain="hub"
+        testID="hub-empty-state"
+        variant="empty"
+      />
     </View>
   );
 }
 
 function HeroSkeleton() {
   return (
-    <SkeletonGroup label="Chargement de l’affiche principale" style={styles.matchFeature}>
+    <SkeletonGroup label={FEATURE_STATE_COPY.hub.loading.title} style={styles.matchFeature}>
       <View style={styles.skeleton}>
         <View style={styles.skeletonTop}>
           <Skeleton height={10} radius="pill" width="38%" />
@@ -496,10 +494,7 @@ const styles = StyleSheet.create({
   headlineTitleCompact: { fontSize: 35, lineHeight: 37 },
   headlineTitleLandscape: { marginTop: 3, fontSize: 34, lineHeight: 36 },
   headlineTitleEmbeddedLandscape: { fontSize: 32, lineHeight: 34 },
-  errorCard: { marginHorizontal: spacing.md, padding: 13, borderRadius: radius.md, backgroundColor: colors.liveSurface, borderWidth: 1, borderColor: colors.liveBorder, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  errorText: { ...typography.bodyComfort, flex: 1, color: colors.liveText },
-  retryAction: { minHeight: layout.minTouchTarget, paddingHorizontal: spacing.sm, alignItems: 'center', justifyContent: 'center' },
-  retryText: { ...typography.control, color: colors.volt, letterSpacing: .5 },
+  stateInset: { marginHorizontal: spacing.md },
   matchFeature: { marginHorizontal: spacing.md, gap: 10 },
   matchFeatureLandscape: { flexDirection: 'row', alignItems: 'stretch' },
   landscapeHeroCopy: { flex: 1, minWidth: 0, paddingVertical: 4, justifyContent: 'space-between' },
@@ -537,10 +532,6 @@ const styles = StyleSheet.create({
   seasonMetric: { width: 78, flexShrink: 0, alignItems: 'flex-end', justifyContent: 'center' },
   seasonMetricLabel: { color: '#929DA7', fontFamily: fonts.bold, fontSize: 9, lineHeight: 12, letterSpacing: .35 },
   seasonMetricValue: { maxWidth: '100%', marginTop: 3, color: colors.text, fontFamily: fonts.display, fontSize: 26, lineHeight: 28 },
-  emptyTicket: { position: 'relative', minHeight: 220, padding: 19, overflow: 'hidden', justifyContent: 'flex-end', borderRadius: 17, backgroundColor: '#080D11', borderWidth: 1, borderColor: '#39444E' },
-  emptyKicker: { ...typography.eyebrow, zIndex: 1, color: colors.volt, letterSpacing: 1 },
-  emptyTitle: { zIndex: 1, maxWidth: 310, marginTop: 7, color: colors.text, fontFamily: fonts.display, fontSize: 29, lineHeight: 31 },
-  emptyCopy: { ...typography.body, zIndex: 1, maxWidth: 300, marginTop: 6, color: '#A2ABB2' },
   skeleton: { minHeight: 245, padding: 16, justifyContent: 'space-between', borderRadius: 17, backgroundColor: '#0D1218', borderWidth: 1, borderColor: colors.border },
   skeletonTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   skeletonDuel: { minHeight: 96, alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', gap: 12 },

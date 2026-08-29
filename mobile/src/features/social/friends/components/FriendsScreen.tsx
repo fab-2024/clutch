@@ -5,8 +5,8 @@ import { Platform, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Tex
 import { BaseSheet } from '@/src/components/overlays/BaseSheet';
 import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { Button } from '@/src/components/ui/Button';
+import { FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { SegmentedControl, type SegmentedControlItem } from '@/src/components/ui/SegmentedControl';
-import { StateView } from '@/src/components/ui/StateView';
 import { publicAppUrl } from '@/src/config/release';
 import { useSnackbar } from '@/src/providers/SnackbarProvider';
 import { colors, layout, spacing, typography } from '@/src/theme';
@@ -238,12 +238,12 @@ export function CirclePeopleScreen({
   );
   const hasContent = Boolean(data.weekly || data.amis.length || data.recues.length || data.envoyees.length);
   const errorState = error ? (
-    <StateView
-      action={{ label: 'RÉESSAYER', onPress: () => void load() }}
+    <FeatureStateView
       compact
-      description={error}
+      domain="circle"
+      onRetry={() => void load()}
+      presentation={hasContent ? 'inline' : 'panel'}
       testID="circle-error-state"
-      title="Ton Cercle ne répond pas."
       variant="error"
     />
   ) : null;

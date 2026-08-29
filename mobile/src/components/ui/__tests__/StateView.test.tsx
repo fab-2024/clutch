@@ -1,6 +1,7 @@
 /// <reference types="jest" />
 
 import { fireEvent, render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 
 import { StateView } from '../StateView';
 
@@ -47,5 +48,22 @@ describe('StateView', () => {
     expect(screen.getByTestId('state').props.accessibilityLiveRegion).toBe('polite');
     expect(screen.getByRole('progressbar').props.accessibilityState).toEqual({ busy: true });
     expect(screen.getByText('Chargement')).toBeTruthy();
+  });
+
+  it('uses the shared compact horizontal contract for inline states', async () => {
+    const screen = await render(
+      <StateView
+        description="Le calendrier n’a pas pu être actualisé."
+        presentation="inline"
+        testID="state"
+        title="Impossible de charger les matchs"
+        variant="error"
+      />,
+    );
+    const style = StyleSheet.flatten(screen.getByTestId('state').props.style);
+
+    expect(style.flexDirection).toBe('row');
+    expect(style.minHeight).toBe(72);
+    expect(screen.getByRole('alert')).toHaveTextContent('Impossible de charger les matchs');
   });
 });
