@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import { RemoteImage } from '../RemoteImage';
 
 jest.mock('expo-image', () => {
@@ -33,6 +33,22 @@ describe('RemoteImage', () => {
       source: { uri: 'https://cdn.example/mark.png' },
       transition: 0,
     }));
+  });
+
+  it('reports when the requested asset is actually displayed', async () => {
+    const onDisplay = jest.fn();
+    const screen = await render(
+      <RemoteImage
+        onDisplay={onDisplay}
+        style={{ height: 48, width: 48 }}
+        testID="remote-mark"
+        uri="https://cdn.example/mark.png"
+      />,
+    );
+
+    fireEvent(screen.getByTestId('remote-mark'), 'display');
+
+    expect(onDisplay).toHaveBeenCalledTimes(1);
   });
 
 });

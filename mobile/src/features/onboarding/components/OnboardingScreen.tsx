@@ -193,8 +193,7 @@ function GamesStep({
   return (
     <View style={styles.stepBody}>
       <View style={styles.stepHeadline}>
-        <Text style={styles.kicker}>TON FEED, TES RÈGLES</Text>
-        <Text style={styles.stepTitle}>CHOISIS TES{`\n`}TERRAINS.</Text>
+        <Text style={styles.stepTitle}>QUELS JEUX{`\n`}SUIS-TU ?</Text>
         <Text style={styles.stepText}>Sélectionne au moins un jeu. Tu pourras changer ça plus tard dans tes paramètres.</Text>
       </View>
 
@@ -280,8 +279,7 @@ function TeamsStep({
   return (
     <View style={styles.stepBody}>
       <View style={styles.stepHeadline}>
-        <Text style={styles.kicker}>UNE COULEUR À PORTER</Text>
-        <Text style={styles.stepTitle}>CHOISIS TES{`\n`}COULEURS.</Text>
+        <Text style={styles.stepTitle}>QUELLE ÉQUIPE{`\n`}SOUTIENS-TU ?</Text>
         <Text style={styles.stepText}>Ta faction donne une identité à ton profil et fait évoluer une relique collective.</Text>
       </View>
 
@@ -351,7 +349,6 @@ const styles = StyleSheet.create({
   progressBarActive: { backgroundColor: colors.volt },
   stepLabel: { ...typography.label, color: '#65717D', letterSpacing: .5 },
 
-  kicker: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.2 },
   stepBody: { flex: 1, paddingTop: 28, paddingBottom: 16, gap: 24 },
   stepHeadline: { gap: 8 },
   stepTitle: { ...typography.displayLarge, color: colors.text },

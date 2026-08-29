@@ -9,7 +9,6 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
-import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 
 import { useCommunityDashboard } from '@/src/features/social/faction/hooks/useCommunityDashboard';
 import type { RelicAnimationPreset } from '@/src/features/social/faction/components/CollectiveRelic';
@@ -112,8 +111,6 @@ export function SocialHomeExperience({
   supporterContribution,
   onSupporterContributionPresented,
 }: SocialHomeExperienceProps) {
-  const systemReduceMotion = useReducedMotion();
-  const reduceMotion = reduceMotionOverride ?? systemReduceMotion;
   const relicHeroHeightRef = useRef(480);
   const relicSceneActiveRef = useRef(true);
   const [relicSceneActive, setRelicSceneActive] = useState(true);
@@ -131,7 +128,6 @@ export function SocialHomeExperience({
       ?? null,
     [favoriteTeamId, rankedFactions],
   );
-  const entrance = (delay: number) => reduceMotion ? undefined : FadeInDown.delay(delay).duration(380);
   const RelicHero = factionHeroVariant === 'v2' ? FactionRelicHeroV2 : FactionRelicHero;
   const updateRelicSceneVisibility = useCallback((visible: boolean) => {
     if (relicSceneActiveRef.current === visible) return;
@@ -164,7 +160,7 @@ export function SocialHomeExperience({
         </View>
       ) : null}
 
-      <Animated.View entering={entrance(20)} onLayout={handleRelicHeroLayout}>
+      <View onLayout={handleRelicHeroLayout}>
         {loading ? <SocialHomeSkeleton /> : (
           <RelicHero
             faction={faction}
@@ -186,18 +182,18 @@ export function SocialHomeExperience({
             supporterContribution={supporterContribution}
           />
         )}
-      </Animated.View>
+      </View>
 
       {!loading && rankedFactions.length ? (
-        <Animated.View entering={entrance(90)}>
+        <View>
           <FactionWar factions={rankedFactions} mine={faction} />
-        </Animated.View>
+        </View>
       ) : null}
 
       {!loading && data.moi && faction ? (
-        <Animated.View entering={entrance(150)}>
+        <View>
           <FactionMemberRanking faction={faction} me={data.moi} />
-        </Animated.View>
+        </View>
       ) : null}
 
       {!loading && !rankedFactions.length ? <EmptyFactions /> : null}

@@ -6,7 +6,6 @@ import Animated, {
   cancelAnimation,
   Easing,
   FadeIn,
-  FadeInDown,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -257,7 +256,6 @@ export default function ResultRevealScreen({
   const choiceName = result.choix === 'a' ? result.equipe_a : result.equipe_b;
   const remaining = Math.max(0, result.restants - 1);
   const returnLabel = matchJourneySourceLabel(journeySource);
-  const entrance = (delay: number) => reduceMotion || replay ? undefined : FadeInDown.delay(delay).duration(460);
   const heroEntrance = replay
     ? undefined
     : reduceMotion && promotion
@@ -265,11 +263,6 @@ export default function ResultRevealScreen({
       : reduceMotion
         ? undefined
         : FadeIn.duration(420);
-  const promotionEntrance = replay
-    ? undefined
-    : reduceMotion
-      ? FadeIn.delay(130).duration(180)
-      : entrance(310);
 
   return (
     <Screen>
@@ -307,7 +300,7 @@ export default function ResultRevealScreen({
           <Text accessibilityRole="header" style={[styles.resultTitle, isShortLandscape && styles.resultTitleLandscape]}>{won ? 'BIEN LU.' : 'PAS CETTE FOIS.'}</Text>
           <Text numberOfLines={1} style={[styles.eventLine, isShortLandscape && styles.eventLineLandscape]}>{gameLabel(result.jeu)} · {result.evenement} · BO{result.format}</Text>
 
-          {!isShortLandscape ? <View style={styles.revealIdentity}><SupporterIdentity compact cosmetics={equipped} meta="SIGNATURE DU VERDICT" pseudo={pseudo} /></View> : null}
+          {!isShortLandscape ? <View style={styles.revealIdentity}><SupporterIdentity compact cosmetics={equipped} meta="TON PROFIL" pseudo={pseudo} /></View> : null}
 
           <Animated.View entering={reduceMotion ? undefined : FadeIn.delay(120).duration(360)} style={[styles.scoreboard, isShortLandscape && styles.scoreboardLandscape]}>
             <RevealTeam accent={teamAColor} chosen={result.choix === 'a'} compact={isShortLandscape} name={result.equipe_a} tag={result.tag_a} winner={result.score_a > result.score_b} />
@@ -326,13 +319,13 @@ export default function ResultRevealScreen({
         </Animated.View>
 
         {isShortLandscape ? (
-          <Animated.View entering={entrance(180)} style={styles.revealIdentityOutside}>
-            <SupporterIdentity compact cosmetics={equipped} meta="SIGNATURE DU VERDICT" pseudo={pseudo} />
-          </Animated.View>
+          <View style={styles.revealIdentityOutside}>
+            <SupporterIdentity compact cosmetics={equipped} meta="TON PROFIL" pseudo={pseudo} />
+          </View>
         ) : null}
 
-        <Animated.View entering={entrance(220)} style={styles.ratingCard}>
-          <View style={styles.sectionHeader}><View><Text style={styles.sectionEyebrow}>RATING SAISONNIER</Text><Text style={styles.sectionTitle}>Tes Frags ont parlé.</Text></View><View style={[styles.deltaPill, { backgroundColor: `${tone}18`, borderColor: `${tone}66` }]}><CurrencyIcon color={tone} kind="frags" size={14} /><Text style={[styles.deltaText, { color: tone }]}>{signed(result.delta_frags)}</Text></View></View>
+        <View style={styles.ratingCard}>
+          <View style={styles.sectionHeader}><View><Text style={styles.sectionEyebrow}>RATING SAISONNIER</Text><Text style={styles.sectionTitle}>Ton rating passe à {formatNumber(result.frags_apres)} Frags.</Text></View><View style={[styles.deltaPill, { backgroundColor: `${tone}18`, borderColor: `${tone}66` }]}><CurrencyIcon color={tone} kind="frags" size={14} /><Text style={[styles.deltaText, { color: tone }]}>{signed(result.delta_frags)}</Text></View></View>
           <View style={styles.ratingFlow}>
             <Metric label="AVANT" value={formatNumber(result.frags_avant)} />
             <View style={styles.ratingArrow}><Text style={[styles.ratingArrowText, { color: tone }]}>→</Text></View>
@@ -340,10 +333,10 @@ export default function ResultRevealScreen({
           </View>
           <View style={styles.ratingTrack}><Animated.View style={[styles.ratingFill, ratingFillStyle, { backgroundColor: tone }]} /></View>
           <Text style={styles.ratingRule}>Calcul serveur figé · probabilité du call {Math.round(result.proba_figee * 100)} %</Text>
-        </Animated.View>
+        </View>
 
         {transition ? transition.kind === 'promotion' ? (
-          <Animated.View entering={promotionEntrance}>
+          <View>
             <PromotionAscensionCard
               announce={promotionAnnouncement}
               delta={result.delta_frags}
@@ -353,19 +346,19 @@ export default function ResultRevealScreen({
               rankBefore={result.rang_avant}
               transition={transition}
             />
-          </Animated.View>
+          </View>
         ) : (
-          <Animated.View entering={entrance(310)} style={styles.rankingCard}>
+          <View style={styles.rankingCard}>
             <GradeHeadline transition={transition} />
             <View style={styles.rankFlow}>
               <RankMetric grade={transition.before?.libelle ?? 'Bronze'} label="AVANT" rank={result.rang_avant} />
               <View style={styles.rankDivider} />
               <RankMetric accent={gradeAccent(transition.after)} grade={transition.after?.libelle ?? 'Bronze'} label="APRÈS" rank={result.rang_apres} />
             </View>
-          </Animated.View>
+          </View>
         ) : null}
 
-        <Animated.View entering={entrance(390)} style={styles.proofCard}>
+        <View style={styles.proofCard}>
           <View style={styles.proofIcon}><Text style={styles.proofGlyph}>✓</Text></View>
           <View style={styles.proofCopy}>
             <Text style={styles.proofLabel}>{result.resultat_corrige ? `RÉSULTAT CORRIGÉ · RÉVISION ${result.revision_resultat}` : 'SOURCE DU VERDICT'}</Text>
@@ -373,11 +366,11 @@ export default function ResultRevealScreen({
             <Text style={styles.proofMeta}>{formatResolutionDate(result.regle_le)} · {result.regle_resolution.libelle.toLowerCase()}</Text>
             <Text numberOfLines={1} style={styles.proofReference}>RÉF. {result.identifiant_resultat_externe}</Text>
           </View>
-        </Animated.View>
+        </View>
 
         {error ? <View style={styles.errorCard}><Text style={styles.errorText}>{error}</Text></View> : null}
 
-        <Animated.View entering={entrance(470)} style={styles.actions}>
+        <View style={styles.actions}>
           <Pressable accessibilityRole="button" disabled={busy} onPress={() => void leaveReveal('calls')} style={({ pressed }) => [styles.primaryButton, (pressed || busy) && styles.primaryPressed]}>
             <Text style={styles.primaryText}>{busy ? 'VALIDATION…' : !replay && remaining > 0 ? `RÉSULTAT SUIVANT · ${remaining}` : 'FAIRE MON PROCHAIN CALL'}</Text>
             {!busy ? <Text style={styles.primaryArrow}>→</Text> : null}
@@ -386,7 +379,7 @@ export default function ResultRevealScreen({
             <Text style={styles.secondaryText}>VOIR MON HISTORIQUE</Text>
           </Pressable>
           {!replay ? <Text style={styles.seenHint}>Le verdict sera archivé après avoir continué.</Text> : null}
-        </Animated.View>
+        </View>
       </ScrollView>
       {promotion && transition && !replay && !reduceMotion ? (
         <PromotionCeremony

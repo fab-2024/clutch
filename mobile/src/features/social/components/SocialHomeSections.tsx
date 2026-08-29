@@ -85,7 +85,7 @@ export function FactionRelicHero({
   const pct = Math.round(progress.progress * 100);
   const title = faction ? 'PORTE TES COULEURS.' : 'CHOISIS TES COULEURS.';
   const actionTitle = progress.max
-    ? 'FAIRE RAYONNER LA FACTION'
+    ? 'INVITER DES SUPPORTERS'
     : instability.tier === 'mutationReady'
       ? 'MUTATION PRÊTE'
     : `RALLIER ${formatNumber(progress.remaining)} SUPPORTER${progress.remaining > 1 ? 'S' : ''}`;
@@ -252,7 +252,7 @@ export function FactionWar({ factions, mine }: { factions: CommunityFaction[]; m
     <View style={styles.warSection}>
       <View style={[styles.sectionHeading, styles.warSectionHeading]}>
         <View style={styles.sectionHeadingCopy}>
-          <Text style={styles.sectionEyebrow}>LA GUERRE DES FACTIONS</Text>
+          <Text style={styles.sectionEyebrow}>CLASSEMENT DES FACTIONS</Text>
           <Text style={[styles.sectionTitle, styles.warSectionTitle]}>QUI DOMINE LE TERRAIN ?</Text>
         </View>
         <View style={styles.warPeriod}>

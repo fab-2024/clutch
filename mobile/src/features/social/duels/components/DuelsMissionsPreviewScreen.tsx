@@ -149,14 +149,17 @@ function futureIso(hours: number) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    width: '100%',
     backgroundColor: colors.background,
   },
   top: {
+    width: '100%',
     backgroundColor: '#06090C',
     borderBottomWidth: 1,
     borderBottomColor: '#171D23',
   },
   content: {
     flex: 1,
+    width: '100%',
   },
 });

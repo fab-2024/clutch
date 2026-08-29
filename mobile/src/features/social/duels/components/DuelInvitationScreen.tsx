@@ -218,7 +218,7 @@ export default function DuelInvitationScreen() {
 
             <View style={styles.rules}>
               <Text style={styles.rulesEyebrow}>RÈGLE DU DUEL</Text>
-              <Text style={styles.rulesTitle}>Le même marché classé. Deux camps opposés.</Text>
+              <Text style={styles.rulesTitle}>Le même match. Deux calls opposés.</Text>
               <Text style={styles.rulesCopy}>Chaque joueur conserve son vrai call « vainqueur de la série ». Le duel ne crée ni mise ni score caché : le verdict officiel règle les deux en même temps.</Text>
             </View>
           </>

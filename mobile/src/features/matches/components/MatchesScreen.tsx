@@ -7,7 +7,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import { useAuth } from '@/src/providers/AuthProvider';
@@ -90,7 +89,6 @@ export function MatchesExperience({
   upcoming,
   userId,
 }: MatchesExperienceProps) {
-  const reduceMotion = useReducedMotion();
   const params = useLocalSearchParams<{
     view?: string | string[];
     duelRivalId?: string | string[];
@@ -138,7 +136,6 @@ export function MatchesExperience({
   const liveMatches = visibleMatches.filter((match) => matchPhase(match) === 'live');
   const standardMatches = visibleMatches.filter((match) => matchPhase(match) !== 'live');
   const activeDate = calendarDays.find((day) => dateKey(day) === activeDayKey) ?? calendarDays[0];
-  const entrance = (delay: number) => reduceMotion ? undefined : FadeInDown.delay(delay).duration(380);
   const prepareMatch = useCallback((match: MatchCenterTarget) => {
     warmMatchCenter(match);
     if (userId) {
@@ -168,14 +165,14 @@ export function MatchesExperience({
         {duelRivalId ? (
           <View style={styles.targetedDuelBanner}>
             <View style={styles.targetedDuelCopy}>
-              <Text style={styles.targetedDuelEyebrow}>DUEL CIBLÉ · MARCHÉ CLASSÉ</Text>
+              <Text style={styles.targetedDuelEyebrow}>DÉFI CIBLÉ · MATCH CLASSÉ</Text>
               <Text style={styles.targetedDuelTitle}>Choisis le match pour défier {duelRivalPseudo || 'ton rival'}.</Text>
             </View>
             <Pressable accessibilityLabel="Annuler le duel ciblé" accessibilityRole="button" onPress={() => router.replace('/(tabs)/matches')} style={({ pressed }) => [styles.targetedDuelClose, pressed && styles.pressed]}><Text style={styles.targetedDuelCloseText}>×</Text></Pressable>
           </View>
         ) : null}
 
-        <Animated.View entering={entrance(30)}>
+        <View>
           <ScheduleHero
             activeDayKey={activeDayKey}
             calendarDays={calendarDays}
@@ -193,9 +190,9 @@ export function MatchesExperience({
               if (searchOpen) setQuery('');
             }}
           />
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={entrance(90)}>
+        <View>
           <ArenaFilters
             callCount={callCount}
             callsOnly={callsOnly}
@@ -206,7 +203,7 @@ export function MatchesExperience({
             onGameChange={changeGame}
             onStatusChange={changeStatus}
           />
-        </Animated.View>
+        </View>
 
         {error ? (
           <View style={styles.errorCard}>
@@ -218,11 +215,11 @@ export function MatchesExperience({
         {loading ? (
           <MatchSkeleton />
         ) : callsOnly ? (
-          <Animated.View entering={entrance(150)}>
+          <View>
             <MyCallsPanel dashboard={calls} followedGames={followedGames} game={game} onPrepareMatch={prepareMatch} query={query} />
-          </Animated.View>
+          </View>
         ) : visibleMatches.length ? (
-          <Animated.View entering={entrance(150)} style={styles.matchesSection}>
+          <View style={styles.matchesSection}>
             <SectionHead callsOnly={callsOnly} count={visibleMatches.length} date={activeDate} status={status} />
             {liveMatches.length ? (
               <View style={styles.liveStack}>
@@ -234,7 +231,7 @@ export function MatchesExperience({
                 {standardMatches.map((match) => <MatchRow key={match.id} match={match} onPrepareMatch={prepareMatch} rivalId={duelRivalId} rivalPseudo={duelRivalPseudo} />)}
               </View>
             ) : null}
-          </Animated.View>
+          </View>
         ) : (
           <EmptyArena callsOnly={callsOnly} query={query} status={status} />
         )}

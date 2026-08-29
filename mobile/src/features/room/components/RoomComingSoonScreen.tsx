@@ -5,9 +5,9 @@ export default function RoomComingSoonScreen() {
   return (
     <PlaceholderScreen
       bottomInset={layout.tabBarContentInset}
-      eyebrow="ROOM // BIENTÔT"
-      title="Le prochain espace se prépare."
-      description="La Room reste en retrait pendant que nous finalisons la boucle Matchs, Calls et progression. Elle arrivera dans une prochaine étape."
+      eyebrow="ROOM // EN PAUSE"
+      title="La Room est en pause."
+      description="Nous concentrons l’expérience sur la boucle Matchs, Calls et progression."
     />
   );
 }

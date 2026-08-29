@@ -82,8 +82,10 @@ const MUTATION_TRANSITIONS = [
 
 export default function SocialHomePreviewScreen({
   factionHeroVariant = 'current',
+  lab = false,
 }: {
   factionHeroVariant?: FactionHeroVariant;
+  lab?: boolean;
 }) {
   const {
     activity,
@@ -92,6 +94,7 @@ export default function SocialHomePreviewScreen({
     fxlab,
     form,
     instability: instabilityParam,
+    lab: labParam,
     motion,
     mutationFrom: mutationFromParam,
     mutationMs: mutationMsParam,
@@ -104,12 +107,14 @@ export default function SocialHomePreviewScreen({
     fxlab?: string;
     form?: string;
     instability?: string;
+    lab?: string;
     motion?: string;
     mutationFrom?: string;
     mutationMs?: string;
     mutationTo?: string;
     reduced?: string;
   }>();
+  const showLab = lab || labParam === '1' || clean === '0';
   const requestedContainer = relicContainerForPreview(form);
   const requestedForm = TESTABLE_FORMS.find((item) => item.container === requestedContainer) ?? TESTABLE_FORMS[0];
   const requestedInstability = parseInstabilityPercent(instabilityParam);
@@ -329,7 +334,7 @@ export default function SocialHomePreviewScreen({
       <View style={{ flex: 1 }}>
         <GriffHeader economy={{ frags: 1842, volts: 680 }} variant="social" />
         <SocialSectionNav activeOverride="faction" variant={factionHeroVariant === 'v2' ? 'v2' : 'default'} />
-        {factionHeroVariant === 'v2' && fxlab === '1' ? (
+        {showLab && factionHeroVariant === 'v2' && fxlab === '1' ? (
           <RelicAnimationControls
             activeFormLevel={previewProgress.current.level}
             compact
@@ -340,7 +345,7 @@ export default function SocialHomePreviewScreen({
             value={relicAnimationPreset}
           />
         ) : null}
-        {clean !== '1' ? <View style={previewStyles.panel}>
+        {showLab ? <View style={previewStyles.panel}>
           <View style={previewStyles.panelTop}>
             <View>
               <Text style={previewStyles.eyebrow}>LABO RELIQUE · DEV UNIQUEMENT</Text>
@@ -516,7 +521,7 @@ export default function SocialHomePreviewScreen({
           motionPreviewOverride={motionPreviewOverride}
           onRelicDiagnosticsChange={setDiagnostics}
           relicAnimationPreset={relicAnimationPreset}
-          relicLabMode
+          relicLabMode={showLab}
           relicMotionCommand={motionCommand}
           relicProgressOverride={relicProgressOverride}
           onMutationPresented={(eventId) => {

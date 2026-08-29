@@ -10,6 +10,7 @@ type RemoteImageProps = Omit<
   'cachePolicy' | 'contentFit' | 'onDisplay' | 'onError' | 'source' | 'style' | 'transition'
 > & {
   contentFit?: ImageContentFit;
+  onDisplay?: () => void;
   onError?: () => void;
   placeholderColor?: string;
   style: StyleProp<ViewStyle>;
@@ -19,6 +20,7 @@ type RemoteImageProps = Omit<
 
 export function RemoteImage({
   contentFit = 'cover',
+  onDisplay,
   onError,
   placeholderColor = colors.surfaceLow,
   style,
@@ -36,7 +38,10 @@ export function RemoteImage({
         {...imageProps}
         cachePolicy="memory-disk"
         contentFit={contentFit}
-        onDisplay={() => setDisplayedUri(uri)}
+        onDisplay={() => {
+          setDisplayedUri(uri);
+          onDisplay?.();
+        }}
         onError={onError}
         recyclingKey={uri}
         source={{ uri }}

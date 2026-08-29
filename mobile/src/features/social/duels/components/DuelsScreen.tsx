@@ -119,7 +119,7 @@ export default function DuelsScreen({
         <View style={styles.intro}>
           <Text style={styles.eyebrow}>SOCIAL // DÉFIS</Text>
           <Text style={styles.title}>UN CALL. DEUX JOUEURS.</Text>
-          <Text style={styles.subtitle}>Le même marché classé « vainqueur de la série », deux camps opposés et aucune mise supplémentaire.</Text>
+          <Text style={styles.subtitle}>Le même match, deux calls opposés et aucune mise supplémentaire.</Text>
         </View>
 
         {error && !duels.length ? (

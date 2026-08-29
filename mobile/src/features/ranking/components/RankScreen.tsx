@@ -157,7 +157,7 @@ function RankHeader({
 
       <View style={styles.intro}>
         <Text style={styles.eyebrow}>RANK // SAISON</Text>
-        <Text style={styles.title}>LAISSE TA TRACE.</Text>
+        <Text style={styles.title}>SUIS TA SAISON.</Text>
         <Text style={styles.subtitle}>Ton rating Frags mesure ta saison. Les Volts restent un solde cosmétique séparé.</Text>
       </View>
 

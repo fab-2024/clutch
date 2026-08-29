@@ -207,19 +207,19 @@ export function CirclePeopleScreen({
     const me = data.weekly?.moi;
     if (!me) return;
     const precision = me.precision_pct == null ? '—' : `${Math.round(me.precision_pct)}%`;
-    const message = `Ma semaine GRIFF : #${me.rang}/${me.participants} dans mon Cercle · ${signed(me.frags_hebdo)} Frags · ${me.victoires}/${me.calls} calls · ${precision} de réussite.`;
+    const message = `Mon bilan GRIFF : #${me.rang}/${me.participants} dans mon Cercle · ${signed(me.frags_hebdo)} Frags · ${me.victoires}/${me.calls} calls · ${precision} de réussite.`;
     const url = publicAppUrl('/') ?? '';
     const shareText = url ? `${message} ${url}` : message;
     try {
       if (Platform.OS === 'web' && globalThis.navigator?.clipboard) {
         await globalThis.navigator.clipboard.writeText(shareText);
-        showSnackbar({ message: 'Carte copiée, prête à être partagée.', tone: 'success' });
+        showSnackbar({ message: 'Bilan copié, prêt à être partagé.', tone: 'success' });
       } else {
         await Share.share({ message: shareText, ...(url ? { url } : {}) });
-        showSnackbar({ message: 'Ta carte est prête à être partagée.', tone: 'success' });
+        showSnackbar({ message: 'Ton bilan est prêt à être partagé.', tone: 'success' });
       }
     } catch {
-      showSnackbar({ message: 'Le partage a été interrompu. Réessaie depuis ta semaine.', tone: 'error' });
+      showSnackbar({ message: 'Le partage a été interrompu. Réessaie depuis ton bilan.', tone: 'error' });
     }
   }
 

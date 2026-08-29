@@ -13,7 +13,7 @@ import {
   View,
   type ImageSourcePropType,
 } from 'react-native';
-import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
+import { useReducedMotion } from 'react-native-reanimated';
 
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
@@ -123,7 +123,6 @@ export function HubExperience({
 }: HubExperienceProps) {
   const reduceMotion = useReducedMotion();
   const { isCompactWidth, isShortLandscape } = useResponsiveLayout();
-  const entrance = (delay: number) => reduceMotion ? undefined : FadeInDown.delay(delay).duration(420);
   const phase = hub.nextMatch ? getHubMatchPhase(hub.nextMatch) : null;
   const live = phase === 'live';
   const finished = phase === 'finished';
@@ -133,7 +132,7 @@ export function HubExperience({
   const headline = live ? 'SUIS LE MATCH EN DIRECT.' : finished ? 'CONSULTE LE RÉSULTAT.' : callLocked ? 'TON CALL EST POSÉ.' : 'TON PROCHAIN CALL.';
   const embeddedHeadline = Boolean(isShortLandscape && !loading && hub.nextMatch);
   const headlineView = (
-    <Animated.View entering={entrance(30)} style={[
+    <View style={[
       styles.headline,
       isShortLandscape && styles.headlineLandscape,
       embeddedHeadline && styles.headlineEmbeddedLandscape,
@@ -152,7 +151,7 @@ export function HubExperience({
       >
         {headline}
       </Text>
-    </Animated.View>
+    </View>
   );
   const errorView = error ? (
     <View accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.errorCard}>
@@ -181,7 +180,7 @@ export function HubExperience({
 
         {!embeddedHeadline ? errorView : null}
 
-        <Animated.View entering={entrance(90)}>
+        <View>
           {loading ? <HeroSkeleton /> : hub.nextMatch ? (
             <MatchHero
               landscapeHeadline={embeddedHeadline ? headlineView : undefined}
@@ -191,24 +190,24 @@ export function HubExperience({
               userId={userId}
             />
           ) : <EmptyHero />}
-        </Animated.View>
+        </View>
 
         {embeddedHeadline ? errorView : null}
 
         {loading || contextualItem ? (
-          <Animated.View entering={entrance(150)} style={styles.contextSlot}>
+          <View style={styles.contextSlot}>
             {loading ? <HubContextSkeleton /> : contextualItem ? <HubContextSlot context={contextualItem} /> : null}
-          </Animated.View>
+          </View>
         ) : null}
 
-        <Animated.View entering={entrance(210)}>
+        <View>
           <SeasonProgressCard hub={hub} loading={loading} />
-        </Animated.View>
+        </View>
 
         {!loading && hub.upNext.length ? (
-          <Animated.View entering={entrance(270)}>
+          <View>
             <UpNext matches={hub.upNext} userId={userId} />
-          </Animated.View>
+          </View>
         ) : null}
       </ScrollView>
     </Screen>

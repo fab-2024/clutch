@@ -156,9 +156,10 @@ const BASE_PREVIEW: RankDashboard = {
   },
 };
 
-export default function RankPreviewScreen() {
+export default function RankPreviewScreen({ lab = false }: { lab?: boolean }) {
   const params = useLocalSearchParams<{
     clean?: string | string[];
+    lab?: string | string[];
     mode?: string | string[];
     narrow?: string | string[];
     reduced?: string | string[];
@@ -166,7 +167,7 @@ export default function RankPreviewScreen() {
   const requestedMode = readParam(params.mode);
   const requestedNarrow = readParam(params.narrow) === '1';
   const requestedReduced = readParam(params.reduced) === '1';
-  const clean = readParam(params.clean) === '1';
+  const showControls = lab || readParam(params.lab) === '1' || readParam(params.clean) === '0';
   const [mode, setMode] = useState<PreviewMode>(isPreviewMode(requestedMode) ? requestedMode : 'start0');
   const [narrow, setNarrow] = useState(requestedNarrow);
   const [reduceMotion, setReduceMotion] = useState(requestedReduced);
@@ -181,7 +182,7 @@ export default function RankPreviewScreen() {
 
   return (
     <View style={previewStyles.root}>
-      {!clean ? (
+      {showControls ? (
         <View style={previewStyles.controls}>
           <View accessibilityRole="tablist" style={previewStyles.controlGroup}>
             {PREVIEW_MODES.map((item) => (

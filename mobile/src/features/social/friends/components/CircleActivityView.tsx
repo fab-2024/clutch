@@ -167,9 +167,9 @@ function WeeklyPerformanceCard({
       </View>
 
       <Button
-        accessibilityLabel="Partager ma performance de la semaine"
+        accessibilityLabel="Partager mon bilan de la semaine"
         fullWidth
-        label="PARTAGER MA SEMAINE"
+        label="PARTAGER MON BILAN"
         onPress={onShare}
         size="compact"
         variant="secondary"

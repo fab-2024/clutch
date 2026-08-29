@@ -194,8 +194,8 @@ export function ArenaFilters({ callCount, callsOnly, game, isAdmin, onCallsOnlyC
       <View style={styles.modeRow}>
         {callsOnly ? (
           <View style={styles.callsModeInfo}>
-            <Text style={styles.callsModeInfoText}>CYCLE DU CALL</Text>
-            <Text style={styles.callsModeInfoMeta}>4 ÉTATS TRANSPARENTS</Text>
+            <Text style={styles.callsModeInfoText}>MES CALLS</Text>
+            <Text style={styles.callsModeInfoMeta}>OUVERTS, VERROUILLÉS ET RÉGLÉS</Text>
           </View>
         ) : (
           <View style={styles.statusSwitch}>

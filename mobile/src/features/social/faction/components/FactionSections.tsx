@@ -160,7 +160,7 @@ export function FactionWar({ factions, featuredId }: { factions: CommunityFactio
     <View style={styles.section}>
       <View style={styles.sectionHeading}>
         <View>
-          <Text style={styles.sectionEyebrow}>GUERRE DES FACTIONS</Text>
+          <Text style={styles.sectionEyebrow}>CLASSEMENT DES FACTIONS</Text>
           <Text style={styles.sectionTitle}>Qui prend de la vitesse ?</Text>
         </View>
         <Text style={styles.sectionMeta}>24 H</Text>

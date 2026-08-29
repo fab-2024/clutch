@@ -343,7 +343,7 @@ export default function MatchCenterScreen({
             ) : prediction && open && prediction.statut === 'en_cours' ? (
               <View style={styles.duelAction}>
                 <View style={styles.duelActionCopy}>
-                  <Text style={styles.duelActionEyebrow}>{duelRivalId ? 'DUEL CIBLÉ · MARCHÉ CLASSÉ' : 'FACE-À-FACE · MARCHÉ CLASSÉ'}</Text>
+                  <Text style={styles.duelActionEyebrow}>{duelRivalId ? 'DÉFI CIBLÉ · MATCH CLASSÉ' : 'FACE-À-FACE · MATCH CLASSÉ'}</Text>
                   <Text style={styles.duelActionTitle}>{duelRivalId ? `Défie ${duelRivalPseudo || 'ton rival'} sur ce call.` : 'Quelqu’un assume le camp opposé ?'}</Text>
                   <Text style={styles.duelActionText}>{duelRivalId ? 'L’invitation apparaîtra dans son Cercle et déclenchera une alerte s’il l’a autorisée.' : 'Crée une invitation liée à ce vrai pronostic et partage-la à ton rival.'}</Text>
                 </View>
