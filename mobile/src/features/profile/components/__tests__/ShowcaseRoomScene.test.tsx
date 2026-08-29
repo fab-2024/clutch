@@ -67,6 +67,7 @@ describe('Showcase room composition', () => {
 
     expect(screen.getByTestId('showcase-room-preview')).toBeTruthy();
     expect(screen.getByTestId('showcase-room-full')).toBeTruthy();
+    expect(screen.getByTestId('showcase-atmosphere-active')).toBeTruthy();
     expect(screen.getAllByLabelText('Maillot de Fnatic')).toHaveLength(2);
     expect(screen.getAllByLabelText('Trophée Premier Signal')).toHaveLength(2);
     expect(screen.getAllByLabelText('Emblème de départ, zéro Frag')).toHaveLength(2);

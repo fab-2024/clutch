@@ -1,10 +1,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import type { ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import {
   Image,
   StyleSheet,
   Text,
   View,
+  type LayoutChangeEvent,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -22,6 +23,11 @@ import { teamHue } from '@/src/utils/teams';
 
 import type { ProfileBadge, ProfileData } from '../../types';
 import LockedDisplaySlot from './LockedDisplaySlot';
+import ShowcaseAtmosphereLayer from './ShowcaseAtmosphereLayer';
+import type {
+  ShowcaseAtmospherePerformanceReport,
+  ShowcaseAtmosphereQuality,
+} from './showcaseAtmosphere';
 import ShowcasePhysicalObject, {
   type ShowcasePhysicalObjectKind,
   type ShowcasePhysicalObjectModel,
@@ -36,6 +42,8 @@ import type {
 } from './types';
 
 type ShowcaseRoomSceneProps = {
+  atmosphereActive?: boolean;
+  atmosphereQuality?: ShowcaseAtmosphereQuality;
   cosmetics?: EquippedCosmetics | null;
   data: ProfileData | null;
   equippedBadges?: readonly (PublicAchievementBadge | null)[];
@@ -45,10 +53,12 @@ type ShowcaseRoomSceneProps = {
   lighting?: ShowcaseLighting;
   loading: boolean;
   mode: 'preview' | 'full';
+  onAtmospherePerformanceReport?: (report: ShowcaseAtmospherePerformanceReport) => void;
   onRingPress?: () => void;
   pedestal?: ShowcasePedestalSkin;
   rankAccent: string;
   rankLabel: string;
+  reduceMotion?: boolean;
   style?: StyleProp<ViewStyle>;
   theme?: ShowcaseRoomTheme;
 };
@@ -57,6 +67,7 @@ const ROOM_ASSET = require('../../../../../assets/showcase/showcase-room-empty-v
 const JERSEY_ASSET = require('../../../../../assets/showcase/showcase-jersey-base-v1.png');
 const TROPHY_ASSET = require('../../../../../assets/showcase/showcase-trophy-v1.png');
 const PEDESTAL_ASSET = require('../../../../../assets/rank/rank-tier-pedestal-v1.png');
+const DEFAULT_FULL_SCENE_SIZE = { height: 276, width: 844 };
 
 const LIGHTING: Record<ShowcaseLighting, { glow: string; wash: readonly [string, string, string] }> = {
   acid: { glow: '#E8FF3D', wash: ['rgba(7,9,1,.03)', 'rgba(114,135,13,.10)', 'rgba(3,5,4,.16)'] },
@@ -112,6 +123,8 @@ const METRICS = {
 } as const;
 
 export default function ShowcaseRoomScene({
+  atmosphereActive = true,
+  atmosphereQuality = 'auto',
   cosmetics,
   data,
   equippedBadges,
@@ -121,13 +134,16 @@ export default function ShowcaseRoomScene({
   lighting = 'cyan',
   loading,
   mode,
+  onAtmospherePerformanceReport,
   onRingPress,
   pedestal = 'obsidian',
   rankAccent,
   rankLabel,
+  reduceMotion = false,
   style,
   theme = 'graphite',
 }: ShowcaseRoomSceneProps) {
+  const [sceneSize, setSceneSize] = useState(DEFAULT_FULL_SCENE_SIZE);
   const compact = mode === 'preview';
   const metrics = METRICS[mode];
   const level = data?.level.level ?? 0;
@@ -143,6 +159,16 @@ export default function ShowcaseRoomScene({
   const topTokens = tokens.slice(0, 3);
   const bottomTokens = tokens.slice(3, 5);
   const visibleTrophies = trophies.slice(0, compact ? 2 : 4);
+  const handleSceneLayout = useCallback((event: LayoutChangeEvent) => {
+    if (compact) return;
+    const next = {
+      height: Math.max(1, Math.round(event.nativeEvent.layout.height)),
+      width: Math.max(1, Math.round(event.nativeEvent.layout.width)),
+    };
+    setSceneSize((current) => (
+      current.height === next.height && current.width === next.width ? current : next
+    ));
+  }, [compact]);
 
   const leftOpacity = sectionOpacity(focus, 'left');
   const centerOpacity = sectionOpacity(focus, 'center');
@@ -155,6 +181,7 @@ export default function ShowcaseRoomScene({
     <View
       accessible={!onRingPress}
       accessibilityLabel={description}
+      onLayout={handleSceneLayout}
       style={[styles.viewport, compact ? styles.viewportPreview : styles.viewportFull, style]}
       testID={`showcase-room-${mode}`}
     >
@@ -162,6 +189,21 @@ export default function ShowcaseRoomScene({
         <Image resizeMode="stretch" source={ROOM_ASSET} style={styles.roomBackdrop} />
         <LinearGradient colors={THEME_WASH[theme]} end={{ x: 1, y: 1 }} pointerEvents="none" start={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
         <LinearGradient colors={light.wash} end={{ x: 0.5, y: 1 }} pointerEvents="none" start={{ x: 0.5, y: 0 }} style={StyleSheet.absoluteFill} />
+        {!compact ? (
+          <ShowcaseAtmosphereLayer
+            active={atmosphereActive && !loading}
+            cosmetics={cosmetics}
+            favoriteTeam={team}
+            height={sceneSize.height}
+            lightingAccent={light.glow}
+            onPerformanceReport={onAtmospherePerformanceReport}
+            quality={atmosphereQuality}
+            rankAccent={rankAccent}
+            rankOrder={data?.ranking.grade.ordre}
+            reduceMotion={reduceMotion}
+            width={sceneSize.width}
+          />
+        ) : null}
         <View pointerEvents="none" style={[styles.edgeShade, compact && styles.edgeShadePreview]} />
 
         <View

@@ -1,6 +1,15 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  AppState,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type AppStateStatus,
+} from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 
 import { Screen } from '@/src/components/layout/Screen';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
@@ -26,6 +35,10 @@ import type { ProfileData } from '../types';
 import ShowcaseCustomizationBar from './showcase/ShowcaseCustomizationBar';
 import ShowcaseRoomScene from './showcase/ShowcaseRoomScene';
 import ShowcaseTopNavigation from './showcase/ShowcaseTopNavigation';
+import type {
+  ShowcaseAtmospherePerformanceReport,
+  ShowcaseAtmosphereQuality,
+} from './showcase/showcaseAtmosphere';
 import { SHOWCASE_PALETTE } from './showcase/showcasePalette';
 import type {
   ShowcaseLighting,
@@ -36,12 +49,23 @@ import type {
 } from './showcase/types';
 
 type ShowcaseScreenProps = {
+  atmosphereQualityOverride?: ShowcaseAtmosphereQuality;
+  onAtmospherePerformanceReport?: (report: ShowcaseAtmospherePerformanceReport) => void;
   previewProfile?: ProfileData;
   previewShop?: CosmeticShopData;
+  reduceMotionOverride?: boolean;
 };
 
-export default function ShowcaseScreen({ previewProfile, previewShop }: ShowcaseScreenProps) {
+export default function ShowcaseScreen({
+  atmosphereQualityOverride,
+  onAtmospherePerformanceReport,
+  previewProfile,
+  previewShop,
+  reduceMotionOverride,
+}: ShowcaseScreenProps) {
   const { profile, session } = useAuth();
+  const systemReduceMotion = useReducedMotion();
+  const reduceMotion = reduceMotionOverride ?? systemReduceMotion;
   const [profileData, setProfileData] = useState<ProfileData | null>(previewProfile ?? null);
   const [shopData, setShopData] = useState<CosmeticShopData | null>(previewShop ?? null);
   const [loading, setLoading] = useState(!previewProfile || !previewShop);
@@ -53,6 +77,8 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
   const [lighting, setLighting] = useState<ShowcaseLighting>('cyan');
   const [jerseyPresentation, setJerseyPresentation] = useState<ShowcaseJerseyPresentation>('locker');
   const [selectedRingFamily, setSelectedRingFamily] = useState<ShowcaseRingFamily | null>(null);
+  const [routeFocused, setRouteFocused] = useState(false);
+  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
   const requestRef = useRef(0);
   const trackedRef = useRef(false);
   const savedAtelierAppliedRef = useRef(false);
@@ -69,6 +95,17 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
     previewProfile ? `preview-${previewProfile.pseudo}` : pseudo,
     fallbackBadgeIds,
   );
+  const atmosphereActive = routeFocused && appState === 'active';
+
+  useFocusEffect(useCallback(() => {
+    setRouteFocused(true);
+    return () => setRouteFocused(false);
+  }, []));
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', setAppState);
+    return () => subscription.remove();
+  }, []);
 
   const load = useCallback(async (refresh = false) => {
     if (previewProfile && previewShop) {
@@ -170,6 +207,8 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
 
         <View style={styles.sceneWrap}>
           <ShowcaseRoomScene
+            atmosphereActive={atmosphereActive}
+            atmosphereQuality={atmosphereQualityOverride}
             cosmetics={cosmetics}
             data={profileData}
             equippedBadges={equippedBadges}
@@ -179,10 +218,12 @@ export default function ShowcaseScreen({ previewProfile, previewShop }: Showcase
             lighting={lighting}
             loading={loading}
             mode="full"
+            onAtmospherePerformanceReport={onAtmospherePerformanceReport}
             onRingPress={equippedRing ? () => setSelectedRingFamily(equippedRing.family) : undefined}
             pedestal={pedestal}
             rankAccent={rankAccent}
             rankLabel={rankLabel}
+            reduceMotion={reduceMotion}
             theme={theme}
           />
 
