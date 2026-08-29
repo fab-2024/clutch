@@ -16,7 +16,7 @@ import { Button } from '@/src/components/ui/Button';
 import { StateView } from '@/src/components/ui/StateView';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { createDuel } from '@/src/features/social/duels/api';
-import { errorFeedback, impactFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
+import { errorFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors } from '@/src/theme';
@@ -35,6 +35,7 @@ import {
 } from '../matchJourney';
 import type { MatchCenterData } from '../types';
 import { matchPhase, predictionIsOpen } from '../utils';
+import { CallLockMoment } from './CallLockMoment';
 import {
   CallContract,
   LoadingCard,
@@ -49,6 +50,8 @@ import { PredictionConfirmationSheet } from './PredictionConfirmationSheet';
 type MatchCenterScreenProps = {
   previewArenaMotion?: boolean;
   previewArenaProgress?: number;
+  previewCallLockChoice?: 'a' | 'b';
+  previewCallLockProgress?: number;
   previewData?: MatchCenterData;
   previewJourneySnapshot?: MatchJourneySnapshot;
   previewJourneySource?: MatchJourneySource;
@@ -59,6 +62,8 @@ type MatchCenterScreenProps = {
 export default function MatchCenterScreen({
   previewArenaMotion,
   previewArenaProgress,
+  previewCallLockChoice,
+  previewCallLockProgress,
   previewData,
   previewJourneySnapshot,
   previewJourneySource,
@@ -94,7 +99,12 @@ export default function MatchCenterScreen({
   const [restoreConfirmationFocus, setRestoreConfirmationFocus] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [duelError, setDuelError] = useState<string | null>(null);
+  const [callLockPresentation, setCallLockPresentation] = useState<{
+    choice: 'a' | 'b';
+    matchId: string;
+  } | null>(null);
   const callStartedRef = useRef<string | null>(null);
+  const callLockResolverRef = useRef<(() => void) | null>(null);
   const confirmationTriggerRef = useRef<View>(null);
   const clearSelectionOnCloseRef = useRef(false);
   const { data, error, load, loading, refreshing } = useMatchCenterData({
@@ -111,7 +121,15 @@ export default function MatchCenterScreen({
     setSubmitError(null);
     setConfirmationOpen(false);
     setRestoreConfirmationFocus(true);
+    setCallLockPresentation(null);
+    callLockResolverRef.current?.();
+    callLockResolverRef.current = null;
   }, [matchId, previewData]);
+
+  useEffect(() => () => {
+    callLockResolverRef.current?.();
+    callLockResolverRef.current = null;
+  }, []);
 
   const loadingState = Boolean(previewLoadingSnapshot || loading);
   const match = previewLoadingSnapshot ? null : data?.match ?? null;
@@ -167,13 +185,26 @@ export default function MatchCenterScreen({
     setConfirmationOpen(true);
   }
 
+  const finishCallLockMoment = useCallback(() => {
+    setCallLockPresentation(null);
+    const resolve = callLockResolverRef.current;
+    callLockResolverRef.current = null;
+    resolve?.();
+  }, []);
+
+  const playCallLockMoment = useCallback((targetMatchId: string, choice: 'a' | 'b') => {
+    callLockResolverRef.current?.();
+    return new Promise<void>((resolve) => {
+      callLockResolverRef.current = resolve;
+      setCallLockPresentation({ choice, matchId: targetMatchId });
+    });
+  }, []);
+
   async function lockPrediction(targetMatchId: string, choice: 'a' | 'b') {
-    impactFeedback();
     setSubmitting(true);
     setSubmitError(null);
     try {
       await submitRankedPrediction(targetMatchId, choice);
-      successFeedback();
       void trackAnalyticsEvent({
         type: 'call_verrouille',
         idempotencyKey: `match:${targetMatchId}:call-locked`,
@@ -181,7 +212,10 @@ export default function MatchCenterScreen({
       clearSelectionOnCloseRef.current = true;
       setRestoreConfirmationFocus(false);
       setConfirmationOpen(false);
-      await load(true);
+      await Promise.all([
+        load(true),
+        playCallLockMoment(targetMatchId, choice),
+      ]);
       if (duelToken) {
         router.replace({ pathname: '/duel/[token]', params: { token: duelToken } });
       }
@@ -430,8 +464,27 @@ export default function MatchCenterScreen({
           visible={confirmationOpen}
         />
       ) : null}
+
+      {match && (previewCallLockChoice || callLockPresentation?.matchId === match.id) ? (
+        <CallLockMoment
+          accentA={journeySnapshot?.accentA ?? '#69A7FF'}
+          accentB={journeySnapshot?.accentB ?? '#FF6C7C'}
+          choice={previewCallLockChoice ?? callLockPresentation?.choice ?? 'a'}
+          fixedProgress={previewCallLockProgress}
+          onComplete={previewCallLockChoice ? NOOP : finishCallLockMoment}
+          onLocked={previewCallLockChoice ? NOOP : successFeedback}
+          reduceMotion={reduceMotion}
+          tagA={match.tag_a}
+          tagB={match.tag_b}
+          teamName={(previewCallLockChoice ?? callLockPresentation?.choice) === 'b'
+            ? match.equipe_b
+            : match.equipe_a}
+          visible
+        />
+      ) : null}
     </Screen>
   );
 }
 
 const REDUCED_PICKER_ENTRANCE_MS = 140;
+const NOOP = () => undefined;

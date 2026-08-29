@@ -2,6 +2,7 @@ import { Redirect, useLocalSearchParams } from 'expo-router';
 
 import type { MatchCenterData } from '../types';
 import type { MatchJourneySnapshot } from '../matchJourney';
+import { CALL_LOCK_DURATION_MS, CALL_LOCK_MILESTONE_MS } from './CallLockMoment';
 import MatchCenterScreen from './MatchCenterScreen';
 
 export const PREVIEW_MATCH_CENTER: MatchCenterData = {
@@ -62,16 +63,25 @@ export default function MatchCenterPreviewScreen() {
   const snapshot = previewSnapshot(previewData);
   const arenaMotion = Boolean(state?.startsWith('handoff'));
   const previewProgress = handoffPreviewProgress(state);
+  const callLockChoice = state?.startsWith('call-lock') ? 'a' as const : undefined;
+  const callLockProgress = callLockPreviewProgress(state);
+  const reduceMotion = state === 'handoff-reduced' || state === 'call-lock-reduced'
+    ? true
+    : arenaMotion || callLockChoice
+      ? false
+      : undefined;
   if (!__DEV__) return <Redirect href="/" />;
   return (
     <MatchCenterScreen
       previewArenaMotion={arenaMotion}
       previewArenaProgress={previewProgress}
+      previewCallLockChoice={callLockChoice}
+      previewCallLockProgress={callLockProgress}
       previewData={previewData}
-      previewJourneySnapshot={arenaMotion ? snapshot : undefined}
+      previewJourneySnapshot={arenaMotion || callLockChoice ? snapshot : undefined}
       previewJourneySource={arenaMotion ? 'hub' : undefined}
       previewLoadingSnapshot={state === 'transition' ? snapshot : undefined}
-      previewReduceMotion={state === 'handoff-reduced' ? true : arenaMotion ? false : undefined}
+      previewReduceMotion={reduceMotion}
     />
   );
 }
@@ -80,6 +90,13 @@ function handoffPreviewProgress(state?: string) {
   if (state === 'handoff-start') return 0;
   if (state === 'handoff-mid') return .52;
   if (state === 'handoff-final' || state === 'handoff-locked') return 1;
+  return undefined;
+}
+
+function callLockPreviewProgress(state?: string) {
+  if (state === 'call-lock-start') return 0;
+  if (state === 'call-lock-seam') return CALL_LOCK_MILESTONE_PROGRESS;
+  if (state === 'call-lock-final' || state === 'call-lock-reduced') return 1;
   return undefined;
 }
 
@@ -130,3 +147,5 @@ function previewSnapshot(data: MatchCenterData): MatchJourneySnapshot {
     teamB: data.match.equipe_b,
   };
 }
+
+const CALL_LOCK_MILESTONE_PROGRESS = CALL_LOCK_MILESTONE_MS / CALL_LOCK_DURATION_MS;

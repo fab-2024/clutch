@@ -7,7 +7,6 @@ import { PREVIEW_MATCH_CENTER } from '../MatchCenterPreviewScreen';
 import MatchCenterScreen from '../MatchCenterScreen';
 import {
   errorFeedback,
-  impactFeedback,
   selectionFeedback,
   successFeedback,
 } from '@/src/lib/feedback';
@@ -69,7 +68,6 @@ jest.mock('@/src/features/analytics/api', () => ({
 jest.mock('@/src/features/social/duels/api', () => ({ createDuel: jest.fn() }));
 jest.mock('@/src/lib/feedback', () => ({
   errorFeedback: jest.fn(),
-  impactFeedback: jest.fn(),
   selectionFeedback: jest.fn(),
   successFeedback: jest.fn(),
 }));
@@ -122,6 +120,30 @@ jest.mock('../MatchCenterSections', () => {
   };
 });
 jest.mock('../MatchArenaHero', () => ({ MatchArenaHero: () => null }));
+jest.mock('../CallLockMoment', () => {
+  const React = jest.requireActual('react');
+  const ReactNative = jest.requireActual('react-native');
+  return {
+    CallLockMoment: ({
+      onComplete,
+      onLocked,
+      visible,
+    }: {
+      onComplete: () => void;
+      onLocked: () => void;
+      visible: boolean;
+    }) => {
+      const played = React.useRef(false);
+      React.useEffect(() => {
+        if (!visible || played.current) return;
+        played.current = true;
+        onLocked();
+        onComplete();
+      }, [onComplete, onLocked, visible]);
+      return visible ? React.createElement(ReactNative.View, { testID: 'call-lock-moment' }) : null;
+    },
+  };
+});
 jest.mock('../PredictionConfirmationSheet', () => {
   const React = jest.requireActual('react');
   const ReactNative = jest.requireActual('react-native');
@@ -180,7 +202,6 @@ jest.mock('../PredictionConfirmationSheet', () => {
 
 const submitPrediction = submitRankedPrediction as jest.MockedFunction<typeof submitRankedPrediction>;
 const playErrorFeedback = errorFeedback as jest.Mock;
-const playImpactFeedback = impactFeedback as jest.Mock;
 const playSelectionFeedback = selectionFeedback as jest.Mock;
 const playSuccessFeedback = successFeedback as jest.Mock;
 
@@ -252,7 +273,6 @@ describe('MatchCenterScreen prediction confirmation', () => {
       expect(mockLoad).toHaveBeenCalledTimes(1);
       expect(screen.queryByTestId('prediction-confirmation-sheet')).toBeNull();
     });
-    expect(playImpactFeedback).toHaveBeenCalledTimes(1);
     expect(playSuccessFeedback).toHaveBeenCalledTimes(1);
     expect(playErrorFeedback).not.toHaveBeenCalled();
   });
