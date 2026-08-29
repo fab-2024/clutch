@@ -128,15 +128,15 @@ function alpha(color: string, opacity: string) {
 }
 
 const styles = StyleSheet.create({
-  root: { minHeight: 63, paddingTop: 3, backgroundColor: '#080C10', borderTopWidth: 1, borderTopColor: '#222C34' },
-  title: { ...typography.eyebrow, height: 12, color: '#C9DA38', fontSize: 7, textAlign: 'center', letterSpacing: 0.68 },
+  root: { minHeight: 78, paddingTop: 5, backgroundColor: '#080C10', borderTopWidth: 1, borderTopColor: '#222C34' },
+  title: { ...typography.eyebrow, color: '#C9DA38', textAlign: 'center', letterSpacing: 0.68 },
   groups: { flexGrow: 1, paddingHorizontal: 12, paddingBottom: 5, justifyContent: 'center', gap: 8 },
-  group: { minWidth: 190, minHeight: 43, paddingHorizontal: 7, paddingVertical: 3, backgroundColor: '#0B1014', borderWidth: 1, borderColor: '#263039' },
-  groupLabel: { ...typography.label, color: '#89959F', fontSize: 6, textAlign: 'center', letterSpacing: 0.34 },
+  group: { minWidth: 190, minHeight: 58, paddingHorizontal: 7, paddingVertical: 4, backgroundColor: '#0B1014', borderWidth: 1, borderColor: '#263039' },
+  groupLabel: { ...typography.label, color: '#89959F', textAlign: 'center', letterSpacing: 0.34 },
   options: { marginTop: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
-  option: { position: 'relative', minHeight: 31, minWidth: 54, paddingHorizontal: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, borderWidth: 1, borderColor: 'transparent', borderRadius: 4 },
+  option: { position: 'relative', minHeight: 44, minWidth: 54, paddingHorizontal: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, borderWidth: 1, borderColor: 'transparent', borderRadius: 4 },
   optionActive: { backgroundColor: 'rgba(232,255,61,.035)', borderColor: 'rgba(232,255,61,.22)' },
-  optionText: { ...typography.label, color: '#707C86', fontSize: 5.5 },
+  optionText: { ...typography.label, color: colors.textMuted },
   optionTextActive: { color: '#D5DDE3' },
   activeMark: { position: 'absolute', right: 9, bottom: 1, left: 9, height: 1, borderRadius: 2, backgroundColor: colors.volt },
   pedestalMiniature: { width: 18, height: 15, alignItems: 'center', justifyContent: 'flex-end' },

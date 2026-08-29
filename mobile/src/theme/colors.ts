@@ -1,4 +1,5 @@
 const background = '#070A0E';
+const backgroundDeep = '#05080B';
 const surfaceLow = '#0E1319';
 const surfaceRaised = '#141A22';
 const borderSubtle = '#202833';
@@ -7,6 +8,7 @@ const focus = '#E8FF3D';
 
 export const colors = {
   background,
+  backgroundDeep,
   surfaceLow,
   surfaceRaised,
   surfaceInteractive: '#171F28',

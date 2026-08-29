@@ -75,19 +75,20 @@ export function MyCallsPanel({ dashboard, followedGames, game, onPrepareMatch, q
 
       <SupporterIdentity compact cosmetics={equipped} meta="SIGNATURE DU CALL" pseudo={pseudo} />
 
-      <View style={styles.tabs}>
+      <View accessibilityRole="tablist" style={styles.tabs}>
         {STATES.map((item) => {
           const active = state === item.id;
           return (
             <Pressable
-              accessibilityRole="button"
+              accessibilityLabel={`${item.label}, ${scoped[item.id].length}`}
+              accessibilityRole="tab"
               accessibilityState={{ selected: active }}
               key={item.id}
               onPress={() => setState(item.id)}
               style={({ pressed }) => [styles.tab, active && styles.tabActive, pressed && styles.pressed]}
             >
               <Text style={[styles.tabCount, active && styles.tabCountActive]}>{scoped[item.id].length}</Text>
-              <Text numberOfLines={1} style={[styles.tabLabel, active && styles.tabLabelActive]}>{item.label}</Text>
+              <Text numberOfLines={2} style={[styles.tabLabel, active && styles.tabLabelActive]}>{item.label}</Text>
             </Pressable>
           );
         })}
@@ -169,7 +170,7 @@ function CallCard({ call, onPrepareMatch }: { call: MyCallItem; onPrepareMatch?:
     >
       <View style={styles.cardTop}>
         <View style={styles.eventCopy}>
-          <Text numberOfLines={1} style={styles.event}>{gameLabel(call.jeu).toUpperCase()} · {call.evenement}</Text>
+          <Text numberOfLines={2} style={styles.event}>{gameLabel(call.jeu).toUpperCase()} · {call.evenement}</Text>
           <Text style={styles.schedule}>{formatSchedule(call.debut)} · BO{call.format}</Text>
         </View>
         <View style={[styles.statePill, { borderColor: `${accent}66`, backgroundColor: `${accent}12` }]}>
@@ -205,7 +206,7 @@ function CallCard({ call, onPrepareMatch }: { call: MyCallItem; onPrepareMatch?:
           <View>
             <Text style={styles.verdictLabel}>{call.resultat_corrige ? `CORRIGÉ · RÉVISION ${call.revision_resultat}` : 'SOURCE DU VERDICT'}</Text>
             <Text style={styles.verdictSource}>{call.source_resultat_label ?? 'Validation GRIFF'}</Text>
-            {call.identifiant_resultat_externe ? <Text numberOfLines={1} style={styles.verdictReference}>RÉF. {call.identifiant_resultat_externe}</Text> : null}
+            {call.identifiant_resultat_externe ? <Text numberOfLines={2} style={styles.verdictReference}>RÉF. {call.identifiant_resultat_externe}</Text> : null}
           </View>
           <View style={styles.deltaRow}>
             <CurrencyIcon color={won ? colors.success : colors.danger} kind="frags" size={13} />
@@ -229,7 +230,7 @@ function CallTeam({ accent, name, selected, tag }: { accent: string; name: strin
 }
 
 function ContractLine({ label, value }: { label: string; value: string }) {
-  return <View style={styles.contractLine}><Text style={styles.contractLabel}>{label}</Text><Text numberOfLines={1} style={styles.contractValue}>{value}</Text></View>;
+  return <View style={styles.contractLine}><Text style={styles.contractLabel}>{label}</Text><Text numberOfLines={2} style={styles.contractValue}>{value}</Text></View>;
 }
 
 function Distribution({ call }: { call: MyCallItem }) {
@@ -306,12 +307,12 @@ const styles = StyleSheet.create({
   explainerEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 },
   explainerTitle: { ...typography.cardTitle, marginTop: 4, color: colors.text },
   explainerText: { ...typography.caption, marginTop: 5, color: colors.textMuted },
-  tabs: { minHeight: 66, padding: 5, borderRadius: 20, flexDirection: 'row', gap: 4, backgroundColor: '#090D11', borderWidth: 1, borderColor: colors.border },
-  tab: { flex: 1, minWidth: 0, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  tabs: { minHeight: 72, padding: 5, borderRadius: 20, flexDirection: 'row', gap: 4, backgroundColor: '#090D11', borderWidth: 1, borderColor: colors.border },
+  tab: { flex: 1, minWidth: 0, minHeight: 48, paddingVertical: 5, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   tabActive: { backgroundColor: '#1A2113', borderWidth: 1, borderColor: '#48551F' },
-  tabCount: { ...typography.bodyStrong, color: '#66717C' },
+  tabCount: { ...typography.bodyStrong, color: colors.textMuted },
   tabCountActive: { color: colors.volt },
-  tabLabel: { ...typography.label, marginTop: 2, color: '#66717C', fontSize: 9 },
+  tabLabel: { ...typography.label, marginTop: 2, color: colors.textMuted, textAlign: 'center' },
   tabLabelActive: { color: colors.text },
   list: { gap: 11 },
   loadMore: { minHeight: 50, paddingHorizontal: 15, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#303A43' },
@@ -332,13 +333,13 @@ const styles = StyleSheet.create({
   teamTag: { ...typography.bodyStrong, color: colors.textMuted },
   teamTagSelected: { color: colors.text },
   scoreBlock: { flex: 1, alignItems: 'center', gap: 4 },
-  vs: { color: '#65717C', fontFamily: fonts.display, fontSize: 18 },
+  vs: { color: colors.textMuted, fontFamily: fonts.display, fontSize: 18 },
   score: { color: colors.text, fontFamily: fonts.display, fontSize: 27, fontVariant: ['tabular-nums'] },
   selectedTag: { ...typography.label, letterSpacing: .35 },
-  noChoice: { ...typography.label, color: '#65717C', letterSpacing: .35 },
+  noChoice: { ...typography.label, color: colors.textMuted, letterSpacing: .35 },
   contract: { overflow: 'hidden', borderRadius: 16, backgroundColor: '#080C10', borderWidth: 1, borderColor: '#202932' },
-  contractLine: { minHeight: 38, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#232C34' },
-  contractLabel: { ...typography.label, color: '#68747F', letterSpacing: .4 },
+  contractLine: { minHeight: 38, paddingHorizontal: 11, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#232C34' },
+  contractLabel: { ...typography.label, color: colors.textMuted, letterSpacing: .4 },
   contractValue: { ...typography.caption, flex: 1, color: colors.text, textAlign: 'right' },
   hiddenDistribution: { minHeight: 45, paddingHorizontal: 11, borderRadius: 15, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#252E37' },
   hiddenDistributionGlyph: { color: '#75818C', fontSize: 17 },

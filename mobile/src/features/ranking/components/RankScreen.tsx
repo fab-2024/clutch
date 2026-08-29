@@ -835,7 +835,7 @@ const styles = StyleSheet.create({
   },
   movementVs: {
     color: colors.textMuted,
-    fontSize: 10,
+    fontSize: 11,
   },
   movementStatus: {
     ...typography.eyebrow,

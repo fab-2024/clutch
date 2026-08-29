@@ -21,24 +21,24 @@ export const typography = {
   /** Short, non-essential overlines only. Never use for actions or status. */
   eyebrow: {
     fontFamily: fonts.bold,
-    fontSize: 10,
-    lineHeight: 13,
+    fontSize: 11,
+    lineHeight: 14,
     letterSpacing: 1,
   },
   caption: {
     fontFamily: fonts.medium,
-    fontSize: 10,
-    lineHeight: 14,
+    fontSize: 11,
+    lineHeight: 16,
   },
   label: {
     fontFamily: fonts.semibold,
-    fontSize: 10,
-    lineHeight: 14,
+    fontSize: 11,
+    lineHeight: 15,
   },
   action: {
     fontFamily: fonts.bold,
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 12,
+    lineHeight: 16,
   },
   body: {
     fontFamily: fonts.body,

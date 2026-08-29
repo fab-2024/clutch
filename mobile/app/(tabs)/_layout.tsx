@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     letterSpacing: 0.15,
   },
-  labelLandscape: { marginTop: 0, fontSize: 10, lineHeight: 12 },
+  labelLandscape: { marginTop: 0, fontSize: 11, lineHeight: 14 },
   glassBackground: {
     flex: 1,
     overflow: 'hidden',

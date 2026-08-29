@@ -63,8 +63,7 @@ export default function FactionEvolutionRail({
             ) : null}
             <FactionRelicMiniature level={form.level} size={43} state={state} />
             <Text
-              adjustsFontSizeToFit
-              numberOfLines={1}
+              numberOfLines={2}
               style={[
                 styles.evolutionLabel,
                 comfortable && styles.evolutionLabelComfortable,
@@ -206,10 +205,11 @@ function stateLabel(state: MiniatureState) {
 
 const styles = StyleSheet.create({
   evolutionRail: {
-    minHeight: 73,
+    minHeight: 88,
     marginTop: 3,
     paddingHorizontal: 2,
     paddingTop: 2,
+    paddingBottom: 6,
     flexDirection: 'row',
     alignItems: 'flex-start',
     overflow: 'hidden',
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#020609',
   },
   evolutionRailComfortable: {
-    minHeight: 76,
+    minHeight: 92,
     paddingTop: 3,
   },
   evolutionNode: {
@@ -319,19 +319,19 @@ const styles = StyleSheet.create({
   lockDot: { color: '#A8AFB4', fontFamily: fonts.bold, fontSize: 8, lineHeight: 8 },
   evolutionLabel: {
     ...typography.label,
-    maxWidth: 58,
+    maxWidth: 68,
     marginTop: -1,
     color: '#BFC7CC',
-    fontSize: 8,
-    lineHeight: 10,
+    fontSize: 11,
+    lineHeight: 14,
     letterSpacing: .05,
     textAlign: 'center',
   },
   evolutionLabelComfortable: {
-    maxWidth: 68,
+    maxWidth: 72,
     marginTop: 0,
-    fontSize: 10,
-    lineHeight: 12,
+    fontSize: 11,
+    lineHeight: 14,
     letterSpacing: 0,
   },
   evolutionLabelCurrent: { color: colors.volt },

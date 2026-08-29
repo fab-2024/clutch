@@ -213,7 +213,7 @@ export function FactionRelicHero({
           >
             <View style={styles.rallySurface}>
               <View style={styles.rallyIcon}><SupporterGroupIcon /></View>
-              <Text adjustsFontSizeToFit numberOfLines={1} style={styles.rallyText}>{actionTitle}</Text>
+              <Text numberOfLines={2} style={styles.rallyText}>{actionTitle}</Text>
             </View>
           </Pressable>
         </View>

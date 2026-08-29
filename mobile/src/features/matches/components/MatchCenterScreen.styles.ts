@@ -31,7 +31,7 @@ export const styles = StyleSheet.create({
   boPill: { paddingHorizontal: 9, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: colors.surfaceElevated },
   boText: { ...typography.label, color: colors.textMuted },
   dateText: { ...typography.metadata, zIndex: 2, color: colors.textMuted, letterSpacing: .7 },
-  dateTextPicker: { fontSize: 10, lineHeight: 13 },
+  dateTextPicker: { fontSize: 11, lineHeight: 14 },
   dateLive: { color: colors.liveText },
   duel: { zIndex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.sm },
   duelLandscape: { paddingVertical: spacing.xs },

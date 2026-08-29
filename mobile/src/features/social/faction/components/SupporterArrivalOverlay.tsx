@@ -140,8 +140,8 @@ const styles = StyleSheet.create({
   },
   amountText: {
     color: '#F0F7C4',
-    fontSize: 10,
-    lineHeight: 12,
+    fontSize: 11,
+    lineHeight: 14,
     fontWeight: '800',
     textShadowColor: 'rgba(0,0,0,.9)',
     textShadowOffset: { width: 0, height: 1 },

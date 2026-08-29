@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
   teamTag: { ...typography.cardTitle, color: colors.text, textAlign: 'center' },
   teamName: { ...typography.caption, width: '100%', color: colors.textMuted, textAlign: 'center' },
   yourChoice: { minHeight: 20, marginTop: 2, paddingHorizontal: 7, borderRadius: 7, justifyContent: 'center' },
-  yourChoiceText: { ...typography.eyebrow, color: '#070A0D', fontSize: 8, lineHeight: 10, letterSpacing: .3 },
+  yourChoiceText: { ...typography.eyebrow, color: '#070A0D', letterSpacing: .3 },
   scoreCenter: { flex: 1, alignItems: 'center', gap: 8 },
   score: { color: colors.text, fontFamily: fonts.display, fontSize: 48, lineHeight: 50, letterSpacing: -2, fontVariant: ['tabular-nums'] },
   scoreLandscape: { fontSize: 40, lineHeight: 42 },

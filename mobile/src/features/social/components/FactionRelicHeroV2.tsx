@@ -182,7 +182,7 @@ export default function FactionRelicHeroV2({
         </View>
         <View style={styles.identityCopy}>
           <Text numberOfLines={1} style={styles.factionName}>{faction?.nom.toUpperCase() ?? 'AUCUNE FACTION'}</Text>
-          <Text numberOfLines={1} style={styles.factionMeta}>
+          <Text numberOfLines={2} style={styles.factionMeta}>
             {faction
               ? `${gameLabel(faction.jeu)} · ${formatNumber(progress.charge)} MEMBRE${progress.charge > 1 ? 'S' : ''}`
               : 'UNE RELIQUE ATTEND TES COULEURS'}
@@ -230,7 +230,7 @@ export default function FactionRelicHeroV2({
               style={styles.inviteSurface}
             >
               <SupporterInviteIcon />
-              <Text adjustsFontSizeToFit numberOfLines={1} style={styles.inviteText}>INVITER DES SUPPORTERS</Text>
+              <Text numberOfLines={2} style={styles.inviteText}>INVITER DES SUPPORTERS</Text>
             </LinearGradient>
           </Pressable>
 

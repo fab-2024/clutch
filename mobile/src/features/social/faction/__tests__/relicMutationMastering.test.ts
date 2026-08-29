@@ -4,12 +4,14 @@ import {
   REDUCED_RELIC_MUTATION_CONCLUSION_START_MS,
   REDUCED_RELIC_MUTATION_SKIP_SETTLE_MS,
   REDUCED_RELIC_MUTATION_SKIP_UNLOCK_MS,
+  RELIC_CONTINUOUS_SCENES,
   RELIC_MUTATION_CONCLUSION_START_MS,
   RELIC_MUTATION_SKIP_SETTLE_MS,
   RELIC_MUTATION_SKIP_UNLOCK_MS,
   relicMutationMasteringTimeline,
   relicMutationNarrativePhase,
   relicSceneVisibleAtOffset,
+  resolveRelicContinuousScene,
   resolveRelicMutationConclusion,
   shouldRunRelicScene,
 } from '../relicMutationMastering';
@@ -94,6 +96,14 @@ describe('relic mutation mastering', () => {
 });
 
 describe('relic scene budget', () => {
+  it('allows exactly one continuous product scene', () => {
+    expect(RELIC_CONTINUOUS_SCENES).toEqual(['idle']);
+    expect(resolveRelicContinuousScene(true, false, false)).toBe('idle');
+    expect(resolveRelicContinuousScene(true, true, false)).toBeNull();
+    expect(resolveRelicContinuousScene(true, false, true)).toBeNull();
+    expect(resolveRelicContinuousScene(false, false, false)).toBeNull();
+  });
+
   it.each([
     [true, true, true, true],
     [false, true, true, false],

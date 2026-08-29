@@ -27,8 +27,10 @@ describe('SegmentedControl', () => {
 
     expect(selected.props.accessibilityState).toEqual({ selected: true });
     expect(screen.getByText('99+')).toBeTruthy();
+    expect(screen.getByText('ACTIVITÉ').props.numberOfLines).toBe(2);
     expect(StyleSheet.flatten(selected.props.style).minHeight).toBeGreaterThanOrEqual(layout.minTouchTarget);
     expect(StyleSheet.flatten(friends.props.style).minHeight).toBeGreaterThanOrEqual(layout.minTouchTarget);
+    expect(StyleSheet.flatten(screen.getByText('99+').parent?.props.style).height).toBeUndefined();
 
     await fireEvent.press(friends);
     expect(onChange).toHaveBeenCalledWith('friends');

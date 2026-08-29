@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   slotSelected: { backgroundColor: '#18200F', borderColor: '#657428' },
   slotNumber: { color: colors.text, fontFamily: fonts.display, fontSize: 20 },
   slotNumberSelected: { color: colors.volt },
-  slotState: { ...typography.label, marginTop: 2, color: colors.textMuted, fontSize: 7 },
+  slotState: { ...typography.label, marginTop: 2, color: colors.textMuted },
   slotStateSelected: { color: colors.volt },
   error: { ...typography.caption, padding: 9, color: '#FF9AA2', borderRadius: 12, backgroundColor: '#1A1012' },
   pressed: { opacity: .72, transform: [{ scale: .99 }] },

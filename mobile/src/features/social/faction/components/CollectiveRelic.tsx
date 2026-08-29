@@ -6,8 +6,6 @@ import {
   AppState,
   Image,
   Platform,
-  Pressable,
-  Text,
   View,
   type AppStateStatus,
   type LayoutChangeEvent,
@@ -55,6 +53,7 @@ import {
 } from '@/src/features/social/faction/relicMotion';
 import {
   relicMutationMasteringTimeline,
+  resolveRelicContinuousScene,
   resolveRelicMutationConclusion,
   shouldRunRelicScene,
 } from '@/src/features/social/faction/relicMutationMastering';
@@ -83,21 +82,19 @@ import {
   RelicMutationReturnBubblesArtwork,
   RelicMutationRootsArtwork,
   RelicReconstructionTraceArtwork,
-  RelicResonanceRingArtwork,
   RelicRootsArtwork,
   RelicStageLiquidArtwork,
   RelicSupporterArrivalArtwork,
 } from './RelicEnergyArtwork';
+import CollectiveRelicRenderer from './CollectiveRelicRenderer';
 import RelicLabContainerArtwork from './RelicLabContainerArtwork';
-import RelicPedestal, {
-  RelicPedestalBack,
-  RelicPedestalFrontLip,
-} from './RelicPedestal';
 import SkiaRelicLayer from './SkiaRelicLayer';
 import type { RelicScenePoint } from './SupporterArrivalOverlay';
+import type { RelicAnimationPreset } from './collectiveRelicTypes';
+
+export type { RelicAnimationPreset } from './collectiveRelicTypes';
 
 const RELIC_ASSET = RELIC_STAGE_ARTWORK.ampoule.asset;
-const ARCH_ASSET = require('../../../../../assets/social/faction-relic-arch.png');
 
 const IDLE_DURATION_MS = 6_400;
 const TAP_DURATION_MS = 550;
@@ -123,8 +120,6 @@ const ANIMATION_ORBIT = 3;
 
 const PRESENTED_SUPPORTER_CONTRIBUTION_IDS = new Set<string>();
 const PRESENTED_MUTATION_EVENT_IDS = new Set<string>();
-
-export type RelicAnimationPreset = 'classic' | 'living' | 'pulse' | 'orbit' | 'skia';
 
 type ActiveRelicMutation = {
   event: CommunityMutationPresentation;
@@ -378,7 +373,11 @@ export default function CollectiveRelic({
     resonancePhase.value = 0;
     idlePhase.value = 0;
     setMotion(instability.tier === 'mutationReady' ? 'mutationReady' : 'idle');
-    if (!routeActiveRef.current || mutationActiveRef.current || reduceMotion) return;
+    if (!resolveRelicContinuousScene(
+      routeActiveRef.current,
+      mutationActiveRef.current,
+      reduceMotion,
+    )) return;
     idlePhase.value = withRepeat(
       withTiming(1, { duration: IDLE_DURATION_MS, easing: Easing.linear }),
       -1,
@@ -1733,187 +1732,47 @@ export default function CollectiveRelic({
         : 'Touche rapidement pour une réaction, ou maintiens pour faire résonner le cœur';
 
   return (
-    <Pressable
+    <CollectiveRelicRenderer
+      accent={accent}
       accessibilityHint={stageAccessibilityHint}
       accessibilityLabel={stageAccessibilityLabel}
-      accessibilityLiveRegion={mutationConclusionVisible ? 'polite' : 'none'}
-      accessibilityRole={mutationConclusionVisible ? 'summary' : 'button'}
-      accessibilityState={mutationConclusionVisible ? undefined : { disabled: stageDisabled }}
-      accessibilityValue={{ text: motionState }}
+      animationPreset={animationPreset}
+      canSkipMutation={canSkipMutation}
+      compact={compact}
       disabled={stageDisabled}
+      faction={faction}
+      labMode={labMode}
+      motion={{
+        ambient: ambientMotion,
+        contact: contactMotion,
+        mutationAura: mutationAuraMotion,
+        mutationBackdrop: mutationBackdropMotion,
+        mutationConclusion: mutationConclusionMotion,
+        mutationContact: mutationContactMotion,
+        mutationReconstructionCopy: mutationReconstructionCopyMotion,
+        mutationRuptureCopy: mutationRuptureCopyMotion,
+        mutationTensionCopy: mutationTensionCopyMotion,
+        pedestalRest: pedestalRestMotion,
+        relicBody: relicBodyMotion,
+        ring: ringMotion,
+        signatureField: signatureFieldMotion,
+        signatureOrbit: signatureOrbitMotion,
+        signaturePulseRing: signaturePulseRingMotion,
+        supporterPedestalSegment: supporterPedestalSegmentMotion,
+      }}
+      motionState={motionState}
+      mutationActive={mutationActive}
+      mutationConclusion={mutationConclusion}
+      mutationConclusionVisible={mutationConclusionVisible}
+      mutationContactWidth={mutationContactWidth}
+      mutationToForm={mutationToForm}
       onLayout={handleStageLayout}
       onPress={skipMutation}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={[styles.stage, compact && styles.stageCompact]}
-      testID="collective-relic-stage"
-    >
-      <LinearGradient
-        colors={animationPreset === 'skia'
-          ? ['rgba(0,3,6,.92)', 'rgba(1,5,8,.76)', 'rgba(0,2,4,.34)']
-          : ['rgba(2,10,19,.96)', 'rgba(3,28,40,.7)', 'rgba(2,8,14,.18)']}
-        locations={animationPreset === 'skia' ? [0, .58, 1] : [0, .54, 1]}
-        style={styles.sceneBackdrop}
-      />
-      <Animated.View pointerEvents="none" style={[styles.mutationBackdrop, mutationBackdropMotion]} />
-
-      {mutationActive && mutationToForm ? (
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          pointerEvents="none"
-          style={[styles.mutationNarrative, compact && styles.mutationNarrativeCompact]}
-        >
-          <Animated.View style={[styles.mutationNarrativeItem, mutationTensionCopyMotion]}>
-            <View style={styles.mutationNarrativeRule} />
-            <View>
-              <Text style={styles.mutationNarrativeEyebrow}>TENSION</Text>
-              <Text style={styles.mutationNarrativeText}>LE CŒUR CONCENTRE LA CHARGE</Text>
-            </View>
-          </Animated.View>
-          <Animated.View style={[styles.mutationNarrativeItem, mutationRuptureCopyMotion]}>
-            <View style={[styles.mutationNarrativeRule, styles.mutationNarrativeRuleRupture]} />
-            <View>
-              <Text style={[styles.mutationNarrativeEyebrow, styles.mutationNarrativeEyebrowRupture]}>RUPTURE</Text>
-              <Text style={styles.mutationNarrativeText}>L’ANCIENNE FORME CÈDE</Text>
-            </View>
-          </Animated.View>
-          <Animated.View style={[styles.mutationNarrativeItem, mutationReconstructionCopyMotion]}>
-            <View style={[styles.mutationNarrativeRule, { backgroundColor: mutationConclusion?.signature.accent }]} />
-            <View>
-              <Text style={[styles.mutationNarrativeEyebrow, { color: mutationConclusion?.signature.accent }]}>RECONSTRUCTION</Text>
-              <Text style={styles.mutationNarrativeText}>PALIER {mutationToForm.code} EN FORMATION</Text>
-            </View>
-          </Animated.View>
-        </View>
-      ) : null}
-
-      {canSkipMutation && !mutationConclusionVisible ? (
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          pointerEvents="none"
-          style={[styles.mutationSkip, compact && styles.mutationSkipCompact]}
-          testID="relic-mutation-skip-label"
-        >
-          <Text style={styles.mutationSkipText}>PASSER</Text>
-          <Text style={styles.mutationSkipGlyph}>››</Text>
-        </View>
-      ) : null}
-
-      {showLegacyScene ? <View pointerEvents="none" style={styles.haloCanvas}>
-        <Animated.View style={[styles.ambientEnergy, ambientMotion]}>
-          <LinearGradient
-            colors={['rgba(5,31,49,.1)', 'rgba(6,55,72,.46)', 'rgba(3,10,18,0)']}
-            end={{ x: .5, y: 1 }}
-            start={{ x: .5, y: 0 }}
-            style={styles.coldAura}
-          />
-          <LinearGradient
-            colors={['rgba(42,220,232,0)', 'rgba(29,185,203,.13)', 'rgba(8,74,91,0)']}
-            locations={[0, .52, 1]}
-            style={styles.glassHalo}
-          />
-          <View style={styles.amberAura} />
-        </Animated.View>
-        <View style={styles.wireLeft} />
-        <View style={styles.wireRight} />
-        <LinearGradient
-          colors={['rgba(2,10,18,0)', 'rgba(2,10,18,.78)', 'rgba(2,8,14,1)']}
-          locations={[0, .72, 1]}
-          style={styles.haloFade}
-        />
-      </View> : null}
-
-      {showLegacyScene ? (
-        <Image accessibilityIgnoresInvertColors resizeMode="contain" source={ARCH_ASSET} style={styles.arch} />
-      ) : null}
-
-      {showLegacyScene ? <RelicPedestalBack /> : null}
-
-      {animationPreset === 'living' || animationPreset === 'pulse' || animationPreset === 'orbit' ? (
-        <Animated.View pointerEvents="none" style={[styles.signatureField, signatureFieldMotion]} />
-      ) : null}
-
-      {animationPreset === 'pulse' ? (
-        <Animated.View pointerEvents="none" style={[styles.signaturePulseRing, signaturePulseRingMotion]} />
-      ) : null}
-
-      {animationPreset === 'orbit' ? (
-        <Animated.View pointerEvents="none" style={[styles.signatureOrbit, signatureOrbitMotion]}>
-          <View style={[styles.signatureOrbitNode, styles.signatureOrbitNodePrimary]} />
-          <View style={[styles.signatureOrbitNode, styles.signatureOrbitNodeSecondary]} />
-        </Animated.View>
-      ) : null}
-
-      {mutationActive && showLegacyScene ? <Animated.View pointerEvents="none" style={[styles.labMutationAura, mutationAuraMotion]} /> : null}
-
-      {showLegacyScene ? <Animated.View pointerEvents="none" style={[styles.resonanceRing, ringMotion]}>
-        <RelicResonanceRingArtwork />
-      </Animated.View> : null}
-
-      {animationPreset === 'classic' || animationPreset === 'skia' ? presentedVessel : (
-        <Animated.View pointerEvents="none" style={[styles.vesselMotionLayer, relicBodyMotion]}>
-          {presentedVessel}
-        </Animated.View>
-      )}
-
-      {showLegacyScene ? <Animated.View
-        pointerEvents="none"
-        style={[styles.contactLightLayer, { width: mutationContactWidth }, contactMotion]}
-      >
-        <Animated.View style={[styles.mutationContactSurface, mutationContactMotion]}>
-          <LinearGradient
-            colors={['rgba(35,214,231,0)', 'rgba(71,238,246,.34)', 'rgba(35,214,231,0)']}
-            end={{ x: 1, y: .5 }}
-            locations={[0, .5, 1]}
-            start={{ x: 0, y: .5 }}
-            style={styles.contactBloom}
-          />
-          <View style={[styles.contactCore, { width: Math.max(34, mutationContactWidth - 12) }]} />
-        </Animated.View>
-      </Animated.View> : null}
-
-      {showLegacyScene ? <>
-        <RelicPedestalFrontLip />
-        <Animated.View pointerEvents="none" style={[styles.contactCopperReflection, pedestalRestMotion]} />
-        <Animated.View pointerEvents="none" style={[styles.supporterPedestalSegment, supporterPedestalSegmentMotion]} />
-        <RelicPedestal accent={accent} faction={faction} />
-      </> : null}
-
-      {mutationConclusionVisible && mutationConclusion ? (
-        <Animated.View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          pointerEvents="none"
-          style={[
-            styles.mutationConclusion,
-            compact && styles.mutationConclusionCompact,
-            labMode && styles.labMutationConclusion,
-            mutationConclusionMotion,
-          ]}
-          testID="relic-mutation-conclusion"
-        >
-          <View style={[styles.mutationConclusionWash, { backgroundColor: mutationConclusion.signature.wash }]} />
-          <View style={[styles.mutationConclusionRule, { backgroundColor: mutationConclusion.signature.accent }]} />
-          <View style={styles.mutationConclusionBody}>
-            <Text style={[styles.mutationConclusionEyebrow, { color: mutationConclusion.signature.accent }]}>
-              {mutationConclusion.signature.eyebrow} · PALIER {mutationConclusion.formCode}
-            </Text>
-            <View style={styles.mutationConclusionHeadline}>
-              <Text numberOfLines={1} style={styles.mutationConclusionName}>{mutationConclusion.formName}</Text>
-              <Text numberOfLines={1} style={[styles.mutationConclusionReward, { color: mutationConclusion.signature.accent }]}>
-                {mutationConclusion.rewardValue}
-              </Text>
-            </View>
-            <View style={styles.mutationConclusionMeta}>
-              <Text style={styles.mutationConclusionLabel}>{mutationConclusion.rewardLabel}</Text>
-              <Text numberOfLines={1} style={styles.mutationConclusionNext}>SUIVANT · {mutationConclusion.nextObjective}</Text>
-            </View>
-          </View>
-        </Animated.View>
-      ) : null}
-    </Pressable>
+      presentedVessel={presentedVessel}
+      showLegacyScene={showLegacyScene}
+    />
   );
 }
 

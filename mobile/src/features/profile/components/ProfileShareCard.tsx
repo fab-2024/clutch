@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   metrics: { zIndex: 1, minHeight: 63, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 9, borderRadius: radius.lg, backgroundColor: 'rgba(3,7,10,.62)', borderWidth: 1, borderColor: '#29323A' },
   metric: { flex: 1, minWidth: 0, alignItems: 'center' },
   metricValue: { width: '100%', color: colors.text, fontFamily: fonts.display, fontSize: 19, textAlign: 'center' },
-  metricLabel: { ...typography.label, marginTop: 3, color: colors.textMuted, fontSize: 8, letterSpacing: .3 },
+  metricLabel: { ...typography.label, marginTop: 3, color: colors.textMuted, letterSpacing: .3 },
   divider: { width: 1, height: 28, backgroundColor: '#303840' },
   footer: { zIndex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   signature: { ...typography.label, flex: 1, color: colors.textMuted, letterSpacing: .4 },

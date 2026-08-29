@@ -117,7 +117,7 @@ function BadgeCard({
 
   return (
     <Pressable
-      accessibilityLabel={`${badge.name}, ${badge.obtained ? 'obtenu' : 'verrouillé'}`}
+      accessibilityLabel={`${badge.name}, ${badge.obtained ? 'obtenu' : 'verrouillé'}. ${detail}`}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [styles.card, badge.obtained && { borderColor: `${badge.accent}60` }, pressed && styles.pressed]}
@@ -184,25 +184,25 @@ const styles = StyleSheet.create({
   summaryTitle: { marginTop: 3, color: colors.text, fontFamily: fonts.display, fontSize: 23, lineHeight: 24 },
   summaryPromise: { ...typography.label, color: '#798590', textAlign: 'right' },
   filters: { gap: 7, paddingHorizontal: spacing.md },
-  filter: { minHeight: 36, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center', borderRadius: 18, backgroundColor: '#0E1419', borderWidth: 1, borderColor: '#29343D' },
+  filter: { minHeight: 44, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center', borderRadius: 18, backgroundColor: '#0E1419', borderWidth: 1, borderColor: '#29343D' },
   filterActive: { backgroundColor: '#19210F', borderColor: '#596725' },
   filterText: { ...typography.label, color: colors.textMuted, letterSpacing: .3 },
   filterTextActive: { color: colors.volt },
   grid: { marginHorizontal: spacing.md, flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  card: { position: 'relative', width: '47%', minHeight: 310, padding: 11, borderRadius: 22, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#242F37' },
+  card: { position: 'relative', width: '47%', minHeight: 340, padding: 11, borderRadius: 22, backgroundColor: '#0A0F14', borderWidth: 1, borderColor: '#242F37' },
   artwork: { position: 'relative', height: 116, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 17, backgroundColor: '#070B0E' },
   cardGlow: { position: 'absolute', width: 85, height: 85, borderRadius: 43, opacity: .1, boxShadow: '0 0 28px rgba(49,215,226,.12)' },
-  equipped: { position: 'absolute', top: 7, right: 7, minHeight: 22, paddingHorizontal: 7, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: colors.volt },
-  equippedText: { ...typography.label, color: '#080A0C', fontSize: 7 },
+  equipped: { position: 'absolute', top: 7, right: 7, minHeight: 28, paddingHorizontal: 7, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: colors.volt },
+  equippedText: { ...typography.label, color: '#080A0C' },
   cardTopline: { marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 5 },
-  rarity: { ...typography.eyebrow, flex: 1, fontSize: 8, letterSpacing: .45 },
-  state: { ...typography.label, color: '#707C86', fontSize: 7 },
+  rarity: { ...typography.eyebrow, flex: 1, letterSpacing: .45 },
+  state: { ...typography.label, color: colors.textMuted },
   name: { ...typography.bodyStrong, minHeight: 38, marginTop: 5, color: colors.text },
   detail: { ...typography.caption, minHeight: 45, marginTop: 3, color: colors.textMuted },
   progressBlock: { marginTop: 'auto', paddingTop: 9 },
   progressTrack: { height: 5, overflow: 'hidden', borderRadius: 3, backgroundColor: '#202A32' },
   progressFill: { height: '100%', borderRadius: 3 },
-  progressText: { ...typography.label, marginTop: 4, color: '#89959F', fontSize: 8, textAlign: 'right' },
-  date: { ...typography.label, marginTop: 'auto', paddingTop: 9, color: '#87939D', fontSize: 8 },
+  progressText: { ...typography.label, marginTop: 4, color: '#89959F', textAlign: 'right' },
+  date: { ...typography.label, marginTop: 'auto', paddingTop: 9, color: '#87939D' },
   pressed: { opacity: .72, transform: [{ scale: .992 }] },
 });

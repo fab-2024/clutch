@@ -49,7 +49,7 @@ export function SegmentedControl<Value extends string>({
               pressed && styles.itemPressed,
             ]}
           >
-            <Text numberOfLines={1} style={[styles.label, selected && styles.labelSelected]}>
+            <Text numberOfLines={2} style={[styles.label, selected && styles.labelSelected]}>
               {item.label}
             </Text>
             {item.badge ? (
@@ -82,6 +82,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     minHeight: layout.minTouchTarget,
     paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -106,9 +107,10 @@ const styles = StyleSheet.create({
     color: colors.volt,
   },
   badge: {
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: 5,
+    minWidth: 24,
+    minHeight: 24,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.pill,

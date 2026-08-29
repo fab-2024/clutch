@@ -56,7 +56,9 @@ describe('ScheduleHero', () => {
     expect(dayButtons).toHaveLength(7);
     expect(dayButtons.filter((button) => button.props.accessibilityState.selected)).toHaveLength(1);
     for (const day of dayButtons) {
-      expect(StyleSheet.flatten(day.props.style).height).toBeGreaterThanOrEqual(layout.minTouchTarget);
+      const style = StyleSheet.flatten(day.props.style);
+      expect(style.height).toBeGreaterThanOrEqual(layout.minTouchTarget);
+      expect(style.minWidth).toBeGreaterThanOrEqual(layout.minTouchTarget);
     }
 
     await fireEvent.press(dayButtons[1]);

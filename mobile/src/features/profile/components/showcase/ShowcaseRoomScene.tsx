@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
   rankObject: { alignItems: 'center', justifyContent: 'center' },
   rankPlate: { position: 'absolute', bottom: '-3%', minWidth: 98, minHeight: 31, paddingHorizontal: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,8,11,.92)', borderWidth: 1, borderRadius: 6 },
   rankPlatePreview: { bottom: '-6%', minWidth: 66, minHeight: 22, paddingHorizontal: 5, borderRadius: 4 },
-  rankLevel: { ...typography.label, color: colors.volt, fontSize: 7, letterSpacing: 0.35 },
+  rankLevel: { ...typography.label, color: colors.volt, letterSpacing: 0.35 },
   rankLevelPreview: { fontSize: 4, lineHeight: 5 },
   rankName: { marginTop: 1, maxWidth: 92, color: colors.text, fontFamily: fonts.display, fontSize: 16, lineHeight: 17 },
   rankNamePreview: { maxWidth: 60, fontSize: 10, lineHeight: 11 },
@@ -519,6 +519,6 @@ const styles = StyleSheet.create({
   trophySlot: { position: 'relative', width: '46%', height: '47%', alignItems: 'center', justifyContent: 'flex-end' },
   trophyAccent: { position: 'absolute', bottom: '4%', width: '48%', height: 2, borderRadius: 5, opacity: 0.72 },
   seasonPlaque: { position: 'absolute', top: 9, left: '39%', right: '39%', minHeight: 34, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,8,11,.78)', borderWidth: 1, borderColor: '#3A4752' },
-  seasonEyebrow: { ...typography.label, color: '#83909B', fontSize: 6 },
-  seasonName: { ...typography.eyebrow, marginTop: 2, color: colors.text, fontSize: 8 },
+  seasonEyebrow: { ...typography.label, color: '#83909B' },
+  seasonName: { ...typography.eyebrow, marginTop: 2, color: colors.text },
 });

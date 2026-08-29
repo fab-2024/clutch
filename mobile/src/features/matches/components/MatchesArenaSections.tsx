@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import {
   Image,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -132,7 +133,12 @@ export function ScheduleHero({
         </View>
       </View>
 
-      <View style={styles.daysRow}>
+      <ScrollView
+        contentContainerStyle={styles.daysRow}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.daysScroll}
+      >
         {calendarDays.map((day) => {
           const key = dateKey(day);
           const active = key === activeDayKey;
@@ -152,7 +158,7 @@ export function ScheduleHero({
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
     </View>
   );
 }

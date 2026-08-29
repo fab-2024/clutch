@@ -123,7 +123,7 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView style={styles.root}>
       <LinearGradient
-        colors={['#05080B', '#0B110E', '#05080B']}
+        colors={[colors.backgroundDeep, '#0B110E', colors.backgroundDeep]}
         end={{ x: 1, y: 1 }}
         start={{ x: 0, y: 0 }}
         style={StyleSheet.absoluteFill}
@@ -305,7 +305,7 @@ function TeamsStep({
                 tag={organization.tag}
                 uri={organization.logo}
               />
-              <Text numberOfLines={1} style={styles.teamName}>{organization.name}</Text>
+              <Text numberOfLines={2} style={styles.teamName}>{organization.name}</Text>
               <View style={styles.gameDots}>
                 {games.map((game) => (
                   <View key={game} style={[styles.gameDot, organization.games.includes(game) && styles.gameDotActive]} />
@@ -336,7 +336,7 @@ function TeamsStep({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, overflow: 'hidden', backgroundColor: '#05080B' },
+  root: { flex: 1, overflow: 'hidden', backgroundColor: colors.backgroundDeep },
   ambientLayer: { position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' },
   ambientVolt: { position: 'absolute', top: -100, right: -140, width: 330, height: 330, borderRadius: 165, backgroundColor: '#BBD21F', opacity: 0.11 },
   ambientBlue: { position: 'absolute', bottom: -170, left: -150, width: 350, height: 350, borderRadius: 175, backgroundColor: '#16496F', opacity: 0.1 },
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
   progress: { flex: 1, flexDirection: 'row', justifyContent: 'center', gap: 5 },
   progressBar: { width: 27, height: 3, borderRadius: 3, backgroundColor: '#242C33' },
   progressBarActive: { backgroundColor: colors.volt },
-  stepLabel: { ...typography.label, color: '#65717D', letterSpacing: .5 },
+  stepLabel: { ...typography.label, color: colors.textMuted, letterSpacing: .5 },
 
   stepBody: { flex: 1, paddingTop: 28, paddingBottom: 16, gap: 24 },
   stepHeadline: { gap: 8 },
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   gameDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#252E36' },
   gameDotActive: { backgroundColor: colors.volt },
   selectedPill: { position: 'absolute', top: 7, right: 7, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 999, backgroundColor: colors.volt },
-  selectedPillText: { ...typography.label, color: '#080A0C', fontSize: 10, lineHeight: 12 },
+  selectedPillText: { ...typography.label, color: '#080A0C' },
 
   bottomActions: { marginTop: 'auto', flexDirection: 'row', alignItems: 'center', gap: 10 },
   backButton: { minHeight: 54, paddingHorizontal: 5, justifyContent: 'center' },

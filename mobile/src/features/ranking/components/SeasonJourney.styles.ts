@@ -81,7 +81,7 @@ export const journeyStyles = StyleSheet.create({
     minWidth: 0,
     flexShrink: 1,
     color: '#9BA5AF',
-    fontSize: 10,
+    fontSize: 11,
     letterSpacing: 0.5,
     textAlign: 'right',
   },
@@ -163,9 +163,9 @@ export const journeyStyles = StyleSheet.create({
   gradeRange: {
     ...typography.eyebrow,
     marginTop: 4,
-    color: '#6F7D89',
-    fontSize: 8,
-    lineHeight: 11,
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 14,
     letterSpacing: 0.42,
   },
   gradeRangeCurrent: {
@@ -253,7 +253,7 @@ export const journeyStyles = StyleSheet.create({
   metricLabel: {
     ...typography.eyebrow,
     color: '#8793A0',
-    fontSize: 9,
+    fontSize: 11,
     letterSpacing: 0.7,
   },
   ratingValue: {
@@ -286,7 +286,7 @@ export const journeyStyles = StyleSheet.create({
     ...typography.label,
     marginTop: 13,
     color: '#A5B1BB',
-    fontSize: 10,
+    fontSize: 11,
     letterSpacing: 0.38,
     textAlign: 'center',
   },

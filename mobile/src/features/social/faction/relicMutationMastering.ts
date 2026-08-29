@@ -8,6 +8,10 @@ export const REDUCED_RELIC_MUTATION_CONCLUSION_START_MS = 500;
 export const RELIC_MUTATION_SKIP_SETTLE_MS = 620;
 export const REDUCED_RELIC_MUTATION_SKIP_SETTLE_MS = 280;
 
+/** The product scene owns a single permanent driver; every visual derives from it. */
+export const RELIC_CONTINUOUS_SCENES = ['idle'] as const;
+export type RelicContinuousScene = (typeof RELIC_CONTINUOUS_SCENES)[number];
+
 export type RelicMutationNarrativePhase =
   | 'tension'
   | 'rupture'
@@ -122,6 +126,15 @@ export function shouldRunRelicScene(
   sceneVisible: boolean,
 ) {
   return routeFocused && appActive && sceneVisible;
+}
+
+export function resolveRelicContinuousScene(
+  routeActive: boolean,
+  mutationActive: boolean,
+  reduceMotion: boolean,
+): RelicContinuousScene | null {
+  if (!routeActive || mutationActive || reduceMotion) return null;
+  return 'idle';
 }
 
 export function relicSceneVisibleAtOffset(scrollOffset: number, heroHeight: number) {
