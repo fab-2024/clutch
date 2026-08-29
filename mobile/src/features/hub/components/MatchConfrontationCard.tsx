@@ -1,75 +1,72 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { useId } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import Animated, { FadeInLeft, FadeInRight } from 'react-native-reanimated';
+import Svg, {
+  Defs,
+  G,
+  LinearGradient as SvgLinearGradient,
+  Path,
+  Rect,
+  Stop,
+} from 'react-native-svg';
 
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
-import { colors, fonts, layout, spacing, typography } from '@/src/theme';
+import { colors, fonts, layout, typography } from '@/src/theme';
 
 import {
-  formatMatchSchedule,
+  formatMatchHeaderSchedule,
   withAlpha,
   type ConfrontationTeam,
   type MatchConfrontationState,
 } from '../matchPresentation';
 import type { HubMatch } from '../types';
-import MatchConfrontationCanvas from './MatchConfrontationCanvas';
-import { MATCH_PLATE_OUTWARD_SHIFT } from './matchConfrontationLayout';
+import { buildMatchTerritoryPalette } from './matchConfrontationPalette';
 
 type MatchConfrontationCardProps = {
-  compactLandscape?: boolean;
   match: HubMatch;
   onPress: () => void;
   onPressIn?: () => void;
-  reduceMotion: boolean;
   state: MatchConfrontationState;
 };
 
-const CARD_ASPECT_RATIO = 1.43;
-const CARD_SIDE_INSET = spacing.sm;
+const CARD_ASPECT_RATIO = 1.405;
 
-export function MatchConfrontationCard({ compactLandscape = false, match, onPress, onPressIn, reduceMotion, state }: MatchConfrontationCardProps) {
+export function MatchConfrontationCard({
+  match,
+  onPress,
+  onPressIn,
+  state,
+}: MatchConfrontationCardProps) {
   const { width } = useWindowDimensions();
-  const compact = width < layout.compactWidthBreakpoint || compactLandscape;
-  const cardWidth = compactLandscape
-    ? Math.min(320, Math.max(240, width * .56))
-    : Math.max(288, Math.min(width, layout.contentMaxWidth) - CARD_SIDE_INSET * 2);
-  const cardHeight = cardWidth / CARD_ASPECT_RATIO;
+  const cardWidth = Math.min(width, layout.contentMaxWidth);
+  const cardHeight = Math.round(cardWidth / CARD_ASPECT_RATIO);
   const sceneScale = cardWidth / 400;
-  const statusAccent = state.phase === 'live'
-    ? colors.live
-    : state.phase === 'finished' || state.phase === 'cancelled'
-      ? '#8F9AA4'
-      : colors.volt;
   const event = String(match.evenement || '').trim() || 'COMPÉTITION';
   const formatValue = Number(match.format);
-  const format = Number.isInteger(formatValue) && formatValue > 0 ? `BO${formatValue}` : 'FORMAT À CONFIRMER';
-  const scoreCopy = state.phase !== 'live' && state.scoreLabel ? `, score ${state.scoreLabel}` : '';
-  const statusGlass: [string, string, string] = state.phase === 'live'
-    ? ['rgba(45,8,13,.96)', 'rgba(16,5,8,.94)', 'rgba(4,6,8,.98)']
-    : ['rgba(18,25,31,.96)', 'rgba(7,11,14,.94)', 'rgba(2,5,7,.98)'];
+  const format = Number.isInteger(formatValue) && formatValue > 0
+    ? 'BO' + formatValue
+    : 'FORMAT À CONFIRMER';
+  const scoreCopy = state.phase !== 'live' && state.scoreLabel
+    ? ', score ' + state.scoreLabel
+    : '';
 
   return (
     <View style={[styles.ticketShell, { height: cardHeight, width: cardWidth }]}>
       <Pressable
         accessibilityHint="Ouvre le Match Center"
-        accessibilityLabel={`${state.teamA.name} contre ${state.teamB.name}, ${state.status}${scoreCopy}`}
+        accessibilityLabel={state.teamA.name + ' contre ' + state.teamB.name + ', ' + state.status + scoreCopy}
         accessibilityRole="button"
         onPress={onPress}
         onPressIn={onPressIn}
         style={({ pressed }) => [styles.ticketSurface, pressed && styles.pressed]}
         testID="match-confrontation-card"
       >
-        <View pointerEvents="none" style={styles.canvasLayer}>
-          <MatchConfrontationCanvas
-            height={cardHeight}
-            leftAccent={state.teamA.accent}
-            leftWinner={state.winner === 'a'}
-            reduceMotion={reduceMotion}
-            rightAccent={state.teamB.accent}
-            rightWinner={state.winner === 'b'}
-            width={cardWidth}
-          />
-        </View>
+        <ArenaBackdrop
+          height={cardHeight}
+          leftAccent={state.teamA.accent}
+          rightAccent={state.teamB.accent}
+          width={cardWidth}
+        />
 
         <View
           accessibilityElementsHidden
@@ -77,241 +74,489 @@ export function MatchConfrontationCard({ compactLandscape = false, match, onPres
           pointerEvents="none"
           style={styles.watermarkLayer}
         >
-          <View style={[styles.watermark, { left: -34 * sceneScale, top: 70 * sceneScale, transform: [{ rotateZ: '7deg' }] }]}>
+          <View style={[styles.watermark, { left: -24 * sceneScale, top: 42 * sceneScale }]}>
             <TeamLogo
               accent={state.teamA.accent}
-              contentScale={.92}
+              contentScale={.96}
               frameless
               name={state.teamA.name}
-              size={142 * sceneScale}
+              size={188 * sceneScale}
               tag={state.teamA.tag}
               uri={state.teamA.logo}
             />
           </View>
-          <View style={[styles.watermark, { right: -34 * sceneScale, top: 70 * sceneScale, transform: [{ rotateZ: '-7deg' }] }]}>
+          <View style={[styles.watermark, { right: -24 * sceneScale, top: 42 * sceneScale }]}>
             <TeamLogo
               accent={state.teamB.accent}
-              contentScale={.92}
+              contentScale={1.08}
               frameless
               name={state.teamB.name}
-              size={142 * sceneScale}
+              size={188 * sceneScale}
               tag={state.teamB.tag}
               uri={state.teamB.logo}
             />
           </View>
         </View>
 
-        <View style={styles.matchTop}>
-          <Text numberOfLines={1} style={styles.scheduleText}>{formatMatchSchedule(match.debut)}</Text>
-          <View style={styles.eventMeta}>
-            <Text numberOfLines={1} style={styles.eventName}>{event.toUpperCase()}</Text>
-            <Text numberOfLines={1} style={styles.formatText}>· {format}</Text>
-          </View>
+        <View style={[styles.matchTop, { height: 32 * sceneScale, paddingHorizontal: 14 * sceneScale }]}>
+          <Text
+            adjustsFontSizeToFit
+            minimumFontScale={.72}
+            numberOfLines={1}
+            style={[styles.scheduleText, { fontSize: 14 * sceneScale, lineHeight: 18 * sceneScale }]}
+          >
+            {formatMatchHeaderSchedule(match.debut)}
+          </Text>
+          <Text
+            adjustsFontSizeToFit
+            minimumFontScale={.64}
+            numberOfLines={1}
+            style={[styles.eventName, { fontSize: 13 * sceneScale, lineHeight: 17 * sceneScale }]}
+          >
+            {event.toUpperCase()} · {format}
+          </Text>
         </View>
 
-        <View pointerEvents="none" style={styles.teamLayer}>
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          pointerEvents="none"
+          style={styles.teamLayer}
+        >
           <TeamFace
-            compact={compact}
-            reduceMotion={reduceMotion}
+            muted={state.winner === 'b'}
             sceneScale={sceneScale}
             team={state.teamA}
             winner={state.winner === 'a'}
-            muted={state.winner === 'b'}
           />
           <TeamFace
-            compact={compact}
-            reduceMotion={reduceMotion}
+            muted={state.winner === 'a'}
             sceneScale={sceneScale}
             team={state.teamB}
             winner={state.winner === 'b'}
-            muted={state.winner === 'a'}
           />
-          {state.scoreLabel && state.phase !== 'live' ? (
-            <View style={[styles.scoreOverlay, { left: 174 * sceneScale, top: 128 * sceneScale, width: 52 * sceneScale }]}>
-              <Text adjustsFontSizeToFit numberOfLines={1} style={styles.score}>{state.scoreLabel}</Text>
-            </View>
-          ) : null}
         </View>
 
-        {state.phase === 'live' ? (
-          <View
-            pointerEvents="none"
-            style={[
-              styles.liveMarker,
-              {
-                marginLeft: -58 * sceneScale,
-                top: 32 * sceneScale,
-                width: 116 * sceneScale,
-              },
-            ]}
-          >
-            <View style={styles.liveMarkerLine} />
-            <View
-              style={[
-                styles.liveMarkerBadge,
-                {
-                  borderColor: withAlpha(colors.live, .88),
-                  boxShadow: `0 7px 18px ${withAlpha(colors.live, .28)}`,
-                  minHeight: Math.max(24, 26 * sceneScale),
-                  minWidth: Math.max(52, 57 * sceneScale),
-                },
-              ]}
-            >
-              <LinearGradient colors={['#F12636', '#C70D22', '#850916']} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
-              <View style={styles.liveMarkerHighlight} />
-              <Text style={[styles.liveMarkerText, { fontSize: Math.max(10, 10.5 * sceneScale) }]}>LIVE</Text>
-            </View>
-            <View style={styles.liveMarkerLine} />
-          </View>
-        ) : (
-          <View
-            style={[
-              styles.matchStatus,
-              compact && styles.matchStatusCompact,
-              {
-                borderColor: withAlpha(statusAccent, .58),
-                boxShadow: `0 7px 18px ${withAlpha(statusAccent, .1)}`,
-                shadowColor: statusAccent,
-              },
-            ]}
-          >
-            <LinearGradient colors={statusGlass} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
-            <View style={styles.statusHighlight} />
-            <Text style={[styles.matchStatusText, { color: statusAccent }]}>{state.status}</Text>
-          </View>
-        )}
-
+        <ConfrontationMarker sceneScale={sceneScale} state={state} />
       </Pressable>
     </View>
   );
 }
 
+function ArenaBackdrop({
+  height,
+  leftAccent,
+  rightAccent,
+  width,
+}: {
+  height: number;
+  leftAccent: string;
+  rightAccent: string;
+  width: number;
+}) {
+  const uniqueId = useId().replace(/:/g, '');
+  const leftPalette = buildMatchTerritoryPalette(leftAccent);
+  const rightPalette = buildMatchTerritoryPalette(rightAccent);
+  const leftGradient = 'hub-left-' + uniqueId;
+  const rightGradient = 'hub-right-' + uniqueId;
+  const shadeGradient = 'hub-shade-' + uniqueId;
+
+  return (
+    <View pointerEvents="none" style={styles.backdrop}>
+      <Svg height={height} preserveAspectRatio="none" viewBox="0 0 400 280" width={width}>
+        <Defs>
+          <SvgLinearGradient id={leftGradient} x1="0" x2="1" y1=".4" y2=".55">
+            <Stop offset="0" stopColor={leftPalette.outer} />
+            <Stop offset=".68" stopColor={leftPalette.middle} />
+            <Stop offset="1" stopColor={leftPalette.nearFracture} />
+          </SvgLinearGradient>
+          <SvgLinearGradient id={rightGradient} x1="0" x2="1" y1=".55" y2=".4">
+            <Stop offset="0" stopColor={rightPalette.nearFracture} />
+            <Stop offset=".36" stopColor={rightPalette.middle} />
+            <Stop offset="1" stopColor={rightPalette.outer} />
+          </SvgLinearGradient>
+          <SvgLinearGradient id={shadeGradient} x1="0" x2="0" y1="0" y2="1">
+            <Stop offset="0" stopColor="#000000" stopOpacity=".16" />
+            <Stop offset=".62" stopColor="#000000" stopOpacity=".02" />
+            <Stop offset="1" stopColor="#000000" stopOpacity=".46" />
+          </SvgLinearGradient>
+        </Defs>
+
+        <Path d="M0 0 H244 L168 280 H0 Z" fill={'url(#' + leftGradient + ')'} />
+        <Path d="M244 0 H400 V280 H168 Z" fill={'url(#' + rightGradient + ')'} />
+
+        <G fill={withAlpha(leftPalette.local, .1)}>
+          <Path d="M0 62 L72 0 H98 L0 126 Z" />
+          <Path d="M0 136 L138 0 H158 L0 202 Z" />
+          <Path d="M0 280 L113 164 L75 280 Z" />
+          <Path d="M88 280 L190 112 L151 280 Z" />
+        </G>
+        <G fill={withAlpha(rightPalette.local, .1)}>
+          <Path d="M400 50 L346 0 H320 L400 112 Z" />
+          <Path d="M400 128 L278 0 H258 L400 194 Z" />
+          <Path d="M400 280 L312 166 L344 280 Z" />
+          <Path d="M320 280 L224 116 L263 280 Z" />
+        </G>
+
+        <G fill="none" stroke={withAlpha(leftPalette.edge, .42)} strokeWidth="1">
+          <Path d="M0 70 L82 12" />
+          <Path d="M0 116 L128 18" />
+          <Path d="M0 218 L172 78" />
+          <Path d="M20 280 L184 126" />
+        </G>
+        <G fill="none" stroke={withAlpha(rightPalette.edge, .42)} strokeWidth="1">
+          <Path d="M400 70 L328 10" />
+          <Path d="M400 116 L282 18" />
+          <Path d="M400 218 L232 78" />
+          <Path d="M380 280 L220 126" />
+        </G>
+
+        <Path d="M231 -14 L261 -14 L181 294 L148 294 Z" fill="rgba(0,0,0,.7)" />
+        <Path d="M238 -10 L162 290" fill="none" stroke={withAlpha(leftPalette.edge, .9)} strokeWidth="2.2" />
+        <Path d="M246 -10 L170 290" fill="none" stroke="#F7FAFC" strokeOpacity=".94" strokeWidth="2.4" />
+        <Path d="M254 -10 L178 290" fill="none" stroke={withAlpha(rightPalette.edge, .94)} strokeWidth="3" />
+        <Path d="M261 -10 L185 290" fill="none" stroke="#020406" strokeOpacity=".92" strokeWidth="7" />
+
+        <Rect fill={'url(#' + shadeGradient + ')'} height="280" width="400" x="0" y="0" />
+        <Rect fill="rgba(1,4,7,.82)" height="32" width="400" x="0" y="0" />
+        <Path d="M0 32 H400" fill="none" stroke="#53616A" strokeOpacity=".74" strokeWidth=".8" />
+      </Svg>
+
+      <LinearGradient
+        colors={['rgba(0,0,0,.18)', 'rgba(0,0,0,0)', 'rgba(0,0,0,.22)']}
+        end={{ x: .5, y: 1 }}
+        start={{ x: .5, y: 0 }}
+        style={StyleSheet.absoluteFill}
+      />
+    </View>
+  );
+}
+
 function TeamFace({
-  compact,
   muted,
-  reduceMotion,
   sceneScale,
   team,
   winner,
 }: {
-  compact: boolean;
   muted: boolean;
-  reduceMotion: boolean;
   sceneScale: number;
   team: ConfrontationTeam;
   winner: boolean;
 }) {
   const left = team.side === 'a';
-  const anchorLeft = (left
-    ? 54 - MATCH_PLATE_OUTWARD_SHIFT
-    : 202 + MATCH_PLATE_OUTWARD_SHIFT) * sceneScale;
-  const anchorTop = (left ? 73 : 71) * sceneScale;
-  const anchorWidth = 152 * sceneScale;
-  const logoSize = Math.round(80 * sceneScale);
-  const logoStageHeight = 94 * sceneScale;
-  const entry = (left ? FadeInLeft : FadeInRight)
-    .springify()
-    .damping(13)
-    .mass(.74)
-    .stiffness(118);
-  const logoContentScale = team.name === 'G2 Esports'
-    ? 1.22
-    : team.name === 'Fnatic'
-      ? .9
-      : team.name === 'Karmine Corp'
-        ? .72
-        : 1;
+  const logoSize = 124 * sceneScale;
+
   return (
-    <Animated.View
-      accessibilityLabel={`${team.name}${winner ? ', vainqueur' : ''}`}
-      entering={reduceMotion ? undefined : entry}
+    <View
+      accessibilityLabel={team.name + (winner ? ', vainqueur' : '')}
       style={[
         styles.ticketTeam,
         {
-          left: anchorLeft,
-          top: anchorTop,
-          width: anchorWidth,
+          left: (left ? 8 : 220) * sceneScale,
+          top: 38 * sceneScale,
+          width: 172 * sceneScale,
         },
         muted && styles.ticketTeamMuted,
       ]}
     >
-      <View style={[styles.logoStage, { height: logoStageHeight }]}>
-        <View
-          style={[
-            styles.logoPerspective,
-            {
-              transform: [
-                { rotateZ: left ? '6deg' : '-6deg' },
-                { skewY: left ? '1.5deg' : '-1.5deg' },
-                { scaleX: .91 },
-                { translateY: left ? -4 : 2 },
-              ],
-            },
-          ]}
-        >
-          <TeamLogo
-            accent={team.accent}
-            contentScale={logoContentScale}
-            frameless
-            name={team.name}
-            size={logoSize}
-            tag={team.tag}
-            uri={team.logo}
-          />
-        </View>
+      <View style={[styles.logoStage, { height: 132 * sceneScale }]}>
+        <TeamLogo
+          accent={team.accent}
+          contentScale={teamLogoContentScale(team.name)}
+          frameless
+          name={team.name}
+          size={logoSize}
+          tag={team.tag}
+          uri={team.logo}
+        />
       </View>
       <Text
         adjustsFontSizeToFit
-        minimumFontScale={.56}
+        minimumFontScale={.58}
         numberOfLines={1}
         style={[
           styles.teamTag,
-          compact && styles.teamTagCompact,
           {
-            fontSize: Math.max(compact ? 31 : 35, 40 * sceneScale),
-            lineHeight: Math.max(compact ? 33 : 37, 42 * sceneScale),
-            marginTop: 18 * sceneScale,
+            fontSize: 48 * sceneScale,
+            lineHeight: 50 * sceneScale,
           },
           winner && { color: team.accent },
         ]}
       >
         {team.tag}
       </Text>
-      <Text adjustsFontSizeToFit minimumFontScale={.7} numberOfLines={1} style={[styles.teamName, compact && styles.teamNameCompact]}>{team.name}</Text>
-    </Animated.View>
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={.7}
+        numberOfLines={1}
+        style={[
+          styles.teamName,
+          {
+            fontSize: 13 * sceneScale,
+            lineHeight: 17 * sceneScale,
+          },
+        ]}
+      >
+        {team.name}
+      </Text>
+    </View>
   );
 }
 
+function ConfrontationMarker({
+  sceneScale,
+  state,
+}: {
+  sceneScale: number;
+  state: MatchConfrontationState;
+}) {
+  if (state.phase === 'live') {
+    return (
+      <View
+        pointerEvents="none"
+        style={[
+          styles.liveMarker,
+          {
+            marginLeft: -48 * sceneScale,
+            top: 132 * sceneScale,
+            width: 96 * sceneScale,
+          },
+        ]}
+      >
+        <View style={styles.liveMarkerLine} />
+        <View
+          style={[
+            styles.liveMarkerBadge,
+            {
+              minHeight: 27 * sceneScale,
+              minWidth: 58 * sceneScale,
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={['#F52B39', '#D00920', '#990A17']}
+            end={{ x: .5, y: 1 }}
+            start={{ x: .5, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.liveMarkerHighlight} />
+          <Text style={[styles.liveMarkerText, { fontSize: 13 * sceneScale, lineHeight: 16 * sceneScale }]}>
+            LIVE
+          </Text>
+        </View>
+        <View style={styles.liveMarkerLine} />
+      </View>
+    );
+  }
+
+  const label = state.phase === 'finished' && state.scoreLabel
+    ? state.scoreLabel
+    : state.status;
+  return (
+    <View
+      pointerEvents="none"
+      style={[
+        styles.matchStatus,
+        {
+          marginLeft: -54 * sceneScale,
+          minHeight: 31 * sceneScale,
+          top: 131 * sceneScale,
+          width: 108 * sceneScale,
+        },
+      ]}
+    >
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={.65}
+        numberOfLines={1}
+        style={[
+          styles.matchStatusText,
+          {
+            color: state.phase === 'upcoming' ? colors.volt : '#F4F6F7',
+            fontSize: 13 * sceneScale,
+            lineHeight: 17 * sceneScale,
+          },
+        ]}
+      >
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function teamLogoContentScale(name: string) {
+  if (name === 'Karmine Corp') return .86;
+  if (name === 'Team Vitality') return 1.42;
+  if (name === 'G2 Esports') return 1.24;
+  if (name === 'Fnatic') return 1.12;
+  return 1;
+}
+
 const styles = StyleSheet.create({
-  ticketShell: { position: 'relative', alignSelf: 'center', boxShadow: '0 20px 46px rgba(0,0,0,.48)' },
-  ticketSurface: { position: 'absolute', inset: 0, padding: 14, overflow: 'hidden', borderRadius: 16, backgroundColor: '#02060A', borderWidth: 1, borderColor: '#324654' },
-  canvasLayer: { position: 'absolute', inset: 0, zIndex: 0 },
-  watermarkLayer: { position: 'absolute', inset: 0, zIndex: 1, overflow: 'hidden' },
-  watermark: { position: 'absolute', opacity: .05 },
-  matchTop: { zIndex: 5, minHeight: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  scheduleText: { ...typography.bodyStrong, flexShrink: 0, color: '#F4F6F7', fontSize: 12, letterSpacing: .25, textShadowColor: 'rgba(0,0,0,.9)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 5 },
-  eventMeta: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 3 },
-  eventName: { ...typography.label, flexShrink: 1, minWidth: 0, color: '#B8C0C7', letterSpacing: .22, textAlign: 'right', textShadowColor: 'rgba(0,0,0,.9)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 5 },
-  formatText: { ...typography.label, flexShrink: 0, color: '#D1D7DB', letterSpacing: .22, textShadowColor: 'rgba(0,0,0,.9)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 5 },
-  teamLayer: { position: 'absolute', zIndex: 4, inset: 0 },
-  scoreOverlay: { position: 'absolute', zIndex: 5, alignItems: 'center', justifyContent: 'center' },
-  score: { color: '#F5F7F8', fontFamily: fonts.display, fontSize: 22, lineHeight: 25, letterSpacing: -.35, textAlign: 'center', textShadowColor: 'rgba(0,0,0,.92)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 7 },
-  liveMarker: { position: 'absolute', zIndex: 7, left: '50%', minHeight: 28, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
-  liveMarkerLine: { flex: 1, height: 1, borderRadius: 1, backgroundColor: 'rgba(244,248,250,.84)', boxShadow: '0 0 6px rgba(255,255,255,.28)' },
-  liveMarkerBadge: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 4, borderWidth: 1, backgroundColor: '#C70D22' },
-  liveMarkerHighlight: { position: 'absolute', top: 1, left: 5, right: 5, height: 1, borderRadius: 1, backgroundColor: 'rgba(255,255,255,.42)' },
-  liveMarkerText: { color: '#FFFFFF', fontFamily: fonts.bold, lineHeight: 14, letterSpacing: .45, textShadowColor: 'rgba(80,0,10,.72)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 },
-  ticketTeam: { position: 'absolute', zIndex: 2, minWidth: 0, alignItems: 'center' },
-  ticketTeamMuted: { opacity: .64 },
-  logoStage: { width: '100%', alignItems: 'center', justifyContent: 'center' },
-  logoPerspective: { alignItems: 'center', justifyContent: 'center' },
-  teamTag: { width: '100%', color: '#F7F8F9', fontFamily: fonts.display, letterSpacing: -1, textAlign: 'center', textShadowColor: 'rgba(0,0,0,.94)', textShadowOffset: { width: 0, height: 3 }, textShadowRadius: 9 },
-  teamTagCompact: { letterSpacing: -.7 },
-  teamName: { ...typography.label, width: '100%', marginTop: 1, paddingHorizontal: 3, color: '#BEC6CC', textAlign: 'center' },
-  teamNameCompact: { fontSize: 11, lineHeight: 14 },
-  matchStatus: { position: 'absolute', zIndex: 6, left: '40%', right: '40%', bottom: 9, minHeight: 32, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 16, backgroundColor: '#05080A', borderWidth: 1, shadowOpacity: .2, shadowRadius: 10, shadowOffset: { width: 0, height: 5 } },
-  matchStatusCompact: { left: '39%', right: '39%', bottom: 8, minHeight: 29, paddingHorizontal: 6 },
-  statusHighlight: { position: 'absolute', top: 1, left: 9, right: 9, height: 1, borderRadius: 1, backgroundColor: 'rgba(255,255,255,.15)' },
-  matchStatusText: { ...typography.action, letterSpacing: .5 },
-  pressed: { opacity: .78 },
+  ticketShell: {
+    position: 'relative',
+    alignSelf: 'center',
+    boxShadow: '0 18px 42px rgba(0,0,0,.48)',
+  },
+  ticketSurface: {
+    position: 'absolute',
+    inset: 0,
+    overflow: 'hidden',
+    borderRadius: 18,
+    backgroundColor: '#02060A',
+    borderWidth: 1,
+    borderColor: '#40515B',
+  },
+  backdrop: {
+    position: 'absolute',
+    inset: 0,
+    zIndex: 0,
+  },
+  watermarkLayer: {
+    position: 'absolute',
+    inset: 0,
+    zIndex: 1,
+    overflow: 'hidden',
+  },
+  watermark: {
+    position: 'absolute',
+    opacity: .045,
+  },
+  matchTop: {
+    position: 'absolute',
+    zIndex: 6,
+    top: 0,
+    right: 0,
+    left: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  scheduleText: {
+    flexShrink: 0,
+    color: '#F5F6F7',
+    fontFamily: fonts.bold,
+    letterSpacing: .2,
+    textShadowColor: 'rgba(0,0,0,.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  eventName: {
+    flex: 1,
+    minWidth: 0,
+    color: '#F0F2F3',
+    fontFamily: fonts.bold,
+    letterSpacing: .15,
+    textAlign: 'right',
+    textShadowColor: 'rgba(0,0,0,.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  teamLayer: {
+    position: 'absolute',
+    zIndex: 4,
+    inset: 0,
+  },
+  ticketTeam: {
+    position: 'absolute',
+    minWidth: 0,
+    alignItems: 'center',
+  },
+  ticketTeamMuted: {
+    opacity: .62,
+  },
+  logoStage: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  teamTag: {
+    width: '100%',
+    color: '#F7F8F9',
+    fontFamily: fonts.display,
+    letterSpacing: -1.2,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,.96)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 8,
+  },
+  teamName: {
+    ...typography.bodyStrong,
+    width: '100%',
+    paddingHorizontal: 4,
+    color: '#F0F2F3',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,.94)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 5,
+  },
+  liveMarker: {
+    position: 'absolute',
+    zIndex: 8,
+    left: '50%',
+    minHeight: 29,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+  },
+  liveMarkerLine: {
+    flex: 1,
+    height: 1,
+    borderRadius: 1,
+    backgroundColor: 'rgba(247,249,250,.9)',
+    boxShadow: '0 0 6px rgba(255,255,255,.3)',
+  },
+  liveMarkerBadge: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#FF5963',
+    backgroundColor: '#D00920',
+    boxShadow: '0 6px 16px rgba(212,9,32,.34)',
+  },
+  liveMarkerHighlight: {
+    position: 'absolute',
+    top: 1,
+    right: 5,
+    left: 5,
+    height: 1,
+    borderRadius: 1,
+    backgroundColor: 'rgba(255,255,255,.44)',
+  },
+  liveMarkerText: {
+    color: '#FFFFFF',
+    fontFamily: fonts.bold,
+    fontStyle: 'italic',
+    letterSpacing: .3,
+    textShadowColor: 'rgba(70,0,8,.72)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  matchStatus: {
+    position: 'absolute',
+    zIndex: 8,
+    left: '50%',
+    paddingHorizontal: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    borderRadius: 16,
+    backgroundColor: 'rgba(4,7,9,.92)',
+    borderWidth: 1,
+    borderColor: '#5B6870',
+    boxShadow: '0 6px 16px rgba(0,0,0,.34)',
+  },
+  matchStatusText: {
+    fontFamily: fonts.bold,
+    letterSpacing: .25,
+    textAlign: 'center',
+  },
+  pressed: {
+    opacity: .84,
+  },
 });

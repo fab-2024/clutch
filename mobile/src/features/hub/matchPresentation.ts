@@ -158,6 +158,17 @@ export function formatMatchSchedule(value: string) {
   return `${date.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').toUpperCase()} ${time}`;
 }
 
+export function formatMatchHeaderSchedule(value: string) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return 'HORAIRE À CONFIRMER';
+  const weekday = date
+    .toLocaleDateString('fr-FR', { weekday: 'short' })
+    .replace('.', '')
+    .toUpperCase();
+  const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  return `${weekday} ${time}`;
+}
+
 function buildTeam(match: HubMatch, side: HubTeamSide): ConfrontationTeam {
   const rawName = side === 'a' ? match.equipe_a : match.equipe_b;
   const rawTag = side === 'a' ? match.tag_a : match.tag_b;

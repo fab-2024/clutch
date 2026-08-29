@@ -1,4 +1,5 @@
 import {
+  formatMatchHeaderSchedule,
   getHubMatchPhase,
   getMatchConfrontationState,
   resolveTeamAccent,
@@ -22,6 +23,11 @@ const BASE_MATCH: HubMatch = {
 };
 
 describe('hub match confrontation presentation', () => {
+  it('formats the confrontation header as weekday and time', () => {
+    expect(formatMatchHeaderSchedule(BASE_MATCH.debut)).toMatch(/^\p{L}{3} \d{2}:\d{2}$/u);
+    expect(formatMatchHeaderSchedule('invalid')).toBe('HORAIRE À CONFIRMER');
+  });
+
   it('distinguishes upcoming, live, finished and cancelled states', () => {
     expect(getHubMatchPhase(BASE_MATCH, NOW)).toBe('upcoming');
     expect(getHubMatchPhase({ ...BASE_MATCH, statut: 'en_cours' }, NOW)).toBe('live');

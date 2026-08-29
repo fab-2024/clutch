@@ -118,7 +118,6 @@ export default function HubPreviewScreen() {
   return (
     <HubExperience
       error={null}
-      headerEconomy={{ frags: 1000, volts: 300 }}
       hub={previewHub}
       loading={false}
       refreshing={false}
@@ -170,7 +169,7 @@ function normalizePreviewScore(value?: string | string[]): PreviewScoreMode {
 function matchForPreviewState(state: PreviewMatchState, teams: PreviewTeams, scoreMode: PreviewScoreMode): HubMatch {
   const matchup = teams === 'kc-vitality'
     ? {
-        event: 'LFL Summer',
+        event: 'LFL Summer Split',
         id: 'kc-vitality',
         teamA: 'Karmine Corp',
         teamB: 'Team Vitality',
