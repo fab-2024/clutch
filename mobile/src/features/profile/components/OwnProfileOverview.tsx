@@ -16,11 +16,12 @@ type OwnProfileOverviewProps = {
   levelFrameVariant: LevelFrameVariant;
   onModify: () => void;
   onOpenActivations: () => void;
+  onOpenBadges: () => void;
   onOpenFaction: () => void;
-  onOpenLocker: () => void;
+  onOpenJerseys: () => void;
   onOpenRank: () => void;
-  onOpenShop: () => void;
   onOpenShowcase: () => void;
+  onOpenTrophies: () => void;
   onOpenVisitor: () => void;
   pseudo: string;
   rankAccent: string;
@@ -34,11 +35,12 @@ export default function OwnProfileOverview({
   levelFrameVariant,
   onModify,
   onOpenActivations,
+  onOpenBadges,
   onOpenFaction,
-  onOpenLocker,
+  onOpenJerseys,
   onOpenRank,
-  onOpenShop,
   onOpenShowcase,
+  onOpenTrophies,
   onOpenVisitor,
   pseudo,
   rankAccent,
@@ -63,15 +65,14 @@ export default function OwnProfileOverview({
       <ProfileOverviewSections
         cosmetics={cosmetics}
         data={data}
-        levelFrameVariant={levelFrameVariant}
         loading={loading}
         onModify={onModify}
         onOpenActivations={onOpenActivations}
+        onOpenBadges={onOpenBadges}
         onOpenFaction={onOpenFaction}
-        onOpenLocker={onOpenLocker}
+        onOpenJerseys={onOpenJerseys}
         onOpenRank={onOpenRank}
-        onOpenShop={onOpenShop}
-        pseudo={pseudo}
+        onOpenTrophies={onOpenTrophies}
         rankAccent={rankAccent}
         rankLabel={rankLabel}
       />

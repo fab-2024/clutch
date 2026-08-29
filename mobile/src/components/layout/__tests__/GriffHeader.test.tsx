@@ -75,6 +75,24 @@ describe('GriffHeader', () => {
     expect(economyStyle.width).toBe(162);
   });
 
+  it('lets tab screens replace the lockup with a compact profile identity', async () => {
+    mockCompactWidth = true;
+
+    const screen = await render(
+      <GriffHeader
+        accessory={<View testID="wallet-accessory" />}
+        compact
+        leading={<View testID="profile-identity" />}
+        variant="wallet"
+      />,
+    );
+    const leadingStyle = StyleSheet.flatten(screen.getByTestId('griff-header-leading').props.style);
+
+    expect(screen.getByTestId('profile-identity')).toBeTruthy();
+    expect(screen.queryByTestId('griff-lockup')).toBeNull();
+    expect(leadingStyle.width).toBe(88);
+  });
+
   it('preserves the existing default presentation for non-wallet contexts', async () => {
     const screen = await render(<GriffHeader economy={{ frags: 12, volts: 34 }} />);
 

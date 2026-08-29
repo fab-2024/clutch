@@ -10,6 +10,7 @@ import {
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import { FeatureStateView } from '@/src/components/ui/FeatureStateView';
+import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors } from '@/src/theme';
 
@@ -161,7 +162,11 @@ export function MatchesExperience({
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
       >
-        <GriffHeader economy={headerEconomy} variant="wallet" />
+        <GriffHeader
+          economy={headerEconomy}
+          leading={<ProfileHeaderButton preview={Boolean(headerEconomy)} />}
+          variant="wallet"
+        />
 
         {duelRivalId ? (
           <View style={styles.targetedDuelBanner}>

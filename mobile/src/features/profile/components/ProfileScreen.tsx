@@ -3,7 +3,6 @@ import Settings2 from 'lucide-react-native/icons/settings-2';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
 import { FeatureStateView } from '@/src/components/ui/FeatureStateView';
@@ -37,7 +36,7 @@ type ProfileScreenProps = {
 export default function ProfileScreen({ previewData, profilePseudo, publicView = false }: ProfileScreenProps) {
   const { profile, session } = useAuth();
   const { equipped } = useCosmetics();
-  const { frags, refresh: refreshEconomy, volts } = useEconomy();
+  const { refresh: refreshEconomy } = useEconomy();
   const [data, setData] = useState<ProfileData | null>(previewData ?? null);
   const [loading, setLoading] = useState(!previewData);
   const [refreshing, setRefreshing] = useState(false);
@@ -138,11 +137,9 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
         >
           <ProfileHeader
-            frags={frags ?? data?.ranking.frags}
             onOpenSettings={() => router.push('/settings/profile')}
             publicProfile={data?.publicProfile !== false}
             publicView={false}
-            volts={volts ?? (previewData ? 300 : null)}
           />
 
           {error ? (
@@ -164,11 +161,21 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             levelFrameVariant={levelFrameEquipment.variant}
             onModify={() => router.push('/settings/profile')}
             onOpenActivations={() => router.push((previewData ? '/campaign-preview' : '/campaign/nova-week') as never)}
+            onOpenBadges={() => router.push({
+              pathname: previewData ? '/shop-preview' : '/shop',
+              params: { scope: 'owned', tab: 'badges' },
+            } as never)}
             onOpenFaction={() => router.push('/(tabs)/social/faction')}
-            onOpenLocker={() => router.push({ pathname: previewData ? '/shop-preview' : '/shop', params: { scope: 'owned' } } as never)}
+            onOpenJerseys={() => router.push({
+              pathname: previewData ? '/showcase-preview' : '/showcase',
+              params: { section: 'collection' },
+            } as never)}
             onOpenRank={() => router.push('/(tabs)/rank')}
-            onOpenShop={() => router.push({ pathname: previewData ? '/shop-preview' : '/shop', params: { scope: 'catalog' } } as never)}
             onOpenShowcase={() => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
+            onOpenTrophies={() => router.push({
+              pathname: previewData ? '/shop-preview' : '/shop',
+              params: { scope: 'owned', tab: 'rings' },
+            } as never)}
             onOpenVisitor={() => router.push({ pathname: '/u/[pseudo]', params: { pseudo: data?.pseudo || pseudo } })}
             pseudo={data?.pseudo || pseudo}
             rankAccent={rankColor}
@@ -215,7 +222,6 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
           rankLabel={rankLabel}
           relicLevel={data?.favoriteTeam?.relique_niveau ?? 1}
           teamTag={data?.favoriteTeam?.tag || 'GRIFF'}
-          volts={publicView ? undefined : volts}
         />
 
         {!publicView ? (
@@ -309,22 +315,30 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
 }
 
 function ProfileHeader({
-  frags,
   onOpenSettings,
   publicProfile,
   publicView,
-  volts,
 }: {
-  frags?: number | null;
   onOpenSettings?: () => void;
   publicProfile: boolean;
   publicView: boolean;
-  volts?: number | null;
 }) {
   if (!publicView) {
     return (
-      <GriffHeader
-        accessory={onOpenSettings ? (
+      <View style={styles.privateHeader}>
+        <Pressable
+          accessibilityLabel="Revenir à l’onglet précédent"
+          accessibilityRole="button"
+          onPress={() => router.back()}
+          style={({ pressed }) => [styles.privateHeaderBack, pressed && styles.pressed]}
+        >
+          <Text style={styles.privateHeaderBackText}>← RETOUR</Text>
+        </Pressable>
+        <View style={styles.privateHeaderCopy}>
+          <Text style={styles.privateHeaderEyebrow}>{publicProfile ? 'PROFIL PUBLIC' : 'PROFIL PRIVÉ'}</Text>
+          <Text style={styles.privateHeaderTitle}>MON PROFIL</Text>
+        </View>
+        {onOpenSettings ? (
           <Pressable
             accessibilityLabel="Ouvrir les paramètres"
             accessibilityRole="button"
@@ -333,11 +347,8 @@ function ProfileHeader({
           >
             <Settings2 color={colors.textSecondary} size={20} strokeWidth={1.9} />
           </Pressable>
-        ) : undefined}
-        compact
-        economy={{ frags: frags ?? null, volts: volts ?? null }}
-        variant="wallet"
-      />
+        ) : null}
+      </View>
     );
   }
 
@@ -451,6 +462,12 @@ const styles = StyleSheet.create({
   blockedStateButtonText: { ...typography.action, color: '#080A0C' },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 22 },
   privateContent: { gap: 12 },
+  privateHeader: { minHeight: 72, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
+  privateHeaderBack: { minHeight: 44, paddingHorizontal: spacing.sm, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderStrong },
+  privateHeaderBackText: { ...typography.action, color: colors.text, letterSpacing: 0.45 },
+  privateHeaderCopy: { flex: 1, minWidth: 0 },
+  privateHeaderEyebrow: { ...typography.metadata, color: colors.volt, letterSpacing: 0.65 },
+  privateHeaderTitle: { ...typography.sectionTitle, marginTop: 2, color: colors.text },
   privateHeaderSettings: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderStrong },
   header: { minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, back: { minHeight: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { ...typography.action, color: colors.text, letterSpacing: 0.6 }, headerActions: { flexDirection: 'row', alignItems: 'center', gap: 6 }, visibility: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { ...typography.label, color: colors.text, letterSpacing: 0.5 }, headerSettings: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, headerSettingsGlyph: { color: colors.text, fontSize: 17, lineHeight: 20, fontWeight: '900' },
   stateInset: { marginHorizontal: spacing.md },

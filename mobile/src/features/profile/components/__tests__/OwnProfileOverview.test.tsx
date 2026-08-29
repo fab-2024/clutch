@@ -23,12 +23,13 @@ jest.mock('react-native-reanimated', () => {
     withTiming: (value: number) => value,
   };
 });
+jest.mock('lucide-react-native/icons/award', () => ({ __esModule: true, default: 'Award' }));
 jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, default: 'ChevronRight' }));
 jest.mock('lucide-react-native/icons/expand', () => ({ __esModule: true, default: 'Expand' }));
 jest.mock('lucide-react-native/icons/eye', () => ({ __esModule: true, default: 'Eye' }));
-jest.mock('lucide-react-native/icons/layers-2', () => ({ __esModule: true, default: 'Layers2' }));
-jest.mock('lucide-react-native/icons/shopping-bag', () => ({ __esModule: true, default: 'ShoppingBag' }));
+jest.mock('lucide-react-native/icons/shirt', () => ({ __esModule: true, default: 'Shirt' }));
 jest.mock('lucide-react-native/icons/sparkles', () => ({ __esModule: true, default: 'Sparkles' }));
+jest.mock('lucide-react-native/icons/trophy', () => ({ __esModule: true, default: 'Trophy' }));
 jest.mock('lucide-react-native/icons/users-round', () => ({ __esModule: true, default: 'UsersRound' }));
 
 const PROFILE: ProfileData = {
@@ -94,11 +95,12 @@ async function renderHub({
   loading = false,
   onModify = jest.fn(),
   onOpenActivations = jest.fn(),
+  onOpenBadges = jest.fn(),
   onOpenFaction = jest.fn(),
-  onOpenLocker = jest.fn(),
+  onOpenJerseys = jest.fn(),
   onOpenRank = jest.fn(),
-  onOpenShop = jest.fn(),
   onOpenShowcase = jest.fn(),
+  onOpenTrophies = jest.fn(),
   onOpenVisitor = jest.fn(),
 }: {
   cosmetics?: EquippedCosmetics;
@@ -106,11 +108,12 @@ async function renderHub({
   loading?: boolean;
   onModify?: jest.Mock;
   onOpenActivations?: jest.Mock;
+  onOpenBadges?: jest.Mock;
   onOpenFaction?: jest.Mock;
-  onOpenLocker?: jest.Mock;
+  onOpenJerseys?: jest.Mock;
   onOpenRank?: jest.Mock;
-  onOpenShop?: jest.Mock;
   onOpenShowcase?: jest.Mock;
+  onOpenTrophies?: jest.Mock;
   onOpenVisitor?: jest.Mock;
 } = {}) {
   return await render(
@@ -121,11 +124,12 @@ async function renderHub({
       levelFrameVariant="signalAscendant"
       onModify={onModify}
       onOpenActivations={onOpenActivations}
+      onOpenBadges={onOpenBadges}
       onOpenFaction={onOpenFaction}
-      onOpenLocker={onOpenLocker}
+      onOpenJerseys={onOpenJerseys}
       onOpenRank={onOpenRank}
-      onOpenShop={onOpenShop}
       onOpenShowcase={onOpenShowcase}
+      onOpenTrophies={onOpenTrophies}
       onOpenVisitor={onOpenVisitor}
       pseudo={data?.pseudo ?? 'TesteurGRIFF'}
       rankAccent="#31D7E2"
@@ -149,26 +153,30 @@ describe('OwnProfileOverview', () => {
     expect(screen.getByLabelText(/Aperçu Vitrine.*rang PLATINE/)).toBeTruthy();
   });
 
-  it('keeps the progression, collection and social actions wired', async () => {
+  it('keeps Ranked, badges, trophies, jerseys and social actions wired', async () => {
     const onOpenActivations = jest.fn();
-    const onOpenLocker = jest.fn();
+    const onOpenBadges = jest.fn();
+    const onOpenJerseys = jest.fn();
     const onOpenRank = jest.fn();
-    const onOpenShop = jest.fn();
+    const onOpenTrophies = jest.fn();
     const screen = await renderHub({
       onOpenActivations,
-      onOpenLocker,
+      onOpenBadges,
+      onOpenJerseys,
       onOpenRank,
-      onOpenShop,
+      onOpenTrophies,
     });
 
     await fireEvent.press(screen.getByTestId('profile-section-progression'));
-    await fireEvent.press(screen.getByLabelText('Ouvrir mes objets dans le Locker'));
-    await fireEvent.press(screen.getByLabelText('Ouvrir le catalogue de la Boutique'));
+    await fireEvent.press(screen.getByLabelText(/Ouvrir mes badges/));
+    await fireEvent.press(screen.getByLabelText(/Ouvrir mes trophées/));
+    await fireEvent.press(screen.getByLabelText(/Ouvrir mes maillots/));
     await fireEvent.press(screen.getByLabelText('Ouvrir les activations'));
 
     expect(onOpenRank).toHaveBeenCalledTimes(1);
-    expect(onOpenLocker).toHaveBeenCalledTimes(1);
-    expect(onOpenShop).toHaveBeenCalledTimes(1);
+    expect(onOpenBadges).toHaveBeenCalledTimes(1);
+    expect(onOpenTrophies).toHaveBeenCalledTimes(1);
+    expect(onOpenJerseys).toHaveBeenCalledTimes(1);
     expect(onOpenActivations).toHaveBeenCalledTimes(1);
   });
 
@@ -217,18 +225,15 @@ describe('OwnProfileOverview', () => {
     expect(onOpenVisitor).not.toHaveBeenCalled();
   });
 
-  it('renders the level frame separately from four neutral signature slots', async () => {
+  it('surfaces the three requested profile collections without generic identity duplicates', async () => {
     const screen = await renderHub();
 
-    expect(screen.getByLabelText('Cadre de niveau, Signal Ascendant')).toBeTruthy();
-    expect(screen.getByLabelText('Cadre d’avatar, emplacement vide')).toBeTruthy();
-    expect(screen.getByLabelText('Titre, emplacement vide')).toBeTruthy();
-    expect(screen.getByLabelText('Bannière de profil, emplacement vide')).toBeTruthy();
-    expect(screen.getByLabelText('Relique, emplacement vide')).toBeTruthy();
-    expect(screen.queryByText('CADRE')).toBeNull();
-    expect(screen.queryByText('TITRE')).toBeNull();
-    expect(screen.queryByText('BANNIÈRE')).toBeNull();
-    expect(screen.queryByText('RELIQUE')).toBeNull();
+    expect(screen.getByText('BADGES')).toBeTruthy();
+    expect(screen.getByText('TROPHÉES')).toBeTruthy();
+    expect(screen.getByText('MAILLOTS')).toBeTruthy();
+    expect(screen.getByText('0 DÉBLOQUÉS')).toBeTruthy();
+    expect(screen.getByText('2/5 DÉBLOQUÉS')).toBeTruthy();
+    expect(screen.getByText('AUCUN ÉQUIPÉ')).toBeTruthy();
   });
 
   it('uses a structured busy state without demonstration values while loading', async () => {

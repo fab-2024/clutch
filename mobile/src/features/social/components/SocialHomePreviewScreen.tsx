@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { previewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
+import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import type { RelicAnimationPreset } from '@/src/features/social/faction/components/CollectiveRelic';
 import { COMMUNITY_FORMS } from '@/src/features/social/faction/constants';
 import type {
@@ -332,7 +333,11 @@ export default function SocialHomePreviewScreen({
 
   const experience = (
       <View style={{ flex: 1 }}>
-        <GriffHeader economy={{ frags: 1842, volts: 680 }} variant="wallet" />
+        <GriffHeader
+          economy={{ frags: 1842, volts: 680 }}
+          leading={<ProfileHeaderButton preview />}
+          variant="wallet"
+        />
         <SocialSectionNav activeOverride="faction" variant={factionHeroVariant === 'v2' ? 'v2' : 'default'} />
         {showLab && factionHeroVariant === 'v2' && fxlab === '1' ? (
           <RelicAnimationControls

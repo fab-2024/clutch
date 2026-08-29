@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
+import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import SocialSectionNav from '@/src/features/social/components/SocialSectionNav';
 import { colors } from '@/src/theme';
 
@@ -97,7 +98,7 @@ export default function CirclePreviewScreen() {
   return (
     <View style={styles.root}>
       <View style={[styles.top, { paddingTop: Math.max(insets.top, 6) }]}>
-        <GriffHeader variant="wallet" />
+        <GriffHeader leading={<ProfileHeaderButton preview />} variant="wallet" />
       </View>
       <SocialSectionNav activeOverride="circle" />
       <View style={styles.content}>

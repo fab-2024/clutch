@@ -91,6 +91,7 @@ function RootNavigator() {
           <Stack.Screen name="showcase" options={{ animation: 'fade', orientation: Platform.OS === 'web' ? 'default' : 'landscape' }} />
           <Stack.Screen name="founder-pack" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="economy" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="my-profile" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="campaign/[key]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="admin/matches" />
           <Stack.Screen name="admin/campaigns/[key]" options={{ animation: 'slide_from_right' }} />

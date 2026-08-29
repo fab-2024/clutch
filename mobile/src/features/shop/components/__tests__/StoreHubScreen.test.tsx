@@ -15,7 +15,7 @@ jest.mock('expo-router', () => ({
   router: { push: jest.fn() },
 }));
 jest.mock('@/src/components/layout/GriffHeader', () => ({
-  GriffHeader: ({ accessory }: { accessory?: ReactNode }) => accessory ?? null,
+  GriffHeader: ({ accessory, leading }: { accessory?: ReactNode; leading?: ReactNode }) => <>{leading}{accessory}</>,
 }));
 jest.mock('@/src/features/profile/levelFrames/components/LevelFrame', () => ({
   __esModule: true,
@@ -45,9 +45,11 @@ describe('StoreHubScreen', () => {
     expect(screen.getByTestId('store-hub-showcase')).toBeTruthy();
     expect(screen.getByTestId('store-hub-shop')).toBeTruthy();
     expect(screen.getByTestId('store-hub-profile')).toBeTruthy();
-    expect(screen.getByText('TesteurGRIFF')).toBeTruthy();
+    expect(screen.getAllByText('TesteurGRIFF')).toHaveLength(2);
     expect(screen.getByText('ROOKIE DU CALL')).toBeTruthy();
     expect(screen.getByText('PUBLIC')).toBeTruthy();
+    const rendered = JSON.stringify(screen.toJSON());
+    expect(rendered.indexOf('store-hub-intro')).toBeLessThan(rendered.indexOf('store-hub-profile'));
     expect(screen.queryByText('PROGRESSION')).toBeNull();
     expect(screen.queryByText('FACTION')).toBeNull();
     expect(screen.queryByText('ACTIVATIONS')).toBeNull();
@@ -56,30 +58,34 @@ describe('StoreHubScreen', () => {
   it('opens the two production destinations and profile settings', async () => {
     const screen = await render(<StoreHubScreen />);
 
+    await fireEvent.press(screen.getByTestId('profile-header-button'));
     await fireEvent.press(screen.getByTestId('store-hub-showcase'));
     await fireEvent.press(screen.getByTestId('store-hub-shop'));
     await fireEvent.press(screen.getByTestId('store-hub-settings'));
 
-    expect(push).toHaveBeenNthCalledWith(1, '/showcase');
-    expect(push).toHaveBeenNthCalledWith(2, {
+    expect(push).toHaveBeenNthCalledWith(1, '/my-profile');
+    expect(push).toHaveBeenNthCalledWith(2, '/showcase');
+    expect(push).toHaveBeenNthCalledWith(3, {
       pathname: '/shop',
       params: { scope: 'catalog' },
     });
-    expect(push).toHaveBeenNthCalledWith(3, '/settings/profile');
+    expect(push).toHaveBeenNthCalledWith(4, '/settings/profile');
   });
 
   it('keeps preview navigation inside preview routes', async () => {
     const screen = await render(<StoreHubScreen preview />);
 
+    await fireEvent.press(screen.getByTestId('profile-header-button'));
     await fireEvent.press(screen.getByTestId('store-hub-showcase'));
     await fireEvent.press(screen.getByTestId('store-hub-shop'));
     await fireEvent.press(screen.getByTestId('store-hub-settings'));
 
-    expect(push).toHaveBeenNthCalledWith(1, '/showcase-preview');
-    expect(push).toHaveBeenNthCalledWith(2, {
+    expect(push).toHaveBeenNthCalledWith(1, '/profile-preview');
+    expect(push).toHaveBeenNthCalledWith(2, '/showcase-preview');
+    expect(push).toHaveBeenNthCalledWith(3, {
       pathname: '/shop-preview',
       params: { scope: 'catalog' },
     });
-    expect(push).toHaveBeenNthCalledWith(3, '/settings-preview');
+    expect(push).toHaveBeenNthCalledWith(4, '/settings-preview');
   });
 });

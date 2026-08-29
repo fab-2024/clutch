@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
+import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import SocialSectionNav from '@/src/features/social/components/SocialSectionNav';
 import type { FriendQuestsData } from '@/src/features/social/missions/types';
 import { colors } from '@/src/theme';
@@ -128,7 +129,7 @@ export default function DuelsMissionsPreviewScreen() {
   return (
     <View style={styles.root}>
       <View style={[styles.top, { paddingTop: Math.max(insets.top, 6) }]}>
-        <GriffHeader variant="wallet" />
+        <GriffHeader leading={<ProfileHeaderButton preview />} variant="wallet" />
       </View>
       <SocialSectionNav activeOverride="challenges" />
       <View style={styles.content}>

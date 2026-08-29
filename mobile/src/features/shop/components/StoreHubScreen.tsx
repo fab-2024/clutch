@@ -9,6 +9,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
+import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import ProfileVitrineIdentity from '@/src/features/profile/components/ProfileVitrineIdentity';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
@@ -69,8 +70,15 @@ export default function StoreHubScreen({ preview = false }: StoreHubScreenProps 
           )}
           compact
           economy={preview ? { frags: 1480, volts: 320 } : undefined}
+          leading={<ProfileHeaderButton preview={preview} pseudo={pseudo} />}
           variant="wallet"
         />
+
+        <View style={styles.intro} testID="store-hub-intro">
+          <Text style={styles.eyebrow}>COLLECTION & STYLE</Text>
+          <Text accessibilityRole="header" style={styles.title}>MAGASIN</Text>
+          <Text style={styles.subtitle}>Ta collection, en deux espaces.</Text>
+        </View>
 
         <View style={styles.profileCard} testID="store-hub-profile">
           <ProfileVitrineIdentity
@@ -80,12 +88,6 @@ export default function StoreHubScreen({ preview = false }: StoreHubScreenProps 
             pseudo={pseudo}
             publicProfile={publicProfile}
           />
-        </View>
-
-        <View style={styles.intro}>
-          <Text style={styles.eyebrow}>COLLECTION & STYLE</Text>
-          <Text accessibilityRole="header" style={styles.title}>MAGASIN</Text>
-          <Text style={styles.subtitle}>Ta collection, en deux espaces.</Text>
         </View>
 
         <View accessibilityLabel="Espaces du Magasin" style={styles.destinations}>
@@ -195,6 +197,7 @@ const styles = StyleSheet.create({
     minHeight: 92,
     marginHorizontal: spacing.md,
     marginTop: spacing.xs,
+    marginBottom: spacing.md,
     padding: 14,
     borderRadius: radius.lg,
     backgroundColor: colors.backgroundDeep,

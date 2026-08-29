@@ -1,4 +1,4 @@
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -63,6 +63,8 @@ export default function ShowcaseScreen({
   previewShop,
   reduceMotionOverride,
 }: ShowcaseScreenProps) {
+  const params = useLocalSearchParams<{ section?: string | string[] }>();
+  const requestedSection = showcaseSectionFromParam(params.section);
   const { profile, session } = useAuth();
   const systemReduceMotion = useReducedMotion();
   const reduceMotion = reduceMotionOverride ?? systemReduceMotion;
@@ -71,7 +73,7 @@ export default function ShowcaseScreen({
   const [loading, setLoading] = useState(!previewProfile || !previewShop);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [section, setSection] = useState<ShowcaseSection>('showcase');
+  const [section, setSection] = useState<ShowcaseSection>(requestedSection);
   const [pedestal, setPedestal] = useState<ShowcasePedestalSkin>('obsidian');
   const [theme, setTheme] = useState<ShowcaseRoomTheme>('graphite');
   const [lighting, setLighting] = useState<ShowcaseLighting>('cyan');
@@ -106,6 +108,10 @@ export default function ShowcaseScreen({
     const subscription = AppState.addEventListener('change', setAppState);
     return () => subscription.remove();
   }, []);
+
+  useEffect(() => {
+    setSection(requestedSection);
+  }, [requestedSection]);
 
   const load = useCallback(async (refresh = false) => {
     if (previewProfile && previewShop) {
@@ -284,6 +290,14 @@ function resolveEquipped(shop: CosmeticShopData | null, fallback?: EquippedCosme
     ...Object.values(equipped.showcase),
   ].some(Boolean);
   return hasEquipment ? equipped : fallback ?? equipped;
+}
+
+function showcaseSectionFromParam(value?: string | string[]): ShowcaseSection {
+  const normalized = Array.isArray(value) ? value[0] : value;
+  if (normalized === 'collection' || normalized === 'season' || normalized === 'rank' || normalized === 'trophies') {
+    return normalized;
+  }
+  return 'showcase';
 }
 
 const styles = StyleSheet.create({

@@ -16,6 +16,7 @@ import { Screen } from '@/src/components/layout/Screen';
 import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
+import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
 import { loadRankDashboard } from '../api';
@@ -99,6 +100,7 @@ export default function RankScreen({ previewData, previewReduceMotion }: RankScr
       loading={loading}
       onRetry={() => void load()}
       onSection={setSection}
+      preview={Boolean(previewData)}
       section={section}
     />
   );
@@ -143,6 +145,7 @@ function RankHeader({
   loading,
   onRetry,
   onSection,
+  preview,
   section,
 }: {
   dashboard: RankDashboard | null;
@@ -150,11 +153,12 @@ function RankHeader({
   loading: boolean;
   onRetry: () => void;
   onSection: (section: Section) => void;
+  preview: boolean;
   section: Section;
 }) {
   return (
     <View style={styles.headerStack}>
-      <GriffHeader variant="wallet" />
+      <GriffHeader leading={<ProfileHeaderButton preview={preview} />} variant="wallet" />
 
       <View style={styles.intro}>
         <Text style={styles.eyebrow}>RANK // SAISON</Text>

@@ -21,6 +21,7 @@ import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout
 import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
+import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import { prefetchMatchCenterData } from '@/src/features/matches/matchCenterCache';
@@ -173,7 +174,11 @@ export function HubExperience({
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
         showsVerticalScrollIndicator={false}
       >
-        <GriffHeader economy={headerEconomy} variant="wallet" />
+        <GriffHeader
+          economy={headerEconomy}
+          leading={<ProfileHeaderButton preview={Boolean(headerEconomy)} />}
+          variant="wallet"
+        />
 
         {!embeddedHeadline ? headlineView : null}
 

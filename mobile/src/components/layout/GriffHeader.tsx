@@ -12,10 +12,11 @@ type Props = {
   accessory?: ReactNode;
   compact?: boolean;
   economy?: Pick<PlayerEconomy, 'frags' | 'volts'>;
+  leading?: ReactNode;
   variant?: 'default' | 'wallet';
 };
 
-export function GriffHeader({ accessory, compact = false, economy, variant = 'default' }: Props = {}) {
+export function GriffHeader({ accessory, compact = false, economy, leading, variant = 'default' }: Props = {}) {
   const { isCompactWidth, isShortLandscape } = useResponsiveLayout();
   const { frags, volts } = useEconomy();
   const displayedFrags = economy?.frags ?? frags;
@@ -26,6 +27,9 @@ export function GriffHeader({ accessory, compact = false, economy, variant = 'de
   const compactWallet = compactPresentation || narrowWallet;
   const hasWalletAccessory = walletPresentation && accessory != null;
   const narrowWalletAccessory = hasWalletAccessory && narrowWallet;
+  const leadingWidth = walletPresentation
+    ? narrowWalletAccessory ? 88 : narrowWallet ? 104 : compactPresentation ? 108 : 118
+    : 96;
   const economySummary = (
     <View
       accessible
@@ -57,8 +61,10 @@ export function GriffHeader({ accessory, compact = false, economy, variant = 'de
       hasWalletAccessory && styles.rootWalletAccessory,
       narrowWalletAccessory && styles.rootWalletAccessoryNarrow,
     ]} testID={`griff-header-${variant}`}>
-      {walletPresentation ? (
-        <GriffLockup width={narrowWalletAccessory ? 88 : narrowWallet ? 104 : compactPresentation ? 108 : 118} />
+      {leading ? (
+        <View style={[styles.leading, { width: leadingWidth }]} testID="griff-header-leading">{leading}</View>
+      ) : walletPresentation ? (
+        <GriffLockup width={leadingWidth} />
       ) : (
         <View style={styles.brandRow}>
           <GriffLockup width={96} />
@@ -160,6 +166,10 @@ const styles = StyleSheet.create({
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  leading: {
+    minWidth: 0,
+    flexShrink: 0,
   },
   economy: {
     flexShrink: 1,

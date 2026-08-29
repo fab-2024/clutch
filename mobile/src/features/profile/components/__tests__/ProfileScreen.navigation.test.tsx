@@ -22,13 +22,14 @@ jest.mock('react-native-reanimated', () => {
     withTiming: (value: number) => value,
   };
 });
+jest.mock('lucide-react-native/icons/award', () => ({ __esModule: true, default: 'Award' }));
 jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, default: 'ChevronRight' }));
 jest.mock('lucide-react-native/icons/expand', () => ({ __esModule: true, default: 'Expand' }));
 jest.mock('lucide-react-native/icons/eye', () => ({ __esModule: true, default: 'Eye' }));
-jest.mock('lucide-react-native/icons/layers-2', () => ({ __esModule: true, default: 'Layers2' }));
 jest.mock('lucide-react-native/icons/settings-2', () => ({ __esModule: true, default: 'Settings2' }));
-jest.mock('lucide-react-native/icons/shopping-bag', () => ({ __esModule: true, default: 'ShoppingBag' }));
+jest.mock('lucide-react-native/icons/shirt', () => ({ __esModule: true, default: 'Shirt' }));
 jest.mock('lucide-react-native/icons/sparkles', () => ({ __esModule: true, default: 'Sparkles' }));
+jest.mock('lucide-react-native/icons/trophy', () => ({ __esModule: true, default: 'Trophy' }));
 jest.mock('lucide-react-native/icons/users-round', () => ({ __esModule: true, default: 'UsersRound' }));
 jest.mock('expo-router', () => ({
   Redirect: () => null,
@@ -57,7 +58,10 @@ jest.mock('@/src/providers/EconomyProvider', () => {
 const push = router.push as jest.Mock;
 
 describe('ProfileScreen private navigation', () => {
-  beforeEach(() => push.mockClear());
+  beforeEach(() => {
+    push.mockClear();
+    (router.back as jest.Mock).mockClear();
+  });
 
   it('opens the preview Vitrine route from profile-preview', async () => {
     const screen = await render(<ProfileScreen previewData={PREVIEW_PROFILE} />);
@@ -75,26 +79,30 @@ describe('ProfileScreen private navigation', () => {
     expect(push).toHaveBeenCalledWith('/showcase');
   });
 
-  it('opens the preview Shop directly on the catalogue scope', async () => {
-    const screen = await render(<ProfileScreen previewData={PREVIEW_PROFILE} />);
-
-    await fireEvent.press(screen.getByLabelText('Ouvrir le catalogue de la Boutique'));
-
-    expect(push).toHaveBeenCalledWith({ pathname: '/shop-preview', params: { scope: 'catalog' } });
-  });
-
   it('keeps the new profile sections connected to their existing destinations', async () => {
     const screen = await render(<ProfileScreen previewData={PREVIEW_PROFILE} />);
 
     await fireEvent.press(screen.getByTestId('profile-section-progression'));
+    await fireEvent.press(screen.getByLabelText(/Ouvrir mes badges/));
+    await fireEvent.press(screen.getByLabelText(/Ouvrir mes trophées/));
+    await fireEvent.press(screen.getByLabelText(/Ouvrir mes maillots/));
     await fireEvent.press(screen.getByLabelText(/Ouvrir ma faction Fnatic/));
-    await fireEvent.press(screen.getByLabelText('Ouvrir mes objets dans le Locker'));
     await fireEvent.press(screen.getByLabelText('Ouvrir les activations'));
 
     expect(push).toHaveBeenNthCalledWith(1, '/(tabs)/rank');
-    expect(push).toHaveBeenNthCalledWith(2, '/(tabs)/social/faction');
-    expect(push).toHaveBeenNthCalledWith(3, { pathname: '/shop-preview', params: { scope: 'owned' } });
-    expect(push).toHaveBeenNthCalledWith(4, '/campaign-preview');
+    expect(push).toHaveBeenNthCalledWith(2, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'badges' } });
+    expect(push).toHaveBeenNthCalledWith(3, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'rings' } });
+    expect(push).toHaveBeenNthCalledWith(4, { pathname: '/showcase-preview', params: { section: 'collection' } });
+    expect(push).toHaveBeenNthCalledWith(5, '/(tabs)/social/faction');
+    expect(push).toHaveBeenNthCalledWith(6, '/campaign-preview');
+  });
+
+  it('returns to the previous tab from the standalone profile', async () => {
+    const screen = await render(<ProfileScreen previewData={PREVIEW_PROFILE} />);
+
+    await fireEvent.press(screen.getByLabelText('Revenir à l’onglet précédent'));
+
+    expect(router.back).toHaveBeenCalledTimes(1);
   });
 
   it('opens profile settings from the private visibility action', async () => {
