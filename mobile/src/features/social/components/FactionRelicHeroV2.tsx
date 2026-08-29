@@ -200,20 +200,35 @@ export default function FactionRelicHeroV2({
 
       {faction ? (
         <View style={styles.progressBlock}>
-          <View style={styles.progressHeading}>
-            <Text style={styles.relicForm}>RELIQUE · {progress.current.name.toUpperCase()}</Text>
-            <Text style={styles.progressValue}>
-              {progress.max ? '10 000+' : `${formatNumber(progress.charge)} / ${formatNumber(progress.objective)}`}
-            </Text>
-          </View>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progress.max ? 100 : pct}%` }]} />
-          </View>
-          <View style={styles.thresholdRow}>
-            <Text style={styles.thresholdValue}>{progress.max ? 'MAX' : formatNumber(progress.remaining)}</Text>
-            <Text style={styles.thresholdLabel}>
-              {progress.max ? 'FORME TERMINALE' : `AVANT ${progress.next?.name.toUpperCase()}`}
-            </Text>
+          <Text style={styles.relicForm}>RELIQUE · {progress.current.name.toUpperCase()}</Text>
+          <View
+            accessibilityLabel={`${formatNumber(progress.charge)} supporters sur ${formatNumber(progress.objective)}`}
+            accessibilityRole="progressbar"
+            accessibilityValue={{
+              max: progress.objective,
+              min: progress.tierStart,
+              now: Math.min(progress.charge, progress.objective),
+              text: progress.max
+                ? 'Forme terminale'
+                : `${formatNumber(progress.remaining)} avant ${progress.next?.name ?? 'la prochaine forme'}`,
+            }}
+            style={styles.progressMeter}
+          >
+            <View pointerEvents="none" style={styles.energyRing} />
+            <View pointerEvents="none" style={styles.energyRingGlow} />
+            <View style={styles.progressCountRow}>
+              <Text style={styles.progressCharge}>{progress.max ? '10 000+' : formatNumber(progress.charge)}</Text>
+              {!progress.max ? <Text style={styles.progressObjective}> / {formatNumber(progress.objective)}</Text> : null}
+            </View>
+            <View style={styles.thresholdRow}>
+              <Text style={styles.thresholdValue}>{progress.max ? 'MAX' : formatNumber(progress.remaining)}</Text>
+              <Text style={styles.thresholdLabel}>
+                {progress.max ? 'FORME TERMINALE' : `AVANT ${progress.next?.name.toUpperCase()}`}
+              </Text>
+            </View>
+            <View pointerEvents="none" style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${progress.max ? 100 : Math.max(1, pct)}%` }]} />
+            </View>
           </View>
 
           <Pressable
@@ -277,10 +292,10 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     padding: 12,
-    borderRadius: 24,
-    backgroundColor: '#02070B',
+    borderRadius: 26,
+    backgroundColor: '#010406',
     borderWidth: 1,
-    borderColor: '#1D2C34',
+    borderColor: '#263842',
   },
   heroAura: {
     position: 'absolute',
@@ -328,17 +343,22 @@ const styles = StyleSheet.create({
   relicQuestion: { ...typography.metricSmall, color: colors.volt },
   identity: {
     zIndex: 4,
-    minHeight: 54,
-    paddingTop: 8,
+    minHeight: 64,
+    marginHorizontal: -2,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#1B2A33',
+    borderRadius: 13,
+    backgroundColor: 'rgba(4,10,14,.94)',
+    borderWidth: 1,
+    borderColor: '#293A43',
+    boxShadow: '0 8px 26px rgba(0,0,0,.42)',
   },
   factionSeal: {
-    width: 44,
-    height: 44,
+    width: 46,
+    height: 46,
     borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
@@ -352,34 +372,73 @@ const styles = StyleSheet.create({
   growthBlock: { flexShrink: 0, alignItems: 'flex-end' },
   growthLabel: { ...typography.label, color: colors.textMuted, letterSpacing: .15 },
   growthValue: { ...typography.metricSmall, marginTop: 1, color: colors.volt },
-  progressBlock: { zIndex: 4, marginTop: 10 },
-  progressHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  relicForm: { ...typography.eyebrow, flex: 1, color: colors.volt, letterSpacing: .55 },
-  progressValue: { ...typography.label, color: '#F0F2F2' },
-  progressTrack: {
-    height: 4,
-    marginTop: 7,
-    overflow: 'hidden',
-    borderRadius: 3,
-    backgroundColor: '#172029',
+  progressBlock: { zIndex: 4, marginTop: 9 },
+  relicForm: { ...typography.eyebrow, color: colors.volt, letterSpacing: .55 },
+  progressMeter: {
+    position: 'relative',
+    minHeight: 83,
+    marginTop: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  progressFill: { height: '100%', borderRadius: 3, backgroundColor: colors.volt },
-  thresholdRow: {
-    minHeight: 26,
-    marginTop: 6,
+  energyRing: {
+    position: 'absolute',
+    width: '94%',
+    height: 53,
+    top: 7,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: 'rgba(232,255,61,.78)',
+    boxShadow: '0 0 12px rgba(232,255,61,.48), inset 0 0 9px rgba(232,255,61,.12)',
+  },
+  energyRingGlow: {
+    position: 'absolute',
+    width: '88%',
+    height: 43,
+    top: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(232,255,61,.24)',
+    boxShadow: '0 0 22px rgba(232,255,61,.2)',
+  },
+  progressCountRow: {
+    zIndex: 2,
+    marginTop: 2,
     flexDirection: 'row',
     alignItems: 'baseline',
+    justifyContent: 'center',
+  },
+  progressCharge: { color: colors.volt, fontSize: 29, lineHeight: 32, fontWeight: '900', letterSpacing: -.7 },
+  progressObjective: { color: '#F0F2F2', fontSize: 20, lineHeight: 24, fontWeight: '900', letterSpacing: -.3 },
+  progressTrack: {
+    position: 'absolute',
+    right: 20,
+    bottom: 3,
+    left: 20,
+    height: 2,
+    overflow: 'hidden',
+    borderRadius: 2,
+    backgroundColor: 'rgba(232,255,61,.08)',
+  },
+  progressFill: { height: '100%', borderRadius: 2, backgroundColor: colors.volt, boxShadow: '0 0 8px rgba(232,255,61,.55)' },
+  thresholdRow: {
+    zIndex: 2,
+    minHeight: 24,
+    marginTop: 2,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'center',
     gap: 7,
   },
-  thresholdValue: { ...typography.metricSmall, color: colors.volt },
-  thresholdLabel: { ...typography.label, color: '#A4AFB6', letterSpacing: .2 },
+  thresholdValue: { ...typography.metricSmall, color: colors.volt, fontSize: 18, lineHeight: 21 },
+  thresholdLabel: { ...typography.label, color: '#AEB7BD', letterSpacing: .2 },
   inviteButton: {
-    minHeight: 50,
-    marginTop: 6,
-    marginBottom: 7,
+    minHeight: 56,
+    marginTop: 8,
+    marginBottom: 8,
     padding: 2,
     overflow: 'hidden',
-    borderRadius: 13,
+    borderRadius: 15,
     backgroundColor: '#69760E',
     borderWidth: 1,
     borderColor: '#C8DC21',
@@ -388,9 +447,9 @@ const styles = StyleSheet.create({
   inviteSurface: {
     flex: 1,
     width: '100%',
-    minHeight: 44,
+    minHeight: 50,
     paddingHorizontal: 14,
-    borderRadius: 10,
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

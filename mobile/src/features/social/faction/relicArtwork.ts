@@ -167,7 +167,7 @@ export const SKIA_RELIC_STAGE_ARTWORK: Record<RelicContainer, RelicStageArtworkC
     contactY: 304,
     heartScale: .5,
     heartY: 267,
-    layout: { height: 315, top: -20, width: 158 },
+    layout: { height: 315, top: -20, width: 220 },
     liquidLevel: 100,
     liquidSurfaceWidth: 23,
     neutralMatte: true,

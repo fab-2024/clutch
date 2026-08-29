@@ -23,6 +23,7 @@ import type { RelicMutationConclusion } from '../relicMutationMastering';
 import type { CommunityFaction, CommunityForm } from '../types';
 
 const ARCH_ASSET = require('../../../../../assets/social/faction-relic-arch.png');
+const LAB_CHAMBER_ASSET = require('../../../../../assets/social/relic-lab-chamber-v1.png');
 
 type MotionStyle = AnimatedStyle<ViewStyle>;
 
@@ -110,9 +111,17 @@ export default function CollectiveRelicRenderer({
       style={[styles.stage, compact && styles.stageCompact]}
       testID="collective-relic-stage"
     >
+      {animationPreset === 'skia' ? (
+        <Image
+          accessibilityIgnoresInvertColors
+          resizeMode="cover"
+          source={LAB_CHAMBER_ASSET}
+          style={styles.labChamberBackdrop}
+        />
+      ) : null}
       <LinearGradient
         colors={animationPreset === 'skia'
-          ? ['rgba(0,3,6,.92)', 'rgba(1,5,8,.76)', 'rgba(0,2,4,.34)']
+          ? ['rgba(0,3,6,.34)', 'rgba(1,5,8,.06)', 'rgba(0,2,4,.3)']
           : ['rgba(2,10,19,.96)', 'rgba(3,28,40,.7)', 'rgba(2,8,14,.18)']}
         locations={animationPreset === 'skia' ? [0, .58, 1] : [0, .54, 1]}
         style={styles.sceneBackdrop}

@@ -97,7 +97,7 @@ describe('relic artwork progression', () => {
         width: SKIA_RELIC_STAGE_ARTWORK.fiole.layout.width,
       },
     }).toEqual({
-      formI: { contactY: 304, heartY: 267, width: 158 },
+      formI: { contactY: 304, heartY: 267, width: 220 },
       formII: { contactY: 248, heartY: 214, width: 300 },
     });
   });

@@ -7,7 +7,6 @@ import {
   Fill,
   Group,
   Image as SkiaImage,
-  ImageShader,
   LinearGradient,
   Oval,
   Path,
@@ -85,6 +84,12 @@ const MAGENTA_HEART_MATRIX = [
   .44, .44, .44, 0, .04,
   0, 0, 0, 1, 0,
 ];
+const CHECKERBOARD_KEY_MATRIX = [
+  1.08, 0, 0, 0, -.025,
+  0, 1.08, 0, 0, -.025,
+  0, 0, 1.08, 0, -.025,
+  -1.45, -1.45, -1.45, 0, 4.05,
+];
 
 const FLUID_EFFECT = Skia.RuntimeEffect.Make(`
   uniform float2 resolution;
@@ -151,27 +156,6 @@ const FLUID_EFFECT = Skia.RuntimeEffect.Make(`
   }
 `);
 
-const NEUTRAL_MATTE_EFFECT = Skia.RuntimeEffect.Make(`
-  uniform shader image;
-  uniform float opacity;
-
-  half4 main(float2 point) {
-    half4 source = image.eval(point);
-    float highest = max(source.r, max(source.g, source.b));
-    float lowest = min(source.r, min(source.g, source.b));
-    float chroma = highest - lowest;
-    float luminance = dot(source.rgb, half3(0.299, 0.587, 0.114));
-    float neutral = 1.0 - smoothstep(0.03, 0.16, chroma);
-    float paleBackdrop = smoothstep(0.3, 0.68, luminance);
-    float matte = neutral * paleBackdrop;
-    float electricHighlight = smoothstep(0.62, 0.92, highest);
-    float edgeAlpha = 1.0 - electricHighlight * (0.12 + neutral * 0.22);
-    float alpha = source.a * (1.0 - matte) * edgeAlpha * opacity;
-    half3 toned = source.rgb * (0.78 - electricHighlight * 0.18);
-    return half4(toned * alpha, alpha);
-  }
-`);
-
 export default function SkiaRelicCanvas({
   config,
   container,
@@ -227,8 +211,8 @@ export default function SkiaRelicCanvas({
   const newVesselOpacity = useDerivedValue(() => mutationEnabled
     ? smoothSegment(mutationProgress.value, .38, .66)
     : 0, [mutationEnabled]);
-  const oldVesselBackOpacity = useDerivedValue(() => oldVesselOpacity.value * (baseConfig.neutralMatte ? .54 : .96), [baseConfig.neutralMatte]);
-  const newVesselBackOpacity = useDerivedValue(() => newVesselOpacity.value * (targetConfig.neutralMatte ? .54 : .96), [targetConfig.neutralMatte]);
+  const oldVesselBackOpacity = useDerivedValue(() => oldVesselOpacity.value * (baseConfig.neutralMatte ? .74 : .96), [baseConfig.neutralMatte]);
+  const newVesselBackOpacity = useDerivedValue(() => newVesselOpacity.value * (targetConfig.neutralMatte ? .74 : .96), [targetConfig.neutralMatte]);
   const oldVesselFrontOpacity = useDerivedValue(() => oldVesselOpacity.value * .96);
   const newVesselFrontOpacity = useDerivedValue(() => newVesselOpacity.value * .96);
   const oldRootOpacity = useDerivedValue(() => rootEnergy(instabilityEnergy, visualEnergy.value, supporterPhase.value)
@@ -735,24 +719,19 @@ function NeutralMatteVessel({
   transform: { value: Transforms3d };
   x: number;
 }) {
-  const uniforms = useDerivedValue(() => ({ opacity: opacity.value }));
-
-  if (!NEUTRAL_MATTE_EFFECT) return null;
-
   return (
     <Group origin={vec(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2)} transform={transform}>
-      <Rect height={CANVAS_HEIGHT} width={CANVAS_WIDTH} x={0} y={0}>
-        <Shader source={NEUTRAL_MATTE_EFFECT} uniforms={uniforms}>
-          <ImageShader
-            fit="contain"
-            height={layout.height}
-            image={image}
-            width={layout.width}
-            x={x}
-            y={layout.top}
-          />
-        </Shader>
-      </Rect>
+      <SkiaImage
+        fit="fill"
+        height={layout.height}
+        image={image}
+        opacity={opacity}
+        width={layout.width}
+        x={x}
+        y={layout.top}
+      >
+        <ColorMatrix matrix={CHECKERBOARD_KEY_MATRIX} />
+      </SkiaImage>
     </Group>
   );
 }

@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 
 import { fonts, typography } from '@/src/theme';
 
-export const COMPACT_RELIC_SCALE = .92;
+export const COMPACT_RELIC_SCALE = 1.16;
 
 export const relicStyles = StyleSheet.create({
   stage: {
@@ -20,15 +20,27 @@ export const relicStyles = StyleSheet.create({
     outlineColor: 'transparent',
   },
   stageCompact: {
-    height: 290,
-    marginTop: -48,
-    marginHorizontal: -34,
-    marginBottom: -12,
+    height: 330,
+    marginTop: -30,
+    marginHorizontal: -22,
+    marginBottom: -5,
     transform: [{ scale: COMPACT_RELIC_SCALE }],
+  },
+  labChamberBackdrop: {
+    position: 'absolute',
+    zIndex: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    opacity: .94,
+    pointerEvents: 'none',
   },
   sceneBackdrop: {
     position: 'absolute',
-    zIndex: 0,
+    zIndex: 1,
     top: 0,
     right: 0,
     bottom: 0,
