@@ -83,8 +83,12 @@ export function ScheduleHero({
       <Animated.View entering={FadeIn.duration(260)} key={visualGame} style={StyleSheet.absoluteFill}>
         <Image resizeMode="cover" source={GAME_BACKGROUNDS[visualGame]} style={styles.scheduleBackdrop} />
       </Animated.View>
-      <LinearGradient colors={['rgba(3,7,10,.14)', 'rgba(3,7,10,.52)', 'rgba(3,7,10,.97)']} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
-      <LinearGradient colors={[`${GAME_ACCENTS[visualGame]}33`, 'transparent', 'rgba(232,255,61,.09)']} end={{ x: 1, y: .8 }} start={{ x: 0, y: .2 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient
+        colors={['#0B1116', 'rgba(5,10,14,.97)', `${GAME_ACCENTS[visualGame]}14`]}
+        end={{ x: 1, y: .5 }}
+        start={{ x: 0, y: .5 }}
+        style={StyleSheet.absoluteFill}
+      />
 
       <View style={styles.scheduleTop}>
         {searchOpen ? (

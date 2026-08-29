@@ -332,7 +332,7 @@ export default function SocialHomePreviewScreen({
 
   const experience = (
       <View style={{ flex: 1 }}>
-        <GriffHeader economy={{ frags: 1842, volts: 680 }} variant="social" />
+        <GriffHeader economy={{ frags: 1842, volts: 680 }} variant="wallet" />
         <SocialSectionNav activeOverride="faction" variant={factionHeroVariant === 'v2' ? 'v2' : 'default'} />
         {showLab && factionHeroVariant === 'v2' && fxlab === '1' ? (
           <RelicAnimationControls

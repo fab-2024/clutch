@@ -153,7 +153,7 @@ function RankHeader({
 }) {
   return (
     <View style={styles.headerStack}>
-      <GriffHeader variant="social" />
+      <GriffHeader variant="wallet" />
 
       <View style={styles.intro}>
         <Text style={styles.eyebrow}>RANK // SAISON</Text>
@@ -420,7 +420,6 @@ function MyPositionCard({ row, scope }: { row: RankLeaderboardRow; scope: string
 
   return (
     <View style={[styles.meCard, { borderColor: accent + '88', backgroundColor: accent + '14' }]}>
-      <View style={[styles.meAura, { backgroundColor: accent }]} />
       <RankEmblem grade={row.grade} size={84} starting={starting} />
       <View style={styles.meIdentity}>
         <Text style={[styles.meEyebrow, { color: accent }]}>TA POSITION</Text>
@@ -810,23 +809,13 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   movementCard: {
-    padding: 17,
     gap: 12,
-    borderRadius: 24,
-    backgroundColor: '#0B1015',
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   movementCount: {
     minWidth: 30,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    color: colors.text,
+    color: colors.textSecondary,
     fontFamily: fonts.bold,
     textAlign: 'center',
-    borderRadius: 11,
-    backgroundColor: '#171F27',
-    overflow: 'hidden',
   },
   movementList: {
     overflow: 'hidden',
@@ -955,15 +944,6 @@ const styles = StyleSheet.create({
     gap: 9,
     borderRadius: 24,
     borderWidth: 1,
-  },
-  meAura: {
-    position: 'absolute',
-    top: -90,
-    left: -60,
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    opacity: 0.1,
   },
   meIdentity: {
     flex: 1,

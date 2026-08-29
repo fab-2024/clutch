@@ -128,10 +128,6 @@ export function FactionRelicHero({
   return (
     <View style={styles.factionHero}>
       <LinearGradient colors={['#07131D', '#061018', '#04090E', '#050A0D']} end={{ x: .8, y: 1 }} start={{ x: .1, y: 0 }} style={StyleSheet.absoluteFill} />
-      <View style={[styles.heroAura, { backgroundColor: signature.aura, boxShadow: signature.glow }]} />
-      <View style={styles.heroAuraCold} />
-      <View style={styles.heroGridLineA} />
-      <View style={styles.heroGridLineB} />
 
       <View style={styles.heroTop}>
         <View style={styles.heroHeading}>
@@ -214,15 +210,10 @@ export function FactionRelicHero({
             onPress={() => void rallySupporters()}
             style={({ pressed }) => [styles.rallyButton, pressed && styles.pressed]}
           >
-            <LinearGradient
-              colors={['#172013', '#11180F', '#0C120C']}
-              end={{ x: 1, y: 1 }}
-              start={{ x: 0, y: 0 }}
-              style={styles.rallySurface}
-            >
+            <View style={styles.rallySurface}>
               <View style={styles.rallyIcon}><SupporterGroupIcon /></View>
               <Text adjustsFontSizeToFit numberOfLines={1} style={styles.rallyText}>{actionTitle}</Text>
-            </LinearGradient>
+            </View>
           </Pressable>
         </View>
       ) : null}
@@ -266,7 +257,6 @@ export function FactionWar({ factions, mine }: { factions: CommunityFaction[]; m
         start={{ x: .1, y: 0 }}
         style={styles.warBoard}
       >
-        <View style={styles.warBoardAura} />
         <View style={styles.warPodium}>
           {podium.map((entry) => (
             <FactionPodiumEntry

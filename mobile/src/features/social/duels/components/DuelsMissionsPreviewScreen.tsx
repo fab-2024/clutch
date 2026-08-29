@@ -128,7 +128,7 @@ export default function DuelsMissionsPreviewScreen() {
   return (
     <View style={styles.root}>
       <View style={[styles.top, { paddingTop: Math.max(insets.top, 6) }]}>
-        <GriffHeader variant="social" />
+        <GriffHeader variant="wallet" />
       </View>
       <SocialSectionNav activeOverride="challenges" />
       <View style={styles.content}>

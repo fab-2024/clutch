@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { GriffLockup, GriffMark } from '@/src/components/brand/GriffLogo';
@@ -11,7 +10,7 @@ import { colors, fonts, typography } from '@/src/theme';
 type Props = {
   compact?: boolean;
   economy?: Pick<PlayerEconomy, 'frags' | 'volts'>;
-  variant?: 'default' | 'social';
+  variant?: 'default' | 'wallet';
 };
 
 export function GriffHeader({ compact = false, economy, variant = 'default' }: Props = {}) {
@@ -19,41 +18,27 @@ export function GriffHeader({ compact = false, economy, variant = 'default' }: P
   const { frags, volts } = useEconomy();
   const displayedFrags = economy?.frags ?? frags;
   const displayedVolts = economy?.volts ?? volts;
-  const social = variant === 'social';
-  const narrowSocial = social && isCompactWidth;
+  const walletPresentation = variant === 'wallet';
+  const narrowWallet = walletPresentation && isCompactWidth;
   const compactPresentation = compact || isShortLandscape;
 
   return (
     <View style={[
       styles.root,
-      social && styles.rootSocial,
-      social && compact && styles.rootSocialCompact,
-      social && isShortLandscape && styles.rootSocialLandscape,
-      social && compact && isShortLandscape && styles.rootSocialCompactLandscape,
-      narrowSocial && styles.rootSocialNarrow,
-    ]}>
-      {social ? (
-        <LinearGradient
-          colors={['rgba(8,18,25,.92)', 'rgba(5,10,14,.72)', 'rgba(2,5,8,0)']}
-          end={{ x: 1, y: 0.5 }}
-          pointerEvents="none"
-          start={{ x: 0, y: 0.5 }}
-          style={styles.socialAtmosphere}
-        />
-      ) : null}
-
-      {social ? (
-        <View accessibilityLabel="GRIFF" accessibilityRole="image" style={[styles.socialBrand, compactPresentation && styles.socialBrandCompact]}>
-          <LinearGradient
-            colors={['#18191A', '#090B0D', '#030405']}
-            end={{ x: 1, y: 1 }}
-            start={{ x: 0, y: 0 }}
-            style={[styles.socialMark, compactPresentation && styles.socialMarkCompact]}
-          >
-            <GriffMark size={compactPresentation ? 32 : 35} style={[styles.socialMarkImage, compactPresentation && styles.socialMarkImageCompact]} />
-          </LinearGradient>
-          {narrowSocial ? null : <Text style={[styles.socialWord, compactPresentation && styles.socialWordCompact]}>GRIFF</Text>}
-          {narrowSocial ? null : <View style={[styles.socialDot, compactPresentation && styles.socialDotCompact]} />}
+      walletPresentation && styles.rootWallet,
+      walletPresentation && compact && styles.rootWalletCompact,
+      walletPresentation && isShortLandscape && styles.rootWalletLandscape,
+      walletPresentation && compact && isShortLandscape && styles.rootWalletCompactLandscape,
+      narrowWallet && styles.rootWalletNarrow,
+    ]} testID={`griff-header-${variant}`}>
+      {walletPresentation ? (
+        <View accessibilityLabel="GRIFF" accessibilityRole="image" style={[styles.walletBrand, compactPresentation && styles.walletBrandCompact]}>
+          <GriffMark
+            size={compactPresentation ? 36 : 40}
+            style={[styles.walletMark, compactPresentation && styles.walletMarkCompact]}
+          />
+          {narrowWallet ? null : <Text style={[styles.walletWord, compactPresentation && styles.walletWordCompact]}>GRIFF</Text>}
+          {narrowWallet ? null : <View style={[styles.walletDot, compactPresentation && styles.walletDotCompact]} />}
         </View>
       ) : (
         <View style={styles.brandRow}>
@@ -65,20 +50,17 @@ export function GriffHeader({ compact = false, economy, variant = 'default' }: P
         accessible
         accessibilityLabel={`${formatBalance(displayedFrags)} Frags, ${formatBalance(displayedVolts)} Volts`}
         accessibilityRole="summary"
-        style={[styles.wallet, social && styles.walletSocial, social && compactPresentation && styles.walletSocialCompact, narrowSocial && styles.walletSocialNarrow]}
+        style={[
+          styles.economy,
+          walletPresentation && styles.economyWallet,
+          walletPresentation && compactPresentation && styles.economyWalletCompact,
+          narrowWallet && styles.economyWalletNarrow,
+        ]}
+        testID="griff-header-economy"
       >
-        {social ? (
-          <LinearGradient
-            colors={['rgba(42,46,49,.88)', 'rgba(10,13,16,.98)', 'rgba(2,4,6,.99)']}
-            end={{ x: 0.72, y: 1 }}
-            pointerEvents="none"
-            start={{ x: 0.2, y: 0 }}
-            style={styles.walletSurface}
-          />
-        ) : null}
-        <Balance compact={social} kind="frags" label="FRAGS" value={displayedFrags} />
-        {social ? <View style={styles.walletDivider} /> : null}
-        <Balance compact={social} kind="volts" label="VOLTS" value={displayedVolts} />
+        <Balance compact={walletPresentation} kind="frags" label="FRAGS" value={displayedFrags} />
+        {walletPresentation ? <View style={styles.economyDivider} /> : null}
+        <Balance compact={walletPresentation} kind="volts" label="VOLTS" value={displayedVolts} />
       </View>
     </View>
   );
@@ -133,121 +115,87 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
-  rootSocial: {
-    minHeight: 96,
+  rootWallet: {
+    minHeight: 84,
     paddingHorizontal: 18,
-    paddingVertical: 18,
-    overflow: 'hidden',
+    paddingVertical: 14,
   },
-  rootSocialCompact: {
-    minHeight: 80,
-    paddingTop: 10,
+  rootWalletCompact: {
+    minHeight: 72,
+    paddingTop: 8,
     paddingRight: 70,
-    paddingBottom: 10,
+    paddingBottom: 8,
     paddingLeft: 14,
   },
-  rootSocialLandscape: {
-    minHeight: 68,
+  rootWalletLandscape: {
+    minHeight: 64,
     paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingVertical: 6,
   },
-  rootSocialCompactLandscape: {
+  rootWalletCompactLandscape: {
     paddingRight: 70,
   },
-  rootSocialNarrow: {
+  rootWalletNarrow: {
     paddingHorizontal: 16,
     gap: 8,
-  },
-  socialAtmosphere: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    opacity: 0.82,
   },
   brandRow: {
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  socialBrand: {
+  walletBrand: {
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  socialBrandCompact: { gap: 8 },
-  socialMark: {
-    width: 45,
-    height: 45,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.25,
-    borderColor: 'rgba(201,125,79,.82)',
-    boxShadow: '0 0 18px rgba(190,101,55,.22), inset 0 1px 0 rgba(255,211,171,.18)',
+  walletBrandCompact: { gap: 8 },
+  walletMark: {
+    width: 40,
+    height: 40,
+    tintColor: colors.volt,
   },
-  socialMarkCompact: { width: 42, height: 42, borderRadius: 13 },
-  socialMarkImage: {
-    width: 35,
-    height: 35,
-    tintColor: '#C98154',
-  },
-  socialMarkImageCompact: { width: 32, height: 32 },
-  socialWord: {
+  walletMarkCompact: { width: 36, height: 36 },
+  walletWord: {
     color: '#F8F7F4',
     fontFamily: fonts.bold,
     fontSize: 19,
     lineHeight: 22,
     letterSpacing: 3.2,
-    textShadowColor: 'rgba(255,255,255,.16)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
-  socialWordCompact: { fontSize: 17, lineHeight: 20, letterSpacing: 2.8 },
-  socialDot: {
+  walletWordCompact: { fontSize: 17, lineHeight: 20, letterSpacing: 2.8 },
+  walletDot: {
     width: 6,
     height: 6,
     marginLeft: -7,
     marginTop: 15,
     borderRadius: 3,
     backgroundColor: colors.volt,
-    boxShadow: '0 0 9px rgba(232,255,61,.72)',
   },
-  socialDotCompact: { marginLeft: -6, marginTop: 13 },
-  wallet: {
+  walletDotCompact: { marginLeft: -6, marginTop: 13 },
+  economy: {
     flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
   },
-  walletSocial: {
+  economyWallet: {
     width: 209,
-    minHeight: 56,
+    minHeight: 52,
     paddingHorizontal: 5,
     gap: 0,
-    overflow: 'hidden',
-    borderRadius: 22,
-    backgroundColor: '#070A0D',
-    borderWidth: 1.25,
-    borderColor: 'rgba(181,109,69,.72)',
-    boxShadow: '0 5px 20px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,217,183,.12)',
+    borderRadius: 18,
+    backgroundColor: colors.surfaceLow,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
   },
-  walletSocialCompact: { width: 170, minHeight: 52, borderRadius: 19 },
-  walletSocialNarrow: { flexShrink: 0 },
-  walletSurface: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-  },
-  walletDivider: {
+  economyWalletCompact: { width: 170, minHeight: 50, borderRadius: 17 },
+  economyWalletNarrow: { flexShrink: 0 },
+  economyDivider: {
     width: 1,
-    height: 34,
-    backgroundColor: 'rgba(111,116,120,.36)',
-    boxShadow: '1px 0 0 rgba(0,0,0,.5)',
+    height: 32,
+    backgroundColor: colors.borderStrong,
   },
   balance: {
     minWidth: 76,
@@ -294,7 +242,7 @@ const styles = StyleSheet.create({
   },
   balanceLabelCompact: {
     ...typography.metadata,
-    color: '#858A93',
+    color: colors.textSecondary,
     fontFamily: fonts.bold,
     letterSpacing: 0.8,
   },

@@ -7,7 +7,7 @@ export const styles = StyleSheet.create({
   targetedDuelBanner: { minHeight: 84, marginHorizontal: spacing.md, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 20, backgroundColor: '#171E10', borderWidth: 1, borderColor: '#4A5720' }, targetedDuelCopy: { flex: 1, minWidth: 0 }, targetedDuelEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .75 }, targetedDuelTitle: { ...typography.bodyStrong, marginTop: 5, color: colors.text }, targetedDuelClose: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#0D120C', borderWidth: 1, borderColor: '#35401B' }, targetedDuelCloseText: { color: colors.textMuted, fontSize: 23, lineHeight: 24 },
   scheduleHero: { position: 'relative', minHeight: 140, marginHorizontal: spacing.md, overflow: 'hidden', borderRadius: 23, backgroundColor: '#101820', borderWidth: 1, borderColor: '#2B3540', padding: 10 },
   scheduleHeroLandscape: { minHeight: 120, padding: 8, borderRadius: 20 },
-  scheduleBackdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, width: '100%', height: '100%' },
+  scheduleBackdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, width: '46%', height: '100%', opacity: .34 },
   scheduleTop: { zIndex: 2, minHeight: layout.minTouchTarget, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   scheduleHeading: { flex: 1, minWidth: 0, gap: 1 },
   searchField: { flex: 1, height: layout.minTouchTarget, paddingHorizontal: 11, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(5,9,12,.74)', borderWidth: 1, borderColor: 'rgba(255,255,255,.26)' },

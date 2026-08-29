@@ -174,7 +174,7 @@ export function HubExperience({
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
         showsVerticalScrollIndicator={false}
       >
-        <GriffHeader economy={headerEconomy} variant="social" />
+        <GriffHeader economy={headerEconomy} variant="wallet" />
 
         {!embeddedHeadline ? headlineView : null}
 
@@ -286,7 +286,6 @@ function MatchCallAction({
 
 function UpNext({ matches, userId }: { matches: HubMatch[]; userId?: string }) {
   const { width } = useWindowDimensions();
-  const dots = Math.min(matches.length, 4);
   const cardWidth = Math.min(310, Math.max(276, width - spacing.md * 2));
   return (
     <View style={styles.upNextSection}>
@@ -297,7 +296,6 @@ function UpNext({ matches, userId }: { matches: HubMatch[]; userId?: string }) {
       <ScrollView horizontal contentContainerStyle={styles.upNextRail} showsHorizontalScrollIndicator={false}>
         {matches.map((match) => <UpNextMatchCard cardWidth={cardWidth} key={match.id} match={match} userId={userId} />)}
       </ScrollView>
-      {dots > 1 ? <View style={styles.railDots}>{Array.from({ length: dots }, (_, index) => <View key={index} style={[styles.railDot, index === 0 && styles.railDotActive]} />)}</View> : null}
     </View>
   );
 }
@@ -507,7 +505,7 @@ const styles = StyleSheet.create({
   landscapeHeroCopy: { flex: 1, minWidth: 0, paddingVertical: 4, justifyContent: 'space-between' },
   contextSlot: { marginHorizontal: spacing.md },
   matchBackdrop: { position: 'absolute', inset: 0, width: '100%', height: '100%' },
-  callAction: { minHeight: 57, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: colors.volt, boxShadow: '0 10px 24px rgba(232,255,61,.16)' },
+  callAction: { minHeight: 57, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: colors.volt },
   callActionLocked: { backgroundColor: '#10170D', borderWidth: 1, borderColor: '#53631B' },
   callActionText: { color: '#07090B', fontFamily: fonts.display, fontSize: 21, lineHeight: 23, letterSpacing: .55 },
   callActionTextLocked: { color: colors.volt },
@@ -517,10 +515,10 @@ const styles = StyleSheet.create({
   sectionKicker: { color: colors.volt, fontFamily: fonts.bold, fontSize: 14, lineHeight: 17, letterSpacing: .5 },
   sectionLink: { ...typography.action, color: colors.volt, fontSize: 10, letterSpacing: .35 },
   upNextRail: { paddingHorizontal: spacing.md, gap: 10 },
-  upNextCard: { position: 'relative', overflow: 'hidden', borderRadius: 18, backgroundColor: '#060B10', borderWidth: 1, borderColor: '#354653', boxShadow: '0 12px 28px rgba(0,0,0,.34)' },
+  upNextCard: { position: 'relative', overflow: 'hidden', borderRadius: 18, backgroundColor: '#060B10', borderWidth: 1, borderColor: '#354653' },
   upNextBackdrop: { position: 'absolute', inset: 0, width: '100%', height: '100%' },
-  upNextSchedulePill: { position: 'absolute', zIndex: 4, top: 9, left: '50%', minHeight: 22, minWidth: 70, marginLeft: -35, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: 'rgba(8,13,8,.9)', borderWidth: 1, borderColor: 'rgba(232,255,61,.32)', boxShadow: '0 4px 12px rgba(0,0,0,.32)' },
-  upNextWhen: { ...typography.label, color: colors.volt, fontSize: 9, lineHeight: 11, letterSpacing: .25 },
+  upNextSchedulePill: { position: 'absolute', zIndex: 4, top: 11, left: '50%', minWidth: 84, marginLeft: -42, alignItems: 'center', justifyContent: 'center' },
+  upNextWhen: { ...typography.label, color: colors.volt, fontSize: 9, lineHeight: 11, letterSpacing: .25, textShadowColor: 'rgba(0,0,0,.95)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   upNextLogo: { position: 'absolute', zIndex: 2, top: 48, alignItems: 'center', justifyContent: 'center' },
   upNextLogoLeft: { left: 10 },
   upNextLogoRight: { right: 10 },
@@ -529,9 +527,6 @@ const styles = StyleSheet.create({
   upNextVs: { color: colors.volt, fontFamily: fonts.bold, fontSize: 13, lineHeight: 14, letterSpacing: .35, textShadowColor: 'rgba(0,0,0,.9)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 5 },
   upNextFooter: { position: 'absolute', zIndex: 4, left: 14, right: 14, bottom: 11, alignItems: 'center', justifyContent: 'center' },
   upNextEvent: { color: '#AEB8C0', fontFamily: fonts.bold, fontSize: 10, lineHeight: 12, letterSpacing: .35, textAlign: 'center', textShadowColor: 'rgba(0,0,0,.95)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
-  railDots: { height: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
-  railDot: { width: 12, height: 4, borderRadius: 2, backgroundColor: '#263039' },
-  railDotActive: { width: 24, backgroundColor: colors.volt },
   seasonCard: { minHeight: 88, marginHorizontal: spacing.md, paddingHorizontal: 14, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 11, overflow: 'hidden', borderRadius: 18, backgroundColor: '#0C1116', borderWidth: 1, borderColor: '#28323B' },
   seasonEmblem: { width: 58, height: 58, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
   seasonEmblemLoading: { opacity: .35 },

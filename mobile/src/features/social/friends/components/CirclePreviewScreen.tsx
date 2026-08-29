@@ -97,7 +97,7 @@ export default function CirclePreviewScreen() {
   return (
     <View style={styles.root}>
       <View style={[styles.top, { paddingTop: Math.max(insets.top, 6) }]}>
-        <GriffHeader variant="social" />
+        <GriffHeader variant="wallet" />
       </View>
       <SocialSectionNav activeOverride="circle" />
       <View style={styles.content}>

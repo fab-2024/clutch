@@ -316,13 +316,11 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   icon: {
-    width: 40,
+    width: 24,
     height: 40,
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 16,
-    backgroundColor: colors.surfaceRaised,
   },
   eyebrow: {
     ...typography.control,
