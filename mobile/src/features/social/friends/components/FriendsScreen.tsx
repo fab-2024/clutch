@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 
 import { BaseSheet } from '@/src/components/overlays/BaseSheet';
 import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
@@ -226,7 +226,7 @@ export function CirclePeopleScreen({
   const pendingCount = data.recues.length + data.envoyees.length;
   const viewItems: readonly SegmentedControlItem<CircleView>[] = [
     { value: 'activity', label: 'ACTIVITÉ', badge: pendingCount || undefined },
-    { value: 'friends', label: 'TOUS LES AMIS' },
+    { value: 'friends', label: 'AMIS' },
   ];
   const header = (
     <CircleHeader
@@ -388,7 +388,18 @@ function CircleHeader({
   return (
     <View style={[styles.header, isShortLandscape && styles.headerLandscape]}>
       <View style={[styles.headerCopy, isShortLandscape && styles.headerCopyLandscape]}>
-        <Text style={styles.eyebrow}>SOCIAL // CERCLE</Text>
+        <View style={styles.headerTopline}>
+          <Text style={styles.eyebrow}>SOCIAL // CERCLE</Text>
+          <Pressable
+            accessibilityLabel="Ouvrir la ligue du Cercle"
+            accessibilityRole="button"
+            onPress={() => router.push('/(tabs)/social/leagues')}
+            style={({ pressed }) => [styles.leagueLink, pressed && styles.leagueLinkPressed]}
+          >
+            <Text style={styles.leagueLinkText}>LIGUE PRIVÉE</Text>
+            <Text style={styles.leagueLinkArrow}>→</Text>
+          </Pressable>
+        </View>
         <Text style={[styles.title, isShortLandscape && styles.titleLandscape]}>{title}</Text>
         <Text numberOfLines={isShortLandscape ? 2 : undefined} style={styles.subtitle}>{subtitle}</Text>
       </View>
@@ -492,8 +503,33 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   headerCopyLandscape: { flex: 1, minWidth: 0 },
+  headerTopline: {
+    minHeight: layout.minTouchTarget,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
   eyebrow: {
     ...typography.control,
+    color: colors.volt,
+  },
+  leagueLink: {
+    minHeight: layout.minTouchTarget,
+    paddingHorizontal: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+  },
+  leagueLinkPressed: { opacity: .72 },
+  leagueLinkText: {
+    ...typography.control,
+    color: colors.textSecondary,
+    letterSpacing: .35,
+  },
+  leagueLinkArrow: {
+    ...typography.bodyStrong,
     color: colors.volt,
   },
   title: {

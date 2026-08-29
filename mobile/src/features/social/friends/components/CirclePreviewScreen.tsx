@@ -99,7 +99,7 @@ export default function CirclePreviewScreen() {
       <View style={[styles.top, { paddingTop: Math.max(insets.top, 6) }]}>
         <GriffHeader variant="social" />
       </View>
-      <SocialSectionNav activeOverride="circle" activeSubsectionOverride="friends" />
+      <SocialSectionNav activeOverride="circle" />
       <View style={styles.content}>
         <CirclePeopleScreen
           focusRequests={focusRequests}

@@ -137,6 +137,14 @@ describe('CirclePeopleScreen', () => {
     expect(screen.getByTestId('circle-requests-section')).toBeTruthy();
     expect(screen.getByTestId('circle-weekly-ranking')).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'ACTIVITÉ, 3' }).props.accessibilityState).toEqual({ selected: true });
+    expect(screen.getAllByRole('tab')).toHaveLength(2);
+  });
+
+  it('integrates the private league as a contextual Circle destination', async () => {
+    const screen = await render(<CirclePeopleScreen previewState={previewState} />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Ouvrir la ligue du Cercle' }));
+    expect(push).toHaveBeenCalledWith('/(tabs)/social/leagues');
   });
 
   it('turns the requests route into an explicit request-first state', async () => {
@@ -150,7 +158,7 @@ describe('CirclePeopleScreen', () => {
   it('switches to a virtualized friend directory and opens canonical profiles', async () => {
     const screen = await render(<CirclePeopleScreen previewState={previewState} />);
 
-    await fireEvent.press(screen.getByRole('tab', { name: 'TOUS LES AMIS' }));
+    await fireEvent.press(screen.getByRole('tab', { name: 'AMIS' }));
     expect(screen.getByTestId('circle-directory-view')).toBeTruthy();
     expect(screen.getByText('TOUS TES AMIS')).toBeTruthy();
 

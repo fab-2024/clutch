@@ -30,27 +30,29 @@ describe('SocialSectionNav', () => {
     expect(screen.queryByRole('tab', { name: 'Ouvrir duels' })).toBeNull();
   });
 
-  it('exposes both navigation levels as tablists with 44 point targets', async () => {
-    mockPathname = '/social/leagues';
-    const screen = await render(<SocialSectionNav />);
+  it.each(['/social/friends', '/social/requests', '/social/leagues'])(
+    'keeps Cercle selected on %s without a redundant content rail',
+    async (pathname) => {
+      mockPathname = pathname;
+      const screen = await render(<SocialSectionNav />);
 
-    expect(screen.getByTestId('social-primary-tablist').props.accessibilityRole).toBe('tablist');
-    expect(screen.getByTestId('social-secondary-tablist').props.accessibilityRole).toBe('tablist');
-    expect(screen.getByRole('tab', { name: 'Ouvrir cercle' }).props.accessibilityState).toEqual({ selected: true });
-    expect(screen.getByRole('tab', { name: 'Ouvrir ligue' }).props.accessibilityState).toEqual({ selected: true });
+      expect(screen.getByTestId('social-primary-tablist').props.accessibilityRole).toBe('tablist');
+      expect(screen.queryByTestId('social-secondary-tablist')).toBeNull();
+      expect(screen.getByRole('tab', { name: 'Ouvrir cercle' }).props.accessibilityState).toEqual({ selected: true });
+      expect(screen.queryByRole('tab', { name: 'Ouvrir ligue' })).toBeNull();
+      expect(screen.getAllByRole('tab')).toHaveLength(3);
 
-    for (const tab of screen.getAllByRole('tab')) {
-      expect(StyleSheet.flatten(tab.props.style).minHeight).toBeGreaterThanOrEqual(layout.minTouchTarget);
-    }
-  });
+      for (const tab of screen.getAllByRole('tab')) {
+        expect(StyleSheet.flatten(tab.props.style).minHeight).toBeGreaterThanOrEqual(layout.minTouchTarget);
+      }
+    },
+  );
 
-  it('supports a deterministic subsection override for isolated previews', async () => {
+  it('supports a deterministic section override for isolated previews', async () => {
     mockPathname = '/social-circle-preview';
-    const screen = await render(
-      <SocialSectionNav activeOverride="circle" activeSubsectionOverride="friends" />,
-    );
+    const screen = await render(<SocialSectionNav activeOverride="circle" />);
 
     expect(screen.getByRole('tab', { name: 'Ouvrir cercle' }).props.accessibilityState).toEqual({ selected: true });
-    expect(screen.getByRole('tab', { name: 'Ouvrir amis' }).props.accessibilityState).toEqual({ selected: true });
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
   });
 });

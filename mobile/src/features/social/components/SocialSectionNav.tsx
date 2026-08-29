@@ -9,7 +9,6 @@ import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout
 import { colors, layout, typography } from '@/src/theme';
 
 type SocialSectionKey = 'faction' | 'circle' | 'challenges';
-type SocialSubsectionKey = 'friends' | 'leagues';
 
 const SECTIONS: {
   href: string;
@@ -22,31 +21,16 @@ const SECTIONS: {
   { key: 'challenges', label: 'Défis', icon: Swords, href: '/(tabs)/social/duels' },
 ];
 
-const SUBSECTIONS: Partial<Record<SocialSectionKey, {
-  href: string;
-  key: SocialSubsectionKey;
-  label: string;
-}[]>> = {
-  circle: [
-    { key: 'friends', label: 'Amis', href: '/(tabs)/social/friends' },
-    { key: 'leagues', label: 'Ligue', href: '/(tabs)/social/leagues' },
-  ],
-};
-
 export default function SocialSectionNav({
   activeOverride,
-  activeSubsectionOverride,
   variant = 'default',
 }: {
   activeOverride?: SocialSectionKey;
-  activeSubsectionOverride?: SocialSubsectionKey;
   variant?: 'default' | 'v2';
 }) {
   const pathname = usePathname();
   const { isShortLandscape } = useResponsiveLayout();
   const active = activeOverride ?? sectionFromPath(pathname);
-  const activeSubsection = activeSubsectionOverride ?? subsectionFromPath(pathname);
-  const subsections = active ? SUBSECTIONS[active] ?? [] : [];
   const refined = variant === 'v2' || pathname.includes('/social/v2');
 
   return (
@@ -77,27 +61,6 @@ export default function SocialSectionNav({
           );
         })}
       </View>
-
-      {subsections.length ? (
-        <View accessibilityRole="tablist" style={[styles.subRail, isShortLandscape && styles.subRailLandscape]} testID="social-secondary-tablist">
-          {subsections.map((item) => {
-            const selected = activeSubsection === item.key;
-            return (
-              <Pressable
-                accessibilityLabel={`Ouvrir ${item.label.toLowerCase()}`}
-                accessibilityRole="tab"
-                accessibilityState={{ selected }}
-                aria-selected={selected}
-                key={item.key}
-                onPress={() => router.replace(item.href as never)}
-                style={({ pressed }) => [styles.subItem, selected && styles.subItemActive, pressed && styles.pressed]}
-              >
-                <Text style={[styles.subLabel, selected && styles.subLabelActive]}>{item.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -106,12 +69,6 @@ function sectionFromPath(pathname: string): SocialSectionKey {
   if (pathname.includes('/social/friends') || pathname.includes('/social/requests') || pathname.includes('/social/leagues')) return 'circle';
   if (pathname.includes('/social/missions') || pathname.includes('/social/duels')) return 'challenges';
   return 'faction';
-}
-
-function subsectionFromPath(pathname: string): SocialSubsectionKey | null {
-  if (pathname.includes('/social/friends') || pathname.includes('/social/requests')) return 'friends';
-  if (pathname.includes('/social/leagues')) return 'leagues';
-  return null;
 }
 
 const styles = StyleSheet.create({
@@ -128,9 +85,6 @@ const styles = StyleSheet.create({
     maxWidth: layout.wideContentMaxWidth,
     paddingTop: 3,
     paddingBottom: 3,
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    gap: 7,
   },
   rail: {
     minHeight: 52,
@@ -142,7 +96,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#202A33',
   },
-  railLandscape: { flex: 3, minWidth: 0 },
+  railLandscape: { minWidth: 0 },
   railRefined: { backgroundColor: '#080D11', borderColor: '#25323A' },
   item: {
     position: 'relative',
@@ -173,27 +127,5 @@ const styles = StyleSheet.create({
     letterSpacing: .15,
   },
   labelActive: { color: colors.volt },
-  subRail: {
-    minHeight: 52,
-    marginTop: 7,
-    padding: 4,
-    borderRadius: 15,
-    flexDirection: 'row',
-    gap: 4,
-    backgroundColor: '#080C10',
-    borderWidth: 1,
-    borderColor: '#202831',
-  },
-  subRailLandscape: { flex: 2, minWidth: 0, marginTop: 0 },
-  subItem: {
-    flex: 1,
-    minHeight: 44,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  subItemActive: { backgroundColor: '#181F11' },
-  subLabel: { ...typography.control, color: colors.textMuted, letterSpacing: .35 },
-  subLabelActive: { color: colors.volt },
   pressed: { opacity: .72 },
 });

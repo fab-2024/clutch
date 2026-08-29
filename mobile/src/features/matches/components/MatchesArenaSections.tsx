@@ -76,7 +76,10 @@ export function ScheduleHero({
   const { isShortLandscape } = useResponsiveLayout();
 
   return (
-    <View style={[styles.scheduleHero, isShortLandscape && styles.scheduleHeroLandscape]}>
+    <View
+      style={[styles.scheduleHero, isShortLandscape && styles.scheduleHeroLandscape]}
+      testID="matches-schedule-hero"
+    >
       <Animated.View entering={FadeIn.duration(260)} key={visualGame} style={StyleSheet.absoluteFill}>
         <Image resizeMode="cover" source={GAME_BACKGROUNDS[visualGame]} style={styles.scheduleBackdrop} />
       </Animated.View>
@@ -97,9 +100,11 @@ export function ScheduleHero({
             />
           </View>
         ) : (
-          <View style={styles.arenaMark}>
-            <View style={styles.arenaMarkDot} />
-            <Text style={styles.arenaMarkText}>GRIFF ARENA</Text>
+          <View style={styles.scheduleHeading}>
+            <Text numberOfLines={1} style={styles.scheduleTitle}>
+              {status === 'upcoming' ? 'PROCHAINS MATCHS' : 'SCORES & RÉSULTATS'}
+            </Text>
+            <Text numberOfLines={1} style={styles.scheduleMonth}>{monthLabel}</Text>
           </View>
         )}
         <View style={styles.scheduleActions}>
@@ -120,11 +125,6 @@ export function ScheduleHero({
             <CalendarIcon color="#F5F7F8" size={18} />
           </Pressable>
         </View>
-      </View>
-
-      <View style={[styles.scheduleCopy, isShortLandscape && styles.scheduleCopyLandscape]}>
-        <Text style={[styles.scheduleTitle, isShortLandscape && styles.scheduleTitleLandscape]}>{status === 'upcoming' ? 'PROCHAINS MATCHS' : 'SCORES & RÉSULTATS'}</Text>
-        <Text style={styles.scheduleMonth}>{monthLabel}</Text>
       </View>
 
       <View style={styles.daysRow}>
