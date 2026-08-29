@@ -1,20 +1,13 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import type { ImageSourcePropType } from 'react-native';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { LEVEL_FRAME_CATALOG } from '@/src/features/profile/levelFrames/catalog';
 import LevelFrame from '@/src/features/profile/levelFrames/components/LevelFrame';
 import type { LevelFrameVariant } from '@/src/features/profile/levelFrames/types';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
+import StaticRelicVial from '@/src/features/social/faction/components/StaticRelicVial';
+import { relicContainerForLevel } from '@/src/features/social/faction/relicArtwork';
 import { colors, fonts, radius, typography } from '@/src/theme';
-
-const RELIC_ASSETS: ImageSourcePropType[] = [
-  require('../../../../assets/social/relic-evolution/ampoule.png'),
-  require('../../../../assets/social/relic-evolution/fiole.png'),
-  require('../../../../assets/social/relic-evolution/flacon.png'),
-  require('../../../../assets/social/relic-evolution/reacteur.png'),
-  require('../../../../assets/social/relic-evolution/reliquaire.png'),
-];
 
 type ProfileShowcaseCardProps = {
   cosmetics?: EquippedCosmetics | null;
@@ -133,19 +126,19 @@ export function ProfileRelicThumbnail({
   name: string;
   size?: number;
 }) {
-  const relicAsset = RELIC_ASSETS[Math.max(0, Math.min(RELIC_ASSETS.length - 1, level - 1))];
+  const container = relicContainerForLevel(level);
   if (compact) {
     return (
       <View accessible accessibilityLabel={`Relique principale, ${name}`} style={[styles.compactRelicBlock, { height: size, width: size }]}>
         <View style={[styles.compactRelicContact, { backgroundColor: alpha(accent, '54'), width: size * .52 }]} />
-        <Image resizeMode="contain" source={relicAsset} style={{ height: size * .98, width: size * .76 }} />
+        <StaticRelicVial container={container} height={size * .98} width={size * .76} />
       </View>
     );
   }
   return (
     <View accessible accessibilityLabel={`Relique principale, ${name}`} style={styles.relicBlock}>
       <View style={[styles.relicHalo, { borderColor: alpha(accent, '6E') }]} />
-      <Image resizeMode="contain" source={relicAsset} style={styles.relicImage} />
+      <StaticRelicVial container={container} height={145} testID="profile-relic-vial" width={142} />
       <Text style={styles.relicLabel}>RELIQUE PRINCIPALE</Text>
       <Text numberOfLines={1} style={[styles.relicName, { color: accent }]}>{name.toUpperCase()}</Text>
     </View>
@@ -179,7 +172,6 @@ const styles = StyleSheet.create({
   title: { ...typography.bodyStrong, maxWidth: 170, marginTop: 2 },
   relicBlock: { position: 'relative', width: 142, minHeight: 178, alignItems: 'center', justifyContent: 'center' },
   relicHalo: { position: 'absolute', width: 122, height: 122, top: 5, borderRadius: 61, backgroundColor: 'rgba(0,0,0,.24)', borderWidth: 1 },
-  relicImage: { width: 142, height: 145 },
   relicLabel: { ...typography.label, marginTop: -5, color: colors.textMuted, letterSpacing: .45 },
   relicName: { ...typography.eyebrow, width: 142, marginTop: 2, textAlign: 'center', letterSpacing: .35 },
   compactRelicBlock: { position: 'relative', alignItems: 'center', justifyContent: 'center' },

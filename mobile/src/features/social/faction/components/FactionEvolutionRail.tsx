@@ -1,36 +1,16 @@
-import { Image, type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
-import { useSharedValue } from 'react-native-reanimated';
+import { StyleSheet, Text, View } from 'react-native';
 
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { COMMUNITY_FORMS } from '@/src/features/social/faction/constants';
-import {
-  RELIC_CONTAINER_SEQUENCE,
-  SKIA_RELIC_STAGE_ARTWORK,
-} from '@/src/features/social/faction/relicArtwork';
+import { relicContainerForLevel } from '@/src/features/social/faction/relicArtwork';
 import type { CommunityFaction, FactionProgress } from '@/src/features/social/faction/types';
 import { colors, fonts, typography } from '@/src/theme';
 
-import SkiaRelicLayer from './SkiaRelicLayer';
+import StaticRelicVial from './StaticRelicVial';
 
 type MiniatureState = 'complete' | 'current' | 'next' | 'locked';
 
 const RAIL_FORMS = COMMUNITY_FORMS.filter((form) => form.level >= 1 && form.level <= 5);
-const RELIC_ASSETS: Record<number, ImageSourcePropType> = {
-  1: require('../../../../../assets/social/relic-evolution/ampoule.png'),
-  2: require('../../../../../assets/social/relic-evolution/fiole.png'),
-  3: require('../../../../../assets/social/relic-evolution/flacon.png'),
-  4: require('../../../../../assets/social/relic-evolution/reacteur.png'),
-  5: require('../../../../../assets/social/relic-evolution/reliquaire.png'),
-};
-const RELIC_ZOOM: Record<number, number> = {
-  1: 1.38,
-  2: 1.04,
-  3: 1.06,
-  4: 1.03,
-  5: 1.03,
-};
-const MINIATURE_CANVAS_WIDTH = 360;
-const MINIATURE_CANVAS_HEIGHT = 270;
 
 export default function FactionEvolutionRail({
   comfortable = false,
@@ -105,19 +85,13 @@ export function FactionRelicMiniature({
           state === 'current' && styles.imageHaloCurrent,
           state === 'complete' && styles.imageHaloComplete,
         ]} />
-        {state === 'current' ? (
-          <CurrentRelicMiniatureArtwork height={height} level={normalizedLevel} size={size} />
-        ) : (
-          <Image
-            accessibilityIgnoresInvertColors
-            resizeMode="contain"
-            source={RELIC_ASSETS[normalizedLevel]}
-            style={[
-              styles.miniatureImage,
-              { width: size, height, opacity, transform: [{ scale: RELIC_ZOOM[normalizedLevel] }] },
-            ]}
-          />
-        )}
+        <StaticRelicVial
+          container={relicContainerForLevel(normalizedLevel)}
+          height={height}
+          opacity={opacity}
+          testID={`relic-miniature-${normalizedLevel}`}
+          width={size}
+        />
         {masked ? <View style={styles.lockShade} /> : null}
       </View>
 
@@ -150,40 +124,6 @@ export function FactionRelicMiniature({
           <View style={styles.lockBody}><Text style={styles.lockDot}>•</Text></View>
         </View>
       ) : null}
-    </View>
-  );
-}
-
-function CurrentRelicMiniatureArtwork({ height, level, size }: { height: number; level: number; size: number }) {
-  const idlePhase = useSharedValue(0);
-  const interactionPhase = useSharedValue(0);
-  const container = RELIC_CONTAINER_SEQUENCE[level - 1] ?? 'ampoule';
-  const scale = height / MINIATURE_CANVAS_HEIGHT;
-
-  return (
-    <View
-      pointerEvents="none"
-      style={[
-        styles.currentRelicCanvas,
-        {
-          left: (size - MINIATURE_CANVAS_WIDTH) / 2,
-          top: (height - MINIATURE_CANVAS_HEIGHT) / 2,
-          transform: [{ scale }],
-        },
-      ]}
-    >
-      <SkiaRelicLayer
-        accent={colors.volt}
-        config={SKIA_RELIC_STAGE_ARTWORK[container]}
-        container={container}
-        energy={interactionPhase}
-        instabilityEnergy={0}
-        levelLift={0}
-        phase={idlePhase}
-        reduceMotion
-        supporterPhase={interactionPhase}
-        tapPhase={interactionPhase}
-      />
     </View>
   );
 }
@@ -254,12 +194,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 0,
     backgroundColor: '#020406',
-  },
-  miniatureImage: { position: 'absolute', left: 0, top: 0 },
-  currentRelicCanvas: {
-    position: 'absolute',
-    width: MINIATURE_CANVAS_WIDTH,
-    height: MINIATURE_CANVAS_HEIGHT,
   },
   imageHalo: {
     position: 'absolute',

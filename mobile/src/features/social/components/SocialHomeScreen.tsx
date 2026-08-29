@@ -1,24 +1,13 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  RefreshControl,
-  ScrollView,
-  View,
-  type LayoutChangeEvent,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from 'react-native';
+import { useMemo } from 'react';
+import { RefreshControl, ScrollView, View } from 'react-native';
 
 import { FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { useCommunityDashboard } from '@/src/features/social/faction/hooks/useCommunityDashboard';
-import type { RelicAnimationPreset } from '@/src/features/social/faction/components/CollectiveRelic';
 import type {
-  RelicMotionDiagnostics,
-  RelicMotionCommand,
-  RelicMotionPreview,
+  RelicDiagnostics,
   SupporterContributionPresentation,
-} from '@/src/features/social/faction/relicMotion';
+} from '@/src/features/social/faction/relicState';
 import type { CommunityData, CommunityMutationPresentation, FactionProgress } from '@/src/features/social/faction/types';
-import { relicSceneVisibleAtOffset } from '@/src/features/social/faction/relicMutationMastering';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors } from '@/src/theme';
 
@@ -40,20 +29,13 @@ type SocialHomeExperienceProps = {
   factionHeroVariant?: FactionHeroVariant;
   favoriteTeamId?: string | null;
   loading: boolean;
-  mutationInterruptSignal?: number;
   mutationOverride?: CommunityMutationPresentation | null;
-  mutationPreviewMs?: number | null;
-  relicAnimationPreset?: RelicAnimationPreset;
-  relicLabMode?: boolean;
-  relicMotionCommand?: RelicMotionCommand | null;
   relicProgressOverride?: FactionProgress;
   instabilityPreviewOverride?: { charge: number; objective: number };
-  motionPreviewOverride?: RelicMotionPreview;
-  onRelicDiagnosticsChange?: (diagnostics: RelicMotionDiagnostics) => void;
+  onRelicDiagnosticsChange?: (diagnostics: RelicDiagnostics) => void;
   onMutationPresented?: (eventId: string) => Promise<void> | void;
   onRefresh: () => void;
   onRetry: () => void;
-  reduceMotionOverride?: boolean;
   refreshing: boolean;
   supporterContribution?: SupporterContributionPresentation | null;
   onSupporterContributionPresented?: (contributionId: string) => Promise<void> | void;
@@ -92,27 +74,17 @@ export function SocialHomeExperience({
   factionHeroVariant = 'current',
   favoriteTeamId,
   loading,
-  mutationInterruptSignal,
   mutationOverride,
-  mutationPreviewMs,
-  relicAnimationPreset,
-  relicLabMode,
-  relicMotionCommand,
   relicProgressOverride,
   instabilityPreviewOverride,
-  motionPreviewOverride,
   onRelicDiagnosticsChange,
   onMutationPresented,
   onRefresh,
   onRetry,
-  reduceMotionOverride,
   refreshing,
   supporterContribution,
   onSupporterContributionPresented,
 }: SocialHomeExperienceProps) {
-  const relicHeroHeightRef = useRef(480);
-  const relicSceneActiveRef = useRef(true);
-  const [relicSceneActive, setRelicSceneActive] = useState(true);
   const rankedFactions = useMemo(
     () => [...data.factions].sort((a, b) => (
       b.membres - a.membres
@@ -128,28 +100,12 @@ export function SocialHomeExperience({
     [favoriteTeamId, rankedFactions],
   );
   const RelicHero = factionHeroVariant === 'v2' ? FactionRelicHeroV2 : FactionRelicHero;
-  const updateRelicSceneVisibility = useCallback((visible: boolean) => {
-    if (relicSceneActiveRef.current === visible) return;
-    relicSceneActiveRef.current = visible;
-    setRelicSceneActive(visible);
-  }, []);
-  const handleRelicHeroLayout = useCallback((event: LayoutChangeEvent) => {
-    relicHeroHeightRef.current = Math.max(1, event.nativeEvent.layout.height);
-  }, []);
-  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    updateRelicSceneVisibility(relicSceneVisibleAtOffset(
-      event.nativeEvent.contentOffset.y,
-      relicHeroHeightRef.current,
-    ));
-  }, [updateRelicSceneVisibility]);
 
   return (
     <ScrollView
       style={styles.root}
       contentContainerStyle={styles.content}
-      onScroll={handleScroll}
       showsVerticalScrollIndicator={false}
-      scrollEventThrottle={64}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.volt} />}
     >
       {error ? (
@@ -163,25 +119,17 @@ export function SocialHomeExperience({
         />
       ) : null}
 
-      <View onLayout={handleRelicHeroLayout}>
+      <View>
         {loading ? <SocialHomeSkeleton /> : error && !faction && !rankedFactions.length ? null : (
           <RelicHero
             faction={faction}
             me={data.moi}
-            mutationInterruptSignal={mutationInterruptSignal}
             mutationOverride={mutationOverride}
-            mutationPreviewMs={mutationPreviewMs}
-            relicAnimationPreset={relicAnimationPreset}
-            relicLabMode={relicLabMode}
-            relicMotionCommand={relicMotionCommand}
             relicProgressOverride={relicProgressOverride}
-            relicSceneActive={relicSceneActive}
             instabilityPreviewOverride={instabilityPreviewOverride}
-            motionPreviewOverride={motionPreviewOverride}
             onRelicDiagnosticsChange={onRelicDiagnosticsChange}
             onMutationPresented={onMutationPresented}
             onSupporterContributionPresented={onSupporterContributionPresented}
-            reduceMotionOverride={reduceMotionOverride}
             supporterContribution={supporterContribution}
           />
         )}

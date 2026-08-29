@@ -6,16 +6,11 @@ import { previewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
-import type { RelicAnimationPreset } from '@/src/features/social/faction/components/CollectiveRelic';
 import { COMMUNITY_FORMS } from '@/src/features/social/faction/constants';
 import type {
-  RelicMotionDiagnostics,
-  RelicMotionCommand,
-  RelicMotionCommandKind,
-  RelicMotionPreview,
+  RelicDiagnostics,
   SupporterContributionPresentation,
-} from '@/src/features/social/faction/relicMotion';
-import { MUTATION_CAPTURE_TIMES_MS } from '@/src/features/social/faction/relicMotion';
+} from '@/src/features/social/faction/relicState';
 import { relicContainerForPreview } from '@/src/features/social/faction/relicArtwork';
 import type { CommunityData, CommunityFaction, CommunityMutationPresentation } from '@/src/features/social/faction/types';
 import { communityFormForLevel, factionProgress } from '@/src/features/social/faction/utils';
@@ -59,19 +54,6 @@ const PREVIEW_COMMUNITY: CommunityData = {
 
 const CHARGE_PRESETS = [0, 1, 99, 100, 499, 500, 1_999, 2_000, 4_999, 5_000, 9_999, 10_000];
 const TESTABLE_FORMS = COMMUNITY_FORMS.filter((form) => form.level >= 1 && form.level <= 5);
-const MOTION_COMMANDS: { kind: RelicMotionCommandKind; label: string }[] = [
-  { kind: 'idle', label: 'REPOS' },
-  { kind: 'tap', label: 'TOUCHER RAPIDE' },
-  { kind: 'cancelledCharge', label: 'CHARGE ANNULÉE' },
-  { kind: 'resonance', label: 'RÉSONANCE' },
-];
-const RELIC_ANIMATION_PRESETS: { label: string; value: RelicAnimationPreset }[] = [
-  { label: 'ORIGINAL', value: 'classic' },
-  { label: 'VIVANTE', value: 'living' },
-  { label: 'CŒUR', value: 'pulse' },
-  { label: 'ORBITALE', value: 'orbit' },
-  { label: 'SKIA · GPU', value: 'skia' },
-];
 const MUTATION_TRANSITIONS = [
   { fromLevel: 1, toLevel: 2 },
   { fromLevel: 2, toLevel: 3 },
@@ -91,29 +73,19 @@ export default function SocialHomePreviewScreen({
   const {
     activity,
     clean,
-    fx,
-    fxlab,
     form,
     instability: instabilityParam,
     lab: labParam,
-    motion,
     mutationFrom: mutationFromParam,
-    mutationMs: mutationMsParam,
     mutationTo: mutationToParam,
-    reduced: reducedParam,
   } = useLocalSearchParams<{
     activity?: string;
     clean?: string;
-    fx?: string;
-    fxlab?: string;
     form?: string;
     instability?: string;
     lab?: string;
-    motion?: string;
     mutationFrom?: string;
-    mutationMs?: string;
     mutationTo?: string;
-    reduced?: string;
   }>();
   const showLab = lab || labParam === '1' || clean === '0';
   const requestedContainer = relicContainerForPreview(form);
@@ -121,45 +93,24 @@ export default function SocialHomePreviewScreen({
   const requestedInstability = parseInstabilityPercent(instabilityParam);
   const requestedMutationFrom = mutationFromParam ? previewMutationLevel(mutationFromParam) : null;
   const requestedMutationTo = mutationToParam ? previewMutationLevel(mutationToParam) : null;
-  const requestedMutationMs = parseMutationPreviewMs(mutationMsParam);
-  const requestedAnimationPreset = parseRelicAnimationPreset(fx)
-    ?? (factionHeroVariant === 'v2' ? 'skia' : 'classic');
   const [charge, setCharge] = useState(() => chargeForInstability(requestedForm.level, requestedInstability));
   const [instabilityOverride, setInstabilityOverride] = useState<{ charge: number; objective: number } | undefined>(
     requestedInstability === null ? undefined : { charge: requestedInstability, objective: 100 },
   );
   const [mutation, setMutation] = useState<CommunityMutationPresentation | null>(null);
-  const [mutationInterruptSignal, setMutationInterruptSignal] = useState(0);
-  const [mutationPreviewMs, setMutationPreviewMs] = useState<number | null>(null);
   const [selectedMutation, setSelectedMutation] = useState({ fromLevel: 1, toLevel: 2 });
   const [presentedMutationEventId, setPresentedMutationEventId] = useState<string | null>(null);
-  const [motionCommand, setMotionCommand] = useState<RelicMotionCommand | null>(null);
   const [supporterContribution, setSupporterContribution] = useState<SupporterContributionPresentation | null>(null);
-  const [reduceMotion, setReduceMotion] = useState(reducedParam === '1');
-  const [relicAnimationPreset, setRelicAnimationPreset] = useState<RelicAnimationPreset>(requestedAnimationPreset);
-  const [diagnostics, setDiagnostics] = useState<RelicMotionDiagnostics>({
-    state: 'idle',
+  const [diagnostics, setDiagnostics] = useState<RelicDiagnostics>({
     tier: 'calm',
     ratio: 0,
-    pendingAmount: 0,
-    aggregatedCount: 0,
     mutationFromForm: null,
     mutationToForm: null,
-    mutationElapsedMs: 0,
     mutationEventId: null,
     mutationEventPresented: false,
   });
   const previewSessionId = useRef(Date.now().toString(36));
   const eventSequence = useRef(0);
-  const motionSequence = useRef(0);
-  const previewScenarioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const motionPreviewOverride: RelicMotionPreview | undefined = motion === 'tap'
-    ? 'tapPeak'
-    : motion === 'resonance'
-      ? 'resonancePeak'
-      : motion === 'arrival'
-        ? 'supporterPeak'
-      : undefined;
   const previewProgress = factionProgress(charge);
   const relicProgressOverride = instabilityOverride ? {
     ...previewProgress,
@@ -210,13 +161,9 @@ export default function SocialHomePreviewScreen({
       } satisfies CommunityMutationPresentation;
       setCharge(target.threshold);
       setInstabilityOverride(undefined);
-      setMotionCommand(null);
       setSupporterContribution(null);
       setSelectedMutation({ fromLevel: requestedMutationFrom, toLevel: requestedMutationTo });
-      setMutationPreviewMs(requestedMutationMs);
       setPresentedMutationEventId(null);
-      setReduceMotion(reducedParam === '1');
-      setRelicAnimationPreset(requestedAnimationPreset);
       setMutation(nextMutation);
       return;
     }
@@ -225,29 +172,17 @@ export default function SocialHomePreviewScreen({
       ? undefined
       : { charge: requestedInstability, objective: 100 });
     setMutation(null);
-    setMutationPreviewMs(null);
-    setMotionCommand(null);
     setSupporterContribution(null);
-    setReduceMotion(reducedParam === '1');
-    setRelicAnimationPreset(requestedAnimationPreset);
-  }, [reducedParam, requestedAnimationPreset, requestedForm.level, requestedInstability, requestedMutationFrom, requestedMutationMs, requestedMutationTo]);
-
-  useEffect(() => () => {
-    if (previewScenarioTimerRef.current) clearTimeout(previewScenarioTimerRef.current);
-  }, []);
+  }, [requestedForm.level, requestedInstability, requestedMutationFrom, requestedMutationTo]);
 
   if (!previewRoutesEnabled) return <Redirect href="/" />;
 
-  const playMutation = (fromLevel: number, toLevel: number, freezeMs: number | null = null) => {
+  const playMutation = (fromLevel: number, toLevel: number) => {
     const target = communityFormForLevel(toLevel);
-    if (previewScenarioTimerRef.current) clearTimeout(previewScenarioTimerRef.current);
-    previewScenarioTimerRef.current = null;
     eventSequence.current += 1;
-    setMotionCommand(null);
     setInstabilityOverride(undefined);
     setSupporterContribution(null);
     setCharge(target.threshold);
-    setMutationPreviewMs(freezeMs);
     setSelectedMutation({ fromLevel, toLevel });
     setPresentedMutationEventId(null);
     setMutation({
@@ -262,47 +197,13 @@ export default function SocialHomePreviewScreen({
     });
   };
 
-  const playInterruptedMutation = () => {
-    playMutation(selectedMutation.fromLevel, selectedMutation.toLevel);
-    previewScenarioTimerRef.current = setTimeout(() => {
-      previewScenarioTimerRef.current = null;
-      setMutationInterruptSignal((value) => value + 1);
-    }, 1_400);
-  };
-
-  const playMutationWithContribution = () => {
-    const targetCharge = communityFormForLevel(selectedMutation.toLevel).threshold;
-    playMutation(selectedMutation.fromLevel, selectedMutation.toLevel);
-    previewScenarioTimerRef.current = setTimeout(() => {
-      previewScenarioTimerRef.current = null;
-      eventSequence.current += 1;
-      setSupporterContribution({
-        id: `preview-supporter-during-mutation-${eventSequence.current}`,
-        amount: 5,
-        fromCharge: targetCharge,
-        toCharge: targetCharge + 5,
-      });
-      setCharge((value) => Math.min(50_000, value + 5));
-    }, 900);
-  };
-
-  const playMotion = (kind: RelicMotionCommandKind) => {
-    motionSequence.current += 1;
-    setMutation(null);
-    setMutationPreviewMs(null);
-    setSupporterContribution(null);
-    setMotionCommand({ id: motionSequence.current, kind });
-  };
-
   const selectForm = (level: number) => {
     const preservedInstability = instabilityOverride
       ? Math.round((instabilityOverride.charge / Math.max(1, instabilityOverride.objective)) * 100)
       : null;
     setCharge(chargeForInstability(level, preservedInstability));
     setMutation(null);
-    setMutationPreviewMs(null);
     setSupporterContribution(null);
-    playMotion('idle');
   };
 
   const playSupporterArrival = (amount: number) => {
@@ -310,7 +211,6 @@ export default function SocialHomePreviewScreen({
     const fromCharge = charge;
     const toCharge = Math.min(50_000, fromCharge + amount);
     setMutation(null);
-    setMutationPreviewMs(null);
     setInstabilityOverride(undefined);
     setCharge(toCharge);
     setSupporterContribution({
@@ -326,9 +226,7 @@ export default function SocialHomePreviewScreen({
     setCharge(chargeForInstability(level, percent));
     setInstabilityOverride({ charge: percent, objective: 100 });
     setMutation(null);
-    setMutationPreviewMs(null);
     setSupporterContribution(null);
-    playMotion('idle');
   };
 
   const experience = (
@@ -339,34 +237,13 @@ export default function SocialHomePreviewScreen({
           variant="wallet"
         />
         <SocialSectionNav activeOverride="faction" variant={factionHeroVariant === 'v2' ? 'v2' : 'default'} />
-        {showLab && factionHeroVariant === 'v2' && fxlab === '1' ? (
-          <RelicAnimationControls
-            activeFormLevel={previewProgress.current.level}
-            compact
-            onChange={setRelicAnimationPreset}
-            onPlayMutation={() => playMutation(selectedMutation.fromLevel, selectedMutation.toLevel)}
-            onSelectForm={selectForm}
-            reduceMotion={reduceMotion}
-            value={relicAnimationPreset}
-          />
-        ) : null}
         {showLab ? <View style={previewStyles.panel}>
           <View style={previewStyles.panelTop}>
             <View>
               <Text style={previewStyles.eyebrow}>LABO RELIQUE · DEV UNIQUEMENT</Text>
               <Text style={previewStyles.title}>{previewProgress.current.name.toUpperCase()} · {charge.toLocaleString('fr-FR')}</Text>
             </View>
-            <Pressable onPress={() => setReduceMotion((value) => !value)} style={[previewStyles.motionButton, reduceMotion && previewStyles.motionButtonActive]}>
-              <Text style={[previewStyles.motionText, reduceMotion && previewStyles.motionTextActive]}>MOUVEMENTS RÉDUITS {reduceMotion ? 'ON' : 'OFF'}</Text>
-            </Pressable>
           </View>
-          {factionHeroVariant === 'v2' ? (
-            <RelicAnimationControls
-              onChange={setRelicAnimationPreset}
-              reduceMotion={reduceMotion}
-              value={relicAnimationPreset}
-            />
-          ) : null}
           <View style={previewStyles.controlRow}>
             <Text style={previewStyles.controlLabel}>RÉCIPIENTS</Text>
             <ScrollView contentContainerStyle={previewStyles.chips} horizontal showsHorizontalScrollIndicator={false} style={previewStyles.controlScroll}>
@@ -379,22 +256,6 @@ export default function SocialHomePreviewScreen({
                   style={[previewStyles.chip, previewProgress.current.container === form.container && previewStyles.chipActive]}
                 >
                   <Text style={[previewStyles.chipText, previewProgress.current.container === form.container && previewStyles.chipTextActive]}>{form.code} · {form.name.toUpperCase()}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-          <View style={previewStyles.controlRow}>
-            <Text style={previewStyles.controlLabel}>ANIMATIONS</Text>
-            <ScrollView contentContainerStyle={previewStyles.chips} horizontal showsHorizontalScrollIndicator={false} style={previewStyles.controlScroll}>
-              {MOTION_COMMANDS.map((command) => (
-                <Pressable
-                  accessibilityLabel={`Jouer l’animation ${command.label.toLowerCase()}`}
-                  accessibilityRole="button"
-                  key={command.kind}
-                  onPress={() => playMotion(command.kind)}
-                  style={[previewStyles.animationButton, motionCommand?.kind === command.kind && previewStyles.animationButtonActive]}
-                >
-                  <Text style={[previewStyles.animationText, motionCommand?.kind === command.kind && previewStyles.animationTextActive]}>{command.label}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -451,32 +312,6 @@ export default function SocialHomePreviewScreen({
               ))}
             </ScrollView>
           </View>
-          <View style={previewStyles.controlRow}>
-            <Text style={previewStyles.controlLabel}>TIMELINE</Text>
-            <ScrollView contentContainerStyle={previewStyles.chips} horizontal showsHorizontalScrollIndicator={false} style={previewStyles.controlScroll}>
-              {MUTATION_CAPTURE_TIMES_MS.map((elapsedMs) => (
-                <Pressable
-                  accessibilityRole="button"
-                  key={elapsedMs}
-                  onPress={() => playMutation(selectedMutation.fromLevel, selectedMutation.toLevel, elapsedMs)}
-                  style={[previewStyles.chip, mutationPreviewMs === elapsedMs && previewStyles.chipActive]}
-                >
-                  <Text style={[previewStyles.chipText, mutationPreviewMs === elapsedMs && previewStyles.chipTextActive]}>{elapsedMs} MS</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-          <View style={previewStyles.controlRow}>
-            <Text style={previewStyles.controlLabel}>SCÉNARIOS</Text>
-            <View style={previewStyles.chips}>
-              <Pressable accessibilityRole="button" onPress={playInterruptedMutation} style={previewStyles.scenarioButton}>
-                <Text style={previewStyles.scenarioText}>INTERROMPRE À 1 400 MS</Text>
-              </Pressable>
-              <Pressable accessibilityRole="button" onPress={playMutationWithContribution} style={previewStyles.scenarioButton}>
-                <Text style={previewStyles.scenarioText}>+5 PENDANT MUTATION</Text>
-              </Pressable>
-            </View>
-          </View>
           <View style={previewStyles.chargeEditor}>
             <Text style={previewStyles.controlLabel}>CHARGE</Text>
             <Pressable onPress={() => { setInstabilityOverride(undefined); setSupporterContribution(null); setCharge((value) => Math.max(0, value - 100)); }} style={previewStyles.stepButton}><Text style={previewStyles.stepText}>−100</Text></Pressable>
@@ -501,14 +336,10 @@ export default function SocialHomePreviewScreen({
             </ScrollView>
           </View>
           <View style={previewStyles.diagnostics}>
-            <Text style={previewStyles.diagnostic}>ÉTAT · {diagnostics.state}</Text>
             <Text style={previewStyles.diagnostic}>TIER · {diagnostics.tier}</Text>
             <Text style={previewStyles.diagnostic}>RATIO · {(diagnostics.ratio * 100).toFixed(1)} %</Text>
-            <Text style={previewStyles.diagnostic}>ATTENTE · +{diagnostics.pendingAmount}</Text>
-            <Text style={previewStyles.diagnostic}>AGRÉGÉES · {diagnostics.aggregatedCount}</Text>
             <Text style={previewStyles.diagnostic}>DE · {diagnostics.mutationFromForm ?? '—'}</Text>
             <Text style={previewStyles.diagnostic}>VERS · {diagnostics.mutationToForm ?? '—'}</Text>
-            <Text style={previewStyles.diagnostic}>TEMPS · {mutationPreviewMs ?? (diagnostics.state === 'mutating' ? 'LIVE / 2 900' : diagnostics.mutationElapsedMs)} MS</Text>
             <Text style={previewStyles.diagnostic}>EVENT · {diagnostics.mutationEventId ?? presentedMutationEventId ?? '—'}</Text>
             <Text style={previewStyles.diagnostic}>PRÉSENTÉ · {diagnostics.mutationEventPresented || Boolean(presentedMutationEventId) ? 'OUI' : 'NON'}</Text>
           </View>
@@ -521,24 +352,15 @@ export default function SocialHomePreviewScreen({
           instabilityPreviewOverride={instabilityOverride}
           loading={false}
           mutationOverride={mutation}
-          mutationInterruptSignal={mutationInterruptSignal}
-          mutationPreviewMs={mutationPreviewMs}
-          motionPreviewOverride={motionPreviewOverride}
           onRelicDiagnosticsChange={setDiagnostics}
-          relicAnimationPreset={relicAnimationPreset}
-          relicLabMode={showLab}
-          relicMotionCommand={motionCommand}
           relicProgressOverride={relicProgressOverride}
           onMutationPresented={(eventId) => {
             setPresentedMutationEventId(eventId);
-            if (mutationPreviewMs === null) {
-              setMutation((current) => current?.id === eventId ? null : current);
-            }
+            setMutation((current) => current?.id === eventId ? null : current);
           }}
           onSupporterContributionPresented={(contributionId) => setSupporterContribution((current) => (
             current?.id === contributionId ? null : current
           ))}
-          reduceMotionOverride={reduceMotion}
           refreshing={false}
           supporterContribution={supporterContribution}
           onRefresh={noop}
@@ -548,101 +370,6 @@ export default function SocialHomePreviewScreen({
   );
 
   return <Screen>{experience}</Screen>;
-}
-
-function RelicAnimationControls({
-  activeFormLevel,
-  compact = false,
-  onChange,
-  onPlayMutation,
-  onSelectForm,
-  reduceMotion,
-  value,
-}: {
-  activeFormLevel?: number;
-  compact?: boolean;
-  onChange: (preset: RelicAnimationPreset) => void;
-  onPlayMutation?: () => void;
-  onSelectForm?: (level: number) => void;
-  reduceMotion: boolean;
-  value: RelicAnimationPreset;
-}) {
-  return (
-    <View style={[previewStyles.fxLab, compact && previewStyles.fxLabCompact]}>
-      <View style={previewStyles.fxLabHeading}>
-        <Text style={previewStyles.fxLabLabel}>SIGNATURE DE LA RELIQUE</Text>
-        <Text style={[previewStyles.fxLabStatus, reduceMotion && previewStyles.fxLabStatusReduced]}>
-          {reduceMotion ? 'FIGÉE · MOUVEMENTS RÉDUITS' : 'TEMPS RÉEL'}
-        </Text>
-      </View>
-      <ScrollView
-        contentContainerStyle={previewStyles.fxLabChoices}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-      >
-        {RELIC_ANIMATION_PRESETS.map((preset) => {
-          const selected = value === preset.value;
-          return (
-            <Pressable
-              accessibilityLabel={`Utiliser l’animation ${preset.label.toLowerCase()} pour la relique`}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              key={preset.value}
-              onPress={() => onChange(preset.value)}
-              style={[previewStyles.fxChoice, selected && previewStyles.fxChoiceActive]}
-            >
-              <View style={[previewStyles.fxChoiceDot, selected && previewStyles.fxChoiceDotActive]} />
-              <Text style={[previewStyles.fxChoiceText, selected && previewStyles.fxChoiceTextActive]}>{preset.label}</Text>
-            </Pressable>
-          );
-        })}
-        {onPlayMutation ? (
-          <Pressable
-            accessibilityLabel="Rejouer la mutation complète de la relique"
-            accessibilityRole="button"
-            onPress={onPlayMutation}
-            style={[previewStyles.fxChoice, previewStyles.fxMutationAction]}
-          >
-            <View style={[previewStyles.fxChoiceDot, previewStyles.fxMutationDot]} />
-            <Text style={[previewStyles.fxChoiceText, previewStyles.fxMutationText]}>▶ MUTATION LIVE</Text>
-          </Pressable>
-        ) : null}
-      </ScrollView>
-      {onSelectForm ? (
-        <>
-          <View style={previewStyles.fxLabSubheading}>
-            <Text style={previewStyles.fxLabLabel}>RÉCIPIENT DE TEST</Text>
-            <Text style={previewStyles.fxLabCurrentForm}>
-              {TESTABLE_FORMS.find((form) => form.level === activeFormLevel)?.name.toUpperCase() ?? 'FORME LIBRE'}
-            </Text>
-          </View>
-          <ScrollView
-            accessibilityLabel="Choisir le récipient de la relique"
-            contentContainerStyle={previewStyles.fxLabChoices}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-          >
-            {TESTABLE_FORMS.map((form) => {
-              const selected = form.level === activeFormLevel;
-              return (
-                <Pressable
-                  accessibilityLabel={`Afficher le récipient ${form.name}`}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  key={form.state}
-                  onPress={() => onSelectForm(form.level)}
-                  style={[previewStyles.formChoice, selected && previewStyles.formChoiceActive]}
-                >
-                  <Text style={[previewStyles.formChoiceCode, selected && previewStyles.formChoiceCodeActive]}>{form.code}</Text>
-                  <Text style={[previewStyles.formChoiceText, selected && previewStyles.formChoiceTextActive]}>{form.name.toUpperCase()}</Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </>
-      ) : null}
-    </View>
-  );
 }
 
 function previewFaction(
@@ -679,11 +406,6 @@ function parseInstabilityPercent(value: string | undefined) {
   return Math.max(0, Math.min(100, parsed));
 }
 
-function parseRelicAnimationPreset(value: string | undefined): RelicAnimationPreset | null {
-  if (value === 'classic' || value === 'living' || value === 'pulse' || value === 'orbit' || value === 'skia') return value;
-  return null;
-}
-
 function chargeForInstability(level: number, percent: number | null) {
   const current = communityFormForLevel(level);
   if (percent === null) return current.threshold;
@@ -700,13 +422,6 @@ function previewMutationLevel(value: string) {
   return TESTABLE_FORMS.find((form) => form.container === container)?.level ?? 1;
 }
 
-function parseMutationPreviewMs(value: string | undefined) {
-  if (value === undefined) return null;
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return null;
-  return Math.max(0, Math.min(2_900, Math.round(parsed)));
-}
-
 function noop() {}
 
 const previewStyles = StyleSheet.create({
@@ -714,10 +429,6 @@ const previewStyles = StyleSheet.create({
   panelTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   eyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .6 },
   title: { ...typography.label, marginTop: 3, color: '#E8ECE9' },
-  motionButton: { minHeight: 30, paddingHorizontal: 9, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: '#161D20', borderWidth: 1, borderColor: '#354047' },
-  motionButtonActive: { backgroundColor: '#202A11', borderColor: '#64752B' },
-  motionText: { ...typography.label, color: '#829099' },
-  motionTextActive: { color: colors.volt },
   controlRow: { minHeight: 31, flexDirection: 'row', alignItems: 'center', gap: 8 },
   controlScroll: { flex: 1 },
   controlLabel: { ...typography.label, width: 82, flexShrink: 0, color: '#87939A' },
@@ -730,41 +441,11 @@ const previewStyles = StyleSheet.create({
   chipActive: { backgroundColor: colors.volt, borderColor: colors.volt },
   chipText: { ...typography.label, color: '#8D999F' },
   chipTextActive: { color: '#080B0D' },
-  animationButton: { minHeight: 29, paddingHorizontal: 10, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0C171C', borderWidth: 1, borderColor: '#24505A' },
-  animationButtonActive: { backgroundColor: '#12323B', borderColor: '#31D7E2' },
-  animationText: { ...typography.label, color: '#78AAB2' },
-  animationTextActive: { color: '#BDF8FA' },
   supporterButton: { minHeight: 29, paddingHorizontal: 10, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1B170C', borderWidth: 1, borderColor: '#6D5427' },
   supporterText: { ...typography.label, color: '#F1C56D' },
   mutationButton: { minHeight: 29, paddingHorizontal: 10, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#17170E', borderWidth: 1, borderColor: '#615128' },
   mutationButtonActive: { backgroundColor: '#302814', borderColor: '#D7B773' },
   mutationText: { ...typography.label, color: '#D7B773' },
-  scenarioButton: { minHeight: 29, paddingHorizontal: 10, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1A1115', borderWidth: 1, borderColor: '#62384A' },
-  scenarioText: { ...typography.label, color: '#E6A5BE' },
   diagnostics: { minHeight: 24, flexDirection: 'row', flexWrap: 'wrap', gap: 5, paddingTop: 2 },
   diagnostic: { ...typography.label, paddingHorizontal: 7, paddingVertical: 4, borderRadius: 8, color: '#87B6BE', backgroundColor: '#091419', borderWidth: 1, borderColor: '#203A42' },
-  fxLab: { gap: 7, paddingVertical: 3 },
-  fxLabCompact: { paddingHorizontal: 14, paddingTop: 8, paddingBottom: 9, backgroundColor: '#071014', borderBottomWidth: 1, borderBottomColor: '#26383F' },
-  fxLabHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  fxLabSubheading: { marginTop: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  fxLabLabel: { ...typography.label, color: '#C4D1D5', letterSpacing: .4 },
-  fxLabCurrentForm: { ...typography.label, color: colors.volt },
-  fxLabStatus: { ...typography.label, color: '#68DCE5' },
-  fxLabStatusReduced: { color: '#E8C36D' },
-  fxLabChoices: { gap: 6, paddingRight: 12 },
-  fxChoice: { minHeight: 31, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, borderRadius: 16, backgroundColor: '#11191D', borderWidth: 1, borderColor: '#2C3940' },
-  fxChoiceActive: { backgroundColor: '#1E2815', borderColor: colors.volt },
-  fxChoiceDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#536169' },
-  fxChoiceDotActive: { backgroundColor: colors.volt, boxShadow: '0 0 8px rgba(221,255,36,.72)' },
-  fxChoiceText: { ...typography.label, color: '#87959C' },
-  fxChoiceTextActive: { color: '#E8F58C' },
-  fxMutationAction: { backgroundColor: '#251811', borderColor: '#8D5A2D' },
-  fxMutationDot: { backgroundColor: '#F4A248', boxShadow: '0 0 8px rgba(244,162,72,.72)' },
-  fxMutationText: { color: '#F4C17C' },
-  formChoice: { minHeight: 34, flexDirection: 'row', alignItems: 'center', gap: 7, paddingLeft: 7, paddingRight: 11, borderRadius: 10, backgroundColor: '#0E171B', borderWidth: 1, borderColor: '#2C3940' },
-  formChoiceActive: { backgroundColor: '#202A11', borderColor: colors.volt },
-  formChoiceCode: { ...typography.label, minWidth: 22, paddingHorizontal: 5, paddingVertical: 3, overflow: 'hidden', borderRadius: 6, textAlign: 'center', color: '#7A8990', backgroundColor: '#192328' },
-  formChoiceCodeActive: { color: '#0A0D0E', backgroundColor: colors.volt },
-  formChoiceText: { ...typography.label, color: '#93A0A6' },
-  formChoiceTextActive: { color: '#EDF7A8' },
 });

@@ -9,14 +9,10 @@ import { accessibility } from '@/src/theme';
 
 import FactionEvolutionRail from '../FactionEvolutionRail';
 
-jest.mock('react-native-reanimated', () => ({
-  useSharedValue: (value: number) => ({ value }),
-}));
-
-jest.mock('../SkiaRelicLayer', () => ({
-  __esModule: true,
-  default: 'SkiaRelicLayerMock',
-}));
+jest.mock('@/src/features/onboarding/components/TeamLogo', () => {
+  const { View } = require('react-native');
+  return View;
+});
 
 describe('FactionEvolutionRail accessibility', () => {
   it('keeps every form readable without shrinking labels to fit', async () => {

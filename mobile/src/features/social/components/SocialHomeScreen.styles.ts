@@ -22,7 +22,6 @@ export const styles = StyleSheet.create({
   factionGrowthBlock: { flexShrink: 0, flexDirection: 'row', alignItems: 'baseline', gap: 4 },
   factionGrowth: { ...typography.metricSmall, color: colors.volt },
   factionGrowthLabel: { ...typography.eyebrow, color: '#9AA5AE', letterSpacing: .2 },
-  supporterArrivalOverlay: { position: 'absolute', zIndex: 5, top: 0, right: 0, bottom: 0, left: 0, overflow: 'visible' },
   progressBlock: { zIndex: 4, marginTop: 8 },
   relicForm: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 },
   progressHeadline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

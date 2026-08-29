@@ -1,31 +1,20 @@
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import Crown from 'lucide-react-native/icons/crown';
-import { useState } from 'react';
-import { Platform, Pressable, Share, StyleSheet, Text, View, type LayoutRectangle } from 'react-native';
-import { useReducedMotion, useSharedValue } from 'react-native-reanimated';
+import { Platform, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Path, Stop } from 'react-native-svg';
 
 import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { publicAppUrl } from '@/src/config/release';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
-import { relicSignatureTheme } from '@/src/features/shop/components/CosmeticRenderer';
-import CollectiveRelic, { type RelicAnimationPreset } from '@/src/features/social/faction/components/CollectiveRelic';
+import CollectiveRelic from '@/src/features/social/faction/components/CollectiveRelic';
 import FactionEvolutionRail from '@/src/features/social/faction/components/FactionEvolutionRail';
 import {
   resolveRelicInstability,
-  type RelicMotionDiagnostics,
-  type RelicMotionCommand,
-  type RelicMotionPreview,
-  type SupporterContributionBatch,
+  type RelicDiagnostics,
   type SupporterContributionPresentation,
-} from '@/src/features/social/faction/relicMotion';
-import {
-  SupporterArrivalOverlay,
-  SupporterCounterPulse,
-  type RelicScenePoint,
-} from '@/src/features/social/faction/components/SupporterArrivalOverlay';
+} from '@/src/features/social/faction/relicState';
 import type {
   CommunityActivity,
   CommunityFaction,
@@ -34,7 +23,6 @@ import type {
   FactionProgress,
 } from '@/src/features/social/faction/types';
 import { factionProgress, gameLabel } from '@/src/features/social/faction/utils';
-import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors } from '@/src/theme';
 
 import { styles } from './SocialHomeScreen.styles';
@@ -42,42 +30,24 @@ import { styles } from './SocialHomeScreen.styles';
 export function FactionRelicHero({
   faction,
   me,
-  mutationInterruptSignal,
   mutationOverride,
-  mutationPreviewMs,
-  relicAnimationPreset,
-  relicLabMode,
-  relicMotionCommand,
   relicProgressOverride,
-  relicSceneActive,
   instabilityPreviewOverride,
-  motionPreviewOverride,
   onRelicDiagnosticsChange,
   onMutationPresented,
   onSupporterContributionPresented,
-  reduceMotionOverride,
   supporterContribution,
 }: {
   faction: CommunityFaction | null;
   me: CommunityMe | null;
-  mutationInterruptSignal?: number;
   mutationOverride?: CommunityMutationPresentation | null;
-  mutationPreviewMs?: number | null;
-  relicAnimationPreset?: RelicAnimationPreset;
-  relicLabMode?: boolean;
-  relicMotionCommand?: RelicMotionCommand | null;
   relicProgressOverride?: FactionProgress;
-  relicSceneActive?: boolean;
   instabilityPreviewOverride?: { charge: number; objective: number };
-  motionPreviewOverride?: RelicMotionPreview;
-  onRelicDiagnosticsChange?: (diagnostics: RelicMotionDiagnostics) => void;
+  onRelicDiagnosticsChange?: (diagnostics: RelicDiagnostics) => void;
   onMutationPresented?: (eventId: string) => Promise<void> | void;
   onSupporterContributionPresented?: (contributionId: string) => Promise<void> | void;
-  reduceMotionOverride?: boolean;
   supporterContribution?: SupporterContributionPresentation | null;
 }) {
-  const systemReduceMotion = useReducedMotion();
-  const { equipped } = useCosmetics();
   const progress = relicProgressOverride ?? factionProgress(faction?.membres ?? 0, faction?.niveau_atteint);
   const instability = resolveRelicInstability(
     instabilityPreviewOverride?.charge ?? progress.charge,
@@ -90,22 +60,7 @@ export function FactionRelicHero({
     : instability.tier === 'mutationReady'
       ? 'MUTATION PRÊTE'
     : `RALLIER ${formatNumber(progress.remaining)} SUPPORTER${progress.remaining > 1 ? 'S' : ''}`;
-  const signature = relicSignatureTheme(equipped.factionEffect);
-  const effectAccent = signature.accent;
   const mutation = mutationOverride === undefined ? me?.mutation_a_presenter : mutationOverride;
-  const supporterArrivalPhase = useSharedValue(0);
-  const [identityLayout, setIdentityLayout] = useState<LayoutRectangle | null>(null);
-  const [supporterLayout, setSupporterLayout] = useState<LayoutRectangle | null>(null);
-  const [liquidTarget, setLiquidTarget] = useState<RelicScenePoint | null>(null);
-  const [activeSupporterAmount, setActiveSupporterAmount] = useState(0);
-  const reduceMotion = reduceMotionOverride ?? systemReduceMotion;
-  const handleSupporterArrivalStart = (batch: SupporterContributionBatch) => {
-    setActiveSupporterAmount(batch.amount);
-  };
-  const supporterAnchor = identityLayout && supporterLayout ? {
-    x: identityLayout.x + supporterLayout.x + supporterLayout.width / 2,
-    y: identityLayout.y + supporterLayout.y + supporterLayout.height / 2,
-  } : null;
 
   async function rallySupporters() {
     if (!faction) return;
@@ -142,33 +97,17 @@ export function FactionRelicHero({
       </View>
 
       <CollectiveRelic
-        accent={effectAccent}
-        animationPreset={relicAnimationPreset}
         faction={faction}
         instabilityPreviewOverride={instabilityPreviewOverride}
         mutation={mutation}
-        mutationInterruptSignal={mutationInterruptSignal}
-        mutationPreviewMs={mutationPreviewMs}
-        labMode={relicLabMode}
-        motionCommand={relicMotionCommand}
-        motionPreviewOverride={motionPreviewOverride}
         onDiagnosticsChange={onRelicDiagnosticsChange}
-        onLiquidTargetLayout={setLiquidTarget}
         onMutationPresented={onMutationPresented}
-        onSupporterArrivalComplete={() => setActiveSupporterAmount(0)}
-        onSupporterArrivalStart={handleSupporterArrivalStart}
         onSupporterContributionPresented={onSupporterContributionPresented}
         progress={progress}
-        reduceMotionOverride={reduceMotionOverride}
-        sceneActive={relicSceneActive}
-        supporterArrivalPhase={supporterArrivalPhase}
         supporterContribution={supporterContribution}
       />
 
-      <View
-        onLayout={(event) => setIdentityLayout(event.nativeEvent.layout)}
-        style={styles.factionIdentity}
-      >
+      <View style={styles.factionIdentity}>
         <View style={styles.factionSeal}>
           {faction ? (
             <TeamLogo accent={colors.volt} name={faction.nom} size={34} tag={faction.tag} uri={faction.logo} />
@@ -181,14 +120,9 @@ export function FactionRelicHero({
           <Text style={styles.factionMeta}>{faction ? `${gameLabel(faction.jeu)} · ${formatNumber(progress.charge)} MEMBRE${progress.charge > 1 ? 'S' : ''}` : 'UNE RELIQUE ATTEND TES COULEURS'}</Text>
         </View>
         {faction ? (
-          <View
-            onLayout={(event) => setSupporterLayout(event.nativeEvent.layout)}
-            style={styles.factionGrowthBlock}
-          >
+          <View style={styles.factionGrowthBlock}>
             <Text style={styles.factionGrowthLabel}>SUPPORTERS ·</Text>
-            <SupporterCounterPulse phase={supporterArrivalPhase}>
-              <Text style={styles.factionGrowth}>{signed(faction.croissance_7j)}</Text>
-            </SupporterCounterPulse>
+            <Text style={styles.factionGrowth}>{signed(faction.croissance_7j)}</Text>
           </View>
         ) : null}
       </View>
@@ -218,16 +152,6 @@ export function FactionRelicHero({
           </Pressable>
         </View>
       ) : null}
-
-      <View pointerEvents="none" style={styles.supporterArrivalOverlay}>
-        <SupporterArrivalOverlay
-          amount={activeSupporterAmount}
-          end={liquidTarget}
-          phase={supporterArrivalPhase}
-          reduceMotion={reduceMotion}
-          start={supporterAnchor}
-        />
-      </View>
     </View>
   );
 }
