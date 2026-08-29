@@ -92,7 +92,7 @@ matrice de soumission sont suivis dans
 
 ## Règles produit et sécurité
 
-- Hub, Matchs, Social, Rank et Moi forment la navigation publique actuelle.
+- Hub, Matchs, Social, Rank et Magasin forment la navigation publique actuelle.
 - La Room reste un placeholder masqué jusqu'à demande explicite.
 - La direction UI actuelle est validée ; un refactor structurel ne doit pas la
   redessiner.

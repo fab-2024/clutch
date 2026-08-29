@@ -1,1 +1,1 @@
-export { ProfileScreen as default } from '@/src/features/profile';
+export { StoreHubScreen as default } from '@/src/features/shop';

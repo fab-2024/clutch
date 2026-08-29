@@ -68,7 +68,7 @@ risque d’outillage et ne doit pas être « corrigée » avec `--force`.
 
 ## 3. Suppression du compte
 
-Le parcours se trouve dans Moi → Paramètres → Compte et données. Il demande le
+Le parcours se trouve dans Magasin → Paramètres → Compte et données. Il demande le
 mot de passe, une confirmation `SUPPRIMER`, puis la fonction
 `clutch-account-delete` :
 
@@ -133,7 +133,7 @@ Avant soumission, compléter manuellement cette matrice :
 | Social : Faction/Cercle/Défis | à faire | à faire | à faire | à faire |
 | Rank : saison/classements/récompense | à faire | à faire | à faire | à faire |
 | Confidentialité, signalement et blocage | à faire | à faire | à faire | à faire |
-| Moi, compte et suppression sandbox | à faire | à faire | à faire | à faire |
+| Magasin, compte et suppression sandbox | à faire | à faire | à faire | à faire |
 | Achat/restauration sandbox | à faire | à faire | à faire | à faire |
 | Notifications réelles | à faire | n/a | à faire | n/a |
 | Liens application fermée/ouverte | à faire | n/a | à faire | n/a |

@@ -25,7 +25,7 @@ export const privacyDocument: LegalDocument = {
       title: 'Finalités',
       paragraphs: [
         'Ces données servent à authentifier le compte, afficher les matchs, régler les calls, calculer la progression, faire fonctionner les fonctions sociales, livrer les achats et améliorer la fiabilité de GRIFF.',
-        'La mesure d’usage repose sur ton consentement. La refuser ne bloque aucune fonction et tu peux changer d’avis à tout moment dans Moi → Paramètres → Confidentialité et sécurité.',
+        'La mesure d’usage repose sur ton consentement. La refuser ne bloque aucune fonction et tu peux changer d’avis à tout moment dans Magasin → Paramètres → Confidentialité et sécurité.',
         'GRIFF ne vend pas les données personnelles et ne les utilise pas pour suivre une personne entre plusieurs applications ou sites.',
       ],
     },

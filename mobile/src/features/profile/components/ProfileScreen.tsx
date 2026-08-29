@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import Settings2 from 'lucide-react-native/icons/settings-2';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -322,23 +323,21 @@ function ProfileHeader({
 }) {
   if (!publicView) {
     return (
-      <View style={styles.privateHeader}>
-        <GriffHeader
-          compact
-          economy={{ frags: frags ?? null, volts: volts ?? null }}
-          variant="wallet"
-        />
-        {onOpenSettings ? (
+      <GriffHeader
+        accessory={onOpenSettings ? (
           <Pressable
             accessibilityLabel="Ouvrir les paramètres"
             accessibilityRole="button"
             onPress={onOpenSettings}
             style={({ pressed }) => [styles.privateHeaderSettings, pressed && styles.pressed]}
           >
-            <Text style={styles.headerSettingsGlyph}>⚙</Text>
+            <Settings2 color={colors.textSecondary} size={20} strokeWidth={1.9} />
           </Pressable>
-        ) : null}
-      </View>
+        ) : undefined}
+        compact
+        economy={{ frags: frags ?? null, volts: volts ?? null }}
+        variant="wallet"
+      />
     );
   }
 
@@ -452,8 +451,7 @@ const styles = StyleSheet.create({
   blockedStateButtonText: { ...typography.action, color: '#080A0C' },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 22 },
   privateContent: { gap: 12 },
-  privateHeader: { position: 'relative', zIndex: 2 },
-  privateHeaderSettings: { position: 'absolute', top: 14, right: 14, width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderStrong },
+  privateHeaderSettings: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderStrong },
   header: { minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, back: { minHeight: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { ...typography.action, color: colors.text, letterSpacing: 0.6 }, headerActions: { flexDirection: 'row', alignItems: 'center', gap: 6 }, visibility: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { ...typography.label, color: colors.text, letterSpacing: 0.5 }, headerSettings: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, headerSettingsGlyph: { color: colors.text, fontSize: 17, lineHeight: 20, fontWeight: '900' },
   stateInset: { marginHorizontal: spacing.md },
   profileTools: { marginHorizontal: spacing.md, gap: 9 },

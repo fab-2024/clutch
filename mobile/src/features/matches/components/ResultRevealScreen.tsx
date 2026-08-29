@@ -13,7 +13,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { GriffLockup } from '@/src/components/brand/GriffLogo';
+import { GriffEmblem, GriffLockup } from '@/src/components/brand/GriffLogo';
 import { Screen } from '@/src/components/layout/Screen';
 import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
@@ -485,7 +485,7 @@ function RankMetric({ accent, grade, label, rank }: { accent?: string; grade: st
 }
 
 function RevealState({ action, copy, onPress, title }: { action?: string; copy: string; onPress?: () => void; title: string }) {
-  return <Screen><LinearGradient colors={['#0B1115', '#070A0E']} style={StyleSheet.absoluteFill} /><View style={styles.state}><View style={styles.stateMark}><Text style={styles.stateGlyph}>C</Text></View><Text style={styles.stateTitle}>{title}</Text><Text style={styles.stateCopy}>{copy}</Text>{action && onPress ? <Pressable accessibilityRole="button" onPress={onPress} style={styles.stateButton}><Text style={styles.stateButtonText}>{action}</Text></Pressable> : null}</View></Screen>;
+  return <Screen><LinearGradient colors={['#0B1115', '#070A0E']} style={StyleSheet.absoluteFill} /><View style={styles.state}><GriffEmblem size={64} style={styles.stateEmblem} /><Text style={styles.stateTitle}>{title}</Text><Text style={styles.stateCopy}>{copy}</Text>{action && onPress ? <Pressable accessibilityRole="button" onPress={onPress} style={styles.stateButton}><Text style={styles.stateButtonText}>{action}</Text></Pressable> : null}</View></Screen>;
 }
 
 function teamColor(tag: string, name: string) { return `hsl(${teamHue(tag, name)}, 72%, 59%)`; }
@@ -502,9 +502,6 @@ const styles = StyleSheet.create({
   topBar: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   topBarLandscape: { minHeight: 40 },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  brandMark: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  brandGlyph: { color: '#06090C', fontFamily: fonts.display, fontSize: 21, lineHeight: 23, letterSpacing: -2 },
-  brandText: { color: colors.text, fontFamily: fonts.bold, fontSize: 13, letterSpacing: 2.5 },
   backButton: { minHeight: 40, justifyContent: 'center', paddingRight: 12 },
   backText: { ...typography.action, color: colors.textMuted, letterSpacing: .5 },
   officialPill: { minHeight: 31, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, borderRadius: radius.pill, backgroundColor: '#0B1116', borderWidth: 1, borderColor: '#2A343D' },
@@ -601,8 +598,7 @@ const styles = StyleSheet.create({
   secondaryText: { ...typography.action, color: colors.textSubtle, letterSpacing: .35 },
   seenHint: { ...typography.caption, color: colors.textMuted, textAlign: 'center' },
   state: { flex: 1, minHeight: 540, padding: spacing.lg, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  stateMark: { width: 64, height: 64, marginBottom: 8, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  stateGlyph: { color: '#080A0D', fontFamily: fonts.display, fontSize: 36, lineHeight: 38, letterSpacing: -3 },
+  stateEmblem: { marginBottom: 8 },
   stateTitle: { ...typography.sectionTitle, color: colors.text, textAlign: 'center' },
   stateCopy: { ...typography.body, maxWidth: 320, color: colors.textMuted, textAlign: 'center' },
   stateButton: { minHeight: 49, marginTop: 10, paddingHorizontal: 18, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },

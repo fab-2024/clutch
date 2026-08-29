@@ -113,7 +113,7 @@ export default function GriffCore({
           style={[styles.core, { borderRadius: inner * 0.34, borderColor: palette.highlight }]}
         >
           <View style={styles.coreReflection} />
-          <GriffMark size={inner * 0.74} style={{ tintColor: palette.ink }} />
+          <GriffMark size={inner * 0.74} tintColor={palette.ink} />
           <View style={styles.coreCut} />
         </LinearGradient>
       </Animated.View>

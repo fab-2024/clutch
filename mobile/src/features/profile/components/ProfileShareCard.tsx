@@ -2,6 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Platform, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 
+import { GriffEmblem, GriffMark } from '@/src/components/brand/GriffLogo';
 import type { EquippedCosmetic } from '@/src/features/shop/types';
 import { publicAppUrl } from '@/src/config/release';
 import { colors, fonts, radius, spacing, typography } from '@/src/theme';
@@ -71,11 +72,11 @@ export default function ProfileShareCard({
     <View style={[styles.shell, { borderColor: palette.border }]}>
       <LinearGradient colors={palette.gradient} end={{ x: 1, y: 1 }} start={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
       <View style={[styles.glow, { backgroundColor: palette.accent }]} />
-      <Text style={[styles.watermark, { color: palette.accent }]}>C</Text>
+      <GriffMark decorative size={154} style={styles.watermark} tintColor={palette.accent} />
 
       <View style={styles.topline}>
         <View style={styles.brand}>
-          <View style={[styles.brandMark, { backgroundColor: palette.accent }]}><Text style={styles.brandGlyph}>C</Text></View>
+          <GriffEmblem size={38} />
           <View><Text style={styles.eyebrow}>CARTE DE PROFIL</Text><Text style={[styles.skinName, { color: palette.accent }]}>{cosmetic?.name?.toUpperCase() || 'CARTE NOIRE'}</Text></View>
         </View>
         <Text style={[styles.team, { color: palette.accent }]}>{teamTag || 'GRIFF'}</Text>
@@ -139,11 +140,9 @@ function formatNumber(value: number) {
 const styles = StyleSheet.create({
   shell: { position: 'relative', overflow: 'hidden', minHeight: 286, marginHorizontal: spacing.md, padding: 18, borderRadius: 28, borderWidth: 1, gap: 18 },
   glow: { position: 'absolute', width: 220, height: 220, right: -105, top: -110, borderRadius: 110, opacity: .17, boxShadow: '0 0 70px rgba(232,255,61,.14)' },
-  watermark: { position: 'absolute', right: -5, top: 38, fontFamily: fonts.display, fontSize: 154, lineHeight: 160, opacity: .055 },
+  watermark: { position: 'absolute', right: -5, top: 38, opacity: .055 },
   topline: { zIndex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   brand: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  brandMark: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  brandGlyph: { color: '#080A0C', fontFamily: fonts.display, fontSize: 23, lineHeight: 25 },
   eyebrow: { ...typography.eyebrow, color: colors.textMuted, letterSpacing: .7 },
   skinName: { ...typography.label, marginTop: 2, letterSpacing: .55 },
   team: { fontFamily: fonts.display, fontSize: 20, letterSpacing: .5 },

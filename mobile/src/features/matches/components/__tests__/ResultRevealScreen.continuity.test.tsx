@@ -51,7 +51,7 @@ jest.mock('react-native-safe-area-context', () => {
   const ReactNative = jest.requireActual('react-native');
   return { SafeAreaView: ReactNative.View };
 });
-jest.mock('@/src/components/brand/GriffLogo', () => ({ GriffLockup: () => null }));
+jest.mock('@/src/components/brand/GriffLogo', () => ({ GriffEmblem: () => null, GriffLockup: () => null }));
 jest.mock('@/src/components/ui/CurrencyIcon', () => ({ CurrencyIcon: () => null }));
 jest.mock('@/src/features/analytics/api', () => ({ trackAnalyticsEvent: jest.fn() }));
 jest.mock('@/src/features/ranking/components/RankEmblem', () => ({ RankEmblem: () => null }));

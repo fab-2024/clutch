@@ -1,6 +1,7 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { GriffLockup, GriffMark } from '@/src/components/brand/GriffLogo';
+import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
 import type { PlayerEconomy } from '@/src/features/economy/types';
@@ -8,12 +9,13 @@ import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors, fonts, typography } from '@/src/theme';
 
 type Props = {
+  accessory?: ReactNode;
   compact?: boolean;
   economy?: Pick<PlayerEconomy, 'frags' | 'volts'>;
   variant?: 'default' | 'wallet';
 };
 
-export function GriffHeader({ compact = false, economy, variant = 'default' }: Props = {}) {
+export function GriffHeader({ accessory, compact = false, economy, variant = 'default' }: Props = {}) {
   const { isCompactWidth, isShortLandscape } = useResponsiveLayout();
   const { frags, volts } = useEconomy();
   const displayedFrags = economy?.frags ?? frags;
@@ -21,6 +23,28 @@ export function GriffHeader({ compact = false, economy, variant = 'default' }: P
   const walletPresentation = variant === 'wallet';
   const narrowWallet = walletPresentation && isCompactWidth;
   const compactPresentation = compact || isShortLandscape;
+  const compactWallet = compactPresentation || narrowWallet;
+  const hasWalletAccessory = walletPresentation && accessory != null;
+  const narrowWalletAccessory = hasWalletAccessory && narrowWallet;
+  const economySummary = (
+    <View
+      accessible
+      accessibilityLabel={`${formatBalance(displayedFrags)} Frags, ${formatBalance(displayedVolts)} Volts`}
+      accessibilityRole="summary"
+      style={[
+        styles.economy,
+        walletPresentation && styles.economyWallet,
+        walletPresentation && compactWallet && styles.economyWalletCompact,
+        narrowWallet && styles.economyWalletNarrow,
+        narrowWalletAccessory && styles.economyWalletAccessoryNarrow,
+      ]}
+      testID="griff-header-economy"
+    >
+      <Balance compact={walletPresentation} kind="frags" label="FRAGS" value={displayedFrags} />
+      {walletPresentation ? <View style={styles.economyDivider} /> : null}
+      <Balance compact={walletPresentation} kind="volts" label="VOLTS" value={displayedVolts} />
+    </View>
+  );
 
   return (
     <View style={[
@@ -30,38 +54,23 @@ export function GriffHeader({ compact = false, economy, variant = 'default' }: P
       walletPresentation && isShortLandscape && styles.rootWalletLandscape,
       walletPresentation && compact && isShortLandscape && styles.rootWalletCompactLandscape,
       narrowWallet && styles.rootWalletNarrow,
+      hasWalletAccessory && styles.rootWalletAccessory,
+      narrowWalletAccessory && styles.rootWalletAccessoryNarrow,
     ]} testID={`griff-header-${variant}`}>
       {walletPresentation ? (
-        <View accessibilityLabel="GRIFF" accessibilityRole="image" style={[styles.walletBrand, compactPresentation && styles.walletBrandCompact]}>
-          <GriffMark
-            size={compactPresentation ? 36 : 40}
-            style={[styles.walletMark, compactPresentation && styles.walletMarkCompact]}
-          />
-          {narrowWallet ? null : <Text style={[styles.walletWord, compactPresentation && styles.walletWordCompact]}>GRIFF</Text>}
-          {narrowWallet ? null : <View style={[styles.walletDot, compactPresentation && styles.walletDotCompact]} />}
-        </View>
+        <GriffLockup width={narrowWalletAccessory ? 88 : narrowWallet ? 104 : compactPresentation ? 108 : 118} />
       ) : (
         <View style={styles.brandRow}>
           <GriffLockup width={96} />
         </View>
       )}
 
-      <View
-        accessible
-        accessibilityLabel={`${formatBalance(displayedFrags)} Frags, ${formatBalance(displayedVolts)} Volts`}
-        accessibilityRole="summary"
-        style={[
-          styles.economy,
-          walletPresentation && styles.economyWallet,
-          walletPresentation && compactPresentation && styles.economyWalletCompact,
-          narrowWallet && styles.economyWalletNarrow,
-        ]}
-        testID="griff-header-economy"
-      >
-        <Balance compact={walletPresentation} kind="frags" label="FRAGS" value={displayedFrags} />
-        {walletPresentation ? <View style={styles.economyDivider} /> : null}
-        <Balance compact={walletPresentation} kind="volts" label="VOLTS" value={displayedVolts} />
-      </View>
+      {hasWalletAccessory ? (
+        <View style={[styles.walletActions, narrowWalletAccessory && styles.walletActionsNarrow]}>
+          {economySummary}
+          {accessory}
+        </View>
+      ) : economySummary}
     </View>
   );
 }
@@ -139,41 +148,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 8,
   },
+  rootWalletAccessory: {
+    paddingHorizontal: 14,
+    gap: 8,
+  },
+  rootWalletAccessoryNarrow: {
+    paddingHorizontal: 8,
+    gap: 6,
+  },
   brandRow: {
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  walletBrand: {
-    minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  walletBrandCompact: { gap: 8 },
-  walletMark: {
-    width: 40,
-    height: 40,
-    tintColor: colors.volt,
-  },
-  walletMarkCompact: { width: 36, height: 36 },
-  walletWord: {
-    color: '#F8F7F4',
-    fontFamily: fonts.bold,
-    fontSize: 19,
-    lineHeight: 22,
-    letterSpacing: 3.2,
-  },
-  walletWordCompact: { fontSize: 17, lineHeight: 20, letterSpacing: 2.8 },
-  walletDot: {
-    width: 6,
-    height: 6,
-    marginLeft: -7,
-    marginTop: 15,
-    borderRadius: 3,
-    backgroundColor: colors.volt,
-  },
-  walletDotCompact: { marginLeft: -6, marginTop: 13 },
   economy: {
     flexShrink: 1,
     flexDirection: 'row',
@@ -192,6 +179,14 @@ const styles = StyleSheet.create({
   },
   economyWalletCompact: { width: 170, minHeight: 50, borderRadius: 17 },
   economyWalletNarrow: { flexShrink: 0 },
+  economyWalletAccessoryNarrow: { width: 162 },
+  walletActions: {
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  walletActionsNarrow: { gap: 4 },
   economyDivider: {
     width: 1,
     height: 32,

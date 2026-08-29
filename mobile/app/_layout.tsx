@@ -109,6 +109,7 @@ function RootNavigator() {
         <Stack.Screen name="legal/terms" />
         <Stack.Screen name="support" />
         <Stack.Screen name="settings-preview" options={{ animation: 'fade' }} />
+        <Stack.Screen name="store-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="shop-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="showcase-preview" options={{ animation: 'fade', orientation: Platform.OS === 'web' ? 'default' : 'landscape' }} />
         <Stack.Screen name="founder-pack-preview" options={{ animation: 'fade' }} />

@@ -3,8 +3,8 @@ import { Tabs } from 'expo-router';
 import type { LucideIcon } from 'lucide-react-native';
 import CalendarDays from 'lucide-react-native/icons/calendar-days';
 import House from 'lucide-react-native/icons/house';
+import Store from 'lucide-react-native/icons/store';
 import Trophy from 'lucide-react-native/icons/trophy';
-import UserRound from 'lucide-react-native/icons/user-round';
 import UsersRound from 'lucide-react-native/icons/users-round';
 import { StyleSheet, View } from 'react-native';
 
@@ -66,7 +66,7 @@ export default function TabsLayout() {
           href: null,
         }}
       />
-      <Tabs.Screen name="profile" options={{ title: 'Moi', tabBarIcon: ({ focused }) => <TabIcon compact={isShortLandscape} focused={focused} icon={UserRound} /> }} />
+      <Tabs.Screen name="profile" options={{ title: 'Magasin', tabBarIcon: ({ focused }) => <TabIcon compact={isShortLandscape} focused={focused} icon={Store} /> }} />
       <Tabs.Screen name="community" options={{ href: null }} />
     </Tabs>
   );

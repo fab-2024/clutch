@@ -26,6 +26,7 @@ jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, 
 jest.mock('lucide-react-native/icons/expand', () => ({ __esModule: true, default: 'Expand' }));
 jest.mock('lucide-react-native/icons/eye', () => ({ __esModule: true, default: 'Eye' }));
 jest.mock('lucide-react-native/icons/layers-2', () => ({ __esModule: true, default: 'Layers2' }));
+jest.mock('lucide-react-native/icons/settings-2', () => ({ __esModule: true, default: 'Settings2' }));
 jest.mock('lucide-react-native/icons/shopping-bag', () => ({ __esModule: true, default: 'ShoppingBag' }));
 jest.mock('lucide-react-native/icons/sparkles', () => ({ __esModule: true, default: 'Sparkles' }));
 jest.mock('lucide-react-native/icons/users-round', () => ({ __esModule: true, default: 'UsersRound' }));

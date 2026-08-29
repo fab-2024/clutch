@@ -34,7 +34,7 @@ export default function ShowcaseTopNavigation({
   return (
     <View style={styles.root}>
       <Pressable
-        accessibilityLabel="Revenir à Moi"
+        accessibilityLabel="Revenir au Magasin"
         accessibilityRole="button"
         onPress={onBack}
         style={({ pressed }) => [styles.back, pressed && styles.pressed]}

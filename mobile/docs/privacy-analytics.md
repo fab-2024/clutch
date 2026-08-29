@@ -22,7 +22,7 @@ Le schéma interdit les identifiants publicitaires, identifiants d’appareil,
 adresses IP applicatives et métadonnées libres. Les événements bruts restent
 dans `private.analytics_evenements`, hors Data API et sans droit de lecture
 direct pour les rôles mobiles. Le refus ne bloque aucune fonction et le choix
-peut être modifié dans Moi → Paramètres → Confidentialité et sécurité.
+peut être modifié dans Magasin → Paramètres → Confidentialité et sécurité.
 
 Clutch est réservé aux personnes de 15 ans ou plus. Seule la confirmation de
 cette condition est stockée dans `private.preferences_confidentialite` ; aucune
