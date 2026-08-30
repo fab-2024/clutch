@@ -33,6 +33,10 @@ jest.mock('@/src/features/matches/matchCenterNavigation', () => ({
 jest.mock('@/src/features/onboarding/components/TeamLogo', () => ({ __esModule: true, default: 'TeamLogo' }));
 jest.mock('@/src/features/profile/components/ProfileHeaderButton', () => ({ __esModule: true, default: 'ProfileHeaderButton' }));
 jest.mock('@/src/features/ranking/components/RankEmblem', () => ({ RankEmblem: 'RankEmblem' }));
+jest.mock('@/src/providers/AuthProvider', () => ({
+  useAuth: () => ({ profile: null, session: null }),
+}));
+jest.mock('../api', () => ({ loadHubData: jest.fn() }));
 jest.mock('../components/HubContextSlot', () => {
   const React = jest.requireActual('react');
   const { Text } = jest.requireActual('react-native');
@@ -112,6 +116,7 @@ describe('HubExperience restoration', () => {
     expect(screen.getByText('Ton classement')).toBeTruthy();
     expect(screen.getByText('RATING FRAGS')).toBeTruthy();
     expect(screen.getByText('RESTORED CONTEXT')).toBeTruthy();
+    expect(screen.getByTestId('hub-season-controls')).toBeTruthy();
     expect(screen.getByText('À SUIVRE')).toBeTruthy();
   });
 });

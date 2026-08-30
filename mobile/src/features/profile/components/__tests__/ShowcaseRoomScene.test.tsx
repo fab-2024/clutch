@@ -70,7 +70,7 @@ describe('Showcase room composition', () => {
     expect(screen.getByTestId('showcase-atmosphere-active')).toBeTruthy();
     expect(screen.getAllByLabelText('Maillot de Fnatic')).toHaveLength(2);
     expect(screen.getAllByLabelText('Trophée Premier Signal')).toHaveLength(2);
-    expect(screen.getAllByLabelText('Emblème de départ, zéro Frag')).toHaveLength(2);
+    expect(screen.getAllByLabelText('Emblème Bronze')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-frame-cadre-profil-1')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-title-titre-profil-1')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-core-apparence-core-1')).toHaveLength(2);
@@ -127,7 +127,7 @@ describe('Showcase room composition', () => {
     expect(screen.getByTestId('rank-emblem-artifact')).toBeTruthy();
   });
 
-  it('uses the zero badge at season start and the grade emblem after progression', async () => {
+  it('uses Bronze at season start and the earned grade after progression', async () => {
     const rankedData = {
       ...PREVIEW_PROFILE,
       ranking: {
@@ -155,7 +155,7 @@ describe('Showcase room composition', () => {
     );
 
     expect(screen.getAllByTestId('rank-emblem-artifact')).toHaveLength(2);
-    expect(screen.getByLabelText('Emblème de départ, zéro Frag')).toBeTruthy();
+    expect(screen.getByLabelText('Emblème Bronze')).toBeTruthy();
     expect(screen.getByLabelText('Emblème Argent')).toBeTruthy();
     expect(screen.queryByTestId('placement-artifact')).toBeNull();
   });

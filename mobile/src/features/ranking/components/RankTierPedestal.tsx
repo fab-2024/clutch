@@ -94,7 +94,6 @@ export function RankTierPedestal({
         <RankEmblem
           grade={gradeState}
           size={78}
-          starting={starting}
         />
       </View>
     </View>

@@ -438,7 +438,7 @@ function MyPositionCard({ row, scope }: { row: RankLeaderboardRow; scope: string
 
   return (
     <View style={[styles.meCard, { borderColor: accent + '88', backgroundColor: accent + '14' }]}>
-      <RankEmblem grade={row.grade} size={84} starting={starting} />
+      <RankEmblem grade={row.grade} size={84} />
       <View style={styles.meIdentity}>
         <Text style={[styles.meEyebrow, { color: accent }]}>TA POSITION</Text>
         <Text style={styles.meGrade}>{row.grade.libelle?.toUpperCase() || 'CLASSÉ'}</Text>
@@ -476,7 +476,7 @@ const LeaderboardRow = memo(function LeaderboardRow({
       ]}
     >
       <Text style={[styles.boardRank, row.me && styles.boardRankMe]}>{row.rank ? String(row.rank) : '—'}</Text>
-      <RankEmblem grade={row.grade} size={46} starting={starting} />
+      <RankEmblem grade={row.grade} size={46} />
       <View style={styles.boardIdentity}>
         <Text numberOfLines={1} style={styles.boardPseudo}>{row.pseudo}{row.me ? ' · TOI' : ''}</Text>
         <Text style={[styles.boardGrade, { color: accent }]}>{row.grade.libelle?.toUpperCase() || 'CLASSÉ'}</Text>
@@ -493,13 +493,12 @@ function RewardsSection({ dashboard }: { dashboard: RankDashboard }) {
   const compact = useWindowDimensions().width <= 340;
   const state = dashboard.state;
   const bestOrder = Number(state?.bestGrade?.ordre ?? state?.grade.ordre ?? -1);
-  const starting = !state || isZeroRank(state.frags);
 
   return (
     <View style={styles.sectionStack}>
       <View style={[styles.rewardIntro, compact && styles.rewardIntroCompact]}>
         <View style={[styles.rewardIntroMark, compact && styles.rewardIntroMarkCompact]}>
-          <RankEmblem grade={state?.bestGrade ?? state?.grade} size={compact ? 88 : 104} starting={starting} />
+          <RankEmblem grade={state?.bestGrade ?? state?.grade} size={compact ? 88 : 104} />
         </View>
         <View style={styles.rewardIntroCopy}>
           <Text style={styles.cardEyebrow}>MEILLEUR GRADE ATTEINT</Text>

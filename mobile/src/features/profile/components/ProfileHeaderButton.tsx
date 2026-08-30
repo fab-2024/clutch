@@ -6,6 +6,8 @@ import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, typography } from '@/src/theme';
 
+const PROFILE_AVATAR_SIZE = 36;
+
 type ProfileHeaderButtonProps = {
   preview?: boolean;
   pseudo?: string;
@@ -36,7 +38,7 @@ export default function ProfileHeaderButton({
         importantForAccessibility="no-hide-descendants"
         style={styles.avatar}
       >
-        <CosmeticAvatar cosmetics={equipped} label={pseudo} size={30} />
+        <CosmeticAvatar cosmetics={equipped} label={pseudo} size={PROFILE_AVATAR_SIZE} />
       </View>
       <View style={styles.copy}>
         <Text numberOfLines={1} style={styles.label}>PROFIL</Text>
@@ -50,10 +52,10 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     minWidth: 0,
-    minHeight: 44,
+    minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   avatar: {
     flexShrink: 0,
@@ -66,15 +68,15 @@ const styles = StyleSheet.create({
   label: {
     ...typography.metadata,
     color: colors.volt,
-    fontSize: 8,
-    lineHeight: 10,
+    fontSize: 9,
+    lineHeight: 11,
     letterSpacing: 0.55,
   },
   pseudo: {
     ...typography.label,
     color: colors.text,
-    fontSize: 9.5,
-    lineHeight: 11,
+    fontSize: 11,
+    lineHeight: 14,
     letterSpacing: -0.1,
   },
   pressed: {

@@ -3,7 +3,6 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
-import { isZeroRank } from '@/src/features/ranking/grades';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import { teamHue } from '@/src/utils/teams';
 
@@ -31,7 +30,6 @@ export default function ProfileVitrinePreviewStage({
     ?? null;
   const team = data?.favoriteTeam ?? null;
   const teamAccent = team ? `hsl(${teamHue(team.tag, team.nom)}, 72%, 58%)` : colors.textMuted;
-  const starting = Boolean(!loading && data && isZeroRank(data.ranking.frags));
   const description = loading
     ? 'Aperçu de la Vitrine en cours de chargement'
     : `Aperçu Vitrine de ${data?.pseudo ?? 'Supporter'}. Badge ${badge?.name ?? 'à débloquer'}, rang ${rankLabel}, équipe ${team?.nom ?? 'à choisir'}.`;
@@ -62,7 +60,7 @@ export default function ProfileVitrinePreviewStage({
           {loading ? (
             <View style={[styles.rankPlaceholder, { borderColor: rankAccent }]} />
           ) : (
-            <RankEmblem decorative grade={data?.ranking.grade} size={78} starting={starting} />
+            <RankEmblem decorative grade={data?.ranking.grade} size={78} />
           )}
           <Image resizeMode="contain" source={PEDESTAL_ASSET} style={styles.pedestal} />
           <Text numberOfLines={1} style={[styles.artifactName, { color: rankAccent }]}>{loading ? '—' : rankLabel}</Text>

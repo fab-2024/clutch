@@ -12,7 +12,6 @@ import { GriffProgress } from '@/src/components/ui/GriffProgress';
 import { Surface } from '@/src/components/ui/Surface';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
-import { isZeroRank } from '@/src/features/ranking/grades';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import { teamHue } from '@/src/utils/teams';
@@ -96,7 +95,6 @@ function ProgressSection({
   const progress = Math.max(0, Math.min(1, data?.level.progress ?? 0));
   const progressValue = Math.round(progress * 100);
   const frags = data?.ranking.frags ?? 0;
-  const starting = !loading && isZeroRank(frags);
   const levelLabel = loading ? 'NIVEAU —' : `NIVEAU ${level} · ${formatNumber(xp)} XP`;
   const description = loading
     ? 'Progression en cours de synchronisation'
@@ -122,7 +120,7 @@ function ProgressSection({
           </View>
 
           <View style={styles.progressIdentity}>
-            <RankEmblem grade={data?.ranking.grade} size={60} starting={starting} />
+            <RankEmblem grade={data?.ranking.grade} size={60} />
             <View style={styles.rankCopy}>
               <Text numberOfLines={1} style={[styles.rankName, { color: rankAccent }]}>
                 {loading ? 'SYNCHRO' : rankLabel}

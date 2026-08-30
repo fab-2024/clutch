@@ -1,11 +1,14 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import Check from 'lucide-react-native/icons/check';
+import Play from 'lucide-react-native/icons/play';
 import Sparkles from 'lucide-react-native/icons/sparkles';
 import Target from 'lucide-react-native/icons/target';
 import Trophy from 'lucide-react-native/icons/trophy';
+import UsersRound from 'lucide-react-native/icons/users-round';
 import type { ComponentType } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { Surface } from '@/src/components/ui/Surface';
@@ -34,9 +37,21 @@ type HubContextSlotProps = {
   now?: number;
 };
 
+type DailyMissionCard = {
+  colors: [string, string, string];
+  current: number;
+  eyebrow: string;
+  goal: number;
+  iconColor: string;
+  Icon: ComponentType<{ color?: string; fill?: string; size?: number; strokeWidth?: number }>;
+  key: 'faction' | 'call' | 'live' | 'social';
+  reward: number;
+  title: string;
+};
+
 export function HubContextSlot({ context, now = Date.now() }: HubContextSlotProps) {
   if (context.kind === 'mission') {
-    return <HubMissionChallengeCard mission={context.mission} now={now} />;
+    return <HubMissionChallengeCard mission={context.mission} />;
   }
 
   const presentation = contextPresentation(context, now);
@@ -85,87 +100,173 @@ export function HubContextSlot({ context, now = Date.now() }: HubContextSlotProp
   );
 }
 
-function HubMissionChallengeCard({ mission, now }: { mission: HubFactionMission; now: number }) {
-  const goal = Math.max(1, mission.goal);
-  const current = Math.min(Math.max(0, mission.progress), goal);
-  const contribution = formatNumber(Math.max(0, mission.personalContribution));
-  const participants = formatNumber(Math.max(0, mission.participants));
+function HubMissionChallengeCard({ mission }: { mission: HubFactionMission }) {
+  const { width } = useWindowDimensions();
   const team = (mission.team.tag || mission.team.name || 'FACTION').toUpperCase();
-  const deadline = missionDeadlineLabel(mission.endsAt, now);
+  const cards = dailyMissionCards(mission, team);
+  const completed = cards.filter((card) => card.current >= card.goal).length;
+  const cardWidth = Math.min(360, Math.max(256, width - 68));
+  const openMissions = () => openContext({ kind: 'mission', mission });
 
   return (
     <View style={styles.missionSection}>
       <View style={styles.missionSectionHeader}>
         <Text style={styles.missionSectionTitle}>DÉFIS DU JOUR</Text>
-        <View style={styles.missionCountPill}>
-          <Text style={styles.missionCount}>1 ACTIF</Text>
+        <Pressable
+          accessibilityLabel={`Voir les quatre défis du jour, ${completed} terminé${completed === 1 ? '' : 's'}`}
+          accessibilityRole="button"
+          onPress={openMissions}
+          style={({ pressed }) => [styles.missionCountPill, pressed && styles.pressed]}
+        >
+          <Text style={styles.missionCount}>{completed} / {cards.length}</Text>
           <ChevronRight color={colors.text} size={18} strokeWidth={2.4} />
-        </View>
+        </Pressable>
       </View>
 
-      <Pressable
-        accessibilityHint="Ouvre le détail des missions dans Défis"
-        accessibilityLabel={`Mission ${mission.title}. Progression ${current} sur ${goal}. Ta contribution ${contribution}. ${formatFutureTime(mission.endsAt, now).toLowerCase()}.`}
-        accessibilityRole="button"
-        onPress={() => openContext({ kind: 'mission', mission })}
-        style={({ pressed }) => [styles.missionPressable, pressed && styles.pressed]}
-        testID="hub-context-mission"
+      <ScrollView
+        contentContainerStyle={styles.missionRail}
+        decelerationRate="fast"
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToAlignment="start"
+        snapToInterval={cardWidth + 10}
+        style={styles.missionRailViewport}
+        testID="hub-mission-rail"
       >
-        <LinearGradient
-          colors={['#FFC400', '#D98A00', '#7D3F00']}
-          end={{ x: 1, y: 1 }}
-          start={{ x: 0, y: 0 }}
-          style={styles.missionCard}
-        >
-          <View
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            pointerEvents="none"
-            style={styles.missionBackdropIcon}
-          >
-            <Target color="rgba(67,35,0,.28)" size={190} strokeWidth={5.5} />
-          </View>
-          <LinearGradient
-            colors={['rgba(255,220,74,.14)', 'rgba(72,28,0,.08)', 'rgba(29,12,0,.44)']}
-            end={{ x: 1, y: 1 }}
-            start={{ x: 0, y: 0 }}
-            style={StyleSheet.absoluteFill}
+        {cards.map((card) => (
+          <DailyMissionCardView
+            card={card}
+            cardWidth={cardWidth}
+            key={card.key}
+            onPress={openMissions}
           />
-
-          <View style={styles.missionCopy}>
-            <View style={styles.missionEyebrowPlate}>
-              <Text numberOfLines={1} style={styles.missionEyebrow}>MISSION {team}</Text>
-            </View>
-            <View style={styles.missionTitlePlate}>
-              <Text
-                adjustsFontSizeToFit
-                minimumFontScale={0.72}
-                numberOfLines={3}
-                style={styles.missionTitle}
-              >
-                {mission.title.toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.missionMetaPlate}>
-              <Text numberOfLines={1} style={styles.missionMeta}>
-                TA CONTRIBUTION {contribution} · {participants} PARTICIPANT{mission.participants === 1 ? '' : 'S'}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.missionBottomRow}>
-            <View style={styles.missionProgressPill}>
-              <Text style={styles.missionProgress}>{current}/{goal}</Text>
-            </View>
-            <View style={styles.missionActionPill}>
-              <Text style={styles.missionDeadline}>{deadline}</Text>
-              <Text style={styles.missionAction}>CONTINUER</Text>
-            </View>
-          </View>
-        </LinearGradient>
-      </Pressable>
+        ))}
+      </ScrollView>
     </View>
   );
+}
+
+function DailyMissionCardView({
+  card,
+  cardWidth,
+  onPress,
+}: {
+  card: DailyMissionCard;
+  cardWidth: number;
+  onPress: () => void;
+}) {
+  const { Icon } = card;
+
+  return (
+    <Pressable
+      accessibilityHint="Ouvre le détail des missions dans Défis"
+      accessibilityLabel={`${card.eyebrow}. ${card.title}. Progression ${card.current} sur ${card.goal}. Récompense ${card.reward} Frags.`}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.missionPressable, { width: cardWidth }, pressed && styles.pressed]}
+      testID={`hub-daily-mission-${card.key}`}
+    >
+      <LinearGradient
+        colors={card.colors}
+        end={{ x: 1, y: 1 }}
+        start={{ x: 0, y: 0 }}
+        style={styles.missionCard}
+      >
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          pointerEvents="none"
+          style={styles.missionBackdropIcon}
+        >
+          <Icon color={card.iconColor} size={154} strokeWidth={5.2} />
+        </View>
+        <LinearGradient
+          colors={['rgba(255,255,255,.10)', 'rgba(20,12,0,.04)', 'rgba(3,8,12,.32)']}
+          end={{ x: 1, y: 1 }}
+          start={{ x: 0, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+
+        <View style={styles.missionCopy}>
+          <View style={styles.missionEyebrowPlate}>
+            <Text numberOfLines={1} style={styles.missionEyebrow}>{card.eyebrow}</Text>
+          </View>
+          <View style={styles.missionTitlePlate}>
+            <Text
+              adjustsFontSizeToFit
+              minimumFontScale={0.68}
+              numberOfLines={2}
+              style={styles.missionTitle}
+            >
+              {card.title}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.missionBottomRow}>
+          <View style={styles.missionProgressPill}>
+            <Text style={styles.missionProgress}>{card.current}/{card.goal}</Text>
+          </View>
+          <View style={styles.missionRewardPill}>
+            <Text style={styles.missionReward}>+{card.reward} FRAGS</Text>
+          </View>
+        </View>
+      </LinearGradient>
+    </Pressable>
+  );
+}
+
+function dailyMissionCards(mission: HubFactionMission, team: string): DailyMissionCard[] {
+  const factionGoal = Math.max(1, mission.goal);
+
+  // The Hub API currently exposes only the faction mission. The other three
+  // cards are presentation placeholders until their mission data is available.
+  return [
+    {
+      colors: ['#F6B900', '#D58700', '#713500'],
+      current: Math.min(Math.max(0, mission.progress), factionGoal),
+      eyebrow: `MISSION ${team}`,
+      goal: factionGoal,
+      iconColor: 'rgba(102,55,0,.30)',
+      Icon: Target,
+      key: 'faction',
+      reward: 25,
+      title: `${factionGoal} CALLS EN FACTION`,
+    },
+    {
+      colors: ['#00AD72', '#007750', '#003C2B'],
+      current: 0,
+      eyebrow: 'MISSION CALL',
+      goal: 1,
+      iconColor: 'rgba(0,62,45,.34)',
+      Icon: Check,
+      key: 'call',
+      reward: 30,
+      title: 'VALIDE 1 CALL',
+    },
+    {
+      colors: ['#842CE5', '#5115B4', '#28036A'],
+      current: 0,
+      eyebrow: 'MISSION LIVE',
+      goal: 2,
+      iconColor: 'rgba(43,4,103,.36)',
+      Icon: Play,
+      key: 'live',
+      reward: 20,
+      title: 'SUIS 2 MATCHS',
+    },
+    {
+      colors: ['#178CE8', '#075DAD', '#052D65'],
+      current: 0,
+      eyebrow: 'MISSION SOCIAL',
+      goal: 1,
+      iconColor: 'rgba(0,44,98,.36)',
+      Icon: UsersRound,
+      key: 'social',
+      reward: 25,
+      title: 'INVITE 1 SUPPORTER',
+    },
+  ];
 }
 
 export function HubContextSkeleton() {
@@ -289,23 +390,6 @@ function formatPastTime(value: string, now: number) {
   return days === 1 ? 'HIER' : `IL Y A ${days} J`;
 }
 
-function formatFutureTime(value: string, now: number) {
-  const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) return 'MISSION EN COURS';
-  const minutes = Math.max(0, Math.ceil((timestamp - now) / 60_000));
-  if (minutes < 60) return `SE TERMINE DANS ${Math.max(1, minutes)} MIN`;
-  const hours = Math.ceil(minutes / 60);
-  if (hours < 48) return `SE TERMINE DANS ${hours} H`;
-  return `SE TERMINE DANS ${Math.ceil(hours / 24)} J`;
-}
-
-function missionDeadlineLabel(value: string, now: number) {
-  const label = formatFutureTime(value, now);
-  return label.startsWith('SE TERMINE DANS ')
-    ? label.replace('SE TERMINE DANS ', 'FIN · ')
-    : label;
-}
-
 function rewardCategory(reward: HubReward) {
   const slots: Record<string, string> = {
     apparence_core: 'Apparence de Core',
@@ -382,93 +466,89 @@ const styles = StyleSheet.create({
     letterSpacing: 0.35,
   },
   missionPressable: {
-    width: '100%',
     overflow: 'hidden',
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ECA900',
-    backgroundColor: '#9D5800',
+    borderColor: 'rgba(255,255,255,.14)',
+    backgroundColor: '#10151A',
+  },
+  missionRailViewport: {
+    marginRight: -spacing.md,
+    overflow: 'visible',
+  },
+  missionRail: {
+    gap: 10,
+    paddingRight: 18,
   },
   missionCard: {
-    minHeight: 224,
+    height: 170,
     overflow: 'hidden',
   },
   missionBackdropIcon: {
     position: 'absolute',
     zIndex: 0,
-    top: 2,
-    right: -22,
-    width: 208,
-    height: 208,
+    top: -4,
+    right: -12,
+    width: 170,
+    height: 170,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ rotate: '-8deg' }],
+    transform: [{ rotate: '-7deg' }],
   },
   missionCopy: {
     zIndex: 2,
-    padding: 15,
-    paddingBottom: 68,
+    padding: 13,
+    paddingBottom: 58,
     alignItems: 'flex-start',
   },
   missionEyebrowPlate: {
-    maxWidth: '76%',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 7,
+    maxWidth: '72%',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
     backgroundColor: 'rgba(6,8,9,.88)',
   },
   missionEyebrow: {
     ...typography.action,
     color: colors.volt,
-    letterSpacing: 0.6,
+    fontFamily: typography.metricSmall.fontFamily,
+    fontSize: 14,
+    lineHeight: 16,
+    letterSpacing: 0.2,
   },
   missionTitlePlate: {
-    maxWidth: '82%',
-    marginTop: 3,
-    paddingHorizontal: 11,
-    paddingVertical: 7,
-    borderRadius: 8,
+    maxWidth: '78%',
+    marginTop: 2,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 6,
     backgroundColor: 'rgba(6,8,9,.94)',
   },
   missionTitle: {
     ...typography.displayMedium,
     color: '#FFFFFF',
-    fontSize: 32,
-    lineHeight: 31,
-    letterSpacing: -0.45,
-  },
-  missionMetaPlate: {
-    maxWidth: '84%',
-    marginTop: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: 'rgba(6,8,9,.72)',
-  },
-  missionMeta: {
-    ...typography.caption,
-    color: '#E8EAEC',
-    fontFamily: typography.control.fontFamily,
-    letterSpacing: 0.2,
+    fontSize: 31,
+    lineHeight: 29,
+    letterSpacing: -0.35,
   },
   missionBottomRow: {
     position: 'absolute',
     zIndex: 3,
-    left: 14,
-    right: 14,
-    bottom: 13,
+    left: 12,
+    right: 12,
+    bottom: 11,
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
   missionProgressPill: {
-    minWidth: 82,
-    minHeight: 44,
-    paddingHorizontal: 12,
+    minWidth: 61,
+    minHeight: 35,
+    paddingHorizontal: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 11,
+    borderRadius: 8,
     backgroundColor: 'rgba(6,8,9,.9)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,.2)',
@@ -476,28 +556,24 @@ const styles = StyleSheet.create({
   missionProgress: {
     ...typography.metricSmall,
     color: '#FFFFFF',
+    fontSize: 17,
+    lineHeight: 19,
   },
-  missionActionPill: {
-    minWidth: 124,
-    minHeight: 44,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    alignItems: 'flex-end',
+  missionRewardPill: {
+    minWidth: 104,
+    minHeight: 35,
+    paddingHorizontal: 11,
+    alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 11,
+    borderRadius: 9,
     backgroundColor: colors.volt,
   },
-  missionDeadline: {
-    ...typography.caption,
-    color: '#323A00',
-    fontSize: 9,
-    lineHeight: 11,
-  },
-  missionAction: {
-    ...typography.action,
+  missionReward: {
+    ...typography.control,
     color: '#080B0D',
-    lineHeight: 14,
-    letterSpacing: 0.25,
+    fontSize: 14,
+    lineHeight: 17,
+    letterSpacing: -0.1,
   },
   accent: {
     position: 'absolute',

@@ -10,16 +10,13 @@ import type {
   SeasonalGradeState,
   SeasonalGradeSummary,
 } from '../grades';
-import { gradeAccent, ZERO_RANK_ACCENT } from '../grades';
+import { gradeDefinition } from '../grades';
 
 type Props = {
   decorative?: boolean;
   grade?: SeasonalGradeState | SeasonalGradeSummary | null;
   size?: number;
-  starting?: boolean;
 };
-
-const ZERO_RANK_ASSET = require('../../../../assets/rank/rank-zero-badge-v2-black.png');
 
 const RANK_ASSETS: Record<SeasonalGradeKey, ImageSourcePropType> = {
   bronze: require('../../../../assets/rank/bronze-transparent.png'),
@@ -31,15 +28,16 @@ const RANK_ASSETS: Record<SeasonalGradeKey, ImageSourcePropType> = {
   eternel: require('../../../../assets/rank/eternel-transparent.png'),
 };
 
-/** Shared premium rank artwork used at every scale across the Rank experience. */
-export function RankEmblem({ decorative = false, grade, size = 72, starting = false }: Props) {
-  const accent = starting ? ZERO_RANK_ACCENT : gradeAccent(grade);
+/** Shared premium rank artwork used at every scale across the app. */
+export function RankEmblem({ decorative = false, grade, size = 72 }: Props) {
   const key = grade?.cle ?? 'bronze';
+  const accent = gradeDefinition(key)?.accent ?? '#C57943';
+  const label = grade?.libelle ?? 'Bronze';
 
   return (
     <View
       accessibilityElementsHidden={decorative || undefined}
-      accessibilityLabel={decorative ? undefined : starting ? 'Emblème de départ, zéro Frag' : 'Emblème ' + (grade?.libelle ?? 'classé')}
+      accessibilityLabel={decorative ? undefined : `Emblème ${label}`}
       accessible={!decorative}
       importantForAccessibility={decorative ? 'no-hide-descendants' : undefined}
       style={[styles.root, { height: size, width: size }]}
@@ -56,8 +54,9 @@ export function RankEmblem({ decorative = false, grade, size = 72, starting = fa
       />
       <Image
         resizeMode="contain"
-        source={starting ? ZERO_RANK_ASSET : RANK_ASSETS[key]}
+        source={RANK_ASSETS[key]}
         style={{ height: size, width: size }}
+        testID="rank-emblem-image"
       />
     </View>
   );

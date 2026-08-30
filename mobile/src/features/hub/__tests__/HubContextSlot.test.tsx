@@ -7,9 +7,12 @@ import { HubContextSkeleton, HubContextSlot } from '../components/HubContextSlot
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, default: 'ChevronRight' }));
+jest.mock('lucide-react-native/icons/check', () => ({ __esModule: true, default: 'Check' }));
+jest.mock('lucide-react-native/icons/play', () => ({ __esModule: true, default: 'Play' }));
 jest.mock('lucide-react-native/icons/sparkles', () => ({ __esModule: true, default: 'Sparkles' }));
 jest.mock('lucide-react-native/icons/target', () => ({ __esModule: true, default: 'Target' }));
 jest.mock('lucide-react-native/icons/trophy', () => ({ __esModule: true, default: 'Trophy' }));
+jest.mock('lucide-react-native/icons/users-round', () => ({ __esModule: true, default: 'UsersRound' }));
 jest.mock('react-native-reanimated', () => {
   const ReactNative = jest.requireActual('react-native');
   const identity = (value: number) => value;
@@ -107,18 +110,23 @@ describe('HubContextSlot', () => {
     });
   });
 
-  it('exposes mission progress and opens the missions surface in Défis', async () => {
+  it('exposes four daily missions in a peeking rail and opens Défis', async () => {
     const screen = await render(<HubContextSlot context={MISSION_CONTEXT} now={NOW} />);
-    const slot = screen.getByTestId('hub-context-mission');
+    const factionMission = screen.getByTestId('hub-daily-mission-faction');
+    const rail = screen.getByTestId('hub-mission-rail');
 
-    expect(slot.props.accessibilityLabel).toContain('Progression 8 sur 12');
+    expect(factionMission.props.accessibilityLabel).toContain('Progression 8 sur 12');
     expect(screen.getByText('DÉFIS DU JOUR')).toBeTruthy();
-    expect(screen.getByText('1 ACTIF')).toBeTruthy();
-    expect(screen.getByText('VERROUILLER 12 CALLS EN FACTION')).toBeTruthy();
-    expect(screen.getByText('TA CONTRIBUTION 3 · 6 PARTICIPANTS')).toBeTruthy();
+    expect(screen.getByText('0 / 4')).toBeTruthy();
+    expect(screen.getByText('12 CALLS EN FACTION')).toBeTruthy();
+    expect(screen.getByText('VALIDE 1 CALL')).toBeTruthy();
+    expect(screen.getByText('SUIS 2 MATCHS')).toBeTruthy();
+    expect(screen.getByText('INVITE 1 SUPPORTER')).toBeTruthy();
     expect(screen.getByText('8/12')).toBeTruthy();
-    expect(screen.getByText('CONTINUER')).toBeTruthy();
-    fireEvent.press(slot);
+    expect(screen.getAllByTestId(/^hub-daily-mission-/)).toHaveLength(4);
+    expect(rail.props.horizontal).toBe(true);
+    expect(rail.props.snapToInterval).toBeGreaterThan(0);
+    fireEvent.press(factionMission);
 
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/(tabs)/social/missions');
   });

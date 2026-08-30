@@ -28,7 +28,7 @@ import {
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
-import { gradeAccent, isZeroRank } from '@/src/features/ranking/grades';
+import { gradeAccent } from '@/src/features/ranking/grades';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, fonts, layout, spacing, typography } from '@/src/theme';
 
@@ -218,6 +218,8 @@ export function HubExperience({
             {loading ? <HubContextSkeleton /> : contextualItem ? <HubContextSlot context={contextualItem} /> : null}
           </View>
         ) : null}
+
+        <SeasonProgressControls />
 
         {!loading && hub.upNext.length ? (
           <View>
@@ -435,7 +437,6 @@ function UpNextMatchCard({
 function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }) {
   const { isCompactWidth } = useResponsiveLayout();
   const grade = hub.frags?.grade;
-  const starting = Boolean(hub.frags && isZeroRank(hub.frags.frags));
   const gradeLabel = loading
     ? '—'
     : grade?.libelle?.toUpperCase() || 'NON CLASSÉ';
@@ -443,36 +444,17 @@ function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }
   const accent = loading ? '#7C8790' : gradeAccent(grade);
   const seasonContext = hub.seasonName?.toUpperCase() ?? 'SAISON EN COURS';
   const emblemSize = isCompactWidth ? 78 : 96;
-  const openRank = () => router.push('/(tabs)/rank');
 
   return (
     <View style={styles.seasonSection} testID="hub-season-ranking">
       <View style={styles.seasonHeader}>
         <Text numberOfLines={1} style={styles.seasonHeaderTitle}>Ton classement</Text>
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={styles.seasonDots}
-        >
-          {SEASON_HEADER_DOTS.map((dot) => (
-            <View key={dot} style={[styles.seasonDot, dot === 0 && styles.seasonDotActive]} />
-          ))}
-        </View>
-        <Pressable
-          accessibilityLabel="Voir mon classement"
-          accessibilityRole="button"
-          onPress={openRank}
-          style={({ pressed }) => [styles.seasonHeaderAction, pressed && styles.pressed]}
-        >
-          <Text style={styles.seasonHeaderActionText}>Voir</Text>
-          <ChevronRight color={colors.text} size={18} strokeWidth={2.2} />
-        </Pressable>
       </View>
 
       <Pressable
         accessibilityLabel={'Ouvrir ma saison, rang ' + gradeLabel + ', ' + frags + ' Frags'}
         accessibilityRole="button"
-        onPress={openRank}
+        onPress={openRankScreen}
         style={({ pressed }) => [
           styles.seasonCard,
           { borderColor: withAlpha(accent, .72) },
@@ -501,7 +483,7 @@ function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }
             loading && styles.seasonEmblemLoading,
           ]}
         >
-          <RankEmblem grade={grade} size={emblemSize} starting={starting} />
+          <RankEmblem grade={grade} size={emblemSize} />
         </View>
         <View style={styles.seasonIdentity}>
           <Text numberOfLines={1} style={styles.seasonContext}>{seasonContext}</Text>
@@ -528,6 +510,31 @@ function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }
           </View>
           <ChevronRight color="#AEB7BF" size={22} strokeWidth={2.4} />
         </View>
+      </Pressable>
+    </View>
+  );
+}
+
+function SeasonProgressControls() {
+  return (
+    <View style={styles.seasonControls} testID="hub-season-controls">
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={styles.seasonDots}
+      >
+        {SEASON_HEADER_DOTS.map((dot) => (
+          <View key={dot} style={[styles.seasonDot, dot === 0 && styles.seasonDotActive]} />
+        ))}
+      </View>
+      <Pressable
+        accessibilityLabel="Voir mon classement"
+        accessibilityRole="button"
+        onPress={openRankScreen}
+        style={({ pressed }) => [styles.seasonHeaderAction, pressed && styles.pressed]}
+      >
+        <Text style={styles.seasonHeaderActionText}>Voir</Text>
+        <ChevronRight color={colors.text} size={18} strokeWidth={2.2} />
       </Pressable>
     </View>
   );
@@ -579,6 +586,10 @@ function prepareMatchCenter(match: MatchCenterTarget, userId?: string) {
   if (userId) {
     void prefetchMatchCenterData({ matchId: match.id, userId }).catch(() => undefined);
   }
+}
+
+function openRankScreen() {
+  router.push('/(tabs)/rank');
 }
 
 function formatNumber(value: number) {
@@ -814,10 +825,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   seasonHeader: {
-    minHeight: 44,
+    minHeight: 28,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
   },
   seasonHeaderTitle: {
     flex: 1,
@@ -847,7 +857,16 @@ const styles = StyleSheet.create({
     shadowOpacity: .38,
     shadowRadius: 8,
   },
+  seasonControls: {
+    position: 'relative',
+    minHeight: 44,
+    marginHorizontal: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   seasonHeaderAction: {
+    position: 'absolute',
+    right: 0,
     minWidth: 74,
     minHeight: 44,
     paddingHorizontal: 12,

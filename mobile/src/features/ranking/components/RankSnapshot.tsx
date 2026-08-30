@@ -32,7 +32,7 @@ export function RankSnapshot({ seasonName, state }: RankSnapshotProps) {
       testID="rank-snapshot"
     >
       <View style={[styles.signal, { backgroundColor: accent }]} />
-      <RankEmblem grade={state.grade} size={compact ? 42 : 66} starting={starting} />
+      <RankEmblem grade={state.grade} size={compact ? 42 : 66} />
 
       <View style={styles.copy}>
         <Text numberOfLines={1} style={[styles.eyebrow, compact && styles.eyebrowCompact, { color: accent }]}>
