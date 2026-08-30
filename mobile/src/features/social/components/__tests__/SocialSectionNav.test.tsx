@@ -13,6 +13,7 @@ jest.mock('expo-router', () => ({
   router: { replace: jest.fn() },
   usePathname: () => mockPathname,
 }));
+jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('lucide-react-native/icons/shield', () => ({ __esModule: true, default: 'Shield' }));
 jest.mock('lucide-react-native/icons/swords', () => ({ __esModule: true, default: 'Swords' }));
 jest.mock('lucide-react-native/icons/users-round', () => ({ __esModule: true, default: 'UsersRound' }));
