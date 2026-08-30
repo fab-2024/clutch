@@ -14,11 +14,15 @@ const mockReloadMissions = jest.fn(async () => undefined);
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), replace: jest.fn() },
 }));
+jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, default: 'ChevronRight' }));
 jest.mock('lucide-react-native/icons/circle-alert', () => ({ __esModule: true, default: 'CircleAlert' }));
 jest.mock('lucide-react-native/icons/circle-check', () => ({ __esModule: true, default: 'CircleCheck' }));
 jest.mock('lucide-react-native/icons/flame', () => ({ __esModule: true, default: 'Flame' }));
 jest.mock('lucide-react-native/icons/inbox', () => ({ __esModule: true, default: 'Inbox' }));
+jest.mock('lucide-react-native/icons/link-2', () => ({ __esModule: true, default: 'Link2' }));
+jest.mock('lucide-react-native/icons/swords', () => ({ __esModule: true, default: 'Swords' }));
+jest.mock('lucide-react-native/icons/trending-up', () => ({ __esModule: true, default: 'TrendingUp' }));
 jest.mock('lucide-react-native/icons/zap', () => ({ __esModule: true, default: 'Zap' }));
 jest.mock('react-native-reanimated', () => {
   const ReactNative = jest.requireActual('react-native');
@@ -89,7 +93,7 @@ describe('DuelsScreen missions integration', () => {
     );
 
     expect(screen.getByText('TES RIVALITÉS')).toBeTruthy();
-    expect(screen.getByText('Tu as reçu un code ?')).toBeTruthy();
+    expect(screen.getByText('REJOINDRE UN RIVAL')).toBeTruthy();
     expect(screen.getByText('DOUBLE CALL')).toBeTruthy();
 
     await act(async () => {
@@ -105,7 +109,7 @@ describe('DuelsScreen missions integration', () => {
       fireEvent.press(screen.getByRole('button', { name: 'Fermer Missions de duo' }));
     });
     await waitFor(() => expect(screen.queryByTestId('missions-sheet')).toBeNull());
-    expect(screen.getByText('Tu as reçu un code ?')).toBeTruthy();
+    expect(screen.getByText('REJOINDRE UN RIVAL')).toBeTruthy();
   }, 10_000);
 
   it('keeps the duel invitation entry working after the mission fusion', async () => {
@@ -113,6 +117,10 @@ describe('DuelsScreen missions integration', () => {
     const screen = await render(
       <DuelsScreen previewData={{ duels: [DUEL_FIXTURE], missions: FRIEND_MISSIONS_FIXTURE }} />,
     );
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole('button', { name: 'Entrer un code de duel' }));
+    });
 
     const invitationButtonBeforeInput = screen.getByRole('button', { name: 'OUVRIR L’INVITATION' });
     expect(invitationButtonBeforeInput.props.accessibilityState).toEqual({ disabled: true });
