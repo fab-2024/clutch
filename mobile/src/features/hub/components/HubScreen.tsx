@@ -28,7 +28,7 @@ import {
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
-import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
+import { gradeAccent, isZeroRank } from '@/src/features/ranking/grades';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, fonts, layout, spacing, typography } from '@/src/theme';
 
@@ -51,6 +51,8 @@ const GAME_BACKGROUNDS: Record<HubGame, ImageSourcePropType> = {
   rocket_league: require('../../../../assets/onboarding/rocket-league-arena.png'),
   valorant: require('../../../../assets/onboarding/valorant-characters.jpg'),
 };
+
+const SEASON_HEADER_DOTS = [0, 1, 2, 3] as const;
 
 const EMPTY_HUB: HubData = {
   seasonId: null,
@@ -207,15 +209,15 @@ export function HubExperience({
           )}
         </View>
 
+        <View>
+          <SeasonProgressCard hub={hub} loading={loading} />
+        </View>
+
         {loading || contextualItem ? (
           <View style={styles.contextSlot}>
             {loading ? <HubContextSkeleton /> : contextualItem ? <HubContextSlot context={contextualItem} /> : null}
           </View>
         ) : null}
-
-        <View>
-          <SeasonProgressCard hub={hub} loading={loading} />
-        </View>
 
         {!loading && hub.upNext.length ? (
           <View>
@@ -431,47 +433,103 @@ function UpNextMatchCard({
 }
 
 function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }) {
+  const { isCompactWidth } = useResponsiveLayout();
   const grade = hub.frags?.grade;
   const starting = Boolean(hub.frags && isZeroRank(hub.frags.frags));
   const gradeLabel = loading
     ? '—'
     : grade?.libelle?.toUpperCase() || 'NON CLASSÉ';
   const frags = loading || !hub.frags ? '—' : formatNumber(hub.frags.frags);
-  const accent = starting ? ZERO_RANK_ACCENT : gradeAccent(grade);
+  const accent = loading ? '#7C8790' : gradeAccent(grade);
   const seasonContext = hub.seasonName?.toUpperCase() ?? 'SAISON EN COURS';
+  const emblemSize = isCompactWidth ? 78 : 96;
+  const openRank = () => router.push('/(tabs)/rank');
 
   return (
-    <Pressable
-      accessibilityLabel={'Ouvrir ma saison, rang ' + gradeLabel + ', ' + frags + ' Frags'}
-      accessibilityRole="button"
-      onPress={() => router.push('/(tabs)/rank')}
-      style={({ pressed }) => [styles.seasonCard, pressed && styles.pressed]}
-    >
-      <View
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        style={[styles.seasonEmblem, loading && styles.seasonEmblemLoading]}
-      >
-        <RankEmblem grade={grade} size={58} starting={starting} />
-      </View>
-      <View style={styles.seasonIdentity}>
-        <Text style={styles.seasonKicker}>CLASSEMENT ACTUEL</Text>
-        <Text numberOfLines={1} style={[styles.seasonGrade, { color: accent }]}>{gradeLabel}</Text>
-        <Text numberOfLines={1} style={styles.seasonContext}>{seasonContext}</Text>
-      </View>
-      <View style={styles.seasonMetric}>
-        <Text style={styles.seasonMetricLabel}>RATING FRAGS</Text>
-        <Text
-          adjustsFontSizeToFit
-          minimumFontScale={.76}
-          numberOfLines={1}
-          style={styles.seasonMetricValue}
+    <View style={styles.seasonSection} testID="hub-season-ranking">
+      <View style={styles.seasonHeader}>
+        <Text numberOfLines={1} style={styles.seasonHeaderTitle}>Ton classement</Text>
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={styles.seasonDots}
         >
-          {frags}
-        </Text>
+          {SEASON_HEADER_DOTS.map((dot) => (
+            <View key={dot} style={[styles.seasonDot, dot === 0 && styles.seasonDotActive]} />
+          ))}
+        </View>
+        <Pressable
+          accessibilityLabel="Voir mon classement"
+          accessibilityRole="button"
+          onPress={openRank}
+          style={({ pressed }) => [styles.seasonHeaderAction, pressed && styles.pressed]}
+        >
+          <Text style={styles.seasonHeaderActionText}>Voir</Text>
+          <ChevronRight color={colors.text} size={18} strokeWidth={2.2} />
+        </Pressable>
       </View>
-      <ChevronRight color="#78838D" size={19} strokeWidth={2} />
-    </Pressable>
+
+      <Pressable
+        accessibilityLabel={'Ouvrir ma saison, rang ' + gradeLabel + ', ' + frags + ' Frags'}
+        accessibilityRole="button"
+        onPress={openRank}
+        style={({ pressed }) => [
+          styles.seasonCard,
+          { borderColor: withAlpha(accent, .72) },
+          pressed && styles.pressed,
+        ]}
+      >
+        <LinearGradient
+          colors={[withAlpha(accent, .68), withAlpha(accent, .34), '#160D08']}
+          end={{ x: 1, y: .6 }}
+          start={{ x: 0, y: .4 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <LinearGradient
+          colors={['rgba(255,255,255,.13)', 'rgba(255,255,255,0)', 'rgba(0,0,0,.28)']}
+          end={{ x: 1, y: 1 }}
+          start={{ x: 0, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={[
+            styles.seasonEmblem,
+            { height: emblemSize, width: emblemSize },
+            loading && styles.seasonEmblemLoading,
+          ]}
+        >
+          <RankEmblem grade={grade} size={emblemSize} starting={starting} />
+        </View>
+        <View style={styles.seasonIdentity}>
+          <Text numberOfLines={1} style={styles.seasonContext}>{seasonContext}</Text>
+          <Text
+            adjustsFontSizeToFit
+            minimumFontScale={.68}
+            numberOfLines={1}
+            style={[styles.seasonGrade, isCompactWidth && styles.seasonGradeCompact, { color: accent }]}
+          >
+            {gradeLabel}
+          </Text>
+        </View>
+        <View style={[styles.seasonMetric, isCompactWidth && styles.seasonMetricCompact]}>
+          <View style={styles.seasonMetricCopy}>
+            <Text numberOfLines={1} style={styles.seasonMetricLabel}>RATING FRAGS</Text>
+            <Text
+              adjustsFontSizeToFit
+              minimumFontScale={.72}
+              numberOfLines={1}
+              style={styles.seasonMetricValue}
+            >
+              {frags}
+            </Text>
+          </View>
+          <ChevronRight color="#AEB7BF" size={22} strokeWidth={2.4} />
+        </View>
+      </Pressable>
+    </View>
   );
 }
 
@@ -751,23 +809,78 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
-  seasonCard: {
-    minHeight: 88,
+  seasonSection: {
     marginHorizontal: spacing.md,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    gap: 8,
+  },
+  seasonHeader: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 11,
-    overflow: 'hidden',
-    borderRadius: 18,
-    backgroundColor: '#0C1116',
+    gap: 10,
+  },
+  seasonHeaderTitle: {
+    flex: 1,
+    minWidth: 0,
+    color: colors.text,
+    fontFamily: fonts.bold,
+    fontSize: 20,
+    lineHeight: 24,
+    letterSpacing: -.3,
+  },
+  seasonDots: {
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+  },
+  seasonDot: {
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    backgroundColor: '#29323A',
+  },
+  seasonDotActive: {
+    width: 36,
+    backgroundColor: colors.volt,
+    shadowColor: colors.volt,
+    shadowOpacity: .38,
+    shadowRadius: 8,
+  },
+  seasonHeaderAction: {
+    minWidth: 74,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 1,
+    borderRadius: 22,
+    backgroundColor: '#12181D',
     borderWidth: 1,
-    borderColor: '#28323B',
+    borderColor: '#202931',
+  },
+  seasonHeaderActionText: {
+    color: colors.text,
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  seasonCard: {
+    minHeight: 120,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    overflow: 'hidden',
+    borderRadius: 20,
+    backgroundColor: '#3B1A08',
+    borderWidth: 1,
+    borderColor: 'rgba(255,190,92,.72)',
   },
   seasonEmblem: {
-    width: 58,
-    height: 58,
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
@@ -780,48 +893,68 @@ const styles = StyleSheet.create({
     minWidth: 0,
     justifyContent: 'center',
   },
-  seasonKicker: {
-    color: '#A0AAB3',
-    fontFamily: fonts.bold,
-    fontSize: 11,
-    lineHeight: 13,
-    letterSpacing: .45,
-  },
   seasonGrade: {
-    marginTop: 3,
+    marginTop: 5,
     fontFamily: fonts.display,
-    fontSize: 23,
-    lineHeight: 25,
-    letterSpacing: .05,
+    fontSize: 42,
+    lineHeight: 40,
+    letterSpacing: -.75,
+    textShadowColor: 'rgba(0,0,0,.8)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 5,
+  },
+  seasonGradeCompact: {
+    fontSize: 34,
+    lineHeight: 34,
   },
   seasonContext: {
-    marginTop: 2,
-    color: '#909BA5',
+    color: '#D6C8BC',
     fontFamily: fonts.bold,
-    fontSize: 11,
-    lineHeight: 14,
-    letterSpacing: .25,
+    fontSize: 12,
+    lineHeight: 15,
+    letterSpacing: .35,
+    textShadowColor: 'rgba(0,0,0,.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   seasonMetric: {
-    width: 78,
+    width: 112,
+    minHeight: 88,
+    paddingHorizontal: 10,
     flexShrink: 0,
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 4,
+    borderRadius: 17,
+    backgroundColor: 'rgba(7,9,11,.9)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,.09)',
+  },
+  seasonMetricCompact: {
+    width: 94,
+    minHeight: 82,
+    paddingHorizontal: 8,
+  },
+  seasonMetricCopy: {
+    flex: 1,
+    minWidth: 0,
     justifyContent: 'center',
   },
   seasonMetricLabel: {
-    color: '#929DA7',
+    color: '#9AA6B1',
     fontFamily: fonts.bold,
-    fontSize: 11,
-    lineHeight: 14,
-    letterSpacing: .35,
+    fontSize: 10,
+    lineHeight: 13,
+    letterSpacing: .28,
   },
   seasonMetricValue: {
     maxWidth: '100%',
-    marginTop: 3,
+    marginTop: 6,
     color: colors.text,
     fontFamily: fonts.display,
-    fontSize: 26,
-    lineHeight: 28,
+    fontSize: 31,
+    lineHeight: 31,
   },
   emptyState: {
     marginHorizontal: 8,

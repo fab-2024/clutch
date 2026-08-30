@@ -108,8 +108,10 @@ describe('HubExperience restoration', () => {
     expect(screen.getByText('RESTORED HEADER')).toBeTruthy();
     expect(screen.getByText('TON PROCHAIN CALL.')).toBeTruthy();
     expect(screen.getByText('PRIMARY MATCH POSTER')).toBeTruthy();
+    expect(screen.getByTestId('hub-season-ranking')).toBeTruthy();
+    expect(screen.getByText('Ton classement')).toBeTruthy();
+    expect(screen.getByText('RATING FRAGS')).toBeTruthy();
     expect(screen.getByText('RESTORED CONTEXT')).toBeTruthy();
-    expect(screen.getByText('CLASSEMENT ACTUEL')).toBeTruthy();
     expect(screen.getByText('À SUIVRE')).toBeTruthy();
   });
 });
