@@ -159,6 +159,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             data={data}
             loading={loading}
             levelFrameVariant={levelFrameEquipment.variant}
+            onAddFriend={() => router.push('/(tabs)/social/friends')}
             onModify={() => router.push('/settings/profile')}
             onOpenActivations={() => router.push((previewData ? '/campaign-preview' : '/campaign/nova-week') as never)}
             onOpenBadges={() => router.push({
@@ -461,14 +462,14 @@ const styles = StyleSheet.create({
   blockedStateButton: { minHeight: 48, marginTop: 8, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.volt },
   blockedStateButtonText: { ...typography.action, color: '#080A0C' },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 22 },
-  privateContent: { gap: 12 },
-  privateHeader: { minHeight: 72, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
-  privateHeaderBack: { minHeight: 44, paddingHorizontal: spacing.sm, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderStrong },
+  privateContent: { gap: 14 },
+  privateHeader: { minHeight: 78, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
+  privateHeaderBack: { minHeight: 50, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderStrong },
   privateHeaderBackText: { ...typography.action, color: colors.text, letterSpacing: 0.45 },
   privateHeaderCopy: { flex: 1, minWidth: 0 },
-  privateHeaderEyebrow: { ...typography.metadata, color: colors.volt, letterSpacing: 0.65 },
-  privateHeaderTitle: { ...typography.sectionTitle, marginTop: 2, color: colors.text },
-  privateHeaderSettings: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderStrong },
+  privateHeaderEyebrow: { ...typography.control, color: colors.volt, letterSpacing: 0.65 },
+  privateHeaderTitle: { ...typography.displaySmall, marginTop: 1, color: colors.text },
+  privateHeaderSettings: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center', borderRadius: 16, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderStrong },
   header: { minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#171D23' }, back: { minHeight: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { ...typography.action, color: colors.text, letterSpacing: 0.6 }, headerActions: { flexDirection: 'row', alignItems: 'center', gap: 6 }, visibility: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, visibilityDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.volt }, visibilityDotPrivate: { backgroundColor: '#FFB84D' }, visibilityText: { ...typography.label, color: colors.text, letterSpacing: 0.5 }, headerSettings: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, headerSettingsGlyph: { color: colors.text, fontSize: 17, lineHeight: 20, fontWeight: '900' },
   stateInset: { marginHorizontal: spacing.md },
   profileTools: { marginHorizontal: spacing.md, gap: 9 },

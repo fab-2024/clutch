@@ -23,13 +23,14 @@ jest.mock('react-native-reanimated', () => {
     withTiming: (value: number) => value,
   };
 });
-jest.mock('lucide-react-native/icons/award', () => ({ __esModule: true, default: 'Award' }));
 jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, default: 'ChevronRight' }));
-jest.mock('lucide-react-native/icons/expand', () => ({ __esModule: true, default: 'Expand' }));
-jest.mock('lucide-react-native/icons/eye', () => ({ __esModule: true, default: 'Eye' }));
-jest.mock('lucide-react-native/icons/shirt', () => ({ __esModule: true, default: 'Shirt' }));
+jest.mock('lucide-react-native/icons/crosshair', () => ({ __esModule: true, default: 'Crosshair' }));
+jest.mock('lucide-react-native/icons/headphones', () => ({ __esModule: true, default: 'Headphones' }));
+jest.mock('lucide-react-native/icons/share-2', () => ({ __esModule: true, default: 'Share2' }));
+jest.mock('lucide-react-native/icons/shield-check', () => ({ __esModule: true, default: 'ShieldCheck' }));
 jest.mock('lucide-react-native/icons/sparkles', () => ({ __esModule: true, default: 'Sparkles' }));
-jest.mock('lucide-react-native/icons/trophy', () => ({ __esModule: true, default: 'Trophy' }));
+jest.mock('lucide-react-native/icons/swords', () => ({ __esModule: true, default: 'Swords' }));
+jest.mock('lucide-react-native/icons/user-round-plus', () => ({ __esModule: true, default: 'UserRoundPlus' }));
 jest.mock('lucide-react-native/icons/users-round', () => ({ __esModule: true, default: 'UsersRound' }));
 
 const PROFILE: ProfileData = {
@@ -93,6 +94,7 @@ async function renderHub({
   cosmetics = EMPTY_EQUIPPED_COSMETICS,
   data = PROFILE,
   loading = false,
+  onAddFriend = jest.fn(),
   onModify = jest.fn(),
   onOpenActivations = jest.fn(),
   onOpenBadges = jest.fn(),
@@ -106,6 +108,7 @@ async function renderHub({
   cosmetics?: EquippedCosmetics;
   data?: ProfileData | null;
   loading?: boolean;
+  onAddFriend?: jest.Mock;
   onModify?: jest.Mock;
   onOpenActivations?: jest.Mock;
   onOpenBadges?: jest.Mock;
@@ -122,6 +125,7 @@ async function renderHub({
       data={data}
       loading={loading}
       levelFrameVariant="signalAscendant"
+      onAddFriend={onAddFriend}
       onModify={onModify}
       onOpenActivations={onOpenActivations}
       onOpenBadges={onOpenBadges}
@@ -150,7 +154,8 @@ describe('OwnProfileOverview', () => {
     const screen = await renderHub();
 
     expect(screen.getByLabelText(/Rang PLATINE.*niveau 7.*568 XP/)).toBeTruthy();
-    expect(screen.getByLabelText(/Aperçu Vitrine.*rang PLATINE/)).toBeTruthy();
+    expect(screen.getByTestId('profile-identity-card')).toBeTruthy();
+    expect(screen.getByTestId('profile-stats-card')).toBeTruthy();
   });
 
   it('keeps Ranked, badges, trophies, jerseys and social actions wired', async () => {
@@ -198,15 +203,23 @@ describe('OwnProfileOverview', () => {
     expect(onOpenShowcase).toHaveBeenCalledTimes(1);
   });
 
-  it('teases the Vitrine with exactly three fixed artifacts instead of the full room', async () => {
+  it('uses the compact identity, ranked, stats and collection composition', async () => {
     const screen = await renderHub();
 
-    expect(screen.getByTestId('profile-vitrine-stage')).toBeTruthy();
-    expect(screen.getAllByTestId(/^profile-vitrine-artifact-/, { includeHiddenElements: true })).toHaveLength(3);
-    expect(screen.getByTestId('profile-vitrine-artifact-badge', { includeHiddenElements: true })).toBeTruthy();
-    expect(screen.getByTestId('profile-vitrine-artifact-rank', { includeHiddenElements: true })).toBeTruthy();
-    expect(screen.getByTestId('profile-vitrine-artifact-team', { includeHiddenElements: true })).toBeTruthy();
-    expect(screen.queryByTestId('showcase-room-preview')).toBeNull();
+    expect(screen.getByTestId('profile-identity-card')).toBeTruthy();
+    expect(screen.getByTestId('profile-section-progression')).toBeTruthy();
+    expect(screen.getByTestId('profile-stats-card')).toBeTruthy();
+    expect(screen.getByTestId('profile-section-collection')).toBeTruthy();
+    expect(screen.queryByTestId('profile-vitrine-stage')).toBeNull();
+  });
+
+  it('opens the friend surface from the primary identity action', async () => {
+    const onAddFriend = jest.fn();
+    const screen = await renderHub({ onAddFriend });
+
+    await fireEvent.press(screen.getByLabelText('Ajouter un ami'));
+
+    expect(onAddFriend).toHaveBeenCalledTimes(1);
   });
 
   it('opens visibility settings from a private profile', async () => {
@@ -232,7 +245,7 @@ describe('OwnProfileOverview', () => {
     expect(screen.getByText('TROPHÉES')).toBeTruthy();
     expect(screen.getByText('MAILLOTS')).toBeTruthy();
     expect(screen.getByText('0 DÉBLOQUÉS')).toBeTruthy();
-    expect(screen.getByText('2/5 DÉBLOQUÉS')).toBeTruthy();
+    expect(screen.getByText('2 / 5')).toBeTruthy();
     expect(screen.getByText('AUCUN ÉQUIPÉ')).toBeTruthy();
   });
 

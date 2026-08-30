@@ -22,14 +22,17 @@ jest.mock('react-native-reanimated', () => {
     withTiming: (value: number) => value,
   };
 });
-jest.mock('lucide-react-native/icons/award', () => ({ __esModule: true, default: 'Award' }));
 jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, default: 'ChevronRight' }));
+jest.mock('lucide-react-native/icons/crosshair', () => ({ __esModule: true, default: 'Crosshair' }));
 jest.mock('lucide-react-native/icons/expand', () => ({ __esModule: true, default: 'Expand' }));
 jest.mock('lucide-react-native/icons/eye', () => ({ __esModule: true, default: 'Eye' }));
+jest.mock('lucide-react-native/icons/headphones', () => ({ __esModule: true, default: 'Headphones' }));
 jest.mock('lucide-react-native/icons/settings-2', () => ({ __esModule: true, default: 'Settings2' }));
-jest.mock('lucide-react-native/icons/shirt', () => ({ __esModule: true, default: 'Shirt' }));
+jest.mock('lucide-react-native/icons/share-2', () => ({ __esModule: true, default: 'Share2' }));
+jest.mock('lucide-react-native/icons/shield-check', () => ({ __esModule: true, default: 'ShieldCheck' }));
 jest.mock('lucide-react-native/icons/sparkles', () => ({ __esModule: true, default: 'Sparkles' }));
-jest.mock('lucide-react-native/icons/trophy', () => ({ __esModule: true, default: 'Trophy' }));
+jest.mock('lucide-react-native/icons/swords', () => ({ __esModule: true, default: 'Swords' }));
+jest.mock('lucide-react-native/icons/user-round-plus', () => ({ __esModule: true, default: 'UserRoundPlus' }));
 jest.mock('lucide-react-native/icons/users-round', () => ({ __esModule: true, default: 'UsersRound' }));
 jest.mock('expo-router', () => ({
   Redirect: () => null,
@@ -77,6 +80,14 @@ describe('ProfileScreen private navigation', () => {
     await fireEvent.press(screen.getByLabelText('Ouvrir ma Vitrine en paysage'));
 
     expect(push).toHaveBeenCalledWith('/showcase');
+  });
+
+  it('opens the friends surface from the primary profile action', async () => {
+    const screen = await render(<ProfileScreen previewData={PREVIEW_PROFILE} />);
+
+    await fireEvent.press(screen.getByLabelText('Ajouter un ami'));
+
+    expect(push).toHaveBeenCalledWith('/(tabs)/social/friends');
   });
 
   it('keeps the new profile sections connected to their existing destinations', async () => {
