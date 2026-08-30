@@ -12,6 +12,7 @@ export function FounderPackBanner({ preview = false }: { preview?: boolean }) {
       accessibilityRole="button"
       onPress={() => router.push(preview ? '/founder-pack-preview' : '/founder-pack')}
       style={({ pressed }) => [styles.root, pressed && styles.pressed]}
+      testID="founder-pack-banner"
     >
       <LinearGradient
         colors={['#251C0D', '#0D1014', '#07090C']}
@@ -32,7 +33,7 @@ export function FounderPackBanner({ preview = false }: { preview?: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  root: { position: 'relative', overflow: 'hidden', minHeight: 112, marginHorizontal: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 24, borderWidth: 1, borderColor: '#665126' },
+  root: { position: 'relative', overflow: 'hidden', minHeight: 112, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 24, borderWidth: 1, borderColor: '#665126' },
   glow: { position: 'absolute', left: -42, top: -58, width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(255,203,69,.11)', boxShadow: '0 0 48px rgba(255,203,69,.14)' },
   seal: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: '#17120A', borderWidth: 1, borderColor: '#B88C32', transform: [{ rotate: '-5deg' }] },
   sealText: { color: '#FFCB45', fontFamily: fonts.display, fontSize: 34, lineHeight: 38 },

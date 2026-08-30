@@ -163,7 +163,7 @@ export default function FounderPackScreen({ previewStatus }: FounderPackScreenPr
       const reconciled = await syncFounderPackStatus('purchase', store.platform);
       setStatus(reconciled);
       await Promise.allSettled([refreshCosmetics(), refreshProfile()]);
-      setMessage('Founder Pack validé. Tes quatre signatures sont dans le Locker.');
+      setMessage('Founder Pack validé. Tes quatre signatures sont dans ta collection.');
     } catch (caught) {
       setError(storeValidated
         ? 'Le store a validé l’achat, mais la synchronisation GRIFF est retardée. Utilise « Restaurer » ou attends le webhook automatique.'
@@ -213,8 +213,8 @@ export default function FounderPackScreen({ previewStatus }: FounderPackScreenPr
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Pressable accessibilityLabel="Revenir au Locker" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
-            <Text style={styles.backText}>← LOCKER</Text>
+          <Pressable accessibilityLabel="Revenir à la boutique" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
+            <Text style={styles.backText}>← BOUTIQUE</Text>
           </Pressable>
           <View style={styles.headerCopy}>
             <Text style={styles.headerEyebrow}>IDENTITÉ // PREMIÈRE VAGUE</Text>

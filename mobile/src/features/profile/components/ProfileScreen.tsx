@@ -161,21 +161,23 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             levelFrameVariant={levelFrameEquipment.variant}
             onAddFriend={() => router.push('/(tabs)/social/friends')}
             onModify={() => router.push('/settings/profile')}
-            onOpenActivations={() => router.push((previewData ? '/campaign-preview' : '/campaign/nova-week') as never)}
             onOpenBadges={() => router.push({
               pathname: previewData ? '/shop-preview' : '/shop',
               params: { scope: 'owned', tab: 'badges' },
             } as never)}
-            onOpenFaction={() => router.push('/(tabs)/social/faction')}
             onOpenJerseys={() => router.push({
-              pathname: previewData ? '/showcase-preview' : '/showcase',
-              params: { section: 'collection' },
+              pathname: previewData ? '/shop-preview' : '/shop',
+              params: { scope: 'owned', tab: 'jerseys' },
             } as never)}
             onOpenRank={() => router.push('/(tabs)/rank')}
+            onOpenRings={() => router.push({
+              pathname: previewData ? '/shop-preview' : '/shop',
+              params: { scope: 'owned', tab: 'rings' },
+            } as never)}
             onOpenShowcase={() => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
             onOpenTrophies={() => router.push({
               pathname: previewData ? '/shop-preview' : '/shop',
-              params: { scope: 'owned', tab: 'rings' },
+              params: { scope: 'owned', tab: 'trophies' },
             } as never)}
             onOpenVisitor={() => router.push({ pathname: '/u/[pseudo]', params: { pseudo: data?.pseudo || pseudo } })}
             pseudo={data?.pseudo || pseudo}

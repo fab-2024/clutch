@@ -95,17 +95,15 @@ describe('ProfileScreen private navigation', () => {
 
     await fireEvent.press(screen.getByTestId('profile-section-progression'));
     await fireEvent.press(screen.getByLabelText(/Ouvrir mes badges/));
+    await fireEvent.press(screen.getByLabelText(/Ouvrir mes anneaux/));
     await fireEvent.press(screen.getByLabelText(/Ouvrir mes trophées/));
     await fireEvent.press(screen.getByLabelText(/Ouvrir mes maillots/));
-    await fireEvent.press(screen.getByLabelText(/Ouvrir ma faction Fnatic/));
-    await fireEvent.press(screen.getByLabelText('Ouvrir les activations'));
 
     expect(push).toHaveBeenNthCalledWith(1, '/(tabs)/rank');
     expect(push).toHaveBeenNthCalledWith(2, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'badges' } });
     expect(push).toHaveBeenNthCalledWith(3, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'rings' } });
-    expect(push).toHaveBeenNthCalledWith(4, { pathname: '/showcase-preview', params: { section: 'collection' } });
-    expect(push).toHaveBeenNthCalledWith(5, '/(tabs)/social/faction');
-    expect(push).toHaveBeenNthCalledWith(6, '/campaign-preview');
+    expect(push).toHaveBeenNthCalledWith(4, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'trophies' } });
+    expect(push).toHaveBeenNthCalledWith(5, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'jerseys' } });
   });
 
   it('returns to the previous tab from the standalone profile', async () => {

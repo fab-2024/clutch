@@ -19,11 +19,10 @@ type OwnProfileOverviewProps = {
   levelFrameVariant: LevelFrameVariant;
   onAddFriend: () => void;
   onModify: () => void;
-  onOpenActivations: () => void;
   onOpenBadges: () => void;
-  onOpenFaction: () => void;
   onOpenJerseys: () => void;
   onOpenRank: () => void;
+  onOpenRings: () => void;
   onOpenShowcase: () => void;
   onOpenTrophies: () => void;
   onOpenVisitor: () => void;
@@ -38,11 +37,10 @@ export default function OwnProfileOverview({
   loading,
   onAddFriend,
   onModify,
-  onOpenActivations,
   onOpenBadges,
-  onOpenFaction,
   onOpenJerseys,
   onOpenRank,
+  onOpenRings,
   onOpenShowcase,
   onOpenTrophies,
   onOpenVisitor,
@@ -67,12 +65,10 @@ export default function OwnProfileOverview({
         cosmetics={cosmetics}
         data={data}
         loading={loading}
-        onModify={onModify}
-        onOpenActivations={onOpenActivations}
         onOpenBadges={onOpenBadges}
-        onOpenFaction={onOpenFaction}
         onOpenJerseys={onOpenJerseys}
         onOpenRank={onOpenRank}
+        onOpenRings={onOpenRings}
         onOpenShowcase={onOpenShowcase}
         onOpenTrophies={onOpenTrophies}
         rankAccent={rankAccent}
@@ -192,7 +188,7 @@ function ProfileOverviewSkeleton() {
       <Skeleton height={156} radius="lg" style={styles.skeletonInset} tone="subtle" width="auto" />
       <View style={styles.collectionSkeleton}>
         <Skeleton height={22} radius="sm" width="36%" />
-        {[0, 1, 2].map((item) => <Skeleton height={92} key={item} radius="md" width="100%" />)}
+        {[0, 1, 2, 3].map((item) => <Skeleton height={92} key={item} radius="md" width="100%" />)}
       </View>
     </SkeletonGroup>
   );

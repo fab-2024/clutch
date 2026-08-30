@@ -96,11 +96,10 @@ async function renderHub({
   loading = false,
   onAddFriend = jest.fn(),
   onModify = jest.fn(),
-  onOpenActivations = jest.fn(),
   onOpenBadges = jest.fn(),
-  onOpenFaction = jest.fn(),
   onOpenJerseys = jest.fn(),
   onOpenRank = jest.fn(),
+  onOpenRings = jest.fn(),
   onOpenShowcase = jest.fn(),
   onOpenTrophies = jest.fn(),
   onOpenVisitor = jest.fn(),
@@ -110,11 +109,10 @@ async function renderHub({
   loading?: boolean;
   onAddFriend?: jest.Mock;
   onModify?: jest.Mock;
-  onOpenActivations?: jest.Mock;
   onOpenBadges?: jest.Mock;
-  onOpenFaction?: jest.Mock;
   onOpenJerseys?: jest.Mock;
   onOpenRank?: jest.Mock;
+  onOpenRings?: jest.Mock;
   onOpenShowcase?: jest.Mock;
   onOpenTrophies?: jest.Mock;
   onOpenVisitor?: jest.Mock;
@@ -127,11 +125,10 @@ async function renderHub({
       levelFrameVariant="signalAscendant"
       onAddFriend={onAddFriend}
       onModify={onModify}
-      onOpenActivations={onOpenActivations}
       onOpenBadges={onOpenBadges}
-      onOpenFaction={onOpenFaction}
       onOpenJerseys={onOpenJerseys}
       onOpenRank={onOpenRank}
+      onOpenRings={onOpenRings}
       onOpenShowcase={onOpenShowcase}
       onOpenTrophies={onOpenTrophies}
       onOpenVisitor={onOpenVisitor}
@@ -158,40 +155,31 @@ describe('OwnProfileOverview', () => {
     expect(screen.getByTestId('profile-stats-card')).toBeTruthy();
   });
 
-  it('keeps Ranked, badges, trophies, jerseys and social actions wired', async () => {
-    const onOpenActivations = jest.fn();
+  it('keeps Ranked and every collection destination wired', async () => {
     const onOpenBadges = jest.fn();
     const onOpenJerseys = jest.fn();
     const onOpenRank = jest.fn();
+    const onOpenRings = jest.fn();
     const onOpenTrophies = jest.fn();
     const screen = await renderHub({
-      onOpenActivations,
       onOpenBadges,
       onOpenJerseys,
       onOpenRank,
+      onOpenRings,
       onOpenTrophies,
     });
 
     await fireEvent.press(screen.getByTestId('profile-section-progression'));
     await fireEvent.press(screen.getByLabelText(/Ouvrir mes badges/));
+    await fireEvent.press(screen.getByLabelText(/Ouvrir mes anneaux/));
     await fireEvent.press(screen.getByLabelText(/Ouvrir mes trophées/));
     await fireEvent.press(screen.getByLabelText(/Ouvrir mes maillots/));
-    await fireEvent.press(screen.getByLabelText('Ouvrir les activations'));
 
     expect(onOpenRank).toHaveBeenCalledTimes(1);
     expect(onOpenBadges).toHaveBeenCalledTimes(1);
+    expect(onOpenRings).toHaveBeenCalledTimes(1);
     expect(onOpenTrophies).toHaveBeenCalledTimes(1);
     expect(onOpenJerseys).toHaveBeenCalledTimes(1);
-    expect(onOpenActivations).toHaveBeenCalledTimes(1);
-  });
-
-  it('uses profile settings when no faction is selected', async () => {
-    const onModify = jest.fn();
-    const screen = await renderHub({ onModify });
-
-    await fireEvent.press(screen.getByLabelText('Choisir mon équipe favorite et rejoindre une faction'));
-
-    expect(onModify).toHaveBeenCalledTimes(1);
   });
 
   it('uses the Vitrine callback for the landscape CTA', async () => {
@@ -238,15 +226,19 @@ describe('OwnProfileOverview', () => {
     expect(onOpenVisitor).not.toHaveBeenCalled();
   });
 
-  it('surfaces the three requested profile collections without generic identity duplicates', async () => {
+  it('surfaces the four requested profile collections without the old spaces block', async () => {
     const screen = await renderHub();
 
     expect(screen.getByText('BADGES')).toBeTruthy();
+    expect(screen.getByText('ANNEAUX')).toBeTruthy();
     expect(screen.getByText('TROPHÉES')).toBeTruthy();
     expect(screen.getByText('MAILLOTS')).toBeTruthy();
     expect(screen.getByText('0 DÉBLOQUÉS')).toBeTruthy();
     expect(screen.getByText('2 / 5')).toBeTruthy();
+    expect(screen.getByText('0 / 4')).toBeTruthy();
     expect(screen.getByText('AUCUN ÉQUIPÉ')).toBeTruthy();
+    expect(screen.queryByText('TES ESPACES')).toBeNull();
+    expect(screen.queryByTestId('profile-section-social')).toBeNull();
   });
 
   it('uses a structured busy state without demonstration values while loading', async () => {

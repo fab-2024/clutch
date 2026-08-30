@@ -1,13 +1,16 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, typography } from '@/src/theme';
 
+import { atelierProductById } from '../atelierCatalog';
 import type {
   CosmeticItem,
   EquippedCosmetic,
   EquippedCosmetics,
 } from '../types';
+
+const DEFAULT_JERSEY_ASSET = require('../../../../assets/showcase/showcase-jersey-base-v1.png');
 
 type CosmeticAvatarProps = {
   cosmetics?: EquippedCosmetics | null;
@@ -138,6 +141,21 @@ export function CosmeticItemPreview({ item, pseudo = 'JOUEUR_01' }: { item: Cosm
       </View>
     );
   }
+  if (item.slot === 'vitrine_maillot') {
+    const product = atelierProductById(item.id);
+    return (
+      <View style={styles.preview}>
+        <View style={[styles.jerseyPreview, { borderColor: alpha(item.accent, '72') }]}>
+          <Image
+            resizeMode="contain"
+            source={product?.image ?? DEFAULT_JERSEY_ASSET}
+            style={styles.jerseyArtwork}
+          />
+          <View style={[styles.jerseyAccent, { backgroundColor: item.accent }]} />
+        </View>
+      </View>
+    );
+  }
   return (
     <View style={styles.preview}>
       <LinearGradient colors={['#141A21', alpha(item.accent, '28'), '#080B0F']} end={{ x: 1, y: 1 }} start={{ x: 0, y: 0 }} style={[styles.cardPreview, { borderColor: alpha(item.accent, '88') }]}><Text style={[styles.cardPreviewRank, { color: item.accent }]}>#128</Text><View style={styles.cardPreviewCopy}><Text numberOfLines={1} style={styles.cardPreviewName}>{pseudo}</Text><Text style={styles.cardPreviewMeta}>ÉLITE · 68% PRÉCISION</Text></View></LinearGradient>
@@ -199,6 +217,9 @@ const styles = StyleSheet.create({
   relicBody: { width: 66, height: 67, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end', borderRadius: 29, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderWidth: 1.5, backgroundColor: 'rgba(19,28,34,.82)' },
   relicLiquid: { position: 'absolute', left: 3, right: 3, bottom: 3, height: 36, borderBottomLeftRadius: 25, borderBottomRightRadius: 25 },
   relicHeart: { width: 10, height: 22, marginBottom: 18, borderRadius: 6 },
+  jerseyPreview: { position: 'relative', width: 142, height: 104, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: '#0B1116', borderWidth: 1 },
+  jerseyArtwork: { width: 136, height: 100 },
+  jerseyAccent: { position: 'absolute', right: 24, bottom: 5, left: 24, height: 2, borderRadius: 2, opacity: 0.82 },
   cardPreview: { width: 140, height: 82, padding: 11, flexDirection: 'row', alignItems: 'center', gap: 9, borderRadius: 17, borderWidth: 1 },
   cardPreviewRank: { fontFamily: fonts.display, fontSize: 25 },
   cardPreviewCopy: { flex: 1, minWidth: 0 },

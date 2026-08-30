@@ -127,6 +127,15 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.queryByTestId('atelier-scene')).toBeNull();
   });
 
+  it('keeps the Founder Pack inside the Boutique', async () => {
+    const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
+
+    expect(screen.getByTestId('founder-pack-banner')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('founder-pack-banner'));
+
+    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/founder-pack-preview');
+  });
+
   it('reviews a rare purchase before debiting then opens its dedicated reveal', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 

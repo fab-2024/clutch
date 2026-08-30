@@ -3,9 +3,7 @@ import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import Crosshair from 'lucide-react-native/icons/crosshair';
 import Headphones from 'lucide-react-native/icons/headphones';
 import ShieldCheck from 'lucide-react-native/icons/shield-check';
-import Sparkles from 'lucide-react-native/icons/sparkles';
 import Swords from 'lucide-react-native/icons/swords';
-import UsersRound from 'lucide-react-native/icons/users-round';
 import type { LucideIcon } from 'lucide-react-native';
 import {
   Image,
@@ -16,13 +14,10 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 
-import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
 import type { SeasonalGradeSummary } from '@/src/features/ranking/grades';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 import { colors, radius, spacing, typography } from '@/src/theme';
-import { teamHue } from '@/src/utils/teams';
-
 import { adaptShowcaseRingStats, resolveAllShowcaseRings } from '../showcaseRings/progression';
 import type { ProfileData } from '../types';
 import { toNumber } from '../utils';
@@ -31,12 +26,10 @@ type ProfileOverviewSectionsProps = {
   cosmetics?: EquippedCosmetics | null;
   data: ProfileData | null;
   loading: boolean;
-  onModify: () => void;
-  onOpenActivations: () => void;
   onOpenBadges: () => void;
-  onOpenFaction: () => void;
   onOpenJerseys: () => void;
   onOpenRank: () => void;
+  onOpenRings: () => void;
   onOpenShowcase: () => void;
   onOpenTrophies: () => void;
   rankAccent: string;
@@ -55,6 +48,7 @@ type CollectionEntry = {
 const COLLECTION_ASSETS = {
   badge: require('../../../../assets/showcase/collectibles/showcase-badge-v1.png'),
   jersey: require('../../../../assets/showcase/showcase-jersey-base-v1.png'),
+  ring: require('../../../../assets/showcase/rings/thumbs/ring-rank-01-thumb.webp'),
   trophy: require('../../../../assets/showcase/showcase-trophy-v1.png'),
 } satisfies Record<string, ImageSourcePropType>;
 
@@ -62,12 +56,10 @@ export default function ProfileOverviewSections({
   cosmetics,
   data,
   loading,
-  onModify,
-  onOpenActivations,
   onOpenBadges,
-  onOpenFaction,
   onOpenJerseys,
   onOpenRank,
+  onOpenRings,
   onOpenShowcase,
   onOpenTrophies,
   rankAccent,
@@ -90,14 +82,8 @@ export default function ProfileOverviewSections({
         onOpenAll={onOpenShowcase}
         onOpenBadges={onOpenBadges}
         onOpenJerseys={onOpenJerseys}
+        onOpenRings={onOpenRings}
         onOpenTrophies={onOpenTrophies}
-      />
-      <SocialSection
-        data={data}
-        loading={loading}
-        onModify={onModify}
-        onOpenActivations={onOpenActivations}
-        onOpenFaction={onOpenFaction}
       />
     </View>
   );
@@ -268,6 +254,7 @@ function ProfileCollectionSection({
   onOpenAll,
   onOpenBadges,
   onOpenJerseys,
+  onOpenRings,
   onOpenTrophies,
 }: {
   cosmetics?: EquippedCosmetics | null;
@@ -276,11 +263,13 @@ function ProfileCollectionSection({
   onOpenAll: () => void;
   onOpenBadges: () => void;
   onOpenJerseys: () => void;
+  onOpenRings: () => void;
   onOpenTrophies: () => void;
 }) {
   const unlockedBadges = loading ? 0 : (data?.badges ?? []).filter((badge) => badge.obtained).length;
-  const trophyProgressions = resolveAllShowcaseRings(adaptShowcaseRingStats(data));
-  const unlockedTrophies = loading ? 0 : trophyProgressions.filter((progress) => progress.current).length;
+  const unlockedTrophies = Math.min(4, unlockedBadges);
+  const ringProgressions = resolveAllShowcaseRings(adaptShowcaseRingStats(data));
+  const unlockedRings = loading ? 0 : ringProgressions.filter((progress) => progress.current).length;
   const equippedJerseys = loading ? 0 : cosmetics?.showcase.jersey ? 1 : 0;
   const entries: CollectionEntry[] = [
     {
@@ -293,10 +282,18 @@ function ProfileCollectionSection({
     },
     {
       accent: '#FF970F',
-      accessibilityLabel: `Ouvrir mes trophées, ${loading ? 'synchronisation' : `${unlockedTrophies} sur ${trophyProgressions.length}`}`,
+      accessibilityLabel: `Ouvrir mes anneaux, ${loading ? 'synchronisation' : `${unlockedRings} sur ${ringProgressions.length}`}`,
+      asset: COLLECTION_ASSETS.ring,
+      label: 'ANNEAUX',
+      meta: loading ? 'SYNCHRONISATION' : `${unlockedRings} / ${ringProgressions.length}`,
+      onPress: onOpenRings,
+    },
+    {
+      accent: '#C98B45',
+      accessibilityLabel: `Ouvrir mes trophées, ${loading ? 'synchronisation' : `${unlockedTrophies} sur 4`}`,
       asset: COLLECTION_ASSETS.trophy,
       label: 'TROPHÉES',
-      meta: loading ? 'SYNCHRONISATION' : `${unlockedTrophies} / ${trophyProgressions.length}`,
+      meta: loading ? 'SYNCHRONISATION' : `${unlockedTrophies} / 4`,
       onPress: onOpenTrophies,
     },
     {
@@ -349,77 +346,6 @@ function ProfileCollectionLink({ entry }: { entry: CollectionEntry }) {
   );
 }
 
-function SocialSection({
-  data,
-  loading,
-  onModify,
-  onOpenActivations,
-  onOpenFaction,
-}: {
-  data: ProfileData | null;
-  loading: boolean;
-  onModify: () => void;
-  onOpenActivations: () => void;
-  onOpenFaction: () => void;
-}) {
-  const team = data?.favoriteTeam;
-  const accent = team ? `hsl(${teamHue(team.tag, team.nom)}, 72%, 58%)` : colors.textMuted;
-  const supporterLabel = team ? `${formatNumber(team.supporters)} supporter${team.supporters === 1 ? '' : 's'}` : '';
-  const factionLabel = loading
-    ? 'Faction en cours de synchronisation'
-    : team
-      ? `Ouvrir ma faction ${team.nom}, relique forme ${roman(team.relique_niveau)}, ${supporterLabel}`
-      : 'Choisir mon équipe favorite et rejoindre une faction';
-
-  return (
-    <View style={styles.socialSection} testID="profile-section-social">
-      <Text style={styles.socialHeading}>TES ESPACES</Text>
-      <View style={styles.socialCard}>
-        <Pressable
-          accessibilityHint={team ? 'Ouvre la relique et la progression de ta faction' : 'Ouvre les paramètres du profil'}
-          accessibilityLabel={factionLabel}
-          accessibilityRole="button"
-          disabled={loading}
-          onPress={team ? onOpenFaction : onModify}
-          style={({ pressed }) => [styles.socialRow, pressed && styles.pressed]}
-        >
-          {team ? (
-            <TeamLogo accent={accent} name={team.nom} size={48} tag={team.tag} uri={team.logo} />
-          ) : (
-            <View style={styles.socialIcon}>
-              <UsersRound color={colors.textSecondary} size={21} strokeWidth={2} />
-            </View>
-          )}
-          <View style={styles.socialCopy}>
-            <Text style={styles.socialEyebrow}>{loading ? 'MA FACTION' : team ? `RELIQUE · FORME ${roman(team.relique_niveau)}` : 'MA FACTION'}</Text>
-            <Text numberOfLines={1} style={styles.socialTitle}>{loading ? 'SYNCHRONISATION' : team?.nom || 'CHOISIS TA COULEUR'}</Text>
-            <Text numberOfLines={1} style={styles.socialMeta}>{loading ? '—' : team ? supporterLabel : 'Équipe, relique et défis communs'}</Text>
-          </View>
-          <ChevronRight color={colors.volt} size={20} strokeWidth={2.2} />
-        </Pressable>
-
-        <View style={styles.divider} />
-
-        <Pressable
-          accessibilityHint="Ouvre les événements et récompenses partenaires"
-          accessibilityLabel="Ouvrir les activations"
-          accessibilityRole="button"
-          disabled={loading}
-          onPress={onOpenActivations}
-          style={({ pressed }) => [styles.activationRow, pressed && styles.pressed]}
-        >
-          <Sparkles color={colors.frag} size={20} strokeWidth={2.1} />
-          <View style={styles.socialCopy}>
-            <Text style={styles.activationTitle}>ACTIVATIONS</Text>
-            <Text style={styles.socialMeta}>Nova Week et partenaires</Text>
-          </View>
-          <ChevronRight color={colors.textSecondary} size={20} strokeWidth={2.1} />
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
 function recapMetric(recap: Record<string, unknown> | null | undefined, keys: string[]) {
   if (!recap) return 0;
   for (const key of keys) {
@@ -430,10 +356,6 @@ function recapMetric(recap: Record<string, unknown> | null | undefined, keys: st
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat('fr-FR').format(Number(value || 0));
-}
-
-function roman(level: number) {
-  return ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][Math.max(0, Math.min(6, Number(level || 1) - 1))];
 }
 
 const styles = StyleSheet.create({
@@ -653,71 +575,6 @@ const styles = StyleSheet.create({
     ...typography.cardTitle,
     marginTop: 3,
     color: colors.textSecondary,
-  },
-  socialSection: {
-    gap: spacing.sm,
-  },
-  socialHeading: {
-    ...typography.cardTitle,
-    paddingHorizontal: spacing.xs,
-    color: colors.text,
-  },
-  socialCard: {
-    overflow: 'hidden',
-    borderRadius: radius.lg,
-    backgroundColor: '#080D11',
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-  },
-  socialRow: {
-    minHeight: 88,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  socialIcon: {
-    width: 48,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceRaised,
-  },
-  socialCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  socialEyebrow: {
-    ...typography.metadata,
-    color: colors.textSecondary,
-  },
-  socialTitle: {
-    ...typography.cardTitle,
-    marginTop: 2,
-    color: colors.text,
-  },
-  socialMeta: {
-    ...typography.metadata,
-    marginTop: 2,
-    color: colors.textSecondary,
-  },
-  divider: {
-    height: 1,
-    marginHorizontal: spacing.md,
-    backgroundColor: colors.borderSubtle,
-  },
-  activationRow: {
-    minHeight: 62,
-    paddingHorizontal: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  activationTitle: {
-    ...typography.control,
-    color: colors.text,
   },
   pressed: {
     opacity: 0.76,

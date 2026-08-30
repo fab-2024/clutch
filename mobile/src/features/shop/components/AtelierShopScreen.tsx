@@ -20,6 +20,7 @@ import { Button } from '@/src/components/ui/Button';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { SegmentedControl, type SegmentedControlItem } from '@/src/components/ui/SegmentedControl';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
+import { FounderPackBanner } from '@/src/features/purchases/components/FounderPackBanner';
 import ShowcaseRoomScene from '@/src/features/profile/components/showcase/ShowcaseRoomScene';
 import { loadProfileData } from '@/src/features/profile/api';
 import {
@@ -477,6 +478,8 @@ export default function AtelierShopScreen({
         >
           <View style={[styles.content, compactHeight && styles.contentCompact]}>
             <AtelierHeader balance={balance} compact={compactHeight} loading={loading} />
+
+            <FounderPackBanner preview={Boolean(previewData)} />
 
             {loadError ? (
               <View accessible accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.errorBanner}>
