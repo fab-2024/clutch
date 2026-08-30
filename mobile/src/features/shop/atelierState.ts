@@ -128,9 +128,10 @@ function materialTheme(itemId: string): ShowcaseRoomTheme {
 
 function lightingTone(itemId: string): ShowcaseLighting {
   if (itemId === 'lighting_acid') return 'acid';
+  if (itemId === 'lighting_emerald') return 'emerald';
   if (itemId === 'lighting_violet') return 'violet';
   if (itemId === 'lighting_amber') return 'amber';
-  if (itemId === 'lighting_white') return 'white';
+  if (itemId === 'lighting_white') return 'competition';
   return 'cyan';
 }
 

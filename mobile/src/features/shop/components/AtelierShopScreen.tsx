@@ -68,6 +68,14 @@ const ATELIER_SHELF_TITLES: Record<AtelierCategory, string> = {
   jerseys: 'MAILLOTS',
 };
 
+const ATELIER_SCENE_REFERENCE = {
+  height: 853,
+  sceneBottom: 679,
+  sceneTop: 87,
+  width: 1844,
+} as const;
+const PRODUCT_VISUAL_HEIGHT = 132;
+
 export type AtelierPreviewState = {
   acquisitionProductId?: string;
   error?: string | null;
@@ -772,6 +780,14 @@ function ProductCard({
   selected: boolean;
   width: number;
 }) {
+  const sceneImageHeight = PRODUCT_VISUAL_HEIGHT / (
+    (ATELIER_SCENE_REFERENCE.sceneBottom - ATELIER_SCENE_REFERENCE.sceneTop)
+    / ATELIER_SCENE_REFERENCE.height
+  );
+  const sceneImageWidth = sceneImageHeight * (
+    ATELIER_SCENE_REFERENCE.width / ATELIER_SCENE_REFERENCE.height
+  );
+
   return (
     <Pressable
       accessibilityHint="Sélectionne cette finition pour afficher ses actions"
@@ -789,7 +805,24 @@ function ProductCard({
     >
       <View style={[styles.productAccent, { backgroundColor: product.accent }]} />
       <View style={[styles.productVisual, { backgroundColor: `${product.accent}0D` }]}>
-        <Image resizeMode="contain" source={product.image} style={styles.productImage} />
+        {product.category === 'lighting' ? (
+          <Image
+            resizeMode="stretch"
+            source={product.image}
+            style={{
+              height: sceneImageHeight,
+              left: (width - sceneImageWidth) / 2,
+              position: 'absolute',
+              top: -sceneImageHeight * (
+                ATELIER_SCENE_REFERENCE.sceneTop / ATELIER_SCENE_REFERENCE.height
+              ),
+              width: sceneImageWidth,
+            }}
+            testID={`atelier-lighting-preview-${product.id}`}
+          />
+        ) : (
+          <Image resizeMode="contain" source={product.image} style={styles.productImage} />
+        )}
         {selected && item?.equipped ? (
           <View style={styles.selectedMark}><Text style={styles.selectedMarkText}>✓</Text></View>
         ) : selected ? (
@@ -1346,6 +1379,7 @@ const styles = StyleSheet.create({
   productVisual: {
     position: 'relative',
     height: 132,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },

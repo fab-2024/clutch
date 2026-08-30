@@ -196,6 +196,7 @@ describe('Showcase room composition', () => {
     const screen = await render(
       <ShowcaseRoomEditorScene
         assignments={assignments}
+        lighting="competition"
         onSlotPress={onSlotPress}
         room={SHOWCASE_ROOM_CATALOG[0]}
       />,

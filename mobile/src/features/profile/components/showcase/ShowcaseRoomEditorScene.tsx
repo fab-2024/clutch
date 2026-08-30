@@ -19,10 +19,13 @@ import {
   type ShowcaseRoomAssignments,
   type ShowcaseRoomSlotId,
 } from './roomEditor';
+import { SHOWCASE_LIGHTING_VISUALS } from './showcaseLighting';
 import { SHOWCASE_PALETTE } from './showcasePalette';
+import type { ShowcaseLighting } from './types';
 
 type ShowcaseRoomEditorSceneProps = {
   assignments: ShowcaseRoomAssignments;
+  lighting: ShowcaseLighting;
   onSlotPress: (slotId: ShowcaseRoomSlotId) => void;
   room: ShowcaseRoomDefinition;
 };
@@ -36,6 +39,7 @@ const ROOM_REFERENCE = {
 
 export default function ShowcaseRoomEditorScene({
   assignments,
+  lighting,
   onSlotPress,
   room,
 }: ShowcaseRoomEditorSceneProps) {
@@ -52,6 +56,7 @@ export default function ShowcaseRoomEditorScene({
   const sceneHeightRatio = (ROOM_REFERENCE.sceneBottom - ROOM_REFERENCE.sceneTop) / ROOM_REFERENCE.height;
   const imageHeight = viewport.height / sceneHeightRatio;
   const imageWidth = imageHeight * (ROOM_REFERENCE.width / ROOM_REFERENCE.height);
+  const lightingVisual = SHOWCASE_LIGHTING_VISUALS[lighting];
 
   return (
     <View
@@ -79,6 +84,22 @@ export default function ShowcaseRoomEditorScene({
         start={{ x: 0, y: 0 }}
         style={StyleSheet.absoluteFill}
       />
+      <LinearGradient
+        colors={lightingVisual.wash}
+        end={{ x: 0.5, y: 1 }}
+        pointerEvents="none"
+        start={{ x: 0.5, y: 0 }}
+        style={StyleSheet.absoluteFill}
+      />
+      {lightingVisual.horizontalWash ? (
+        <LinearGradient
+          colors={lightingVisual.horizontalWash}
+          end={{ x: 1, y: 0.5 }}
+          pointerEvents="none"
+          start={{ x: 0, y: 0.5 }}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : null}
       <View pointerEvents="none" style={styles.instructions}>
         <View style={[styles.roomDot, { backgroundColor: room.accent }]} />
         <View style={styles.instructionCopy}>

@@ -60,6 +60,9 @@ describe('showcase Atelier state', () => {
       pedestal: 'steel',
       jerseyPresentation: 'podium',
     });
+    expect(resolveAtelierSceneConfig(data.equipped, { lighting: 'lighting_white' }).lighting).toBe('competition');
+    expect(resolveAtelierSceneConfig(data.equipped, { lighting: 'lighting_emerald' }).lighting).toBe('emerald');
+    expect(resolveAtelierSceneConfig(data.equipped, { lighting: 'lighting_acid' }).lighting).toBe('acid');
   });
 });
 

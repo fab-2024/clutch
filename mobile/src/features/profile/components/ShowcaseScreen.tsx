@@ -274,6 +274,7 @@ export default function ShowcaseScreen({
           {selectedRoom && section === 'showcase' ? (
             <ShowcaseRoomEditorScene
               assignments={roomAssignments}
+              lighting={lighting}
               onSlotPress={setActiveRoomSlot}
               room={selectedRoom}
             />

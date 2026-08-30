@@ -1,0 +1,35 @@
+/// <reference types="jest" />
+
+import {
+  SHOWCASE_CUSTOMIZABLE_LIGHTINGS,
+  SHOWCASE_LIGHTING_VISUALS,
+} from '../showcase/showcaseLighting';
+
+describe('showcase lighting directions', () => {
+  it('exposes the six approved lighting directions in display order', () => {
+    expect(SHOWCASE_CUSTOMIZABLE_LIGHTINGS).toEqual([
+      'cyan',
+      'amber',
+      'violet',
+      'competition',
+      'emerald',
+      'acid',
+    ]);
+    expect(SHOWCASE_CUSTOMIZABLE_LIGHTINGS.map((lighting) => (
+      SHOWCASE_LIGHTING_VISUALS[lighting].label
+    ))).toEqual([
+      'CYAN',
+      'AMBRE',
+      'VIOLET',
+      'ROUGE / CYAN',
+      'ÉMERAUDE',
+      'VICTOIRE',
+    ]);
+  });
+
+  it('keeps split washes for competition and emerald lighting', () => {
+    expect(SHOWCASE_LIGHTING_VISUALS.competition.horizontalWash).toHaveLength(3);
+    expect(SHOWCASE_LIGHTING_VISUALS.emerald.horizontalWash).toHaveLength(3);
+    expect(SHOWCASE_LIGHTING_VISUALS.cyan.horizontalWash).toBeUndefined();
+  });
+});

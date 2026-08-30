@@ -31,6 +31,7 @@ import ShowcasePhysicalObject, {
   type ShowcasePhysicalObjectKind,
   type ShowcasePhysicalObjectModel,
 } from './ShowcasePhysicalObject';
+import { SHOWCASE_LIGHTING_VISUALS } from './showcaseLighting';
 import { SHOWCASE_PALETTE } from './showcasePalette';
 import type {
   ShowcaseJerseyPresentation,
@@ -67,14 +68,6 @@ const JERSEY_ASSET = require('../../../../../assets/showcase/showcase-jersey-bas
 const TROPHY_ASSET = require('../../../../../assets/showcase/showcase-trophy-v1.png');
 const PEDESTAL_ASSET = require('../../../../../assets/rank/rank-tier-pedestal-v1.png');
 const DEFAULT_FULL_SCENE_SIZE = { height: 276, width: 844 };
-
-const LIGHTING: Record<ShowcaseLighting, { glow: string; wash: readonly [string, string, string] }> = {
-  acid: { glow: '#E8FF3D', wash: ['rgba(7,9,1,.03)', 'rgba(114,135,13,.10)', 'rgba(3,5,4,.16)'] },
-  cyan: { glow: '#31D7E2', wash: ['rgba(1,8,12,.03)', 'rgba(20,105,138,.09)', 'rgba(1,5,8,.16)'] },
-  violet: { glow: '#9A6BFF', wash: ['rgba(5,3,12,.04)', 'rgba(80,43,143,.09)', 'rgba(2,4,8,.17)'] },
-  amber: { glow: '#E2B25D', wash: ['rgba(10,6,2,.03)', 'rgba(118,75,24,.09)', 'rgba(3,4,7,.17)'] },
-  white: { glow: '#F1F4F4', wash: ['rgba(8,10,12,.02)', 'rgba(196,207,214,.08)', 'rgba(2,4,6,.15)'] },
-};
 
 const THEME_WASH: Record<ShowcaseRoomTheme, readonly [string, string, string]> = {
   graphite: ['rgba(5,9,13,.04)', 'rgba(4,8,12,.01)', 'rgba(2,5,8,.12)'],
@@ -151,7 +144,7 @@ export default function ShowcaseRoomScene({
   const trophies = loading ? [] : (data?.badges ?? []).filter((badge) => badge.obtained);
   const team = data?.favoriteTeam;
   const teamAccent = team ? `hsl(${teamHue(team.tag, team.nom)}, 72%, 58%)` : '#71808B';
-  const light = LIGHTING[lighting];
+  const light = SHOWCASE_LIGHTING_VISUALS[lighting];
   const pedestalAccent = PEDESTAL_ACCENT[pedestal];
   const tokens = cosmeticTokens(cosmetics);
   const topTokens = tokens.slice(0, 3);
@@ -187,6 +180,9 @@ export default function ShowcaseRoomScene({
         <Image resizeMode="stretch" source={ROOM_ASSET} style={styles.roomBackdrop} />
         <LinearGradient colors={THEME_WASH[theme]} end={{ x: 1, y: 1 }} pointerEvents="none" start={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
         <LinearGradient colors={light.wash} end={{ x: 0.5, y: 1 }} pointerEvents="none" start={{ x: 0.5, y: 0 }} style={StyleSheet.absoluteFill} />
+        {light.horizontalWash ? (
+          <LinearGradient colors={light.horizontalWash} end={{ x: 1, y: 0.5 }} pointerEvents="none" start={{ x: 0, y: 0.5 }} style={StyleSheet.absoluteFill} />
+        ) : null}
         {!compact ? (
           <ShowcaseAtmosphereLayer
             active={atmosphereActive && !loading}
@@ -457,10 +453,6 @@ function badgeAccent(badge: ProfileBadge) {
   if (badge.rarity === 'epic') return '#A982FF';
   if (badge.rarity === 'rare') return '#63B8FF';
   return '#AAB4BE';
-}
-
-function alpha(color: string, opacity: string) {
-  return /^#[0-9a-f]{6}$/i.test(color) ? `${color}${opacity}` : color;
 }
 
 const styles = StyleSheet.create({

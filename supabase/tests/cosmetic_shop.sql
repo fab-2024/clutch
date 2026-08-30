@@ -12,6 +12,7 @@ declare
   v_repeat jsonb;
   v_showcase_purchase jsonb;
   v_showcase_repeat jsonb;
+  v_lighting_purchase jsonb;
   v_equipped jsonb;
   v_rejected boolean := false;
 begin
@@ -52,7 +53,7 @@ begin
   select public.clutch_boutique_cosmetique_v1() into v_shop;
 
   if (v_shop ->> 'solde')::integer <> 0
-     or jsonb_array_length(v_shop -> 'objets') <> 43
+     or jsonb_array_length(v_shop -> 'objets') <> 44
      or (
        select count(*)
        from jsonb_array_elements(v_shop -> 'objets') item
@@ -123,6 +124,20 @@ begin
       v_showcase_repeat;
   end if;
 
+  select public.clutch_acheter_cosmetique_v1('lighting_emerald') into v_lighting_purchase;
+
+  if not (v_lighting_purchase ->> 'achete')::boolean
+     or (v_lighting_purchase ->> 'solde')::integer <> 510
+     or (v_lighting_purchase ->> 'emplacement') <> 'vitrine_eclairage'
+     or not exists (
+       select 1 from public.inventaire i
+       where i.user_id = v_user
+         and i.objet_id = 'lighting_emerald'
+     )
+  then
+    raise exception 'Lighting purchase was not applied: %', v_lighting_purchase;
+  end if;
+
   begin
     perform public.clutch_acheter_cosmetique_v1('apparence-core-4');
   exception when sqlstate 'P0001' then
@@ -142,7 +157,7 @@ begin
   if v_equipped #>> '{titre_profil,id}' <> 'titre-profil-2'
      or v_equipped #>> '{apparence_core,id}' <> 'apparence-core-1'
      or v_equipped #>> '{vitrine_materiau,id}' <> 'material_steel'
-     or v_equipped #>> '{vitrine_eclairage,id}' <> 'lighting_cyan'
+     or v_equipped #>> '{vitrine_eclairage,id}' <> 'lighting_emerald'
      or v_equipped #>> '{vitrine_supports,id}' <> 'supports_gallery'
      or v_equipped #>> '{vitrine_maillot,id}' <> 'jersey_locker'
   then

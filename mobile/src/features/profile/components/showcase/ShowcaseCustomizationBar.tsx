@@ -3,6 +3,10 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { colors, typography } from '@/src/theme';
 
+import {
+  SHOWCASE_CUSTOMIZABLE_LIGHTINGS,
+  SHOWCASE_LIGHTING_VISUALS,
+} from './showcaseLighting';
 import type { ShowcaseLighting, ShowcasePedestalSkin, ShowcaseRoomTheme } from './types';
 
 type ShowcaseCustomizationBarProps = {
@@ -26,11 +30,11 @@ const THEMES: { color: string; label: string; value: ShowcaseRoomTheme }[] = [
   { color: '#173A55', label: 'AZUR', value: 'azure' },
 ];
 
-const LIGHTS: { color: string; label: string; value: ShowcaseLighting }[] = [
-  { color: '#31D7E2', label: 'CYAN', value: 'cyan' },
-  { color: '#9A6BFF', label: 'VIOLET', value: 'violet' },
-  { color: '#E2B25D', label: 'AMBRE', value: 'amber' },
-];
+const LIGHTS = SHOWCASE_CUSTOMIZABLE_LIGHTINGS.map((value) => ({
+  color: SHOWCASE_LIGHTING_VISUALS[value].glow,
+  label: SHOWCASE_LIGHTING_VISUALS[value].label,
+  value,
+}));
 
 export default function ShowcaseCustomizationBar({
   lighting,
@@ -61,14 +65,14 @@ export function ShowcaseControlGroup<T extends string>({
 }: {
   label: string;
   onChange: (value: T) => void;
-  options: { color: string; label: string; value: T }[];
+  options: readonly { color: string; label: string; value: T }[];
   selected: T;
   variant?: 'pedestal' | 'theme' | 'lighting';
 }) {
   const resolvedVariant = variant ?? (label.includes('SOCLE') ? 'pedestal' : label.includes('THÈME') ? 'theme' : 'lighting');
 
   return (
-    <View style={styles.group}>
+    <View style={[styles.group, resolvedVariant === 'lighting' && styles.groupLighting]}>
       <Text style={styles.groupLabel}>{label}</Text>
       <View style={styles.options}>
         {options.map((option) => {
@@ -132,6 +136,7 @@ const styles = StyleSheet.create({
   title: { ...typography.eyebrow, color: '#C9DA38', textAlign: 'center', letterSpacing: 0.68 },
   groups: { flexGrow: 1, paddingHorizontal: 12, paddingBottom: 5, justifyContent: 'center', gap: 8 },
   group: { minWidth: 190, minHeight: 58, paddingHorizontal: 7, paddingVertical: 4, backgroundColor: '#0B1014', borderWidth: 1, borderColor: '#263039' },
+  groupLighting: { minWidth: 430 },
   groupLabel: { ...typography.label, color: '#89959F', textAlign: 'center', letterSpacing: 0.34 },
   options: { marginTop: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
   option: { position: 'relative', minHeight: 44, minWidth: 54, paddingHorizontal: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, borderWidth: 1, borderColor: 'transparent', borderRadius: 4 },

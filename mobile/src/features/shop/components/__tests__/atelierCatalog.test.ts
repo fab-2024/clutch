@@ -7,18 +7,19 @@ import {
 } from '../../atelierCatalog';
 
 describe('showcase Atelier catalog', () => {
-  it('keeps the approved order, prices and sixteen unique identifiers', () => {
+  it('keeps the approved order, prices and seventeen unique identifiers', () => {
     expect(ATELIER_CATALOG.map((item) => item.id)).toEqual([
       'material_graphite',
       'material_steel',
       'material_bronze',
       'material_carbon',
       'material_smoked_glass',
-      'lighting_acid',
       'lighting_cyan',
-      'lighting_violet',
       'lighting_amber',
+      'lighting_violet',
       'lighting_white',
+      'lighting_emerald',
+      'lighting_acid',
       'supports_forge',
       'supports_gallery',
       'supports_halo',
@@ -26,10 +27,10 @@ describe('showcase Atelier catalog', () => {
       'jersey_gallery',
       'jersey_podium',
     ]);
-    expect(new Set(ATELIER_CATALOG.map((item) => item.id))).toHaveProperty('size', 16);
+    expect(new Set(ATELIER_CATALOG.map((item) => item.id))).toHaveProperty('size', 17);
     expect(ATELIER_CATALOG.map((item) => item.price)).toEqual([
       0, 120, 180, 220, 260,
-      80, 0, 100, 100, 80,
+      0, 100, 100, 80, 120, 80,
       220, 0, 280,
       0, 200, 240,
     ]);
@@ -39,7 +40,7 @@ describe('showcase Atelier catalog', () => {
     const items = createAtelierPreviewItems();
     expect(items.every((item) => /^[a-z0-9-]+$/.test(item.styleKey))).toBe(true);
     expect(atelierProducts('materials')).toHaveLength(5);
-    expect(atelierProducts('lighting')).toHaveLength(5);
+    expect(atelierProducts('lighting')).toHaveLength(6);
     expect(atelierProducts('supports')).toHaveLength(3);
     expect(atelierProducts('jerseys')).toHaveLength(3);
     expect(items.filter((item) => item.included).map((item) => item.id)).toEqual([

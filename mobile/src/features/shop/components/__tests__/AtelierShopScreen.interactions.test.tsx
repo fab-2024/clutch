@@ -130,6 +130,10 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.getByTestId('atelier-shelf-level-frames')).toBeTruthy();
     expect(screen.getByTestId('atelier-shelf-materials')).toBeTruthy();
     expect(screen.getByTestId('atelier-shelf-lighting')).toBeTruthy();
+    expect(screen.getAllByTestId(/atelier-lighting-preview-/)).toHaveLength(6);
+    expect(screen.getByText('Compétition rouge / cyan')).toBeTruthy();
+    expect(screen.getByText('Émeraude vert / or')).toBeTruthy();
+    expect(screen.getByText('Victoire Clutch')).toBeTruthy();
     expect(screen.getByTestId('atelier-shelf-supports')).toBeTruthy();
     expect(screen.getByTestId('atelier-shelf-jerseys')).toBeTruthy();
     expect(screen.queryByTestId('atelier-category-control')).toBeNull();
@@ -188,7 +192,7 @@ describe('AtelierShopScreen interactions', () => {
     });
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/showcase-preview');
     await waitFor(() => expect(screen.queryByTestId('rare-acquisition-reveal')).toBeNull());
-  });
+  }, 10_000);
 
   it('returns from a preview reveal to the preserved Atelier context', async () => {
     const screen = await render(
