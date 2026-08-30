@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 import { publicAppUrl } from '@/src/config/release';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
@@ -27,7 +28,7 @@ import type {
 } from '@/src/features/social/faction/types';
 import { factionProgress, gameLabel } from '@/src/features/social/faction/utils';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
-import { colors, typography } from '@/src/theme';
+import { colors, fonts, typography } from '@/src/theme';
 
 type FactionRelicHeroV2Props = {
   faction: CommunityFaction | null;
@@ -60,7 +61,6 @@ export default function FactionRelicHeroV2({
   );
   const signature = relicSignatureTheme(equipped.factionEffect);
   const mutation = mutationOverride === undefined ? me?.mutation_a_presenter : mutationOverride;
-  const pct = Math.round(progress.progress * 100);
   const status = progress.awakened
     ? 'CŒUR ÉVEILLÉ'
     : instability.tier === 'mutationReady'
@@ -161,20 +161,28 @@ export default function FactionRelicHeroV2({
             }}
             style={styles.progressMeter}
           >
-            <View pointerEvents="none" style={styles.energyRing} />
-            <View pointerEvents="none" style={styles.energyRingGlow} />
-            <View style={styles.progressCountRow}>
-              <Text style={styles.progressCharge}>{progress.max ? '10 000+' : formatNumber(progress.charge)}</Text>
-              {!progress.max ? <Text style={styles.progressObjective}> / {formatNumber(progress.objective)}</Text> : null}
-            </View>
-            <View style={styles.thresholdRow}>
-              <Text style={styles.thresholdValue}>{progress.max ? 'MAX' : formatNumber(progress.remaining)}</Text>
-              <Text style={styles.thresholdLabel}>
-                {progress.max ? 'FORME TERMINALE' : `AVANT ${progress.next?.name.toUpperCase()}`}
+            <RelicProgressArcs />
+            <View style={styles.progressContent}>
+              <Text
+                adjustsFontSizeToFit
+                minimumFontScale={.68}
+                numberOfLines={1}
+                style={styles.progressCount}
+              >
+                <Text style={styles.progressCharge}>{progress.max ? '10 000+' : formatNumber(progress.charge)}</Text>
+                {!progress.max ? <Text style={styles.progressObjective}> / {formatNumber(progress.objective)}</Text> : null}
               </Text>
-            </View>
-            <View pointerEvents="none" style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${progress.max ? 100 : Math.max(1, pct)}%` }]} />
+              <Text
+                adjustsFontSizeToFit
+                minimumFontScale={.72}
+                numberOfLines={1}
+                style={styles.thresholdText}
+              >
+                <Text style={styles.thresholdValue}>{progress.max ? 'MAX' : formatNumber(progress.remaining)}</Text>
+                <Text style={styles.thresholdLabel}>
+                  {progress.max ? '  FORME TERMINALE' : `  AVANT ${progress.next?.name.toUpperCase()}`}
+                </Text>
+              </Text>
             </View>
           </View>
 
@@ -200,6 +208,52 @@ export default function FactionRelicHeroV2({
         </View>
       ) : null}
     </View>
+  );
+}
+
+function RelicProgressArcs() {
+  return (
+    <Svg
+      preserveAspectRatio="none"
+      style={styles.progressArcs}
+      testID="relic-progress-arcs"
+      viewBox="0 0 400 112"
+      width="100%"
+      height="100%"
+    >
+      <Path
+        d="M 22 55 C 92 13 308 13 378 55"
+        fill="none"
+        opacity={.12}
+        stroke={colors.volt}
+        strokeLinecap="round"
+        strokeWidth={12}
+      />
+      <Path
+        d="M 43 72 C 112 104 288 104 357 72"
+        fill="none"
+        opacity={.1}
+        stroke={colors.volt}
+        strokeLinecap="round"
+        strokeWidth={10}
+      />
+      <Path
+        d="M 22 55 C 92 13 308 13 378 55"
+        fill="none"
+        opacity={.86}
+        stroke={colors.volt}
+        strokeLinecap="round"
+        strokeWidth={2.5}
+      />
+      <Path
+        d="M 43 72 C 112 104 288 104 357 72"
+        fill="none"
+        opacity={.92}
+        stroke={colors.volt}
+        strokeLinecap="round"
+        strokeWidth={3}
+      />
+    </Svg>
   );
 }
 
@@ -280,125 +334,119 @@ const styles = StyleSheet.create({
   relicQuestion: { ...typography.metricSmall, color: colors.volt },
   identity: {
     zIndex: 4,
-    minHeight: 64,
-    marginHorizontal: -2,
+    minHeight: 62,
+    marginHorizontal: 1,
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 7,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderRadius: 13,
-    backgroundColor: 'rgba(4,10,14,.94)',
+    borderRadius: 11,
+    backgroundColor: 'rgba(4,9,13,.96)',
     borderWidth: 1,
-    borderColor: '#293A43',
-    boxShadow: '0 8px 26px rgba(0,0,0,.42)',
+    borderColor: '#2B3A43',
   },
   factionSeal: {
-    width: 46,
-    height: 46,
-    borderRadius: 13,
+    width: 45,
+    height: 45,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#060A0D',
     borderWidth: 1,
-    borderColor: '#687A2B',
+    borderColor: colors.volt,
   },
   identityCopy: { flex: 1, minWidth: 0 },
-  factionName: { ...typography.bodyStrong, color: '#F6F7F5', letterSpacing: .1 },
+  factionName: { ...typography.bodyStrong, color: '#F8F9F7', letterSpacing: .1 },
   factionMeta: { ...typography.caption, marginTop: 2, color: '#8D99A2' },
   growthBlock: { flexShrink: 0, alignItems: 'flex-end' },
   growthLabel: { ...typography.label, color: colors.textMuted, letterSpacing: .15 },
   growthValue: { ...typography.metricSmall, marginTop: 1, color: colors.volt },
-  progressBlock: { zIndex: 4, marginTop: 9 },
-  relicForm: { ...typography.eyebrow, color: colors.volt, letterSpacing: .55 },
+  progressBlock: { zIndex: 4, marginTop: 8 },
+  relicForm: {
+    color: colors.volt,
+    fontFamily: fonts.displayBold,
+    fontSize: 13,
+    lineHeight: 16,
+    letterSpacing: .45,
+  },
   progressMeter: {
     position: 'relative',
-    minHeight: 83,
-    marginTop: 2,
+    minHeight: 112,
+    marginTop: -1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  energyRing: {
+  progressArcs: {
     position: 'absolute',
-    width: '94%',
-    height: 53,
-    top: 7,
-    borderRadius: 999,
-    borderWidth: 2,
-    borderColor: 'rgba(232,255,61,.78)',
-    boxShadow: '0 0 12px rgba(232,255,61,.48), inset 0 0 9px rgba(232,255,61,.12)',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
-  energyRingGlow: {
-    position: 'absolute',
-    width: '88%',
-    height: 43,
-    top: 12,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(232,255,61,.24)',
-    boxShadow: '0 0 22px rgba(232,255,61,.2)',
-  },
-  progressCountRow: {
+  progressContent: {
     zIndex: 2,
-    marginTop: 2,
-    flexDirection: 'row',
-    alignItems: 'baseline',
+    width: '100%',
+    paddingHorizontal: 48,
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  progressCharge: { color: colors.volt, fontSize: 29, lineHeight: 32, fontWeight: '900', letterSpacing: -.7 },
-  progressObjective: { color: '#F0F2F2', fontSize: 20, lineHeight: 24, fontWeight: '900', letterSpacing: -.3 },
-  progressTrack: {
-    position: 'absolute',
-    right: 20,
-    bottom: 3,
-    left: 20,
-    height: 2,
-    overflow: 'hidden',
-    borderRadius: 2,
-    backgroundColor: 'rgba(232,255,61,.08)',
+  progressCount: {
+    width: '100%',
+    color: '#F0F2F2',
+    fontFamily: fonts.display,
+    fontSize: 28,
+    lineHeight: 31,
+    letterSpacing: -.45,
+    textAlign: 'center',
   },
-  progressFill: { height: '100%', borderRadius: 2, backgroundColor: colors.volt, boxShadow: '0 0 8px rgba(232,255,61,.55)' },
-  thresholdRow: {
-    zIndex: 2,
-    minHeight: 24,
-    marginTop: 2,
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'center',
-    gap: 7,
+  progressCharge: { color: colors.volt, fontFamily: fonts.display, fontSize: 30, lineHeight: 32 },
+  progressObjective: { color: '#F0F2F2', fontFamily: fonts.display, fontSize: 24, lineHeight: 28 },
+  thresholdText: {
+    width: '100%',
+    marginTop: 3,
+    color: '#AEB7BD',
+    fontFamily: fonts.displayBold,
+    fontSize: 14,
+    lineHeight: 18,
+    letterSpacing: .15,
+    textAlign: 'center',
   },
-  thresholdValue: { ...typography.metricSmall, color: colors.volt, fontSize: 18, lineHeight: 21 },
-  thresholdLabel: { ...typography.label, color: '#AEB7BD', letterSpacing: .2 },
+  thresholdValue: { color: colors.volt, fontFamily: fonts.display, fontSize: 20, lineHeight: 21 },
+  thresholdLabel: { color: '#AEB7BD', fontFamily: fonts.displayBold, fontSize: 14, lineHeight: 18 },
   inviteButton: {
-    minHeight: 56,
-    marginTop: 8,
-    marginBottom: 8,
-    padding: 2,
+    minHeight: 59,
+    marginTop: 3,
+    marginHorizontal: 9,
+    marginBottom: 12,
+    padding: 3,
     overflow: 'hidden',
-    borderRadius: 15,
-    backgroundColor: '#69760E',
+    borderRadius: 14,
+    backgroundColor: '#11180B',
     borderWidth: 1,
-    borderColor: '#C8DC21',
-    boxShadow: '0 0 16px rgba(232,255,61,.18)',
+    borderColor: '#293214',
+    boxShadow: '0 5px 14px rgba(0,0,0,.3)',
   },
   inviteSurface: {
     flex: 1,
     width: '100%',
-    minHeight: 50,
+    minHeight: 51,
     paddingHorizontal: 14,
-    borderRadius: 12,
+    borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 11,
+    borderWidth: 1,
+    borderColor: 'rgba(249,255,135,.72)',
   },
   inviteText: {
-    ...typography.cardTitle,
     flexShrink: 1,
     color: '#090C0E',
-    fontSize: 15,
-    lineHeight: 19,
-    letterSpacing: .1,
+    fontFamily: fonts.displayBold,
+    fontSize: 17,
+    lineHeight: 20,
+    letterSpacing: .25,
     textAlign: 'center',
   },
   inviteGlyph: { position: 'relative', width: 27, height: 23 },

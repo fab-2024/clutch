@@ -25,6 +25,7 @@ export default function FactionEvolutionRail({
     <View style={[styles.evolutionRail, comfortable && styles.evolutionRailComfortable]}>
       {RAIL_FORMS.map((form, index) => {
         const state = miniatureState(form.level, currentLevel, progress.awakened);
+        const miniatureSize = comfortable ? (state === 'current' ? 50 : 40) : 43;
         return (
           <View
             accessibilityLabel={`${form.name}, ${stateLabel(state)}`}
@@ -41,9 +42,11 @@ export default function FactionEvolutionRail({
                 <View style={[styles.connectorDot, state === 'complete' && styles.connectorDotComplete]} />
               </View>
             ) : null}
-            <FactionRelicMiniature level={form.level} size={43} state={state} />
+            <View style={comfortable ? styles.miniatureSlotComfortable : undefined}>
+              <FactionRelicMiniature comfortable={comfortable} level={form.level} size={miniatureSize} state={state} />
+            </View>
             <Text
-              numberOfLines={2}
+              numberOfLines={comfortable ? 1 : 2}
               style={[
                 styles.evolutionLabel,
                 comfortable && styles.evolutionLabelComfortable,
@@ -61,11 +64,13 @@ export default function FactionEvolutionRail({
 }
 
 export function FactionRelicMiniature({
+  comfortable = false,
   faction,
   level,
   size = 48,
   state,
 }: {
+  comfortable?: boolean;
   faction?: CommunityFaction | null;
   level: number;
   size?: number;
@@ -83,6 +88,7 @@ export function FactionRelicMiniature({
         <View style={[
           styles.imageHalo,
           state === 'current' && styles.imageHaloCurrent,
+          state === 'current' && comfortable && styles.imageHaloCurrentComfortable,
           state === 'complete' && styles.imageHaloComplete,
         ]} />
         <StaticRelicVial
@@ -157,8 +163,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#020609',
   },
   evolutionRailComfortable: {
-    minHeight: 92,
-    paddingTop: 3,
+    minHeight: 94,
+    marginTop: 0,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: 2,
+    borderRadius: 0,
+    backgroundColor: 'transparent',
   },
   evolutionNode: {
     position: 'relative',
@@ -177,7 +188,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#303A42',
   },
   connectorComplete: { backgroundColor: '#557F79' },
-  connectorComfortable: { top: 31 },
+  connectorComfortable: { top: 40 },
   connectorDot: {
     position: 'absolute',
     width: 4,
@@ -189,6 +200,11 @@ const styles = StyleSheet.create({
   },
   connectorDotComplete: { backgroundColor: colors.volt },
   miniature: { position: 'relative', alignItems: 'center', justifyContent: 'flex-start' },
+  miniatureSlotComfortable: {
+    height: 64,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
   imageWindow: {
     position: 'relative',
     overflow: 'hidden',
@@ -207,6 +223,14 @@ const styles = StyleSheet.create({
   imageHaloCurrent: {
     backgroundColor: 'rgba(31,177,188,.22)',
     boxShadow: '0 0 12px rgba(56,208,215,.23)',
+  },
+  imageHaloCurrentComfortable: {
+    left: '10%',
+    right: '10%',
+    top: '12%',
+    bottom: '3%',
+    backgroundColor: 'rgba(232,255,61,.2)',
+    boxShadow: '0 0 14px rgba(232,255,61,.28)',
   },
   imageHaloComplete: { backgroundColor: 'rgba(28,113,122,.16)' },
   lockShade: {
@@ -262,8 +286,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   evolutionLabelComfortable: {
-    maxWidth: 72,
-    marginTop: 0,
+    width: '100%',
+    maxWidth: '100%',
+    marginTop: 1,
+    fontFamily: fonts.displayBold,
     fontSize: 11,
     lineHeight: 14,
     letterSpacing: 0,

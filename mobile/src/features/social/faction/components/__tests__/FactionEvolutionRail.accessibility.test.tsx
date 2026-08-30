@@ -34,4 +34,26 @@ describe('FactionEvolutionRail accessibility', () => {
 
     expect(screen.getByLabelText(`${current.name}, forme actuelle`)).toBeTruthy();
   });
+
+  it('keeps the comfortable five-step rail on one labelled line', async () => {
+    const current = COMMUNITY_FORMS.find((form) => form.level === 1)!;
+    const screen = await render(
+      <FactionEvolutionRail
+        comfortable
+        progress={{ awakened: false, current, level: 1 } as FactionProgress}
+      />,
+    );
+
+    COMMUNITY_FORMS.filter((form) => form.level >= 1 && form.level <= 5).forEach((form) => {
+      const label = screen.getByText(form.name.toUpperCase());
+      expect(label.props.adjustsFontSizeToFit).toBeUndefined();
+      expect(label.props.numberOfLines).toBe(1);
+      expect(StyleSheet.flatten(label.props.style).fontSize).toBeGreaterThanOrEqual(
+        accessibility.minimumFunctionalFontSize,
+      );
+    });
+
+    expect(screen.getByLabelText('Ampoule, forme actuelle')).toBeTruthy();
+    expect(screen.getByLabelText('Bonbonne, forme verrouillée')).toBeTruthy();
+  });
 });
