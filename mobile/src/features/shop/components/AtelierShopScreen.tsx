@@ -64,7 +64,7 @@ type AtelierNotice = { text: string; tone: 'error' | 'info' | 'success' };
 const ATELIER_SHELF_TITLES: Record<AtelierCategory, string> = {
   materials: 'MATIÈRES',
   lighting: 'LUMIÈRES',
-  supports: 'SOCLES',
+  supports: 'PRÉSENTOIRS',
   jerseys: 'MAILLOTS',
 };
 
@@ -787,6 +787,7 @@ function ProductCard({
   const sceneImageWidth = sceneImageHeight * (
     ATELIER_SCENE_REFERENCE.width / ATELIER_SCENE_REFERENCE.height
   );
+  const usesScenePreview = product.category === 'lighting' || product.category === 'supports';
 
   return (
     <Pressable
@@ -805,7 +806,7 @@ function ProductCard({
     >
       <View style={[styles.productAccent, { backgroundColor: product.accent }]} />
       <View style={[styles.productVisual, { backgroundColor: `${product.accent}0D` }]}>
-        {product.category === 'lighting' ? (
+        {usesScenePreview ? (
           <Image
             resizeMode="stretch"
             source={product.image}
@@ -818,7 +819,7 @@ function ProductCard({
               ),
               width: sceneImageWidth,
             }}
-            testID={`atelier-lighting-preview-${product.id}`}
+            testID={`atelier-${product.category}-preview-${product.id}`}
           />
         ) : (
           <Image resizeMode="contain" source={product.image} style={styles.productImage} />

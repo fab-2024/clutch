@@ -6,6 +6,7 @@ import type {
 } from '@/src/features/profile/components/showcase/types';
 
 import { ATELIER_CATEGORY_META, type AtelierCategory } from './atelierCatalog';
+import { showcasePresenterById } from './showcasePresenterCatalog';
 import type { CosmeticItem, CosmeticShopData, EquippedCosmetics } from './types';
 
 export type AtelierPrimaryAction = 'buy' | 'equip' | 'equipped' | 'insufficient' | 'unavailable';
@@ -15,6 +16,7 @@ export type AtelierSceneConfig = {
   jerseyPresentation: ShowcaseJerseyPresentation;
   lighting: ShowcaseLighting;
   pedestal: ShowcasePedestalSkin;
+  presenterId: string;
   theme: ShowcaseRoomTheme;
 };
 
@@ -89,6 +91,7 @@ export function resolveAtelierSceneConfig(
     theme: materialTheme(materialId),
     lighting: lightingTone(lightingId),
     pedestal: supportsPedestal(supportsId),
+    presenterId: supportsId,
     jerseyPresentation: jerseyPresentation(jerseyId),
   };
 }
@@ -136,9 +139,7 @@ function lightingTone(itemId: string): ShowcaseLighting {
 }
 
 function supportsPedestal(itemId: string): ShowcasePedestalSkin {
-  if (itemId === 'supports_forge') return 'bronze';
-  if (itemId === 'supports_halo') return 'steel';
-  return 'obsidian';
+  return showcasePresenterById(itemId)?.pedestal ?? 'obsidian';
 }
 
 function jerseyPresentation(itemId: string): ShowcaseJerseyPresentation {

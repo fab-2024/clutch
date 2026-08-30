@@ -6,6 +6,7 @@ import {
   type CosmeticRarity,
   type ShowcaseAtelierSlot,
 } from './types';
+import { SHOWCASE_PRESENTER_CATALOG } from './showcasePresenterCatalog';
 
 export const ATELIER_CATEGORIES = [
   'materials',
@@ -37,7 +38,7 @@ export const ATELIER_CATEGORY_META: Record<AtelierCategory, {
 }> = {
   materials: { glyph: '▤', label: 'MATÉRIAUX', shortLabel: 'MATIÈRE', slot: 'vitrine_materiau' },
   lighting: { glyph: '✦', label: 'ÉCLAIRAGE', shortLabel: 'LUMIÈRE', slot: 'vitrine_eclairage' },
-  supports: { glyph: '◫', label: 'SUPPORTS', shortLabel: 'SOCLES', slot: 'vitrine_supports' },
+  supports: { glyph: '◫', label: 'PRÉSENTOIRS', shortLabel: 'PRÉSENTOIR', slot: 'vitrine_supports' },
   jerseys: { glyph: '⌁', label: 'MAILLOTS', shortLabel: 'MAILLOT', slot: 'vitrine_maillot' },
 };
 
@@ -163,39 +164,17 @@ export const ATELIER_CATALOG: readonly AtelierProduct[] = [
     accent: '#E8FF3D',
     image: require('../../../assets/shop/atelier/lighting/scenes/lighting-victory-scene.png'),
   },
-  {
-    id: 'supports_forge',
-    category: 'supports',
-    slot: 'vitrine_supports',
-    name: 'Forge',
-    description: 'Des socles lourds aux liserés bronze, conçus comme des pièces d’atelier.',
-    price: 220,
-    rarity: 'epique',
-    accent: '#B4774E',
-    image: require('../../../assets/shop/atelier/supports/supports_forge.png'),
-  },
-  {
-    id: 'supports_gallery',
-    category: 'supports',
-    slot: 'vitrine_supports',
-    name: 'Galerie',
-    description: 'Des supports noirs minimalistes qui concentrent le regard sur la collection.',
-    price: 0,
-    rarity: 'commun',
-    accent: '#8A959E',
-    image: require('../../../assets/shop/atelier/supports/supports_gallery.png'),
-  },
-  {
-    id: 'supports_halo',
-    category: 'supports',
-    slot: 'vitrine_supports',
-    name: 'Halo',
-    description: 'Des anneaux cyan sous chaque pièce pour une suspension visuelle maîtrisée.',
-    price: 280,
-    rarity: 'epique',
-    accent: '#31D7E2',
-    image: require('../../../assets/shop/atelier/supports/supports_halo.png'),
-  },
+  ...SHOWCASE_PRESENTER_CATALOG.map((presenter) => ({
+    id: presenter.id,
+    category: 'supports' as const,
+    slot: 'vitrine_supports' as const,
+    name: presenter.name,
+    description: presenter.description,
+    price: presenter.price,
+    rarity: presenter.rarity,
+    accent: presenter.accent,
+    image: presenter.image,
+  })),
   {
     id: 'jersey_locker',
     category: 'jerseys',

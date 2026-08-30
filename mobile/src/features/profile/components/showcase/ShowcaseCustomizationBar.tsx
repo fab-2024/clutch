@@ -2,27 +2,28 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { colors, typography } from '@/src/theme';
+import { SHOWCASE_PRESENTER_CATALOG } from '@/src/features/shop/showcasePresenterCatalog';
 
 import {
   SHOWCASE_CUSTOMIZABLE_LIGHTINGS,
   SHOWCASE_LIGHTING_VISUALS,
 } from './showcaseLighting';
-import type { ShowcaseLighting, ShowcasePedestalSkin, ShowcaseRoomTheme } from './types';
+import type { ShowcaseLighting, ShowcaseRoomTheme } from './types';
 
 type ShowcaseCustomizationBarProps = {
   lighting: ShowcaseLighting;
   onLightingChange: (value: ShowcaseLighting) => void;
-  onPedestalChange: (value: ShowcasePedestalSkin) => void;
+  onPresenterChange: (value: string) => void;
   onThemeChange: (value: ShowcaseRoomTheme) => void;
-  pedestal: ShowcasePedestalSkin;
+  presenterId: string;
   theme: ShowcaseRoomTheme;
 };
 
-const PEDESTALS: { color: string; label: string; value: ShowcasePedestalSkin }[] = [
-  { color: '#111820', label: 'OBSIDIENNE', value: 'obsidian' },
-  { color: '#A76B42', label: 'BRONZE', value: 'bronze' },
-  { color: '#7E909E', label: 'ACIER', value: 'steel' },
-];
+const PRESENTERS = SHOWCASE_PRESENTER_CATALOG.map((presenter) => ({
+  color: presenter.accent,
+  label: presenter.name.toUpperCase(),
+  value: presenter.id,
+}));
 
 const THEMES: { color: string; label: string; value: ShowcaseRoomTheme }[] = [
   { color: '#161C22', label: 'GRAPHITE', value: 'graphite' },
@@ -39,16 +40,16 @@ const LIGHTS = SHOWCASE_CUSTOMIZABLE_LIGHTINGS.map((value) => ({
 export default function ShowcaseCustomizationBar({
   lighting,
   onLightingChange,
-  onPedestalChange,
+  onPresenterChange,
   onThemeChange,
-  pedestal,
+  presenterId,
   theme,
 }: ShowcaseCustomizationBarProps) {
   return (
     <View style={styles.root}>
       <Text style={styles.title}>PERSONNALISER</Text>
       <ScrollView contentContainerStyle={styles.groups} horizontal showsHorizontalScrollIndicator={false}>
-        <ShowcaseControlGroup label="SKIN DU SOCLE" onChange={onPedestalChange} options={PEDESTALS} selected={pedestal} variant="pedestal" />
+        <ShowcaseControlGroup label="PRÉSENTOIR" onChange={onPresenterChange} options={PRESENTERS} selected={presenterId} variant="presenter" />
         <ShowcaseControlGroup label="THÈME DE VITRINE" onChange={onThemeChange} options={THEMES} selected={theme} variant="theme" />
         <ShowcaseControlGroup label="COULEUR D’ÉCLAIRAGE" onChange={onLightingChange} options={LIGHTS} selected={lighting} variant="lighting" />
       </ScrollView>
@@ -67,12 +68,24 @@ export function ShowcaseControlGroup<T extends string>({
   onChange: (value: T) => void;
   options: readonly { color: string; label: string; value: T }[];
   selected: T;
-  variant?: 'pedestal' | 'theme' | 'lighting';
+  variant?: 'pedestal' | 'presenter' | 'theme' | 'lighting';
 }) {
-  const resolvedVariant = variant ?? (label.includes('SOCLE') ? 'pedestal' : label.includes('THÈME') ? 'theme' : 'lighting');
+  const resolvedVariant = variant ?? (
+    label.includes('PRÉSENTOIR')
+      ? 'presenter'
+      : label.includes('SOCLE')
+        ? 'pedestal'
+        : label.includes('THÈME')
+          ? 'theme'
+          : 'lighting'
+  );
 
   return (
-    <View style={[styles.group, resolvedVariant === 'lighting' && styles.groupLighting]}>
+    <View style={[
+      styles.group,
+      resolvedVariant === 'presenter' && styles.groupPresenter,
+      resolvedVariant === 'lighting' && styles.groupLighting,
+    ]}>
       <Text style={styles.groupLabel}>{label}</Text>
       <View style={styles.options}>
         {options.map((option) => {
@@ -98,8 +111,8 @@ export function ShowcaseControlGroup<T extends string>({
   );
 }
 
-function ControlMiniature({ active, color, variant }: { active: boolean; color: string; variant: 'pedestal' | 'theme' | 'lighting' }) {
-  if (variant === 'pedestal') {
+function ControlMiniature({ active, color, variant }: { active: boolean; color: string; variant: 'pedestal' | 'presenter' | 'theme' | 'lighting' }) {
+  if (variant === 'pedestal' || variant === 'presenter') {
     return (
       <View style={styles.pedestalMiniature}>
         <View style={[styles.pedestalTop, { borderColor: alpha(color, active ? 'F0' : '9A') }]} />
@@ -136,6 +149,7 @@ const styles = StyleSheet.create({
   title: { ...typography.eyebrow, color: '#C9DA38', textAlign: 'center', letterSpacing: 0.68 },
   groups: { flexGrow: 1, paddingHorizontal: 12, paddingBottom: 5, justifyContent: 'center', gap: 8 },
   group: { minWidth: 190, minHeight: 58, paddingHorizontal: 7, paddingVertical: 4, backgroundColor: '#0B1014', borderWidth: 1, borderColor: '#263039' },
+  groupPresenter: { minWidth: 610 },
   groupLighting: { minWidth: 430 },
   groupLabel: { ...typography.label, color: '#89959F', textAlign: 'center', letterSpacing: 0.34 },
   options: { marginTop: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },

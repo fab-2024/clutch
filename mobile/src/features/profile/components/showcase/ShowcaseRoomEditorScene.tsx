@@ -17,6 +17,7 @@ import {
   showcasePlaceableGlyph,
   showcasePlaceableKindLabel,
   type ShowcaseRoomAssignments,
+  type ShowcaseRoomSlotDefinition,
   type ShowcaseRoomSlotId,
 } from './roomEditor';
 import { SHOWCASE_LIGHTING_VISUALS } from './showcaseLighting';
@@ -27,7 +28,8 @@ type ShowcaseRoomEditorSceneProps = {
   assignments: ShowcaseRoomAssignments;
   lighting: ShowcaseLighting;
   onSlotPress: (slotId: ShowcaseRoomSlotId) => void;
-  room: ShowcaseRoomDefinition;
+  room: Pick<ShowcaseRoomDefinition, 'accent' | 'id' | 'image' | 'name'>;
+  slots?: readonly ShowcaseRoomSlotDefinition[];
 };
 
 const ROOM_REFERENCE = {
@@ -42,6 +44,7 @@ export default function ShowcaseRoomEditorScene({
   lighting,
   onSlotPress,
   room,
+  slots = SHOWCASE_ROOM_SLOTS,
 }: ShowcaseRoomEditorSceneProps) {
   const [viewport, setViewport] = useState({ height: 276, width: 844 });
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
@@ -60,7 +63,7 @@ export default function ShowcaseRoomEditorScene({
 
   return (
     <View
-      accessibilityLabel={`${room.name}, huit emplacements personnalisables`}
+      accessibilityLabel={`${room.name}, ${slots.length} emplacements personnalisables`}
       onLayout={handleLayout}
       style={styles.viewport}
       testID="showcase-room-editor"
@@ -108,7 +111,7 @@ export default function ShowcaseRoomEditorScene({
         </View>
       </View>
 
-      {SHOWCASE_ROOM_SLOTS.map((slot) => {
+      {slots.map((slot) => {
         const item = assignments[slot.id];
         return (
           <Pressable
@@ -116,6 +119,7 @@ export default function ShowcaseRoomEditorScene({
             accessibilityLabel={`${slot.label}${item ? `, ${showcasePlaceableKindLabel(item.kind)} ${item.name}` : ', vide'}`}
             accessibilityRole="button"
             accessibilityState={{ selected: Boolean(item) }}
+            hitSlop={slots.length > 8 ? 6 : undefined}
             key={slot.id}
             onPress={() => onSlotPress(slot.id)}
             style={({ pressed }) => [
@@ -126,6 +130,7 @@ export default function ShowcaseRoomEditorScene({
                 top: slot.top,
                 width: slot.width,
               },
+              slots.length > 8 && styles.slotDense,
               item && { borderColor: `${item.accent}A8` },
               pressed && styles.slotPressed,
             ]}
@@ -217,6 +222,11 @@ const styles = StyleSheet.create({
   slotPressed: {
     backgroundColor: 'rgba(232,255,61,.13)',
     borderColor: colors.volt,
+  },
+  slotDense: {
+    minWidth: 32,
+    minHeight: 36,
+    padding: 2,
   },
   slotSelection: {
     width: '100%',

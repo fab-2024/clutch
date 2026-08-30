@@ -4,10 +4,12 @@ export const SHOWCASE_ROOM_SLOT_IDS = [
   'left-free',
   'jersey',
   'trophy',
+  'left-extra',
   'rank',
   'badge',
   'title',
   'ring',
+  'right-extra',
   'right-free',
 ] as const;
 
@@ -63,11 +65,12 @@ export function createEmptyShowcaseRoomAssignments(): ShowcaseRoomAssignments {
 
 export function createDefaultShowcaseRoomAssignments(
   items: readonly ShowcasePlaceableItem[],
+  slots: readonly ShowcaseRoomSlotDefinition[] = SHOWCASE_ROOM_SLOTS,
 ): ShowcaseRoomAssignments {
   const assignments = createEmptyShowcaseRoomAssignments();
   const used = new Set<string>();
 
-  SHOWCASE_ROOM_SLOTS.forEach((slot) => {
+  slots.forEach((slot) => {
     const item = items.find((candidate) => (
       candidate.kind === slot.preferredKind && !used.has(candidate.id)
     ));

@@ -58,6 +58,7 @@ describe('showcase Atelier state', () => {
       theme: 'carbon',
       lighting: 'violet',
       pedestal: 'steel',
+      presenterId: 'supports_halo',
       jerseyPresentation: 'podium',
     });
     expect(resolveAtelierSceneConfig(data.equipped, { lighting: 'lighting_white' }).lighting).toBe('competition');

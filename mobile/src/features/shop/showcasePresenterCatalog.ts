@@ -1,0 +1,153 @@
+import type { ImageSourcePropType } from 'react-native';
+
+import {
+  SHOWCASE_ROOM_SLOTS,
+  type ShowcaseRoomSlotDefinition,
+} from '@/src/features/profile/components/showcase/roomEditor';
+import type { ShowcasePedestalSkin } from '@/src/features/profile/components/showcase/types';
+
+import type { CosmeticRarity } from './types';
+
+export type ShowcasePresenterDefinition = {
+  accent: string;
+  description: string;
+  id: string;
+  image: ImageSourcePropType;
+  name: string;
+  pedestal: ShowcasePedestalSkin;
+  price: number;
+  rarity: CosmeticRarity;
+  slots: readonly ShowcaseRoomSlotDefinition[];
+};
+
+const BRONZE_GALLERY_SLOTS = [
+  { id: 'trophy', label: 'Emplacement trophée', preferredKind: 'trophy', left: '2%', top: '37%', width: '11%', height: '40%' },
+  { id: 'jersey', label: 'Emplacement maillot', preferredKind: 'jersey', left: '14%', top: '29%', width: '11%', height: '49%' },
+  { id: 'left-free', label: 'Emplacement gauche', preferredKind: 'frame', left: '26%', top: '39%', width: '9%', height: '38%' },
+  { id: 'rank', label: 'Emplacement central', preferredKind: 'rank', left: '40%', top: '19%', width: '20%', height: '60%' },
+  { id: 'badge', label: 'Emplacement badge', preferredKind: 'badge', left: '61%', top: '31%', width: '10%', height: '47%' },
+  { id: 'title', label: 'Emplacement titre', preferredKind: 'title', left: '71%', top: '44%', width: '10%', height: '32%' },
+  { id: 'ring', label: 'Emplacement anneau', preferredKind: 'ring', left: '82%', top: '47%', width: '8%', height: '29%' },
+  { id: 'right-free', label: 'Emplacement droit', preferredKind: 'core', left: '90%', top: '38%', width: '8%', height: '39%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
+
+const MECHANICAL_CARBON_SLOTS = [
+  { id: 'left-free', label: 'Emplacement gauche extérieur', preferredKind: 'frame', left: '1%', top: '45%', width: '7%', height: '32%' },
+  { id: 'jersey', label: 'Emplacement maillot', preferredKind: 'jersey', left: '10%', top: '27%', width: '13%', height: '51%' },
+  { id: 'trophy', label: 'Emplacement trophée', preferredKind: 'trophy', left: '24%', top: '36%', width: '10%', height: '41%' },
+  { id: 'left-extra', label: 'Emplacement gauche intérieur', preferredKind: 'banner', left: '35%', top: '45%', width: '7%', height: '31%' },
+  { id: 'rank', label: 'Emplacement central', preferredKind: 'rank', left: '42%', top: '19%', width: '17%', height: '60%' },
+  { id: 'badge', label: 'Emplacement badge', preferredKind: 'badge', left: '60%', top: '36%', width: '10%', height: '41%' },
+  { id: 'title', label: 'Emplacement titre', preferredKind: 'title', left: '70%', top: '45%', width: '10%', height: '31%' },
+  { id: 'ring', label: 'Emplacement anneau', preferredKind: 'ring', left: '80%', top: '48%', width: '7%', height: '29%' },
+  { id: 'right-extra', label: 'Emplacement droit intérieur', preferredKind: 'core', left: '87%', top: '46%', width: '6%', height: '30%' },
+  { id: 'right-free', label: 'Emplacement droit extérieur', preferredKind: 'frame', left: '93%', top: '44%', width: '6%', height: '33%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
+
+const CRYSTAL_CAPSULE_SLOTS = [
+  { id: 'left-free', label: 'Capsule gauche', preferredKind: 'frame', left: '2%', top: '28%', width: '9%', height: '50%' },
+  { id: 'jersey', label: 'Capsule maillot', preferredKind: 'jersey', left: '13%', top: '29%', width: '11%', height: '49%' },
+  { id: 'trophy', label: 'Capsule trophée', preferredKind: 'trophy', left: '26%', top: '29%', width: '11%', height: '49%' },
+  { id: 'rank', label: 'Capsule centrale', preferredKind: 'rank', left: '41%', top: '18%', width: '18%', height: '61%' },
+  { id: 'badge', label: 'Capsule badge', preferredKind: 'badge', left: '61%', top: '30%', width: '9%', height: '48%' },
+  { id: 'title', label: 'Capsule titre', preferredKind: 'title', left: '71%', top: '34%', width: '8%', height: '44%' },
+  { id: 'ring', label: 'Capsule anneau', preferredKind: 'ring', left: '81%', top: '31%', width: '8%', height: '47%' },
+  { id: 'right-free', label: 'Capsule droite', preferredKind: 'core', left: '90%', top: '28%', width: '8%', height: '50%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
+
+const STEEL_VAULT_SLOTS = [
+  { id: 'jersey', label: 'Niche maillot', preferredKind: 'jersey', left: '5%', top: '30%', width: '12%', height: '47%' },
+  { id: 'trophy', label: 'Niche trophée', preferredKind: 'trophy', left: '18%', top: '32%', width: '11%', height: '45%' },
+  { id: 'left-free', label: 'Niche gauche haute', preferredKind: 'frame', left: '30%', top: '31%', width: '9%', height: '22%' },
+  { id: 'left-extra', label: 'Niche gauche basse', preferredKind: 'banner', left: '30%', top: '55%', width: '9%', height: '21%' },
+  { id: 'rank', label: 'Niche centrale', preferredKind: 'rank', left: '40%', top: '25%', width: '20%', height: '53%' },
+  { id: 'badge', label: 'Niche badge', preferredKind: 'badge', left: '61%', top: '31%', width: '10%', height: '46%' },
+  { id: 'title', label: 'Niche titre', preferredKind: 'title', left: '72%', top: '39%', width: '9%', height: '37%' },
+  { id: 'right-extra', label: 'Niche droite haute', preferredKind: 'core', left: '82%', top: '30%', width: '8%', height: '23%' },
+  { id: 'ring', label: 'Niche anneau', preferredKind: 'ring', left: '82%', top: '55%', width: '8%', height: '21%' },
+  { id: 'right-free', label: 'Niche droite extérieure', preferredKind: 'frame', left: '91%', top: '30%', width: '8%', height: '47%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
+
+const CHAMPAGNE_PODIUM_SLOTS = [
+  { id: 'badge', label: 'Podium badge', preferredKind: 'badge', left: '12%', top: '41%', width: '12%', height: '36%' },
+  { id: 'jersey', label: 'Podium maillot', preferredKind: 'jersey', left: '26%', top: '27%', width: '15%', height: '50%' },
+  { id: 'rank', label: 'Podium central', preferredKind: 'rank', left: '42%', top: '17%', width: '18%', height: '61%' },
+  { id: 'trophy', label: 'Podium trophée', preferredKind: 'trophy', left: '61%', top: '27%', width: '15%', height: '31%' },
+  { id: 'title', label: 'Podium titre', preferredKind: 'title', left: '61%', top: '59%', width: '15%', height: '19%' },
+  { id: 'ring', label: 'Podium anneau', preferredKind: 'ring', left: '79%', top: '43%', width: '11%', height: '35%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
+
+export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] = [
+  {
+    id: 'supports_gallery',
+    name: 'Cercle Obsidienne',
+    description: 'Huit socles circulaires noirs organisés autour du rang central.',
+    accent: '#31D7E2',
+    image: require('../../../assets/shop/atelier/supports/scenes/presenter-circle-obsidian.png'),
+    pedestal: 'obsidian',
+    price: 0,
+    rarity: 'commun',
+    slots: SHOWCASE_ROOM_SLOTS,
+  },
+  {
+    id: 'supports_forge',
+    name: 'Galerie Bronze',
+    description: 'Huit vitrines de musée bordées de bronze pour les pièces emblématiques.',
+    accent: '#B4774E',
+    image: require('../../../assets/shop/atelier/supports/scenes/presenter-bronze-gallery.png'),
+    pedestal: 'bronze',
+    price: 220,
+    rarity: 'rare',
+    slots: BRONZE_GALLERY_SLOTS,
+  },
+  {
+    id: 'supports_halo',
+    name: 'Carbone Mécanique',
+    description: 'Dix stations techniques en carbone, serrées autour d’un noyau central.',
+    accent: '#6D8492',
+    image: require('../../../assets/shop/atelier/supports/scenes/presenter-mechanical-carbon.png'),
+    pedestal: 'steel',
+    price: 280,
+    rarity: 'epique',
+    slots: MECHANICAL_CARBON_SLOTS,
+  },
+  {
+    id: 'supports_crystal',
+    name: 'Capsules Cristal',
+    description: 'Huit capsules transparentes, lumineuses et parfaitement isolées.',
+    accent: '#B9E8FF',
+    image: require('../../../assets/shop/atelier/supports/scenes/presenter-crystal-capsules.png'),
+    pedestal: 'steel',
+    price: 300,
+    rarity: 'epique',
+    slots: CRYSTAL_CAPSULE_SLOTS,
+  },
+  {
+    id: 'supports_vault',
+    name: 'Coffre-fort Acier',
+    description: 'Dix niches blindées pour une collection dense et parfaitement cadrée.',
+    accent: '#AEB9C1',
+    image: require('../../../assets/shop/atelier/supports/scenes/presenter-steel-vault.png'),
+    pedestal: 'steel',
+    price: 320,
+    rarity: 'epique',
+    slots: STEEL_VAULT_SLOTS,
+  },
+  {
+    id: 'supports_champagne',
+    name: 'Podium Champagne',
+    description: 'Six grandes scènes champagne qui donnent plus d’espace aux pièces fortes.',
+    accent: '#D7B77A',
+    image: require('../../../assets/shop/atelier/supports/scenes/presenter-champagne-podium.png'),
+    pedestal: 'bronze',
+    price: 240,
+    rarity: 'rare',
+    slots: CHAMPAGNE_PODIUM_SLOTS,
+  },
+] as const;
+
+export const DEFAULT_SHOWCASE_PRESENTER_ID = SHOWCASE_PRESENTER_CATALOG[0].id;
+
+export function showcasePresenterById(id: string | null | undefined) {
+  return SHOWCASE_PRESENTER_CATALOG.find((presenter) => presenter.id === id) ?? null;
+}

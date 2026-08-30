@@ -13,6 +13,7 @@ declare
   v_showcase_purchase jsonb;
   v_showcase_repeat jsonb;
   v_lighting_purchase jsonb;
+  v_presenter_purchase jsonb;
   v_equipped jsonb;
   v_rejected boolean := false;
 begin
@@ -53,7 +54,7 @@ begin
   select public.clutch_boutique_cosmetique_v1() into v_shop;
 
   if (v_shop ->> 'solde')::integer <> 0
-     or jsonb_array_length(v_shop -> 'objets') <> 44
+     or jsonb_array_length(v_shop -> 'objets') <> 47
      or (
        select count(*)
        from jsonb_array_elements(v_shop -> 'objets') item
@@ -138,6 +139,20 @@ begin
     raise exception 'Lighting purchase was not applied: %', v_lighting_purchase;
   end if;
 
+  select public.clutch_acheter_cosmetique_v1('supports_crystal') into v_presenter_purchase;
+
+  if not (v_presenter_purchase ->> 'achete')::boolean
+     or (v_presenter_purchase ->> 'solde')::integer <> 210
+     or (v_presenter_purchase ->> 'emplacement') <> 'vitrine_supports'
+     or not exists (
+       select 1 from public.inventaire i
+       where i.user_id = v_user
+         and i.objet_id = 'supports_crystal'
+     )
+  then
+    raise exception 'Presenter purchase was not applied: %', v_presenter_purchase;
+  end if;
+
   begin
     perform public.clutch_acheter_cosmetique_v1('apparence-core-4');
   exception when sqlstate 'P0001' then
@@ -158,7 +173,7 @@ begin
      or v_equipped #>> '{apparence_core,id}' <> 'apparence-core-1'
      or v_equipped #>> '{vitrine_materiau,id}' <> 'material_steel'
      or v_equipped #>> '{vitrine_eclairage,id}' <> 'lighting_emerald'
-     or v_equipped #>> '{vitrine_supports,id}' <> 'supports_gallery'
+     or v_equipped #>> '{vitrine_supports,id}' <> 'supports_crystal'
      or v_equipped #>> '{vitrine_maillot,id}' <> 'jersey_locker'
   then
     raise exception 'Equipped cosmetic projection is inconsistent: %', v_equipped;

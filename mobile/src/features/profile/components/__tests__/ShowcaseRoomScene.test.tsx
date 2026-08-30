@@ -4,6 +4,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { View } from 'react-native';
 
 import { SHOWCASE_ROOM_CATALOG } from '@/src/features/shop/showcaseRoomCatalog';
+import { SHOWCASE_PRESENTER_CATALOG } from '@/src/features/shop/showcasePresenterCatalog';
 import {
   adaptShowcaseRingStats,
   resolveEquippedShowcaseRing,
@@ -34,7 +35,7 @@ describe('Showcase room composition', () => {
   it('shares real collection data between both modes and wires its controls', async () => {
     const onSelect = jest.fn();
     const onLightingChange = jest.fn();
-    const onPedestalChange = jest.fn();
+    const onPresenterChange = jest.fn();
     const onThemeChange = jest.fn();
     const data = PREVIEW_PROFILE;
     const screen = await render(
@@ -51,10 +52,11 @@ describe('Showcase room composition', () => {
           refreshing={false}
         />
         <ShowcaseControlGroup
-          label="SKIN DU SOCLE"
-          onChange={onPedestalChange}
-          options={[{ color: '#A76B42', label: 'BRONZE', value: 'bronze' }]}
-          selected="bronze"
+          label="PRÉSENTOIR"
+          onChange={onPresenterChange}
+          options={[{ color: '#A76B42', label: 'GALERIE BRONZE', value: 'supports_forge' }]}
+          selected="supports_forge"
+          variant="presenter"
         />
         <ShowcaseControlGroup
           label="THÈME DE VITRINE"
@@ -95,11 +97,11 @@ describe('Showcase room composition', () => {
     await fireEvent.press(screen.getByLabelText('Afficher rang'));
     await fireEvent.press(screen.getByLabelText('Afficher trophées'));
 
-    await fireEvent.press(screen.getByTestId('showcase-control-bronze'));
+    await fireEvent.press(screen.getByTestId('showcase-control-supports_forge'));
     await fireEvent.press(screen.getByTestId('showcase-control-azure'));
     await fireEvent.press(screen.getByTestId('showcase-control-amber'));
 
-    expect(onPedestalChange).toHaveBeenCalledWith('bronze');
+    expect(onPresenterChange).toHaveBeenCalledWith('supports_forge');
     expect(onThemeChange).toHaveBeenCalledWith('azure');
     expect(onLightingChange).toHaveBeenCalledWith('amber');
     expect(onSelect.mock.calls.map(([section]) => section)).toEqual([
@@ -212,5 +214,28 @@ describe('Showcase room composition', () => {
     await fireEvent.press(screen.getByTestId('showcase-room-slot-right-free'));
 
     expect(onSlotPress.mock.calls.map(([slot]) => slot)).toEqual(['jersey', 'right-free']);
+  });
+
+  it('makes all ten mechanical presenter placements actionable', async () => {
+    const presenter = SHOWCASE_PRESENTER_CATALOG[2];
+    const onSlotPress = jest.fn();
+    const assignments = createDefaultShowcaseRoomAssignments([], presenter.slots);
+    const screen = await render(
+      <ShowcaseRoomEditorScene
+        assignments={assignments}
+        lighting="cyan"
+        onSlotPress={onSlotPress}
+        room={presenter}
+        slots={presenter.slots}
+      />,
+    );
+
+    expect(screen.getByLabelText('Carbone Mécanique, 10 emplacements personnalisables')).toBeTruthy();
+    expect(screen.getAllByRole('button')).toHaveLength(10);
+
+    await fireEvent.press(screen.getByTestId('showcase-room-slot-left-extra'));
+    await fireEvent.press(screen.getByTestId('showcase-room-slot-right-extra'));
+
+    expect(onSlotPress.mock.calls.map(([slot]) => slot)).toEqual(['left-extra', 'right-extra']);
   });
 });

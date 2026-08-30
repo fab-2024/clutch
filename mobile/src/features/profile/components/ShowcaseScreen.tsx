@@ -16,6 +16,10 @@ import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import { loadCosmeticShop } from '@/src/features/shop/api';
 import { resolveAtelierSceneConfig } from '@/src/features/shop/atelierState';
+import {
+  DEFAULT_SHOWCASE_PRESENTER_ID,
+  showcasePresenterById,
+} from '@/src/features/shop/showcasePresenterCatalog';
 import { showcaseRoomById } from '@/src/features/shop/showcaseRoomCatalog';
 import type { CosmeticItem, CosmeticShopData, EquippedCosmetics } from '@/src/features/shop/types';
 import { resolveEquippedAchievementBadges } from '@/src/features/profile/achievementBadges/equipment';
@@ -43,7 +47,6 @@ import ShowcaseRoomEditorScene from './showcase/ShowcaseRoomEditorScene';
 import ShowcaseRoomScene from './showcase/ShowcaseRoomScene';
 import ShowcaseTopNavigation from './showcase/ShowcaseTopNavigation';
 import {
-  SHOWCASE_ROOM_SLOTS,
   createDefaultShowcaseRoomAssignments,
   createEmptyShowcaseRoomAssignments,
   type ShowcasePlaceableItem,
@@ -99,6 +102,7 @@ export default function ShowcaseScreen({
   const [pedestal, setPedestal] = useState<ShowcasePedestalSkin>('obsidian');
   const [theme, setTheme] = useState<ShowcaseRoomTheme>('graphite');
   const [lighting, setLighting] = useState<ShowcaseLighting>('cyan');
+  const [presenterId, setPresenterId] = useState<string>(DEFAULT_SHOWCASE_PRESENTER_ID);
   const [jerseyPresentation, setJerseyPresentation] = useState<ShowcaseJerseyPresentation>('locker');
   const [selectedRingFamily, setSelectedRingFamily] = useState<ShowcaseRingFamily | null>(null);
   const [activeRoomSlot, setActiveRoomSlot] = useState<ShowcaseRoomSlotId | null>(null);
@@ -187,19 +191,20 @@ export default function ShowcaseScreen({
   }, [loading, previewProfile, profileData]);
 
   useEffect(() => {
+    if (shopData && !savedAtelierAppliedRef.current) {
+      const saved = resolveAtelierSceneConfig(shopData.equipped);
+      savedAtelierAppliedRef.current = true;
+      setTheme(saved.theme);
+      setLighting(saved.lighting);
+      setPedestal(saved.pedestal);
+      setPresenterId(saved.presenterId);
+      setJerseyPresentation(saved.jerseyPresentation);
+    }
     if (selectedRoom) {
       setTheme(selectedRoom.theme);
       setLighting(selectedRoom.lighting);
       setPedestal(selectedRoom.pedestal);
-      return;
     }
-    if (!shopData || savedAtelierAppliedRef.current) return;
-    const saved = resolveAtelierSceneConfig(shopData.equipped);
-    savedAtelierAppliedRef.current = true;
-    setTheme(saved.theme);
-    setLighting(saved.lighting);
-    setPedestal(saved.pedestal);
-    setJerseyPresentation(saved.jerseyPresentation);
   }, [selectedRoom, shopData]);
 
   const ownedItems = useMemo(
@@ -207,6 +212,11 @@ export default function ShowcaseScreen({
     [shopData?.items],
   );
   const cosmetics = resolveEquipped(shopData, profileData?.cosmetics);
+  const presenter = showcasePresenterById(presenterId)
+    ?? showcasePresenterById(DEFAULT_SHOWCASE_PRESENTER_ID)!;
+  const activeSlots = presenter.slots;
+  const editableScene = selectedRoom ?? presenter;
+  const assignmentLayoutKey = `${selectedRoom?.id ?? 'equipped'}:${presenter.id}`;
   const ringStats = useMemo(() => adaptShowcaseRingStats(profileData), [profileData]);
   const ringProgressions = useMemo(
     () => resolveAllShowcaseRings(ringStats, ringEquipment.family),
@@ -238,18 +248,21 @@ export default function ShowcaseScreen({
     }),
     [ownedItems, profileData, rankAccent, rankLabel, ringProgressions],
   );
-  const activeRoomSlotDefinition = SHOWCASE_ROOM_SLOTS.find((slot) => slot.id === activeRoomSlot) ?? null;
+  const activeRoomSlotDefinition = activeSlots.find((slot) => slot.id === activeRoomSlot) ?? null;
 
   useEffect(() => {
-    if (!selectedRoom) {
-      initializedRoomRef.current = null;
-      setActiveRoomSlot(null);
-      return;
-    }
-    if (!placeableItems.length || initializedRoomRef.current === selectedRoom.id) return;
-    initializedRoomRef.current = selectedRoom.id;
-    setRoomAssignments(createDefaultShowcaseRoomAssignments(placeableItems));
-  }, [placeableItems, selectedRoom]);
+    if (!placeableItems.length || initializedRoomRef.current === assignmentLayoutKey) return;
+    initializedRoomRef.current = assignmentLayoutKey;
+    setActiveRoomSlot(null);
+    setRoomAssignments(createDefaultShowcaseRoomAssignments(placeableItems, activeSlots));
+  }, [activeSlots, assignmentLayoutKey, placeableItems]);
+
+  function changePresenter(nextId: string) {
+    const next = showcasePresenterById(nextId);
+    if (!next) return;
+    setPresenterId(next.id);
+    setPedestal(next.pedestal);
+  }
 
   function assignRoomItem(item: ShowcasePlaceableItem | null) {
     if (!activeRoomSlot) return;
@@ -271,12 +284,13 @@ export default function ShowcaseScreen({
         />
 
         <View style={styles.sceneWrap}>
-          {selectedRoom && section === 'showcase' ? (
+          {section === 'showcase' ? (
             <ShowcaseRoomEditorScene
               assignments={roomAssignments}
               lighting={lighting}
               onSlotPress={setActiveRoomSlot}
-              room={selectedRoom}
+              room={editableScene}
+              slots={activeSlots}
             />
           ) : (
             <ShowcaseRoomScene
@@ -329,9 +343,9 @@ export default function ShowcaseScreen({
         <ShowcaseCustomizationBar
           lighting={lighting}
           onLightingChange={setLighting}
-          onPedestalChange={setPedestal}
+          onPresenterChange={changePresenter}
           onThemeChange={setTheme}
-          pedestal={pedestal}
+          presenterId={presenter.id}
           theme={theme}
         />
 

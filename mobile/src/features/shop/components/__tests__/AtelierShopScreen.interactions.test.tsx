@@ -135,6 +135,10 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.getByText('Émeraude vert / or')).toBeTruthy();
     expect(screen.getByText('Victoire Clutch')).toBeTruthy();
     expect(screen.getByTestId('atelier-shelf-supports')).toBeTruthy();
+    expect(screen.getAllByTestId(/atelier-supports-preview-/)).toHaveLength(6);
+    expect(screen.getByText('Cercle Obsidienne')).toBeTruthy();
+    expect(screen.getByText('Coffre-fort Acier')).toBeTruthy();
+    expect(screen.getByText('Podium Champagne')).toBeTruthy();
     expect(screen.getByTestId('atelier-shelf-jerseys')).toBeTruthy();
     expect(screen.queryByTestId('atelier-category-control')).toBeNull();
     expect(screen.queryByTestId('atelier-scene')).toBeNull();

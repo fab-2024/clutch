@@ -19,10 +19,10 @@ const ITEMS: ShowcasePlaceableItem[] = [
 ];
 
 describe('showcase room editor assignments', () => {
-  it('defines eight independent clickable placements', () => {
+  it('defines eight default placements and reserves ten assignment slots', () => {
     expect(SHOWCASE_ROOM_SLOTS).toHaveLength(8);
     expect(new Set(SHOWCASE_ROOM_SLOTS.map((slot) => slot.id)).size).toBe(8);
-    expect(Object.keys(createEmptyShowcaseRoomAssignments())).toHaveLength(8);
+    expect(Object.keys(createEmptyShowcaseRoomAssignments())).toHaveLength(10);
   });
 
   it('fills each placement from the matching real collection family', () => {

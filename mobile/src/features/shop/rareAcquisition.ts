@@ -45,7 +45,7 @@ const SLOT_LABELS: Record<CosmeticSlot, string> = {
   carte_profil: 'BANNIÈRE DE PROFIL',
   vitrine_materiau: 'MATIÈRE DE VITRINE',
   vitrine_eclairage: 'LUMIÈRE DE VITRINE',
-  vitrine_supports: 'SOCLES DE VITRINE',
+  vitrine_supports: 'PRÉSENTOIRS DE VITRINE',
   vitrine_maillot: 'PRÉSENTATION DE MAILLOT',
 };
 

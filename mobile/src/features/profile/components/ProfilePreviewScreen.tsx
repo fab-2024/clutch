@@ -130,7 +130,7 @@ export const PREVIEW_PROFILE: ProfileData = {
     showcase: {
       material: { id: 'material_graphite', slot: 'vitrine_materiau', level: 1, name: 'Graphite mat', description: '', rarity: 'commun', styleKey: 'material-graphite', accent: '#7B8791' },
       lighting: { id: 'lighting_cyan', slot: 'vitrine_eclairage', level: 2, name: 'Cryo cyan', description: '', rarity: 'commun', styleKey: 'lighting-cyan', accent: '#31D7E2' },
-      supports: { id: 'supports_gallery', slot: 'vitrine_supports', level: 2, name: 'Galerie', description: '', rarity: 'commun', styleKey: 'supports-gallery', accent: '#8A959E' },
+      supports: { id: 'supports_gallery', slot: 'vitrine_supports', level: 1, name: 'Cercle Obsidienne', description: '', rarity: 'commun', styleKey: 'presenter-circle-obsidian', accent: '#31D7E2' },
       jersey: { id: 'jersey_locker', slot: 'vitrine_maillot', level: 1, name: 'Vestiaire', description: '', rarity: 'commun', styleKey: 'jersey-locker', accent: '#7B8791' },
     },
   },
