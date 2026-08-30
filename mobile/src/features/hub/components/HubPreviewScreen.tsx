@@ -118,6 +118,7 @@ export default function HubPreviewScreen() {
   return (
     <HubExperience
       error={null}
+      headerEconomy={{ frags: 1000, volts: 300 }}
       hub={previewHub}
       loading={false}
       refreshing={false}
