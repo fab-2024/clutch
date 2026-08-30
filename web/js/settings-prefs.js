@@ -12,7 +12,7 @@ export const PARAMETRES_PAR_DEFAUT = Object.freeze({
     community: true,
   },
   experience: {
-    games: ['lol', 'cs2', 'valorant'],
+    games: ['lol', 'rocket_league', 'valorant'],
     motion: 'full',
     sound: 65,
     rewardSound: true,

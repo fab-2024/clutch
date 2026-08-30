@@ -4,7 +4,7 @@ import { SUPABASE_ANON_KEY, MODE_DEMO } from './config.js';
 const KEY = 'clutch:onboarding:v1';
 const SESSION_KEY = 'clutch.session';
 const SYNC_KEY = 'clutch:onboarding:jeux-sync-v1';
-const JEUX_VALIDES = new Set(['lol', 'cs2', 'valorant']);
+const JEUX_VALIDES = new Set(['lol', 'rocket_league', 'valorant']);
 
 function readOnboarding() {
   try {

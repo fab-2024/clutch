@@ -8,7 +8,7 @@ const FILTRES = [
   { cle: '', libelle: 'Tous' },
   { cle: 'lol', libelle: 'LoL' },
   { cle: 'valorant', libelle: 'VALORANT' },
-  { cle: 'cs2', libelle: 'CS2' },
+  { cle: 'rocket_league', libelle: 'RL' },
 ];
 
 let jeuActif = '';

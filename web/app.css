@@ -73,7 +73,7 @@
   --or: #e8ff3d;
 
   --lol: #c8963e;
-  --cs2: #f0a03c;
+  --rocket-league: #35b8ff;
   --valorant: #ff4655;
 
   /* Deux familles, deux rôles. */
@@ -429,7 +429,7 @@ a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 
 .pastille-jeu { width: 8px; height: 8px; border-radius: 3px; flex-shrink: 0; }
 .pastille-jeu[data-jeu='lol'] { background: var(--lol); }
-.pastille-jeu[data-jeu='cs2'] { background: var(--cs2); }
+.pastille-jeu[data-jeu='rocket_league'] { background: var(--rocket-league); }
 .pastille-jeu[data-jeu='valorant'] { background: var(--valorant); }
 
 .match__corps {
@@ -1079,7 +1079,7 @@ input::placeholder { color: var(--texte-faible); }
 }
 
 .es-match[data-jeu='lol']      { --jeu: var(--lol); }
-.es-match[data-jeu='cs2']      { --jeu: var(--cs2); }
+.es-match[data-jeu='rocket_league'] { --jeu: var(--rocket-league); }
 .es-match[data-jeu='valorant'] { --jeu: var(--valorant); }
 
 .es-match:hover {

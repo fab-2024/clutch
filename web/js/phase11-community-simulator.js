@@ -9,7 +9,7 @@ const maintenant=Date.now();
 const mock={
   factions:[
     {equipe_id:'kc',nom:'Karmine Corp',tag:'KC',jeu:'lol',membres:472,niveau_atteint:4,croissance_24h:18,croissance_7j:64,moi:true,dernier_evenement_id:null},
-    {equipe_id:'vit',nom:'Team Vitality',tag:'VIT',jeu:'cs2',membres:441,niveau_atteint:4,croissance_24h:13,croissance_7j:51,moi:false},
+    {equipe_id:'vit',nom:'Team Vitality',tag:'VIT',jeu:'rocket_league',membres:441,niveau_atteint:4,croissance_24h:13,croissance_7j:51,moi:false},
     {equipe_id:'g2',nom:'G2 Esports',tag:'G2',jeu:'lol',membres:398,niveau_atteint:4,croissance_24h:7,croissance_7j:38,moi:false},
     {equipe_id:'m8',nom:'Gentle Mates',tag:'M8',jeu:'val',membres:188,niveau_atteint:4,croissance_24h:4,croissance_7j:12,moi:false},
   ],

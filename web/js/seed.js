@@ -19,17 +19,17 @@ export const EQUIPES = [
   { id: 'lol-gx', jeu: 'lol', nom: 'GiantX', tag: 'GX', elo: 1398 },
   { id: 'lol-rge', jeu: 'lol', nom: 'Rogue', tag: 'RGE', elo: 1472 },
 
-  // --- Counter-Strike 2 ---
-  { id: 'cs-vit', jeu: 'cs2', nom: 'Team Vitality', tag: 'VIT', elo: 1738 },
-  { id: 'cs-navi', jeu: 'cs2', nom: 'Natus Vincere', tag: 'NAVI', elo: 1665 },
-  { id: 'cs-spirit', jeu: 'cs2', nom: 'Team Spirit', tag: 'SPR', elo: 1691 },
-  { id: 'cs-faze', jeu: 'cs2', nom: 'FaZe Clan', tag: 'FAZE', elo: 1612 },
-  { id: 'cs-mouz', jeu: 'cs2', nom: 'MOUZ', tag: 'MOUZ', elo: 1587 },
-  { id: 'cs-g2', jeu: 'cs2', nom: 'G2 Esports', tag: 'G2', elo: 1573 },
-  { id: 'cs-falcons', jeu: 'cs2', nom: 'Team Falcons', tag: 'FLC', elo: 1541 },
-  { id: 'cs-astralis', jeu: 'cs2', nom: 'Astralis', tag: 'AST', elo: 1466 },
-  { id: 'cs-vp', jeu: 'cs2', nom: 'Virtus.pro', tag: 'VP', elo: 1489 },
-  { id: 'cs-heroic', jeu: 'cs2', nom: 'Heroic', tag: 'HER', elo: 1432 },
+  // --- Rocket League ---
+  { id: 'rl-vit', jeu: 'rocket_league', nom: 'Team Vitality', tag: 'VIT', elo: 1738 },
+  { id: 'rl-kc', jeu: 'rocket_league', nom: 'Karmine Corp', tag: 'KC', elo: 1710 },
+  { id: 'rl-bds', jeu: 'rocket_league', nom: 'Team BDS', tag: 'BDS', elo: 1691 },
+  { id: 'rl-m8', jeu: 'rocket_league', nom: 'Gentle Mates', tag: 'M8', elo: 1642 },
+  { id: 'rl-nrg', jeu: 'rocket_league', nom: 'NRG', tag: 'NRG', elo: 1598 },
+  { id: 'rl-g2', jeu: 'rocket_league', nom: 'G2 Stride', tag: 'G2', elo: 1635 },
+  { id: 'rl-falcons', jeu: 'rocket_league', nom: 'Team Falcons', tag: 'FLC', elo: 1654 },
+  { id: 'rl-gen', jeu: 'rocket_league', nom: 'Gen.G Mobil1 Racing', tag: 'GEN', elo: 1558 },
+  { id: 'rl-ssg', jeu: 'rocket_league', nom: 'Spacestation Gaming', tag: 'SSG', elo: 1536 },
+  { id: 'rl-furia', jeu: 'rocket_league', nom: 'FURIA', tag: 'FUR', elo: 1572 },
 
   // --- Valorant ---
   { id: 'val-tl', jeu: 'valorant', nom: 'Team Liquid', tag: 'TL', elo: 1622 },
@@ -73,8 +73,8 @@ export function construireSaisons(maintenant = Date.now()) {
 export const EVENEMENTS = [
   { id: 'lec-summer', jeu: 'lol', nom: 'LEC Summer Split', tier: 'S' },
   { id: 'lfl-summer', jeu: 'lol', nom: 'LFL Summer Split', tier: 'A' },
-  { id: 'blast-bounty', jeu: 'cs2', nom: 'BLAST Bounty', tier: 'S' },
-  { id: 'esl-pro', jeu: 'cs2', nom: 'ESL Pro League', tier: 'S' },
+  { id: 'rlcs-major', jeu: 'rocket_league', nom: 'RLCS Major', tier: 'S' },
+  { id: 'rlcs-open', jeu: 'rocket_league', nom: 'RLCS Open', tier: 'A' },
   { id: 'vct-masters', jeu: 'valorant', nom: 'VCT Masters', tier: 'S' },
   { id: 'vct-emea', jeu: 'valorant', nom: 'VCT EMEA League', tier: 'A' },
 ];
@@ -94,31 +94,31 @@ const AFFICHES = [
   // [event, equipe_a, equipe_b, format, décalage en heures depuis maintenant]
   ['lec-summer', 'lol-g2', 'lol-kc', 3, 3],
   ['lec-summer', 'lol-fnc', 'lol-vit', 3, 5.5],
-  ['blast-bounty', 'cs-vit', 'cs-navi', 3, 2],
+  ['rlcs-major', 'rl-vit', 'rl-kc', 3, 2],
   ['vct-masters', 'val-fnc', 'val-prx', 3, 7],
   ['lec-summer', 'lol-mkoi', 'lol-bds', 3, 26],
-  ['esl-pro', 'cs-spirit', 'cs-faze', 3, 24.5],
+  ['rlcs-open', 'rl-bds', 'rl-m8', 3, 24.5],
   ['vct-emea', 'val-kc', 'val-tl', 3, 28],
   ['lfl-summer', 'lol-th', 'lol-sk', 1, 30],
-  ['blast-bounty', 'cs-mouz', 'cs-g2', 3, 49],
+  ['rlcs-major', 'rl-nrg', 'rl-g2', 3, 49],
   ['vct-masters', 'val-drx', 'val-sen', 3, 51],
   ['lec-summer', 'lol-rge', 'lol-gx', 3, 52],
-  ['esl-pro', 'cs-falcons', 'cs-astralis', 3, 72],
+  ['rlcs-open', 'rl-falcons', 'rl-gen', 3, 72],
   ['vct-emea', 'val-g2', 'val-t1', 3, 74],
   ['lec-summer', 'lol-g2', 'lol-fnc', 5, 96],
-  ['blast-bounty', 'cs-vit', 'cs-spirit', 5, 100],
+  ['rlcs-major', 'rl-vit', 'rl-bds', 5, 100],
   ['vct-masters', 'val-edg', 'val-nvg', 3, 120],
   ['lfl-summer', 'lol-kc', 'lol-vit', 3, 122],
-  ['esl-pro', 'cs-vp', 'cs-heroic', 3, 144],
+  ['rlcs-open', 'rl-ssg', 'rl-furia', 3, 144],
 ];
 
 const RESULTATS = [
   // matchs déjà joués : [event, a, b, format, heures dans le passé, scoreA, scoreB]
   ['lec-summer', 'lol-kc', 'lol-bds', 3, -20, 2, 0],
-  ['blast-bounty', 'cs-navi', 'cs-g2', 3, -26, 2, 1],
+  ['rlcs-major', 'rl-kc', 'rl-g2', 3, -26, 2, 1],
   ['vct-masters', 'val-prx', 'val-sen', 3, -44, 2, 1],
   ['lec-summer', 'lol-vit', 'lol-sk', 3, -48, 2, 1],
-  ['esl-pro', 'cs-faze', 'cs-astralis', 3, -70, 2, 0],
+  ['rlcs-open', 'rl-m8', 'rl-gen', 3, -70, 2, 0],
   ['vct-emea', 'val-kc', 'val-g2', 3, -74, 1, 2],
 ];
 

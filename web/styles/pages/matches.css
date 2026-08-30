@@ -134,9 +134,9 @@
   --right-light: rgba(192,93,255,.22);
 }
 
-.ui-v4 .arena-hero[data-jeu='cs2'] {
-  --left-light: rgba(72,151,255,.25);
-  --right-light: rgba(244,148,61,.24);
+.ui-v4 .arena-hero[data-jeu='rocket_league'] {
+  --left-light: rgba(53,184,255,.28);
+  --right-light: rgba(255,139,46,.22);
 }
 
 .ui-v4 .arena-hero[data-jeu='valorant'] {

@@ -205,7 +205,7 @@ function panneauExperience(prefs, u) {
       <div class="settings-game-grid">
         ${jeuChip('lol', 'League of Legends', prefs.experience.games.includes('lol'))}
         ${jeuChip('valorant', 'VALORANT', prefs.experience.games.includes('valorant'))}
-        ${jeuChip('cs2', 'Counter-Strike 2', prefs.experience.games.includes('cs2'))}
+        ${jeuChip('rocket_league', 'Rocket League', prefs.experience.games.includes('rocket_league'))}
       </div>
     </div>
 

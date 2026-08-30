@@ -1,4 +1,16 @@
-import { formatPredictionCountdown } from '../utils';
+import { formatPredictionCountdown, gameKey, gameLabel } from '../utils';
+
+describe('Rocket League game metadata', () => {
+  it('recognizes the persisted id and human label before the generic League fallback', () => {
+    expect(gameLabel('rocket_league')).toBe('RL');
+    expect(gameLabel('Rocket League')).toBe('RL');
+    expect(gameKey('rocket_league')).toBe('RL');
+  });
+
+  it('does not expose the retired Counter-Strike identifier as a supported game', () => {
+    expect(gameKey('cs2')).toBe('Autres');
+  });
+});
 
 describe('formatPredictionCountdown', () => {
   it('formats the time remaining before a call locks', () => {

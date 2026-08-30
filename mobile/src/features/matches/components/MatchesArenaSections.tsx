@@ -31,19 +31,19 @@ const GAME_FILTERS: { id: GameFilter; label: string }[] = [
   { id: 'followed', label: 'POUR TOI' },
   { id: 'lol', label: 'LOL' },
   { id: 'valorant', label: 'VAL' },
-  { id: 'cs2', label: 'CS2' },
+  { id: 'rocket_league', label: 'RL' },
 ];
 
 const GAME_BACKGROUNDS: Record<GameId, ImageSourcePropType> = {
   lol: require('../../../../assets/onboarding/lol-characters.jpg'),
   valorant: require('../../../../assets/onboarding/valorant-characters.jpg'),
-  cs2: require('../../../../assets/onboarding/cs2-operators.jpg'),
+  rocket_league: require('../../../../assets/onboarding/rocket-league-arena.png'),
 };
 
 const GAME_ACCENTS: Record<GameId, string> = {
   lol: '#72C7F4',
   valorant: '#FF6170',
-  cs2: '#F2A34B',
+  rocket_league: '#35B8FF',
 };
 
 type ScheduleHeroProps = {
@@ -381,7 +381,7 @@ export function toGameId(game?: string | null): GameId | null {
   const key = gameKey(game);
   if (key === 'LoL') return 'lol';
   if (key === 'VALORANT') return 'valorant';
-  if (key === 'CS2') return 'cs2';
+  if (key === 'RL') return 'rocket_league';
   return null;
 }
 

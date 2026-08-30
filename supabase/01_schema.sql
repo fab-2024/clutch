@@ -47,7 +47,7 @@ create index if not exists participations_classement_idx on participations (sais
 -- ---------------------------------------------------------------- Équipes
 create table if not exists equipes (
   id   text primary key,
-  jeu  text not null check (jeu in ('lol', 'cs2', 'valorant')),
+  jeu  text not null check (jeu in ('lol', 'rocket_league', 'valorant')),
   nom  text not null,
   tag  text not null,
   elo  integer not null default 1500,
@@ -58,7 +58,7 @@ create index if not exists equipes_jeu_idx on equipes (jeu);
 -- ----------------------------------------------------------- Évènements
 create table if not exists evenements (
   id   text primary key,
-  jeu  text not null check (jeu in ('lol', 'cs2', 'valorant')),
+  jeu  text not null check (jeu in ('lol', 'rocket_league', 'valorant')),
   nom  text not null,
   tier text default 'A'
 );
@@ -68,7 +68,7 @@ create table if not exists matchs (
   id          text primary key default gen_random_uuid()::text,
   event_id    text not null references evenements (id),
   saison_id   text not null references saisons (id),
-  jeu         text not null check (jeu in ('lol', 'cs2', 'valorant')),
+  jeu         text not null check (jeu in ('lol', 'rocket_league', 'valorant')),
   equipe_a_id text not null references equipes (id),
   equipe_b_id text not null references equipes (id),
   format      integer not null check (format in (1, 3, 5)),

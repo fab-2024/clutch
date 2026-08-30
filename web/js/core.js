@@ -79,7 +79,7 @@ export const ELO_DEFAUT = 1500;
 
 export const JEUX = {
   lol: { id: 'lol', nom: 'League of Legends', court: 'LoL', couleur: '#c8963e' },
-  cs2: { id: 'cs2', nom: 'Counter-Strike 2', court: 'CS2', couleur: '#e8a33d' },
+  rocket_league: { id: 'rocket_league', nom: 'Rocket League', court: 'RL', couleur: '#35b8ff' },
   valorant: { id: 'valorant', nom: 'Valorant', court: 'VAL', couleur: '#ff4655' },
 };
 
@@ -571,7 +571,7 @@ export function constatsAnalyste(detail, { seuil = SEUIL_SIGNIFICATIF } = {}) {
 
   for (const [liste, nom, formate] of [
     [detail.par_format, 'format', (c) => `BO${c}`],
-    [detail.par_jeu, 'jeu', (c) => ({ lol: 'LoL', cs2: 'CS2', valorant: 'Valorant' })[c] ?? c],
+    [detail.par_jeu, 'jeu', (c) => ({ lol: 'LoL', rocket_league: 'RL', valorant: 'Valorant' })[c] ?? c],
     [detail.par_marche, 'marché', (c) => c.replace('_', ' ')],
     [detail.par_cote, 'niveau de cote', (c) => TRANCHES_COTE.find((t) => t.cle === c)?.libelle ?? c],
   ]) {

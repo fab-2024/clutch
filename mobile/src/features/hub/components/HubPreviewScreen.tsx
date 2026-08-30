@@ -38,7 +38,7 @@ const PREVIEW_HUB: HubData = {
   upNext: [
     previewMatch('kc-vit', 8, 'lol', 'Karmine Corp', 'KC', 'Team Vitality', 'VIT', 'LFL', 3),
     previewMatch('t1-gen', 27, 'lol', 'T1', 'T1', 'Gen.G', 'GEN', 'LCK', 3),
-    previewMatch('navi-faze', 51, 'cs2', 'Natus Vincere', 'NAVI', 'FaZe Clan', 'FAZE', 'BLAST Premier', 3),
+    previewMatch('kc-vit-rl', 51, 'rocket_league', 'Karmine Corp', 'KC', 'Team Vitality', 'VIT', 'RLCS Major', 5),
   ],
   nextMatchPrediction: null,
   predictionsToday: 2,

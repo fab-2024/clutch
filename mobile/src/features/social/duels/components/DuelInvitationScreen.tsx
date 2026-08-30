@@ -338,7 +338,7 @@ function Notice({ onRetry, tone, text }: { onRetry?: () => void; tone: 'error' |
   );
 }
 function choiceTag(duel: DuelInvitation, choice: 'a' | 'b') { return choice === 'a' ? duel.tag_a : duel.tag_b; }
-function gameLabel(value: string) { const game = value.toLowerCase(); if (game.includes('lol')) return 'LOL'; if (game.includes('valorant')) return 'VAL'; if (game.includes('cs')) return 'CS2'; return 'ESPORT'; }
+function gameLabel(value: string) { const game = value.toLowerCase(); if (game.includes('rocket') || game === 'rl') return 'RL'; if (game.includes('lol')) return 'LOL'; if (game.includes('valorant')) return 'VAL'; return 'ESPORT'; }
 function formatDate(value: string) { return new Date(value).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
 function errorMessage(caught: unknown, fallback: string) { return caught instanceof Error ? caught.message : fallback; }
 

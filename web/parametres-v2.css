@@ -329,7 +329,7 @@
 .settings-game__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--texte-faible); }
 .settings-game__dot--lol { background: var(--lol); }
 .settings-game__dot--valorant { background: var(--valorant); }
-.settings-game__dot--cs2 { background: var(--cs2); }
+.settings-game__dot--rocket_league { background: var(--rocket-league); }
 .settings-range { width: 100%; display: grid; grid-template-columns: minmax(0,1fr) 50px; align-items: center; gap: 12px; }
 .settings-range input { width: 100%; accent-color: var(--accent); }
 .settings-range output { color: var(--accent); font-family: var(--titre); font-size: .73rem; font-weight: 800; text-align: right; }

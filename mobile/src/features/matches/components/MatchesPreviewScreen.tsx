@@ -52,14 +52,14 @@ const PREVIEW_UPCOMING: ArenaMatch[] = [
     event: 'LEC Summer',
   }),
   previewMatch({
-    id: 'preview-navi-faze',
+    id: 'preview-kc-vit-rl',
     date: dateAt(2, 18, 0),
-    game: 'cs2',
-    teamA: 'Natus Vincere',
-    tagA: 'NAVI',
-    teamB: 'FaZe Clan',
-    tagB: 'FAZE',
-    event: 'BLAST Premier',
+    game: 'rocket_league',
+    teamA: 'Karmine Corp',
+    tagA: 'KC',
+    teamB: 'Team Vitality',
+    tagB: 'VIT',
+    event: 'RLCS Major',
   }),
 ];
 
@@ -114,7 +114,7 @@ export default function MatchesPreviewScreen() {
       calls={PREVIEW_CALLS}
       error={null}
       finished={PREVIEW_FINISHED}
-      followedGames={['lol', 'valorant', 'cs2']}
+      followedGames={['lol', 'valorant', 'rocket_league']}
       headerEconomy={{ frags: 1842, volts: 680 }}
       isAdmin={false}
       loading={false}

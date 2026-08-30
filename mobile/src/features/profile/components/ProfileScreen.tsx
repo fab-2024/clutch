@@ -450,7 +450,7 @@ function VerdictRow({ item }: { item: RecentPrediction }) {
 function rarityColor(rarity: ProfileBadge['rarity']) { if (rarity === 'legendary') return '#FFB84D'; if (rarity === 'secret') return '#D1D7DC'; if (rarity === 'epic') return '#A982FF'; if (rarity === 'rare') return '#63B8FF'; return '#AAB4BE'; }
 function badgeRarityLabel(rarity: ProfileBadge['rarity']) { if (rarity === 'legendary') return 'LÉGENDAIRE'; if (rarity === 'secret') return 'SECRET'; if (rarity === 'epic') return 'ÉPIQUE'; if (rarity === 'rare') return 'RARE'; return 'COMMUN'; }
 function roman(level: number) { return ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][Math.max(0, Math.min(6, Number(level || 1) - 1))]; }
-function gameName(game: string) { const key = String(game || '').toLowerCase(); if (key.includes('lol') || key.includes('league')) return 'LoL'; if (key.includes('valorant')) return 'VAL'; if (key.includes('cs')) return 'CS2'; return 'ESPORT'; }
+function gameName(game: string) { const key = String(game || '').toLowerCase(); if (key.includes('rocket') || key === 'rl') return 'RL'; if (key.includes('lol') || key.includes('league')) return 'LoL'; if (key.includes('valorant')) return 'VAL'; return 'ESPORT'; }
 function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
 function formatDecimal(value: number) { return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(Number(value || 0)); }
 const styles = StyleSheet.create({

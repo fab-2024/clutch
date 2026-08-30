@@ -349,7 +349,7 @@ function DuelListSkeleton() {
   );
 }
 
-function gameLabel(value?: string) { const game = String(value || '').toLowerCase(); if (game.includes('lol')) return 'LOL'; if (game.includes('valorant')) return 'VAL'; if (game.includes('cs')) return 'CS2'; return 'ESPORT'; }
+function gameLabel(value?: string) { const game = String(value || '').toLowerCase(); if (game.includes('rocket') || game === 'rl') return 'RL'; if (game.includes('lol')) return 'LOL'; if (game.includes('valorant')) return 'VAL'; return 'ESPORT'; }
 function formatDate(value?: string) { if (!value) return 'Date à venir'; const date = new Date(value); if (!Number.isFinite(date.getTime())) return 'Date à venir'; return date.toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
 function effectiveStatus(duel: DuelRow): DuelStatus { return duel.statut === 'en_attente' && duel.debut && new Date(duel.debut).getTime() <= Date.now() ? 'expire' : duel.statut; }
 function statusLabel(status: DuelStatus) { return status === 'termine' ? 'TERMINÉ' : status === 'accepte' ? 'VERROUILLÉ' : status === 'annule' ? 'ANNULÉ' : status === 'expire' ? 'EXPIRÉ' : 'EN ATTENTE'; }

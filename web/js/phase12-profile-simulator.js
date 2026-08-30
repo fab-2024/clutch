@@ -58,14 +58,14 @@ function mock() {
       secrets_obtenus: ['sixieme_sens','david'],
     },
     serie_actuelle: 5,
-    meilleur_jeu: { jeu:'cs2', pronostics:68, gagnes:57, precision_pct:83.8 },
+    meilleur_jeu: { jeu:'rocket_league', pronostics:68, gagnes:57, precision_pct:83.8 },
     conviction_preferee: { conviction:'fort', pronostics:76 },
     equipe_favorite: { id:'val-kc', nom:'Karmine Corp', tag:'KC', jeu:'valorant', logo:null, supporters:472, relique:'Calice', relique_niveau:4 },
     forme_recente: [
-      { id:'1',match_id:'m-sim-1',statut:'gagne',choix:'a',conviction:'fort',delta_frags:48,jeu:'cs2',evenement:'IEM Cologne',equipe_a:'Team Vitality',equipe_b:'G2 Esports',tag_a:'VIT',tag_b:'G2',score_a:2,score_b:1 },
+      { id:'1',match_id:'m-sim-1',statut:'gagne',choix:'a',conviction:'fort',delta_frags:48,jeu:'rocket_league',evenement:'RLCS Major',equipe_a:'Team Vitality',equipe_b:'Karmine Corp',tag_a:'VIT',tag_b:'KC',score_a:3,score_b:2 },
       { id:'2',match_id:'m-sim-2',statut:'gagne',choix:'b',conviction:'fort',delta_frags:41,jeu:'valorant',evenement:'VCT EMEA',equipe_a:'FNATIC',equipe_b:'Karmine Corp',tag_a:'FNC',tag_b:'KC',score_a:0,score_b:2 },
       { id:'3',match_id:'m-sim-3',statut:'perdu',choix:'a',conviction:'normal',delta_frags:-26,jeu:'lol',evenement:'LEC',equipe_a:'G2 Esports',equipe_b:'Karmine Corp',tag_a:'G2',tag_b:'KC',score_a:0,score_b:1 },
-      { id:'4',match_id:'m-sim-4',statut:'gagne',choix:'b',conviction:'fort',delta_frags:56,jeu:'cs2',evenement:'BLAST',equipe_a:'NAVI',equipe_b:'Team Vitality',tag_a:'NAVI',tag_b:'VIT',score_a:1,score_b:2 },
+      { id:'4',match_id:'m-sim-4',statut:'gagne',choix:'b',conviction:'fort',delta_frags:56,jeu:'rocket_league',evenement:'RLCS Open',equipe_a:'Team BDS',equipe_b:'Team Vitality',tag_a:'BDS',tag_b:'VIT',score_a:2,score_b:3 },
       { id:'5',match_id:'m-sim-5',statut:'gagne',choix:'a',conviction:'normal',delta_frags:32,jeu:'valorant',evenement:'VCT EMEA',equipe_a:'Karmine Corp',equipe_b:'Team Heretics',tag_a:'KC',tag_b:'TH',score_a:2,score_b:0 },
     ],
     viewer: {

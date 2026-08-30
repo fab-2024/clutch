@@ -21,7 +21,7 @@ begin
   select e.id, e.jeu
   into v_team_id, v_game
   from public.equipes e
-  where e.jeu = any(array['lol', 'cs2', 'valorant']::text[])
+  where e.jeu = any(array['lol', 'rocket_league', 'valorant']::text[])
   order by e.id
   limit 1;
 

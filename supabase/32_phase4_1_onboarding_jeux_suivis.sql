@@ -14,7 +14,7 @@ begin
   ) then
     alter table public.profils
       add constraint profils_jeux_suivis_valides
-      check (jeux_suivis <@ array['lol','cs2','valorant']::text[]);
+      check (jeux_suivis <@ array['lol','rocket_league','valorant']::text[]);
   end if;
 end $$;
 
@@ -35,7 +35,7 @@ begin
   select coalesce(array_agg(distinct jeu order by jeu), '{}'::text[])
     into v_jeux
   from unnest(coalesce(p_jeux, '{}'::text[])) as jeu
-  where jeu = any(array['lol','cs2','valorant']::text[]);
+  where jeu = any(array['lol','rocket_league','valorant']::text[]);
 
   update public.profils
      set jeux_suivis = v_jeux

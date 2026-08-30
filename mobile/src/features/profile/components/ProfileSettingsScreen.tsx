@@ -524,6 +524,7 @@ async function previewSaveDelay(duration = 520) {
 
 function gameLabel(game: GameId) {
   if (game === 'valorant') return 'VAL';
+  if (game === 'rocket_league') return 'RL';
   return game.toUpperCase();
 }
 

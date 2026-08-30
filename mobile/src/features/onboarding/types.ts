@@ -1,4 +1,4 @@
-export type GameId = 'lol' | 'valorant' | 'cs2';
+export type GameId = 'lol' | 'valorant' | 'rocket_league';
 
 export type TeamRow = {
   id: string;

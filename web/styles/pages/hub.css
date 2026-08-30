@@ -185,9 +185,9 @@
   --arena-right: rgba(229,70,155,.25);
 }
 
-.ui-v4 .hub-hero[data-jeu="cs2"] {
-  --arena-left: rgba(57,129,255,.28);
-  --arena-right: rgba(240,145,60,.26);
+.ui-v4 .hub-hero[data-jeu="rocket_league"] {
+  --arena-left: rgba(53,184,255,.3);
+  --arena-right: rgba(255,139,46,.24);
 }
 
 .ui-v4 .hub-hero[data-jeu="valorant"] {

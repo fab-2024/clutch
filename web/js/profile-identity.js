@@ -29,7 +29,7 @@ export function signatureDepuisRecap(recap = {}) {
 }
 
 export function libelleJeu(jeu) {
-  if (jeu === 'cs2') return 'CS2';
+  if (jeu === 'rocket_league') return 'RL';
   if (jeu === 'lol') return 'LoL';
   if (jeu === 'valorant') return 'VAL';
   return String(jeu || 'Esport').toUpperCase();

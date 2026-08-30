@@ -21,7 +21,7 @@ export const GAMES: GameChoice[] = [
     gradient: ['#291015', '#141218', '#080B0F'], activeGradient: ['#42141D', '#191315', '#080B0F'],
   },
   {
-    id: 'cs2', short: 'CS2', name: 'Counter-Strike 2', code: 'C', accent: '#55A7FF', copy: 'Majors · BLAST · ESL',
-    gradient: ['#0B1C2C', '#10161D', '#080B0F'], activeGradient: ['#102D48', '#12191D', '#080B0F'],
+    id: 'rocket_league', short: 'RL', name: 'Rocket League', code: 'R', accent: '#35B8FF', copy: 'RLCS · Majors · Worlds',
+    gradient: ['#071D2A', '#10161D', '#080B0F'], activeGradient: ['#0A3048', '#12191D', '#080B0F'],
   },
 ];

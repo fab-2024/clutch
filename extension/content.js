@@ -21,7 +21,7 @@
   function jeuDetecte() {
     const texte = `${document.title} ${document.querySelector('meta[name="description"]')?.content || ''}`.toLowerCase();
     if (/valorant|vct/.test(texte)) return 'valorant';
-    if (/counter-?strike|cs2|cs:go|blast|esl pro/.test(texte)) return 'cs2';
+    if (/rocket\s*league|rocketleague|rlcs/.test(texte)) return 'rocket_league';
     if (/league of legends|lol|lec|lfl|worlds/.test(texte)) return 'lol';
     return '';
   }

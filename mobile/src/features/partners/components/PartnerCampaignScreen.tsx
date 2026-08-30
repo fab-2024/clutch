@@ -320,7 +320,7 @@ function SectionHeader({ eyebrow, meta, title }: { eyebrow: string; meta: string
 function firstParam(value?: string | string[]) { return Array.isArray(value) ? value[0] : value; }
 function taskMeta(type: PartnerCampaignTask['type']) { if (type === 'match_follow') return { glyph: '◉', eyebrow: 'SIGNAL 01 // SUIVI' }; if (type === 'calls') return { glyph: '◎', eyebrow: 'SIGNAL 02 // ARENA' }; return { glyph: '✦', eyebrow: 'SIGNAL 03 // FACTION' }; }
 function slotLabel(slot: PartnerCampaignReward['slot']) { if (slot === 'cadre_profil') return 'CADRE DE PROFIL'; if (slot === 'titre_profil') return 'TITRE SUPPORTER'; return 'VARIATION DE RELIQUE'; }
-function gameLabel(game: string) { if (game === 'lol') return 'LEAGUE OF LEGENDS'; if (game === 'valorant') return 'VALORANT'; if (game === 'cs2') return 'COUNTER-STRIKE 2'; return game.toUpperCase(); }
+function gameLabel(game: string) { if (game === 'lol') return 'LEAGUE OF LEGENDS'; if (game === 'valorant') return 'VALORANT'; if (game === 'rocket_league') return 'ROCKET LEAGUE'; return game.toUpperCase(); }
 function shortDate(value: string) { return new Date(value).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }).toUpperCase(); }
 function dateRange(start: string, end: string) { const format = (value: string) => new Date(value).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }).replace('.', '').toUpperCase(); return `${format(start)} — ${format(end)}`; }
 function messageFrom(value: unknown, fallback: string) { return value instanceof Error && value.message ? value.message : fallback; }

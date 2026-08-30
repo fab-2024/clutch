@@ -262,6 +262,37 @@ begin
     raise exception 'Auth profile recovery RPC is not hardened';
   end if;
 
+  if exists (
+    select 1
+    from public.equipes
+    where jeu not in ('lol', 'rocket_league', 'valorant')
+    union all
+    select 1
+    from public.evenements
+    where jeu not in ('lol', 'rocket_league', 'valorant')
+    union all
+    select 1
+    from public.matchs
+    where jeu not in ('lol', 'rocket_league', 'valorant')
+  ) then
+    raise exception 'Runtime game catalog contains a retired or unknown game';
+  end if;
+
+  if exists (
+    select 1
+    from public.profils
+    where 'cs2' = any(coalesce(jeux_suivis, '{}'::text[]))
+  ) then
+    raise exception 'A profile still follows the retired CS2 game id';
+  end if;
+
+  if not exists (select 1 from public.equipes where jeu = 'rocket_league')
+     or not exists (select 1 from public.evenements where jeu = 'rocket_league')
+     or not exists (select 1 from public.matchs where jeu = 'rocket_league')
+  then
+    raise exception 'Rocket League seed coverage is incomplete';
+  end if;
+
   raise notice 'p0_mobile_contracts_ok';
 end;
 $$;

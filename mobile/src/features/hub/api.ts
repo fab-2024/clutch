@@ -26,7 +26,7 @@ type CommunityRow = {
 export async function loadHubData(userId: string, followedGames: string[] = []): Promise<HubData> {
   const now = new Date().toISOString();
   const matchFields = 'id,debut,jeu,equipe_a,tag_a,equipe_b,tag_b,evenement,format,statut,score_a,score_b';
-  const games = followedGames.length ? followedGames : ['lol', 'cs2', 'valorant'];
+  const games = followedGames.length ? followedGames : ['lol', 'rocket_league', 'valorant'];
   const [
     seasonResult,
     inProgressResult,

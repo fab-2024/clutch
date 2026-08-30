@@ -265,9 +265,9 @@ function filterCalls(calls: MyCallItem[], game: GameFilter, followed: string[], 
 
 function gameId(game: string): GameId | null {
   const value = game.toLowerCase();
+  if (value.includes('rocket') || value === 'rl') return 'rocket_league';
   if (value.includes('lol') || value.includes('league')) return 'lol';
   if (value.includes('valorant')) return 'valorant';
-  if (value.includes('cs')) return 'cs2';
   return null;
 }
 

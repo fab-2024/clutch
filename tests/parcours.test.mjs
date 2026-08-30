@@ -350,7 +350,7 @@ test('équipe préférée : elle se pose, se change et se retire', async () => {
   await store.definirEquipeFavorite('lol-kc');
   assert.equal((await store.utilisateurCourant()).equipe_favorite.tag, 'KC');
 
-  await store.definirEquipeFavorite('cs-vit');
+  await store.definirEquipeFavorite('rl-vit');
   assert.equal((await store.utilisateurCourant()).equipe_favorite.tag, 'VIT');
 
   await store.definirEquipeFavorite(null);
@@ -949,7 +949,7 @@ test('admin : les créations invalides sont refusées', async () => {
   await store.connexion('Organisateur');
   const ev = await store.creerEvenement({ nom: 'Test Cup', jeu: 'lol' });
   const a = await store.creerEquipe({ nom: 'Alpha Team', tag: 'ALP', jeu: 'lol' });
-  const cs = await store.creerEquipe({ nom: 'Bravo Squad', tag: 'BRV', jeu: 'cs2' });
+  const rocketLeague = await store.creerEquipe({ nom: 'Bravo Squad', tag: 'BRV', jeu: 'rocket_league' });
 
   await assert.rejects(() => store.creerEvenement({ nom: 'Test Cup', jeu: 'lol' }), /porte déjà ce nom/);
   await assert.rejects(() => store.creerEvenement({ nom: '  ', jeu: 'lol' }), /Donne un nom/);
@@ -960,12 +960,12 @@ test('admin : les créations invalides sont refusées', async () => {
     /contre elle-même/
   );
   await assert.rejects(
-    () => store.creerMatch({ eventId: ev.id, equipeAId: a.id, equipeBId: cs.id, format: 3, debut: DEMAIN() }),
+    () => store.creerMatch({ eventId: ev.id, equipeAId: a.id, equipeBId: rocketLeague.id, format: 3, debut: DEMAIN() }),
     /même jeu|doivent jouer/
   );
   await assert.rejects(
     () => store.creerMatch({
-      eventId: ev.id, equipeAId: a.id, equipeBId: cs.id, format: 3,
+      eventId: ev.id, equipeAId: a.id, equipeBId: rocketLeague.id, format: 3,
       debut: new Date(Date.now() - 3600 * 1000).toISOString(),
     }),
     /futur/

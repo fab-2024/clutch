@@ -160,7 +160,7 @@ body[data-screen="onboarding"] .principal { min-height:100dvh; padding:0; }
 }
 .ui-v4 .onboarding-v5__game:hover { transform:translateY(-3px); border-color:rgba(255,255,255,.28); }
 .ui-v4 .onboarding-v5__game--lol { --game:#d0a84b; }
-.ui-v4 .onboarding-v5__game--cs2 { --game:#e0e4e8; }
+.ui-v4 .onboarding-v5__game--rocket-league { --game:#35b8ff; }
 .ui-v4 .onboarding-v5__game--valorant { --game:#ff4655; }
 .ui-v4 .onboarding-v5__game.actif {
   border-color:var(--lime);

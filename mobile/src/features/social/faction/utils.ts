@@ -49,8 +49,8 @@ export function shouldPresentRelicMutation(
 
 export function gameLabel(game: string) {
   const key = String(game || '').toLowerCase();
+  if (key.includes('rocket') || key === 'rl') return 'ROCKET LEAGUE';
   if (key.includes('lol') || key.includes('league')) return 'LEAGUE OF LEGENDS';
   if (key.includes('valorant')) return 'VALORANT';
-  if (key.includes('cs')) return 'COUNTER-STRIKE 2';
   return String(game || 'ESPORT').toUpperCase();
 }

@@ -34,8 +34,8 @@ function resultatFictif(statut) {
     tag_b: 'G2',
     score_a: gagne ? 2 : 1,
     score_b: gagne ? 1 : 2,
-    jeu: 'cs2',
-    evenement: 'SIMULATION · IEM Cologne',
+    jeu: 'rocket_league',
+    evenement: 'SIMULATION · RLCS Major',
     format: 3,
     restants: 1,
   };

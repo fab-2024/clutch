@@ -5,37 +5,37 @@ import { publicPresentation } from '../server/public-data.mjs';
 test('public match presentation stays action-oriented', () => {
   const card = publicPresentation('match', {
     id: 'm-test',
-    jeu: 'cs2',
-    format: 3,
+    jeu: 'rocket_league',
+    format: 5,
     debut: '2026-08-20T18:00:00Z',
     statut: 'a_venir',
     equipe_a: 'Team Vitality',
-    equipe_b: 'G2 Esports',
+    equipe_b: 'Karmine Corp',
     tag_a: 'VIT',
-    tag_b: 'G2',
-    evenement: 'IEM Cologne',
+    tag_b: 'KC',
+    evenement: 'RLCS Major',
     score_a: null,
     score_b: null,
   });
 
   assert.equal(card.kind, 'match');
-  assert.equal(card.title, 'VIT vs G2 · IEM Cologne | GRIFF');
+  assert.equal(card.title, 'VIT vs KC · RLCS Major | GRIFF');
   assert.equal(card.cta, 'Prendre position');
   assert.equal(card.spaPath, '/#/matchs/m-test');
-  assert.match(card.description, /Team Vitality vs G2 Esports/);
+  assert.match(card.description, /Team Vitality vs Karmine Corp/);
 });
 
 test('public challenge presentation exposes only the invitation story', () => {
   const card = publicPresentation('challenge', {
     token: 'abc123',
     statut: 'en_attente',
-    jeu: 'cs2',
-    evenement: 'IEM Cologne',
+    jeu: 'rocket_league',
+    evenement: 'RLCS Major',
     debut: '2026-08-20T18:00:00Z',
     equipe_a: 'Team Vitality',
-    equipe_b: 'G2 Esports',
+    equipe_b: 'Karmine Corp',
     tag_a: 'VIT',
-    tag_b: 'G2',
+    tag_b: 'KC',
     createur_pseudo: 'FabTheTap',
     createur_choix: 'a',
     createur_conviction: 'fort',

@@ -25,17 +25,17 @@ test('Contrarian detects a low-probability winning call', () => {
 test('Secondary traits expose game and conviction without replacing archetype', () => {
   const traits = traitsDepuisProfil({
     recap: { paris: 30, precision_pct: 76, outsiders_250_gagnes: 2 },
-    meilleur_jeu: { jeu: 'cs2', pronostics: 18, precision_pct: 78 },
+    meilleur_jeu: { jeu: 'rocket_league', pronostics: 18, precision_pct: 78 },
     conviction_preferee: { conviction: 'fort', pronostics: 12 },
     serie_actuelle: 2,
   });
-  assert.deepEqual(traits.map((t) => t.cle), ['jeu-cs2', 'strong-conviction', 'upsets']);
+  assert.deepEqual(traits.map((t) => t.cle), ['jeu-rocket_league', 'strong-conviction', 'upsets']);
 });
 
 test('Profile signature combines archetype, game and conviction', () => {
   assert.equal(signatureCourte({
     recap: { paris: 20, gagnes: 17, precision_pct: 85 },
-    meilleur_jeu: { jeu: 'cs2' },
+    meilleur_jeu: { jeu: 'rocket_league' },
     conviction_preferee: { conviction: 'fort' },
-  }), 'Oracle · CS2 · FORT');
+  }), 'Oracle · RL · FORT');
 });

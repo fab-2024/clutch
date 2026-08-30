@@ -30,7 +30,7 @@ declare v_id text; v_ev evenements%rowtype;
 begin
   if not clutch_est_admin() then raise exception 'Réservé aux administrateurs.'; end if;
   if coalesce(trim(p_nom), '') = '' then raise exception 'Donne un nom au tournoi.'; end if;
-  if p_jeu not in ('lol', 'cs2', 'valorant') then raise exception 'Jeu inconnu.'; end if;
+  if p_jeu not in ('lol', 'rocket_league', 'valorant') then raise exception 'Jeu inconnu.'; end if;
 
   -- Identifiant lisible, dérivé du nom : « LEC Summer » -> « ev-lec-summer ».
   v_id := 'ev-' || left(regexp_replace(lower(unaccent_simple(p_nom)), '[^a-z0-9]+', '-', 'g'), 40);
@@ -57,7 +57,7 @@ begin
   if trim(p_tag) !~ '^[A-Za-z0-9.]{2,6}$' then
     raise exception 'Le tag fait 2 à 6 caractères, sans espace.';
   end if;
-  if p_jeu not in ('lol', 'cs2', 'valorant') then raise exception 'Jeu inconnu.'; end if;
+  if p_jeu not in ('lol', 'rocket_league', 'valorant') then raise exception 'Jeu inconnu.'; end if;
   if p_elo < 1000 or p_elo > 2200 then
     raise exception 'L''Elo de départ doit être entre 1000 et 2200.';
   end if;

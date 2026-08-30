@@ -10,7 +10,7 @@ function mock(){
   return {
     actives:[
       {id:'sim-duo',type:'duo_calls',objectif:3,progression:2,recompense_xp:100,recompense_volts:25,statut:'active',expire_le:soon,partenaire:{id:'theo',pseudo:'Theo',profil_public:true},moi_fait:false,partenaire_fait:true},
-      {id:'sim-oppo',type:'opposition',objectif:2,progression:1,recompense_xp:120,recompense_volts:30,statut:'active',expire_le:soon,partenaire:{id:'lucas',pseudo:'Lucas',profil_public:true},moi_fait:false,partenaire_fait:true,match:{id:'m-17',jeu:'cs2',evenement:'ESL Pro League',tag_a:'VIT',tag_b:'G2',equipe_a:'Team Vitality',equipe_b:'G2 Esports'}},
+      {id:'sim-oppo',type:'opposition',objectif:2,progression:1,recompense_xp:120,recompense_volts:30,statut:'active',expire_le:soon,partenaire:{id:'lucas',pseudo:'Lucas',profil_public:true},moi_fait:false,partenaire_fait:true,match:{id:'m-17',jeu:'rocket_league',evenement:'RLCS Major',tag_a:'VIT',tag_b:'KC',equipe_a:'Team Vitality',equipe_b:'Karmine Corp'}},
       {id:'sim-league',type:'league_push',objectif:60,progression:34,recompense_xp:140,recompense_volts:40,statut:'active',expire_le:soon,partenaire:{id:'emma',pseudo:'Emma',profil_public:true},moi_fait:true,partenaire_fait:true,ligue:{id:'sim-ligue',nom:'Les Déglingos',code:'SIM123'}},
     ],
     historique:[

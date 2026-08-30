@@ -8,7 +8,7 @@
   --game-soft: color-mix(in oklab, var(--game) 20%, transparent);
 }
 .matchs-v2 [data-jeu='lol'], .match-center[data-jeu='lol'] { --game: var(--lol); }
-.matchs-v2 [data-jeu='cs2'], .match-center[data-jeu='cs2'] { --game: var(--cs2); }
+.matchs-v2 [data-jeu='rocket_league'], .match-center[data-jeu='rocket_league'] { --game: var(--rocket-league); }
 .matchs-v2 [data-jeu='valorant'], .match-center[data-jeu='valorant'] { --game: var(--valorant); }
 
 /* En-tête et filtres ------------------------------------------------------ */
@@ -55,7 +55,7 @@
   box-shadow:0 28px 90px -55px rgba(0,0,0,.95);
 }
 .arena-hero[data-jeu='lol'] { --game:var(--lol); }
-.arena-hero[data-jeu='cs2'] { --game:var(--cs2); }
+.arena-hero[data-jeu='rocket_league'] { --game:var(--rocket-league); }
 .arena-hero[data-jeu='valorant'] { --game:var(--valorant); }
 .arena-hero::before {
   content:''; position:absolute; inset:0; z-index:-3; pointer-events:none;
@@ -285,7 +285,7 @@
   transition:background var(--transition),border-color var(--transition),transform var(--transition);
 }
 .arena-row[data-jeu='lol'] { --game:var(--lol); }
-.arena-row[data-jeu='cs2'] { --game:var(--cs2); }
+.arena-row[data-jeu='rocket_league'] { --game:var(--rocket-league); }
 .arena-row[data-jeu='valorant'] { --game:var(--valorant); }
 .arena-row+.arena-row::before {
   content:''; position:absolute; left:6px; right:6px; top:-1px; height:1px; background:rgba(255,255,255,.045);

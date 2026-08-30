@@ -268,8 +268,8 @@ function isRewardRevealRarity(rarity: string) {
 
 function gameLabel(game: string) {
   const normalized = game.toLowerCase();
+  if (normalized.includes('rocket') || normalized === 'rl') return 'RL';
   if (normalized.includes('valorant')) return 'VALORANT';
-  if (normalized.includes('cs')) return 'CS2';
   if (normalized.includes('lol')) return 'LOL';
   return 'ESPORT';
 }

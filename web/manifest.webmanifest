@@ -1,7 +1,7 @@
 {
   "name": "Clutch — le prono esport entre potes",
   "short_name": "Clutch",
-  "description": "Pronostique les matchs LoL, CS2 et Valorant avec tes potes. Monnaie virtuelle, zéro argent réel.",
+  "description": "Pronostique les matchs LoL, Rocket League et Valorant avec tes potes. Monnaie virtuelle, zéro argent réel.",
   "lang": "fr",
   "start_url": "./index.html#/matchs",
   "scope": "./",

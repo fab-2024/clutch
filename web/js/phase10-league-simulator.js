@@ -19,7 +19,7 @@ const mock = {
     {id:'nina',pseudo:'Nina',rang:7,rang_7j:5,mouvement:-2,frags:1164,net_7j:-41,pronostics_regles:20,pronostics_gagnes:10},
   ],
   matchs: [
-    {id:'sim1',jeu:'cs2',evenement:'IEM Cologne',format:3,debut:new Date(Date.now()+2*3600000).toISOString(),equipe_a:'Team Vitality',equipe_b:'G2 Esports',tag_a:'VIT',tag_b:'G2',participants:8,mon_choix:'a',choix_a:5,choix_b:3,cible_choix:'b'},
+    {id:'sim1',jeu:'rocket_league',evenement:'RLCS Major',format:5,debut:new Date(Date.now()+2*3600000).toISOString(),equipe_a:'Team Vitality',equipe_b:'Karmine Corp',tag_a:'VIT',tag_b:'KC',participants:8,mon_choix:'a',choix_a:5,choix_b:3,cible_choix:'b'},
     {id:'sim2',jeu:'lol',evenement:'LEC Summer',format:3,debut:new Date(Date.now()+5*3600000).toISOString(),equipe_a:'Karmine Corp',equipe_b:'G2 Esports',tag_a:'KC',tag_b:'G2',participants:6,mon_choix:null,choix_a:null,choix_b:null,cible_choix:null},
   ],
   rivalites: [
