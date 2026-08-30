@@ -14,6 +14,7 @@ export type ShowcasePresenterDefinition = {
   id: string;
   image: ImageSourcePropType;
   name: string;
+  packOnly?: boolean;
   pedestal: ShowcasePedestalSkin;
   price: number;
   rarity: CosmeticRarity;
@@ -75,6 +76,19 @@ const CHAMPAGNE_PODIUM_SLOTS = [
   { id: 'trophy', label: 'Podium trophée', preferredKind: 'trophy', left: '61%', top: '27%', width: '15%', height: '31%' },
   { id: 'title', label: 'Podium titre', preferredKind: 'title', left: '61%', top: '59%', width: '15%', height: '19%' },
   { id: 'ring', label: 'Podium anneau', preferredKind: 'ring', left: '79%', top: '43%', width: '11%', height: '35%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
+
+const FNATIC_TEAM_PACK_SLOTS = [
+  { id: 'left-free', label: 'Cadre Fnatic', preferredKind: 'frame', left: '2%', top: '39%', width: '8%', height: '39%' },
+  { id: 'jersey', label: 'Maillot Fnatic', preferredKind: 'jersey', left: '11%', top: '27%', width: '13%', height: '51%' },
+  { id: 'trophy', label: 'Totem Fnatic', preferredKind: 'trophy', left: '25%', top: '38%', width: '9%', height: '40%' },
+  { id: 'left-extra', label: 'Bannière Fnatic', preferredKind: 'banner', left: '34%', top: '39%', width: '8%', height: '39%' },
+  { id: 'rank', label: 'Rang central', preferredKind: 'rank', left: '41%', top: '18%', width: '18%', height: '61%' },
+  { id: 'badge', label: 'Badge Fnatic', preferredKind: 'badge', left: '60%', top: '35%', width: '10%', height: '43%' },
+  { id: 'title', label: 'Titre Fnatic', preferredKind: 'title', left: '70%', top: '44%', width: '10%', height: '34%' },
+  { id: 'ring', label: 'Jeton Fnatic', preferredKind: 'ring', left: '80%', top: '48%', width: '8%', height: '30%' },
+  { id: 'right-extra', label: 'Logo 3D Fnatic', preferredKind: 'core', left: '88%', top: '41%', width: '6%', height: '37%' },
+  { id: 'right-free', label: 'Carte de partage Fnatic', preferredKind: 'banner', left: '94%', top: '41%', width: '6%', height: '37%' },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
 export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] = [
@@ -143,6 +157,18 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     price: 240,
     rarity: 'rare',
     slots: CHAMPAGNE_PODIUM_SLOTS,
+  },
+  {
+    id: 'fnatic-pedestals',
+    name: 'Fnatic Black & Orange',
+    description: 'Dix emplacements noirs et orange conçus pour le pack officiel Fnatic.',
+    accent: '#FF5900',
+    image: require('../../../assets/shop/team-packs/fnatic/fnatic-black-orange-room-empty.png'),
+    packOnly: true,
+    pedestal: 'obsidian',
+    price: 0,
+    rarity: 'legendaire',
+    slots: FNATIC_TEAM_PACK_SLOTS,
   },
 ] as const;
 

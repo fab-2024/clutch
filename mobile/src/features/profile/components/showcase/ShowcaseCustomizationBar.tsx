@@ -22,6 +22,7 @@ type ShowcaseCustomizationBarProps = {
   rankDisplayId: string;
   rankDisplays: readonly Pick<ShowcaseRankDisplayDefinition, 'accent' | 'id' | 'name'>[];
   theme: ShowcaseRoomTheme;
+  unlockedPresenterIds?: readonly string[];
 };
 
 type ShowcaseControlVariant = 'pedestal' | 'presenter' | 'rank' | 'theme' | 'lighting';
@@ -29,6 +30,7 @@ type ShowcaseControlVariant = 'pedestal' | 'presenter' | 'rank' | 'theme' | 'lig
 const PRESENTERS = SHOWCASE_PRESENTER_CATALOG.map((presenter) => ({
   color: presenter.accent,
   label: presenter.name.toUpperCase(),
+  packOnly: presenter.packOnly ?? false,
   value: presenter.id,
 }));
 
@@ -44,6 +46,17 @@ const LIGHTS = SHOWCASE_CUSTOMIZABLE_LIGHTINGS.map((value) => ({
   value,
 }));
 
+export function showcasePresenterOptions(
+  presenterId: string,
+  unlockedPresenterIds: readonly string[] = [],
+) {
+  return PRESENTERS.filter(
+    (option) => !option.packOnly
+      || option.value === presenterId
+      || unlockedPresenterIds.includes(option.value),
+  );
+}
+
 export default function ShowcaseCustomizationBar({
   lighting,
   onLightingChange,
@@ -55,18 +68,20 @@ export default function ShowcaseCustomizationBar({
   rankDisplayId,
   rankDisplays,
   theme,
+  unlockedPresenterIds = [],
 }: ShowcaseCustomizationBarProps) {
   const rankDisplayOptions = rankDisplays.map((display) => ({
     color: display.accent,
     label: display.name.toUpperCase(),
     value: display.id,
   }));
+  const presenterOptions = showcasePresenterOptions(presenterId, unlockedPresenterIds);
 
   return (
     <View style={styles.root}>
       <Text style={styles.title}>PERSONNALISER</Text>
       <ScrollView contentContainerStyle={styles.groups} horizontal showsHorizontalScrollIndicator={false}>
-        <ShowcaseControlGroup label="PRÉSENTOIR" onChange={onPresenterChange} options={PRESENTERS} selected={presenterId} variant="presenter" />
+        <ShowcaseControlGroup label="PRÉSENTOIR" onChange={onPresenterChange} options={presenterOptions} selected={presenterId} variant="presenter" />
         <ShowcaseControlGroup disabled={rankDisplayDisabled} label="ÉCRIN DU RANG" onChange={onRankDisplayChange} options={rankDisplayOptions} selected={rankDisplayId} variant="rank" />
         <ShowcaseControlGroup label="THÈME DE VITRINE" onChange={onThemeChange} options={THEMES} selected={theme} variant="theme" />
         <ShowcaseControlGroup label="COULEUR D’ÉCLAIRAGE" onChange={onLightingChange} options={LIGHTS} selected={lighting} variant="lighting" />

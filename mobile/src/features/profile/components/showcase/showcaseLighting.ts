@@ -37,6 +37,11 @@ export const SHOWCASE_LIGHTING_VISUALS: Record<ShowcaseLighting, ShowcaseLightin
     label: 'ÉMERAUDE',
     wash: ['rgba(4,14,8,.03)', 'rgba(22,119,71,.15)', 'rgba(8,7,3,.17)'],
   },
+  orange: {
+    glow: '#FF5900',
+    label: 'FNATIC',
+    wash: ['rgba(20,6,1,.05)', 'rgba(188,61,0,.15)', 'rgba(7,4,2,.18)'],
+  },
   violet: {
     glow: '#9A6BFF',
     label: 'VIOLET',

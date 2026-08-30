@@ -7,7 +7,7 @@ import {
 } from '../../showcasePresenterCatalog';
 
 describe('showcase presenter catalog', () => {
-  it('keeps the six approved presenters in visual order', () => {
+  it('keeps the approved presenters and the Fnatic pack scene in visual order', () => {
     expect(SHOWCASE_PRESENTER_CATALOG.map((presenter) => presenter.id)).toEqual([
       'supports_gallery',
       'supports_forge',
@@ -15,6 +15,7 @@ describe('showcase presenter catalog', () => {
       'supports_crystal',
       'supports_vault',
       'supports_champagne',
+      'fnatic-pedestals',
     ]);
     expect(SHOWCASE_PRESENTER_CATALOG.map((presenter) => presenter.slots.length)).toEqual([
       8,
@@ -23,7 +24,17 @@ describe('showcase presenter catalog', () => {
       8,
       10,
       6,
+      10,
     ]);
+  });
+
+  it('exposes ten clickable slots for the Fnatic Black & Orange room', () => {
+    expect(showcasePresenterById('fnatic-pedestals')).toMatchObject({
+      accent: '#FF5900',
+      name: 'Fnatic Black & Orange',
+      rarity: 'legendaire',
+    });
+    expect(showcasePresenterById('fnatic-pedestals')?.slots).toHaveLength(10);
   });
 
   it('keeps every placement independently clickable inside each presenter', () => {

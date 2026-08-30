@@ -31,6 +31,18 @@ describe('ShowcasePhysicalObject', () => {
     }
     expect(screen.getByText('OBJET TITLE')).toBeTruthy();
   });
+
+  it('renders a collectible-specific image when the catalog provides one', async () => {
+    const image = { uri: 'fnatic-logo-3d' };
+    const screen = await render(
+      <ShowcasePhysicalObject
+        model={{ accent: '#FF5900', id: 'fnatic-logo-3d', image, kind: 'core', name: 'Logo 3D Fnatic' }}
+        size={40}
+      />,
+    );
+
+    expect(screen.getByTestId('showcase-object-image-core').props.source).toBe(image);
+  });
 });
 
 function kindLabel(kind: ShowcasePhysicalObjectKind) {

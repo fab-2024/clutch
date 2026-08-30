@@ -32,4 +32,12 @@ describe('showcase lighting directions', () => {
     expect(SHOWCASE_LIGHTING_VISUALS.emerald.horizontalWash).toHaveLength(3);
     expect(SHOWCASE_LIGHTING_VISUALS.cyan.horizontalWash).toBeUndefined();
   });
+
+  it('keeps the Fnatic orange lighting available to equipped team packs', () => {
+    expect(SHOWCASE_LIGHTING_VISUALS.orange).toMatchObject({
+      glow: '#FF5900',
+      label: 'FNATIC',
+    });
+    expect(SHOWCASE_CUSTOMIZABLE_LIGHTINGS).not.toContain('orange');
+  });
 });

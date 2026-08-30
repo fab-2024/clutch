@@ -20,6 +20,7 @@ import {
   useFrameCallback,
   useSharedValue,
   withRepeat,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -144,6 +145,7 @@ function ShowcaseAtmosphereCanvas({
   width: number;
 }) {
   const phase = useSharedValue(0);
+  const impulse = useSharedValue(0);
 
   useEffect(() => {
     cancelAnimation(phase);
@@ -156,12 +158,26 @@ function ShowcaseAtmosphereCanvas({
     return () => cancelAnimation(phase);
   }, [atmosphere.driftDurationMs, phase]);
 
+  useEffect(() => {
+    cancelAnimation(impulse);
+    impulse.value = 0;
+    if (atmosphere.effect === 'embers') {
+      impulse.value = withSequence(
+        withTiming(1, { duration: 350, easing: Easing.out(Easing.quad) }),
+        withTiming(0, { duration: 850, easing: Easing.inOut(Easing.quad) }),
+      );
+    }
+    return () => cancelAnimation(impulse);
+  }, [atmosphere.effect, impulse]);
+
   const breath = useDerivedValue(() => (Math.sin(phase.value * Math.PI * 2) + 1) / 2);
   const rankRadius = useDerivedValue(() => 250 + breath.value * 18);
   const teamRadius = useDerivedValue(() => 230 + (1 - breath.value) * 16);
   const ambientOpacity = useDerivedValue(() => 0.78 + breath.value * 0.14);
   const sweepX = useDerivedValue(() => -260 + phase.value * 1_520);
-  const sweepOpacity = useDerivedValue(() => 0.24 + breath.value * 0.08);
+  const sweepOpacity = useDerivedValue(() => (
+    (0.24 + breath.value * 0.08) * (1 + impulse.value * 0.85)
+  ));
   const sweepStart = useDerivedValue(() => vec(sweepX.value, 0));
   const sweepEnd = useDerivedValue(() => vec(sweepX.value + 190, 0));
 
@@ -233,6 +249,7 @@ function ShowcaseAtmosphereCanvas({
               key={`showcase-atmosphere-dust-${index}`}
               particle={particle}
               phase={phase}
+              impulse={impulse}
             />
           ))}
         </FitBox>
@@ -285,11 +302,13 @@ function AtmosphereDust({
   index,
   particle,
   phase,
+  impulse,
 }: {
   atmosphere: ShowcaseAtmosphere;
   index: number;
   particle: (typeof DUST)[number];
   phase: SharedValue<number>;
+  impulse: SharedValue<number>;
 }) {
   const [baseX, baseY, offset, radius] = particle;
   const local = useDerivedValue(() => (phase.value + offset) % 1);
@@ -297,7 +316,8 @@ function AtmosphereDust({
   const cy = useDerivedValue(() => baseY - local.value * (52 + index % 4 * 8));
   const opacity = useDerivedValue(() => {
     const fade = Math.sin(local.value * Math.PI);
-    return Math.max(0, fade) * atmosphere.intensity * (index % 3 === 0 ? 0.7 : 0.43);
+    const emberBoost = atmosphere.effect === 'embers' ? 1 + impulse.value * 1.4 : 1;
+    return Math.max(0, fade) * atmosphere.intensity * (index % 3 === 0 ? 0.7 : 0.43) * emberBoost;
   });
 
   return (

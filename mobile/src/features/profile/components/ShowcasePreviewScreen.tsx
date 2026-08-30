@@ -3,6 +3,10 @@ import { useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { PREVIEW_SHOP } from '@/src/features/shop/components/ShopPreviewScreen';
+import {
+  applyPreviewTeamPackAction,
+  createTeamPackPreviewItems,
+} from '@/src/features/shop/teamPackCatalog';
 import { EMPTY_EQUIPPED_COSMETICS, type CosmeticShopData } from '@/src/features/shop/types';
 import { colors, typography } from '@/src/theme';
 
@@ -87,9 +91,21 @@ export default function ShowcasePreviewScreen() {
   );
 }
 
-type ShowcasePreviewMood = 'minimal' | 'mythic' | 'standard';
+type ShowcasePreviewMood = 'fnatic' | 'minimal' | 'mythic' | 'standard';
 
 function showcasePreviewForMood(mood: ShowcasePreviewMood) {
+  if (mood === 'fnatic') {
+    const packShop = applyPreviewTeamPackAction({
+      ...SHOWCASE_SHOP,
+      balance: 1_280,
+      items: [...SHOWCASE_SHOP.items, ...createTeamPackPreviewItems()],
+    });
+    return {
+      profile: PREVIEW_PROFILE,
+      shop: packShop,
+    };
+  }
+
   if (mood === 'mythic') {
     const core = {
       accent: '#E8FF3D',
@@ -180,7 +196,7 @@ function showcasePreviewForMood(mood: ShowcasePreviewMood) {
 }
 
 function previewMood(value?: string): ShowcasePreviewMood {
-  if (value === 'minimal' || value === 'mythic') return value;
+  if (value === 'fnatic' || value === 'minimal' || value === 'mythic') return value;
   return 'standard';
 }
 

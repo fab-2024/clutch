@@ -12,6 +12,7 @@ import {
   type CosmeticItem,
   type CosmeticLicense,
   type CosmeticMutation,
+  type CosmeticPackMutation,
   type CosmeticPublicationStatus,
   type CosmeticRarity,
   type CosmeticShopData,
@@ -67,6 +68,22 @@ export async function equipCosmetic(itemId: string): Promise<CosmeticMutation> {
   });
   if (error) throw error;
   return normalizeMutation(data, itemId);
+}
+
+export async function purchaseCosmeticPack(packId: string): Promise<CosmeticPackMutation> {
+  const { data, error } = await supabase.rpc('clutch_acheter_pack_cosmetique_v1', {
+    p_pack_id: packId,
+  });
+  if (error) throw error;
+  return normalizePackMutation(data, packId);
+}
+
+export async function equipCosmeticPack(packId: string): Promise<CosmeticPackMutation> {
+  const { data, error } = await supabase.rpc('clutch_equiper_pack_cosmetique_v1', {
+    p_pack_id: packId,
+  });
+  if (error) throw error;
+  return normalizePackMutation(data, packId);
 }
 
 export function normalizeEquipped(value: unknown): EquippedCosmetics {
@@ -159,6 +176,21 @@ function normalizeMutation(value: unknown, fallbackId: string): CosmeticMutation
     balance: toNonNegativeInteger(payload.solde),
     purchased: payload.achete === true,
     equipped: payload.equipe === true,
+  };
+}
+
+function normalizePackMutation(
+  value: unknown,
+  fallbackId: string,
+): CosmeticPackMutation {
+  const payload = asRecord(value);
+  const listedItems = Array.isArray(payload.objets) ? payload.objets.length : 0;
+  return {
+    packId: stringValue(payload.pack) || stringValue(payload.pack_id) || fallbackId,
+    balance: toNonNegativeInteger(payload.solde),
+    purchased: payload.achete === true,
+    equipped: payload.equipe !== false,
+    itemCount: toNonNegativeInteger(payload.nombre_objets) || listedItems,
   };
 }
 

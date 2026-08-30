@@ -170,6 +170,15 @@ describe('AtelierShopScreen interactions', () => {
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/founder-pack-preview');
   });
 
+  it('opens the live Fnatic team pack from its Atelier shelf', async () => {
+    const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
+
+    expect(screen.getByTestId('atelier-shelf-team-packs')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('atelier-team-pack-fnatic-black-orange'));
+
+    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/team-pack-preview');
+  });
+
   it('reviews a rare purchase before debiting then opens its dedicated reveal', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 

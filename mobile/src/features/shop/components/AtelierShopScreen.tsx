@@ -55,6 +55,7 @@ import {
   SHOWCASE_ROOM_CATALOG,
   type ShowcaseRoomDefinition,
 } from '../showcaseRoomCatalog';
+import { FNATIC_TEAM_PACK, type TeamPackDefinition } from '../teamPackCatalog';
 import type { CosmeticItem, CosmeticShopData } from '../types';
 import { AtelierPurchaseSheet } from './AtelierPurchaseSheet';
 import { RareAcquisitionReveal } from './RareAcquisitionReveal';
@@ -258,6 +259,15 @@ export default function AtelierShopScreen({
       pathname: previewData ? '/showcase-preview' : '/showcase',
       params: { room: room.id },
     } as never);
+  }
+
+  function openTeamPack(pack: TeamPackDefinition) {
+    selectionFeedback();
+    if (previewData) {
+      router.push('/team-pack-preview' as never);
+      return;
+    }
+    router.push({ pathname: '/team-pack/[key]', params: { key: pack.id } } as never);
   }
 
   function handlePrimaryAction() {
@@ -466,9 +476,11 @@ export default function AtelierShopScreen({
                   />
                 ))}
 
+                <TeamPackShelf onOpen={openTeamPack} pack={FNATIC_TEAM_PACK} />
+
                 <View style={styles.discoveryLine}>
                   <Text style={styles.discoveryLabel}>PROCHAINEMENT</Text>
-                  <Text style={styles.discoveryValue}>PACKS ÉQUIPES · COLLABS</Text>
+                  <Text style={styles.discoveryValue}>NOUVEAUX PACKS ÉQUIPES · COLLABS</Text>
                 </View>
 
                 <FounderPackBanner preview={Boolean(previewData)} />
@@ -572,6 +584,60 @@ function ShelfHeading({ count, eyebrow, title }: { count: number; eyebrow: strin
       <Text accessibilityLabel={`${count} éléments`} style={styles.shelfCount}>
         {String(count).padStart(2, '0')}
       </Text>
+    </View>
+  );
+}
+
+function TeamPackShelf({
+  onOpen,
+  pack,
+}: {
+  onOpen: (pack: TeamPackDefinition) => void;
+  pack: TeamPackDefinition;
+}) {
+  return (
+    <View style={styles.catalogShelf} testID="atelier-shelf-team-packs">
+      <ShelfHeading count={1} eyebrow="COLLECTION // OFFICIELLE" title="PACKS ÉQUIPES" />
+      <Pressable
+        accessibilityHint="Ouvre la collection complète et ses douze objets"
+        accessibilityLabel={`Ouvrir ${pack.name}, ${pack.items.length} objets, ${formatNumber(pack.price)} Volts`}
+        accessibilityRole="button"
+        onPress={() => onOpen(pack)}
+        style={({ pressed }) => [
+          styles.teamPackCard,
+          { borderColor: `${pack.accent}72` },
+          pressed && styles.pressed,
+        ]}
+        testID={`atelier-team-pack-${pack.id}`}
+      >
+        <Image
+          accessibilityIgnoresInvertColors
+          resizeMode="cover"
+          source={pack.hero}
+          style={StyleSheet.absoluteFill}
+        />
+        <View pointerEvents="none" style={styles.teamPackShade} />
+        <View style={styles.teamPackContent}>
+          <View style={styles.teamPackTopline}>
+            <View style={[styles.teamPackOfficial, { borderColor: `${pack.accent}80` }]}>
+              <View style={[styles.teamPackDot, { backgroundColor: pack.accent }]} />
+              <Text style={styles.teamPackOfficialText}>OFFICIEL</Text>
+            </View>
+            <Text style={styles.teamPackCount}>{pack.items.length} OBJETS</Text>
+          </View>
+          <View>
+            <Text style={[styles.teamPackTitle, { color: pack.accent }]}>{pack.title}</Text>
+            <Text style={styles.teamPackSubtitle}>{pack.subtitle}</Text>
+            <View style={styles.teamPackActionRow}>
+              <View style={styles.teamPackPrice}>
+                <CurrencyIcon kind="volts" size={14} />
+                <Text style={styles.teamPackPriceText}>{formatNumber(pack.price)}</Text>
+              </View>
+              <Text style={[styles.teamPackOpen, { color: pack.accent }]}>VOIR LE PACK →</Text>
+            </View>
+          </View>
+        </View>
+      </Pressable>
     </View>
   );
 }
@@ -1521,6 +1587,89 @@ const styles = StyleSheet.create({
     ...typography.body,
     marginTop: spacing.xs,
     color: colors.textSecondary,
+  },
+  teamPackCard: {
+    position: 'relative',
+    minHeight: 250,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    backgroundColor: '#08090B',
+  },
+  teamPackShade: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: 'rgba(4,5,7,.24)',
+    borderBottomWidth: 128,
+    borderBottomColor: 'rgba(4,5,7,.82)',
+  },
+  teamPackContent: {
+    minHeight: 250,
+    padding: spacing.md,
+    justifyContent: 'space-between',
+  },
+  teamPackTopline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  teamPackOfficial: {
+    minHeight: 28,
+    paddingHorizontal: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(4,5,7,.84)',
+  },
+  teamPackDot: {
+    width: 6,
+    height: 6,
+    borderRadius: radius.pill,
+  },
+  teamPackOfficialText: {
+    ...typography.eyebrow,
+    color: colors.text,
+  },
+  teamPackCount: {
+    ...typography.eyebrow,
+    color: colors.textSecondary,
+  },
+  teamPackTitle: {
+    fontFamily: fonts.display,
+    fontSize: 40,
+    lineHeight: 38,
+    letterSpacing: -0.8,
+  },
+  teamPackSubtitle: {
+    ...typography.cardTitle,
+    color: colors.text,
+    letterSpacing: 1,
+  },
+  teamPackActionRow: {
+    marginTop: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  teamPackPrice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  teamPackPriceText: {
+    ...typography.metricSmall,
+    color: colors.text,
+  },
+  teamPackOpen: {
+    ...typography.control,
   },
   discoveryLine: {
     minHeight: layout.minTouchTarget,

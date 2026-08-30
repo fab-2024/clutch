@@ -55,7 +55,7 @@ begin
   select public.clutch_boutique_cosmetique_v1() into v_shop;
 
   if (v_shop ->> 'solde')::integer <> 0
-     or jsonb_array_length(v_shop -> 'objets') <> 53
+     or jsonb_array_length(v_shop -> 'objets') <> 65
      or (
        select count(*)
        from jsonb_array_elements(v_shop -> 'objets') item

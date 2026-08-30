@@ -15,6 +15,7 @@ export type ShowcasePhysicalObjectKind = 'frame' | 'title' | 'core' | 'banner' |
 export type ShowcasePhysicalObjectModel = {
   accent: string;
   id: string;
+  image?: ImageSourcePropType;
   kind: ShowcasePhysicalObjectKind;
   name: string;
 };
@@ -72,7 +73,7 @@ export default function ShowcasePhysicalObject({
       />
       <Image
         resizeMode="contain"
-        source={SHOWCASE_COLLECTIBLE_ASSETS[model.kind]}
+        source={model.image ?? SHOWCASE_COLLECTIBLE_ASSETS[model.kind]}
         style={styles.image}
         testID={`showcase-object-image-${model.kind}`}
       />

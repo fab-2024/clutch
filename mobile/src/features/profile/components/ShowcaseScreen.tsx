@@ -26,6 +26,7 @@ import {
   showcaseRankDisplayById,
 } from '@/src/features/shop/showcaseRankDisplayCatalog';
 import { showcaseRoomById } from '@/src/features/shop/showcaseRoomCatalog';
+import { FNATIC_TEAM_PACK, teamPackItemById } from '@/src/features/shop/teamPackCatalog';
 import type { CosmeticItem, CosmeticShopData, EquippedCosmetics } from '@/src/features/shop/types';
 import { resolveEquippedAchievementBadges } from '@/src/features/profile/achievementBadges/equipment';
 import { useAchievementBadgeEquipment } from '@/src/features/profile/achievementBadges/useAchievementBadgeEquipment';
@@ -45,10 +46,7 @@ import { loadProfileData } from '../api';
 import type { ProfileData } from '../types';
 import ShowcaseCustomizationBar from './showcase/ShowcaseCustomizationBar';
 import ShowcaseObjectPickerSheet from './showcase/ShowcaseObjectPickerSheet';
-import {
-  SHOWCASE_COLLECTIBLE_ASSETS,
-  type ShowcasePhysicalObjectKind,
-} from './showcase/ShowcasePhysicalObject';
+import { SHOWCASE_COLLECTIBLE_ASSETS } from './showcase/ShowcasePhysicalObject';
 import ShowcaseRoomEditorScene from './showcase/ShowcaseRoomEditorScene';
 import ShowcaseRoomScene from './showcase/ShowcaseRoomScene';
 import ShowcaseTopNavigation from './showcase/ShowcaseTopNavigation';
@@ -56,6 +54,9 @@ import {
   createDefaultShowcaseRoomAssignments,
   createEmptyShowcaseRoomAssignments,
   type ShowcasePlaceableItem,
+  type ShowcasePlaceableKind,
+  type ShowcaseRoomAssignments,
+  type ShowcaseRoomSlotDefinition,
   type ShowcaseRoomSlotId,
 } from './showcase/roomEditor';
 import type {
@@ -222,6 +223,12 @@ export default function ShowcaseScreen({
     () => shopData?.items.filter((item) => item.owned) ?? [],
     [shopData?.items],
   );
+  const unlockedPresenterIds = useMemo(
+    () => ownedItems
+      .filter((item) => item.slot === 'vitrine_supports')
+      .map((item) => item.id),
+    [ownedItems],
+  );
   const rankDisplayOptions = useMemo(() => {
     if (previewProfile && previewShop) return SHOWCASE_RANK_DISPLAY_CATALOG;
     const ownedIds = new Set(
@@ -279,8 +286,12 @@ export default function ShowcaseScreen({
     if (!placeableItems.length || initializedRoomRef.current === assignmentLayoutKey) return;
     initializedRoomRef.current = assignmentLayoutKey;
     setActiveRoomSlot(null);
-    setRoomAssignments(createDefaultShowcaseRoomAssignments(placeableItems, activeSlots));
-  }, [activeSlots, assignmentLayoutKey, placeableItems]);
+    setRoomAssignments(createPresenterRoomAssignments(
+      placeableItems,
+      activeSlots,
+      presenter.id,
+    ));
+  }, [activeSlots, assignmentLayoutKey, placeableItems, presenter.id]);
 
   function changePresenter(nextId: string) {
     const next = showcasePresenterById(nextId);
@@ -387,6 +398,7 @@ export default function ShowcaseScreen({
               rankDisplay={rankDisplay}
               rankLabel={rankLabel}
               reduceMotion={reduceMotion}
+              roomImage={editableScene.image}
               theme={theme}
             />
           )}
@@ -427,6 +439,7 @@ export default function ShowcaseScreen({
           rankDisplayId={rankDisplay.id}
           rankDisplays={rankDisplayOptions}
           theme={theme}
+          unlockedPresenterIds={unlockedPresenterIds}
         />
 
         <ShowcaseRingDetailSheet
@@ -465,12 +478,13 @@ function resolveRoomPlaceableItems({
   const items: ShowcasePlaceableItem[] = [];
 
   ownedItems.forEach((item) => {
-    const kind = roomKindForCosmetic(item);
+    const packDefinition = teamPackItemById(item.id);
+    const kind = packDefinition?.roomKind ?? roomKindForCosmetic(item);
     if (!kind) return;
     items.push({
       accent: item.accent,
       id: `cosmetic:${item.id}`,
-      image: SHOWCASE_COLLECTIBLE_ASSETS[kind],
+      image: packDefinition?.image ?? physicalAssetForKind(kind),
       kind,
       name: item.name,
     });
@@ -513,12 +527,36 @@ function resolveRoomPlaceableItems({
   return items;
 }
 
-function roomKindForCosmetic(item: CosmeticItem): ShowcasePhysicalObjectKind | null {
+function roomKindForCosmetic(item: CosmeticItem): ShowcasePlaceableKind | null {
   if (item.slot === 'cadre_profil') return 'frame';
   if (item.slot === 'titre_profil') return 'title';
   if (item.slot === 'apparence_core') return 'core';
   if (item.slot === 'carte_profil') return 'banner';
   return null;
+}
+
+function physicalAssetForKind(kind: ShowcasePlaceableKind) {
+  if (kind === 'frame' || kind === 'title' || kind === 'core' || kind === 'banner' || kind === 'badge') {
+    return SHOWCASE_COLLECTIBLE_ASSETS[kind];
+  }
+  return undefined;
+}
+
+function createPresenterRoomAssignments(
+  items: readonly ShowcasePlaceableItem[],
+  slots: readonly ShowcaseRoomSlotDefinition[],
+  presenterId: string,
+): ShowcaseRoomAssignments {
+  const assignments = createDefaultShowcaseRoomAssignments(items, slots);
+  if (presenterId !== 'fnatic-pedestals') return assignments;
+
+  const itemById = new Map(items.map((item) => [item.id, item]));
+  FNATIC_TEAM_PACK.items.forEach((definition) => {
+    if (!definition.roomSlot) return;
+    const item = itemById.get(`cosmetic:${definition.id}`);
+    if (item) assignments[definition.roomSlot] = item;
+  });
+  return assignments;
 }
 
 function resolveEquipped(shop: CosmeticShopData | null, fallback?: EquippedCosmetics | null) {

@@ -6,12 +6,17 @@ import { View } from 'react-native';
 import { SHOWCASE_ROOM_CATALOG } from '@/src/features/shop/showcaseRoomCatalog';
 import { SHOWCASE_PRESENTER_CATALOG } from '@/src/features/shop/showcasePresenterCatalog';
 import { SHOWCASE_RANK_DISPLAY_CATALOG } from '@/src/features/shop/showcaseRankDisplayCatalog';
+import { createTeamPackPreviewItems, FNATIC_TEAM_PACK } from '@/src/features/shop/teamPackCatalog';
+import type { EquippedCosmetic } from '@/src/features/shop/types';
 import {
   adaptShowcaseRingStats,
   resolveEquippedShowcaseRing,
 } from '../../showcaseRings/progression';
 import { PREVIEW_PROFILE } from '../ProfilePreviewScreen';
-import { ShowcaseControlGroup } from '../showcase/ShowcaseCustomizationBar';
+import ShowcaseCustomizationBar, {
+  showcasePresenterOptions,
+  ShowcaseControlGroup,
+} from '../showcase/ShowcaseCustomizationBar';
 import ShowcaseRoomEditorScene from '../showcase/ShowcaseRoomEditorScene';
 import ShowcaseRoomScene from '../showcase/ShowcaseRoomScene';
 import ShowcaseTopNavigation from '../showcase/ShowcaseTopNavigation';
@@ -33,6 +38,30 @@ const ROOM_PROPS = {
 } as const;
 
 describe('Showcase room composition', () => {
+  it('keeps a pack presenter available after its owner previews another presenter', async () => {
+    const onPresenterChange = jest.fn();
+    const props = {
+      lighting: 'cyan' as const,
+      onLightingChange: jest.fn(),
+      onPresenterChange,
+      onRankDisplayChange: jest.fn(),
+      onThemeChange: jest.fn(),
+      presenterId: 'supports_gallery',
+      rankDisplayId: SHOWCASE_RANK_DISPLAY_CATALOG[0].id,
+      rankDisplays: SHOWCASE_RANK_DISPLAY_CATALOG,
+      theme: 'graphite' as const,
+    };
+    expect(showcasePresenterOptions('supports_gallery')).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ value: 'fnatic-pedestals' })]),
+    );
+    const unlockedScreen = await render(
+      <ShowcaseCustomizationBar {...props} unlockedPresenterIds={['fnatic-pedestals']} />,
+    );
+    await fireEvent.press(unlockedScreen.getByTestId('showcase-control-fnatic-pedestals'));
+
+    expect(onPresenterChange).toHaveBeenCalledWith('fnatic-pedestals');
+  });
+
   it('shares real collection data between both modes and wires its controls', async () => {
     const onSelect = jest.fn();
     const onLightingChange = jest.fn();
@@ -145,6 +174,47 @@ describe('Showcase room composition', () => {
     expect(screen.queryByLabelText('Trophée Premier Signal')).toBeNull();
     expect(screen.queryByTestId(/showcase-object-/)).toBeNull();
     expect(screen.getByTestId('rank-emblem-artifact')).toBeTruthy();
+  });
+
+  it('uses a pack-specific room background when one is equipped', async () => {
+    const roomImage = { uri: 'fnatic-room' };
+    const screen = await render(
+      <ShowcaseRoomScene {...ROOM_PROPS} mode="full" roomImage={roomImage} />,
+    );
+
+    expect(screen.getByTestId('showcase-room-custom-background').props.source).toBe(roomImage);
+  });
+
+  it('renders equipped Fnatic collectibles with their dedicated pack art', async () => {
+    const items = createTeamPackPreviewItems();
+    const find = (id: string) => {
+      const item = items.find((candidate) => candidate.id === id);
+      if (!item) throw new Error(`Missing Fnatic fixture ${id}`);
+      const { accent, description, level, name, rarity, slot, styleKey } = item;
+      return { accent, description, id, level, name, rarity, slot, styleKey } satisfies EquippedCosmetic;
+    };
+    const cosmetics = {
+      ...PREVIEW_PROFILE.cosmetics,
+      frame: find('fnatic-profile-frame'),
+      title: find('fnatic-title'),
+      core: find('fnatic-logo-3d'),
+      factionEffect: find('fnatic-embers'),
+      profileCard: find('fnatic-share-card'),
+      showcase: {
+        ...PREVIEW_PROFILE.cosmetics.showcase,
+        jersey: find('fnatic-jersey'),
+      },
+    };
+    const screen = await render(
+      <ShowcaseRoomScene {...ROOM_PROPS} cosmetics={cosmetics} mode="full" />,
+    );
+
+    expect(screen.getByTestId('showcase-jersey-fnatic-jersey').props.source).toBe(
+      FNATIC_TEAM_PACK.items.find((item) => item.id === 'fnatic-jersey')?.image,
+    );
+    expect(screen.getByTestId('showcase-object-image-frame').props.source).toBe(
+      FNATIC_TEAM_PACK.items.find((item) => item.id === 'fnatic-profile-frame')?.image,
+    );
   });
 
   it('uses Bronze at season start and the earned grade after progression', async () => {

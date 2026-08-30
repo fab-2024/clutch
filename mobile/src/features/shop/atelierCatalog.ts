@@ -168,7 +168,7 @@ export const ATELIER_CATALOG: readonly AtelierProduct[] = [
     accent: '#E8FF3D',
     image: require('../../../assets/shop/atelier/lighting/scenes/lighting-victory-scene.png'),
   },
-  ...SHOWCASE_PRESENTER_CATALOG.map((presenter) => ({
+  ...SHOWCASE_PRESENTER_CATALOG.filter((presenter) => !presenter.packOnly).map((presenter) => ({
     id: presenter.id,
     category: 'supports' as const,
     slot: 'vitrine_supports' as const,
@@ -232,7 +232,7 @@ export const ATELIER_DISCOVERY_ENTRIES: readonly {
   kind: AtelierDiscoveryKind;
   label: string;
 }[] = [
-  { kind: 'team_pack', label: 'PACKS ÉQUIPES', description: 'Collections officielles à venir', glyph: '⬡' },
+  { kind: 'team_pack', label: 'PACKS ÉQUIPES', description: 'Fnatic Black & Orange disponible', glyph: '⬡' },
   { kind: 'partner_pack', label: 'COLLABS', description: 'Collaborations autorisées à venir', glyph: '✦' },
 ] as const;
 

@@ -1,6 +1,7 @@
 /// <reference types="jest" />
 
 import { createAtelierPreviewItems } from '../../atelierCatalog';
+import { createTeamPackPreviewItems } from '../../teamPackCatalog';
 import {
   applyAtelierTry,
   applyPreviewAtelierAction,
@@ -66,6 +67,25 @@ describe('showcase Atelier state', () => {
     expect(resolveAtelierSceneConfig(data.equipped, { lighting: 'lighting_white' }).lighting).toBe('competition');
     expect(resolveAtelierSceneConfig(data.equipped, { lighting: 'lighting_emerald' }).lighting).toBe('emerald');
     expect(resolveAtelierSceneConfig(data.equipped, { lighting: 'lighting_acid' }).lighting).toBe('acid');
+  });
+
+  it('activates the pack-only Fnatic room and orange lighting', () => {
+    const items = createTeamPackPreviewItems();
+    const fnaticLighting = items.find((item) => item.id === 'fnatic-room-lighting');
+    const fnaticPedestals = items.find((item) => item.id === 'fnatic-pedestals');
+    if (!fnaticLighting || !fnaticPedestals) throw new Error('Missing Fnatic preview fixtures');
+
+    expect(resolveAtelierSceneConfig({
+      ...EMPTY_EQUIPPED_COSMETICS,
+      showcase: {
+        ...EMPTY_EQUIPPED_COSMETICS.showcase,
+        lighting: asEquipped(fnaticLighting),
+        supports: asEquipped(fnaticPedestals),
+      },
+    })).toMatchObject({
+      lighting: 'orange',
+      presenterId: 'fnatic-pedestals',
+    });
   });
 });
 

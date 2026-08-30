@@ -6,6 +6,7 @@ import {
   Text,
   View,
   type LayoutChangeEvent,
+  type ImageSourcePropType,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -17,6 +18,7 @@ import {
   showcaseRankDisplayById,
   type ShowcaseRankDisplayDefinition,
 } from '@/src/features/shop/showcaseRankDisplayCatalog';
+import { teamPackItemById } from '@/src/features/shop/teamPackCatalog';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 import ShowcaseAchievementBadge from '@/src/features/profile/achievementBadges/components/ShowcaseAchievementBadge';
 import type { PublicAchievementBadge } from '@/src/features/profile/achievementBadges/types';
@@ -65,6 +67,7 @@ type ShowcaseRoomSceneProps = {
   rankDisplay?: Pick<ShowcaseRankDisplayDefinition, 'id' | 'name' | 'overlayImage'> | null;
   rankLabel: string;
   reduceMotion?: boolean;
+  roomImage?: ImageSourcePropType;
   style?: StyleProp<ViewStyle>;
   theme?: ShowcaseRoomTheme;
 };
@@ -138,6 +141,7 @@ export default function ShowcaseRoomScene({
   rankDisplay,
   rankLabel,
   reduceMotion = false,
+  roomImage,
   style,
   theme = 'graphite',
 }: ShowcaseRoomSceneProps) {
@@ -149,6 +153,7 @@ export default function ShowcaseRoomScene({
   const visibleBadges = badgeSlots.filter((badge) => Boolean(badge?.obtained));
   const trophies = loading ? [] : (data?.badges ?? []).filter((badge) => badge.obtained);
   const team = data?.favoriteTeam;
+  const jerseyPackItem = teamPackItemById(cosmetics?.showcase.jersey?.id);
   const teamAccent = team ? `hsl(${teamHue(team.tag, team.nom)}, 72%, 58%)` : '#71808B';
   const light = SHOWCASE_LIGHTING_VISUALS[lighting];
   const pedestalAccent = PEDESTAL_ACCENT[pedestal];
@@ -186,7 +191,12 @@ export default function ShowcaseRoomScene({
       testID={`showcase-room-${mode}`}
     >
       <View style={styles.room}>
-        <Image resizeMode="stretch" source={ROOM_ASSET} style={styles.roomBackdrop} />
+        <Image
+          resizeMode="stretch"
+          source={roomImage ?? ROOM_ASSET}
+          style={styles.roomBackdrop}
+          testID={roomImage ? 'showcase-room-custom-background' : 'showcase-room-default-background'}
+        />
         <LinearGradient colors={THEME_WASH[theme]} end={{ x: 1, y: 1 }} pointerEvents="none" start={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />
         <LinearGradient colors={light.wash} end={{ x: 0.5, y: 1 }} pointerEvents="none" start={{ x: 0.5, y: 0 }} style={StyleSheet.absoluteFill} />
         {light.horizontalWash ? (
@@ -303,7 +313,9 @@ export default function ShowcaseRoomScene({
         >
           <View
             accessible
-            accessibilityLabel={team ? `Maillot de ${team.nom}` : 'Emplacement de maillot vide'}
+            accessibilityLabel={jerseyPackItem?.roomKind === 'jersey'
+              ? `Maillot ${jerseyPackItem.name}`
+              : team ? `Maillot de ${team.nom}` : 'Emplacement de maillot vide'}
             style={[
               styles.jerseyStage,
               compact && styles.jerseyStagePreview,
@@ -311,7 +323,14 @@ export default function ShowcaseRoomScene({
               jerseyPresentation === 'podium' && styles.jerseyStagePodium,
             ]}
           >
-            {team ? (
+            {jerseyPackItem?.roomKind === 'jersey' ? (
+              <Image
+                resizeMode="contain"
+                source={jerseyPackItem.image}
+                style={{ height: metrics.jerseyHeight, width: metrics.jerseyHeight * 0.88 }}
+                testID={`showcase-jersey-${jerseyPackItem.id}`}
+              />
+            ) : team ? (
               <>
                 {jerseyPresentation === 'gallery' ? <View style={[styles.jerseyGalleryFrame, compact && styles.jerseyGalleryFramePreview]} /> : null}
                 {jerseyPresentation === 'podium' ? <View style={[styles.jerseyPodiumBase, compact && styles.jerseyPodiumBasePreview]} /> : null}
@@ -444,12 +463,25 @@ function resolveBadgeSlots(
 
 function cosmeticTokens(cosmetics?: EquippedCosmetics | null): ShowcasePhysicalObjectModel[] {
   const items: (ShowcasePhysicalObjectModel | null)[] = [
-    cosmetics?.frame ? { accent: cosmetics.frame.accent, id: cosmetics.frame.id, kind: 'frame', name: cosmetics.frame.name } : null,
-    cosmetics?.title ? { accent: cosmetics.title.accent, id: cosmetics.title.id, kind: 'title', name: cosmetics.title.name } : null,
-    cosmetics?.core ? { accent: cosmetics.core.accent, id: cosmetics.core.id, kind: 'core', name: cosmetics.core.name } : null,
-    cosmetics?.profileCard ? { accent: cosmetics.profileCard.accent, id: cosmetics.profileCard.id, kind: 'banner', name: cosmetics.profileCard.name } : null,
+    cosmetics?.frame ? physicalCosmeticToken(cosmetics.frame, 'frame') : null,
+    cosmetics?.title ? physicalCosmeticToken(cosmetics.title, 'title') : null,
+    cosmetics?.core ? physicalCosmeticToken(cosmetics.core, 'core') : null,
+    cosmetics?.profileCard ? physicalCosmeticToken(cosmetics.profileCard, 'banner') : null,
   ];
   return items.filter((item): item is ShowcasePhysicalObjectModel => Boolean(item));
+}
+
+function physicalCosmeticToken(
+  cosmetic: NonNullable<EquippedCosmetics['frame']>,
+  kind: ShowcasePhysicalObjectKind,
+): ShowcasePhysicalObjectModel {
+  return {
+    accent: cosmetic.accent,
+    id: cosmetic.id,
+    image: teamPackItemById(cosmetic.id)?.image,
+    kind,
+    name: cosmetic.name,
+  };
 }
 
 function sectionOpacity(focus: ShowcaseSection, target: 'left' | 'center' | 'right') {

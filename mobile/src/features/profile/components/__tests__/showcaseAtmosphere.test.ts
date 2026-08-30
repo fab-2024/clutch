@@ -63,6 +63,37 @@ describe('showcase adaptive atmosphere', () => {
     expect(atmosphere.lightingColor).toBe('#31D7E2');
     expect(atmosphere.intensity).toBeLessThanOrEqual(0.39);
     expect(atmosphere.dustCount).toBeLessThanOrEqual(11);
+    expect(atmosphere.effect).toBe('ambient');
+  });
+
+  it('uses the Fnatic ember impulse profile before settling into idle', () => {
+    const atmosphere = resolveShowcaseAtmosphere({
+      cosmetics: {
+        ...EMPTY_EQUIPPED_COSMETICS,
+        factionEffect: {
+          accent: '#FF5900',
+          description: '',
+          id: 'fnatic-embers',
+          level: 1,
+          name: 'Effet Braises',
+          rarity: 'legendaire',
+          slot: 'effet_faction',
+          styleKey: 'fnatic-embers',
+        },
+      },
+      favoriteTeam: null,
+      lightingAccent: '#FF5900',
+      rankAccent: '#B87845',
+      rankOrder: 0,
+    });
+
+    expect(atmosphere).toMatchObject({
+      cosmeticColor: '#FF5900',
+      driftDurationMs: 12_000,
+      dustCount: 11,
+      effect: 'embers',
+      intensity: 0.39,
+    });
   });
 
   it('raises density modestly for a mythic rank and legendary object', () => {

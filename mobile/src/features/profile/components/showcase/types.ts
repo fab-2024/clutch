@@ -10,6 +10,7 @@ export type ShowcaseLighting =
   | 'competition'
   | 'cyan'
   | 'emerald'
+  | 'orange'
   | 'violet'
   | 'white';
 

@@ -13,8 +13,8 @@ declare
   v_purchase jsonb;
   v_rejected boolean := false;
 begin
-  if (v_contract ->> 'version')::integer <> 4
-     or v_contract ->> 'code' <> 'identity_showcase_founder_v4'
+  if (v_contract ->> 'version')::integer <> 5
+     or v_contract ->> 'code' <> 'identity_showcase_team_packs_v5'
      or coalesce((v_contract #>> '{devises,frags,achetables}')::boolean, true)
      or coalesce((v_contract #>> '{devises,frags,depensables}')::boolean, true)
      or coalesce((v_contract #>> '{devises,volts,conversion_frags}')::boolean, true)
@@ -23,7 +23,8 @@ begin
      or coalesce((v_contract #>> '{catalogue,effets_competitifs}')::boolean, true)
      or coalesce((v_contract #>> '{partenaires,justesse_pronostic_recompensee}')::boolean, true)
      or not coalesce((v_contract #>> '{paiements,actifs}')::boolean, false)
-     or coalesce((v_contract #>> '{paiements,packs_volts_actifs}')::boolean, true)
+     or not coalesce((v_contract #>> '{paiements,packs_volts_actifs}')::boolean, false)
+     or not coalesce((v_contract #>> '{paiements,packs_volts,equipement_a_l_achat}')::boolean, false)
      or (v_contract #>> '{paiements,founder_pack,volts_inclus}')::integer <> 0
   then
     raise exception 'Monetization contract exposes a forbidden capability: %', v_contract;
@@ -65,7 +66,7 @@ begin
 
   select public.clutch_boutique_cosmetique_v1() into v_shop;
   if v_shop -> 'contrat' <> v_contract
-     or jsonb_array_length(v_shop -> 'objets') <> 53
+     or jsonb_array_length(v_shop -> 'objets') <> 65
   then
     raise exception 'Shop does not consume monetization contract v1: %', v_shop;
   end if;
@@ -74,7 +75,7 @@ begin
   values (v_user, 500, 'ajustement', 'monetization-contract-credit');
 
   select public.clutch_acheter_cosmetique_v1('titre-profil-2') into v_purchase;
-  if (v_purchase ->> 'contrat_version')::integer <> 4
+  if (v_purchase ->> 'contrat_version')::integer <> 5
      or not (v_purchase ->> 'achete')::boolean
      or (v_purchase ->> 'solde')::integer <> 250
      or (

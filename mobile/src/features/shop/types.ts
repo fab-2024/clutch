@@ -45,6 +45,7 @@ export const COSMETIC_SOURCES = [
   'partenaire',
   'achat',
   'founder_pack',
+  'team_pack',
 ] as const;
 
 export type CosmeticSource = (typeof COSMETIC_SOURCES)[number];
@@ -181,6 +182,14 @@ export type CosmeticMutation = {
   equipped: boolean;
 };
 
+export type CosmeticPackMutation = {
+  balance: number;
+  equipped: boolean;
+  itemCount: number;
+  packId: string;
+  purchased: boolean;
+};
+
 export const EMPTY_EQUIPPED_COSMETICS: EquippedCosmetics = {
   frame: null,
   title: null,
@@ -197,8 +206,8 @@ export const EMPTY_EQUIPPED_COSMETICS: EquippedCosmetics = {
 };
 
 export const DEFAULT_MONETIZATION_CONTRACT: MonetizationContract = {
-  version: 4,
-  code: 'identity_showcase_founder_v4',
+  version: 5,
+  code: 'identity_showcase_team_packs_v5',
   promise: 'L’identité du supporter. Jamais ses performances.',
   currencies: {
     fragsPurchasable: false,
@@ -209,7 +218,7 @@ export const DEFAULT_MONETIZATION_CONTRACT: MonetizationContract = {
     voltsConvertibleToFrags: false,
   },
   catalog: {
-    schemaVersion: 4,
+    schemaVersion: 5,
     allowedSlots: [...COSMETIC_SLOTS],
     initialFamilies: ['cadre_avatar', 'banniere', 'titre_supporter', 'signature_relique'],
     extensionFamilies: [
