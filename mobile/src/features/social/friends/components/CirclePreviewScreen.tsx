@@ -9,7 +9,7 @@ import SocialSectionNav from '@/src/features/social/components/SocialSectionNav'
 import { colors } from '@/src/theme';
 
 import type { CircleWeeklyRow, FriendRow, FriendsData, PlayerSearchRow } from '../types';
-import { CirclePeopleScreen, type CirclePreviewState, type CircleView } from './FriendsScreen';
+import { CirclePeopleScreen, type CirclePreviewState } from './FriendsScreen';
 
 const FRIENDS: FriendRow[] = [
   { id: 'nova', pseudo: 'Nova', solde: 2840, paris: 38, gagnes: 25, tag_favori: 'KC' },
@@ -83,15 +83,11 @@ type PreviewStateKey = 'default' | 'empty' | 'error' | 'loading' | 'long' | 'sea
 
 export default function CirclePreviewScreen() {
   const insets = useSafeAreaInsets();
-  const { focus, state: stateParam, view: viewParam } = useLocalSearchParams<{
+  const { focus, state: stateParam } = useLocalSearchParams<{
     focus?: string;
     state?: string;
-    view?: string;
   }>();
   const state = previewStateKey(stateParam);
-  const initialView: CircleView = viewParam === 'friends' || state === 'search' || state === 'long'
-    ? 'friends'
-    : 'activity';
   const focusRequests = focus === 'requests' || focus === '1';
   const previewState = useMemo<CirclePreviewState>(() => previewFor(state), [state]);
 
@@ -104,8 +100,7 @@ export default function CirclePreviewScreen() {
       <View style={styles.content}>
         <CirclePeopleScreen
           focusRequests={focusRequests}
-          initialView={initialView}
-          key={`${initialView}-${state}-${focusRequests ? 'requests' : 'activity'}`}
+          key={`${state}-${focusRequests ? 'requests' : 'activity'}`}
           previewState={previewState}
         />
       </View>

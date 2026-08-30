@@ -1,15 +1,15 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Platform, Share, StyleSheet, Text, View } from 'react-native';
 
 import { BaseSheet } from '@/src/components/overlays/BaseSheet';
 import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { Button } from '@/src/components/ui/Button';
 import { FeatureStateView } from '@/src/components/ui/FeatureStateView';
-import { SegmentedControl, type SegmentedControlItem } from '@/src/components/ui/SegmentedControl';
 import { publicAppUrl } from '@/src/config/release';
+import CircleViewSwitch from '@/src/features/social/components/CircleViewSwitch';
 import { useSnackbar } from '@/src/providers/SnackbarProvider';
-import { colors, layout, spacing, typography } from '@/src/theme';
+import { colors, spacing, typography } from '@/src/theme';
 
 import {
   answerFriendRequest,
@@ -23,8 +23,6 @@ import CircleActivityView from './CircleActivityView';
 import CircleDirectoryView from './CircleDirectoryView';
 
 const EMPTY: FriendsData = { amis: [], recues: [], envoyees: [], weekly: null };
-
-export type CircleView = 'activity' | 'friends';
 
 export type CirclePreviewState = {
   data: FriendsData;
@@ -46,16 +44,12 @@ export function FriendRequestsScreen() {
 
 export function CirclePeopleScreen({
   focusRequests = false,
-  initialView = 'activity',
   previewState,
 }: {
   focusRequests?: boolean;
-  initialView?: CircleView;
   previewState?: CirclePreviewState;
 }) {
-  const { isShortLandscape } = useResponsiveLayout();
   const previewMode = previewState !== undefined;
-  const [view, setView] = useState<CircleView>(initialView);
   const [data, setData] = useState<FriendsData>(previewState?.data ?? EMPTY);
   const [search, setSearch] = useState(previewState?.search ?? '');
   const [results, setResults] = useState<PlayerSearchRow[]>(previewState?.searchResults ?? []);
@@ -224,16 +218,10 @@ export function CirclePeopleScreen({
   }
 
   const pendingCount = data.recues.length + data.envoyees.length;
-  const viewItems: readonly SegmentedControlItem<CircleView>[] = [
-    { value: 'activity', label: 'ACTIVITÉ', badge: pendingCount || undefined },
-    { value: 'friends', label: 'AMIS' },
-  ];
   const header = (
     <CircleHeader
       focusRequests={focusRequests}
-      items={viewItems}
-      onChange={setView}
-      view={view}
+      pendingCount={pendingCount}
     />
   );
   const hasContent = Boolean(data.weekly || data.amis.length || data.recues.length || data.envoyees.length);
@@ -250,64 +238,50 @@ export function CirclePeopleScreen({
 
   return (
     <View style={styles.root}>
-      {view === 'activity' ? (
-        <ScrollView
-          contentContainerStyle={[styles.activityContent, isShortLandscape && styles.activityContentLandscape]}
-          refreshControl={(
-            <RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />
-          )}
-          showsVerticalScrollIndicator={false}
-          testID="circle-activity-scroll"
-        >
-          {header}
-          {errorState}
-          {!error || hasContent ? (
-            <CircleActivityView
-              busy={busy}
-              data={data}
-              focusRequests={focusRequests}
-              loading={loading}
-              onAccept={(id) => void act(id, 'accept')}
-              onCancel={(id) => void act(id, 'cancel')}
-              onChallenge={challengePlayer}
-              onOpenMatches={() => router.push('/(tabs)/matches')}
-              onOpenProfile={openProfile}
-              onReject={(id) => void act(id, 'reject')}
-              onShare={() => void sharePerformance()}
-            />
-          ) : null}
-        </ScrollView>
-      ) : (
-        <CircleDirectoryView
-          busy={busy}
-          data={data}
-          hasError={Boolean(error)}
-          header={(
-            <>
-              {header}
-              {errorState}
-            </>
-          )}
-          loading={loading}
-          onChangeSearch={setSearch}
-          onOpenActions={openFriendActions}
-          onOpenProfile={openProfile}
-          onRefresh={() => void load(true)}
-          onSearchAction={(player) => void act(
-            player.id,
-            player.relation === 'demande_recue'
-              ? 'accept'
-              : player.relation === 'demande_envoyee'
-                ? 'cancel'
-                : 'add',
-          )}
-          refreshing={refreshing}
-          results={results}
-          search={search}
-          searchError={searchError}
-          searching={searching}
-        />
-      )}
+      <CircleDirectoryView
+        busy={busy}
+        data={data}
+        hasError={Boolean(error)}
+        header={(
+          <>
+            {header}
+            {errorState}
+            {!error || hasContent ? (
+              <CircleActivityView
+                busy={busy}
+                data={data}
+                focusRequests={focusRequests}
+                loading={loading}
+                onAccept={(id) => void act(id, 'accept')}
+                onCancel={(id) => void act(id, 'cancel')}
+                onChallenge={challengePlayer}
+                onOpenMatches={() => router.push('/(tabs)/matches')}
+                onOpenProfile={openProfile}
+                onReject={(id) => void act(id, 'reject')}
+                onShare={() => void sharePerformance()}
+              />
+            ) : null}
+          </>
+        )}
+        loading={loading}
+        onChangeSearch={setSearch}
+        onOpenActions={openFriendActions}
+        onOpenProfile={openProfile}
+        onRefresh={() => void load(true)}
+        onSearchAction={(player) => void act(
+          player.id,
+          player.relation === 'demande_recue'
+            ? 'accept'
+            : player.relation === 'demande_envoyee'
+              ? 'cancel'
+              : 'add',
+        )}
+        refreshing={refreshing}
+        results={results}
+        search={search}
+        searchError={searchError}
+        searching={searching}
+      />
 
       <BaseSheet
         dismissible={!selectedFriend || busy !== selectedFriend.id}
@@ -364,53 +338,26 @@ export function CirclePeopleScreen({
 
 function CircleHeader({
   focusRequests,
-  items,
-  onChange,
-  view,
+  pendingCount,
 }: {
   focusRequests: boolean;
-  items: readonly SegmentedControlItem<CircleView>[];
-  onChange: (view: CircleView) => void;
-  view: CircleView;
+  pendingCount: number;
 }) {
   const { isShortLandscape } = useResponsiveLayout();
-  const title = view === 'friends'
-    ? 'TOUS TES AMIS.'
-    : focusRequests
-      ? 'TES DEMANDES.'
-      : 'L’ACTIVITÉ DU CERCLE.';
-  const subtitle = view === 'friends'
-    ? 'Trouve un pseudo, ouvre un profil ou prépare une rivalité.'
-    : focusRequests
-      ? 'Réponds aux invitations avant de reprendre le fil de la semaine.'
-      : 'Ta semaine, les nouvelles demandes et les rivalités qui progressent.';
+  const title = focusRequests ? 'TES DEMANDES.' : 'TOUT TON CERCLE.';
+  const subtitle = focusRequests
+    ? 'Réponds aux invitations avant de reprendre le fil de la semaine.'
+    : 'Ta semaine, tes demandes et tous tes amis réunis dans un seul flux.';
 
   return (
     <View style={[styles.header, isShortLandscape && styles.headerLandscape]}>
       <View style={[styles.headerCopy, isShortLandscape && styles.headerCopyLandscape]}>
-        <View style={styles.headerTopline}>
-          <Text style={styles.eyebrow}>SOCIAL // CERCLE</Text>
-          <Pressable
-            accessibilityLabel="Ouvrir la ligue du Cercle"
-            accessibilityRole="button"
-            onPress={() => router.push('/(tabs)/social/leagues')}
-            style={({ pressed }) => [styles.leagueLink, pressed && styles.leagueLinkPressed]}
-          >
-            <Text style={styles.leagueLinkText}>LIGUE PRIVÉE</Text>
-            <Text style={styles.leagueLinkArrow}>→</Text>
-          </Pressable>
-        </View>
+        <Text style={styles.eyebrow}>SOCIAL // CERCLE</Text>
         <Text style={[styles.title, isShortLandscape && styles.titleLandscape]}>{title}</Text>
         <Text numberOfLines={isShortLandscape ? 2 : undefined} style={styles.subtitle}>{subtitle}</Text>
       </View>
       <View style={[styles.segmentWrap, isShortLandscape && styles.segmentWrapLandscape]}>
-        <SegmentedControl
-          accessibilityLabel="Vue du Cercle"
-          items={items}
-          onChange={onChange}
-          testID="circle-view-switch"
-          value={view}
-        />
+        <CircleViewSwitch pendingCount={pendingCount} value="activity" />
       </View>
     </View>
   );
@@ -477,18 +424,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  activityContent: {
-    width: '100%',
-    maxWidth: layout.contentMaxWidth,
-    alignSelf: 'center',
-    paddingHorizontal: spacing.md,
-    paddingBottom: layout.tabBarContentInset,
-    gap: spacing.lg,
-  },
-  activityContentLandscape: {
-    maxWidth: layout.wideContentMaxWidth,
-    gap: 12,
-  },
   header: {
     gap: spacing.md,
     paddingTop: spacing.sm,
@@ -503,33 +438,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   headerCopyLandscape: { flex: 1, minWidth: 0 },
-  headerTopline: {
-    minHeight: layout.minTouchTarget,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
   eyebrow: {
     ...typography.control,
-    color: colors.volt,
-  },
-  leagueLink: {
-    minHeight: layout.minTouchTarget,
-    paddingHorizontal: spacing.xs,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-  },
-  leagueLinkPressed: { opacity: .72 },
-  leagueLinkText: {
-    ...typography.control,
-    color: colors.textSecondary,
-    letterSpacing: .35,
-  },
-  leagueLinkArrow: {
-    ...typography.bodyStrong,
     color: colors.volt,
   },
   title: {

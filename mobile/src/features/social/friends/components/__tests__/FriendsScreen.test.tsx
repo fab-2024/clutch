@@ -65,6 +65,7 @@ jest.mock('../../api', () => ({
 }));
 
 const push = router.push as jest.Mock;
+const replace = router.replace as jest.Mock;
 const previewData: FriendsData = {
   amis: [
     { id: 'nova', pseudo: 'Nova', solde: 2840, paris: 38, gagnes: 25, tag_favori: 'KC' },
@@ -126,25 +127,29 @@ const previewState = { data: previewData };
 describe('CirclePeopleScreen', () => {
   beforeEach(() => {
     push.mockClear();
+    replace.mockClear();
     mockShowSnackbar.mockClear();
   });
 
-  it('opens on a focused activity hierarchy with requests and weekly performance', async () => {
+  it('merges activity and friends into one Circle feed', async () => {
     const screen = await render(<CirclePeopleScreen previewState={previewState} />);
 
-    expect(screen.getByText('L’ACTIVITÉ DU CERCLE.')).toBeTruthy();
+    expect(screen.getByText('TOUT TON CERCLE.')).toBeTruthy();
     expect(screen.getByTestId('circle-performance-card')).toBeTruthy();
     expect(screen.getByTestId('circle-requests-section')).toBeTruthy();
     expect(screen.getByTestId('circle-weekly-ranking')).toBeTruthy();
+    expect(screen.getByTestId('circle-directory-view')).toBeTruthy();
+    expect(screen.getByText('TOUS TES AMIS')).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'ACTIVITÉ, 3' }).props.accessibilityState).toEqual({ selected: true });
+    expect(screen.getByRole('tab', { name: 'LIGUE PRIVÉE' })).toBeTruthy();
     expect(screen.getAllByRole('tab')).toHaveLength(2);
   });
 
-  it('integrates the private league as a contextual Circle destination', async () => {
+  it('replaces the friends tab with the private league destination', async () => {
     const screen = await render(<CirclePeopleScreen previewState={previewState} />);
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Ouvrir la ligue du Cercle' }));
-    expect(push).toHaveBeenCalledWith('/(tabs)/social/leagues');
+    await fireEvent.press(screen.getByRole('tab', { name: 'LIGUE PRIVÉE' }));
+    expect(replace).toHaveBeenCalledWith('/(tabs)/social/leagues');
   });
 
   it('turns the requests route into an explicit request-first state', async () => {
@@ -155,10 +160,9 @@ describe('CirclePeopleScreen', () => {
     expect(screen.getByTestId('circle-requests-section')).toBeTruthy();
   });
 
-  it('switches to a virtualized friend directory and opens canonical profiles', async () => {
+  it('keeps the friend directory virtualized inside the activity feed', async () => {
     const screen = await render(<CirclePeopleScreen previewState={previewState} />);
 
-    await fireEvent.press(screen.getByRole('tab', { name: 'AMIS' }));
     expect(screen.getByTestId('circle-directory-view')).toBeTruthy();
     expect(screen.getByText('TOUS TES AMIS')).toBeTruthy();
 
@@ -167,9 +171,7 @@ describe('CirclePeopleScreen', () => {
   });
 
   it('moves secondary friend actions into a contextual sheet', async () => {
-    const screen = await render(
-      <CirclePeopleScreen initialView="friends" previewState={previewState} />,
-    );
+    const screen = await render(<CirclePeopleScreen previewState={previewState} />);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Actions pour Nova' }));
     expect(screen.getByTestId('circle-friend-actions-sheet')).toBeTruthy();
@@ -183,9 +185,7 @@ describe('CirclePeopleScreen', () => {
   });
 
   it('keeps friend removal behind an explicit confirmation', async () => {
-    const screen = await render(
-      <CirclePeopleScreen initialView="friends" previewState={previewState} />,
-    );
+    const screen = await render(<CirclePeopleScreen previewState={previewState} />);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Actions pour Nova' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Retirer Nova de mon Cercle' }));

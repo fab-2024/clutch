@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Skeleton as SkeletonBlock, SkeletonGroup } from '@/src/components/ui/Skeleton';
+import CircleViewSwitch from '@/src/features/social/components/CircleViewSwitch';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
 import { createLeague, joinLeague, loadLeagues } from '../api';
@@ -62,6 +63,8 @@ export default function LeaguesScreen() {
       showsVerticalScrollIndicator={false}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
     >
+      <CircleViewSwitch value="league" />
+
       <View style={styles.privateHero}>
         <Text style={styles.privateEyebrow}>CERCLE // LIGUE PRIVÉE</Text>
         <Text style={styles.privateTitle}>VOTRE CLASSEMENT. VOS RÈGLES.</Text>
