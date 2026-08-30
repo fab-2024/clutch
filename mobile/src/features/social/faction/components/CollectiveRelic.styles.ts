@@ -1,6 +1,9 @@
 import { StyleSheet } from 'react-native';
 
-export const COMPACT_RELIC_SCALE = 1.16;
+export const COMPACT_RELIC_SCALE = 2;
+
+const COMPACT_RELIC_HEIGHT = 330;
+const COMPACT_RELIC_BOTTOM_OVERFLOW = ((COMPACT_RELIC_SCALE - 1) * COMPACT_RELIC_HEIGHT) / 2;
 
 export const relicStyles = StyleSheet.create({
   stage: {
@@ -19,10 +22,10 @@ export const relicStyles = StyleSheet.create({
     outlineColor: 'transparent',
   },
   stageCompact: {
-    height: 330,
+    height: COMPACT_RELIC_HEIGHT,
     marginTop: -30,
     marginHorizontal: -22,
-    marginBottom: -5,
+    marginBottom: COMPACT_RELIC_BOTTOM_OVERFLOW + 8,
     transform: [{ scale: COMPACT_RELIC_SCALE }],
   },
   vesselSlot: {

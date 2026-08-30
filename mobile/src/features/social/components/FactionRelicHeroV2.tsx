@@ -282,11 +282,10 @@ const styles = StyleSheet.create({
   hero: {
     position: 'relative',
     overflow: 'hidden',
-    padding: 12,
-    borderRadius: 26,
+    marginHorizontal: -18,
+    paddingHorizontal: 30,
+    paddingVertical: 12,
     backgroundColor: '#010406',
-    borderWidth: 1,
-    borderColor: '#263842',
   },
   heroAura: {
     position: 'absolute',
