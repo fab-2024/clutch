@@ -51,6 +51,10 @@ import {
   createRareAcquisitionEvent,
   type RareAcquisitionEvent,
 } from '../rareAcquisition';
+import {
+  SHOWCASE_ROOM_CATALOG,
+  type ShowcaseRoomDefinition,
+} from '../showcaseRoomCatalog';
 import type { CosmeticItem, CosmeticShopData } from '../types';
 import { AtelierPurchaseSheet } from './AtelierPurchaseSheet';
 import { RareAcquisitionReveal } from './RareAcquisitionReveal';
@@ -239,6 +243,14 @@ export default function AtelierShopScreen({
     setNotice(null);
   }
 
+  function openRoom(room: ShowcaseRoomDefinition) {
+    selectionFeedback();
+    router.push({
+      pathname: previewData ? '/showcase-preview' : '/showcase',
+      params: { room: room.id },
+    } as never);
+  }
+
   function handlePrimaryAction() {
     if (!selectedItem || !selectedProduct || pendingId) return;
     const nextAction = atelierPrimaryAction(selectedItem, balance);
@@ -421,6 +433,12 @@ export default function AtelierShopScreen({
                   </Text>
                 </View>
 
+                <ShowcaseRoomShelf
+                  onOpen={openRoom}
+                  rooms={SHOWCASE_ROOM_CATALOG}
+                  width={shelfCardWidth}
+                />
+
                 <LevelFrameShelf
                   entries={levelFrameCollection}
                   level={profileData?.level.level ?? 42}
@@ -545,6 +563,80 @@ function ShelfHeading({ count, eyebrow, title }: { count: number; eyebrow: strin
       <Text accessibilityLabel={`${count} éléments`} style={styles.shelfCount}>
         {String(count).padStart(2, '0')}
       </Text>
+    </View>
+  );
+}
+
+function ShowcaseRoomShelf({
+  onOpen,
+  rooms,
+  width,
+}: {
+  onOpen: (room: ShowcaseRoomDefinition) => void;
+  rooms: readonly ShowcaseRoomDefinition[];
+  width: number;
+}) {
+  const imageHeight = 140 / ((676 - 87) / 853);
+  const imageWidth = imageHeight * (1844 / 853);
+
+  return (
+    <View style={styles.catalogShelf} testID="atelier-shelf-rooms">
+      <ShelfHeading count={rooms.length} eyebrow="VITRINE // ESPACE" title="SALLES" />
+      <ScrollView
+        accessibilityLabel="Parcourir les salles"
+        contentContainerStyle={styles.shelfTrack}
+        decelerationRate="fast"
+        horizontal
+        nestedScrollEnabled
+        showsHorizontalScrollIndicator={false}
+        snapToAlignment="start"
+        snapToInterval={width + spacing.sm}
+        testID="atelier-room-list"
+      >
+        {rooms.map((room, index) => (
+          <Pressable
+            accessibilityHint="Ouvre cette salle pour organiser les objets de ta collection"
+            accessibilityLabel={`${room.name}, huit emplacements personnalisables`}
+            accessibilityRole="button"
+            key={room.id}
+            onPress={() => onOpen(room)}
+            style={({ pressed }) => [
+              styles.roomCard,
+              { borderColor: `${room.accent}66`, width },
+              index < rooms.length - 1 && styles.shelfItem,
+              pressed && styles.pressed,
+            ]}
+            testID={`atelier-room-${room.id}`}
+          >
+            <View style={styles.roomVisual}>
+              <Image
+                resizeMode="stretch"
+                source={room.image}
+                style={{
+                  height: imageHeight,
+                  left: (width - imageWidth) / 2,
+                  position: 'absolute',
+                  top: -imageHeight * (87 / 853),
+                  width: imageWidth,
+                }}
+              />
+              <View pointerEvents="none" style={styles.roomImageShade} />
+              <View style={styles.roomSlotCount}>
+                <Text style={styles.roomSlotCountText}>8 EMPLACEMENTS</Text>
+              </View>
+            </View>
+            <View style={styles.roomCopy}>
+              <View style={styles.roomTopline}>
+                <Text style={[styles.rarity, { color: room.accent }]}>SALLE</Text>
+                <Text style={styles.roomIncluded}>INCLUS</Text>
+              </View>
+              <Text numberOfLines={1} style={styles.productName}>{room.name}</Text>
+              <Text numberOfLines={2} style={styles.productDescription}>{room.description}</Text>
+              <Text style={styles.roomAction}>PERSONNALISER →</Text>
+            </View>
+          </Pressable>
+        ))}
+      </ScrollView>
     </View>
   );
 }
@@ -1098,6 +1190,66 @@ const styles = StyleSheet.create({
   },
   shelfItem: {
     marginRight: spacing.sm,
+  },
+  roomCard: {
+    overflow: 'hidden',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    backgroundColor: colors.surfaceLow,
+  },
+  roomVisual: {
+    position: 'relative',
+    height: 140,
+    overflow: 'hidden',
+    backgroundColor: colors.background,
+  },
+  roomImageShade: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: 'rgba(2,5,8,.12)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,.08)',
+  },
+  roomSlotCount: {
+    position: 'absolute',
+    right: spacing.xs,
+    bottom: spacing.xs,
+    minHeight: 26,
+    paddingHorizontal: spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(232,255,61,.42)',
+    backgroundColor: 'rgba(5,9,11,.88)',
+  },
+  roomSlotCountText: {
+    ...typography.metadata,
+    color: colors.volt,
+  },
+  roomCopy: {
+    minHeight: 132,
+    padding: spacing.sm,
+  },
+  roomTopline: {
+    minHeight: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  roomIncluded: {
+    ...typography.metadata,
+    color: colors.textMuted,
+  },
+  roomAction: {
+    ...typography.control,
+    marginTop: 'auto',
+    paddingTop: spacing.sm,
+    color: colors.volt,
   },
   frameCard: {
     position: 'relative',

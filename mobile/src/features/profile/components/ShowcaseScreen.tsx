@@ -16,7 +16,8 @@ import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import { loadCosmeticShop } from '@/src/features/shop/api';
 import { resolveAtelierSceneConfig } from '@/src/features/shop/atelierState';
-import type { CosmeticShopData, EquippedCosmetics } from '@/src/features/shop/types';
+import { showcaseRoomById } from '@/src/features/shop/showcaseRoomCatalog';
+import type { CosmeticItem, CosmeticShopData, EquippedCosmetics } from '@/src/features/shop/types';
 import { resolveEquippedAchievementBadges } from '@/src/features/profile/achievementBadges/equipment';
 import { useAchievementBadgeEquipment } from '@/src/features/profile/achievementBadges/useAchievementBadgeEquipment';
 import ShowcaseRingDetailSheet from '@/src/features/profile/showcaseRings/components/ShowcaseRingDetailSheet';
@@ -25,7 +26,7 @@ import {
   resolveAllShowcaseRings,
   resolveEquippedShowcaseRing,
 } from '@/src/features/profile/showcaseRings/progression';
-import type { ShowcaseRingFamily } from '@/src/features/profile/showcaseRings/types';
+import type { ShowcaseRingFamily, ShowcaseRingProgress } from '@/src/features/profile/showcaseRings/types';
 import { useShowcaseRingEquipment } from '@/src/features/profile/showcaseRings/useShowcaseRingEquipment';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, typography } from '@/src/theme';
@@ -33,8 +34,21 @@ import { colors, typography } from '@/src/theme';
 import { loadProfileData } from '../api';
 import type { ProfileData } from '../types';
 import ShowcaseCustomizationBar from './showcase/ShowcaseCustomizationBar';
+import ShowcaseObjectPickerSheet from './showcase/ShowcaseObjectPickerSheet';
+import {
+  SHOWCASE_COLLECTIBLE_ASSETS,
+  type ShowcasePhysicalObjectKind,
+} from './showcase/ShowcasePhysicalObject';
+import ShowcaseRoomEditorScene from './showcase/ShowcaseRoomEditorScene';
 import ShowcaseRoomScene from './showcase/ShowcaseRoomScene';
 import ShowcaseTopNavigation from './showcase/ShowcaseTopNavigation';
+import {
+  SHOWCASE_ROOM_SLOTS,
+  createDefaultShowcaseRoomAssignments,
+  createEmptyShowcaseRoomAssignments,
+  type ShowcasePlaceableItem,
+  type ShowcaseRoomSlotId,
+} from './showcase/roomEditor';
 import type {
   ShowcaseAtmospherePerformanceReport,
   ShowcaseAtmosphereQuality,
@@ -56,6 +70,10 @@ type ShowcaseScreenProps = {
   reduceMotionOverride?: boolean;
 };
 
+const JERSEY_ASSET = require('../../../../assets/showcase/showcase-jersey-base-v1.png');
+const RANK_ASSET = require('../../../../assets/showcase/showcase-placement-artifact-v1.png');
+const TROPHY_ASSET = require('../../../../assets/showcase/showcase-trophy-v1.png');
+
 export default function ShowcaseScreen({
   atmosphereQualityOverride,
   onAtmospherePerformanceReport,
@@ -63,8 +81,12 @@ export default function ShowcaseScreen({
   previewShop,
   reduceMotionOverride,
 }: ShowcaseScreenProps) {
-  const params = useLocalSearchParams<{ section?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    room?: string | string[];
+    section?: string | string[];
+  }>();
   const requestedSection = showcaseSectionFromParam(params.section);
+  const selectedRoom = showcaseRoomById(readParam(params.room));
   const { profile, session } = useAuth();
   const systemReduceMotion = useReducedMotion();
   const reduceMotion = reduceMotionOverride ?? systemReduceMotion;
@@ -79,11 +101,14 @@ export default function ShowcaseScreen({
   const [lighting, setLighting] = useState<ShowcaseLighting>('cyan');
   const [jerseyPresentation, setJerseyPresentation] = useState<ShowcaseJerseyPresentation>('locker');
   const [selectedRingFamily, setSelectedRingFamily] = useState<ShowcaseRingFamily | null>(null);
+  const [activeRoomSlot, setActiveRoomSlot] = useState<ShowcaseRoomSlotId | null>(null);
+  const [roomAssignments, setRoomAssignments] = useState(createEmptyShowcaseRoomAssignments);
   const [routeFocused, setRouteFocused] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
   const requestRef = useRef(0);
   const trackedRef = useRef(false);
   const savedAtelierAppliedRef = useRef(false);
+  const initializedRoomRef = useRef<string | null>(null);
   const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
   const ringEquipment = useShowcaseRingEquipment(
     previewProfile ? `preview-${previewProfile.pseudo}` : pseudo,
@@ -162,6 +187,12 @@ export default function ShowcaseScreen({
   }, [loading, previewProfile, profileData]);
 
   useEffect(() => {
+    if (selectedRoom) {
+      setTheme(selectedRoom.theme);
+      setLighting(selectedRoom.lighting);
+      setPedestal(selectedRoom.pedestal);
+      return;
+    }
     if (!shopData || savedAtelierAppliedRef.current) return;
     const saved = resolveAtelierSceneConfig(shopData.equipped);
     savedAtelierAppliedRef.current = true;
@@ -169,7 +200,7 @@ export default function ShowcaseScreen({
     setLighting(saved.lighting);
     setPedestal(saved.pedestal);
     setJerseyPresentation(saved.jerseyPresentation);
-  }, [shopData]);
+  }, [selectedRoom, shopData]);
 
   const ownedItems = useMemo(
     () => shopData?.items.filter((item) => item.owned) ?? [],
@@ -197,6 +228,34 @@ export default function ShowcaseScreen({
   const rankAccent = profileData && isZeroRank(profileData.ranking.frags)
     ? ZERO_RANK_ACCENT
     : gradeAccent(grade);
+  const placeableItems = useMemo(
+    () => resolveRoomPlaceableItems({
+      ownedItems,
+      profileData,
+      rankAccent,
+      rankLabel,
+      ringProgressions,
+    }),
+    [ownedItems, profileData, rankAccent, rankLabel, ringProgressions],
+  );
+  const activeRoomSlotDefinition = SHOWCASE_ROOM_SLOTS.find((slot) => slot.id === activeRoomSlot) ?? null;
+
+  useEffect(() => {
+    if (!selectedRoom) {
+      initializedRoomRef.current = null;
+      setActiveRoomSlot(null);
+      return;
+    }
+    if (!placeableItems.length || initializedRoomRef.current === selectedRoom.id) return;
+    initializedRoomRef.current = selectedRoom.id;
+    setRoomAssignments(createDefaultShowcaseRoomAssignments(placeableItems));
+  }, [placeableItems, selectedRoom]);
+
+  function assignRoomItem(item: ShowcasePlaceableItem | null) {
+    if (!activeRoomSlot) return;
+    setRoomAssignments((current) => ({ ...current, [activeRoomSlot]: item }));
+    setActiveRoomSlot(null);
+  }
 
   return (
     <Screen>
@@ -212,26 +271,34 @@ export default function ShowcaseScreen({
         />
 
         <View style={styles.sceneWrap}>
-          <ShowcaseRoomScene
-            atmosphereActive={atmosphereActive}
-            atmosphereQuality={atmosphereQualityOverride}
-            cosmetics={cosmetics}
-            data={profileData}
-            equippedBadges={equippedBadges}
-            equippedRing={equippedRing}
-            focus={section}
-            jerseyPresentation={jerseyPresentation}
-            lighting={lighting}
-            loading={loading}
-            mode="full"
-            onAtmospherePerformanceReport={onAtmospherePerformanceReport}
-            onRingPress={equippedRing ? () => setSelectedRingFamily(equippedRing.family) : undefined}
-            pedestal={pedestal}
-            rankAccent={rankAccent}
-            rankLabel={rankLabel}
-            reduceMotion={reduceMotion}
-            theme={theme}
-          />
+          {selectedRoom && section === 'showcase' ? (
+            <ShowcaseRoomEditorScene
+              assignments={roomAssignments}
+              onSlotPress={setActiveRoomSlot}
+              room={selectedRoom}
+            />
+          ) : (
+            <ShowcaseRoomScene
+              atmosphereActive={atmosphereActive}
+              atmosphereQuality={atmosphereQualityOverride}
+              cosmetics={cosmetics}
+              data={profileData}
+              equippedBadges={equippedBadges}
+              equippedRing={equippedRing}
+              focus={section}
+              jerseyPresentation={jerseyPresentation}
+              lighting={lighting}
+              loading={loading}
+              mode="full"
+              onAtmospherePerformanceReport={onAtmospherePerformanceReport}
+              onRingPress={equippedRing ? () => setSelectedRingFamily(equippedRing.family) : undefined}
+              pedestal={pedestal}
+              rankAccent={rankAccent}
+              rankLabel={rankLabel}
+              reduceMotion={reduceMotion}
+              theme={theme}
+            />
+          )}
 
           {loading ? (
             <View accessibilityLabel="Installation de ta collection" accessibilityRole="progressbar" pointerEvents="none" style={styles.loading}>
@@ -273,9 +340,90 @@ export default function ShowcaseScreen({
           progress={selectedRingProgress}
           visible={Boolean(selectedRingProgress)}
         />
+
+        <ShowcaseObjectPickerSheet
+          current={activeRoomSlot ? roomAssignments[activeRoomSlot] : null}
+          items={placeableItems}
+          onClose={() => setActiveRoomSlot(null)}
+          onSelect={assignRoomItem}
+          slot={activeRoomSlotDefinition}
+        />
       </View>
     </Screen>
   );
+}
+
+function resolveRoomPlaceableItems({
+  ownedItems,
+  profileData,
+  rankAccent,
+  rankLabel,
+  ringProgressions,
+}: {
+  ownedItems: readonly CosmeticItem[];
+  profileData: ProfileData | null;
+  rankAccent: string;
+  rankLabel: string;
+  ringProgressions: readonly ShowcaseRingProgress[];
+}): ShowcasePlaceableItem[] {
+  if (!profileData) return [];
+  const items: ShowcasePlaceableItem[] = [];
+
+  ownedItems.forEach((item) => {
+    const kind = roomKindForCosmetic(item);
+    if (!kind) return;
+    items.push({
+      accent: item.accent,
+      id: `cosmetic:${item.id}`,
+      image: SHOWCASE_COLLECTIBLE_ASSETS[kind],
+      kind,
+      name: item.name,
+    });
+  });
+
+  profileData.badges.filter((badge) => badge.obtained).forEach((badge) => {
+    items.push({ accent: badge.accent, id: `badge:${badge.id}`, image: SHOWCASE_COLLECTIBLE_ASSETS.badge, kind: 'badge', name: badge.name });
+    items.push({ accent: badge.accent, id: `trophy:${badge.id}`, image: TROPHY_ASSET, kind: 'trophy', name: badge.name });
+  });
+
+  if (profileData.favoriteTeam) {
+    items.push({
+      accent: '#F5792A',
+      id: `jersey:${profileData.favoriteTeam.id}`,
+      image: JERSEY_ASSET,
+      kind: 'jersey',
+      name: profileData.favoriteTeam.nom,
+    });
+  }
+
+  ringProgressions.forEach((progress) => {
+    if (!progress.current) return;
+    items.push({
+      accent: progress.definition.accent,
+      id: `ring:${progress.family}`,
+      image: progress.current.assets.full,
+      kind: 'ring',
+      name: `${progress.definition.name} · ${progress.current.name}`,
+    });
+  });
+
+  items.push({
+    accent: rankAccent,
+    id: `rank:${profileData.ranking.grade.cle}`,
+    image: RANK_ASSET,
+    kind: 'rank',
+    name: rankLabel,
+  });
+
+  return items;
+}
+
+function roomKindForCosmetic(item: CosmeticItem): ShowcasePhysicalObjectKind | null {
+  if (item.slot === 'cadre_profil') return 'frame';
+  if (item.slot === 'titre_profil') return 'title';
+  if (item.slot === 'apparence_core') return 'core';
+  if (item.slot === 'carte_profil') return 'banner';
+  return null;
 }
 
 function resolveEquipped(shop: CosmeticShopData | null, fallback?: EquippedCosmetics | null) {
@@ -298,6 +446,10 @@ function showcaseSectionFromParam(value?: string | string[]): ShowcaseSection {
     return normalized;
   }
   return 'showcase';
+}
+
+function readParam(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 const styles = StyleSheet.create({

@@ -3,14 +3,20 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { View } from 'react-native';
 
+import { SHOWCASE_ROOM_CATALOG } from '@/src/features/shop/showcaseRoomCatalog';
 import {
   adaptShowcaseRingStats,
   resolveEquippedShowcaseRing,
 } from '../../showcaseRings/progression';
 import { PREVIEW_PROFILE } from '../ProfilePreviewScreen';
 import { ShowcaseControlGroup } from '../showcase/ShowcaseCustomizationBar';
+import ShowcaseRoomEditorScene from '../showcase/ShowcaseRoomEditorScene';
 import ShowcaseRoomScene from '../showcase/ShowcaseRoomScene';
 import ShowcaseTopNavigation from '../showcase/ShowcaseTopNavigation';
+import {
+  createDefaultShowcaseRoomAssignments,
+  type ShowcasePlaceableItem,
+} from '../showcase/roomEditor';
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('@/src/features/onboarding/components/TeamLogo', () => 'TeamLogo');
@@ -179,5 +185,31 @@ describe('Showcase room composition', () => {
     expect(screen.getAllByLabelText(/Anneau Faction, Recrue, palier 1/)).toHaveLength(2);
     await fireEvent.press(screen.getAllByTestId('showcase-ring-artifact-faction')[1]);
     expect(onRingPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('makes every room placement actionable', async () => {
+    const onSlotPress = jest.fn();
+    const assignments = createDefaultShowcaseRoomAssignments([
+      { accent: '#F5792A', id: 'jersey:fnc', kind: 'jersey', name: 'Fnatic' },
+      { accent: '#FFB84D', id: 'trophy:first', kind: 'trophy', name: 'Premier Signal' },
+    ] satisfies ShowcasePlaceableItem[]);
+    const screen = await render(
+      <ShowcaseRoomEditorScene
+        assignments={assignments}
+        onSlotPress={onSlotPress}
+        room={SHOWCASE_ROOM_CATALOG[0]}
+      />,
+    );
+
+    expect(screen.getByTestId('showcase-room-editor')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-background-obsidian-gallery')).toBeTruthy();
+    expect(screen.getAllByRole('button')).toHaveLength(8);
+    expect(screen.getByLabelText('Emplacement maillot, Maillot Fnatic')).toBeTruthy();
+    expect(screen.getByLabelText('Emplacement droit, vide')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('showcase-room-slot-jersey'));
+    await fireEvent.press(screen.getByTestId('showcase-room-slot-right-free'));
+
+    expect(onSlotPress.mock.calls.map(([slot]) => slot)).toEqual(['jersey', 'right-free']);
   });
 });

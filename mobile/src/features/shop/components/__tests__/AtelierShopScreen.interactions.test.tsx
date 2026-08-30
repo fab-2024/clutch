@@ -126,6 +126,7 @@ describe('AtelierShopScreen interactions', () => {
   it('stacks one horizontal shelf per collection and removes the live preview', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 
+    expect(screen.getByTestId('atelier-shelf-rooms')).toBeTruthy();
     expect(screen.getByTestId('atelier-shelf-level-frames')).toBeTruthy();
     expect(screen.getByTestId('atelier-shelf-materials')).toBeTruthy();
     expect(screen.getByTestId('atelier-shelf-lighting')).toBeTruthy();
@@ -134,6 +135,17 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.queryByTestId('atelier-category-control')).toBeNull();
     expect(screen.queryByTestId('atelier-scene')).toBeNull();
     expect(screen.queryByText('APERÇU EN DIRECT')).toBeNull();
+  });
+
+  it('opens a selected room in the interactive preview', async () => {
+    const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
+
+    await fireEvent.press(screen.getByTestId('atelier-room-orbital-station'));
+
+    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
+      pathname: '/showcase-preview',
+      params: { room: 'orbital-station' },
+    });
   });
 
   it('keeps the Founder Pack inside the Boutique', async () => {
