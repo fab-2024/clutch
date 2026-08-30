@@ -34,16 +34,28 @@ const GAME_FILTERS: { id: GameFilter; label: string }[] = [
   { id: 'rocket_league', label: 'RL' },
 ];
 
-const GAME_BACKGROUNDS: Record<GameId, ImageSourcePropType> = {
+const LIVE_GAME_BACKGROUNDS: Record<GameId, ImageSourcePropType> = {
   lol: require('../../../../assets/onboarding/lol-characters.jpg'),
   valorant: require('../../../../assets/onboarding/valorant-characters.jpg'),
   rocket_league: require('../../../../assets/onboarding/rocket-league-arena.png'),
+};
+
+const SCHEDULE_BACKGROUNDS: Record<GameFilter, ImageSourcePropType> = {
+  followed: require('../../../../assets/matches/calendar-for-you-controller.png'),
+  lol: require('../../../../assets/matches/calendar-lol.jpg'),
+  valorant: require('../../../../assets/matches/calendar-valorant.jpg'),
+  rocket_league: require('../../../../assets/matches/calendar-rocket-league.jpg'),
 };
 
 const GAME_ACCENTS: Record<GameId, string> = {
   lol: '#72C7F4',
   valorant: '#FF6170',
   rocket_league: '#35B8FF',
+};
+
+const SCHEDULE_ACCENTS: Record<GameFilter, string> = {
+  followed: '#9A5CFF',
+  ...GAME_ACCENTS,
 };
 
 type ScheduleHeroProps = {
@@ -58,7 +70,7 @@ type ScheduleHeroProps = {
   query: string;
   searchOpen: boolean;
   status: StatusFilter;
-  visualGame: GameId;
+  game: GameFilter;
 };
 
 export function ScheduleHero({
@@ -73,7 +85,7 @@ export function ScheduleHero({
   query,
   searchOpen,
   status,
-  visualGame,
+  game,
 }: ScheduleHeroProps) {
   const { isShortLandscape } = useResponsiveLayout();
 
@@ -82,11 +94,11 @@ export function ScheduleHero({
       style={[styles.scheduleHero, isShortLandscape && styles.scheduleHeroLandscape]}
       testID="matches-schedule-hero"
     >
-      <Animated.View entering={FadeIn.duration(260)} key={visualGame} style={StyleSheet.absoluteFill}>
-        <Image resizeMode="cover" source={GAME_BACKGROUNDS[visualGame]} style={styles.scheduleBackdrop} />
+      <Animated.View entering={FadeIn.duration(260)} key={game} style={StyleSheet.absoluteFill}>
+        <Image resizeMode="cover" source={SCHEDULE_BACKGROUNDS[game]} style={styles.scheduleBackdrop} />
       </Animated.View>
       <LinearGradient
-        colors={['#0B1116', 'rgba(5,10,14,.97)', `${GAME_ACCENTS[visualGame]}14`]}
+        colors={['#0B1116', 'rgba(5,10,14,.97)', `${SCHEDULE_ACCENTS[game]}14`]}
         end={{ x: 1, y: .5 }}
         start={{ x: 0, y: .5 }}
         style={StyleSheet.absoluteFill}
@@ -256,7 +268,7 @@ export function LiveMatchCard({ match, onPrepareMatch, rivalId, rivalPseudo }: {
   const prepare = () => onPrepareMatch ? onPrepareMatch(target) : warmMatchCenter(target);
   return (
     <Pressable accessibilityHint="Ouvre le Match Center" accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}, en direct`} accessibilityRole="button" onPress={() => { prepare(); openMatchCenter(target, { rivalId, rivalPseudo, source: 'matches' }); }} onPressIn={prepare} style={({ pressed }) => [styles.liveCard, pressed && styles.pressed]}>
-      <Image resizeMode="cover" source={GAME_BACKGROUNDS[game]} style={styles.liveBackdrop} />
+      <Image resizeMode="cover" source={LIVE_GAME_BACKGROUNDS[game]} style={styles.liveBackdrop} />
       <LinearGradient colors={['rgba(3,6,9,.25)', 'rgba(3,6,9,.73)', 'rgba(3,6,9,.98)']} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
       <View style={styles.liveTop}>
         <Text numberOfLines={1} style={styles.liveEvent}>{gameLabel(match.jeu).toUpperCase()} · {match.evenement}</Text>

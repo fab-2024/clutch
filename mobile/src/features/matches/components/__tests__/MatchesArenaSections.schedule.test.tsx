@@ -40,7 +40,7 @@ describe('ScheduleHero', () => {
         query=""
         searchOpen={false}
         status="upcoming"
-        visualGame="lol"
+        game="followed"
       />,
     );
 

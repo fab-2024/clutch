@@ -32,7 +32,6 @@ import {
   filterMatches,
   findDefaultDayKey,
   formatMonth,
-  toGameId,
   type GameFilter,
   type StatusFilter,
 } from './MatchesArenaSections';
@@ -132,9 +131,6 @@ export function MatchesExperience({
     () => filtered.filter((match) => dateKey(new Date(match.debut)) === activeDayKey),
     [activeDayKey, filtered],
   );
-  const visualGame = game === 'followed'
-    ? toGameId(visibleMatches[0]?.jeu ?? filtered[0]?.jeu) ?? 'lol'
-    : game;
   const liveMatches = visibleMatches.filter((match) => matchPhase(match) === 'live');
   const standardMatches = visibleMatches.filter((match) => matchPhase(match) !== 'live');
   const activeDate = calendarDays.find((day) => dateKey(day) === activeDayKey) ?? calendarDays[0];
@@ -187,7 +183,7 @@ export function MatchesExperience({
             query={query}
             searchOpen={searchOpen}
             status={status}
-            visualGame={visualGame}
+            game={game}
             onQueryChange={setQuery}
             onSelectDay={setSelectedDayKey}
             onToggleHistory={() => changeStatus(status === 'upcoming' ? 'finished' : 'upcoming')}
