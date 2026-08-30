@@ -3,10 +3,13 @@ import { StyleSheet } from 'react-native';
 import { colors, fonts, layout, spacing, typography } from '@/src/theme';
 
 export const styles = StyleSheet.create({
+  gameBackground: { position: 'absolute', inset: 0, overflow: 'hidden', backgroundColor: '#020609' },
+  gameBackgroundImage: { position: 'absolute', inset: 0, width: '100%', height: '100%' },
+  gameBackgroundScrim: { position: 'absolute', inset: 0 },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 14 },
   targetedDuelBanner: { minHeight: 84, marginHorizontal: spacing.md, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 20, backgroundColor: '#171E10', borderWidth: 1, borderColor: '#4A5720' }, targetedDuelCopy: { flex: 1, minWidth: 0 }, targetedDuelEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .75 }, targetedDuelTitle: { ...typography.bodyStrong, marginTop: 5, color: colors.text }, targetedDuelClose: { width: layout.minTouchTarget, height: layout.minTouchTarget, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#0D120C', borderWidth: 1, borderColor: '#35401B' }, targetedDuelCloseText: { color: colors.textMuted, fontSize: 23, lineHeight: 24 },
-  scheduleHero: { position: 'relative', minHeight: 140, marginHorizontal: spacing.md, overflow: 'hidden', borderRadius: 23, backgroundColor: '#101820', borderWidth: 1, borderColor: '#2B3540', padding: 10 },
-  scheduleHeroLandscape: { minHeight: 120, padding: 8, borderRadius: 20 },
+  scheduleHero: { position: 'relative', minHeight: 150, marginHorizontal: spacing.md, overflow: 'hidden', borderRadius: 23, backgroundColor: '#101820', borderWidth: 1, borderColor: '#2B3540', padding: 12 },
+  scheduleHeroLandscape: { minHeight: 132, padding: 10, borderRadius: 20 },
   scheduleBackdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, width: '46%', height: '100%', opacity: .34 },
   scheduleTop: { zIndex: 2, minHeight: layout.minTouchTarget, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   scheduleHeading: { flex: 1, minWidth: 0, gap: 1 },

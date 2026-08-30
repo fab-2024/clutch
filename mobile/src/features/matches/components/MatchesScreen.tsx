@@ -1,6 +1,8 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -37,6 +39,13 @@ import {
 } from './MatchesArenaSections';
 import { styles } from './MatchesScreen.styles';
 import { MyCallsPanel } from './MyCallsPanel';
+
+const GAME_GLOBAL_BACKGROUNDS = {
+  followed: require('../../../../assets/matches/matches-followed-global-background.jpg'),
+  lol: require('../../../../assets/matches/matches-lol-global-background.jpg'),
+  valorant: require('../../../../assets/matches/matches-valorant-global-background.jpg'),
+  rocket_league: require('../../../../assets/matches/matches-rocket-league-global-background.jpg'),
+} as const;
 
 type MatchesExperienceProps = {
   error: string | null;
@@ -153,6 +162,22 @@ export function MatchesExperience({
 
   return (
     <Screen>
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        pointerEvents="none"
+        style={styles.gameBackground}
+        testID={`matches-${game}-global-background`}
+      >
+        <Image resizeMode="cover" source={GAME_GLOBAL_BACKGROUNDS[game]} style={styles.gameBackgroundImage} />
+        <LinearGradient
+          colors={['rgba(2,6,9,.58)', 'rgba(2,6,9,.70)', 'rgba(2,6,9,.82)']}
+          end={{ x: .5, y: 1 }}
+          start={{ x: .5, y: 0 }}
+          style={styles.gameBackgroundScrim}
+        />
+      </View>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
