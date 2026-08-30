@@ -19,7 +19,7 @@ type Props = {
   starting?: boolean;
 };
 
-const ZERO_RANK_ASSET = require('../../../../assets/rank/rank-zero-badge-v1.png');
+const ZERO_RANK_ASSET = require('../../../../assets/rank/rank-zero-badge-v2-black.png');
 
 const RANK_ASSETS: Record<SeasonalGradeKey, ImageSourcePropType> = {
   bronze: require('../../../../assets/rank/bronze-transparent.png'),
