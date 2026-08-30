@@ -112,7 +112,12 @@ describe('HubContextSlot', () => {
     const slot = screen.getByTestId('hub-context-mission');
 
     expect(slot.props.accessibilityLabel).toContain('Progression 8 sur 12');
+    expect(screen.getByText('DÉFIS DU JOUR')).toBeTruthy();
+    expect(screen.getByText('1 ACTIF')).toBeTruthy();
+    expect(screen.getByText('VERROUILLER 12 CALLS EN FACTION')).toBeTruthy();
+    expect(screen.getByText('TA CONTRIBUTION 3 · 6 PARTICIPANTS')).toBeTruthy();
     expect(screen.getByText('8/12')).toBeTruthy();
+    expect(screen.getByText('CONTINUER')).toBeTruthy();
     fireEvent.press(slot);
 
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/(tabs)/social/missions');

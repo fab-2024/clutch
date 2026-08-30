@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import Sparkles from 'lucide-react-native/icons/sparkles';
@@ -6,7 +7,6 @@ import Trophy from 'lucide-react-native/icons/trophy';
 import type { ComponentType } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { GriffProgress } from '@/src/components/ui/GriffProgress';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { Surface } from '@/src/components/ui/Surface';
 import { colors, spacing, typography } from '@/src/theme';
@@ -26,7 +26,6 @@ type ContextPresentation = {
   Icon: ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
   metric: string;
   metricLabel: string;
-  progress?: { current: number; goal: number };
   title: string;
 };
 
@@ -36,6 +35,10 @@ type HubContextSlotProps = {
 };
 
 export function HubContextSlot({ context, now = Date.now() }: HubContextSlotProps) {
+  if (context.kind === 'mission') {
+    return <HubMissionChallengeCard mission={context.mission} now={now} />;
+  }
+
   const presentation = contextPresentation(context, now);
   const { Icon } = presentation;
 
@@ -69,16 +72,6 @@ export function HubContextSlot({ context, now = Date.now() }: HubContextSlotProp
           <Text numberOfLines={2} style={styles.title}>{presentation.title}</Text>
           <Text numberOfLines={2} style={styles.description}>{presentation.description}</Text>
 
-          {presentation.progress ? (
-            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.progress}>
-              <GriffProgress
-                accessibilityLabel={`Progression ${presentation.progress.current} sur ${presentation.progress.goal}`}
-                max={presentation.progress.goal}
-                value={presentation.progress.current}
-              />
-            </View>
-          ) : null}
-
           <View style={styles.footer}>
             <Text numberOfLines={1} style={styles.footerMeta}>{presentation.footer}</Text>
             <View style={styles.action}>
@@ -89,6 +82,89 @@ export function HubContextSlot({ context, now = Date.now() }: HubContextSlotProp
         </View>
       </Surface>
     </Pressable>
+  );
+}
+
+function HubMissionChallengeCard({ mission, now }: { mission: HubFactionMission; now: number }) {
+  const goal = Math.max(1, mission.goal);
+  const current = Math.min(Math.max(0, mission.progress), goal);
+  const contribution = formatNumber(Math.max(0, mission.personalContribution));
+  const participants = formatNumber(Math.max(0, mission.participants));
+  const team = (mission.team.tag || mission.team.name || 'FACTION').toUpperCase();
+  const deadline = missionDeadlineLabel(mission.endsAt, now);
+
+  return (
+    <View style={styles.missionSection}>
+      <View style={styles.missionSectionHeader}>
+        <Text style={styles.missionSectionTitle}>DÉFIS DU JOUR</Text>
+        <View style={styles.missionCountPill}>
+          <Text style={styles.missionCount}>1 ACTIF</Text>
+          <ChevronRight color={colors.text} size={18} strokeWidth={2.4} />
+        </View>
+      </View>
+
+      <Pressable
+        accessibilityHint="Ouvre le détail des missions dans Défis"
+        accessibilityLabel={`Mission ${mission.title}. Progression ${current} sur ${goal}. Ta contribution ${contribution}. ${formatFutureTime(mission.endsAt, now).toLowerCase()}.`}
+        accessibilityRole="button"
+        onPress={() => openContext({ kind: 'mission', mission })}
+        style={({ pressed }) => [styles.missionPressable, pressed && styles.pressed]}
+        testID="hub-context-mission"
+      >
+        <LinearGradient
+          colors={['#FFC400', '#D98A00', '#7D3F00']}
+          end={{ x: 1, y: 1 }}
+          start={{ x: 0, y: 0 }}
+          style={styles.missionCard}
+        >
+          <View
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            pointerEvents="none"
+            style={styles.missionBackdropIcon}
+          >
+            <Target color="rgba(67,35,0,.28)" size={190} strokeWidth={5.5} />
+          </View>
+          <LinearGradient
+            colors={['rgba(255,220,74,.14)', 'rgba(72,28,0,.08)', 'rgba(29,12,0,.44)']}
+            end={{ x: 1, y: 1 }}
+            start={{ x: 0, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+
+          <View style={styles.missionCopy}>
+            <View style={styles.missionEyebrowPlate}>
+              <Text numberOfLines={1} style={styles.missionEyebrow}>MISSION {team}</Text>
+            </View>
+            <View style={styles.missionTitlePlate}>
+              <Text
+                adjustsFontSizeToFit
+                minimumFontScale={0.72}
+                numberOfLines={3}
+                style={styles.missionTitle}
+              >
+                {mission.title.toUpperCase()}
+              </Text>
+            </View>
+            <View style={styles.missionMetaPlate}>
+              <Text numberOfLines={1} style={styles.missionMeta}>
+                TA CONTRIBUTION {contribution} · {participants} PARTICIPANT{mission.participants === 1 ? '' : 'S'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.missionBottomRow}>
+            <View style={styles.missionProgressPill}>
+              <Text style={styles.missionProgress}>{current}/{goal}</Text>
+            </View>
+            <View style={styles.missionActionPill}>
+              <Text style={styles.missionDeadline}>{deadline}</Text>
+              <Text style={styles.missionAction}>CONTINUER</Text>
+            </View>
+          </View>
+        </LinearGradient>
+      </Pressable>
+    </View>
   );
 }
 
@@ -114,9 +190,11 @@ export function HubContextSkeleton() {
   );
 }
 
-function contextPresentation(context: HubContextItem, now: number): ContextPresentation {
+function contextPresentation(
+  context: Exclude<HubContextItem, { kind: 'mission' }>,
+  now: number,
+): ContextPresentation {
   if (context.kind === 'result') return resultPresentation(context.result, now);
-  if (context.kind === 'mission') return missionPresentation(context.mission, now);
   return rewardPresentation(context.reward, now);
 }
 
@@ -142,29 +220,6 @@ function resultPresentation(result: HubRecentResult, now: number): ContextPresen
     metric: deltaLabel,
     metricLabel: 'FRAGS',
     title: score,
-  };
-}
-
-function missionPresentation(mission: HubFactionMission, now: number): ContextPresentation {
-  const current = Math.min(Math.max(0, mission.progress), Math.max(1, mission.goal));
-  const goal = Math.max(1, mission.goal);
-  const timeLeft = formatFutureTime(mission.endsAt, now);
-  const contribution = formatNumber(Math.max(0, mission.personalContribution));
-  const participants = formatNumber(Math.max(0, mission.participants));
-
-  return {
-    accent: colors.frag,
-    accessibilityLabel: `Mission ${mission.title}. Progression ${current} sur ${goal}. Ta contribution ${contribution}. ${timeLeft.toLowerCase()}.`,
-    action: 'CONTINUER',
-    description: `Ta contribution ${contribution} · ${participants} participant${mission.participants === 1 ? '' : 's'}`,
-    eyebrow: `MISSION · ${mission.team.tag || mission.team.name}`,
-    footer: timeLeft,
-    hint: 'Ouvre le détail des missions dans Défis',
-    Icon: Target,
-    metric: `${current}/${goal}`,
-    metricLabel: 'ÉQUIPE',
-    progress: { current, goal },
-    title: mission.title,
   };
 }
 
@@ -244,6 +299,13 @@ function formatFutureTime(value: string, now: number) {
   return `SE TERMINE DANS ${Math.ceil(hours / 24)} J`;
 }
 
+function missionDeadlineLabel(value: string, now: number) {
+  const label = formatFutureTime(value, now);
+  return label.startsWith('SE TERMINE DANS ')
+    ? label.replace('SE TERMINE DANS ', 'FIN · ')
+    : label;
+}
+
 function rewardCategory(reward: HubReward) {
   const slots: Record<string, string> = {
     apparence_core: 'Apparence de Core',
@@ -288,6 +350,154 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.78,
+  },
+  missionSection: {
+    gap: 10,
+  },
+  missionSectionHeader: {
+    minHeight: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  missionSectionTitle: {
+    ...typography.sectionTitle,
+    color: colors.text,
+  },
+  missionCountPill: {
+    minHeight: 40,
+    paddingHorizontal: 13,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    borderRadius: 20,
+    backgroundColor: '#151B20',
+    borderWidth: 1,
+    borderColor: '#242D35',
+  },
+  missionCount: {
+    ...typography.control,
+    color: colors.text,
+    letterSpacing: 0.35,
+  },
+  missionPressable: {
+    width: '100%',
+    overflow: 'hidden',
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#ECA900',
+    backgroundColor: '#9D5800',
+  },
+  missionCard: {
+    minHeight: 224,
+    overflow: 'hidden',
+  },
+  missionBackdropIcon: {
+    position: 'absolute',
+    zIndex: 0,
+    top: 2,
+    right: -22,
+    width: 208,
+    height: 208,
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ rotate: '-8deg' }],
+  },
+  missionCopy: {
+    zIndex: 2,
+    padding: 15,
+    paddingBottom: 68,
+    alignItems: 'flex-start',
+  },
+  missionEyebrowPlate: {
+    maxWidth: '76%',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 7,
+    backgroundColor: 'rgba(6,8,9,.88)',
+  },
+  missionEyebrow: {
+    ...typography.action,
+    color: colors.volt,
+    letterSpacing: 0.6,
+  },
+  missionTitlePlate: {
+    maxWidth: '82%',
+    marginTop: 3,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 8,
+    backgroundColor: 'rgba(6,8,9,.94)',
+  },
+  missionTitle: {
+    ...typography.displayMedium,
+    color: '#FFFFFF',
+    fontSize: 32,
+    lineHeight: 31,
+    letterSpacing: -0.45,
+  },
+  missionMetaPlate: {
+    maxWidth: '84%',
+    marginTop: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: 'rgba(6,8,9,.72)',
+  },
+  missionMeta: {
+    ...typography.caption,
+    color: '#E8EAEC',
+    fontFamily: typography.control.fontFamily,
+    letterSpacing: 0.2,
+  },
+  missionBottomRow: {
+    position: 'absolute',
+    zIndex: 3,
+    left: 14,
+    right: 14,
+    bottom: 13,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  missionProgressPill: {
+    minWidth: 82,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 11,
+    backgroundColor: 'rgba(6,8,9,.9)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,.2)',
+  },
+  missionProgress: {
+    ...typography.metricSmall,
+    color: '#FFFFFF',
+  },
+  missionActionPill: {
+    minWidth: 124,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    borderRadius: 11,
+    backgroundColor: colors.volt,
+  },
+  missionDeadline: {
+    ...typography.caption,
+    color: '#323A00',
+    fontSize: 9,
+    lineHeight: 11,
+  },
+  missionAction: {
+    ...typography.action,
+    color: '#080B0D',
+    lineHeight: 14,
+    letterSpacing: 0.25,
   },
   accent: {
     position: 'absolute',
@@ -353,9 +563,6 @@ const styles = StyleSheet.create({
     ...typography.bodyComfort,
     marginTop: spacing.xs,
     color: colors.textSecondary,
-  },
-  progress: {
-    marginTop: spacing.sm,
   },
   footer: {
     minHeight: 24,
