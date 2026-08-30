@@ -76,17 +76,13 @@ jest.mock('@/src/components/overlays/BaseSheet', () => {
     },
   };
 });
-jest.mock('@/src/features/profile/components/showcase/ShowcaseRoomScene', () => {
+jest.mock('@/src/features/profile/levelFrames/components/LevelFrame', () => {
   const ReactNative = jest.requireActual('react-native');
   return {
     __esModule: true,
-    default: (props: Record<string, unknown>) => <ReactNative.View {...props} testID="atelier-scene" />,
+    default: ({ variant }: { variant: string }) => <ReactNative.Text>{variant}</ReactNative.Text>,
   };
 });
-jest.mock('@/src/features/profile/levelFrames/components/LevelFrameGallery', () => ({
-  __esModule: true,
-  default: 'LevelFrameGallery',
-}));
 jest.mock('@/src/features/profile/levelFrames/useLevelFrameEquipment', () => ({
   useLevelFrameEquipment: () => ({ equip: jest.fn(), variant: 'signalAscendant' }),
 }));
@@ -117,14 +113,27 @@ jest.mock('@/src/providers/SnackbarProvider', () => ({
 describe('AtelierShopScreen interactions', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('keeps a structured preview in place while the Atelier loads', async () => {
+  it('keeps a structured catalogue in place while the Atelier loads', async () => {
     const screen = await render(
       <AtelierShopScreen previewData={makeData(1280)} previewState={{ loading: true }} />,
     );
 
-    expect(screen.getByRole('progressbar').props.accessibilityLabel).toBe('Chargement de l’aperçu Atelier');
-    expect(screen.getByTestId('atelier-scene-loading')).toBeTruthy();
+    expect(screen.getByRole('progressbar').props.accessibilityLabel).toBe('Chargement du catalogue Atelier');
+    expect(screen.getByTestId('atelier-catalog-loading')).toBeTruthy();
     expect(screen.queryByTestId('atelier-scene')).toBeNull();
+  });
+
+  it('stacks one horizontal shelf per collection and removes the live preview', async () => {
+    const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
+
+    expect(screen.getByTestId('atelier-shelf-level-frames')).toBeTruthy();
+    expect(screen.getByTestId('atelier-shelf-materials')).toBeTruthy();
+    expect(screen.getByTestId('atelier-shelf-lighting')).toBeTruthy();
+    expect(screen.getByTestId('atelier-shelf-supports')).toBeTruthy();
+    expect(screen.getByTestId('atelier-shelf-jerseys')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-category-control')).toBeNull();
+    expect(screen.queryByTestId('atelier-scene')).toBeNull();
+    expect(screen.queryByText('APERÇU EN DIRECT')).toBeNull();
   });
 
   it('keeps the Founder Pack inside the Boutique', async () => {
@@ -183,10 +192,10 @@ describe('AtelierShopScreen interactions', () => {
     });
 
     await waitFor(() => expect(screen.queryByTestId('rare-acquisition-reveal')).toBeNull());
-    expect(screen.getByText('CHOISIS UNE FINITION.')).toBeTruthy();
+    expect(screen.getByText('COMPOSE TON ESPACE.')).toBeTruthy();
   });
 
-  it('applies owned equipment immediately to the live scene', async () => {
+  it('applies owned equipment immediately to the selected collection', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280, true)} />);
 
     fireEvent.press(screen.getByTestId('atelier-product-material_steel'));
@@ -194,7 +203,7 @@ describe('AtelierShopScreen interactions', () => {
     fireEvent.press(screen.getByTestId('atelier-action-primary'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('atelier-scene').props.theme).toBe('steel');
+      expect(screen.getByLabelText('Acier brossé, équipé')).toBeTruthy();
     });
 
     const success = mockShowSnackbar.mock.calls.at(-1)?.[0];
@@ -210,7 +219,7 @@ describe('AtelierShopScreen interactions', () => {
     await act(async () => success.action.onPress());
 
     await waitFor(() => {
-      expect(screen.getByTestId('atelier-scene').props.theme).toBe('graphite');
+      expect(screen.getByLabelText('Graphite mat, équipé')).toBeTruthy();
       expect(mockShowSnackbar).toHaveBeenLastCalledWith({
         message: 'Graphite mat restauré sur ta Vitrine.',
         tone: 'success',
@@ -218,7 +227,7 @@ describe('AtelierShopScreen interactions', () => {
     });
   });
 
-  it('keeps try-on available while making an insufficient balance explicit', async () => {
+  it('makes an insufficient balance explicit without keeping a hidden preview action', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(60)} />);
 
     fireEvent.press(screen.getByTestId('atelier-product-material_steel'));
@@ -231,7 +240,7 @@ describe('AtelierShopScreen interactions', () => {
     });
     expect(screen.getByRole('alert')).toBeTruthy();
     expect(screen.getByText('Il manque 60 Volts pour cette finition.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Essayer Acier brossé' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Essayer Acier brossé' })).toBeNull();
   });
 });
 

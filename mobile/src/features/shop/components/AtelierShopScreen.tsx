@@ -1,10 +1,7 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import {
   Image,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -13,24 +10,21 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 
 import { Screen } from '@/src/components/layout/Screen';
 import { Button } from '@/src/components/ui/Button';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
-import { SegmentedControl, type SegmentedControlItem } from '@/src/components/ui/SegmentedControl';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { FounderPackBanner } from '@/src/features/purchases/components/FounderPackBanner';
-import ShowcaseRoomScene from '@/src/features/profile/components/showcase/ShowcaseRoomScene';
 import { loadProfileData } from '@/src/features/profile/api';
 import {
   resolveLevelFrameCollection,
   resolveOwnedLevelFrames,
 } from '@/src/features/profile/levelFrames/catalog';
-import LevelFrameGallery from '@/src/features/profile/levelFrames/components/LevelFrameGallery';
+import LevelFrame from '@/src/features/profile/levelFrames/components/LevelFrame';
+import type { LevelFrameCollectionEntry } from '@/src/features/profile/levelFrames/types';
 import { useLevelFrameEquipment } from '@/src/features/profile/levelFrames/useLevelFrameEquipment';
 import type { ProfileData } from '@/src/features/profile/types';
-import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import { errorFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
@@ -48,13 +42,10 @@ import {
   type AtelierProduct,
 } from '../atelierCatalog';
 import {
-  applyAtelierTry,
   applyPreviewAtelierAction,
   atelierPrimaryAction,
   equippedAtelierIds,
-  resolveAtelierSceneConfig,
   type AtelierPrimaryAction,
-  type AtelierTrySelection,
 } from '../atelierState';
 import {
   createRareAcquisitionEvent,
@@ -64,8 +55,14 @@ import type { CosmeticItem, CosmeticShopData } from '../types';
 import { AtelierPurchaseSheet } from './AtelierPurchaseSheet';
 import { RareAcquisitionReveal } from './RareAcquisitionReveal';
 
-type AtelierDivision = 'showcase' | 'levelFrames';
 type AtelierNotice = { text: string; tone: 'error' | 'info' | 'success' };
+
+const ATELIER_SHELF_TITLES: Record<AtelierCategory, string> = {
+  materials: 'MATIÈRES',
+  lighting: 'LUMIÈRES',
+  supports: 'SOCLES',
+  jerseys: 'MAILLOTS',
+};
 
 export type AtelierPreviewState = {
   acquisitionProductId?: string;
@@ -82,37 +79,12 @@ export type AtelierShopScreenProps = {
   previewState?: AtelierPreviewState;
 };
 
-const DIVISION_ITEMS: readonly SegmentedControlItem<AtelierDivision>[] = [
-  { label: 'VITRINE', value: 'showcase' },
-  { label: 'CADRES', value: 'levelFrames' },
-];
-
-const CATEGORY_ITEMS: readonly SegmentedControlItem<AtelierCategory>[] = ATELIER_CATEGORIES.map((value) => ({
-  label: ATELIER_CATEGORY_META[value].shortLabel,
-  value,
-}));
-
-const COMPACT_CATEGORY_LABELS: Readonly<Record<AtelierCategory, string>> = {
-  jerseys: 'MAIL.',
-  lighting: 'LUM.',
-  materials: 'MAT.',
-  supports: 'SOCLES',
-};
-
-const COMPACT_CATEGORY_ITEMS: readonly SegmentedControlItem<AtelierCategory>[] = ATELIER_CATEGORIES.map((value) => ({
-  accessibilityLabel: ATELIER_CATEGORY_META[value].shortLabel,
-  label: COMPACT_CATEGORY_LABELS[value],
-  value,
-}));
-
 export default function AtelierShopScreen({
   previewData,
   previewProfile,
   previewState,
 }: AtelierShopScreenProps) {
-  const params = useLocalSearchParams<{ category?: string | string[] }>();
   const { height, width } = useWindowDimensions();
-  const reduceMotion = useReducedMotion();
   const { profile, session } = useAuth();
   const { refresh: refreshEconomy, volts } = useEconomy();
   const { refresh: refreshCosmetics } = useCosmetics();
@@ -122,9 +94,7 @@ export default function AtelierShopScreen({
   const [data, setData] = useState<CosmeticShopData | null>(previewData ?? null);
   const [profileData, setProfileData] = useState<ProfileData | null>(previewProfile ?? null);
   const [category, setCategory] = useState<AtelierCategory>(initialProduct?.category ?? 'materials');
-  const [division, setDivision] = useState<AtelierDivision>(() => levelFrameCategoryFromParam(params.category));
   const [selectedId, setSelectedId] = useState(initialProduct?.id ?? 'material_graphite');
-  const [trial, setTrial] = useState<AtelierTrySelection>({});
   const [loading, setLoading] = useState(previewState?.loading ?? !previewData);
   const [refreshing, setRefreshing] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -136,7 +106,6 @@ export default function AtelierShopScreen({
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [acquisition, setAcquisition] = useState<RareAcquisitionEvent | null>(null);
   const [pendingAcquisition, setPendingAcquisition] = useState<RareAcquisitionEvent | null>(null);
-  const productTrackRef = useRef<ScrollView>(null);
   const purchaseTriggerRef = useRef<View>(null);
   const requestRef = useRef(0);
   const cachedDataRef = useRef<CosmeticShopData | null>(previewData ?? null);
@@ -144,8 +113,7 @@ export default function AtelierShopScreen({
   const previewAcquisitionRef = useRef('');
   const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
   const compactHeight = height < 700;
-  const compactWidth = width < 360;
-  const cardWidth = Math.min(344, Math.max(240, width - 64));
+  const shelfCardWidth = Math.min(268, Math.max(218, width * 0.72));
   const previewLoading = previewState?.loading ?? false;
   const previewError = previewState?.error ?? null;
 
@@ -216,10 +184,6 @@ export default function AtelierShopScreen({
   }, [load]);
 
   useEffect(() => {
-    setDivision(levelFrameCategoryFromParam(params.category));
-  }, [params.category]);
-
-  useEffect(() => {
     if (!previewProduct) return;
     setCategory(previewProduct.category);
     setSelectedId(previewProduct.id);
@@ -236,21 +200,12 @@ export default function AtelierShopScreen({
     [data?.equipped, profileData?.cosmetics],
   );
   const selectedProduct = products.find((product) => product.id === selectedId)
-    ?? products.find((product) => product.id === (trial[category] ?? equippedIds[category]))
+    ?? products.find((product) => product.id === equippedIds[category])
     ?? products[0]
     ?? null;
   const selectedItem = selectedProduct ? runtimeById.get(selectedProduct.id) ?? null : null;
-  const selectedIndex = Math.max(0, products.findIndex((product) => product.id === selectedProduct?.id));
   const balance = data?.balance ?? volts ?? 0;
   const action = selectedItem ? atelierPrimaryAction(selectedItem, balance) : 'unavailable';
-  const scene = resolveAtelierSceneConfig(data?.equipped ?? profileData?.cosmetics, trial);
-  const cosmetics = data?.equipped ?? profileData?.cosmetics ?? null;
-  const grade = profileData?.ranking.grade;
-  const rankLabel = loading ? 'SYNCHRO' : grade?.libelle?.toUpperCase() ?? 'BRONZE';
-  const rankAccent = profileData && isZeroRank(profileData.ranking.frags)
-    ? ZERO_RANK_ACCENT
-    : gradeAccent(grade);
-  const trialActive = Object.keys(trial).length > 0;
   const purchaseProduct = atelierProductById(purchaseId);
   const purchaseItem = purchaseProduct ? runtimeById.get(purchaseProduct.id) ?? null : null;
   const ownedLevelFrames = useMemo(
@@ -276,42 +231,12 @@ export default function AtelierShopScreen({
     setAcquisition(createRareAcquisitionEvent({ eventKey, item, origin: 'atelier', product }));
   }, [previewState?.acquisitionProductId, runtimeById]);
 
-  function handleDivisionChange(nextDivision: AtelierDivision) {
+  function handleProductSelection(product: AtelierProduct) {
+    if (product.id === selectedProduct?.id) return;
     selectionFeedback();
-    setDivision(nextDivision);
+    setCategory(product.category);
+    setSelectedId(product.id);
     setNotice(null);
-    setPurchaseId(null);
-    setPurchaseError(null);
-  }
-
-  function handleCategoryChange(nextCategory: AtelierCategory) {
-    selectionFeedback();
-    const nextProducts = atelierProducts(nextCategory);
-    const nextId = trial[nextCategory] ?? equippedIds[nextCategory];
-    setCategory(nextCategory);
-    setSelectedId(nextProducts.some((product) => product.id === nextId) ? nextId : nextProducts[0]?.id ?? '');
-    setNotice(null);
-  }
-
-  function handleProductSelection(productId: string) {
-    if (productId === selectedProduct?.id) return;
-    selectionFeedback();
-    setSelectedId(productId);
-    setNotice(null);
-  }
-
-  function handleProductScrollEnd(event: NativeSyntheticEvent<NativeScrollEvent>) {
-    const interval = cardWidth + spacing.sm;
-    const index = Math.max(0, Math.min(products.length - 1, Math.round(event.nativeEvent.contentOffset.x / interval)));
-    const product = products[index];
-    if (product) handleProductSelection(product.id);
-  }
-
-  function handleTry() {
-    if (!selectedProduct) return;
-    selectionFeedback();
-    setTrial((current) => applyAtelierTry(current, selectedProduct.category, selectedProduct.id));
-    setNotice({ tone: 'info', text: `${selectedProduct.name} est visible en aperçu. Rien n’est encore sauvegardé.` });
   }
 
   function handlePrimaryAction() {
@@ -331,7 +256,6 @@ export default function AtelierShopScreen({
   async function equipSelected(item: CosmeticItem, product: AtelierProduct) {
     if (!data || pendingId) return;
     const previousData = data;
-    const previousTrial = trial;
     const previousItem = data.items.find((candidate) => candidate.slot === item.slot && candidate.equipped) ?? null;
     const optimistic = applyPreviewAtelierAction(data, item.id);
     setPendingId(item.id);
@@ -339,7 +263,6 @@ export default function AtelierShopScreen({
     setNotice({ tone: 'info', text: `${product.name} est appliqué. Synchronisation en cours…` });
     setData(optimistic);
     cachedDataRef.current = optimistic;
-    setTrial((current) => withoutTrialCategory(current, product.category));
 
     try {
       if (!previewData) await equipCosmetic(item.id);
@@ -356,7 +279,6 @@ export default function AtelierShopScreen({
             setNotice({ tone: 'info', text: `Restauration de ${previousItem.name}…` });
             cachedDataRef.current = previousData;
             setData(previousData);
-            setTrial(withoutTrialCategory(previousTrial, product.category));
             try {
               if (!previewData) await equipCosmetic(previousItem.id);
               setNotice(null);
@@ -388,7 +310,6 @@ export default function AtelierShopScreen({
     } catch (caught) {
       cachedDataRef.current = previousData;
       setData(previousData);
-      setTrial(previousTrial);
       setNotice({
         tone: 'error',
         text: friendlyMutationError(caught, 'L’équipement n’a pas pu être enregistré. Ta configuration précédente est restaurée.'),
@@ -414,7 +335,6 @@ export default function AtelierShopScreen({
       const purchased = applyPreviewAtelierAction(data, purchaseItem.id);
       cachedDataRef.current = purchased;
       setData(purchased);
-      setTrial((current) => withoutTrialCategory(current, purchaseProduct.category));
       setPurchaseId(null);
       setNotice(null);
       const reveal = createRareAcquisitionEvent({
@@ -479,8 +399,6 @@ export default function AtelierShopScreen({
           <View style={[styles.content, compactHeight && styles.contentCompact]}>
             <AtelierHeader balance={balance} compact={compactHeight} loading={loading} />
 
-            <FounderPackBanner preview={Boolean(previewData)} />
-
             {loadError ? (
               <View accessible accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.errorBanner}>
                 <View style={styles.errorCopy}>
@@ -491,140 +409,54 @@ export default function AtelierShopScreen({
               </View>
             ) : null}
 
-            <SegmentedControl
-              accessibilityLabel="Choisir une section de la boutique"
-              items={DIVISION_ITEMS}
-              onChange={handleDivisionChange}
-              value={division}
-            />
-
-            {division === 'levelFrames' ? (
-              <LevelFrameGallery
-                entries={levelFrameCollection}
-                level={profileData?.level.level ?? 42}
-                mode="shop"
-              />
+            {loading ? (
+              <AtelierCatalogSkeleton />
             ) : (
-              <>
-                <View style={[styles.livePanel, compactHeight && styles.livePanelCompact]}>
-                  <LinearGradient
-                    colors={['rgba(18,25,32,.98)', 'rgba(7,10,14,.99)']}
-                    end={{ x: 1, y: 1 }}
-                    start={{ x: 0, y: 0 }}
-                    style={StyleSheet.absoluteFill}
-                  />
-                  <View style={styles.panelHeading}>
-                    <View style={styles.panelCopy}>
-                      <Text style={styles.sectionEyebrow}>APERÇU EN DIRECT</Text>
-                      <Text numberOfLines={1} style={styles.panelDescription}>
-                        {trialActive ? 'Aperçu temporaire' : 'Configuration équipée'}
-                      </Text>
-                    </View>
-                    <Button
-                      accessibilityLabel="Ouvrir la Vitrine en paysage"
-                      label="OUVRIR ↗"
-                      onPress={() => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
-                      size="compact"
-                      variant="ghost"
-                    />
-                  </View>
-
-                  <View style={styles.sceneFrame}>
-                    {loading ? (
-                      <AtelierSceneSkeleton compact={compactHeight} />
-                    ) : (
-                      <ShowcaseRoomScene
-                        cosmetics={cosmetics}
-                        data={profileData}
-                        jerseyPresentation={scene.jerseyPresentation}
-                        lighting={scene.lighting}
-                        loading={false}
-                        mode="preview"
-                        pedestal={scene.pedestal}
-                        rankAccent={rankAccent}
-                        rankLabel={rankLabel}
-                        style={compactHeight ? styles.compactScene : undefined}
-                        theme={scene.theme}
-                      />
-                    )}
-                    {trialActive ? (
-                      <View accessible accessibilityLabel="Aperçu temporaire, non sauvegardé" style={styles.trialStatus}>
-                        <Text style={styles.trialStatusText}>APERÇU · NON SAUVEGARDÉ</Text>
-                      </View>
-                    ) : null}
-                  </View>
+              <View style={styles.catalog} testID="atelier-catalog">
+                <View style={styles.catalogIntro}>
+                  <Text style={styles.sectionEyebrow}>BOUTIQUE // COLLECTION</Text>
+                  <Text style={styles.catalogTitle}>COMPOSE TON ESPACE.</Text>
+                  <Text style={styles.catalogDescription}>
+                    Fais glisser chaque rayon pour découvrir les différentes finitions.
+                  </Text>
                 </View>
 
-                <View style={[styles.composer, compactHeight && styles.composerCompact]}>
-                  <View style={[styles.composerHeading, compactHeight && styles.composerHeadingCompact]}>
-                    <View>
-                      <Text style={styles.sectionEyebrow}>COMPOSER LA VITRINE</Text>
-                      <Text style={styles.composerTitle}>CHOISIS UNE FINITION.</Text>
-                    </View>
-                    <Text accessibilityLabel={`${selectedIndex + 1} sur ${products.length}`} style={styles.counter}>
-                      {String(selectedIndex + 1).padStart(2, '0')} / {String(products.length).padStart(2, '0')}
-                    </Text>
-                  </View>
+                <LevelFrameShelf
+                  entries={levelFrameCollection}
+                  level={profileData?.level.level ?? 42}
+                  width={shelfCardWidth}
+                />
 
-                  <SegmentedControl
-                    accessibilityLabel="Choisir une catégorie de finition"
-                    items={compactWidth ? COMPACT_CATEGORY_ITEMS : CATEGORY_ITEMS}
-                    onChange={handleCategoryChange}
-                    testID="atelier-category-control"
-                    value={category}
+                {ATELIER_CATEGORIES.map((shelfCategory) => (
+                  <AtelierProductShelf
+                    category={shelfCategory}
+                    key={shelfCategory}
+                    onSelect={handleProductSelection}
+                    products={atelierProducts(shelfCategory)}
+                    runtimeById={runtimeById}
+                    selectedId={selectedProduct?.id ?? null}
+                    width={shelfCardWidth}
                   />
-
-                  <Animated.View key={category} entering={reduceMotion ? undefined : FadeIn.duration(180)}>
-                    <ScrollView
-                      contentOffset={{ x: selectedIndex * (cardWidth + spacing.sm), y: 0 }}
-                      contentContainerStyle={styles.productTrack}
-                      decelerationRate="fast"
-                      horizontal
-                      onContentSizeChange={() => productTrackRef.current?.scrollTo({
-                        animated: false,
-                        x: selectedIndex * (cardWidth + spacing.sm),
-                        y: 0,
-                      })}
-                      onMomentumScrollEnd={handleProductScrollEnd}
-                      ref={productTrackRef}
-                      showsHorizontalScrollIndicator={false}
-                      snapToAlignment="start"
-                      snapToInterval={cardWidth + spacing.sm}
-                      testID="atelier-product-list"
-                    >
-                      {products.map((product, index) => (
-                        <View key={product.id} style={index < products.length - 1 ? styles.productItem : undefined}>
-                          <ProductCard
-                            item={runtimeById.get(product.id) ?? null}
-                            onPress={() => handleProductSelection(product.id)}
-                            previewed={trial[category] === product.id}
-                            product={product}
-                            selected={selectedProduct?.id === product.id}
-                            width={cardWidth}
-                          />
-                        </View>
-                      ))}
-                    </ScrollView>
-                  </Animated.View>
-                </View>
+                ))}
 
                 <View style={styles.discoveryLine}>
                   <Text style={styles.discoveryLabel}>PROCHAINEMENT</Text>
                   <Text style={styles.discoveryValue}>PACKS ÉQUIPES · COLLABS</Text>
                 </View>
-              </>
+
+                <FounderPackBanner preview={Boolean(previewData)} />
+              </View>
             )}
           </View>
         </ScrollView>
 
-        {division === 'showcase' && selectedProduct ? (
+        {!loading && selectedProduct ? (
           <AtelierActionDock
             action={action}
             balance={balance}
             item={selectedItem}
             notice={notice}
             onPrimary={handlePrimaryAction}
-            onTry={handleTry}
             pending={pendingId === selectedProduct.id}
             primaryRef={purchaseTriggerRef}
             product={selectedProduct}
@@ -681,36 +513,169 @@ function AtelierHeader({ balance, compact, loading }: { balance: number; compact
   );
 }
 
-function AtelierSceneSkeleton({ compact }: { compact: boolean }) {
+function AtelierCatalogSkeleton() {
   return (
     <SkeletonGroup
-      label="Chargement de l’aperçu Atelier"
-      style={[styles.sceneSkeleton, compact && styles.compactScene]}
-      testID="atelier-scene-loading"
+      label="Chargement du catalogue Atelier"
+      style={styles.catalogSkeleton}
+      testID="atelier-catalog-loading"
     >
-      <Skeleton height="72%" radius="md" style={styles.sceneSkeletonLeft} tone="subtle" width="24%" />
-      <View style={styles.sceneSkeletonCenter}>
-        <Skeleton height={compact ? 58 : 72} radius="lg" width={compact ? 58 : 72} />
-        <Skeleton height={12} radius="pill" width="68%" />
-        <Skeleton height={8} radius="pill" tone="subtle" width="48%" />
-      </View>
-      <Skeleton height="68%" radius="md" style={styles.sceneSkeletonRight} tone="subtle" width="25%" />
-      <Skeleton height={10} radius="pill" style={styles.sceneSkeletonPlaque} width="22%" />
+      <Skeleton height={14} radius="pill" width="38%" />
+      <Skeleton height={30} radius="sm" width="70%" />
+      {[0, 1, 2].map((index) => (
+        <View key={index} style={styles.catalogSkeletonSection}>
+          <Skeleton height={22} radius="sm" width="42%" />
+          <View style={styles.catalogSkeletonTrack}>
+            <Skeleton height={238} radius="md" width="70%" />
+            <Skeleton height={238} radius="md" tone="subtle" width="24%" />
+          </View>
+        </View>
+      ))}
     </SkeletonGroup>
+  );
+}
+
+function ShelfHeading({ count, eyebrow, title }: { count: number; eyebrow: string; title: string }) {
+  return (
+    <View style={styles.shelfHeading}>
+      <View style={styles.shelfHeadingCopy}>
+        <Text style={styles.shelfEyebrow}>{eyebrow}</Text>
+        <Text style={styles.shelfTitle}>{title}</Text>
+      </View>
+      <Text accessibilityLabel={`${count} éléments`} style={styles.shelfCount}>
+        {String(count).padStart(2, '0')}
+      </Text>
+    </View>
+  );
+}
+
+function LevelFrameShelf({
+  entries,
+  level,
+  width,
+}: {
+  entries: readonly LevelFrameCollectionEntry[];
+  level: number;
+  width: number;
+}) {
+  return (
+    <View style={styles.catalogShelf} testID="atelier-shelf-level-frames">
+      <ShelfHeading count={entries.length} eyebrow="IDENTITÉ // CADRES DE NIVEAU" title="CADRES" />
+      <ScrollView
+        accessibilityLabel="Parcourir les cadres"
+        contentContainerStyle={styles.shelfTrack}
+        decelerationRate="fast"
+        horizontal
+        nestedScrollEnabled
+        showsHorizontalScrollIndicator={false}
+        snapToAlignment="start"
+        snapToInterval={width + spacing.sm}
+      >
+        {entries.map((entry, index) => (
+          <View
+            accessible
+            accessibilityLabel={`${entry.name}, ${levelFrameStateLabel(entry)}`}
+            key={entry.variant}
+            style={[
+              styles.frameCard,
+              { width },
+              entry.equipped && { borderColor: `${entry.accent}99` },
+              index < entries.length - 1 && styles.shelfItem,
+            ]}
+            testID={`atelier-level-frame-${entry.variant}`}
+          >
+            <View style={styles.frameVisual}>
+              <View style={[styles.frameGlow, { backgroundColor: entry.accent }]} />
+              <LevelFrame
+                disabled={!entry.owned}
+                level={level}
+                selected={entry.equipped}
+                size={108}
+                variant={entry.variant}
+              />
+              {entry.equipped ? (
+                <View style={styles.frameEquippedPill}>
+                  <Text style={styles.frameEquippedText}>ÉQUIPÉ</Text>
+                </View>
+              ) : null}
+            </View>
+            <View style={styles.frameTopline}>
+              <Text style={[styles.rarity, { color: entry.accent }]}>{levelFrameRarityLabel(entry)}</Text>
+              <Text style={styles.frameState}>{levelFrameSourceLabel(entry)}</Text>
+            </View>
+            <Text numberOfLines={1} style={styles.productName}>{entry.name}</Text>
+            <Text numberOfLines={2} style={styles.productDescription}>{entry.description}</Text>
+            <View style={styles.framePriceRow}>
+              {entry.source === 'volts' && entry.price ? <CurrencyIcon kind="volts" size={13} /> : null}
+              <Text style={styles.framePrice}>{levelFramePriceLabel(entry)}</Text>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+function AtelierProductShelf({
+  category,
+  onSelect,
+  products,
+  runtimeById,
+  selectedId,
+  width,
+}: {
+  category: AtelierCategory;
+  onSelect: (product: AtelierProduct) => void;
+  products: readonly AtelierProduct[];
+  runtimeById: ReadonlyMap<string, CosmeticItem>;
+  selectedId: string | null;
+  width: number;
+}) {
+  const title = ATELIER_SHELF_TITLES[category];
+
+  return (
+    <View style={styles.catalogShelf} testID={`atelier-shelf-${category}`}>
+      <ShelfHeading
+        count={products.length}
+        eyebrow={`FINITION // ${ATELIER_CATEGORY_META[category].shortLabel}`}
+        title={title}
+      />
+      <ScrollView
+        accessibilityLabel={`Parcourir les ${title.toLocaleLowerCase('fr-FR')}`}
+        contentContainerStyle={styles.shelfTrack}
+        decelerationRate="fast"
+        horizontal
+        nestedScrollEnabled
+        showsHorizontalScrollIndicator={false}
+        snapToAlignment="start"
+        snapToInterval={width + spacing.sm}
+        testID={`atelier-product-list-${category}`}
+      >
+        {products.map((product, index) => (
+          <View key={product.id} style={index < products.length - 1 ? styles.shelfItem : undefined}>
+            <ProductCard
+              item={runtimeById.get(product.id) ?? null}
+              onPress={() => onSelect(product)}
+              product={product}
+              selected={selectedId === product.id}
+              width={width}
+            />
+          </View>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
 function ProductCard({
   item,
   onPress,
-  previewed,
   product,
   selected,
   width,
 }: {
   item: CosmeticItem | null;
   onPress: () => void;
-  previewed: boolean;
   product: AtelierProduct;
   selected: boolean;
   width: number;
@@ -718,7 +683,7 @@ function ProductCard({
   return (
     <Pressable
       accessibilityHint="Sélectionne cette finition pour afficher ses actions"
-      accessibilityLabel={`${product.name}, ${productStateLabel(item, product, previewed)}`}
+      accessibilityLabel={`${product.name}, ${productStateLabel(item, product)}`}
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
@@ -742,7 +707,7 @@ function ProductCard({
       <View style={styles.productCopy}>
         <View style={styles.productTopline}>
           <Text style={[styles.rarity, { color: product.accent }]}>{rarityLabel(product.rarity)}</Text>
-          <ProductState item={item} previewed={previewed} product={product} />
+          <ProductState item={item} product={product} />
         </View>
         <Text numberOfLines={1} style={styles.productName}>{product.name}</Text>
         <Text numberOfLines={2} style={styles.productDescription}>{product.description}</Text>
@@ -753,14 +718,11 @@ function ProductCard({
 
 function ProductState({
   item,
-  previewed,
   product,
 }: {
   item: CosmeticItem | null;
-  previewed: boolean;
   product: AtelierProduct;
 }) {
-  if (previewed && !item?.equipped) return <Text style={styles.statePreview}>APERÇU</Text>;
   if (item?.equipped) return <Text style={styles.stateEquipped}>● ÉQUIPÉ</Text>;
   if (item?.owned) return <Text style={styles.stateOwned}>POSSÉDÉ</Text>;
   if (!item) return <Text style={styles.stateMuted}>SYNCHRO</Text>;
@@ -778,7 +740,6 @@ function AtelierActionDock({
   item,
   notice,
   onPrimary,
-  onTry,
   pending,
   primaryRef,
   product,
@@ -788,7 +749,6 @@ function AtelierActionDock({
   item: CosmeticItem | null;
   notice: AtelierNotice | null;
   onPrimary: () => void;
-  onTry: () => void;
   pending: boolean;
   primaryRef: RefObject<View | null>;
   product: AtelierProduct;
@@ -822,30 +782,18 @@ function AtelierActionDock({
                 {action === 'insufficient' ? `${formatNumber(price)} VOLTS` : actionStateLabel(action)}
               </Text>
             </View>
-            <View style={styles.actions}>
-              <View style={styles.tryAction}>
-                <Button
-                  accessibilityLabel={`Essayer ${product.name}`}
-                  disabled={pending}
-                  fullWidth
-                  label="ESSAYER"
-                  onPress={onTry}
-                  variant="secondary"
-                />
-              </View>
-              <View style={styles.primaryAction}>
-                <Button
-                  accessibilityHint={action === 'buy' ? 'Ouvre le récapitulatif avant de débiter tes Volts' : undefined}
-                  accessibilityLabel={primaryAccessibilityLabel(action, product, price, balance)}
-                  disabled={disabled}
-                  fullWidth
-                  label={primaryLabel(action, item, product, balance)}
-                  loading={pending}
-                  onPress={onPrimary}
-                  ref={primaryRef}
-                  testID="atelier-action-primary"
-                />
-              </View>
+            <View style={styles.primaryAction}>
+              <Button
+                accessibilityHint={action === 'buy' ? 'Ouvre le récapitulatif avant de débiter tes Volts' : undefined}
+                accessibilityLabel={primaryAccessibilityLabel(action, product, price, balance)}
+                disabled={disabled}
+                fullWidth
+                label={primaryLabel(action, item, product, balance)}
+                loading={pending}
+                onPress={onPrimary}
+                ref={primaryRef}
+                testID="atelier-action-primary"
+              />
             </View>
           </>
         )}
@@ -927,12 +875,38 @@ function actionStateLabel(action: AtelierPrimaryAction) {
   return 'INDISPONIBLE';
 }
 
-function productStateLabel(item: CosmeticItem | null, product: AtelierProduct, previewed: boolean) {
-  if (previewed && !item?.equipped) return 'en aperçu temporaire';
+function productStateLabel(item: CosmeticItem | null, product: AtelierProduct) {
   if (item?.equipped) return 'équipé';
   if (item?.owned) return 'possédé';
   if (!item) return 'en synchronisation';
   return `${formatNumber(item.price || product.price)} Volts`;
+}
+
+function levelFrameRarityLabel(entry: LevelFrameCollectionEntry) {
+  if (entry.rarity === 'legendary') return 'LÉGENDAIRE';
+  if (entry.rarity === 'epic') return 'ÉPIQUE';
+  if (entry.rarity === 'rare') return 'RARE';
+  return 'INCLUS';
+}
+
+function levelFrameSourceLabel(entry: LevelFrameCollectionEntry) {
+  if (entry.equipped) return '● ÉQUIPÉ';
+  if (entry.owned) return 'POSSÉDÉ';
+  if (entry.source === 'founder_pack') return 'FOUNDER PACK';
+  if (entry.source === 'included') return 'INCLUS';
+  return 'VOLTS';
+}
+
+function levelFramePriceLabel(entry: LevelFrameCollectionEntry) {
+  if (entry.source === 'included') return 'INCLUS · ÉVOLUTIF';
+  if (entry.source === 'founder_pack') return 'FOUNDER PACK';
+  return entry.price ? `${formatNumber(entry.price)} VOLTS` : 'INDISPONIBLE';
+}
+
+function levelFrameStateLabel(entry: LevelFrameCollectionEntry) {
+  if (entry.equipped) return 'équipé';
+  if (entry.owned) return 'possédé';
+  return levelFramePriceLabel(entry).toLocaleLowerCase('fr-FR');
 }
 
 function rarityLabel(rarity: AtelierProduct['rarity']) {
@@ -940,12 +914,6 @@ function rarityLabel(rarity: AtelierProduct['rarity']) {
   if (rarity === 'epique') return 'ÉPIQUE';
   if (rarity === 'rare') return 'RARE';
   return 'COMMUN';
-}
-
-function withoutTrialCategory(selection: AtelierTrySelection, category: AtelierCategory) {
-  const next = { ...selection };
-  delete next[category];
-  return next;
 }
 
 function formatNumber(value: number) {
@@ -964,13 +932,6 @@ function friendlyMutationError(caught: unknown, fallback: string) {
   if (/solde insuffisant/i.test(value)) return 'Ton solde a changé. Recharge l’Atelier avant de confirmer.';
   if (/network|fetch|hors connexion|offline/i.test(value)) return 'Connexion indisponible. Réessaie sans quitter ta composition.';
   return value || fallback;
-}
-
-function levelFrameCategoryFromParam(value?: string | string[]) {
-  const normalized = Array.isArray(value) ? value[0] : value;
-  return normalized === 'level-frames' || normalized === 'levelFrames' || normalized === 'niveaux'
-    ? 'levelFrames'
-    : 'showcase';
 }
 
 const noticeToneStyle = StyleSheet.create({
@@ -1084,100 +1045,135 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     color: colors.textSecondary,
   },
-  livePanel: {
-    position: 'relative',
-    overflow: 'hidden',
-    padding: spacing.sm,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceRaised,
-  },
-  livePanelCompact: {
-    paddingTop: spacing.xs,
-  },
-  panelHeading: {
-    minHeight: layout.minTouchTarget,
-    marginBottom: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  panelCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
   sectionEyebrow: {
     ...typography.eyebrow,
     color: colors.volt,
   },
-  panelDescription: {
-    ...typography.metadata,
-    marginTop: 2,
+  catalog: {
+    gap: spacing.xl,
+  },
+  catalogIntro: {
+    paddingTop: spacing.xs,
+  },
+  catalogTitle: {
+    ...typography.displaySmall,
+    marginTop: 3,
+    color: colors.text,
+  },
+  catalogDescription: {
+    ...typography.body,
+    maxWidth: 330,
+    marginTop: spacing.xs,
     color: colors.textSecondary,
   },
-  sceneFrame: {
-    position: 'relative',
-    overflow: 'hidden',
-    borderRadius: radius.md,
-    backgroundColor: colors.background,
-  },
-  compactScene: {
-    aspectRatio: 2.3,
-  },
-  sceneSkeleton: { position: 'relative', overflow: 'hidden', aspectRatio: 1.84, backgroundColor: '#090D12' },
-  sceneSkeletonLeft: { position: 'absolute', left: '4%', bottom: '10%' },
-  sceneSkeletonCenter: { position: 'absolute', top: '18%', left: '34%', width: '32%', alignItems: 'center', gap: spacing.xs },
-  sceneSkeletonRight: { position: 'absolute', right: '4%', bottom: '11%' },
-  sceneSkeletonPlaque: { position: 'absolute', bottom: '7%', left: '39%' },
-  trialStatus: {
-    position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    minHeight: 28,
-    paddingHorizontal: spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: `${colors.volt}8A`,
-    backgroundColor: 'rgba(9,13,7,.92)',
-  },
-  trialStatusText: {
-    ...typography.metadata,
-    color: colors.volt,
-  },
-  composer: {
+  catalogShelf: {
     gap: spacing.sm,
   },
-  composerCompact: {
-    gap: spacing.xs,
-  },
-  composerHeading: {
-    minHeight: 46,
+  shelfHeading: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     gap: spacing.md,
   },
-  composerHeadingCompact: {
-    minHeight: 38,
+  shelfHeadingCopy: {
+    flex: 1,
+    minWidth: 0,
   },
-  composerTitle: {
+  shelfEyebrow: {
+    ...typography.eyebrow,
+    color: colors.volt,
+  },
+  shelfTitle: {
     ...typography.sectionTitle,
     marginTop: 2,
     color: colors.text,
   },
-  counter: {
+  shelfCount: {
     ...typography.metricSmall,
     color: colors.textMuted,
   },
-  productTrack: {
-    paddingRight: spacing.xl,
+  shelfTrack: {
+    paddingRight: spacing.xl + spacing.md,
   },
-  productItem: {
+  shelfItem: {
     marginRight: spacing.sm,
+  },
+  frameCard: {
+    position: 'relative',
+    minHeight: 286,
+    padding: spacing.sm,
+    overflow: 'hidden',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    backgroundColor: colors.surfaceLow,
+  },
+  frameVisual: {
+    position: 'relative',
+    height: 132,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    backgroundColor: colors.background,
+  },
+  frameGlow: {
+    position: 'absolute',
+    width: 112,
+    height: 112,
+    borderRadius: radius.pill,
+    opacity: 0.09,
+  },
+  frameEquippedPill: {
+    position: 'absolute',
+    top: spacing.xs,
+    right: spacing.xs,
+    minHeight: 28,
+    paddingHorizontal: spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    backgroundColor: colors.volt,
+  },
+  frameEquippedText: {
+    ...typography.metadata,
+    color: colors.background,
+  },
+  frameTopline: {
+    minHeight: 20,
+    marginTop: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
+  },
+  frameState: {
+    ...typography.metadata,
+    color: colors.textMuted,
+  },
+  framePriceRow: {
+    minHeight: 20,
+    marginTop: 'auto',
+    paddingTop: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  framePrice: {
+    ...typography.metadata,
+    color: colors.textSecondary,
+  },
+  catalogSkeleton: {
+    gap: spacing.sm,
+  },
+  catalogSkeletonSection: {
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  catalogSkeletonTrack: {
+    flexDirection: 'row',
+    gap: spacing.sm,
   },
   productCard: {
     position: 'relative',
@@ -1197,7 +1193,7 @@ const styles = StyleSheet.create({
   },
   productVisual: {
     position: 'relative',
-    height: 150,
+    height: 132,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1239,7 +1235,7 @@ const styles = StyleSheet.create({
     color: colors.volt,
   },
   productCopy: {
-    minHeight: 112,
+    minHeight: 106,
     padding: spacing.sm,
   },
   productTopline: {
@@ -1252,10 +1248,6 @@ const styles = StyleSheet.create({
   rarity: {
     ...typography.metadata,
     fontFamily: fonts.bold,
-  },
-  statePreview: {
-    ...typography.metadata,
-    color: colors.info,
   },
   stateEquipped: {
     ...typography.metadata,
@@ -1347,16 +1339,8 @@ const styles = StyleSheet.create({
     color: colors.volt,
     textAlign: 'right',
   },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  tryAction: {
-    width: 108,
-  },
   primaryAction: {
-    flex: 1,
-    minWidth: 0,
+    width: '100%',
   },
   activeConfiguration: {
     minHeight: layout.controlHeight,
