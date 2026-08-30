@@ -399,6 +399,13 @@ enabled = true
 verify_jwt = true
 entrypoint = "./functions/clutch-account-delete/index.ts"
 
+# The gateway validates the legacy Supabase JWT, then the function also checks
+# the dedicated cron secret without exposing the provider token to clients.
+[functions.clutch-pandascore-sync]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/clutch-pandascore-sync/index.ts"
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

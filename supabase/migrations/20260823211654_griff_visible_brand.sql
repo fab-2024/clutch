@@ -44,41 +44,9 @@ before insert or update of nom, description, licence
 on public.objets_catalogue
 for each row execute function private.griff_normaliser_marque_catalogue_v1();
 
-update public.matchs
-set resultat_source_label = replace(
-      replace(replace(resultat_source_label, 'CLUTCH', 'GRIFF'), 'Clutch', 'GRIFF'),
-      'clutch',
-      'GRIFF'
-    )
-where resultat_source_label ilike '%clutch%';
-
-create or replace function private.griff_normaliser_marque_match_v1()
-returns trigger
-language plpgsql
-security invoker
-set search_path = ''
-as $$
-begin
-  new.resultat_source_label := replace(
-    replace(replace(new.resultat_source_label, 'CLUTCH', 'GRIFF'), 'Clutch', 'GRIFF'),
-    'clutch',
-    'GRIFF'
-  );
-  return new;
-end;
-$$;
-
-revoke all privileges
-on function private.griff_normaliser_marque_match_v1()
-from public, anon, authenticated, service_role;
-
-drop trigger if exists griff_normaliser_marque_match_v1
-on public.matchs;
-
-create trigger griff_normaliser_marque_match_v1
-before insert or update of resultat_source_label
-on public.matchs
-for each row execute function private.griff_normaliser_marque_match_v1();
+-- Result source labels are immutable provenance once a match is final. They
+-- intentionally keep the name recorded at settlement time instead of
+-- bypassing the revisioned correction and audit lifecycle for a visual rebrand.
 
 update public.evenements_notification
 set titre = replace(replace(replace(titre, 'CLUTCH', 'GRIFF'), 'Clutch', 'GRIFF'), 'clutch', 'GRIFF'),
@@ -124,14 +92,6 @@ begin
        or lower(licence ->> 'titulaire') = 'clutch'
   ) then
     raise exception 'Visible cosmetic catalogue branding migration failed';
-  end if;
-
-  if exists (
-    select 1
-    from public.matchs
-    where resultat_source_label ilike '%clutch%'
-  ) then
-    raise exception 'Visible match source branding migration failed';
   end if;
 
   if exists (

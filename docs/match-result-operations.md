@@ -36,8 +36,8 @@ correction administrative.
 ## Score invalide et égalité
 
 Le marché V1 porte sur le vainqueur de la série. Une égalité ne permet donc pas
-de déterminer le verdict et est toujours rejetée. Pour un BO1, BO3 ou BO5, le
-vainqueur doit respectivement atteindre 1, 2 ou 3 maps, sans score négatif.
+de déterminer le verdict et est toujours rejetée. Pour un BO1, BO3, BO5 ou BO7,
+le vainqueur doit respectivement atteindre 1, 2, 3 ou 4 maps, sans score négatif.
 
 Un score invalide annule toute la transaction : aucun match, call, classement,
 Elo ou journal d'audit ne doit être modifié.
@@ -101,3 +101,10 @@ journal est en lecture refusée par défaut et ne possède aucun droit direct,
 même pour `service_role`. Les index du lot peuvent enfin être signalés comme
 inutilisés immédiatement après leur création ; cette information doit être
 réévaluée après du trafic réel.
+
+## Automatisation PandaScore
+
+Le connecteur gratuit, sa cadence, ses garde-fous et sa procédure de déploiement
+sont décrits dans [`pandascore-sync.md`](pandascore-sync.md). Il réutilise les
+transitions de ce runbook : aucun résultat n'est écrit directement depuis le
+mobile et chaque règlement conserve la provenance `pandascore`.

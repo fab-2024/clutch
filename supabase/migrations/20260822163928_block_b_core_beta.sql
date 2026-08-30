@@ -1418,3 +1418,4 @@ comment on function public.clutch_rank_dashboard_v1() is
   'Authenticated Rank orchestration over the unchanged canonical Frags, grade and placement functions.';
 comment on function public.clutch_hub_complements_v1() is
   'Authenticated Hub complement returning the latest verdict, real collective faction mission and latest earned cosmetic.';
+;

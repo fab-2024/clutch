@@ -72,3 +72,4 @@ grant execute on function public.clutch_assurer_mon_profil_v1()
 
 comment on function public.clutch_assurer_mon_profil_v1() is
   'Recree uniquement le profil manquant de l utilisateur authentifie.';
+;

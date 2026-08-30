@@ -14,6 +14,7 @@
     "db:test:concurrency": "node scripts/test-match-result-concurrency.mjs",
     "economy:simulate": "node scripts/simulate-volts-economy.mjs",
     "db:advisors": "supabase db advisors --local --type all --level warn --fail-on error",
+    "pandascore:test": "node --test supabase/functions/clutch-pandascore-sync/pandascore.test.mjs",
     "mobile:architecture": "node scripts/check-mobile.mjs",
     "mobile:typecheck": "npm --prefix mobile run typecheck",
     "mobile:lint": "npm --prefix mobile run lint -- --max-warnings=0",

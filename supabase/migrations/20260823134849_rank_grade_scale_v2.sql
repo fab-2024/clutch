@@ -609,3 +609,4 @@ grant execute on function public.clutch_classement_rank_v1(text, text)
 to authenticated, service_role;
 grant execute on function public.clutch_rank_dashboard_v1()
 to authenticated, service_role;
+;

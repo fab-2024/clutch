@@ -151,3 +151,4 @@ comment on function public.clutch_admin_demarrer_match_v1(text) is
   'Passe un match a venir en cours. Reserve aux profils administrateurs.';
 comment on function public.clutch_admin_reporter_match_v1(text, timestamptz) is
   'Reporte un match a venir vers une date future. Reserve aux profils administrateurs.';
+;

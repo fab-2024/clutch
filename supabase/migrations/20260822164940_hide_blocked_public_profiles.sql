@@ -39,3 +39,4 @@ to anon, authenticated, service_role;
 
 comment on function public.clutch_profil_public_v1(text) is
   'Public profile projection. Authenticated viewers receive null when either account has blocked the other.';
+;

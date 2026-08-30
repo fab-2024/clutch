@@ -1,6 +1,6 @@
--- GREATEST is PostgreSQL conditional syntax rather than a pg_catalog routine.
--- Keep the validated token expression from the previous migration and restore
--- the unqualified conditional expression used by the delivery backfill.
+-- The original standard string used two literal backslashes, so PostgreSQL's
+-- regular-expression engine rejected valid ExpoPushToken[...] values. Use an
+-- escape string to pass exactly one escaping backslash to the regex engine.
 
 create or replace function public.clutch_enregistrer_jeton_notification_v1(
   p_jeton_expo text,
@@ -63,7 +63,7 @@ begin
   insert into public.livraisons_notification (
     notification_id, jeton_id, jeton_expo, prochaine_tentative
   )
-  select e.id, v_id, v_jeton, greatest(pg_catalog.now(), e.planifie_pour)
+  select e.id, v_id, v_jeton, pg_catalog.greatest(pg_catalog.now(), e.planifie_pour)
   from public.evenements_notification e
   where e.user_id = v_user
     and e.statut = 'en_attente'
@@ -85,3 +85,4 @@ to authenticated, service_role;
 
 comment on function public.clutch_enregistrer_jeton_notification_v1(text, text, text) is
   'Authenticated Expo token registration. The token format is strictly allowlisted and the owner is derived from auth.uid().';
+;

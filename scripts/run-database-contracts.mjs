@@ -18,6 +18,7 @@ const contractFiles = [
   'supabase/tests/privacy_analytics_partner_campaign.sql',
   'supabase/tests/founder_pack_iap.sql',
   'supabase/tests/match_result_reliability.sql',
+  'supabase/tests/pandascore_sync_contract.sql',
   'supabase/tests/release_readiness_privacy.sql',
   'supabase/tests/block_b_core_beta.sql',
   'supabase/tests/rank_grade_scale_v2.sql',

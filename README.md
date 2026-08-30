@@ -107,6 +107,7 @@ associations stores et suppression RevenueCat configurées.
 - [Contrats produit V1](docs/product-contracts.md)
 - [Roadmap exécutable](docs/product-roadmap.md)
 - [Fiabilité des résultats](docs/match-result-operations.md)
+- [Synchronisation PandaScore](docs/pandascore-sync.md)
 - [Confidentialité analytics et achats](mobile/docs/privacy-analytics.md)
 - [Préparation de release](mobile/docs/release-readiness.md)
 
