@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -64,19 +65,10 @@ export function MyCallsPanel({ dashboard, followedGames, game, onPrepareMatch, q
 
   return (
     <View style={styles.section}>
-      <View style={styles.explainer}>
-        <View style={styles.explainerMark}><Text style={styles.explainerGlyph}>✓</Text></View>
-        <View style={styles.explainerCopy}>
-          <Text style={styles.explainerEyebrow}>TRANSPARENCE DU CALL</Text>
-          <Text style={styles.explainerTitle}>Règle avant. Répartition après.</Text>
-          <Text style={styles.explainerText}>Le verrouillage est définitif. La tendance des joueurs n’apparaît qu’une fois ton choix validé.</Text>
-        </View>
-      </View>
-
-      <SupporterIdentity compact cosmetics={equipped} meta="SIGNATURE DU CALL" pseudo={pseudo} />
+      <SupporterIdentity cosmetics={equipped} meta="SIGNATURE DU CALL" pseudo={pseudo} />
 
       <View accessibilityRole="tablist" style={styles.tabs}>
-        {STATES.map((item) => {
+        {STATES.map((item, index) => {
           const active = state === item.id;
           return (
             <Pressable
@@ -85,7 +77,7 @@ export function MyCallsPanel({ dashboard, followedGames, game, onPrepareMatch, q
               accessibilityState={{ selected: active }}
               key={item.id}
               onPress={() => setState(item.id)}
-              style={({ pressed }) => [styles.tab, active && styles.tabActive, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.tab, index < STATES.length - 1 && styles.tabDivider, active && styles.tabActive, pressed && styles.pressed]}
             >
               <Text style={[styles.tabCount, active && styles.tabCountActive]}>{scoped[item.id].length}</Text>
               <Text numberOfLines={2} style={[styles.tabLabel, active && styles.tabLabelActive]}>{item.label}</Text>
@@ -180,12 +172,12 @@ function CallCard({ call, onPrepareMatch }: { call: MyCallItem; onPrepareMatch?:
       </View>
 
       <View style={styles.duel}>
-        <CallTeam accent="#65B7FF" name={call.equipe_a} selected={call.choix === 'a'} tag={call.tag_a} />
+        <CallTeam accent="#20BDF2" name={call.equipe_a} selected={call.choix === 'a'} side="left" tag={call.tag_a} />
         <View style={styles.scoreBlock}>
           {resolved ? <Text style={styles.score}>{call.score_a ?? 0}–{call.score_b ?? 0}</Text> : <Text style={styles.vs}>VS</Text>}
           {selectedTag ? <Text style={[styles.selectedTag, { color: accent }]}>CALL · {selectedTag}</Text> : <Text style={styles.noChoice}>CHOIX LIBRE</Text>}
         </View>
-        <CallTeam accent="#FF6C7C" name={call.equipe_b} selected={call.choix === 'b'} tag={call.tag_b} />
+        <CallTeam accent="#FF4E63" name={call.equipe_b} selected={call.choix === 'b'} side="right" tag={call.tag_b} />
       </View>
 
       <View style={styles.contract}>
@@ -220,12 +212,17 @@ function CallCard({ call, onPrepareMatch }: { call: MyCallItem; onPrepareMatch?:
   );
 }
 
-function CallTeam({ accent, name, selected, tag }: { accent: string; name: string; selected: boolean; tag: string }) {
+function CallTeam({ accent, name, selected, side, tag }: { accent: string; name: string; selected: boolean; side: 'left' | 'right'; tag: string }) {
   return (
-    <View style={styles.team}>
-      <View style={[styles.logoWrap, selected && styles.logoWrapSelected]}><TeamLogo accent={accent} name={name} size={45} tag={tag} /></View>
+    <LinearGradient
+      colors={[`${accent}42`, '#07111A', `${accent}24`]}
+      end={{ x: side === 'left' ? 1 : 0, y: .5 }}
+      start={{ x: side === 'left' ? 0 : 1, y: .5 }}
+      style={[styles.team, side === 'left' ? styles.teamLeft : styles.teamRight, { borderColor: selected ? colors.volt : `${accent}88` }]}
+    >
+      <View style={[styles.logoWrap, { borderColor: `${accent}B8`, backgroundColor: `${accent}14` }, selected && styles.logoWrapSelected]}><TeamLogo accent={accent} name={name} size={57} tag={tag} /></View>
       <Text numberOfLines={1} style={[styles.teamTag, selected && styles.teamTagSelected]}>{tag}</Text>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -299,69 +296,65 @@ function signed(value: number) {
 }
 
 const styles = StyleSheet.create({
-  section: { marginHorizontal: 14, gap: 12 },
-  explainer: { minHeight: 116, padding: 14, borderRadius: 23, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#10160E', borderWidth: 1, borderColor: '#414D1E' },
-  explainerMark: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  explainerGlyph: { color: '#080B0D', fontFamily: fonts.bold, fontSize: 20 },
-  explainerCopy: { flex: 1, minWidth: 0 },
-  explainerEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 },
-  explainerTitle: { ...typography.cardTitle, marginTop: 4, color: colors.text },
-  explainerText: { ...typography.caption, marginTop: 5, color: colors.textMuted },
-  tabs: { minHeight: 72, padding: 5, borderRadius: 20, flexDirection: 'row', gap: 4, backgroundColor: '#090D11', borderWidth: 1, borderColor: colors.border },
-  tab: { flex: 1, minWidth: 0, minHeight: 48, paddingVertical: 5, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  tabActive: { backgroundColor: '#1A2113', borderWidth: 1, borderColor: '#48551F' },
-  tabCount: { ...typography.bodyStrong, color: colors.textMuted },
-  tabCountActive: { color: colors.volt },
-  tabLabel: { ...typography.label, marginTop: 2, color: colors.textMuted, textAlign: 'center' },
-  tabLabelActive: { color: colors.text },
+  section: { marginHorizontal: 14, gap: 14 },
+  tabs: { minHeight: 78, overflow: 'hidden', borderRadius: 20, flexDirection: 'row', backgroundColor: '#07111A', borderWidth: 1, borderColor: '#154760' },
+  tab: { flex: 1, minWidth: 0, minHeight: 76, paddingHorizontal: 2, paddingVertical: 8, alignItems: 'center', justifyContent: 'center' },
+  tabDivider: { borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: '#1B526D' },
+  tabActive: { margin: 7, minHeight: 62, borderRadius: 16, backgroundColor: colors.volt, borderWidth: 1, borderColor: '#F1FF48', boxShadow: '0 0 18px rgba(220,255,36,.48)' },
+  tabCount: { color: '#7EC3E5', fontFamily: fonts.display, fontSize: 20, fontVariant: ['tabular-nums'] },
+  tabCountActive: { color: '#080B0D' },
+  tabLabel: { ...typography.label, marginTop: 3, color: '#77B3D0', textAlign: 'center', letterSpacing: .35 },
+  tabLabelActive: { color: '#080B0D' },
   list: { gap: 11 },
   loadMore: { minHeight: 50, paddingHorizontal: 15, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#303A43' },
   loadMoreText: { ...typography.action, color: colors.volt, letterSpacing: .35 },
   loadMoreMeta: { ...typography.label, color: colors.textMuted },
-  card: { overflow: 'hidden', padding: 14, borderRadius: 25, gap: 13, backgroundColor: '#0B1015', borderWidth: 1 },
-  cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  card: { overflow: 'hidden', padding: 14, borderRadius: 22, gap: 15, backgroundColor: '#06131E', borderWidth: 1 },
+  cardTop: { minHeight: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   eventCopy: { flex: 1, minWidth: 0 },
-  event: { ...typography.eyebrow, color: colors.text, letterSpacing: .45 },
-  schedule: { ...typography.caption, marginTop: 3, color: colors.textMuted },
-  statePill: { minHeight: 27, paddingHorizontal: 9, borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1 },
-  stateDot: { width: 5, height: 5, borderRadius: 3 },
-  stateText: { ...typography.label, letterSpacing: .35 },
-  duel: { minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  team: { width: 78, alignItems: 'center', gap: 5 },
-  logoWrap: { width: 51, height: 51, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'transparent' },
-  logoWrapSelected: { borderColor: colors.volt, backgroundColor: '#161D0F' },
-  teamTag: { ...typography.bodyStrong, color: colors.textMuted },
+  event: { ...typography.bodyStrong, color: colors.text, letterSpacing: .15 },
+  schedule: { ...typography.label, marginTop: 5, color: '#78C9F2', letterSpacing: .3 },
+  statePill: { minHeight: 32, paddingHorizontal: 11, borderRadius: 17, flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1 },
+  stateDot: { width: 7, height: 7, borderRadius: 4 },
+  stateText: { ...typography.action, letterSpacing: .45 },
+  duel: { minHeight: 164, overflow: 'hidden', borderRadius: 18, flexDirection: 'row', alignItems: 'stretch', backgroundColor: '#061019', borderWidth: 1, borderColor: '#22516A' },
+  team: { flex: 1, minWidth: 0, paddingVertical: 14, alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1 },
+  teamLeft: { borderTopLeftRadius: 17, borderBottomLeftRadius: 17, borderRightWidth: 0 },
+  teamRight: { borderTopRightRadius: 17, borderBottomRightRadius: 17, borderLeftWidth: 0 },
+  logoWrap: { width: 74, height: 74, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
+  logoWrapSelected: { borderColor: colors.volt, backgroundColor: '#18210D', boxShadow: '0 0 14px rgba(220,255,36,.25)' },
+  teamTag: { color: '#F6F8F9', fontFamily: fonts.display, fontSize: 20 },
   teamTagSelected: { color: colors.text },
-  scoreBlock: { flex: 1, alignItems: 'center', gap: 4 },
-  vs: { color: colors.textMuted, fontFamily: fonts.display, fontSize: 18 },
-  score: { color: colors.text, fontFamily: fonts.display, fontSize: 27, fontVariant: ['tabular-nums'] },
-  selectedTag: { ...typography.label, letterSpacing: .35 },
+  scoreBlock: { width: 80, paddingHorizontal: 3, alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: '#071019', borderLeftWidth: 1, borderRightWidth: 1, borderColor: '#1D394A', zIndex: 2 },
+  vs: { color: '#F4F6F7', fontFamily: fonts.display, fontSize: 26 },
+  score: { color: colors.text, fontFamily: fonts.display, fontSize: 25, fontVariant: ['tabular-nums'] },
+  selectedTag: { ...typography.label, textAlign: 'center', letterSpacing: .35 },
   noChoice: { ...typography.label, color: colors.textMuted, letterSpacing: .35 },
-  contract: { overflow: 'hidden', borderRadius: 16, backgroundColor: '#080C10', borderWidth: 1, borderColor: '#202932' },
-  contractLine: { minHeight: 38, paddingHorizontal: 11, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#232C34' },
-  contractLabel: { ...typography.label, color: colors.textMuted, letterSpacing: .4 },
+  contract: { overflow: 'hidden', borderRadius: 16, backgroundColor: '#071724', borderWidth: 1, borderColor: '#1C4A63' },
+  contractLine: { minHeight: 48, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#1C4A63' },
+  contractLabel: { ...typography.label, color: '#7CC4E6', letterSpacing: .45 },
   contractValue: { ...typography.caption, flex: 1, color: colors.text, textAlign: 'right' },
-  hiddenDistribution: { minHeight: 45, paddingHorizontal: 11, borderRadius: 15, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#252E37' },
-  hiddenDistributionGlyph: { color: '#75818C', fontSize: 17 },
-  hiddenDistributionText: { ...typography.caption, flex: 1, color: colors.textMuted },
-  distribution: { padding: 11, borderRadius: 16, gap: 7, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#29333C' },
+  hiddenDistribution: { minHeight: 52, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 8, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: '#1D4054' },
+  hiddenDistributionGlyph: { color: '#76B8D6', fontSize: 17 },
+  hiddenDistributionText: { ...typography.caption, flex: 1, color: '#79A9C0' },
+  distribution: { paddingHorizontal: 7, paddingVertical: 14, gap: 9, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: '#1D4054' },
   distributionTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   distributionLabel: { ...typography.label, color: colors.volt, letterSpacing: .35 },
-  distributionTotal: { ...typography.label, color: '#71808B' },
+  distributionTotal: { ...typography.label, color: '#7BB9D7' },
   distributionValues: { flexDirection: 'row', justifyContent: 'space-between' },
   distributionA: { ...typography.bodyStrong, color: '#65B7FF' },
   distributionB: { ...typography.bodyStrong, color: '#FF6C7C' },
-  distributionTrack: { height: 6, overflow: 'hidden', borderRadius: 3, backgroundColor: '#FF6C7C' },
-  distributionFill: { height: '100%', backgroundColor: '#65B7FF' },
+  distributionTrack: { height: 7, overflow: 'hidden', borderRadius: 4, backgroundColor: '#FF4E63' },
+  distributionFill: { height: '100%', backgroundColor: '#20BDF2' },
   verdict: { minHeight: 52, padding: 10, borderRadius: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#080C10', borderWidth: 1, borderColor: '#202932' },
   verdictLabel: { ...typography.label, color: colors.textMuted, letterSpacing: .35 },
   verdictSource: { ...typography.caption, marginTop: 3, color: colors.text },
   verdictReference: { ...typography.eyebrow, maxWidth: 215, marginTop: 3, color: colors.textSubtle, letterSpacing: .25 },
   deltaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   delta: { ...typography.bodyStrong },
-  actionRow: { minHeight: 30, paddingTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#202932' },
+  actionRow: { minHeight: 48, paddingHorizontal: 7, paddingTop: 7, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#1D4054' },
   action: { ...typography.action, letterSpacing: .4 },
-  actionArrow: { fontSize: 15, fontWeight: '900' },
+  actionArrow: { fontSize: 24, fontWeight: '900' },
   empty: { minHeight: 160, justifyContent: 'center', padding: 18, borderRadius: radius.lg, backgroundColor: '#0B1015', borderWidth: 1, borderColor: colors.border },
   emptyEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .6 },
   emptyTitle: { ...typography.cardTitle, marginTop: 6, color: colors.text },
