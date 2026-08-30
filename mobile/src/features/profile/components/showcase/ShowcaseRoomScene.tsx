@@ -12,6 +12,11 @@ import {
 
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
+import {
+  DEFAULT_SHOWCASE_RANK_DISPLAY_ID,
+  showcaseRankDisplayById,
+  type ShowcaseRankDisplayDefinition,
+} from '@/src/features/shop/showcaseRankDisplayCatalog';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 import ShowcaseAchievementBadge from '@/src/features/profile/achievementBadges/components/ShowcaseAchievementBadge';
 import type { PublicAchievementBadge } from '@/src/features/profile/achievementBadges/types';
@@ -57,6 +62,7 @@ type ShowcaseRoomSceneProps = {
   onRingPress?: () => void;
   pedestal?: ShowcasePedestalSkin;
   rankAccent: string;
+  rankDisplay?: Pick<ShowcaseRankDisplayDefinition, 'id' | 'name' | 'overlayImage'> | null;
   rankLabel: string;
   reduceMotion?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -66,7 +72,6 @@ type ShowcaseRoomSceneProps = {
 const ROOM_ASSET = require('../../../../../assets/showcase/showcase-room-empty-v1.png');
 const JERSEY_ASSET = require('../../../../../assets/showcase/showcase-jersey-base-v1.png');
 const TROPHY_ASSET = require('../../../../../assets/showcase/showcase-trophy-v1.png');
-const PEDESTAL_ASSET = require('../../../../../assets/rank/rank-tier-pedestal-v1.png');
 const DEFAULT_FULL_SCENE_SIZE = { height: 276, width: 844 };
 
 const THEME_WASH: Record<ShowcaseRoomTheme, readonly [string, string, string]> = {
@@ -130,6 +135,7 @@ export default function ShowcaseRoomScene({
   onRingPress,
   pedestal = 'obsidian',
   rankAccent,
+  rankDisplay,
   rankLabel,
   reduceMotion = false,
   style,
@@ -146,6 +152,9 @@ export default function ShowcaseRoomScene({
   const teamAccent = team ? `hsl(${teamHue(team.tag, team.nom)}, 72%, 58%)` : '#71808B';
   const light = SHOWCASE_LIGHTING_VISUALS[lighting];
   const pedestalAccent = PEDESTAL_ACCENT[pedestal];
+  const equippedRankDisplay = showcaseRankDisplayById(cosmetics?.showcase.rankDisplay?.id)
+    ?? showcaseRankDisplayById(DEFAULT_SHOWCASE_RANK_DISPLAY_ID)!;
+  const resolvedRankDisplay = rankDisplay ?? equippedRankDisplay;
   const tokens = cosmeticTokens(cosmetics);
   const topTokens = tokens.slice(0, 3);
   const bottomTokens = tokens.slice(3, 5);
@@ -166,7 +175,7 @@ export default function ShowcaseRoomScene({
   const rightOpacity = sectionOpacity(focus, 'right');
   const description = loading
     ? 'Showroom en cours d’installation'
-    : `Showroom de ${data?.pseudo ?? 'Supporter'}, rang ${rankLabel}, ${visibleBadges.length} badges visibles et ${trophies.length} trophées${equippedRing ? `, anneau ${equippedRing.familyName} ${equippedRing.name}` : ''}`;
+    : `Showroom de ${data?.pseudo ?? 'Supporter'}, rang ${rankLabel}, écrin ${resolvedRankDisplay.name}, ${visibleBadges.length} badges visibles et ${trophies.length} trophées${equippedRing ? `, anneau ${equippedRing.familyName} ${equippedRing.name}` : ''}`;
 
   return (
     <View
@@ -260,6 +269,14 @@ export default function ShowcaseRoomScene({
             { opacity: centerOpacity },
           ]}
         >
+          <Image
+            accessibilityLabel={`Écrin de rang ${resolvedRankDisplay.name}`}
+            accessible
+            resizeMode="contain"
+            source={resolvedRankDisplay.overlayImage}
+            style={[styles.rankDisplayOverlay, compact && styles.rankDisplayOverlayPreview]}
+            testID={`showcase-rank-display-${resolvedRankDisplay.id}`}
+          />
           <View style={[styles.rankBeam, { backgroundColor: light.glow }]} />
           {!loading ? <View style={[styles.rankHalo, { borderColor: rankAccent }]} /> : null}
           {loading ? (
@@ -269,11 +286,7 @@ export default function ShowcaseRoomScene({
               <RankEmblem grade={data?.ranking.grade} size={metrics.rankSize} />
             </View>
           )}
-          <Image
-            resizeMode="contain"
-            source={PEDESTAL_ASSET}
-            style={{ height: metrics.pedestalHeight, marginTop: compact ? -22 : -30, width: metrics.pedestalWidth }}
-          />
+          <View style={{ height: metrics.pedestalHeight, marginTop: compact ? -22 : -30, width: metrics.pedestalWidth }} />
           <View style={[styles.rankPlate, compact && styles.rankPlatePreview, { borderColor: pedestalAccent }]}>
             <Text style={[styles.rankLevel, compact && styles.rankLevelPreview]}>NIVEAU {loading ? '—' : level}</Text>
             <Text adjustsFontSizeToFit numberOfLines={1} style={[styles.rankName, compact && styles.rankNamePreview, { color: rankAccent }]}>{loading ? '—' : rankLabel}</Text>
@@ -474,6 +487,8 @@ const styles = StyleSheet.create({
   shelfBottom: { top: '66%' },
   rankStage: { position: 'absolute', left: '35%', top: '12%', width: '30%', height: '56%', alignItems: 'center', justifyContent: 'flex-end' },
   rankStagePreview: { left: '32%', top: '8%', width: '36%', height: '62%' },
+  rankDisplayOverlay: { position: 'absolute', top: '-20%', left: '-25%', width: '150%', height: '125%', opacity: 0.94 },
+  rankDisplayOverlayPreview: { top: '-14%', left: '-18%', width: '136%', height: '118%' },
   rankBeam: { position: 'absolute', top: '2%', width: '16%', height: '72%', borderRadius: 90, opacity: 0.028 },
   rankHalo: { position: 'absolute', bottom: '20%', width: '34%', aspectRatio: 1, borderRadius: 999, borderWidth: 1, opacity: 0.055 },
   rankPlaceholder: { borderWidth: 1, borderColor: '#4D5B67', backgroundColor: '#111920', transform: [{ rotate: '45deg' }] },

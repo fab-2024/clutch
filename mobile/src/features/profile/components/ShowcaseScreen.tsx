@@ -14,12 +14,17 @@ import { useReducedMotion } from 'react-native-reanimated';
 import { Screen } from '@/src/components/layout/Screen';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
-import { loadCosmeticShop } from '@/src/features/shop/api';
-import { resolveAtelierSceneConfig } from '@/src/features/shop/atelierState';
+import { equipCosmetic, loadCosmeticShop } from '@/src/features/shop/api';
+import { applyPreviewAtelierAction, resolveAtelierSceneConfig } from '@/src/features/shop/atelierState';
 import {
   DEFAULT_SHOWCASE_PRESENTER_ID,
   showcasePresenterById,
 } from '@/src/features/shop/showcasePresenterCatalog';
+import {
+  DEFAULT_SHOWCASE_RANK_DISPLAY_ID,
+  SHOWCASE_RANK_DISPLAY_CATALOG,
+  showcaseRankDisplayById,
+} from '@/src/features/shop/showcaseRankDisplayCatalog';
 import { showcaseRoomById } from '@/src/features/shop/showcaseRoomCatalog';
 import type { CosmeticItem, CosmeticShopData, EquippedCosmetics } from '@/src/features/shop/types';
 import { resolveEquippedAchievementBadges } from '@/src/features/profile/achievementBadges/equipment';
@@ -33,6 +38,7 @@ import {
 import type { ShowcaseRingFamily, ShowcaseRingProgress } from '@/src/features/profile/showcaseRings/types';
 import { useShowcaseRingEquipment } from '@/src/features/profile/showcaseRings/useShowcaseRingEquipment';
 import { useAuth } from '@/src/providers/AuthProvider';
+import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, typography } from '@/src/theme';
 
 import { loadProfileData } from '../api';
@@ -91,6 +97,7 @@ export default function ShowcaseScreen({
   const requestedSection = showcaseSectionFromParam(params.section);
   const selectedRoom = showcaseRoomById(readParam(params.room));
   const { profile, session } = useAuth();
+  const { refresh: refreshCosmetics } = useCosmetics();
   const systemReduceMotion = useReducedMotion();
   const reduceMotion = reduceMotionOverride ?? systemReduceMotion;
   const [profileData, setProfileData] = useState<ProfileData | null>(previewProfile ?? null);
@@ -103,6 +110,8 @@ export default function ShowcaseScreen({
   const [theme, setTheme] = useState<ShowcaseRoomTheme>('graphite');
   const [lighting, setLighting] = useState<ShowcaseLighting>('cyan');
   const [presenterId, setPresenterId] = useState<string>(DEFAULT_SHOWCASE_PRESENTER_ID);
+  const [rankDisplayId, setRankDisplayId] = useState<string>(DEFAULT_SHOWCASE_RANK_DISPLAY_ID);
+  const [rankDisplayPendingId, setRankDisplayPendingId] = useState<string | null>(null);
   const [jerseyPresentation, setJerseyPresentation] = useState<ShowcaseJerseyPresentation>('locker');
   const [selectedRingFamily, setSelectedRingFamily] = useState<ShowcaseRingFamily | null>(null);
   const [activeRoomSlot, setActiveRoomSlot] = useState<ShowcaseRoomSlotId | null>(null);
@@ -113,6 +122,7 @@ export default function ShowcaseScreen({
   const trackedRef = useRef(false);
   const savedAtelierAppliedRef = useRef(false);
   const initializedRoomRef = useRef<string | null>(null);
+  const rankDisplayMutationRef = useRef(false);
   const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
   const ringEquipment = useShowcaseRingEquipment(
     previewProfile ? `preview-${previewProfile.pseudo}` : pseudo,
@@ -198,6 +208,7 @@ export default function ShowcaseScreen({
       setLighting(saved.lighting);
       setPedestal(saved.pedestal);
       setPresenterId(saved.presenterId);
+      setRankDisplayId(saved.rankDisplayId);
       setJerseyPresentation(saved.jerseyPresentation);
     }
     if (selectedRoom) {
@@ -211,9 +222,23 @@ export default function ShowcaseScreen({
     () => shopData?.items.filter((item) => item.owned) ?? [],
     [shopData?.items],
   );
+  const rankDisplayOptions = useMemo(() => {
+    if (previewProfile && previewShop) return SHOWCASE_RANK_DISPLAY_CATALOG;
+    const ownedIds = new Set(
+      shopData?.items
+        .filter((item) => item.slot === 'vitrine_rang' && item.owned)
+        .map((item) => item.id) ?? [],
+    );
+    const ownedDisplays = SHOWCASE_RANK_DISPLAY_CATALOG.filter((display) => ownedIds.has(display.id));
+    return ownedDisplays.length > 0
+      ? ownedDisplays
+      : SHOWCASE_RANK_DISPLAY_CATALOG.filter((display) => display.id === DEFAULT_SHOWCASE_RANK_DISPLAY_ID);
+  }, [previewProfile, previewShop, shopData?.items]);
   const cosmetics = resolveEquipped(shopData, profileData?.cosmetics);
   const presenter = showcasePresenterById(presenterId)
     ?? showcasePresenterById(DEFAULT_SHOWCASE_PRESENTER_ID)!;
+  const rankDisplay = showcaseRankDisplayById(rankDisplayId)
+    ?? showcaseRankDisplayById(DEFAULT_SHOWCASE_RANK_DISPLAY_ID)!;
   const activeSlots = presenter.slots;
   const editableScene = selectedRoom ?? presenter;
   const assignmentLayoutKey = `${selectedRoom?.id ?? 'equipped'}:${presenter.id}`;
@@ -264,6 +289,53 @@ export default function ShowcaseScreen({
     setPedestal(next.pedestal);
   }
 
+  async function changeRankDisplay(nextId: string) {
+    const next = showcaseRankDisplayById(nextId);
+    if (!next || next.id === rankDisplay.id || rankDisplayMutationRef.current || refreshing || loading) return;
+
+    const item = shopData?.items.find((candidate) => candidate.id === next.id) ?? null;
+    const previewMode = Boolean(previewProfile && previewShop);
+    if (!previewMode && !item?.owned) return;
+
+    const previousId = rankDisplay.id;
+    const previousShop = shopData;
+    const mutationRequestId = previewMode ? requestRef.current : ++requestRef.current;
+    rankDisplayMutationRef.current = true;
+    setRankDisplayPendingId(next.id);
+    setError(null);
+    setRankDisplayId(next.id);
+
+    if (previewMode) {
+      rankDisplayMutationRef.current = false;
+      setRankDisplayPendingId(null);
+      return;
+    }
+
+    if (shopData) setShopData(applyPreviewAtelierAction(shopData, next.id));
+
+    try {
+      await equipCosmetic(next.id);
+      const [shopResult] = await Promise.allSettled([
+        loadCosmeticShop(),
+        refreshCosmetics(),
+      ]);
+      if (requestRef.current === mutationRequestId && shopResult.status === 'fulfilled') {
+        setShopData(shopResult.value);
+      }
+    } catch (caught) {
+      if (requestRef.current === mutationRequestId) {
+        setRankDisplayId(previousId);
+        setShopData(previousShop);
+        setError(caught instanceof Error
+          ? caught.message
+          : 'Impossible d’équiper cet écrin de rang.');
+      }
+    } finally {
+      rankDisplayMutationRef.current = false;
+      setRankDisplayPendingId(null);
+    }
+  }
+
   function assignRoomItem(item: ShowcasePlaceableItem | null) {
     if (!activeRoomSlot) return;
     setRoomAssignments((current) => ({ ...current, [activeRoomSlot]: item }));
@@ -278,7 +350,9 @@ export default function ShowcaseScreen({
           loading={loading}
           objectCount={ownedItems.length + ringProgressions.filter((progress) => progress.current).length + (profileData?.badges.filter((badge) => badge.obtained).length ?? 0)}
           onBack={() => router.back()}
-          onRefresh={() => void load(true)}
+          onRefresh={() => {
+            if (!rankDisplayMutationRef.current) void load(true);
+          }}
           onSelect={setSection}
           refreshing={refreshing}
         />
@@ -289,6 +363,7 @@ export default function ShowcaseScreen({
               assignments={roomAssignments}
               lighting={lighting}
               onSlotPress={setActiveRoomSlot}
+              rankDisplay={rankDisplay}
               room={editableScene}
               slots={activeSlots}
             />
@@ -309,6 +384,7 @@ export default function ShowcaseScreen({
               onRingPress={equippedRing ? () => setSelectedRingFamily(equippedRing.family) : undefined}
               pedestal={pedestal}
               rankAccent={rankAccent}
+              rankDisplay={rankDisplay}
               rankLabel={rankLabel}
               reduceMotion={reduceMotion}
               theme={theme}
@@ -344,8 +420,12 @@ export default function ShowcaseScreen({
           lighting={lighting}
           onLightingChange={setLighting}
           onPresenterChange={changePresenter}
+          onRankDisplayChange={(nextId) => { void changeRankDisplay(nextId); }}
           onThemeChange={setTheme}
           presenterId={presenter.id}
+          rankDisplayDisabled={Boolean(rankDisplayPendingId) || refreshing || loading}
+          rankDisplayId={rankDisplay.id}
+          rankDisplays={rankDisplayOptions}
           theme={theme}
         />
 

@@ -65,6 +65,7 @@ const ATELIER_SHELF_TITLES: Record<AtelierCategory, string> = {
   materials: 'MATIÈRES',
   lighting: 'LUMIÈRES',
   supports: 'PRÉSENTOIRS',
+  ranks: 'ÉCRINS DE RANG',
   jerseys: 'MAILLOTS',
 };
 
@@ -788,6 +789,7 @@ function ProductCard({
     ATELIER_SCENE_REFERENCE.width / ATELIER_SCENE_REFERENCE.height
   );
   const usesScenePreview = product.category === 'lighting' || product.category === 'supports';
+  const usesRankPreview = product.category === 'ranks';
 
   return (
     <Pressable
@@ -805,7 +807,10 @@ function ProductCard({
       testID={`atelier-product-${product.id}`}
     >
       <View style={[styles.productAccent, { backgroundColor: product.accent }]} />
-      <View style={[styles.productVisual, { backgroundColor: `${product.accent}0D` }]}>
+      <View
+        style={[styles.productVisual, { backgroundColor: `${product.accent}0D` }]}
+        testID={usesRankPreview ? `atelier-ranks-preview-${product.id}` : undefined}
+      >
         {usesScenePreview ? (
           <Image
             resizeMode="stretch"
@@ -821,6 +826,20 @@ function ProductCard({
             }}
             testID={`atelier-${product.category}-preview-${product.id}`}
           />
+        ) : usesRankPreview ? (
+          selected && product.overlayImage ? (
+            <Image
+              resizeMode="contain"
+              source={product.overlayImage}
+              style={styles.rankProductImage}
+            />
+          ) : (
+            <View style={styles.rankProductMiniature}>
+              <View style={[styles.rankProductHalo, { borderColor: `${product.accent}B8` }]} />
+              <View style={[styles.rankProductCore, { backgroundColor: product.accent }]} />
+              <View style={[styles.rankProductBase, { borderTopColor: product.accent }]} />
+            </View>
+          )
         ) : (
           <Image resizeMode="contain" source={product.image} style={styles.productImage} />
         )}
@@ -1387,6 +1406,42 @@ const styles = StyleSheet.create({
   productImage: {
     width: '100%',
     height: '100%',
+  },
+  rankProductImage: {
+    width: '100%',
+    height: '100%',
+  },
+  rankProductMiniature: {
+    position: 'relative',
+    width: 108,
+    height: 112,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  rankProductHalo: {
+    position: 'absolute',
+    top: 10,
+    width: 74,
+    height: 74,
+    borderRadius: 999,
+    borderWidth: 2,
+    opacity: 0.76,
+  },
+  rankProductCore: {
+    position: 'absolute',
+    top: 30,
+    width: 34,
+    height: 34,
+    borderRadius: 6,
+    opacity: 0.84,
+    transform: [{ rotate: '45deg' }],
+  },
+  rankProductBase: {
+    width: 96,
+    height: 29,
+    borderTopWidth: 2,
+    borderRadius: 8,
+    backgroundColor: '#080C10',
   },
   selectedMark: {
     position: 'absolute',

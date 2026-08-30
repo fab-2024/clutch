@@ -5,6 +5,7 @@ import { View } from 'react-native';
 
 import { SHOWCASE_ROOM_CATALOG } from '@/src/features/shop/showcaseRoomCatalog';
 import { SHOWCASE_PRESENTER_CATALOG } from '@/src/features/shop/showcasePresenterCatalog';
+import { SHOWCASE_RANK_DISPLAY_CATALOG } from '@/src/features/shop/showcaseRankDisplayCatalog';
 import {
   adaptShowcaseRingStats,
   resolveEquippedShowcaseRing,
@@ -36,6 +37,7 @@ describe('Showcase room composition', () => {
     const onSelect = jest.fn();
     const onLightingChange = jest.fn();
     const onPresenterChange = jest.fn();
+    const onRankDisplayChange = jest.fn();
     const onThemeChange = jest.fn();
     const data = PREVIEW_PROFILE;
     const screen = await render(
@@ -50,6 +52,13 @@ describe('Showcase room composition', () => {
           onRefresh={jest.fn()}
           onSelect={onSelect}
           refreshing={false}
+        />
+        <ShowcaseControlGroup
+          label="ÉCRIN DU RANG"
+          onChange={onRankDisplayChange}
+          options={[{ color: '#7ED9F4', label: 'NOYAU ORBITAL', value: 'rank_orbital_core' }]}
+          selected="rank_orbital_core"
+          variant="rank"
         />
         <ShowcaseControlGroup
           label="PRÉSENTOIR"
@@ -79,6 +88,7 @@ describe('Showcase room composition', () => {
     expect(screen.getAllByLabelText('Maillot de Fnatic')).toHaveLength(2);
     expect(screen.getAllByLabelText('Trophée Premier Signal')).toHaveLength(2);
     expect(screen.getAllByLabelText('Emblème Bronze')).toHaveLength(2);
+    expect(screen.getAllByTestId('showcase-rank-display-rank_carbon_cradle')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-frame-cadre-profil-1')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-title-titre-profil-1')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-core-apparence-core-1')).toHaveLength(2);
@@ -98,10 +108,12 @@ describe('Showcase room composition', () => {
     await fireEvent.press(screen.getByLabelText('Afficher trophées'));
 
     await fireEvent.press(screen.getByTestId('showcase-control-supports_forge'));
+    await fireEvent.press(screen.getByTestId('showcase-control-rank_orbital_core'));
     await fireEvent.press(screen.getByTestId('showcase-control-azure'));
     await fireEvent.press(screen.getByTestId('showcase-control-amber'));
 
     expect(onPresenterChange).toHaveBeenCalledWith('supports_forge');
+    expect(onRankDisplayChange).toHaveBeenCalledWith('rank_orbital_core');
     expect(onThemeChange).toHaveBeenCalledWith('azure');
     expect(onLightingChange).toHaveBeenCalledWith('amber');
     expect(onSelect.mock.calls.map(([section]) => section)).toEqual([
@@ -122,7 +134,7 @@ describe('Showcase room composition', () => {
     const screen = await render(
       <ShowcaseRoomScene
         {...ROOM_PROPS}
-        cosmetics={{ frame: null, title: null, core: null, factionEffect: null, profileCard: null, showcase: { material: null, lighting: null, supports: null, jersey: null } }}
+        cosmetics={{ frame: null, title: null, core: null, factionEffect: null, profileCard: null, showcase: { material: null, lighting: null, supports: null, rankDisplay: null, jersey: null } }}
         data={sparseData}
         mode="full"
       />,
@@ -225,12 +237,14 @@ describe('Showcase room composition', () => {
         assignments={assignments}
         lighting="cyan"
         onSlotPress={onSlotPress}
+        rankDisplay={SHOWCASE_RANK_DISPLAY_CATALOG[3]}
         room={presenter}
         slots={presenter.slots}
       />,
     );
 
     expect(screen.getByLabelText('Carbone Mécanique, 10 emplacements personnalisables')).toBeTruthy();
+    expect(screen.getByTestId('showcase-rank-display-rank_orbital_core')).toBeTruthy();
     expect(screen.getAllByRole('button')).toHaveLength(10);
 
     await fireEvent.press(screen.getByTestId('showcase-room-slot-left-extra'));

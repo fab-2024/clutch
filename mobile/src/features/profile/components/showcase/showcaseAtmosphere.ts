@@ -141,6 +141,7 @@ function strongestEquippedCosmetic(cosmetics?: EquippedCosmetics | null) {
     cosmetics?.showcase.material,
     cosmetics?.showcase.lighting,
     cosmetics?.showcase.supports,
+    cosmetics?.showcase.rankDisplay,
     cosmetics?.showcase.jersey,
   ].filter((item): item is EquippedCosmetic => Boolean(item));
 

@@ -7,11 +7,13 @@ import {
   type ShowcaseAtelierSlot,
 } from './types';
 import { SHOWCASE_PRESENTER_CATALOG } from './showcasePresenterCatalog';
+import { SHOWCASE_RANK_DISPLAY_CATALOG } from './showcaseRankDisplayCatalog';
 
 export const ATELIER_CATEGORIES = [
   'materials',
   'lighting',
   'supports',
+  'ranks',
   'jerseys',
 ] as const;
 
@@ -25,6 +27,7 @@ export type AtelierProduct = {
   id: string;
   image: ImageSourcePropType;
   name: string;
+  overlayImage?: ImageSourcePropType;
   price: number;
   rarity: CosmeticRarity;
   slot: ShowcaseAtelierSlot;
@@ -39,6 +42,7 @@ export const ATELIER_CATEGORY_META: Record<AtelierCategory, {
   materials: { glyph: '▤', label: 'MATÉRIAUX', shortLabel: 'MATIÈRE', slot: 'vitrine_materiau' },
   lighting: { glyph: '✦', label: 'ÉCLAIRAGE', shortLabel: 'LUMIÈRE', slot: 'vitrine_eclairage' },
   supports: { glyph: '◫', label: 'PRÉSENTOIRS', shortLabel: 'PRÉSENTOIR', slot: 'vitrine_supports' },
+  ranks: { glyph: '◆', label: 'ÉCRINS DE RANG', shortLabel: 'RANG', slot: 'vitrine_rang' },
   jerseys: { glyph: '⌁', label: 'MAILLOTS', shortLabel: 'MAILLOT', slot: 'vitrine_maillot' },
 };
 
@@ -174,6 +178,18 @@ export const ATELIER_CATALOG: readonly AtelierProduct[] = [
     rarity: presenter.rarity,
     accent: presenter.accent,
     image: presenter.image,
+  })),
+  ...SHOWCASE_RANK_DISPLAY_CATALOG.map((display) => ({
+    id: display.id,
+    category: 'ranks' as const,
+    slot: 'vitrine_rang' as const,
+    name: display.name,
+    description: display.description,
+    price: display.price,
+    rarity: display.rarity,
+    accent: display.accent,
+    image: display.image,
+    overlayImage: display.overlayImage,
   })),
   {
     id: 'jersey_locker',

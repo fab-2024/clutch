@@ -10,6 +10,7 @@ export const SHOWCASE_ATELIER_SLOTS = [
   'vitrine_materiau',
   'vitrine_eclairage',
   'vitrine_supports',
+  'vitrine_rang',
   'vitrine_maillot',
 ] as const;
 
@@ -32,6 +33,7 @@ export const COSMETIC_FAMILIES = [
   'vitrine_materiau',
   'vitrine_eclairage',
   'vitrine_supports',
+  'vitrine_rang',
   'vitrine_maillot',
 ] as const;
 
@@ -57,6 +59,7 @@ export const COSMETIC_FAMILY_BY_SLOT: Record<CosmeticSlot, CosmeticFamily> = {
   vitrine_materiau: 'vitrine_materiau',
   vitrine_eclairage: 'vitrine_eclairage',
   vitrine_supports: 'vitrine_supports',
+  vitrine_rang: 'vitrine_rang',
   vitrine_maillot: 'vitrine_maillot',
 };
 
@@ -159,6 +162,7 @@ export type ShowcaseAtelierEquipment = {
   material: EquippedCosmetic | null;
   lighting: EquippedCosmetic | null;
   supports: EquippedCosmetic | null;
+  rankDisplay: EquippedCosmetic | null;
   jersey: EquippedCosmetic | null;
 };
 
@@ -187,13 +191,14 @@ export const EMPTY_EQUIPPED_COSMETICS: EquippedCosmetics = {
     material: null,
     lighting: null,
     supports: null,
+    rankDisplay: null,
     jersey: null,
   },
 };
 
 export const DEFAULT_MONETIZATION_CONTRACT: MonetizationContract = {
-  version: 3,
-  code: 'identity_showcase_founder_v3',
+  version: 4,
+  code: 'identity_showcase_founder_v4',
   promise: 'L’identité du supporter. Jamais ses performances.',
   currencies: {
     fragsPurchasable: false,
@@ -204,7 +209,7 @@ export const DEFAULT_MONETIZATION_CONTRACT: MonetizationContract = {
     voltsConvertibleToFrags: false,
   },
   catalog: {
-    schemaVersion: 3,
+    schemaVersion: 4,
     allowedSlots: [...COSMETIC_SLOTS],
     initialFamilies: ['cadre_avatar', 'banniere', 'titre_supporter', 'signature_relique'],
     extensionFamilies: [
@@ -212,6 +217,7 @@ export const DEFAULT_MONETIZATION_CONTRACT: MonetizationContract = {
       'vitrine_materiau',
       'vitrine_eclairage',
       'vitrine_supports',
+      'vitrine_rang',
       'vitrine_maillot',
     ],
     sources: [...COSMETIC_SOURCES],

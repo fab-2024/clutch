@@ -139,6 +139,11 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.getByText('Cercle Obsidienne')).toBeTruthy();
     expect(screen.getByText('Coffre-fort Acier')).toBeTruthy();
     expect(screen.getByText('Podium Champagne')).toBeTruthy();
+    expect(screen.getByTestId('atelier-shelf-ranks')).toBeTruthy();
+    expect(screen.getAllByTestId(/atelier-ranks-preview-/)).toHaveLength(6);
+    expect(screen.getByText('Écrin Mécanique Carbone')).toBeTruthy();
+    expect(screen.getByText('Noyau Orbital')).toBeTruthy();
+    expect(screen.getByText('Révélation Clutch')).toBeTruthy();
     expect(screen.getByTestId('atelier-shelf-jerseys')).toBeTruthy();
     expect(screen.queryByTestId('atelier-category-control')).toBeNull();
     expect(screen.queryByTestId('atelier-scene')).toBeNull();
@@ -279,6 +284,7 @@ function makeData(balance: number, steelOwned = false): CosmeticShopData {
         lighting: asEquipped(findItem(items, 'lighting_cyan')),
         material: asEquipped(findItem(items, 'material_graphite')),
         supports: asEquipped(findItem(items, 'supports_gallery')),
+        rankDisplay: asEquipped(findItem(items, 'rank_carbon_cradle')),
       },
     },
     items,

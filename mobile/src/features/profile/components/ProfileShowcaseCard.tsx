@@ -1,10 +1,14 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { LEVEL_FRAME_CATALOG } from '@/src/features/profile/levelFrames/catalog';
 import LevelFrame from '@/src/features/profile/levelFrames/components/LevelFrame';
 import type { LevelFrameVariant } from '@/src/features/profile/levelFrames/types';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
+import {
+  DEFAULT_SHOWCASE_RANK_DISPLAY_ID,
+  showcaseRankDisplayById,
+} from '@/src/features/shop/showcaseRankDisplayCatalog';
 import StaticRelicVial from '@/src/features/social/faction/components/StaticRelicVial';
 import { relicContainerForLevel } from '@/src/features/social/faction/relicArtwork';
 import { colors, fonts, radius, typography } from '@/src/theme';
@@ -43,6 +47,8 @@ export default function ProfileShowcaseCard({
   const bannerAccent = cosmetics?.profileCard?.accent ?? rankAccent;
   const frameAccent = cosmetics?.frame?.accent ?? bannerAccent;
   const relicAccent = cosmetics?.factionEffect?.accent ?? rankAccent;
+  const rankDisplay = showcaseRankDisplayById(cosmetics?.showcase.rankDisplay?.id)
+    ?? showcaseRankDisplayById(DEFAULT_SHOWCASE_RANK_DISPLAY_ID)!;
 
   return (
     <View style={[styles.card, { borderColor: alpha(bannerAccent, '72') }]}>
@@ -54,6 +60,14 @@ export default function ProfileShowcaseCard({
       />
       <View style={[styles.bannerGlow, { backgroundColor: bannerAccent }]} />
       <View style={[styles.relicGlow, { backgroundColor: relicAccent }]} />
+      <Image
+        accessibilityLabel={`Écrin de rang ${rankDisplay.name}`}
+        accessible
+        resizeMode="contain"
+        source={rankDisplay.overlayImage}
+        style={styles.rankDisplayBackdrop}
+        testID={`profile-rank-display-${rankDisplay.id}`}
+      />
       <Text style={[styles.watermark, { color: bannerAccent }]}>{teamTag}</Text>
 
       <View style={styles.topline}>
@@ -157,6 +171,7 @@ const styles = StyleSheet.create({
   card: { position: 'relative', overflow: 'hidden', minHeight: 430, marginHorizontal: 16, padding: 18, borderRadius: 31, backgroundColor: '#0A0F14', borderWidth: 1 },
   bannerGlow: { position: 'absolute', width: 300, height: 300, top: -185, left: -65, borderRadius: 150, opacity: .2, boxShadow: '0 0 70px rgba(232,255,61,.1)' },
   relicGlow: { position: 'absolute', width: 150, height: 180, right: -28, top: 112, borderRadius: 80, opacity: .1, boxShadow: '0 0 52px rgba(232,255,61,.12)' },
+  rankDisplayBackdrop: { position: 'absolute', top: 30, right: -8, width: 178, height: 178, opacity: .34 },
   watermark: { position: 'absolute', right: -12, top: 46, fontFamily: fonts.display, fontSize: 94, lineHeight: 98, letterSpacing: -6, opacity: .065 },
   topline: { zIndex: 2, minHeight: 27, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   bannerMeta: { minWidth: 0, flex: 1, flexDirection: 'row', alignItems: 'center', gap: 7 },

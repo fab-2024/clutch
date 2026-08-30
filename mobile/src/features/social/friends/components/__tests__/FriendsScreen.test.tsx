@@ -48,7 +48,7 @@ jest.mock('@/src/providers/CosmeticsProvider', () => ({
       factionEffect: null,
       frame: null,
       profileCard: null,
-      showcase: { jersey: null, lighting: null, material: null, supports: null },
+      showcase: { jersey: null, lighting: null, material: null, supports: null, rankDisplay: null },
       title: null,
     },
   }),

@@ -92,6 +92,34 @@ describe('showcase adaptive atmosphere', () => {
     expect(atmosphere.driftDurationMs).toBe(13_340);
   });
 
+  it('lets an equipped rank display drive the cosmetic atmosphere', () => {
+    const atmosphere = resolveShowcaseAtmosphere({
+      cosmetics: {
+        ...EMPTY_EQUIPPED_COSMETICS,
+        showcase: {
+          ...EMPTY_EQUIPPED_COSMETICS.showcase,
+          rankDisplay: {
+            accent: '#F5792A',
+            description: '',
+            id: 'rank_volcanic_forge',
+            level: 5,
+            name: 'Forge Volcanique',
+            rarity: 'epique',
+            slot: 'vitrine_rang',
+            styleKey: 'rank-volcanic-forge',
+          },
+        },
+      },
+      favoriteTeam: null,
+      lightingAccent: '#31D7E2',
+      rankAccent: '#B87845',
+      rankOrder: 0,
+    });
+
+    expect(atmosphere.cosmeticColor).toBe('#F5792A');
+    expect(atmosphere.dustCount).toBe(8);
+  });
+
   it.each([
     [{ fullScreen: false }, 'preview'],
     [{ platform: 'web' }, 'web'],

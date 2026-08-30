@@ -14,6 +14,7 @@ declare
   v_showcase_repeat jsonb;
   v_lighting_purchase jsonb;
   v_presenter_purchase jsonb;
+  v_rank_display_purchase jsonb;
   v_equipped jsonb;
   v_rejected boolean := false;
 begin
@@ -54,13 +55,13 @@ begin
   select public.clutch_boutique_cosmetique_v1() into v_shop;
 
   if (v_shop ->> 'solde')::integer <> 0
-     or jsonb_array_length(v_shop -> 'objets') <> 47
+     or jsonb_array_length(v_shop -> 'objets') <> 53
      or (
        select count(*)
        from jsonb_array_elements(v_shop -> 'objets') item
        where (item ->> 'possede')::boolean
          and (item ->> 'equipe')::boolean
-     ) <> 9
+     ) <> 10
   then
     raise exception 'Initial cosmetic shop payload is inconsistent: %', v_shop;
   end if;
@@ -153,6 +154,20 @@ begin
     raise exception 'Presenter purchase was not applied: %', v_presenter_purchase;
   end if;
 
+  select public.clutch_acheter_cosmetique_v1('rank_crystal_capsule') into v_rank_display_purchase;
+
+  if not (v_rank_display_purchase ->> 'achete')::boolean
+     or (v_rank_display_purchase ->> 'solde')::integer <> 30
+     or (v_rank_display_purchase ->> 'emplacement') <> 'vitrine_rang'
+     or not exists (
+       select 1 from public.inventaire i
+       where i.user_id = v_user
+         and i.objet_id = 'rank_crystal_capsule'
+     )
+  then
+    raise exception 'Rank display purchase was not applied: %', v_rank_display_purchase;
+  end if;
+
   begin
     perform public.clutch_acheter_cosmetique_v1('apparence-core-4');
   exception when sqlstate 'P0001' then
@@ -174,6 +189,7 @@ begin
      or v_equipped #>> '{vitrine_materiau,id}' <> 'material_steel'
      or v_equipped #>> '{vitrine_eclairage,id}' <> 'lighting_emerald'
      or v_equipped #>> '{vitrine_supports,id}' <> 'supports_crystal'
+     or v_equipped #>> '{vitrine_rang,id}' <> 'rank_crystal_capsule'
      or v_equipped #>> '{vitrine_maillot,id}' <> 'jersey_locker'
   then
     raise exception 'Equipped cosmetic projection is inconsistent: %', v_equipped;

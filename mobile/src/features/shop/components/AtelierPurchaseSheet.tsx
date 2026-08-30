@@ -76,7 +76,7 @@ export function AtelierPurchaseSheet({
           <View style={[styles.productRow, compactHeight && styles.productRowCompact]}>
             <View style={[styles.visual, compactHeight && styles.visualCompact, { borderColor: `${product.accent}66` }]}>
               <View style={[StyleSheet.absoluteFill, { backgroundColor: `${product.accent}12` }]} />
-              <Image resizeMode="contain" source={product.image} style={styles.image} />
+              <Image resizeMode="contain" source={product.overlayImage ?? product.image} style={styles.image} />
             </View>
             <View style={styles.productCopy}>
               <Text style={[styles.rarity, { color: product.accent }]}>{rarityLabel(product.rarity)}</Text>

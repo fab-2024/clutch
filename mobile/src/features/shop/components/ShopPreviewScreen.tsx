@@ -79,6 +79,7 @@ export const PREVIEW_SHOP: CosmeticShopData = {
       material: previewEquipped(ATELIER_ITEMS, 'vitrine_materiau'),
       lighting: previewEquipped(ATELIER_ITEMS, 'vitrine_eclairage'),
       supports: previewEquipped(ATELIER_ITEMS, 'vitrine_supports'),
+      rankDisplay: previewEquipped(ATELIER_ITEMS, 'vitrine_rang'),
       jersey: previewEquipped(ATELIER_ITEMS, 'vitrine_maillot'),
     },
   },

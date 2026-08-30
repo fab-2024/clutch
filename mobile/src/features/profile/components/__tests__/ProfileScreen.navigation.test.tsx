@@ -38,7 +38,7 @@ jest.mock('expo-router', () => ({
   Redirect: () => null,
   router: { back: jest.fn(), push: jest.fn() },
 }));
-jest.mock('@/src/features/analytics/api', () => ({ trackAnalyticsEvent: jest.fn() }));
+jest.mock('@/src/features/analytics/api', () => ({ trackAnalyticsEvent: jest.fn(async () => undefined) }));
 jest.mock('@/src/features/safety', () => ({ ProfileSafetyActions: () => null }));
 jest.mock('@/src/features/safety/api', () => ({ loadProfileSafetyState: jest.fn() }));
 jest.mock('../../api', () => ({ loadProfileData: jest.fn() }));
@@ -50,7 +50,7 @@ jest.mock('@/src/providers/AuthProvider', () => ({
 }));
 jest.mock('@/src/providers/CosmeticsProvider', () => ({
   useCosmetics: () => ({
-    equipped: { frame: null, title: null, core: null, factionEffect: null, profileCard: null, showcase: { material: null, lighting: null, supports: null, jersey: null } },
+    equipped: { frame: null, title: null, core: null, factionEffect: null, profileCard: null, showcase: { material: null, lighting: null, supports: null, rankDisplay: null, jersey: null } },
   }),
 }));
 jest.mock('@/src/providers/EconomyProvider', () => {
@@ -73,6 +73,14 @@ describe('ProfileScreen private navigation', () => {
 
     expect(push).toHaveBeenCalledWith('/showcase-preview');
   }, 15_000); // The first cold render compiles the complete showroom scene.
+
+  it('shows the equipped rank display on the public profile card', async () => {
+    const screen = await render(
+      <ProfileScreen previewData={PREVIEW_PROFILE} profilePseudo="FabTheTap" publicView />,
+    );
+
+    expect(screen.getByTestId('profile-rank-display-rank_carbon_cradle')).toBeTruthy();
+  });
 
   it('opens the production Vitrine route from Moi', async () => {
     const screen = await render(<ProfileScreen />);

@@ -42,13 +42,14 @@ describe('showcase Atelier state', () => {
     expect(findItem(second, 'material_bronze')).toMatchObject({ owned: true, equipped: true });
   });
 
-  it('keeps try-on temporary and derives all four scene layers', () => {
+  it('keeps try-on temporary and derives all five scene layers', () => {
     const data = makeData(500);
     const trial = applyAtelierTry({}, 'lighting', 'lighting_violet');
     const scene = resolveAtelierSceneConfig(data.equipped, {
       ...trial,
       materials: 'material_carbon',
       supports: 'supports_halo',
+      ranks: 'rank_orbital_core',
       jerseys: 'jersey_podium',
     });
 
@@ -59,6 +60,7 @@ describe('showcase Atelier state', () => {
       lighting: 'violet',
       pedestal: 'steel',
       presenterId: 'supports_halo',
+      rankDisplayId: 'rank_orbital_core',
       jerseyPresentation: 'podium',
     });
     expect(resolveAtelierSceneConfig(data.equipped, { lighting: 'lighting_white' }).lighting).toBe('competition');
@@ -78,6 +80,7 @@ function makeData(balance: number): CosmeticShopData {
         material: asEquipped(findItem({ items } as CosmeticShopData, 'material_graphite')),
         lighting: asEquipped(findItem({ items } as CosmeticShopData, 'lighting_cyan')),
         supports: asEquipped(findItem({ items } as CosmeticShopData, 'supports_gallery')),
+        rankDisplay: asEquipped(findItem({ items } as CosmeticShopData, 'rank_carbon_cradle')),
         jersey: asEquipped(findItem({ items } as CosmeticShopData, 'jersey_locker')),
       },
     },

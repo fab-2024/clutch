@@ -7,6 +7,7 @@ import type {
 
 import { ATELIER_CATEGORY_META, type AtelierCategory } from './atelierCatalog';
 import { showcasePresenterById } from './showcasePresenterCatalog';
+import { DEFAULT_SHOWCASE_RANK_DISPLAY_ID } from './showcaseRankDisplayCatalog';
 import type { CosmeticItem, CosmeticShopData, EquippedCosmetics } from './types';
 
 export type AtelierPrimaryAction = 'buy' | 'equip' | 'equipped' | 'insufficient' | 'unavailable';
@@ -17,6 +18,7 @@ export type AtelierSceneConfig = {
   lighting: ShowcaseLighting;
   pedestal: ShowcasePedestalSkin;
   presenterId: string;
+  rankDisplayId: string;
   theme: ShowcaseRoomTheme;
 };
 
@@ -24,6 +26,7 @@ const DEFAULT_IDS: Record<AtelierCategory, string> = {
   materials: 'material_graphite',
   lighting: 'lighting_cyan',
   supports: 'supports_gallery',
+  ranks: DEFAULT_SHOWCASE_RANK_DISPLAY_ID,
   jerseys: 'jersey_locker',
 };
 
@@ -73,6 +76,7 @@ export function equippedAtelierIds(equipped: EquippedCosmetics | null | undefine
     materials: equipped?.showcase.material?.id ?? DEFAULT_IDS.materials,
     lighting: equipped?.showcase.lighting?.id ?? DEFAULT_IDS.lighting,
     supports: equipped?.showcase.supports?.id ?? DEFAULT_IDS.supports,
+    ranks: equipped?.showcase.rankDisplay?.id ?? DEFAULT_IDS.ranks,
     jerseys: equipped?.showcase.jersey?.id ?? DEFAULT_IDS.jerseys,
   };
 }
@@ -85,6 +89,7 @@ export function resolveAtelierSceneConfig(
   const materialId = trial.materials ?? persisted.materials;
   const lightingId = trial.lighting ?? persisted.lighting;
   const supportsId = trial.supports ?? persisted.supports;
+  const rankDisplayId = trial.ranks ?? persisted.ranks;
   const jerseyId = trial.jerseys ?? persisted.jerseys;
 
   return {
@@ -92,6 +97,7 @@ export function resolveAtelierSceneConfig(
     lighting: lightingTone(lightingId),
     pedestal: supportsPedestal(supportsId),
     presenterId: supportsId,
+    rankDisplayId,
     jerseyPresentation: jerseyPresentation(jerseyId),
   };
 }
@@ -117,6 +123,7 @@ function equipmentFromItems(items: CosmeticItem[], fallback: EquippedCosmetics) 
     material: find('materials') ?? fallback.showcase.material,
     lighting: find('lighting') ?? fallback.showcase.lighting,
     supports: find('supports') ?? fallback.showcase.supports,
+    rankDisplay: find('ranks') ?? fallback.showcase.rankDisplay,
     jersey: find('jerseys') ?? fallback.showcase.jersey,
   };
 }

@@ -81,6 +81,7 @@ export function normalizeEquipped(value: unknown): EquippedCosmetics {
       material: normalizeEquippedItem(payload.vitrine_materiau, 'vitrine_materiau'),
       lighting: normalizeEquippedItem(payload.vitrine_eclairage, 'vitrine_eclairage'),
       supports: normalizeEquippedItem(payload.vitrine_supports, 'vitrine_supports'),
+      rankDisplay: normalizeEquippedItem(payload.vitrine_rang, 'vitrine_rang'),
       jersey: normalizeEquippedItem(payload.vitrine_maillot, 'vitrine_maillot'),
     },
   };

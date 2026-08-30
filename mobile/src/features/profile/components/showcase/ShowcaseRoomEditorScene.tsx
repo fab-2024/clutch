@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import type { ShowcaseRoomDefinition } from '@/src/features/shop/showcaseRoomCatalog';
+import type { ShowcaseRankDisplayDefinition } from '@/src/features/shop/showcaseRankDisplayCatalog';
 import { colors, fonts, typography } from '@/src/theme';
 
 import {
@@ -28,6 +29,7 @@ type ShowcaseRoomEditorSceneProps = {
   assignments: ShowcaseRoomAssignments;
   lighting: ShowcaseLighting;
   onSlotPress: (slotId: ShowcaseRoomSlotId) => void;
+  rankDisplay?: Pick<ShowcaseRankDisplayDefinition, 'id' | 'name' | 'overlayImage'> | null;
   room: Pick<ShowcaseRoomDefinition, 'accent' | 'id' | 'image' | 'name'>;
   slots?: readonly ShowcaseRoomSlotDefinition[];
 };
@@ -43,6 +45,7 @@ export default function ShowcaseRoomEditorScene({
   assignments,
   lighting,
   onSlotPress,
+  rankDisplay,
   room,
   slots = SHOWCASE_ROOM_SLOTS,
 }: ShowcaseRoomEditorSceneProps) {
@@ -59,6 +62,8 @@ export default function ShowcaseRoomEditorScene({
   const sceneHeightRatio = (ROOM_REFERENCE.sceneBottom - ROOM_REFERENCE.sceneTop) / ROOM_REFERENCE.height;
   const imageHeight = viewport.height / sceneHeightRatio;
   const imageWidth = imageHeight * (ROOM_REFERENCE.width / ROOM_REFERENCE.height);
+  const imageLeft = (viewport.width - imageWidth) / 2;
+  const imageTop = -imageHeight * (ROOM_REFERENCE.sceneTop / ROOM_REFERENCE.height);
   const lightingVisual = SHOWCASE_LIGHTING_VISUALS[lighting];
 
   return (
@@ -73,13 +78,31 @@ export default function ShowcaseRoomEditorScene({
         source={room.image}
         style={{
           height: imageHeight,
-          left: (viewport.width - imageWidth) / 2,
+          left: imageLeft,
           position: 'absolute',
-          top: -imageHeight * (ROOM_REFERENCE.sceneTop / ROOM_REFERENCE.height),
+          top: imageTop,
           width: imageWidth,
         }}
         testID={`showcase-room-background-${room.id}`}
       />
+      {rankDisplay ? (
+        <>
+          <View pointerEvents="none" style={styles.rankDisplayMask} />
+          <View
+            pointerEvents="none"
+            style={styles.rankDisplayLayer}
+            testID={`showcase-rank-display-${rankDisplay.id}`}
+          >
+            <Image
+              accessibilityLabel={`Écrin de rang ${rankDisplay.name}`}
+              accessible
+              resizeMode="contain"
+              source={rankDisplay.overlayImage}
+              style={styles.rankDisplayOverlay}
+            />
+          </View>
+        </>
+      ) : null}
       <LinearGradient
         colors={['rgba(2,5,8,.04)', `${room.accent}0B`, 'rgba(2,5,8,.18)']}
         end={{ x: 1, y: 1 }}
@@ -131,6 +154,7 @@ export default function ShowcaseRoomEditorScene({
                 width: slot.width,
               },
               slots.length > 8 && styles.slotDense,
+              slot.id === 'rank' && styles.rankSlot,
               item && { borderColor: `${item.accent}A8` },
               pressed && styles.slotPressed,
             ]}
@@ -173,6 +197,27 @@ const styles = StyleSheet.create({
     minHeight: 0,
     overflow: 'hidden',
     backgroundColor: SHOWCASE_PALETTE.graphiteDeep,
+  },
+  rankDisplayLayer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: '20%',
+    right: '20%',
+  },
+  rankDisplayMask: {
+    position: 'absolute',
+    top: '12%',
+    bottom: '7%',
+    left: '38%',
+    right: '38%',
+    borderRadius: 999,
+    backgroundColor: '#03070A',
+  },
+  rankDisplayOverlay: {
+    width: '100%',
+    height: '100%',
+    opacity: 0.96,
   },
   instructions: {
     position: 'absolute',
@@ -222,6 +267,10 @@ const styles = StyleSheet.create({
   slotPressed: {
     backgroundColor: 'rgba(232,255,61,.13)',
     borderColor: colors.volt,
+  },
+  rankSlot: {
+    overflow: 'hidden',
+    borderRadius: 18,
   },
   slotDense: {
     minWidth: 32,
