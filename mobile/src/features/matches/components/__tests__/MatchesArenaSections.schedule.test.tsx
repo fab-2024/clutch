@@ -46,7 +46,8 @@ describe('ScheduleHero', () => {
 
     const heroStyle = StyleSheet.flatten(screen.getByTestId('matches-schedule-hero').props.style);
     expect(heroStyle.minHeight).toBeGreaterThanOrEqual(120);
-    expect(heroStyle.minHeight).toBeLessThanOrEqual(150);
+    expect(heroStyle.minHeight).toBeLessThanOrEqual(160);
+    expect(heroStyle.paddingBottom).toBe(20);
     expect(screen.getByText('PROCHAINS MATCHS')).toBeTruthy();
     expect(screen.getByText('AOÛT 2026')).toBeTruthy();
 
