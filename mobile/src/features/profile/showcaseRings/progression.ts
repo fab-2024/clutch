@@ -16,6 +16,7 @@ const RANK_MILESTONE: Record<string, number> = {
   platine: 2,
   diamant: 3,
   mythique: 4,
+  eternel: 4,
 };
 
 const FACTION_KEYS = [

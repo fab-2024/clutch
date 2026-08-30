@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
   type ListRenderItemInfo,
 } from 'react-native';
@@ -156,6 +157,8 @@ function RankHeader({
   preview: boolean;
   section: Section;
 }) {
+  const compact = useWindowDimensions().width <= 340;
+
   return (
     <View style={styles.headerStack}>
       <GriffHeader leading={<ProfileHeaderButton preview={preview} />} variant="wallet" />
@@ -179,7 +182,18 @@ function RankHeader({
             onPress={() => onSection(item.key)}
             style={[styles.tab, section === item.key && styles.tabActive]}
           >
-            <Text style={[styles.tabText, section === item.key && styles.tabTextActive]}>{item.label}</Text>
+            <Text
+              adjustsFontSizeToFit
+              minimumFontScale={0.68}
+              numberOfLines={1}
+              style={[
+                styles.tabText,
+                compact && styles.tabTextCompact,
+                section === item.key && styles.tabTextActive,
+              ]}
+            >
+              {item.label}
+            </Text>
           </Pressable>
         ))}
       </View>
@@ -476,19 +490,22 @@ const LeaderboardRow = memo(function LeaderboardRow({
 });
 
 function RewardsSection({ dashboard }: { dashboard: RankDashboard }) {
+  const compact = useWindowDimensions().width <= 340;
   const state = dashboard.state;
   const bestOrder = Number(state?.bestGrade?.ordre ?? state?.grade.ordre ?? -1);
   const starting = !state || isZeroRank(state.frags);
 
   return (
     <View style={styles.sectionStack}>
-      <View style={styles.rewardIntro}>
-        <View style={styles.rewardIntroMark}>
-          <RankEmblem grade={state?.bestGrade ?? state?.grade} size={104} starting={starting} />
+      <View style={[styles.rewardIntro, compact && styles.rewardIntroCompact]}>
+        <View style={[styles.rewardIntroMark, compact && styles.rewardIntroMarkCompact]}>
+          <RankEmblem grade={state?.bestGrade ?? state?.grade} size={compact ? 88 : 104} starting={starting} />
         </View>
         <View style={styles.rewardIntroCopy}>
           <Text style={styles.cardEyebrow}>MEILLEUR GRADE ATTEINT</Text>
-          <Text style={styles.rewardTitle}>{state?.bestGrade?.libelle?.toUpperCase() || state?.grade.libelle?.toUpperCase() || 'BRONZE'}</Text>
+          <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={styles.rewardTitle}>
+            {state?.bestGrade?.libelle?.toUpperCase() || state?.grade.libelle?.toUpperCase() || 'BRONZE'}
+          </Text>
           <Text style={styles.rewardCopy}>{dashboard.reward.detail}</Text>
         </View>
       </View>
@@ -640,8 +657,10 @@ function formatNumber(value: number) {
 }
 
 function gradeRange(grade: SeasonalGradeDefinition) {
-  if (grade.key === 'mythique') return '1 650+ · 30 VERDICTS';
-  return formatNumber(grade.minimum) + '–' + formatNumber(grade.maximum ?? grade.minimum) + ' FRAGS';
+  const range = grade.maximum == null
+    ? formatNumber(grade.minimum) + '+ FRAGS'
+    : formatNumber(grade.minimum) + '–' + formatNumber(grade.maximum) + ' FRAGS';
+  return grade.minimumVerdicts ? range + ' · ' + grade.minimumVerdicts + ' VERDICTS' : range;
 }
 
 const styles = StyleSheet.create({
@@ -701,7 +720,10 @@ const styles = StyleSheet.create({
   tabText: {
     ...typography.label,
     color: colors.textMuted,
-    fontSize: 12,
+    fontSize: 11,
+  },
+  tabTextCompact: {
+    fontSize: 9,
   },
   tabTextActive: {
     color: '#080A0C',
@@ -1040,9 +1062,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3C4720',
   },
+  rewardIntroCompact: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+  },
   rewardIntroMark: {
     width: 94,
     alignItems: 'center',
+  },
+  rewardIntroMarkCompact: {
+    width: '100%',
   },
   rewardIntroCopy: {
     flex: 1,

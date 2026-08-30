@@ -32,14 +32,21 @@ export function RankSnapshot({ seasonName, state }: RankSnapshotProps) {
       testID="rank-snapshot"
     >
       <View style={[styles.signal, { backgroundColor: accent }]} />
-      <RankEmblem grade={state.grade} size={compact ? 52 : 66} starting={starting} />
+      <RankEmblem grade={state.grade} size={compact ? 42 : 66} starting={starting} />
 
       <View style={styles.copy}>
-        <Text numberOfLines={1} style={[styles.eyebrow, { color: accent }]}>
+        <Text numberOfLines={1} style={[styles.eyebrow, compact && styles.eyebrowCompact, { color: accent }]}>
           {seasonName ? seasonName.toUpperCase() : 'SAISON EN COURS'}
         </Text>
         <View style={[styles.gradeRow, compact && styles.gradeRowCompact]}>
-          <Text numberOfLines={1} style={styles.grade}>{grade}</Text>
+          <Text
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+            numberOfLines={1}
+            style={[styles.grade, compact && styles.gradeCompact]}
+          >
+            {grade}
+          </Text>
           <Text style={styles.frags}>{formatNumber(state.frags)} FRAGS</Text>
         </View>
         <View
@@ -99,6 +106,7 @@ const styles = StyleSheet.create({
   },
   rootCompact: {
     minHeight: 138,
+    marginHorizontal: spacing.sm,
     paddingRight: spacing.sm,
     gap: spacing.xs,
   },
@@ -117,6 +125,9 @@ const styles = StyleSheet.create({
   eyebrow: {
     ...typography.eyebrow,
   },
+  eyebrowCompact: {
+    fontSize: 9,
+  },
   gradeRow: {
     marginTop: 3,
     flexDirection: 'row',
@@ -132,6 +143,10 @@ const styles = StyleSheet.create({
     ...typography.sectionTitle,
     flexShrink: 1,
     color: colors.text,
+  },
+  gradeCompact: {
+    fontSize: 17,
+    lineHeight: 19,
   },
   frags: {
     ...typography.metadata,
@@ -160,7 +175,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   positionCompact: {
-    width: 70,
+    width: 50,
   },
   rank: {
     ...typography.metric,

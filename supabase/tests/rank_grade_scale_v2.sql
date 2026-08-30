@@ -54,6 +54,25 @@ begin
     raise exception 'Mythique must unlock at 1,650 Frags and 30 verdicts';
   end if;
 
+  if public.clutch_grade_frags_v1(1849, 30) ->> 'cle' is distinct from 'mythique'
+     or public.clutch_grade_frags_v1(1650, 30) ->> 'prochaine_cle' is distinct from 'eternel'
+  then
+    raise exception 'Mythique must lead to Éternel across the 1,650–1,849 range';
+  end if;
+
+  v_grade := public.clutch_grade_frags_v1(1850, 29);
+  if v_grade ->> 'cle' is distinct from 'diamant'
+     or (v_grade ->> 'prochains_pronostics_restants')::integer is distinct from 1
+  then
+    raise exception 'Éternel must keep the elite verdict gate: %', v_grade;
+  end if;
+
+  if public.clutch_grade_frags_v1(1850, 30) ->> 'cle' is distinct from 'eternel'
+     or private.clutch_grade_ordre_eligible_v1(1850, 30) is distinct from 6::smallint
+  then
+    raise exception 'Éternel must unlock at 1,850 Frags and 30 verdicts';
+  end if;
+
   insert into auth.users (
     id, aud, role, email, email_confirmed_at,
     raw_app_meta_data, raw_user_meta_data, created_at, updated_at

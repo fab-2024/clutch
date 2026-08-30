@@ -34,9 +34,12 @@ describe('rank without placement matches', () => {
     });
   });
 
-  it('keeps the thirty-call condition for Mythique', () => {
+  it('keeps the thirty-call condition for Mythique and Éternel', () => {
     expect(normalizeGradeState({}, { frags: 1650, settledCalls: 29 }).cle).toBe('diamant');
     expect(normalizeGradeState({}, { frags: 1650, settledCalls: 30 }).cle).toBe('mythique');
+    expect(normalizeGradeState({}, { frags: 1849, settledCalls: 30 }).cle).toBe('mythique');
+    expect(normalizeGradeState({}, { frags: 1850, settledCalls: 29 }).cle).toBe('diamant');
+    expect(normalizeGradeState({}, { frags: 1850, settledCalls: 30 }).cle).toBe('eternel');
   });
 
   it('classifies transitions only as promotion, demotion or stable', () => {
@@ -53,6 +56,11 @@ describe('rank without placement matches', () => {
       minimum: 1250,
       rewardName: 'Réserve Platine',
       rewardType: 'VOLTS',
+    });
+    expect(gradeDefinition('eternel')).toMatchObject({
+      minimum: 1850,
+      minimumVerdicts: 30,
+      rewardName: 'Sceau Éternel',
     });
   });
 });

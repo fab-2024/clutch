@@ -1,4 +1,4 @@
-export type SeasonalGradeKey = 'bronze' | 'argent' | 'or' | 'platine' | 'diamant' | 'mythique';
+export type SeasonalGradeKey = 'bronze' | 'argent' | 'or' | 'platine' | 'diamant' | 'mythique' | 'eternel';
 
 export type SeasonalGradeState = {
   classe: boolean;
@@ -35,6 +35,7 @@ export type SeasonalGradeDefinition = {
   label: string;
   minimum: number;
   maximum: number | null;
+  minimumVerdicts?: number;
   accent: string;
   rewardType: string;
   rewardName: string;
@@ -47,7 +48,7 @@ export const SEASONAL_GRADE_LADDER: SeasonalGradeDefinition[] = [
     label: 'Bronze',
     minimum: 0,
     maximum: 849,
-    accent: '#B87845',
+    accent: '#C57943',
     rewardType: 'CADRE',
     rewardName: 'Entaille Bronze',
     rewardDetail: 'Un cadre graphite marqué d’une première facette.',
@@ -57,7 +58,7 @@ export const SEASONAL_GRADE_LADDER: SeasonalGradeDefinition[] = [
     label: 'Argent',
     minimum: 850,
     maximum: 1049,
-    accent: '#AAB4C0',
+    accent: '#C7D4E5',
     rewardType: 'TITRE',
     rewardName: 'Trace nette',
     rewardDetail: 'Un titre saisonnier visible sur ton profil public.',
@@ -67,7 +68,7 @@ export const SEASONAL_GRADE_LADDER: SeasonalGradeDefinition[] = [
     label: 'Or',
     minimum: 1050,
     maximum: 1249,
-    accent: '#E6B84A',
+    accent: '#F0B62F',
     rewardType: 'BANNIÈRE',
     rewardName: 'Éclat de saison',
     rewardDetail: 'Une bannière traversée par trois fragments dorés.',
@@ -77,7 +78,7 @@ export const SEASONAL_GRADE_LADDER: SeasonalGradeDefinition[] = [
     label: 'Platine',
     minimum: 1250,
     maximum: 1449,
-    accent: '#67D4C1',
+    accent: '#37C8C9',
     rewardType: 'VOLTS',
     rewardName: 'Réserve Platine',
     rewardDetail: 'Une allocation cosmétique de 300 Volts.',
@@ -87,7 +88,7 @@ export const SEASONAL_GRADE_LADDER: SeasonalGradeDefinition[] = [
     label: 'Diamant',
     minimum: 1450,
     maximum: 1649,
-    accent: '#8AA8FF',
+    accent: '#4E82FF',
     rewardType: 'RELIQUE',
     rewardName: 'Cristal classé',
     rewardDetail: 'Une relique saisonnière aux facettes complètes.',
@@ -96,11 +97,23 @@ export const SEASONAL_GRADE_LADDER: SeasonalGradeDefinition[] = [
     key: 'mythique',
     label: 'Mythique',
     minimum: 1650,
-    maximum: null,
-    accent: '#E8FF3D',
+    maximum: 1849,
+    minimumVerdicts: 30,
+    accent: '#A965FF',
     rewardType: 'ENSEMBLE',
     rewardName: 'Cœur Mythique',
     rewardDetail: 'Le set complet de la saison. Requiert aussi 30 verdicts classés.',
+  },
+  {
+    key: 'eternel',
+    label: 'Éternel',
+    minimum: 1850,
+    maximum: null,
+    minimumVerdicts: 30,
+    accent: '#FF4055',
+    rewardType: 'EMBLÈME',
+    rewardName: 'Sceau Éternel',
+    rewardDetail: 'La marque du sommet absolu de la saison.',
   },
 ];
 
@@ -164,9 +177,11 @@ export function normalizeGradeState(
     prochain_libelle: typeof row.prochain_libelle === 'string' ? row.prochain_libelle : nextDefinition?.label,
     prochain_minimum: optionalNumber(row.prochain_minimum) ?? nextDefinition?.minimum,
     prochain_objectif_pronostics: optionalNumber(row.prochain_objectif_pronostics)
-      ?? (nextDefinition?.key === 'mythique' ? 30 : undefined),
+      ?? nextDefinition?.minimumVerdicts,
     prochains_pronostics_restants: optionalNumber(row.prochains_pronostics_restants)
-      ?? (nextDefinition?.key === 'mythique' ? Math.max(0, 30 - settledCalls) : undefined),
+      ?? (nextDefinition?.minimumVerdicts
+        ? Math.max(0, nextDefinition.minimumVerdicts - settledCalls)
+        : undefined),
   };
 }
 
@@ -193,7 +208,8 @@ function isGradeKey(value: unknown): value is SeasonalGradeKey {
     || value === 'or'
     || value === 'platine'
     || value === 'diamant'
-    || value === 'mythique';
+    || value === 'mythique'
+    || value === 'eternel';
 }
 
 function optionalNumber(value: unknown) {
@@ -209,7 +225,7 @@ function nonNegativeInteger(value: unknown) {
 
 function gradeForScore(frags: number, settledCalls: number) {
   return SEASONAL_GRADE_LADDER.filter((grade) => (
-    grade.minimum <= frags && (grade.key !== 'mythique' || settledCalls >= 30)
+    grade.minimum <= frags && settledCalls >= (grade.minimumVerdicts ?? 0)
   )).at(-1) ?? SEASONAL_GRADE_LADDER[0];
 }
 

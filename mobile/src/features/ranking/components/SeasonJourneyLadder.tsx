@@ -28,7 +28,7 @@ import {
 } from './SeasonJourney.styles';
 
 const GRADES = [...SEASONAL_GRADE_LADDER].reverse();
-const GRADE_X = [244, 218, 243, 216, 241, 220];
+const GRADE_X = [244, 218, 243, 216, 241, 220, 243];
 
 type SeasonJourneyLadderProps = {
   pulse: SharedValue<number>;
@@ -245,9 +245,10 @@ function branchPath(from: JourneyPoint, to: JourneyPoint, index: number) {
 }
 
 function gradeRange(grade: SeasonalGradeDefinition) {
-  return grade.maximum == null
+  const range = grade.maximum == null
     ? `${formatNumber(grade.minimum)}+ FRAGS`
     : `${formatNumber(grade.minimum)}–${formatNumber(grade.maximum)} FRAGS`;
+  return grade.minimumVerdicts ? `${range} · ${grade.minimumVerdicts} VERDICTS` : range;
 }
 
 function formatNumber(value: number) {

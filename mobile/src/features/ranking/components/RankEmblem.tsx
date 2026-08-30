@@ -28,6 +28,7 @@ const RANK_ASSETS: Record<SeasonalGradeKey, ImageSourcePropType> = {
   platine: require('../../../../assets/rank/platine-transparent.png'),
   diamant: require('../../../../assets/rank/diamant-transparent.png'),
   mythique: require('../../../../assets/rank/mythique-transparent.png'),
+  eternel: require('../../../../assets/rank/eternel-transparent.png'),
 };
 
 /** Shared premium rank artwork used at every scale across the Rank experience. */

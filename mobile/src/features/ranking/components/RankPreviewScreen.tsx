@@ -6,12 +6,13 @@ import type { SeasonalGradeState } from '../grades';
 import type { RankDashboard, RankLeaderboardRow } from '../types';
 import RankScreen from './RankScreen';
 
-type PreviewMode = 'start0' | 'bronze' | 'platine';
+type PreviewMode = 'start0' | 'bronze' | 'platine' | 'eternel';
 
 const PREVIEW_MODES: { key: PreviewMode; label: string }[] = [
   { key: 'start0', label: 'DÉPART 0' },
   { key: 'bronze', label: 'BRONZE 420' },
   { key: 'platine', label: 'PLATINE 1 432' },
+  { key: 'eternel', label: 'ÉTERNEL 1 924' },
 ];
 
 const BRONZE: SeasonalGradeState = {
@@ -87,11 +88,24 @@ const DIAMANT: SeasonalGradeState = {
 
 const MYTHIQUE: SeasonalGradeState = {
   ...ARGENT,
-  progression: 1,
+  progression: 0.37,
   cle: 'mythique',
   libelle: 'Mythique',
   ordre: 5,
   minimum: 1650,
+  plafond: 1850,
+  prochaine_cle: 'eternel',
+  prochain_libelle: 'Éternel',
+  prochain_minimum: 1850,
+};
+
+const ETERNEL: SeasonalGradeState = {
+  ...ARGENT,
+  progression: 1,
+  cle: 'eternel',
+  libelle: 'Éternel',
+  ordre: 6,
+  minimum: 1850,
   plafond: undefined,
   prochaine_cle: undefined,
   prochain_libelle: undefined,
@@ -99,8 +113,8 @@ const MYTHIQUE: SeasonalGradeState = {
 };
 
 const GLOBAL: RankLeaderboardRow[] = [
-  row('nova', 'Nova', 1, 1724, 42, 31, MYTHIQUE),
-  row('akira', 'Akira', 2, 1591, 36, 27, DIAMANT),
+  row('nova', 'Nova', 1, 1924, 42, 31, ETERNEL),
+  row('akira', 'Akira', 2, 1724, 36, 27, MYTHIQUE),
   row('aya', 'Aya', 28, 1168, 24, 17, OR),
   row('melo', 'Melo', 147, 1036, 18, 12, ARGENT),
   row('pierre-louis', 'Pierre-Louis', 148, 1032, 16, 10, ARGENT, true),
@@ -134,7 +148,7 @@ const BASE_PREVIEW: RankDashboard = {
       row('zoe', 'Zoé', 3, 420, 3, 2, { ...BRONZE, progression: 420 / 850 }),
     ],
     faction: [
-      row('nova', 'Nova', 1, 1724, 42, 31, MYTHIQUE),
+      row('nova', 'Nova', 1, 1924, 42, 31, ETERNEL),
       row('nox', 'Nox', 2, 1376, 28, 19, PLATINE),
       row('pierre-louis', 'Pierre-Louis', 18, 1032, 16, 10, ARGENT, true),
       row('lina', 'Lina', 19, 318, 4, 3, { ...BRONZE, progression: 318 / 850 }),
@@ -226,6 +240,24 @@ export default function RankPreviewScreen({ lab = false }: { lab?: boolean }) {
 }
 
 function dashboardForMode(mode: PreviewMode): RankDashboard {
+  if (mode === 'eternel') {
+    return {
+      ...BASE_PREVIEW,
+      state: {
+        ...BASE_PREVIEW.state!,
+        frags: 1924,
+        peakFrags: 1948,
+        settledCalls: 42,
+        wonCalls: 31,
+        grade: ETERNEL,
+        rank: 1,
+        percentile: 100,
+        bestGrade: { cle: 'eternel', libelle: 'Éternel', ordre: 6, minimum: 1850 },
+        bestRank: 1,
+      },
+    };
+  }
+
   if (mode === 'platine') {
     return {
       ...BASE_PREVIEW,
@@ -272,7 +304,7 @@ function readParam(value: string | string[] | undefined) {
 }
 
 function isPreviewMode(value: string | undefined): value is PreviewMode {
-  return value === 'start0' || value === 'bronze' || value === 'platine';
+  return value === 'start0' || value === 'bronze' || value === 'platine' || value === 'eternel';
 }
 
 const previewStyles = StyleSheet.create({
