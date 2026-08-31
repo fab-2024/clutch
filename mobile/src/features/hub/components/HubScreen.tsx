@@ -275,16 +275,23 @@ function MatchHero({
         onPressIn={prepare}
         state={confrontation}
       />
-      <MatchCallAction label={confrontation.action} onPress={open} onPressIn={prepare} />
+      <MatchCallAction
+        live={confrontation.phase === 'live'}
+        label={confrontation.action}
+        onPress={open}
+        onPressIn={prepare}
+      />
     </View>
   );
 }
 
 function MatchCallAction({
+  live,
   label,
   onPress,
   onPressIn,
 }: {
+  live: boolean;
   label: string;
   onPress: () => void;
   onPressIn: () => void;
@@ -295,13 +302,36 @@ function MatchCallAction({
       accessibilityRole="button"
       onPress={onPress}
       onPressIn={onPressIn}
-      style={({ pressed }) => [styles.callAction, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.callAction,
+        live && styles.callActionLive,
+        pressed && styles.pressed,
+      ]}
       testID="hub-primary-action"
     >
-      <Text adjustsFontSizeToFit minimumFontScale={.72} numberOfLines={1} style={styles.callActionText}>
+      {live ? (
+        <LinearGradient
+          colors={['#F0D51A', '#DDF10E', '#C5FA1D']}
+          end={{ x: 1, y: .5 }}
+          start={{ x: 0, y: .5 }}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : null}
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={.72}
+        numberOfLines={1}
+        style={[styles.callActionText, live && styles.callActionTextLive]}
+      >
         {label}
       </Text>
-      <Text style={styles.callActionArrow}>›</Text>
+      {live ? (
+        <View style={styles.callActionLiveArrow} testID="hub-primary-action-live-arrow">
+          <ChevronRight color="#FFFFFF" size={17} strokeWidth={3.2} />
+        </View>
+      ) : (
+        <Text style={styles.callActionArrow}>›</Text>
+      )}
     </Pressable>
   );
 }
@@ -680,6 +710,19 @@ const styles = StyleSheet.create({
     borderColor: '#D8EE31',
     boxShadow: '0 0 22px rgba(232,255,61,.18)',
   },
+  callActionLive: {
+    width: 192,
+    minHeight: 42,
+    alignSelf: 'center',
+    marginHorizontal: 0,
+    paddingLeft: 28,
+    paddingRight: 10,
+    gap: 12,
+    borderRadius: 22,
+    borderColor: '#E8F22B',
+    backgroundColor: '#DDF10E',
+    boxShadow: '0 8px 22px rgba(215,240,20,.2)',
+  },
   callActionText: {
     maxWidth: '82%',
     color: '#050708',
@@ -689,6 +732,13 @@ const styles = StyleSheet.create({
     letterSpacing: .45,
     textAlign: 'center',
   },
+  callActionTextLive: {
+    maxWidth: 110,
+    flexShrink: 1,
+    fontSize: 18,
+    lineHeight: 21,
+    letterSpacing: .25,
+  },
   callActionArrow: {
     position: 'absolute',
     right: 20,
@@ -696,6 +746,18 @@ const styles = StyleSheet.create({
     fontSize: 39,
     lineHeight: 41,
     fontWeight: '300',
+  },
+  callActionLiveArrow: {
+    width: 24,
+    height: 24,
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: '#050708',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,.12)',
+    boxShadow: '0 2px 5px rgba(0,0,0,.32)',
   },
   upNextSection: {
     gap: 10,
