@@ -55,7 +55,7 @@ jest.mock('../components/MatchConfrontationCard', () => {
 
 const MAIN_MATCH: HubMatch = {
   id: 'main-kc-vit',
-  debut: '2026-08-30T20:00:00.000Z',
+  debut: '2099-08-30T20:00:00.000Z',
   jeu: 'lol',
   equipe_a: 'Karmine Corp',
   tag_a: 'KC',
@@ -86,8 +86,8 @@ const HUB: HubData = {
     goal: 12,
     progress: 8,
     personalContribution: 3,
-    startsAt: '2026-08-29T12:00:00.000Z',
-    endsAt: '2026-08-31T12:00:00.000Z',
+    startsAt: '2020-08-29T12:00:00.000Z',
+    endsAt: '2099-08-31T12:00:00.000Z',
     completed: false,
     participants: 6,
     team: { id: 'kc', name: 'Karmine Corp', tag: 'KC', logo: null },
@@ -114,7 +114,7 @@ describe('HubExperience restoration', () => {
     expect(screen.getByText('PRIMARY MATCH POSTER')).toBeTruthy();
     expect(screen.getByTestId('hub-season-ranking')).toBeTruthy();
     expect(screen.getByText('Ton classement')).toBeTruthy();
-    expect(screen.getByText('RATING FRAGS')).toBeTruthy();
+    expect(screen.getByText('FRAGS')).toBeTruthy();
     expect(screen.getByText('RESTORED CONTEXT')).toBeTruthy();
     expect(screen.getByTestId('hub-season-controls')).toBeTruthy();
     expect(screen.getByText('À SUIVRE')).toBeTruthy();

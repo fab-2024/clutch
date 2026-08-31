@@ -470,6 +470,7 @@ function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }
   const gradeLabel = loading
     ? '—'
     : grade?.libelle?.toUpperCase() || 'NON CLASSÉ';
+  const fragScore = loading || !hub.frags ? null : hub.frags.frags;
   const frags = loading || !hub.frags ? '—' : formatNumber(hub.frags.frags);
   const accent = loading ? '#7C8790' : gradeAccent(grade);
   const seasonContext = hub.seasonName?.toUpperCase() ?? 'SAISON EN COURS';
@@ -527,18 +528,34 @@ function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }
           </Text>
         </View>
         <View style={[styles.seasonMetric, isCompactWidth && styles.seasonMetricCompact]}>
+          <LinearGradient
+            colors={['rgba(13,29,40,.98)', 'rgba(4,10,15,.98)', 'rgba(2,5,8,.98)']}
+            end={{ x: 1, y: 1 }}
+            start={{ x: 0, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.seasonMetricInnerBorder} />
+          <Text numberOfLines={1} style={styles.seasonMetricLabel}>FRAGS</Text>
           <View style={styles.seasonMetricCopy}>
-            <Text numberOfLines={1} style={styles.seasonMetricLabel}>RATING FRAGS</Text>
             <Text
               adjustsFontSizeToFit
               minimumFontScale={.72}
               numberOfLines={1}
-              style={styles.seasonMetricValue}
+              style={[
+                styles.seasonMetricValue,
+                fragScore != null && Math.abs(fragScore) >= 100 && styles.seasonMetricValueMedium,
+                fragScore != null && Math.abs(fragScore) >= 1000 && styles.seasonMetricValueLong,
+                { color: accent },
+              ]}
             >
               {frags}
             </Text>
+            <ChevronRight
+              color="#B8BDC2"
+              size={isCompactWidth ? 23 : 27}
+              strokeWidth={2.5}
+            />
           </View>
-          <ChevronRight color="#AEB7BF" size={22} strokeWidth={2.4} />
         </View>
       </Pressable>
     </View>
@@ -1000,42 +1017,76 @@ const styles = StyleSheet.create({
   },
   seasonMetric: {
     width: 112,
-    minHeight: 88,
-    paddingHorizontal: 10,
+    minHeight: 96,
+    paddingTop: 12,
+    paddingBottom: 8,
+    paddingHorizontal: 11,
     flexShrink: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 4,
-    borderRadius: 17,
-    backgroundColor: 'rgba(7,9,11,.9)',
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
+    gap: 2,
+    overflow: 'hidden',
+    borderRadius: 18,
+    backgroundColor: '#050A0E',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,.09)',
+    borderColor: 'rgba(104,139,163,.78)',
+    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.72), 0 3px 10px rgba(0,0,0,.28)',
   },
   seasonMetricCompact: {
     width: 94,
-    minHeight: 82,
+    minHeight: 90,
+    paddingTop: 10,
+    paddingBottom: 7,
     paddingHorizontal: 8,
+  },
+  seasonMetricInnerBorder: {
+    position: 'absolute',
+    top: 3,
+    right: 3,
+    bottom: 3,
+    left: 3,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,.08)',
   },
   seasonMetricCopy: {
     flex: 1,
     minWidth: 0,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 4,
   },
   seasonMetricLabel: {
-    color: '#9AA6B1',
-    fontFamily: fonts.bold,
-    fontSize: 10,
-    lineHeight: 13,
-    letterSpacing: .28,
+    color: '#F1F2F3',
+    fontFamily: fonts.display,
+    fontSize: 15,
+    lineHeight: 18,
+    letterSpacing: .4,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   seasonMetricValue: {
-    maxWidth: '100%',
-    marginTop: 6,
-    color: colors.text,
+    maxWidth: '70%',
+    flexShrink: 1,
     fontFamily: fonts.display,
-    fontSize: 31,
-    lineHeight: 31,
+    fontSize: 46,
+    lineHeight: 47,
+    letterSpacing: -.7,
+    textShadowColor: 'rgba(0,0,0,.78)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  seasonMetricValueMedium: {
+    fontSize: 39,
+    lineHeight: 41,
+  },
+  seasonMetricValueLong: {
+    fontSize: 32,
+    lineHeight: 35,
+    letterSpacing: -.45,
   },
   emptyState: {
     marginHorizontal: 8,
