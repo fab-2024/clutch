@@ -10,6 +10,7 @@ import {
   KC_TEAM_PACK,
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   M8_TEAM_PACK,
+  ROCKET_LEAGUE_COLLECTION_PACK,
   TEAM_PACK_CATALOG,
   teamPackById,
   teamPackPrimaryAction,
@@ -82,6 +83,14 @@ const VALORANT_EXPECTED_IDS = [
   'valorant-jett-gallery',
   'valorant-omen',
   'valorant-wingman',
+];
+
+const ROCKET_LEAGUE_EXPECTED_IDS = [
+  'rocket-league-zomba-wheel',
+  'rocket-league-boost-100',
+  'rocket-league-octane-gallery',
+  'rocket-league-arena-ball',
+  'rocket-league-goal-explosion',
 ];
 
 describe('Fnatic team pack catalogue', () => {
@@ -210,6 +219,7 @@ describe('League of Legends game collection pack catalogue', () => {
     expect(GAME_COLLECTION_PACK_CATALOG).toEqual([
       LEAGUE_OF_LEGENDS_COLLECTION_PACK,
       VALORANT_COLLECTION_PACK,
+      ROCKET_LEAGUE_COLLECTION_PACK,
     ]);
     expect(COSMETIC_PACK_CATALOG).toContain(LEAGUE_OF_LEGENDS_COLLECTION_PACK);
     expect(TEAM_PACK_CATALOG).not.toContain(LEAGUE_OF_LEGENDS_COLLECTION_PACK);
@@ -237,6 +247,28 @@ describe('League of Legends game collection pack catalogue', () => {
     ]);
     expect(next.equipped.showcase.supports?.id).toBe('valorant-jett-gallery');
     expect(teamPackPrimaryAction(VALORANT_COLLECTION_PACK, next)).toBe('equipped');
+  });
+
+  it('publishes and equips the five-object Rocket League collection atomically', () => {
+    expect(COSMETIC_PACK_CATALOG).toContain(ROCKET_LEAGUE_COLLECTION_PACK);
+    expect(TEAM_PACK_CATALOG).not.toContain(ROCKET_LEAGUE_COLLECTION_PACK);
+    expect(cosmeticPackById('rocket-league-collection')).toBe(ROCKET_LEAGUE_COLLECTION_PACK);
+    expect(ROCKET_LEAGUE_COLLECTION_PACK.kind).toBe('game_collection');
+    expect(ROCKET_LEAGUE_COLLECTION_PACK.price).toBe(900);
+    expect(ROCKET_LEAGUE_COLLECTION_PACK.items.map((item) => item.id)).toEqual(
+      ROCKET_LEAGUE_EXPECTED_IDS,
+    );
+
+    const initial = makeData(1_000, ROCKET_LEAGUE_COLLECTION_PACK);
+    const next = applyPreviewTeamPackAction(initial, ROCKET_LEAGUE_COLLECTION_PACK);
+
+    expect(next.balance).toBe(100);
+    expect(next.items.every((item) => item.owned)).toBe(true);
+    expect(next.items.filter((item) => item.equipped).map((item) => item.id)).toEqual([
+      'rocket-league-octane-gallery',
+    ]);
+    expect(next.equipped.showcase.supports?.id).toBe('rocket-league-octane-gallery');
+    expect(teamPackPrimaryAction(ROCKET_LEAGUE_COLLECTION_PACK, next)).toBe('equipped');
   });
 
   it('buys the five objects and equips the collection gallery atomically', () => {

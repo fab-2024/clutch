@@ -8,6 +8,7 @@ import {
 import { createPresenterRoomAssignments } from '../../showcasePresenterAssignments';
 import {
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
+  ROCKET_LEAGUE_COLLECTION_PACK,
   VALORANT_COLLECTION_PACK,
 } from '../../teamPackCatalog';
 
@@ -25,6 +26,7 @@ describe('showcase presenter catalog', () => {
       'm8-pedestals',
       'lol-jinx-fishbones-gallery',
       'valorant-jett-gallery',
+      'rocket-league-octane-gallery',
     ]);
     expect(SHOWCASE_PRESENTER_CATALOG.map((presenter) => presenter.slots.length)).toEqual([
       8,
@@ -36,6 +38,7 @@ describe('showcase presenter catalog', () => {
       10,
       10,
       10,
+      5,
       5,
       5,
     ]);
@@ -64,6 +67,31 @@ describe('showcase presenter catalog', () => {
     expect(assignments.trophy?.name).toBe('Jett');
     expect(assignments['right-extra']?.name).toBe('Omen');
     expect(assignments['right-free']?.name).toBe('Wingman');
+  });
+
+  it('exposes and fills the five fixed Rocket League collection slots', () => {
+    expect(showcasePresenterById('rocket-league-octane-gallery')).toMatchObject({
+      accent: '#FF8A24',
+      name: 'Collection Rocket League',
+      packId: 'rocket-league-collection',
+      showRankDisplay: false,
+    });
+    expect(showcasePresenterById('rocket-league-octane-gallery')?.slots).toHaveLength(5);
+
+    const items = ROCKET_LEAGUE_COLLECTION_PACK.items.map((item) => ({
+      accent: item.accent,
+      id: `cosmetic:${item.id}`,
+      image: item.image,
+      kind: item.roomKind!,
+      name: item.name,
+    }));
+    const assignments = createPresenterRoomAssignments(items, 'rocket-league-octane-gallery');
+
+    expect(assignments['left-free']?.name).toBe('Roue Zomba');
+    expect(assignments['left-extra']?.name).toBe('Boost 100');
+    expect(assignments.trophy?.name).toBe('Octane');
+    expect(assignments['right-extra']?.name).toBe('Ballon d’arène');
+    expect(assignments['right-free']?.name).toBe('Explosion de but');
   });
 
   it('exposes ten clickable slots linked to the KC Blue Wall pack', () => {

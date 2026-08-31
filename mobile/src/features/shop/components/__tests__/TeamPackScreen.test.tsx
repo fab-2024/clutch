@@ -9,6 +9,7 @@ import {
   KC_TEAM_PACK,
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   M8_TEAM_PACK,
+  ROCKET_LEAGUE_COLLECTION_PACK,
   VALORANT_COLLECTION_PACK,
   type TeamPackDefinition,
 } from '../../teamPackCatalog';
@@ -198,6 +199,27 @@ describe('TeamPackScreen', () => {
     await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
     expect(screen.getAllByText('Omen').length).toBeGreaterThan(0);
     expect(screen.getByText('RIOT GAMES × CLUTCH')).toBeTruthy();
+  });
+
+  it('renders the Rocket League game collection and its five inspectable objects', async () => {
+    const screen = await render(
+      <TeamPackScreen
+        packId={ROCKET_LEAGUE_COLLECTION_PACK.id}
+        previewData={makeData(1_000, ROCKET_LEAGUE_COLLECTION_PACK)}
+      />,
+    );
+
+    expect(screen.getByText('COLLECTION JEU // OFFICIELLE')).toBeTruthy();
+    expect(screen.getAllByText('BLUE & ORANGE ARENA')).toHaveLength(2);
+    expect(screen.getAllByTestId(/^team-pack-item-rocket-league-/)).toHaveLength(5);
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('team-pack-item-rocket-league-arena-ball'));
+    });
+
+    await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
+    expect(screen.getAllByText('Ballon d’arène').length).toBeGreaterThan(0);
+    expect(screen.getByText('PSYONIX × CLUTCH')).toBeTruthy();
   });
 
   it('makes an insufficient Volt balance explicit', async () => {

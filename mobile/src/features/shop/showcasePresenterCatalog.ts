@@ -135,6 +135,14 @@ const VALORANT_COLLECTION_SLOTS = [
   { id: 'right-free', label: 'Wingman', preferredKind: 'ring', left: '82%', top: '34%', width: '15%', height: '45%' },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
+const ROCKET_LEAGUE_COLLECTION_SLOTS = [
+  { id: 'left-free', label: 'Roue Zomba', preferredKind: 'ring', left: '3%', top: '28%', width: '19%', height: '51%' },
+  { id: 'left-extra', label: 'Boost 100', preferredKind: 'core', left: '23%', top: '30%', width: '16%', height: '49%' },
+  { id: 'trophy', label: 'Octane', preferredKind: 'trophy', left: '39%', top: '18%', width: '22%', height: '61%' },
+  { id: 'right-extra', label: 'Ballon d’arène', preferredKind: 'trophy', left: '61%', top: '24%', width: '20%', height: '55%' },
+  { id: 'right-free', label: 'Explosion de but', preferredKind: 'core', left: '82%', top: '33%', width: '15%', height: '46%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
+
 export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] = [
   {
     id: 'supports_gallery',
@@ -268,6 +276,20 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     rarity: 'legendaire',
     showRankDisplay: false,
     slots: VALORANT_COLLECTION_SLOTS,
+  },
+  {
+    id: 'rocket-league-octane-gallery',
+    name: 'Collection Rocket League',
+    description: 'Cinq socles champagne dans une arène de pierre traversée de bleu et d’orange.',
+    accent: '#FF8A24',
+    image: require('../../../assets/shop/collections/rocket-league/rocket-league-collection-room-empty.png'),
+    packId: 'rocket-league-collection',
+    packOnly: true,
+    pedestal: 'bronze',
+    price: 0,
+    rarity: 'legendaire',
+    showRankDisplay: false,
+    slots: ROCKET_LEAGUE_COLLECTION_SLOTS,
   },
 ] as const;
 

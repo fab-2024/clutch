@@ -58,6 +58,7 @@ const KC_BLUE = '#168DFF';
 const M8_ICE = '#B9DCFF';
 const LOL_GOLD = '#D6B56A';
 const VALORANT_RED = '#FF4655';
+const ROCKET_LEAGUE_ORANGE = '#FF8A24';
 
 export const FNATIC_TEAM_PACK: TeamPackDefinition = {
   id: 'fnatic-black-orange',
@@ -719,6 +720,87 @@ export const VALORANT_COLLECTION_PACK: TeamPackDefinition = {
   ],
 };
 
+export const ROCKET_LEAGUE_COLLECTION_PACK: TeamPackDefinition = {
+  id: 'rocket-league-collection',
+  kind: 'game_collection',
+  brandKey: 'rocket-league',
+  name: 'Pack Rocket League',
+  title: 'ROCKET LEAGUE',
+  subtitle: 'BLUE & ORANGE ARENA',
+  description: 'Cinq pièces iconiques réunies dans une galerie traversée par l’énergie bleue et orange.',
+  accent: ROCKET_LEAGUE_ORANGE,
+  price: 900,
+  licenseHolder: 'Psyonix',
+  hero: require('../../../assets/shop/collections/rocket-league/rocket-league-collection-hero.png'),
+  items: [
+    {
+      id: 'rocket-league-zomba-wheel',
+      number: 1,
+      name: 'Roue Zomba',
+      description: 'Une roue de collection dont le moyeu irradie un motif d’énergie bleu, rose et orange.',
+      slot: 'apparence_core',
+      rarity: 'legendaire',
+      accent: '#35A8FF',
+      equipByDefault: false,
+      roomKind: 'ring',
+      roomSlot: 'left-free',
+      image: require('../../../assets/shop/collections/rocket-league/items/zomba-wheel.png'),
+    },
+    {
+      id: 'rocket-league-boost-100',
+      number: 2,
+      name: 'Boost 100',
+      description: 'Un orbe doré suspendu au-dessus d’un flux continu de particules de boost.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: '#FFBE3D',
+      equipByDefault: false,
+      roomKind: 'core',
+      roomSlot: 'left-extra',
+      image: require('../../../assets/shop/collections/rocket-league/items/boost-100.png'),
+    },
+    {
+      id: 'rocket-league-octane-gallery',
+      number: 3,
+      name: 'Octane',
+      description: 'La pièce centrale de la collection, un Octane bleu et orange en sustentation.',
+      slot: 'vitrine_supports',
+      rarity: 'legendaire',
+      accent: '#2C9CFF',
+      equipByDefault: true,
+      roomKind: 'trophy',
+      roomSlot: 'trophy',
+      image: require('../../../assets/shop/collections/rocket-league/items/octane.png'),
+    },
+    {
+      id: 'rocket-league-arena-ball',
+      number: 4,
+      name: 'Ballon d’arène',
+      description: 'Le ballon blindé des arènes, marqué par les lumières des deux camps.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: '#7CCAFF',
+      equipByDefault: false,
+      roomKind: 'trophy',
+      roomSlot: 'right-extra',
+      image: require('../../../assets/shop/collections/rocket-league/items/arena-ball.png'),
+    },
+    {
+      id: 'rocket-league-goal-explosion',
+      number: 5,
+      name: 'Explosion de but',
+      description: 'Un impact bleu et orange figé dans un but miniature de collection.',
+      slot: 'apparence_core',
+      rarity: 'legendaire',
+      accent: ROCKET_LEAGUE_ORANGE,
+      equipByDefault: false,
+      roomKind: 'core',
+      roomSlot: 'right-free',
+      image: require('../../../assets/shop/collections/rocket-league/items/goal-explosion.png'),
+    },
+  ],
+};
+
 export const TEAM_PACK_CATALOG: readonly TeamPackDefinition[] = [
   FNATIC_TEAM_PACK,
   KC_TEAM_PACK,
@@ -728,6 +810,7 @@ export const TEAM_PACK_CATALOG: readonly TeamPackDefinition[] = [
 export const GAME_COLLECTION_PACK_CATALOG: readonly TeamPackDefinition[] = [
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   VALORANT_COLLECTION_PACK,
+  ROCKET_LEAGUE_COLLECTION_PACK,
 ];
 
 export const COSMETIC_PACK_CATALOG: readonly TeamPackDefinition[] = [

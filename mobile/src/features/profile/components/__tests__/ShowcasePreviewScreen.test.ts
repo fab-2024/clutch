@@ -100,4 +100,13 @@ describe('ShowcasePreviewScreen team-pack moods', () => {
     ))).toHaveLength(5);
     expect(preview.shop.equipped.showcase.supports?.id).toBe('valorant-jett-gallery');
   });
+
+  it('builds the five-object Rocket League collection with its dedicated presenter', () => {
+    const preview = showcasePreviewForMood('rocket-league', 'rocket-league-collection');
+
+    expect(preview.shop.items.filter((item) => (
+      item.collectionKey === 'rocket-league-collection'
+    ))).toHaveLength(5);
+    expect(preview.shop.equipped.showcase.supports?.id).toBe('rocket-league-octane-gallery');
+  });
 });
