@@ -4,10 +4,20 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { View } from 'react-native';
 
 import { SHOWCASE_ROOM_CATALOG } from '@/src/features/shop/showcaseRoomCatalog';
+import { createPresenterRoomAssignments } from '@/src/features/shop/showcasePresenterAssignments';
 import { SHOWCASE_PRESENTER_CATALOG } from '@/src/features/shop/showcasePresenterCatalog';
 import { SHOWCASE_RANK_DISPLAY_CATALOG } from '@/src/features/shop/showcaseRankDisplayCatalog';
-import { createTeamPackPreviewItems, FNATIC_TEAM_PACK } from '@/src/features/shop/teamPackCatalog';
-import type { EquippedCosmetic } from '@/src/features/shop/types';
+import {
+  applyPreviewTeamPackAction,
+  createTeamPackPreviewItems,
+  FNATIC_TEAM_PACK,
+  KC_TEAM_PACK,
+} from '@/src/features/shop/teamPackCatalog';
+import {
+  DEFAULT_MONETIZATION_CONTRACT,
+  EMPTY_EQUIPPED_COSMETICS,
+  type EquippedCosmetic,
+} from '@/src/features/shop/types';
 import {
   adaptShowcaseRingStats,
   resolveEquippedShowcaseRing,
@@ -28,6 +38,26 @@ import {
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('@/src/features/onboarding/components/TeamLogo', () => 'TeamLogo');
 jest.mock('../ProfileScreen', () => 'ProfileScreen');
+jest.mock('../showcase/ShowcaseAtmosphereLayer', () => {
+  const React = jest.requireActual('react');
+  const ReactNative = jest.requireActual('react-native');
+  return function ShowcaseAtmosphereMock({
+    active,
+    cosmetics,
+    reduceMotion,
+  }: {
+    active: boolean;
+    cosmetics?: { factionEffect?: { id?: string } | null } | null;
+    reduceMotion: boolean;
+  }) {
+    const effectId = cosmetics?.factionEffect?.id ?? 'ambient';
+    return React.createElement(ReactNative.View, {
+      accessibilityLabel: `Atmosphère ${effectId}, ${reduceMotion ? 'mouvements réduits' : 'animée'}`,
+      pointerEvents: 'none',
+      testID: `showcase-atmosphere-${active ? 'active' : 'paused'}`,
+    });
+  };
+});
 
 const ROOM_PROPS = {
   cosmetics: PREVIEW_PROFILE.cosmetics,
@@ -54,12 +84,100 @@ describe('Showcase room composition', () => {
     expect(showcasePresenterOptions('supports_gallery')).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ value: 'fnatic-pedestals' })]),
     );
+    expect(showcasePresenterOptions('supports_gallery')).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ value: 'kc-pedestals' })]),
+    );
     const unlockedScreen = await render(
       <ShowcaseCustomizationBar {...props} unlockedPresenterIds={['fnatic-pedestals']} />,
     );
     await fireEvent.press(unlockedScreen.getByTestId('showcase-control-fnatic-pedestals'));
 
     expect(onPresenterChange).toHaveBeenCalledWith('fnatic-pedestals');
+  });
+
+  it('unlocks the KC presenter with ten independent Blue Wall slots', async () => {
+    const onPresenterChange = jest.fn();
+    const screen = await render(
+      <ShowcaseCustomizationBar
+        lighting="blue"
+        onLightingChange={jest.fn()}
+        onPresenterChange={onPresenterChange}
+        onRankDisplayChange={jest.fn()}
+        onThemeChange={jest.fn()}
+        presenterId="supports_gallery"
+        rankDisplayId={SHOWCASE_RANK_DISPLAY_CATALOG[0].id}
+        rankDisplays={SHOWCASE_RANK_DISPLAY_CATALOG}
+        theme="graphite"
+        unlockedPresenterIds={['kc-pedestals']}
+      />,
+    );
+
+    await fireEvent.press(screen.getByTestId('showcase-control-kc-pedestals'));
+    expect(onPresenterChange).toHaveBeenCalledWith('kc-pedestals');
+    expect(SHOWCASE_PRESENTER_CATALOG.find((presenter) => presenter.id === 'kc-pedestals')?.slots).toHaveLength(10);
+  });
+
+  it('auto-assigns the equipped KC pack across ten clickable Blue Wall slots', async () => {
+    const presenter = SHOWCASE_PRESENTER_CATALOG.find((candidate) => candidate.id === 'kc-pedestals');
+    if (!presenter) throw new Error('Missing KC presenter');
+    const equippedShop = applyPreviewTeamPackAction({
+      balance: KC_TEAM_PACK.price,
+      contract: DEFAULT_MONETIZATION_CONTRACT,
+      equipped: EMPTY_EQUIPPED_COSMETICS,
+      items: createTeamPackPreviewItems(KC_TEAM_PACK),
+    }, KC_TEAM_PACK);
+    expect(equippedShop.equipped.showcase.supports?.id).toBe(presenter.id);
+    expect(equippedShop.equipped.showcase.jersey?.id).toBe('kc-jersey');
+    expect(equippedShop.equipped.factionEffect?.id).toBe('kc-blue-wall-effect');
+
+    const ownedIds = new Set(equippedShop.items.filter((item) => item.owned).map((item) => item.id));
+    const items: ShowcasePlaceableItem[] = KC_TEAM_PACK.items.flatMap((item) => (
+      ownedIds.has(item.id) && item.roomKind
+        ? [{
+          accent: item.accent,
+          id: `cosmetic:${item.id}`,
+          image: item.image,
+          kind: item.roomKind,
+          name: item.name,
+        }]
+        : []
+    ));
+    items.push({ accent: '#B87845', id: 'rank:bronze', kind: 'rank', name: 'Bronze' });
+    const assignments = createPresenterRoomAssignments(items, presenter.id);
+
+    expect(Object.values(assignments).filter(Boolean)).toHaveLength(10);
+    expect(assignments['left-free']?.id).toBe('cosmetic:kc-profile-frame');
+    expect(assignments.jersey?.id).toBe('cosmetic:kc-jersey');
+    expect(assignments['right-free']?.id).toBe('cosmetic:kc-share-card');
+
+    const onSlotPress = jest.fn();
+    const screen = await render(
+      <ShowcaseRoomEditorScene
+        assignments={assignments}
+        atmosphereActive
+        cosmetics={equippedShop.equipped}
+        favoriteTeam={{
+          ...PREVIEW_PROFILE.favoriteTeam!,
+          id: 'kc',
+          nom: 'Karmine Corp',
+          tag: 'KC',
+        }}
+        lighting="blue"
+        onSlotPress={onSlotPress}
+        rankAccent="#B87845"
+        rankOrder={0}
+        reduceMotion
+        room={presenter}
+        slots={presenter.slots}
+      />,
+    );
+
+    expect(screen.getByTestId('showcase-atmosphere-active')).toBeTruthy();
+    expect(screen.getByLabelText('Atmosphère kc-blue-wall-effect, mouvements réduits')).toBeTruthy();
+    expect(screen.getAllByTestId(/^showcase-room-slot-/)).toHaveLength(10);
+    await fireEvent.press(screen.getByTestId('showcase-room-slot-left-free'));
+    await fireEvent.press(screen.getByTestId('showcase-room-slot-right-free'));
+    expect(onSlotPress.mock.calls).toEqual([['left-free'], ['right-free']]);
   });
 
   it('shares real collection data between both modes and wires its controls', async () => {
@@ -214,6 +332,38 @@ describe('Showcase room composition', () => {
     );
     expect(screen.getByTestId('showcase-object-image-frame').props.source).toBe(
       FNATIC_TEAM_PACK.items.find((item) => item.id === 'fnatic-profile-frame')?.image,
+    );
+  });
+
+  it('renders equipped KC collectibles with their dedicated Blue Wall art', async () => {
+    const items = createTeamPackPreviewItems(KC_TEAM_PACK);
+    const find = (id: string) => {
+      const item = items.find((candidate) => candidate.id === id);
+      if (!item) throw new Error(`Missing KC fixture ${id}`);
+      const { accent, description, level, name, rarity, slot, styleKey } = item;
+      return { accent, description, id, level, name, rarity, slot, styleKey } satisfies EquippedCosmetic;
+    };
+    const cosmetics = {
+      ...PREVIEW_PROFILE.cosmetics,
+      frame: find('kc-profile-frame'),
+      title: find('kc-title'),
+      core: find('kc-logo-3d'),
+      factionEffect: find('kc-blue-wall-effect'),
+      profileCard: find('kc-share-card'),
+      showcase: {
+        ...PREVIEW_PROFILE.cosmetics.showcase,
+        jersey: find('kc-jersey'),
+      },
+    };
+    const screen = await render(
+      <ShowcaseRoomScene {...ROOM_PROPS} cosmetics={cosmetics} lighting="blue" mode="full" />,
+    );
+
+    expect(screen.getByTestId('showcase-jersey-kc-jersey').props.source).toBe(
+      KC_TEAM_PACK.items.find((item) => item.id === 'kc-jersey')?.image,
+    );
+    expect(screen.getByTestId('showcase-object-image-frame').props.source).toBe(
+      KC_TEAM_PACK.items.find((item) => item.id === 'kc-profile-frame')?.image,
     );
   });
 

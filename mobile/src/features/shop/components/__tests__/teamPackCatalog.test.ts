@@ -4,7 +4,11 @@ import {
   applyPreviewTeamPackAction,
   createTeamPackPreviewItems,
   FNATIC_TEAM_PACK,
+  KC_TEAM_PACK,
+  TEAM_PACK_CATALOG,
+  teamPackById,
   teamPackPrimaryAction,
+  type TeamPackDefinition,
 } from '../../teamPackCatalog';
 import {
   COSMETIC_SLOTS,
@@ -26,6 +30,21 @@ const EXPECTED_IDS = [
   'fnatic-embers',
   'fnatic-share-card',
   'fnatic-title',
+];
+
+const KC_EXPECTED_IDS = [
+  'kc-room-lighting',
+  'kc-jersey',
+  'kc-logo-3d',
+  'kc-banner',
+  'kc-pedestals',
+  'kc-supporter-token',
+  'kc-totem',
+  'kc-supporter-badge',
+  'kc-profile-frame',
+  'kc-blue-wall-effect',
+  'kc-share-card',
+  'kc-title',
 ];
 
 describe('Fnatic team pack catalogue', () => {
@@ -78,11 +97,46 @@ describe('Fnatic team pack catalogue', () => {
   });
 });
 
-function makeData(balance: number): CosmeticShopData {
+describe('Karmine Corp team pack catalogue', () => {
+  it('publishes both official team packs and the twelve Blue Wall objects', () => {
+    expect(TEAM_PACK_CATALOG.map((pack) => pack.id)).toEqual([
+      'fnatic-black-orange',
+      'kc-blue-wall',
+    ]);
+    expect(teamPackById('kc-blue-wall')).toBe(KC_TEAM_PACK);
+    expect(KC_TEAM_PACK.price).toBe(FNATIC_TEAM_PACK.price);
+    expect(KC_TEAM_PACK.items.map((item) => item.id)).toEqual(KC_EXPECTED_IDS);
+    expect(KC_TEAM_PACK.items.every((item) => COSMETIC_SLOTS.includes(item.slot))).toBe(true);
+  });
+
+  it('buys and equips the eight Blue Wall defaults atomically', () => {
+    const initial = makeData(1280, KC_TEAM_PACK);
+    const next = applyPreviewTeamPackAction(initial, KC_TEAM_PACK);
+
+    expect(next.balance).toBe(80);
+    expect(next.items.every((item) => item.owned)).toBe(true);
+    expect(next.items.filter((item) => item.equipped).map((item) => item.id)).toEqual([
+      'kc-room-lighting',
+      'kc-jersey',
+      'kc-logo-3d',
+      'kc-pedestals',
+      'kc-profile-frame',
+      'kc-blue-wall-effect',
+      'kc-share-card',
+      'kc-title',
+    ]);
+    expect(next.equipped.showcase.lighting?.id).toBe('kc-room-lighting');
+    expect(next.equipped.showcase.supports?.id).toBe('kc-pedestals');
+    expect(next.equipped.factionEffect?.id).toBe('kc-blue-wall-effect');
+    expect(teamPackPrimaryAction(KC_TEAM_PACK, next)).toBe('equipped');
+  });
+});
+
+function makeData(balance: number, pack: TeamPackDefinition = FNATIC_TEAM_PACK): CosmeticShopData {
   return {
     balance,
     contract: DEFAULT_MONETIZATION_CONTRACT,
     equipped: EMPTY_EQUIPPED_COSMETICS,
-    items: createTeamPackPreviewItems(),
+    items: createTeamPackPreviewItems(pack),
   };
 }

@@ -1,7 +1,7 @@
 /// <reference types="jest" />
 
 import { createAtelierPreviewItems } from '../../atelierCatalog';
-import { createTeamPackPreviewItems } from '../../teamPackCatalog';
+import { createTeamPackPreviewItems, KC_TEAM_PACK } from '../../teamPackCatalog';
 import {
   applyAtelierTry,
   applyPreviewAtelierAction,
@@ -85,6 +85,25 @@ describe('showcase Atelier state', () => {
     })).toMatchObject({
       lighting: 'orange',
       presenterId: 'fnatic-pedestals',
+    });
+  });
+
+  it('activates the pack-only KC room and Blue Wall lighting', () => {
+    const items = createTeamPackPreviewItems(KC_TEAM_PACK);
+    const lighting = items.find((item) => item.id === 'kc-room-lighting');
+    const pedestals = items.find((item) => item.id === 'kc-pedestals');
+    if (!lighting || !pedestals) throw new Error('Missing KC preview fixtures');
+
+    expect(resolveAtelierSceneConfig({
+      ...EMPTY_EQUIPPED_COSMETICS,
+      showcase: {
+        ...EMPTY_EQUIPPED_COSMETICS.showcase,
+        lighting: asEquipped(lighting),
+        supports: asEquipped(pedestals),
+      },
+    })).toMatchObject({
+      lighting: 'blue',
+      presenterId: 'kc-pedestals',
     });
   });
 });

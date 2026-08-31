@@ -57,6 +57,16 @@ export default function ShowcaseAtmosphereFallback({
         start={{ x: 0.48, y: 0.02 }}
         style={styles.centralLight}
       />
+      {atmosphere.effect === 'blue-wall' ? (
+        <LinearGradient
+          colors={['rgba(0,0,0,0)', 'rgba(22,141,255,.72)', 'rgba(185,227,255,.86)', 'rgba(22,141,255,.72)', 'rgba(0,0,0,0)']}
+          end={{ x: 1, y: 0.5 }}
+          locations={[0, 0.22, 0.5, 0.78, 1]}
+          start={{ x: 0, y: 0.5 }}
+          style={styles.blueWallContour}
+          testID="showcase-blue-wall-static-contour"
+        />
+      ) : null}
       {STATIC_DUST.slice(0, atmosphere.dustCount).map(([left, top], index) => (
         <View
           key={`static-showcase-dust-${left}-${top}`}
@@ -80,6 +90,14 @@ export default function ShowcaseAtmosphereFallback({
 }
 
 const styles = StyleSheet.create({
+  blueWallContour: {
+    position: 'absolute',
+    top: '61%',
+    right: '8%',
+    left: '8%',
+    height: 2,
+    opacity: 0.88,
+  },
   centralLight: {
     position: 'absolute',
     top: 0,

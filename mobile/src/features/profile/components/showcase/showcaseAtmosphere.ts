@@ -29,7 +29,7 @@ export type ShowcaseAtmosphere = {
   cosmeticColor: string;
   driftDurationMs: number;
   dustCount: number;
-  effect: 'ambient' | 'embers';
+  effect: 'ambient' | 'blue-wall' | 'embers';
   intensity: number;
   lightingColor: string;
   rankColor: string;
@@ -61,21 +61,24 @@ export function resolveShowcaseAtmosphere({
   const rarityWeight = rarityScore(signatureCosmetic);
   const embers = cosmetics?.factionEffect?.id === 'fnatic-embers'
     || cosmetics?.factionEffect?.styleKey === 'fnatic-embers';
-  const intensity = embers
+  const blueWall = cosmetics?.factionEffect?.id === 'kc-blue-wall-effect'
+    || cosmetics?.factionEffect?.styleKey === 'kc-blue-wall-effect';
+  const brandedEffect = embers || blueWall;
+  const intensity = brandedEffect
     ? 0.39
     : clamp(0.22 + safeRankOrder * 0.022 + rarityWeight * 0.018, 0.22, 0.39);
 
   return {
-    cosmeticColor: embers
-      ? '#FF5900'
+    cosmeticColor: brandedEffect
+      ? (blueWall ? '#168DFF' : '#FF5900')
       : normalizeHex(signatureCosmetic?.accent, normalizeHex(cosmetics?.core?.accent, rankAccent)),
-    driftDurationMs: embers
-      ? 12_000
+    driftDurationMs: brandedEffect
+      ? (blueWall ? 14_000 : 12_000)
       : clamp(17_000 - safeRankOrder * 480 - rarityWeight * 420, 12_200, 17_000),
-    dustCount: embers
-      ? 11
+    dustCount: brandedEffect
+      ? (blueWall ? 9 : 11)
       : clamp(6 + Math.floor(safeRankOrder / 2) + rarityWeight, 6, 11),
-    effect: embers ? 'embers' : 'ambient',
+    effect: embers ? 'embers' : blueWall ? 'blue-wall' : 'ambient',
     intensity,
     lightingColor: normalizeHex(lightingAccent, '#31D7E2'),
     rankColor: normalizeHex(rankAccent, '#E8FF3D'),

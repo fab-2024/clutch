@@ -54,4 +54,32 @@ describe('ProfileShareCard branding', () => {
     expect(screen.getByText('FNATIC // BLACK & ORANGE')).toBeTruthy();
     expect(screen.getByText('CARTE DE PARTAGE FNATIC')).toBeTruthy();
   });
+
+  it('applies the Karmine Corp Blue Wall identity when its share card is equipped', async () => {
+    const screen = await render(
+      <ProfileShareCard
+        accuracy={72}
+        cosmetic={{
+          accent: '#168DFF',
+          description: '',
+          id: 'kc-share-card',
+          level: 11,
+          name: 'Carte de partage KC',
+          rarity: 'epique',
+          slot: 'carte_profil',
+          styleKey: 'kc-share-card',
+        }}
+        frags={1247}
+        grade="Bronze"
+        profileTitle="Blue Wall"
+        pseudo="FabTheTap"
+        publicProfile
+        rank={381}
+        teamTag="KC"
+      />,
+    );
+
+    expect(screen.getByText('KARMINE CORP // BLUE WALL')).toBeTruthy();
+    expect(screen.getByText('CARTE DE PARTAGE KC')).toBeTruthy();
+  });
 });

@@ -7,6 +7,7 @@ export type ShowcaseRoomTheme = 'graphite' | 'steel' | 'museum' | 'carbon' | 'az
 export type ShowcaseLighting =
   | 'acid'
   | 'amber'
+  | 'blue'
   | 'competition'
   | 'cyan'
   | 'emerald'

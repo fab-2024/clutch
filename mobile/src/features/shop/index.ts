@@ -6,6 +6,7 @@ export { default as TeamPackPreviewScreen } from './components/TeamPackPreviewSc
 export { default as TeamPackScreen } from './components/TeamPackScreen';
 export {
   FNATIC_TEAM_PACK,
+  KC_TEAM_PACK,
   TEAM_PACK_CATALOG,
   teamPackById,
   teamPackItemById,

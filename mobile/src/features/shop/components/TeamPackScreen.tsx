@@ -32,6 +32,7 @@ import {
   FNATIC_TEAM_PACK,
   teamPackById,
   teamPackPrimaryAction,
+  type TeamPackDefinition,
   type TeamPackItemDefinition,
   type TeamPackPrimaryAction,
 } from '../teamPackCatalog';
@@ -109,8 +110,8 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
       successFeedback();
       showSnackbar({
         message: action === 'buy'
-          ? 'Pack Fnatic débloqué et équipé dans ta Vitrine.'
-          : 'Le Pack Fnatic équipe maintenant ta Vitrine.',
+          ? `${pack.name} débloqué et équipé dans ta Vitrine.`
+          : `Le ${pack.name} équipe maintenant ta Vitrine.`,
         tone: 'success',
       });
 
@@ -172,7 +173,7 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
               <Text style={styles.backGlyph}>‹</Text>
             </Pressable>
             <View style={styles.headerCopy}>
-              <Text style={styles.headerEyebrow}>PACK ÉQUIPE // OFFICIEL</Text>
+              <Text style={[styles.headerEyebrow, { color: pack.accent }]}>PACK ÉQUIPE // OFFICIEL</Text>
               <Text style={styles.headerTitle}>{pack.name.toLocaleUpperCase('fr-FR')}</Text>
             </View>
             <View style={styles.itemCount}>
@@ -198,11 +199,11 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
               <Text style={styles.heroSubtitle}>{pack.subtitle}</Text>
               <Text style={styles.heroDescription}>{pack.description}</Text>
               <View style={styles.heroMeta}>
-                <View style={styles.officialPill}>
+                <View style={[styles.officialPill, { borderColor: `${pack.accent}52` }]}>
                   <View style={[styles.officialDot, { backgroundColor: pack.accent }]} />
                   <Text style={styles.officialText}>COLLECTION OFFICIELLE</Text>
                 </View>
-                <Text style={styles.heroMetaText}>12 COSMÉTIQUES</Text>
+                <Text style={styles.heroMetaText}>{pack.items.length} COSMÉTIQUES</Text>
               </View>
             </View>
           </View>
@@ -219,16 +220,16 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
 
           <View style={styles.collectionHeading}>
             <View>
-              <Text style={styles.sectionEyebrow}>CONTENU DU PACK</Text>
-              <Text style={styles.sectionTitle}>BLACK & ORANGE</Text>
+              <Text style={[styles.sectionEyebrow, { color: pack.accent }]}>CONTENU DU PACK</Text>
+              <Text style={styles.sectionTitle}>{pack.subtitle}</Text>
             </View>
             <Text style={styles.inspectHint}>TOUCHE POUR INSPECTER</Text>
           </View>
 
           {loading ? (
-            <View accessibilityLabel="Chargement du Pack Fnatic" accessibilityRole="progressbar" style={styles.loading}>
+            <View accessibilityLabel={`Chargement du ${pack.name}`} accessibilityRole="progressbar" style={styles.loading}>
               <ActivityIndicator color={pack.accent} />
-              <Text style={styles.loadingText}>SYNCHRONISATION DES 12 OBJETS…</Text>
+              <Text style={styles.loadingText}>SYNCHRONISATION DES {pack.items.length} OBJETS…</Text>
             </View>
           ) : (
             <View style={styles.itemGrid} testID="team-pack-item-grid">
@@ -263,7 +264,7 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
                       </View>
                       {runtime?.owned ? (
                         <View style={styles.ownedPill}>
-                          <Text style={styles.ownedText}>{runtime.equipped ? 'ÉQUIPÉ' : 'POSSÉDÉ'}</Text>
+                          <Text style={[styles.ownedText, { color: pack.accent }]}>{runtime.equipped ? 'ÉQUIPÉ' : 'POSSÉDÉ'}</Text>
                         </View>
                       ) : null}
                     </View>
@@ -277,8 +278,8 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
             </View>
           )}
 
-          <View style={styles.licenseBlock}>
-            <Text style={styles.licenseTitle}>FNATIC × CLUTCH</Text>
+          <View style={[styles.licenseBlock, { borderColor: `${pack.accent}38` }]}>
+            <Text style={[styles.licenseTitle, { color: pack.accent }]}>{pack.licenseHolder.toLocaleUpperCase('fr-FR')} × CLUTCH</Text>
             <Text style={styles.licenseText}>
               Collection cosmétique officielle. Aucun objet ne modifie le rang, les Calls ou les performances.
             </Text>
@@ -294,11 +295,11 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
         />
 
         <BaseSheet
-          eyebrow="PACK FNATIC // OBJET"
+          eyebrow={`PACK ${pack.title} // OBJET`}
           footer={<Button fullWidth label="FERMER" onPress={() => setSelectedItem(null)} variant="secondary" />}
           onClose={() => setSelectedItem(null)}
           testID="team-pack-item-sheet"
-          title={selectedItem?.name ?? 'Objet Fnatic'}
+          title={selectedItem?.name ?? `Objet ${pack.title}`}
           visible={Boolean(selectedItem)}
         >
           {selectedItem ? (
@@ -312,11 +313,11 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
                 />
               </View>
               <View style={styles.sheetMetaRow}>
-                <Text style={[styles.sheetNumber, { color: pack.accent }]}>OBJET {selectedItem.number}/12</Text>
+                <Text style={[styles.sheetNumber, { color: pack.accent }]}>OBJET {selectedItem.number}/{pack.items.length}</Text>
                 <Text style={styles.sheetSlot}>{slotLabel(selectedItem.slot)}</Text>
               </View>
               <Text style={styles.sheetDescription}>{selectedItem.description}</Text>
-              <View style={styles.sheetStatus}>
+              <View style={[styles.sheetStatus, { borderColor: `${pack.accent}38` }]}>
                 <View style={[styles.officialDot, { backgroundColor: pack.accent }]} />
                 <Text style={styles.sheetStatusText}>
                   {runtimeById.get(selectedItem.id)?.owned ? 'DANS TA COLLECTION' : 'INCLUS DANS LE PACK'}
@@ -340,12 +341,12 @@ function TeamPackActionDock({
   action: TeamPackPrimaryAction;
   balance: number;
   onPress: () => void;
-  pack: typeof FNATIC_TEAM_PACK;
+  pack: TeamPackDefinition;
   pending: boolean;
 }) {
   const disabled = pending || action === 'equipped' || action === 'insufficient' || action === 'unavailable';
   return (
-    <View style={styles.dock} testID="team-pack-action-dock">
+    <View style={[styles.dock, { borderTopColor: `${pack.accent}42` }]} testID="team-pack-action-dock">
       <View style={styles.dockCopy}>
         <Text style={styles.dockEyebrow}>PACK COMPLET</Text>
         {action === 'buy' || action === 'insufficient' ? (
@@ -355,12 +356,12 @@ function TeamPackActionDock({
           </View>
         ) : (
           <Text style={[styles.dockState, action === 'equipped' && { color: pack.accent }]}>
-            {action === 'equipped' ? 'CONFIGURATION ACTIVE' : '12 OBJETS POSSÉDÉS'}
+            {action === 'equipped' ? 'CONFIGURATION ACTIVE' : `${pack.items.length} OBJETS POSSÉDÉS`}
           </Text>
         )}
       </View>
       <Pressable
-        accessibilityLabel={actionAccessibilityLabel(action, balance, pack.price)}
+        accessibilityLabel={actionAccessibilityLabel(action, balance, pack.price, pack.name)}
         accessibilityRole="button"
         accessibilityState={{ busy: pending, disabled }}
         disabled={disabled}
@@ -393,12 +394,12 @@ function actionLabel(action: TeamPackPrimaryAction) {
   return 'INDISPONIBLE';
 }
 
-function actionAccessibilityLabel(action: TeamPackPrimaryAction, balance: number, price: number) {
-  if (action === 'buy') return `Acheter et équiper le Pack Fnatic pour ${formatNumber(price)} Volts`;
-  if (action === 'equip') return 'Équiper le Pack Fnatic';
-  if (action === 'equipped') return 'Le Pack Fnatic est équipé';
+function actionAccessibilityLabel(action: TeamPackPrimaryAction, balance: number, price: number, packName: string) {
+  if (action === 'buy') return `Acheter et équiper le ${packName} pour ${formatNumber(price)} Volts`;
+  if (action === 'equip') return `Équiper le ${packName}`;
+  if (action === 'equipped') return `Le ${packName} est équipé`;
   if (action === 'insufficient') return `Solde insuffisant. Il manque ${formatNumber(price - balance)} Volts`;
-  return 'Le Pack Fnatic est indisponible';
+  return `Le ${packName} est indisponible`;
 }
 
 function slotLabel(slot: TeamPackItemDefinition['slot']) {
@@ -422,7 +423,7 @@ function friendlyError(caught: unknown) {
   const message = caught instanceof Error ? caught.message : '';
   if (/solde insuffisant/i.test(message)) return 'Ton solde a changé. Recharge le pack avant de réessayer.';
   if (/network|fetch|hors connexion|offline/i.test(message)) return 'Connexion indisponible. Ta collection n’a pas été modifiée.';
-  return message || 'Le Pack Fnatic n’a pas pu être synchronisé.';
+  return message || 'Le pack équipe n’a pas pu être synchronisé.';
 }
 
 function readParam(value?: string | string[]) {
@@ -453,7 +454,7 @@ const styles = StyleSheet.create({
   },
   backGlyph: { color: colors.text, fontSize: 31, lineHeight: 31, marginTop: -3 },
   headerCopy: { flex: 1, minWidth: 0 },
-  headerEyebrow: { ...typography.eyebrow, color: '#FF5900' },
+  headerEyebrow: { ...typography.eyebrow },
   headerTitle: { ...typography.sectionTitle, color: colors.text, marginTop: 1 },
   itemCount: { alignItems: 'center', minWidth: 54 },
   itemCountValue: { ...typography.metricSmall, color: colors.text },
@@ -497,7 +498,7 @@ const styles = StyleSheet.create({
   errorText: { ...typography.body, color: colors.textSecondary },
   retry: { ...typography.action, marginTop: spacing.xs },
   collectionHeading: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.sm },
-  sectionEyebrow: { ...typography.eyebrow, color: '#FF5900' },
+  sectionEyebrow: { ...typography.eyebrow },
   sectionTitle: { ...typography.sectionTitle, color: colors.text, marginTop: 2 },
   inspectHint: { ...typography.caption, color: colors.textMuted, textAlign: 'right', maxWidth: 112 },
   loading: {
@@ -544,7 +545,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: 'rgba(3,4,5,.88)',
   },
-  ownedText: { ...typography.eyebrow, color: '#FF8A40', fontSize: 9 },
+  ownedText: { ...typography.eyebrow, fontSize: 9 },
   itemCopy: { paddingHorizontal: spacing.sm, paddingVertical: spacing.sm },
   itemName: { ...typography.bodyStrong, color: colors.text },
   itemType: { ...typography.eyebrow, color: colors.textMuted, fontSize: 9, marginTop: 3 },
@@ -555,7 +556,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: '#0B0B0C',
   },
-  licenseTitle: { ...typography.eyebrow, color: '#FF5900' },
+  licenseTitle: { ...typography.eyebrow },
   licenseText: { ...typography.body, color: colors.textMuted, marginTop: spacing.xs },
   dock: {
     position: 'absolute',

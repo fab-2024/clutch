@@ -20,6 +20,11 @@ export const SHOWCASE_LIGHTING_VISUALS: Record<ShowcaseLighting, ShowcaseLightin
     label: 'AMBRE',
     wash: ['rgba(18,9,1,.04)', 'rgba(173,95,25,.15)', 'rgba(7,5,3,.17)'],
   },
+  blue: {
+    glow: '#168DFF',
+    label: 'BLUE WALL',
+    wash: ['rgba(1,5,18,.05)', 'rgba(10,81,188,.17)', 'rgba(1,4,12,.2)'],
+  },
   competition: {
     glow: '#31D7E2',
     horizontalWash: ['rgba(194,18,28,.27)', 'rgba(7,8,10,.02)', 'rgba(0,158,205,.27)'],

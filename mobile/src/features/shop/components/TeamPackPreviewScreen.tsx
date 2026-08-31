@@ -6,26 +6,35 @@ import {
   applyPreviewTeamPackAction,
   createTeamPackPreviewItems,
   FNATIC_TEAM_PACK,
+  teamPackById,
+  type TeamPackDefinition,
 } from '../teamPackCatalog';
 import type { CosmeticShopData } from '../types';
 import { PREVIEW_SHOP } from './ShopPreviewScreen';
 import TeamPackScreen from './TeamPackScreen';
 
 export default function TeamPackPreviewScreen() {
-  const params = useLocalSearchParams<{ state?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    packId?: string | string[];
+    state?: string | string[];
+  }>();
   if (!previewRoutesEnabled) return <Redirect href="/" />;
 
+  const pack = teamPackById(readParam(params.packId)) ?? FNATIC_TEAM_PACK;
   const state = readParam(params.state);
-  const initial = previewPackData(state === 'insufficient' ? 320 : PREVIEW_SHOP.balance);
-  const data = state === 'equipped' ? applyPreviewTeamPackAction(initial) : initial;
-  return <TeamPackScreen packId={FNATIC_TEAM_PACK.id} previewData={data} />;
+  const initial = previewPackData(state === 'insufficient' ? 320 : PREVIEW_SHOP.balance, pack);
+  const data = state === 'equipped' ? applyPreviewTeamPackAction(initial, pack) : initial;
+  return <TeamPackScreen packId={pack.id} previewData={data} />;
 }
 
-function previewPackData(balance: number): CosmeticShopData {
+function previewPackData(
+  balance: number,
+  pack: TeamPackDefinition,
+): CosmeticShopData {
   return {
     ...PREVIEW_SHOP,
     balance,
-    items: [...PREVIEW_SHOP.items, ...createTeamPackPreviewItems()],
+    items: [...PREVIEW_SHOP.items, ...createTeamPackPreviewItems(pack)],
   };
 }
 

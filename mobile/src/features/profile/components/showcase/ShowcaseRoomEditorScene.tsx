@@ -11,8 +11,15 @@ import {
 
 import type { ShowcaseRoomDefinition } from '@/src/features/shop/showcaseRoomCatalog';
 import type { ShowcaseRankDisplayDefinition } from '@/src/features/shop/showcaseRankDisplayCatalog';
+import type { EquippedCosmetics } from '@/src/features/shop/types';
 import { colors, fonts, typography } from '@/src/theme';
 
+import type { ProfileTeam } from '../../types';
+import ShowcaseAtmosphereLayer from './ShowcaseAtmosphereLayer';
+import type {
+  ShowcaseAtmospherePerformanceReport,
+  ShowcaseAtmosphereQuality,
+} from './showcaseAtmosphere';
 import {
   SHOWCASE_ROOM_SLOTS,
   showcasePlaceableGlyph,
@@ -27,9 +34,17 @@ import type { ShowcaseLighting } from './types';
 
 type ShowcaseRoomEditorSceneProps = {
   assignments: ShowcaseRoomAssignments;
+  atmosphereActive?: boolean;
+  atmosphereQuality?: ShowcaseAtmosphereQuality;
+  cosmetics?: EquippedCosmetics | null;
+  favoriteTeam?: ProfileTeam | null;
   lighting: ShowcaseLighting;
+  onAtmospherePerformanceReport?: (report: ShowcaseAtmospherePerformanceReport) => void;
   onSlotPress: (slotId: ShowcaseRoomSlotId) => void;
+  rankAccent?: string;
   rankDisplay?: Pick<ShowcaseRankDisplayDefinition, 'id' | 'name' | 'overlayImage'> | null;
+  rankOrder?: number | null;
+  reduceMotion?: boolean;
   room: Pick<ShowcaseRoomDefinition, 'accent' | 'id' | 'image' | 'name'>;
   slots?: readonly ShowcaseRoomSlotDefinition[];
 };
@@ -43,9 +58,17 @@ const ROOM_REFERENCE = {
 
 export default function ShowcaseRoomEditorScene({
   assignments,
+  atmosphereActive = true,
+  atmosphereQuality = 'auto',
+  cosmetics,
+  favoriteTeam,
   lighting,
+  onAtmospherePerformanceReport,
   onSlotPress,
+  rankAccent = '#B87845',
   rankDisplay,
+  rankOrder,
+  reduceMotion = false,
   room,
   slots = SHOWCASE_ROOM_SLOTS,
 }: ShowcaseRoomEditorSceneProps) {
@@ -85,24 +108,6 @@ export default function ShowcaseRoomEditorScene({
         }}
         testID={`showcase-room-background-${room.id}`}
       />
-      {rankDisplay ? (
-        <>
-          <View pointerEvents="none" style={styles.rankDisplayMask} />
-          <View
-            pointerEvents="none"
-            style={styles.rankDisplayLayer}
-            testID={`showcase-rank-display-${rankDisplay.id}`}
-          >
-            <Image
-              accessibilityLabel={`Écrin de rang ${rankDisplay.name}`}
-              accessible
-              resizeMode="contain"
-              source={rankDisplay.overlayImage}
-              style={styles.rankDisplayOverlay}
-            />
-          </View>
-        </>
-      ) : null}
       <LinearGradient
         colors={['rgba(2,5,8,.04)', `${room.accent}0B`, 'rgba(2,5,8,.18)']}
         end={{ x: 1, y: 1 }}
@@ -125,6 +130,37 @@ export default function ShowcaseRoomEditorScene({
           start={{ x: 0, y: 0.5 }}
           style={StyleSheet.absoluteFill}
         />
+      ) : null}
+      <ShowcaseAtmosphereLayer
+        active={atmosphereActive}
+        cosmetics={cosmetics}
+        favoriteTeam={favoriteTeam}
+        height={viewport.height}
+        lightingAccent={lightingVisual.glow}
+        onPerformanceReport={onAtmospherePerformanceReport}
+        quality={atmosphereQuality}
+        rankAccent={rankAccent}
+        rankOrder={rankOrder}
+        reduceMotion={reduceMotion}
+        width={viewport.width}
+      />
+      {rankDisplay ? (
+        <>
+          <View pointerEvents="none" style={styles.rankDisplayMask} />
+          <View
+            pointerEvents="none"
+            style={styles.rankDisplayLayer}
+            testID={`showcase-rank-display-${rankDisplay.id}`}
+          >
+            <Image
+              accessibilityLabel={`Écrin de rang ${rankDisplay.name}`}
+              accessible
+              resizeMode="contain"
+              source={rankDisplay.overlayImage}
+              style={styles.rankDisplayOverlay}
+            />
+          </View>
+        </>
       ) : null}
       <View pointerEvents="none" style={styles.instructions}>
         <View style={[styles.roomDot, { backgroundColor: room.accent }]} />

@@ -3,7 +3,12 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
-import { createTeamPackPreviewItems, FNATIC_TEAM_PACK } from '../../teamPackCatalog';
+import {
+  createTeamPackPreviewItems,
+  FNATIC_TEAM_PACK,
+  KC_TEAM_PACK,
+  type TeamPackDefinition,
+} from '../../teamPackCatalog';
 import {
   DEFAULT_MONETIZATION_CONTRACT,
   EMPTY_EQUIPPED_COSMETICS,
@@ -114,6 +119,24 @@ describe('TeamPackScreen', () => {
     });
   });
 
+  it('renders the KC Blue Wall hero and twelve inspectable objects', async () => {
+    const screen = await render(
+      <TeamPackScreen packId={KC_TEAM_PACK.id} previewData={makeData(1280, KC_TEAM_PACK)} />,
+    );
+
+    expect(screen.getAllByText('BLUE WALL')).toHaveLength(2);
+    expect(screen.getAllByTestId(/^team-pack-item-kc-/)).toHaveLength(12);
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('team-pack-item-kc-jersey'));
+    });
+
+    await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
+    expect(screen.getAllByText('Maillot KC').length).toBeGreaterThan(0);
+    expect(screen.getByText('Le maillot noir et bleu de la Karmine Corp, frappé du monogramme blanc.')).toBeTruthy();
+    expect(screen.getByText('KARMINE CORP × CLUTCH')).toBeTruthy();
+  });
+
   it('makes an insufficient Volt balance explicit', async () => {
     const screen = await render(<TeamPackScreen packId={FNATIC_TEAM_PACK.id} previewData={makeData(1199)} />);
 
@@ -126,11 +149,11 @@ describe('TeamPackScreen', () => {
   });
 });
 
-function makeData(balance = 1280): CosmeticShopData {
+function makeData(balance = 1280, pack: TeamPackDefinition = FNATIC_TEAM_PACK): CosmeticShopData {
   return {
     balance,
     contract: DEFAULT_MONETIZATION_CONTRACT,
     equipped: EMPTY_EQUIPPED_COSMETICS,
-    items: createTeamPackPreviewItems(),
+    items: createTeamPackPreviewItems(pack),
   };
 }

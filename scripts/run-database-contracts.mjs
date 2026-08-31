@@ -16,6 +16,7 @@ const contractFiles = [
   'supabase/tests/catalog_inventory_equipment_v2.sql',
   'supabase/tests/volts_economy_ledger_v2.sql',
   'supabase/tests/fnatic_team_pack_v1.sql',
+  'supabase/tests/karmine_corp_team_pack_v1.sql',
   'supabase/tests/privacy_analytics_partner_campaign.sql',
   'supabase/tests/founder_pack_iap.sql',
   'supabase/tests/match_result_reliability.sql',

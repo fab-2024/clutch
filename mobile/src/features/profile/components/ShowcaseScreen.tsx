@@ -16,6 +16,7 @@ import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import { equipCosmetic, loadCosmeticShop } from '@/src/features/shop/api';
 import { applyPreviewAtelierAction, resolveAtelierSceneConfig } from '@/src/features/shop/atelierState';
+import { createPresenterRoomAssignments } from '@/src/features/shop/showcasePresenterAssignments';
 import {
   DEFAULT_SHOWCASE_PRESENTER_ID,
   showcasePresenterById,
@@ -26,7 +27,7 @@ import {
   showcaseRankDisplayById,
 } from '@/src/features/shop/showcaseRankDisplayCatalog';
 import { showcaseRoomById } from '@/src/features/shop/showcaseRoomCatalog';
-import { FNATIC_TEAM_PACK, teamPackItemById } from '@/src/features/shop/teamPackCatalog';
+import { teamPackItemById } from '@/src/features/shop/teamPackCatalog';
 import type { CosmeticItem, CosmeticShopData, EquippedCosmetics } from '@/src/features/shop/types';
 import { resolveEquippedAchievementBadges } from '@/src/features/profile/achievementBadges/equipment';
 import { useAchievementBadgeEquipment } from '@/src/features/profile/achievementBadges/useAchievementBadgeEquipment';
@@ -51,12 +52,9 @@ import ShowcaseRoomEditorScene from './showcase/ShowcaseRoomEditorScene';
 import ShowcaseRoomScene from './showcase/ShowcaseRoomScene';
 import ShowcaseTopNavigation from './showcase/ShowcaseTopNavigation';
 import {
-  createDefaultShowcaseRoomAssignments,
   createEmptyShowcaseRoomAssignments,
   type ShowcasePlaceableItem,
   type ShowcasePlaceableKind,
-  type ShowcaseRoomAssignments,
-  type ShowcaseRoomSlotDefinition,
   type ShowcaseRoomSlotId,
 } from './showcase/roomEditor';
 import type {
@@ -288,10 +286,9 @@ export default function ShowcaseScreen({
     setActiveRoomSlot(null);
     setRoomAssignments(createPresenterRoomAssignments(
       placeableItems,
-      activeSlots,
       presenter.id,
     ));
-  }, [activeSlots, assignmentLayoutKey, placeableItems, presenter.id]);
+  }, [assignmentLayoutKey, placeableItems, presenter.id]);
 
   function changePresenter(nextId: string) {
     const next = showcasePresenterById(nextId);
@@ -372,9 +369,17 @@ export default function ShowcaseScreen({
           {section === 'showcase' ? (
             <ShowcaseRoomEditorScene
               assignments={roomAssignments}
+              atmosphereActive={atmosphereActive && !loading}
+              atmosphereQuality={atmosphereQualityOverride}
+              cosmetics={cosmetics}
+              favoriteTeam={profileData?.favoriteTeam}
               lighting={lighting}
+              onAtmospherePerformanceReport={onAtmospherePerformanceReport}
               onSlotPress={setActiveRoomSlot}
+              rankAccent={rankAccent}
               rankDisplay={rankDisplay}
+              rankOrder={profileData?.ranking.grade.ordre}
+              reduceMotion={reduceMotion}
               room={editableScene}
               slots={activeSlots}
             />
@@ -540,23 +545,6 @@ function physicalAssetForKind(kind: ShowcasePlaceableKind) {
     return SHOWCASE_COLLECTIBLE_ASSETS[kind];
   }
   return undefined;
-}
-
-function createPresenterRoomAssignments(
-  items: readonly ShowcasePlaceableItem[],
-  slots: readonly ShowcaseRoomSlotDefinition[],
-  presenterId: string,
-): ShowcaseRoomAssignments {
-  const assignments = createDefaultShowcaseRoomAssignments(items, slots);
-  if (presenterId !== 'fnatic-pedestals') return assignments;
-
-  const itemById = new Map(items.map((item) => [item.id, item]));
-  FNATIC_TEAM_PACK.items.forEach((definition) => {
-    if (!definition.roomSlot) return;
-    const item = itemById.get(`cosmetic:${definition.id}`);
-    if (item) assignments[definition.roomSlot] = item;
-  });
-  return assignments;
 }
 
 function resolveEquipped(shop: CosmeticShopData | null, fallback?: EquippedCosmetics | null) {

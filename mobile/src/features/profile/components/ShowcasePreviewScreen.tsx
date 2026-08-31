@@ -6,6 +6,10 @@ import { PREVIEW_SHOP } from '@/src/features/shop/components/ShopPreviewScreen';
 import {
   applyPreviewTeamPackAction,
   createTeamPackPreviewItems,
+  FNATIC_TEAM_PACK,
+  KC_TEAM_PACK,
+  teamPackById,
+  type TeamPackDefinition,
 } from '@/src/features/shop/teamPackCatalog';
 import { EMPTY_EQUIPPED_COSMETICS, type CosmeticShopData } from '@/src/features/shop/types';
 import { colors, typography } from '@/src/theme';
@@ -56,6 +60,7 @@ export default function ShowcasePreviewScreen() {
   const params = useLocalSearchParams<{
     diagnostics?: string | string[];
     mood?: string | string[];
+    packId?: string | string[];
     quality?: string | string[];
     reduced?: string | string[];
   }>();
@@ -65,7 +70,7 @@ export default function ShowcasePreviewScreen() {
   const quality = previewQuality(readParam(params.quality));
   const reduceMotion = readParam(params.reduced) === '1';
   const diagnostics = readParam(params.diagnostics) === '1';
-  const preview = showcasePreviewForMood(mood);
+  const preview = showcasePreviewForMood(mood, readParam(params.packId));
 
   return (
     <View style={styles.root}>
@@ -91,17 +96,19 @@ export default function ShowcasePreviewScreen() {
   );
 }
 
-type ShowcasePreviewMood = 'fnatic' | 'minimal' | 'mythic' | 'standard';
+type ShowcasePreviewMood = 'fnatic' | 'kc' | 'minimal' | 'mythic' | 'standard';
 
-function showcasePreviewForMood(mood: ShowcasePreviewMood) {
-  if (mood === 'fnatic') {
+export function showcasePreviewForMood(mood: ShowcasePreviewMood, packId?: string) {
+  const pack = teamPackById(packId)
+    ?? (mood === 'fnatic' ? FNATIC_TEAM_PACK : mood === 'kc' ? KC_TEAM_PACK : null);
+  if (pack) {
     const packShop = applyPreviewTeamPackAction({
       ...SHOWCASE_SHOP,
       balance: 1_280,
-      items: [...SHOWCASE_SHOP.items, ...createTeamPackPreviewItems()],
-    });
+      items: [...SHOWCASE_SHOP.items, ...createTeamPackPreviewItems(pack)],
+    }, pack);
     return {
-      profile: PREVIEW_PROFILE,
+      profile: previewProfileForPack(pack),
       shop: packShop,
     };
   }
@@ -196,8 +203,21 @@ function showcasePreviewForMood(mood: ShowcasePreviewMood) {
 }
 
 function previewMood(value?: string): ShowcasePreviewMood {
-  if (value === 'fnatic' || value === 'minimal' || value === 'mythic') return value;
+  if (value === 'fnatic' || value === 'kc' || value === 'minimal' || value === 'mythic') return value;
   return 'standard';
+}
+
+function previewProfileForPack(pack: TeamPackDefinition) {
+  if (pack.id !== KC_TEAM_PACK.id) return PREVIEW_PROFILE;
+  return {
+    ...PREVIEW_PROFILE,
+    favoriteTeam: {
+      ...PREVIEW_PROFILE.favoriteTeam!,
+      id: 'kc',
+      nom: 'Karmine Corp',
+      tag: 'KC',
+    },
+  };
 }
 
 function previewQuality(value?: string): ShowcaseAtmosphereQuality {

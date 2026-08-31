@@ -40,4 +40,12 @@ describe('showcase lighting directions', () => {
     });
     expect(SHOWCASE_CUSTOMIZABLE_LIGHTINGS).not.toContain('orange');
   });
+
+  it('keeps the KC Blue Wall lighting exclusive to the equipped pack', () => {
+    expect(SHOWCASE_LIGHTING_VISUALS.blue).toMatchObject({
+      glow: '#168DFF',
+      label: 'BLUE WALL',
+    });
+    expect(SHOWCASE_CUSTOMIZABLE_LIGHTINGS).not.toContain('blue');
+  });
 });

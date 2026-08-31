@@ -14,6 +14,7 @@ export type ShowcasePresenterDefinition = {
   id: string;
   image: ImageSourcePropType;
   name: string;
+  packId?: string;
   packOnly?: boolean;
   pedestal: ShowcasePedestalSkin;
   price: number;
@@ -91,6 +92,19 @@ const FNATIC_TEAM_PACK_SLOTS = [
   { id: 'right-free', label: 'Carte de partage Fnatic', preferredKind: 'banner', left: '94%', top: '41%', width: '6%', height: '37%' },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
+const KC_TEAM_PACK_SLOTS = [
+  { id: 'left-free', label: 'Cadre KC', preferredKind: 'frame', left: '2%', top: '39%', width: '8%', height: '39%' },
+  { id: 'jersey', label: 'Maillot KC', preferredKind: 'jersey', left: '11%', top: '27%', width: '13%', height: '51%' },
+  { id: 'trophy', label: 'Totem KC', preferredKind: 'trophy', left: '25%', top: '38%', width: '9%', height: '40%' },
+  { id: 'left-extra', label: 'Bannière Blue Wall', preferredKind: 'banner', left: '34%', top: '39%', width: '8%', height: '39%' },
+  { id: 'rank', label: 'Rang central', preferredKind: 'rank', left: '41%', top: '18%', width: '18%', height: '61%' },
+  { id: 'badge', label: 'Badge KC', preferredKind: 'badge', left: '60%', top: '35%', width: '10%', height: '43%' },
+  { id: 'title', label: 'Titre Blue Wall', preferredKind: 'title', left: '70%', top: '44%', width: '10%', height: '34%' },
+  { id: 'ring', label: 'Jeton KC', preferredKind: 'ring', left: '80%', top: '48%', width: '8%', height: '30%' },
+  { id: 'right-extra', label: 'Logo 3D KC', preferredKind: 'core', left: '88%', top: '41%', width: '6%', height: '37%' },
+  { id: 'right-free', label: 'Carte de partage KC', preferredKind: 'banner', left: '94%', top: '41%', width: '6%', height: '37%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
+
 export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] = [
   {
     id: 'supports_gallery',
@@ -164,11 +178,25 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     description: 'Dix emplacements noirs et orange conçus pour le pack officiel Fnatic.',
     accent: '#FF5900',
     image: require('../../../assets/shop/team-packs/fnatic/fnatic-black-orange-room-empty.png'),
+    packId: 'fnatic-black-orange',
     packOnly: true,
     pedestal: 'obsidian',
     price: 0,
     rarity: 'legendaire',
     slots: FNATIC_TEAM_PACK_SLOTS,
+  },
+  {
+    id: 'kc-pedestals',
+    name: 'Karmine Corp Blue Wall',
+    description: 'Dix emplacements noir et bleu conçus pour le pack officiel Karmine Corp.',
+    accent: '#168DFF',
+    image: require('../../../assets/shop/team-packs/kc/kc-blue-wall-room-empty.png'),
+    packId: 'kc-blue-wall',
+    packOnly: true,
+    pedestal: 'obsidian',
+    price: 0,
+    rarity: 'legendaire',
+    slots: KC_TEAM_PACK_SLOTS,
   },
 ] as const;
 

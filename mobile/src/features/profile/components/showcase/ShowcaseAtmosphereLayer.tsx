@@ -166,6 +166,11 @@ function ShowcaseAtmosphereCanvas({
         withTiming(1, { duration: 350, easing: Easing.out(Easing.quad) }),
         withTiming(0, { duration: 850, easing: Easing.inOut(Easing.quad) }),
       );
+    } else if (atmosphere.effect === 'blue-wall') {
+      impulse.value = withSequence(
+        withTiming(1, { duration: 450, easing: Easing.out(Easing.quad) }),
+        withTiming(0, { duration: 750, easing: Easing.inOut(Easing.quad) }),
+      );
     }
     return () => cancelAnimation(impulse);
   }, [atmosphere.effect, impulse]);
@@ -180,6 +185,9 @@ function ShowcaseAtmosphereCanvas({
   ));
   const sweepStart = useDerivedValue(() => vec(sweepX.value, 0));
   const sweepEnd = useDerivedValue(() => vec(sweepX.value + 190, 0));
+  const blueWallOpacity = useDerivedValue(() => 0.12 + impulse.value * 0.72);
+  const blueWallWidth = useDerivedValue(() => 320 + impulse.value * 500);
+  const blueWallX = useDerivedValue(() => 500 - blueWallWidth.value / 2);
 
   return (
     <>
@@ -241,6 +249,30 @@ function ShowcaseAtmosphereCanvas({
               />
             </Rect>
           </Group>
+
+          {atmosphere.effect === 'blue-wall' ? (
+            <Group blendMode="screen" opacity={blueWallOpacity}>
+              <Rect height={5} width={blueWallWidth} x={blueWallX} y={286}>
+                <LinearGradient
+                  colors={['rgba(0,0,0,0)', '#168DFF', '#B9E3FF', '#168DFF', 'rgba(0,0,0,0)']}
+                  end={vec(910, 286)}
+                  positions={[0, 0.22, 0.5, 0.78, 1]}
+                  start={vec(90, 286)}
+                />
+              </Rect>
+              {[-196, -140, -84, -28, 28, 84, 140, 196].map((offset) => (
+                <Rect
+                  color={offset % 84 === 0 ? '#B9E3FF' : '#168DFF'}
+                  height={190 - Math.abs(offset) * 0.3}
+                  key={`blue-wall-column-${offset}`}
+                  opacity={0.5}
+                  width={2}
+                  x={500 + offset}
+                  y={96 + Math.abs(offset) * 0.14}
+                />
+              ))}
+            </Group>
+          ) : null}
 
           {DUST.slice(0, atmosphere.dustCount).map((particle, index) => (
             <AtmosphereDust

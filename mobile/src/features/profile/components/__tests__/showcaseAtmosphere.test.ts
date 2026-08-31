@@ -96,6 +96,44 @@ describe('showcase adaptive atmosphere', () => {
     });
   });
 
+  it('uses the KC Blue Wall propagation profile with a reduced-motion fallback', () => {
+    const atmosphere = resolveShowcaseAtmosphere({
+      cosmetics: {
+        ...EMPTY_EQUIPPED_COSMETICS,
+        factionEffect: {
+          accent: '#168DFF',
+          description: '',
+          id: 'kc-blue-wall-effect',
+          level: 1,
+          name: 'Effet Blue Wall',
+          rarity: 'legendaire',
+          slot: 'effet_faction',
+          styleKey: 'kc-blue-wall-effect',
+        },
+      },
+      favoriteTeam: null,
+      lightingAccent: '#168DFF',
+      rankAccent: '#B87845',
+      rankOrder: 0,
+    });
+
+    expect(atmosphere).toMatchObject({
+      cosmeticColor: '#168DFF',
+      driftDurationMs: 14_000,
+      dustCount: 9,
+      effect: 'blue-wall',
+      intensity: 0.39,
+    });
+    expect(resolveShowcaseAtmosphereMode({
+      active: true,
+      fullScreen: true,
+      performanceStatus: 'passed',
+      platform: 'ios',
+      quality: 'auto',
+      reduceMotion: true,
+    })).toEqual({ kind: 'static', reason: 'reduced-motion' });
+  });
+
   it('raises density modestly for a mythic rank and legendary object', () => {
     const atmosphere = resolveShowcaseAtmosphere({
       cosmetics: {

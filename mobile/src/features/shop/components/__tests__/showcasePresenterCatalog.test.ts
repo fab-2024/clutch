@@ -7,7 +7,7 @@ import {
 } from '../../showcasePresenterCatalog';
 
 describe('showcase presenter catalog', () => {
-  it('keeps the approved presenters and the Fnatic pack scene in visual order', () => {
+  it('keeps the approved presenters and both team-pack scenes in visual order', () => {
     expect(SHOWCASE_PRESENTER_CATALOG.map((presenter) => presenter.id)).toEqual([
       'supports_gallery',
       'supports_forge',
@@ -16,6 +16,7 @@ describe('showcase presenter catalog', () => {
       'supports_vault',
       'supports_champagne',
       'fnatic-pedestals',
+      'kc-pedestals',
     ]);
     expect(SHOWCASE_PRESENTER_CATALOG.map((presenter) => presenter.slots.length)).toEqual([
       8,
@@ -25,7 +26,18 @@ describe('showcase presenter catalog', () => {
       10,
       6,
       10,
+      10,
     ]);
+  });
+
+  it('exposes ten clickable slots linked to the KC Blue Wall pack', () => {
+    expect(showcasePresenterById('kc-pedestals')).toMatchObject({
+      accent: '#168DFF',
+      name: 'Karmine Corp Blue Wall',
+      packId: 'kc-blue-wall',
+      rarity: 'legendaire',
+    });
+    expect(showcasePresenterById('kc-pedestals')?.slots).toHaveLength(10);
   });
 
   it('exposes ten clickable slots for the Fnatic Black & Orange room', () => {
