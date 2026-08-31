@@ -5,6 +5,8 @@ import type { ProfileTeam } from '@/src/features/profile/types';
 
 import {
   evaluateShowcaseAtmospherePerformance,
+  M8_SPARKLE_ARRIVAL_MS,
+  M8_SPARKLE_FILIGREE_MS,
   resolveShowcaseAtmosphere,
   resolveShowcaseAtmosphereMode,
   SHOWCASE_ATMOSPHERE_DROPPED_FRAME_LIMIT,
@@ -132,6 +134,38 @@ describe('showcase adaptive atmosphere', () => {
       quality: 'auto',
       reduceMotion: true,
     })).toEqual({ kind: 'static', reason: 'reduced-motion' });
+  });
+
+  it('uses the M8 filigree and sparkle arrival profile', () => {
+    const atmosphere = resolveShowcaseAtmosphere({
+      cosmetics: {
+        ...EMPTY_EQUIPPED_COSMETICS,
+        factionEffect: {
+          accent: '#B9DCFF',
+          description: '',
+          id: 'm8-sparkle-effect',
+          level: 1,
+          name: 'Effet Éclat M8',
+          rarity: 'legendaire',
+          slot: 'effet_faction',
+          styleKey: 'm8-sparkle-effect',
+        },
+      },
+      favoriteTeam: null,
+      lightingAccent: '#B9DCFF',
+      rankAccent: '#B87845',
+      rankOrder: 0,
+    });
+
+    expect(atmosphere).toMatchObject({
+      cosmeticColor: '#B9DCFF',
+      driftDurationMs: 10_000,
+      dustCount: 8,
+      effect: 'm8-sparkle',
+      intensity: 0.39,
+    });
+    expect(M8_SPARKLE_FILIGREE_MS).toBe(400);
+    expect(M8_SPARKLE_ARRIVAL_MS).toBe(1_100);
   });
 
   it('raises density modestly for a mythic rank and legendary object', () => {

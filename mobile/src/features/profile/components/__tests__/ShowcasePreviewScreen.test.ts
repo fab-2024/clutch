@@ -65,4 +65,21 @@ describe('ShowcasePreviewScreen team-pack moods', () => {
     expect(preview.shop.equipped.showcase.supports?.id).toBe('fnatic-pedestals');
     expect(preview.shop.equipped.factionEffect?.id).toBe('fnatic-embers');
   });
+
+  it('builds the M8 Gentle Mates Paris showcase with its dedicated mood', () => {
+    const preview = showcasePreviewForMood('m8', 'm8-gentle-mates');
+
+    expect(preview.profile.favoriteTeam).toMatchObject({
+      id: 'm8',
+      nom: 'Gentle Mates',
+      tag: 'M8',
+    });
+    expect(preview.shop.items.filter((item) => item.collectionKey === 'm8-gentle-mates')).toHaveLength(12);
+    expect(preview.shop.equipped.showcase).toMatchObject({
+      jersey: expect.objectContaining({ id: 'm8-jersey' }),
+      lighting: expect.objectContaining({ id: 'm8-room-lighting' }),
+      supports: expect.objectContaining({ id: 'm8-pedestals' }),
+    });
+    expect(preview.shop.equipped.factionEffect?.id).toBe('m8-sparkle-effect');
+  });
 });

@@ -5,6 +5,7 @@ import {
   createTeamPackPreviewItems,
   FNATIC_TEAM_PACK,
   KC_TEAM_PACK,
+  M8_TEAM_PACK,
   TEAM_PACK_CATALOG,
   teamPackById,
   teamPackPrimaryAction,
@@ -45,6 +46,21 @@ const KC_EXPECTED_IDS = [
   'kc-blue-wall-effect',
   'kc-share-card',
   'kc-title',
+];
+
+const M8_EXPECTED_IDS = [
+  'm8-room-lighting',
+  'm8-jersey',
+  'm8-crest-3d',
+  'm8-banner',
+  'm8-pedestals',
+  'm8-supporter-token',
+  'm8-crest-totem',
+  'm8-supporter-badge',
+  'm8-profile-frame',
+  'm8-sparkle-effect',
+  'm8-share-card',
+  'm8-title',
 ];
 
 describe('Fnatic team pack catalogue', () => {
@@ -98,10 +114,11 @@ describe('Fnatic team pack catalogue', () => {
 });
 
 describe('Karmine Corp team pack catalogue', () => {
-  it('publishes both official team packs and the twelve Blue Wall objects', () => {
+  it('publishes the official team packs and the twelve Blue Wall objects', () => {
     expect(TEAM_PACK_CATALOG.map((pack) => pack.id)).toEqual([
       'fnatic-black-orange',
       'kc-blue-wall',
+      'm8-gentle-mates',
     ]);
     expect(teamPackById('kc-blue-wall')).toBe(KC_TEAM_PACK);
     expect(KC_TEAM_PACK.price).toBe(FNATIC_TEAM_PACK.price);
@@ -129,6 +146,41 @@ describe('Karmine Corp team pack catalogue', () => {
     expect(next.equipped.showcase.supports?.id).toBe('kc-pedestals');
     expect(next.equipped.factionEffect?.id).toBe('kc-blue-wall-effect');
     expect(teamPackPrimaryAction(KC_TEAM_PACK, next)).toBe('equipped');
+  });
+});
+
+describe('M8 team pack catalogue', () => {
+  it('publishes the twelve Gentle Mates Paris cosmetics with the agreed rarity mix', () => {
+    expect(teamPackById('m8-gentle-mates')).toBe(M8_TEAM_PACK);
+    expect(M8_TEAM_PACK.price).toBe(1200);
+    expect(M8_TEAM_PACK.brandKey).toBe('m8');
+    expect(M8_TEAM_PACK.items.map((item) => item.id)).toEqual(M8_EXPECTED_IDS);
+    expect(M8_TEAM_PACK.items.every((item) => COSMETIC_SLOTS.includes(item.slot))).toBe(true);
+    expect(M8_TEAM_PACK.items.filter((item) => item.rarity === 'legendaire')).toHaveLength(3);
+    expect(M8_TEAM_PACK.items.filter((item) => item.rarity === 'epique')).toHaveLength(7);
+    expect(M8_TEAM_PACK.items.filter((item) => item.rarity === 'rare')).toHaveLength(2);
+  });
+
+  it('buys and equips the eight M8 defaults atomically', () => {
+    const initial = makeData(1280, M8_TEAM_PACK);
+    const next = applyPreviewTeamPackAction(initial, M8_TEAM_PACK);
+
+    expect(next.balance).toBe(80);
+    expect(next.items.every((item) => item.owned)).toBe(true);
+    expect(next.items.filter((item) => item.equipped).map((item) => item.id)).toEqual([
+      'm8-room-lighting',
+      'm8-jersey',
+      'm8-crest-3d',
+      'm8-pedestals',
+      'm8-profile-frame',
+      'm8-sparkle-effect',
+      'm8-share-card',
+      'm8-title',
+    ]);
+    expect(next.equipped.showcase.lighting?.id).toBe('m8-room-lighting');
+    expect(next.equipped.showcase.supports?.id).toBe('m8-pedestals');
+    expect(next.equipped.factionEffect?.id).toBe('m8-sparkle-effect');
+    expect(teamPackPrimaryAction(M8_TEAM_PACK, next)).toBe('equipped');
   });
 });
 

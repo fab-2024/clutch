@@ -1,7 +1,11 @@
 /// <reference types="jest" />
 
 import { createAtelierPreviewItems } from '../../atelierCatalog';
-import { createTeamPackPreviewItems, KC_TEAM_PACK } from '../../teamPackCatalog';
+import {
+  createTeamPackPreviewItems,
+  KC_TEAM_PACK,
+  M8_TEAM_PACK,
+} from '../../teamPackCatalog';
 import {
   applyAtelierTry,
   applyPreviewAtelierAction,
@@ -104,6 +108,25 @@ describe('showcase Atelier state', () => {
     })).toMatchObject({
       lighting: 'blue',
       presenterId: 'kc-pedestals',
+    });
+  });
+
+  it('activates the pack-only M8 room and silver lighting', () => {
+    const items = createTeamPackPreviewItems(M8_TEAM_PACK);
+    const lighting = items.find((item) => item.id === 'm8-room-lighting');
+    const pedestals = items.find((item) => item.id === 'm8-pedestals');
+    if (!lighting || !pedestals) throw new Error('Missing M8 preview fixtures');
+
+    expect(resolveAtelierSceneConfig({
+      ...EMPTY_EQUIPPED_COSMETICS,
+      showcase: {
+        ...EMPTY_EQUIPPED_COSMETICS.showcase,
+        lighting: asEquipped(lighting),
+        supports: asEquipped(pedestals),
+      },
+    })).toMatchObject({
+      lighting: 'silver',
+      presenterId: 'm8-pedestals',
     });
   });
 });

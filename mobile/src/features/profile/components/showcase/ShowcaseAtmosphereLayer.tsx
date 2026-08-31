@@ -36,6 +36,8 @@ import {
   SHOWCASE_ATMOSPHERE_FPS_FLOOR,
   SHOWCASE_ATMOSPHERE_SAMPLE_DURATION_MS,
   SHOWCASE_ATMOSPHERE_SAMPLE_WARMUP_MS,
+  M8_SPARKLE_ARRIVAL_MS,
+  M8_SPARKLE_FILIGREE_MS,
   type ShowcaseAtmosphere,
   type ShowcaseAtmospherePerformanceReport,
   type ShowcaseAtmospherePerformanceStatus,
@@ -171,6 +173,15 @@ function ShowcaseAtmosphereCanvas({
         withTiming(1, { duration: 450, easing: Easing.out(Easing.quad) }),
         withTiming(0, { duration: 750, easing: Easing.inOut(Easing.quad) }),
       );
+    } else if (atmosphere.effect === 'm8-sparkle') {
+      impulse.value = withSequence(
+        withTiming(0.42, { duration: M8_SPARKLE_FILIGREE_MS, easing: Easing.out(Easing.quad) }),
+        withTiming(1, {
+          duration: M8_SPARKLE_ARRIVAL_MS - M8_SPARKLE_FILIGREE_MS,
+          easing: Easing.out(Easing.cubic),
+        }),
+        withTiming(0, { duration: 350, easing: Easing.inOut(Easing.quad) }),
+      );
     }
     return () => cancelAnimation(impulse);
   }, [atmosphere.effect, impulse]);
@@ -188,6 +199,15 @@ function ShowcaseAtmosphereCanvas({
   const blueWallOpacity = useDerivedValue(() => 0.12 + impulse.value * 0.72);
   const blueWallWidth = useDerivedValue(() => 320 + impulse.value * 500);
   const blueWallX = useDerivedValue(() => 500 - blueWallWidth.value / 2);
+  const m8IdleSparkle = useDerivedValue(() => (
+    Math.pow(Math.max(0, Math.sin(phase.value * Math.PI * 2)), 18) * 0.34
+  ));
+  const m8FiligreeOpacity = useDerivedValue(() => (
+    Math.min(1, impulse.value / 0.42) * 0.42 + m8IdleSparkle.value * 0.24
+  ));
+  const m8StarOpacity = useDerivedValue(() => (
+    Math.max(0, (impulse.value - 0.3) / 0.7) * 0.92 + m8IdleSparkle.value
+  ));
 
   return (
     <>
@@ -271,6 +291,45 @@ function ShowcaseAtmosphereCanvas({
                   y={96 + Math.abs(offset) * 0.14}
                 />
               ))}
+            </Group>
+          ) : null}
+
+          {atmosphere.effect === 'm8-sparkle' ? (
+            <Group blendMode="screen">
+              <Group opacity={m8FiligreeOpacity}>
+                <Circle
+                  color="#B9DCFF"
+                  cx={500}
+                  cy={335}
+                  r={205}
+                  style="stroke"
+                  strokeWidth={2}
+                />
+                <Circle
+                  color="#EAF5FF"
+                  cx={500}
+                  cy={335}
+                  r={142}
+                  style="stroke"
+                  strokeWidth={1}
+                />
+                <Rect color="#B9DCFF" height={1} opacity={0.72} width={520} x={240} y={334} />
+              </Group>
+              <Group opacity={m8StarOpacity}>
+                <Circle cx={500} cy={103} r={64}>
+                  <RadialGradient
+                    c={vec(500, 103)}
+                    colors={['rgba(234,245,255,.72)', 'rgba(185,220,255,.18)', 'rgba(0,0,0,0)']}
+                    positions={[0, 0.38, 1]}
+                    r={64}
+                  />
+                </Circle>
+                <Rect color="#F7FBFF" height={116} width={3} x={498.5} y={45} />
+                <Rect color="#F7FBFF" height={3} width={116} x={442} y={101.5} />
+                <Circle color="#FFFFFF" cx={500} cy={103} r={5} />
+                <Circle color="#DDEEFF" cx={277} cy={133} r={2.2} />
+                <Circle color="#DDEEFF" cx={742} cy={151} r={2.4} />
+              </Group>
             </Group>
           ) : null}
 

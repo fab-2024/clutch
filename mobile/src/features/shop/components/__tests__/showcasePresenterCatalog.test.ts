@@ -7,7 +7,7 @@ import {
 } from '../../showcasePresenterCatalog';
 
 describe('showcase presenter catalog', () => {
-  it('keeps the approved presenters and both team-pack scenes in visual order', () => {
+  it('keeps the approved presenters and team-pack scenes in visual order', () => {
     expect(SHOWCASE_PRESENTER_CATALOG.map((presenter) => presenter.id)).toEqual([
       'supports_gallery',
       'supports_forge',
@@ -17,6 +17,7 @@ describe('showcase presenter catalog', () => {
       'supports_champagne',
       'fnatic-pedestals',
       'kc-pedestals',
+      'm8-pedestals',
     ]);
     expect(SHOWCASE_PRESENTER_CATALOG.map((presenter) => presenter.slots.length)).toEqual([
       8,
@@ -25,6 +26,7 @@ describe('showcase presenter catalog', () => {
       8,
       10,
       6,
+      10,
       10,
       10,
     ]);
@@ -47,6 +49,16 @@ describe('showcase presenter catalog', () => {
       rarity: 'legendaire',
     });
     expect(showcasePresenterById('fnatic-pedestals')?.slots).toHaveLength(10);
+  });
+
+  it('exposes ten clickable slots linked to the M8 Gentle Mates Paris pack', () => {
+    expect(showcasePresenterById('m8-pedestals')).toMatchObject({
+      accent: '#B9DCFF',
+      name: 'M8 Gentle Mates Paris',
+      packId: 'm8-gentle-mates',
+      rarity: 'legendaire',
+    });
+    expect(showcasePresenterById('m8-pedestals')?.slots).toHaveLength(10);
   });
 
   it('keeps every placement independently clickable inside each presenter', () => {

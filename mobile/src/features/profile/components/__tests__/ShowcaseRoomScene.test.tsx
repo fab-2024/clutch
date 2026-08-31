@@ -12,6 +12,7 @@ import {
   createTeamPackPreviewItems,
   FNATIC_TEAM_PACK,
   KC_TEAM_PACK,
+  M8_TEAM_PACK,
 } from '@/src/features/shop/teamPackCatalog';
 import {
   DEFAULT_MONETIZATION_CONTRACT,
@@ -174,6 +175,64 @@ describe('Showcase room composition', () => {
 
     expect(screen.getByTestId('showcase-atmosphere-active')).toBeTruthy();
     expect(screen.getByLabelText('Atmosphère kc-blue-wall-effect, mouvements réduits')).toBeTruthy();
+    expect(screen.getAllByTestId(/^showcase-room-slot-/)).toHaveLength(10);
+    await fireEvent.press(screen.getByTestId('showcase-room-slot-left-free'));
+    await fireEvent.press(screen.getByTestId('showcase-room-slot-right-free'));
+    expect(onSlotPress.mock.calls).toEqual([['left-free'], ['right-free']]);
+  });
+
+  it('auto-assigns nine M8 collectibles plus the rank across ten clickable slots', async () => {
+    const presenter = SHOWCASE_PRESENTER_CATALOG.find((candidate) => candidate.id === 'm8-pedestals');
+    if (!presenter) throw new Error('Missing M8 presenter');
+    const equippedShop = applyPreviewTeamPackAction({
+      balance: M8_TEAM_PACK.price,
+      contract: DEFAULT_MONETIZATION_CONTRACT,
+      equipped: EMPTY_EQUIPPED_COSMETICS,
+      items: createTeamPackPreviewItems(M8_TEAM_PACK),
+    }, M8_TEAM_PACK);
+    const items: ShowcasePlaceableItem[] = M8_TEAM_PACK.items.flatMap((item) => (
+      item.roomKind
+        ? [{
+          accent: item.accent,
+          id: `cosmetic:${item.id}`,
+          image: item.image,
+          kind: item.roomKind,
+          name: item.name,
+        }]
+        : []
+    ));
+    items.push({ accent: '#B87845', id: 'rank:bronze', kind: 'rank', name: 'Bronze' });
+    const assignments = createPresenterRoomAssignments(items, presenter.id);
+
+    expect(Object.values(assignments).filter(Boolean)).toHaveLength(10);
+    expect(assignments['left-free']?.id).toBe('cosmetic:m8-profile-frame');
+    expect(assignments.jersey?.id).toBe('cosmetic:m8-jersey');
+    expect(assignments['right-extra']?.id).toBe('cosmetic:m8-crest-3d');
+    expect(assignments.rank?.id).toBe('rank:bronze');
+
+    const onSlotPress = jest.fn();
+    const screen = await render(
+      <ShowcaseRoomEditorScene
+        assignments={assignments}
+        atmosphereActive
+        cosmetics={equippedShop.equipped}
+        favoriteTeam={{
+          ...PREVIEW_PROFILE.favoriteTeam!,
+          id: 'm8',
+          nom: 'Gentle Mates',
+          tag: 'M8',
+        }}
+        lighting="silver"
+        onSlotPress={onSlotPress}
+        rankAccent="#B87845"
+        rankOrder={0}
+        reduceMotion
+        room={presenter}
+        slots={presenter.slots}
+      />,
+    );
+
+    expect(screen.getByLabelText('Atmosphère m8-sparkle-effect, mouvements réduits')).toBeTruthy();
     expect(screen.getAllByTestId(/^showcase-room-slot-/)).toHaveLength(10);
     await fireEvent.press(screen.getByTestId('showcase-room-slot-left-free'));
     await fireEvent.press(screen.getByTestId('showcase-room-slot-right-free'));

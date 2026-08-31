@@ -61,48 +61,51 @@ describe('team pack shop API', () => {
     });
   });
 
-  it('forwards the Karmine Corp pack id to the existing atomic RPCs', async () => {
-    supabase.rpc
-      .mockResolvedValueOnce({
-        data: {
-          pack: 'kc-blue-wall',
-          solde: 80,
-          achete: true,
-          equipe: true,
-          nombre_objets: 12,
-        },
-        error: null,
-      })
-      .mockResolvedValueOnce({
-        data: {
-          pack_id: 'kc-blue-wall',
-          solde: 80,
-          achete: false,
-          equipe: true,
-          objets: new Array(12).fill('objet'),
-        },
-        error: null,
-      });
+  it.each(['kc-blue-wall', 'm8-gentle-mates'])(
+    'forwards the %s pack id to the existing atomic RPCs',
+    async (packId) => {
+      supabase.rpc
+        .mockResolvedValueOnce({
+          data: {
+            pack: packId,
+            solde: 80,
+            achete: true,
+            equipe: true,
+            nombre_objets: 12,
+          },
+          error: null,
+        })
+        .mockResolvedValueOnce({
+          data: {
+            pack_id: packId,
+            solde: 80,
+            achete: false,
+            equipe: true,
+            objets: new Array(12).fill('objet'),
+          },
+          error: null,
+        });
 
-    await expect(purchaseCosmeticPack('kc-blue-wall')).resolves.toMatchObject({
-      packId: 'kc-blue-wall',
-      purchased: true,
-      equipped: true,
-      itemCount: 12,
-    });
-    await expect(equipCosmeticPack('kc-blue-wall')).resolves.toMatchObject({
-      packId: 'kc-blue-wall',
-      purchased: false,
-      equipped: true,
-      itemCount: 12,
-    });
-    expect(supabase.rpc).toHaveBeenNthCalledWith(1, 'clutch_acheter_pack_cosmetique_v1', {
-      p_pack_id: 'kc-blue-wall',
-    });
-    expect(supabase.rpc).toHaveBeenNthCalledWith(2, 'clutch_equiper_pack_cosmetique_v1', {
-      p_pack_id: 'kc-blue-wall',
-    });
-  });
+      await expect(purchaseCosmeticPack(packId)).resolves.toMatchObject({
+        packId,
+        purchased: true,
+        equipped: true,
+        itemCount: 12,
+      });
+      await expect(equipCosmeticPack(packId)).resolves.toMatchObject({
+        packId,
+        purchased: false,
+        equipped: true,
+        itemCount: 12,
+      });
+      expect(supabase.rpc).toHaveBeenNthCalledWith(1, 'clutch_acheter_pack_cosmetique_v1', {
+        p_pack_id: packId,
+      });
+      expect(supabase.rpc).toHaveBeenNthCalledWith(2, 'clutch_equiper_pack_cosmetique_v1', {
+        p_pack_id: packId,
+      });
+    },
+  );
 
   it('surfaces an RPC error without mutating the response', async () => {
     supabase.rpc.mockResolvedValue({ data: null, error: new Error('network') });

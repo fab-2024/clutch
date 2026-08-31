@@ -65,4 +65,21 @@ describe('TeamPackPreviewScreen', () => {
     }));
     expect(props.previewData.items).toHaveLength(12);
   });
+
+  it('selects the requested M8 pack with its sparkle effect', async () => {
+    mockParams = { packId: 'm8-gentle-mates' };
+    await render(<TeamPackPreviewScreen />);
+
+    const props = mockTeamPackScreen.mock.calls[0][0] as {
+      packId: string;
+      previewData: { items: { id: string }[] };
+    };
+    expect(props).toEqual(expect.objectContaining({
+      packId: 'm8-gentle-mates',
+      previewData: expect.objectContaining({
+        items: expect.arrayContaining([expect.objectContaining({ id: 'm8-sparkle-effect' })]),
+      }),
+    }));
+    expect(props.previewData.items).toHaveLength(12);
+  });
 });

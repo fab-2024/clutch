@@ -7,6 +7,7 @@ import {
   createTeamPackPreviewItems,
   FNATIC_TEAM_PACK,
   KC_TEAM_PACK,
+  M8_TEAM_PACK,
   type TeamPackDefinition,
 } from '../../teamPackCatalog';
 import {
@@ -135,6 +136,24 @@ describe('TeamPackScreen', () => {
     expect(screen.getAllByText('Maillot KC').length).toBeGreaterThan(0);
     expect(screen.getByText('Le maillot noir et bleu de la Karmine Corp, frappé du monogramme blanc.')).toBeTruthy();
     expect(screen.getByText('KARMINE CORP × CLUTCH')).toBeTruthy();
+  });
+
+  it('renders the M8 Gentle Mates Paris hero and twelve inspectable objects', async () => {
+    const screen = await render(
+      <TeamPackScreen packId={M8_TEAM_PACK.id} previewData={makeData(1280, M8_TEAM_PACK)} />,
+    );
+
+    expect(screen.getAllByText('GENTLE MATES PARIS')).toHaveLength(2);
+    expect(screen.getAllByTestId(/^team-pack-item-m8-/)).toHaveLength(12);
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('team-pack-item-m8-jersey'));
+    });
+
+    await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
+    expect(screen.getAllByText('Maillot M8 2026').length).toBeGreaterThan(0);
+    expect(screen.getByText('Le maillot 2026 blanc et bleu de Gentle Mates, inspiré par Paris.')).toBeTruthy();
+    expect(screen.getByText('GENTLE MATES × CLUTCH')).toBeTruthy();
   });
 
   it('makes an insufficient Volt balance explicit', async () => {

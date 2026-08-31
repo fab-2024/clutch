@@ -8,6 +8,7 @@ import {
   createTeamPackPreviewItems,
   FNATIC_TEAM_PACK,
   KC_TEAM_PACK,
+  M8_TEAM_PACK,
   teamPackById,
   type TeamPackDefinition,
 } from '@/src/features/shop/teamPackCatalog';
@@ -96,11 +97,17 @@ export default function ShowcasePreviewScreen() {
   );
 }
 
-type ShowcasePreviewMood = 'fnatic' | 'kc' | 'minimal' | 'mythic' | 'standard';
+type ShowcasePreviewMood = 'fnatic' | 'kc' | 'm8' | 'minimal' | 'mythic' | 'standard';
 
 export function showcasePreviewForMood(mood: ShowcasePreviewMood, packId?: string) {
   const pack = teamPackById(packId)
-    ?? (mood === 'fnatic' ? FNATIC_TEAM_PACK : mood === 'kc' ? KC_TEAM_PACK : null);
+    ?? (mood === 'fnatic'
+      ? FNATIC_TEAM_PACK
+      : mood === 'kc'
+        ? KC_TEAM_PACK
+        : mood === 'm8'
+          ? M8_TEAM_PACK
+          : null);
   if (pack) {
     const packShop = applyPreviewTeamPackAction({
       ...SHOWCASE_SHOP,
@@ -203,19 +210,34 @@ export function showcasePreviewForMood(mood: ShowcasePreviewMood, packId?: strin
 }
 
 function previewMood(value?: string): ShowcasePreviewMood {
-  if (value === 'fnatic' || value === 'kc' || value === 'minimal' || value === 'mythic') return value;
+  if (
+    value === 'fnatic'
+    || value === 'kc'
+    || value === 'm8'
+    || value === 'minimal'
+    || value === 'mythic'
+  ) return value;
   return 'standard';
 }
 
 function previewProfileForPack(pack: TeamPackDefinition) {
-  if (pack.id !== KC_TEAM_PACK.id) return PREVIEW_PROFILE;
+  if (pack.id === KC_TEAM_PACK.id) {
+    return withPreviewTeam({ id: 'kc', name: 'Karmine Corp', tag: 'KC' });
+  }
+  if (pack.id === M8_TEAM_PACK.id) {
+    return withPreviewTeam({ id: 'm8', name: 'Gentle Mates', tag: 'M8' });
+  }
+  return PREVIEW_PROFILE;
+}
+
+function withPreviewTeam(team: { id: string; name: string; tag: string }) {
   return {
     ...PREVIEW_PROFILE,
     favoriteTeam: {
       ...PREVIEW_PROFILE.favoriteTeam!,
-      id: 'kc',
-      nom: 'Karmine Corp',
-      tag: 'KC',
+      id: team.id,
+      nom: team.name,
+      tag: team.tag,
     },
   };
 }

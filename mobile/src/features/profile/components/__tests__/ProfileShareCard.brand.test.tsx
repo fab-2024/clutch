@@ -82,4 +82,32 @@ describe('ProfileShareCard branding', () => {
     expect(screen.getByText('KARMINE CORP // BLUE WALL')).toBeTruthy();
     expect(screen.getByText('CARTE DE PARTAGE KC')).toBeTruthy();
   });
+
+  it('applies the M8 Gentle Mates Paris identity when its share card is equipped', async () => {
+    const screen = await render(
+      <ProfileShareCard
+        accuracy={72}
+        cosmetic={{
+          accent: '#B9DCFF',
+          description: '',
+          id: 'm8-share-card',
+          level: 11,
+          name: 'Carte de partage',
+          rarity: 'epique',
+          slot: 'carte_profil',
+          styleKey: 'm8-share-card',
+        }}
+        frags={1247}
+        grade="Bronze"
+        profileTitle="Gentle Mates Paris"
+        pseudo="FabTheTap"
+        publicProfile
+        rank={381}
+        teamTag="M8"
+      />,
+    );
+
+    expect(screen.getByText('M8 // GENTLE MATES PARIS')).toBeTruthy();
+    expect(screen.getByText('CARTE DE PARTAGE')).toBeTruthy();
+  });
 });

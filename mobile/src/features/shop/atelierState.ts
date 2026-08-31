@@ -139,6 +139,7 @@ function materialTheme(itemId: string): ShowcaseRoomTheme {
 function lightingTone(itemId: string): ShowcaseLighting {
   if (itemId === 'fnatic-room-lighting') return 'orange';
   if (itemId === 'kc-room-lighting') return 'blue';
+  if (itemId === 'm8-room-lighting') return 'silver';
   if (itemId === 'lighting_acid') return 'acid';
   if (itemId === 'lighting_emerald') return 'emerald';
   if (itemId === 'lighting_violet') return 'violet';

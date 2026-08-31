@@ -67,6 +67,14 @@ export default function ShowcaseAtmosphereFallback({
           testID="showcase-blue-wall-static-contour"
         />
       ) : null}
+      {atmosphere.effect === 'm8-sparkle' ? (
+        <View style={styles.m8Star} testID="showcase-m8-static-star">
+          <View style={styles.m8StarGlow} />
+          <View style={[styles.m8StarRay, styles.m8StarRayVertical]} />
+          <View style={[styles.m8StarRay, styles.m8StarRayHorizontal]} />
+          <View style={styles.m8StarCore} />
+        </View>
+      ) : null}
       {STATIC_DUST.slice(0, atmosphere.dustCount).map(([left, top], index) => (
         <View
           key={`static-showcase-dust-${left}-${top}`}
@@ -109,5 +117,43 @@ const styles = StyleSheet.create({
   dust: {
     position: 'absolute',
     borderRadius: 999,
+  },
+  m8Star: {
+    position: 'absolute',
+    top: '12%',
+    left: '50%',
+    width: 80,
+    height: 80,
+    marginLeft: -40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  m8StarCore: {
+    width: 7,
+    height: 7,
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+    boxShadow: '0 0 14px rgba(185,220,255,.9)',
+  },
+  m8StarGlow: {
+    position: 'absolute',
+    width: 58,
+    height: 58,
+    borderRadius: 999,
+    backgroundColor: 'rgba(185,220,255,.13)',
+  },
+  m8StarRay: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: '#EAF5FF',
+    opacity: 0.92,
+  },
+  m8StarRayHorizontal: {
+    width: 70,
+    height: 2,
+  },
+  m8StarRayVertical: {
+    width: 2,
+    height: 70,
   },
 });

@@ -105,6 +105,19 @@ const KC_TEAM_PACK_SLOTS = [
   { id: 'right-free', label: 'Carte de partage KC', preferredKind: 'banner', left: '94%', top: '41%', width: '6%', height: '37%' },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
+const M8_TEAM_PACK_SLOTS = [
+  { id: 'left-free', label: 'Cadre M8', preferredKind: 'frame', left: '2%', top: '39%', width: '8%', height: '39%' },
+  { id: 'jersey', label: 'Maillot M8 2026', preferredKind: 'jersey', left: '11%', top: '27%', width: '13%', height: '51%' },
+  { id: 'trophy', label: 'Figurine blason M8', preferredKind: 'trophy', left: '25%', top: '38%', width: '9%', height: '40%' },
+  { id: 'left-extra', label: 'Bannière Paris', preferredKind: 'banner', left: '34%', top: '39%', width: '8%', height: '39%' },
+  { id: 'rank', label: 'Rang central', preferredKind: 'rank', left: '41%', top: '18%', width: '18%', height: '61%' },
+  { id: 'badge', label: 'Badge M8 supporter', preferredKind: 'badge', left: '60%', top: '35%', width: '10%', height: '43%' },
+  { id: 'title', label: 'Titre Gentle Mates Paris', preferredKind: 'title', left: '70%', top: '44%', width: '10%', height: '34%' },
+  { id: 'ring', label: 'Jeton M8 supporter', preferredKind: 'ring', left: '80%', top: '48%', width: '8%', height: '30%' },
+  { id: 'right-extra', label: 'Blason 3D M8', preferredKind: 'core', left: '88%', top: '41%', width: '6%', height: '37%' },
+  { id: 'right-free', label: 'Carte de partage M8', preferredKind: 'banner', left: '94%', top: '41%', width: '6%', height: '37%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
+
 export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] = [
   {
     id: 'supports_gallery',
@@ -197,6 +210,19 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     price: 0,
     rarity: 'legendaire',
     slots: KC_TEAM_PACK_SLOTS,
+  },
+  {
+    id: 'm8-pedestals',
+    name: 'M8 Gentle Mates Paris',
+    description: 'Dix emplacements bleu nuit et argent conçus pour le pack officiel M8.',
+    accent: '#B9DCFF',
+    image: require('../../../assets/shop/team-packs/m8/m8-gentle-mates-room-empty.png'),
+    packId: 'm8-gentle-mates',
+    packOnly: true,
+    pedestal: 'steel',
+    price: 0,
+    rarity: 'legendaire',
+    slots: M8_TEAM_PACK_SLOTS,
   },
 ] as const;
 

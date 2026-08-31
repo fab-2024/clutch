@@ -10,6 +10,8 @@ export const SHOWCASE_ATMOSPHERE_FPS_FLOOR = 56;
 export const SHOWCASE_ATMOSPHERE_DROPPED_FRAME_LIMIT = 0.1;
 export const SHOWCASE_ATMOSPHERE_SAMPLE_WARMUP_MS = 600;
 export const SHOWCASE_ATMOSPHERE_SAMPLE_DURATION_MS = 2_200;
+export const M8_SPARKLE_FILIGREE_MS = 400;
+export const M8_SPARKLE_ARRIVAL_MS = 1_100;
 
 export type ShowcaseAtmosphereQuality = 'auto' | 'animated' | 'static';
 export type ShowcaseAtmospherePerformanceStatus = 'untested' | 'passed' | 'failed';
@@ -29,7 +31,7 @@ export type ShowcaseAtmosphere = {
   cosmeticColor: string;
   driftDurationMs: number;
   dustCount: number;
-  effect: 'ambient' | 'blue-wall' | 'embers';
+  effect: 'ambient' | 'blue-wall' | 'embers' | 'm8-sparkle';
   intensity: number;
   lightingColor: string;
   rankColor: string;
@@ -63,22 +65,24 @@ export function resolveShowcaseAtmosphere({
     || cosmetics?.factionEffect?.styleKey === 'fnatic-embers';
   const blueWall = cosmetics?.factionEffect?.id === 'kc-blue-wall-effect'
     || cosmetics?.factionEffect?.styleKey === 'kc-blue-wall-effect';
-  const brandedEffect = embers || blueWall;
+  const m8Sparkle = cosmetics?.factionEffect?.id === 'm8-sparkle-effect'
+    || cosmetics?.factionEffect?.styleKey === 'm8-sparkle-effect';
+  const brandedEffect = embers || blueWall || m8Sparkle;
   const intensity = brandedEffect
     ? 0.39
     : clamp(0.22 + safeRankOrder * 0.022 + rarityWeight * 0.018, 0.22, 0.39);
 
   return {
     cosmeticColor: brandedEffect
-      ? (blueWall ? '#168DFF' : '#FF5900')
+      ? (blueWall ? '#168DFF' : m8Sparkle ? '#B9DCFF' : '#FF5900')
       : normalizeHex(signatureCosmetic?.accent, normalizeHex(cosmetics?.core?.accent, rankAccent)),
     driftDurationMs: brandedEffect
-      ? (blueWall ? 14_000 : 12_000)
+      ? (blueWall ? 14_000 : m8Sparkle ? 10_000 : 12_000)
       : clamp(17_000 - safeRankOrder * 480 - rarityWeight * 420, 12_200, 17_000),
     dustCount: brandedEffect
-      ? (blueWall ? 9 : 11)
+      ? (blueWall ? 9 : m8Sparkle ? 8 : 11)
       : clamp(6 + Math.floor(safeRankOrder / 2) + rarityWeight, 6, 11),
-    effect: embers ? 'embers' : blueWall ? 'blue-wall' : 'ambient',
+    effect: embers ? 'embers' : blueWall ? 'blue-wall' : m8Sparkle ? 'm8-sparkle' : 'ambient',
     intensity,
     lightingColor: normalizeHex(lightingAccent, '#31D7E2'),
     rankColor: normalizeHex(rankAccent, '#E8FF3D'),

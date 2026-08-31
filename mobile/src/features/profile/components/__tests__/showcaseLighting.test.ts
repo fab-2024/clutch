@@ -48,4 +48,12 @@ describe('showcase lighting directions', () => {
     });
     expect(SHOWCASE_CUSTOMIZABLE_LIGHTINGS).not.toContain('blue');
   });
+
+  it('keeps the M8 silver lighting exclusive to the equipped pack', () => {
+    expect(SHOWCASE_LIGHTING_VISUALS.silver).toMatchObject({
+      glow: '#B9DCFF',
+      label: 'ÉCLAT M8',
+    });
+    expect(SHOWCASE_CUSTOMIZABLE_LIGHTINGS).not.toContain('silver');
+  });
 });

@@ -129,6 +129,7 @@ function profileCardPalette(styleKey?: string | null, accent?: string | null) {
   const resolvedAccent = /^#[0-9a-f]{6}$/i.test(accent ?? '') ? String(accent).toUpperCase() : colors.volt;
   if (styleKey === 'fnatic-share-card') return { accent: resolvedAccent, border: `${resolvedAccent}A8`, gradient: ['#190A03', '#0B0909', '#050608'] as const, signature: 'FNATIC // BLACK & ORANGE' };
   if (styleKey === 'kc-share-card') return { accent: resolvedAccent, border: `${resolvedAccent}B8`, gradient: ['#03172E', '#06101F', '#03070E'] as const, signature: 'KARMINE CORP // BLUE WALL' };
+  if (styleKey === 'm8-share-card') return { accent: resolvedAccent, border: `${resolvedAccent}C2`, gradient: ['#071428', '#08101E', '#03070E'] as const, signature: 'M8 // GENTLE MATES PARIS' };
   if (styleKey === 'card-signal') return { accent: resolvedAccent, border: `${resolvedAccent}88`, gradient: ['#182009', '#0B110C', '#070A0D'] as const, signature: 'GRIFF // LAISSE TA MARQUE' };
   if (styleKey === 'card-scoreboard') return { accent: resolvedAccent, border: `${resolvedAccent}88`, gradient: ['#101E2B', '#0A1119', '#070A0D'] as const, signature: 'GRIFF // LAISSE TA MARQUE' };
   if (styleKey === 'card-nocturne') return { accent: resolvedAccent, border: `${resolvedAccent}88`, gradient: ['#21152E', '#100E19', '#070A0D'] as const, signature: 'GRIFF // LAISSE TA MARQUE' };

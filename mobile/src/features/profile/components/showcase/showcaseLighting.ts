@@ -47,6 +47,11 @@ export const SHOWCASE_LIGHTING_VISUALS: Record<ShowcaseLighting, ShowcaseLightin
     label: 'FNATIC',
     wash: ['rgba(20,6,1,.05)', 'rgba(188,61,0,.15)', 'rgba(7,4,2,.18)'],
   },
+  silver: {
+    glow: '#B9DCFF',
+    label: 'ÉCLAT M8',
+    wash: ['rgba(3,7,16,.04)', 'rgba(185,220,255,.14)', 'rgba(2,4,10,.19)'],
+  },
   violet: {
     glow: '#9A6BFF',
     label: 'VIOLET',

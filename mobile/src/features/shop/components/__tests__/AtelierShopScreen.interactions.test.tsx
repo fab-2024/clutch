@@ -170,11 +170,12 @@ describe('AtelierShopScreen interactions', () => {
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/founder-pack-preview');
   });
 
-  it('keeps both official team packs in the Atelier shelf and opens their previews', async () => {
+  it('keeps all official team packs in the Atelier shelf and opens their previews', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 
     expect(screen.getByTestId('atelier-shelf-team-packs')).toBeTruthy();
     expect(screen.getByTestId('atelier-team-pack-kc-blue-wall')).toBeTruthy();
+    expect(screen.getByTestId('atelier-team-pack-m8-gentle-mates')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('atelier-team-pack-fnatic-black-orange'));
 
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
@@ -186,6 +187,12 @@ describe('AtelierShopScreen interactions', () => {
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
       pathname: '/team-pack-preview',
       params: { packId: 'kc-blue-wall' },
+    });
+
+    await fireEvent.press(screen.getByTestId('atelier-team-pack-m8-gentle-mates'));
+    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
+      pathname: '/team-pack-preview',
+      params: { packId: 'm8-gentle-mates' },
     });
   });
 
