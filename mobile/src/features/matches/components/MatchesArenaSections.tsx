@@ -1,16 +1,13 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import {
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
-  type ImageSourcePropType,
 } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
@@ -33,19 +30,6 @@ const GAME_FILTERS: { id: GameFilter; label: string }[] = [
   { id: 'valorant', label: 'VAL' },
   { id: 'rocket_league', label: 'RL' },
 ];
-
-const LIVE_GAME_BACKGROUNDS: Record<GameId, ImageSourcePropType> = {
-  lol: require('../../../../assets/onboarding/lol-characters.jpg'),
-  valorant: require('../../../../assets/onboarding/valorant-characters.jpg'),
-  rocket_league: require('../../../../assets/onboarding/rocket-league-arena.png'),
-};
-
-const SCHEDULE_BACKGROUNDS: Record<GameFilter, ImageSourcePropType> = {
-  followed: require('../../../../assets/matches/calendar-for-you-controller.png'),
-  lol: require('../../../../assets/matches/calendar-lol.jpg'),
-  valorant: require('../../../../assets/matches/calendar-valorant.jpg'),
-  rocket_league: require('../../../../assets/matches/calendar-rocket-league.jpg'),
-};
 
 const GAME_ACCENTS: Record<GameId, string> = {
   lol: '#72C7F4',
@@ -94,11 +78,8 @@ export function ScheduleHero({
       style={[styles.scheduleHero, isShortLandscape && styles.scheduleHeroLandscape]}
       testID="matches-schedule-hero"
     >
-      <Animated.View entering={FadeIn.duration(260)} key={game} style={StyleSheet.absoluteFill}>
-        <Image resizeMode="cover" source={SCHEDULE_BACKGROUNDS[game]} style={styles.scheduleBackdrop} />
-      </Animated.View>
       <LinearGradient
-        colors={['#0B1116', 'rgba(5,10,14,.97)', `${SCHEDULE_ACCENTS[game]}14`]}
+        colors={['rgba(5,11,16,.78)', 'rgba(5,10,14,.62)', `${SCHEDULE_ACCENTS[game]}12`]}
         end={{ x: 1, y: .5 }}
         start={{ x: 0, y: .5 }}
         style={StyleSheet.absoluteFill}
@@ -262,14 +243,12 @@ export function SectionHead({ callsOnly, count, date, status }: { callsOnly: boo
 }
 
 export function LiveMatchCard({ match, onPrepareMatch, rivalId, rivalPseudo }: { match: ArenaMatch; onPrepareMatch?: (match: MatchCenterTarget) => void; rivalId?: string; rivalPseudo?: string }) {
-  const game = toGameId(match.jeu) ?? 'lol';
   const callTag = predictionTag(match);
   const target = arenaTransitionTarget(match, '#66B3FF', '#FF6C7C');
   const prepare = () => onPrepareMatch ? onPrepareMatch(target) : warmMatchCenter(target);
   return (
     <Pressable accessibilityHint="Ouvre le Match Center" accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}, en direct`} accessibilityRole="button" onPress={() => { prepare(); openMatchCenter(target, { rivalId, rivalPseudo, source: 'matches' }); }} onPressIn={prepare} style={({ pressed }) => [styles.liveCard, pressed && styles.pressed]}>
-      <Image resizeMode="cover" source={LIVE_GAME_BACKGROUNDS[game]} style={styles.liveBackdrop} />
-      <LinearGradient colors={['rgba(3,6,9,.25)', 'rgba(3,6,9,.73)', 'rgba(3,6,9,.98)']} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['rgba(3,7,10,.16)', 'rgba(3,7,10,.48)', 'rgba(3,7,10,.76)']} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
       <View style={styles.liveTop}>
         <Text numberOfLines={1} style={styles.liveEvent}>{gameLabel(match.jeu).toUpperCase()} · {match.evenement}</Text>
         <View style={styles.livePill}><View style={styles.liveDot} /><Text style={styles.liveText}>LIVE</Text></View>
