@@ -208,6 +208,12 @@ describe('AtelierShopScreen interactions', () => {
       pathname: '/team-pack-preview',
       params: { packId: 'league-of-legends-collection' },
     });
+
+    await fireEvent.press(screen.getByTestId('atelier-game-collection-valorant-collection'));
+    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
+      pathname: '/team-pack-preview',
+      params: { packId: 'valorant-collection' },
+    });
   });
 
   it('reviews a rare purchase before debiting then opens its dedicated reveal', async () => {

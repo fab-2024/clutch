@@ -57,6 +57,7 @@ const FNATIC_ORANGE = '#FF5900';
 const KC_BLUE = '#168DFF';
 const M8_ICE = '#B9DCFF';
 const LOL_GOLD = '#D6B56A';
+const VALORANT_RED = '#FF4655';
 
 export const FNATIC_TEAM_PACK: TeamPackDefinition = {
   id: 'fnatic-black-orange',
@@ -637,6 +638,87 @@ export const LEAGUE_OF_LEGENDS_COLLECTION_PACK: TeamPackDefinition = {
   ],
 };
 
+export const VALORANT_COLLECTION_PACK: TeamPackDefinition = {
+  id: 'valorant-collection',
+  kind: 'game_collection',
+  brandKey: 'valorant',
+  name: 'Pack Valorant',
+  title: 'VALORANT',
+  subtitle: 'PROTOCOLE RADIANT',
+  description: 'Cinq pièces iconiques réunies dans une galerie de pierre, de métal et de lumière corail.',
+  accent: VALORANT_RED,
+  price: 900,
+  licenseHolder: 'Riot Games',
+  hero: require('../../../assets/shop/collections/valorant/valorant-collection-hero.png'),
+  items: [
+    {
+      id: 'valorant-vandal',
+      number: 1,
+      name: 'Vandal',
+      description: 'Une réplique blanche et graphite sertie d’un noyau corail lumineux.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: VALORANT_RED,
+      equipByDefault: false,
+      roomKind: 'core',
+      roomSlot: 'left-free',
+      image: require('../../../assets/shop/collections/valorant/items/vandal.png'),
+    },
+    {
+      id: 'valorant-spike',
+      number: 2,
+      name: 'Spike',
+      description: 'Le dispositif de radianite suspendu au-dessus d’un socle parcouru d’étincelles rouges.',
+      slot: 'apparence_core',
+      rarity: 'legendaire',
+      accent: VALORANT_RED,
+      equipByDefault: false,
+      roomKind: 'core',
+      roomSlot: 'left-extra',
+      image: require('../../../assets/shop/collections/valorant/items/spike.png'),
+    },
+    {
+      id: 'valorant-jett-gallery',
+      number: 3,
+      name: 'Jett',
+      description: 'La pièce centrale de la collection, portée par une spirale de vent et de lames.',
+      slot: 'vitrine_supports',
+      rarity: 'legendaire',
+      accent: '#9FE8FF',
+      equipByDefault: true,
+      roomKind: 'trophy',
+      roomSlot: 'trophy',
+      image: require('../../../assets/shop/collections/valorant/items/jett.png'),
+    },
+    {
+      id: 'valorant-omen',
+      number: 4,
+      name: 'Omen',
+      description: 'Un buste d’Omen émergeant d’une nappe d’ombre violette.',
+      slot: 'apparence_core',
+      rarity: 'legendaire',
+      accent: '#8A5CFF',
+      equipByDefault: false,
+      roomKind: 'trophy',
+      roomSlot: 'right-extra',
+      image: require('../../../assets/shop/collections/valorant/items/omen.png'),
+    },
+    {
+      id: 'valorant-wingman',
+      number: 5,
+      name: 'Wingman',
+      description: 'Le compagnon jaune de Gekko protégé sous une cloche de verre de collection.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: '#D8F34A',
+      equipByDefault: false,
+      roomKind: 'ring',
+      roomSlot: 'right-free',
+      image: require('../../../assets/shop/collections/valorant/items/wingman.png'),
+    },
+  ],
+};
+
 export const TEAM_PACK_CATALOG: readonly TeamPackDefinition[] = [
   FNATIC_TEAM_PACK,
   KC_TEAM_PACK,
@@ -645,6 +727,7 @@ export const TEAM_PACK_CATALOG: readonly TeamPackDefinition[] = [
 
 export const GAME_COLLECTION_PACK_CATALOG: readonly TeamPackDefinition[] = [
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
+  VALORANT_COLLECTION_PACK,
 ];
 
 export const COSMETIC_PACK_CATALOG: readonly TeamPackDefinition[] = [

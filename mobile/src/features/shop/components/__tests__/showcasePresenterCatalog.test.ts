@@ -6,7 +6,10 @@ import {
   showcasePresenterById,
 } from '../../showcasePresenterCatalog';
 import { createPresenterRoomAssignments } from '../../showcasePresenterAssignments';
-import { LEAGUE_OF_LEGENDS_COLLECTION_PACK } from '../../teamPackCatalog';
+import {
+  LEAGUE_OF_LEGENDS_COLLECTION_PACK,
+  VALORANT_COLLECTION_PACK,
+} from '../../teamPackCatalog';
 
 describe('showcase presenter catalog', () => {
   it('keeps the approved presenters and team-pack scenes in visual order', () => {
@@ -21,6 +24,7 @@ describe('showcase presenter catalog', () => {
       'kc-pedestals',
       'm8-pedestals',
       'lol-jinx-fishbones-gallery',
+      'valorant-jett-gallery',
     ]);
     expect(SHOWCASE_PRESENTER_CATALOG.map((presenter) => presenter.slots.length)).toEqual([
       8,
@@ -33,7 +37,33 @@ describe('showcase presenter catalog', () => {
       10,
       10,
       5,
+      5,
     ]);
+  });
+
+  it('exposes and fills the five fixed Valorant collection slots', () => {
+    expect(showcasePresenterById('valorant-jett-gallery')).toMatchObject({
+      accent: '#FF4655',
+      name: 'Collection Valorant',
+      packId: 'valorant-collection',
+      showRankDisplay: false,
+    });
+    expect(showcasePresenterById('valorant-jett-gallery')?.slots).toHaveLength(5);
+
+    const items = VALORANT_COLLECTION_PACK.items.map((item) => ({
+      accent: item.accent,
+      id: `cosmetic:${item.id}`,
+      image: item.image,
+      kind: item.roomKind!,
+      name: item.name,
+    }));
+    const assignments = createPresenterRoomAssignments(items, 'valorant-jett-gallery');
+
+    expect(assignments['left-free']?.name).toBe('Vandal');
+    expect(assignments['left-extra']?.name).toBe('Spike');
+    expect(assignments.trophy?.name).toBe('Jett');
+    expect(assignments['right-extra']?.name).toBe('Omen');
+    expect(assignments['right-free']?.name).toBe('Wingman');
   });
 
   it('exposes ten clickable slots linked to the KC Blue Wall pack', () => {

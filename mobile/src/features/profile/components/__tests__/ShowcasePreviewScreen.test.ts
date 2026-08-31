@@ -91,4 +91,13 @@ describe('ShowcasePreviewScreen team-pack moods', () => {
     ))).toHaveLength(5);
     expect(preview.shop.equipped.showcase.supports?.id).toBe('lol-jinx-fishbones-gallery');
   });
+
+  it('builds the five-object Valorant collection with its dedicated presenter', () => {
+    const preview = showcasePreviewForMood('valorant', 'valorant-collection');
+
+    expect(preview.shop.items.filter((item) => (
+      item.collectionKey === 'valorant-collection'
+    ))).toHaveLength(5);
+    expect(preview.shop.equipped.showcase.supports?.id).toBe('valorant-jett-gallery');
+  });
 });

@@ -11,6 +11,7 @@ import {
   KC_TEAM_PACK,
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   M8_TEAM_PACK,
+  VALORANT_COLLECTION_PACK,
   type TeamPackDefinition,
 } from '@/src/features/shop/teamPackCatalog';
 import { EMPTY_EQUIPPED_COSMETICS, type CosmeticShopData } from '@/src/features/shop/types';
@@ -98,7 +99,7 @@ export default function ShowcasePreviewScreen() {
   );
 }
 
-type ShowcasePreviewMood = 'fnatic' | 'kc' | 'lol' | 'm8' | 'minimal' | 'mythic' | 'standard';
+type ShowcasePreviewMood = 'fnatic' | 'kc' | 'lol' | 'm8' | 'minimal' | 'mythic' | 'standard' | 'valorant';
 
 export function showcasePreviewForMood(mood: ShowcasePreviewMood, packId?: string) {
   const pack = cosmeticPackById(packId)
@@ -110,7 +111,9 @@ export function showcasePreviewForMood(mood: ShowcasePreviewMood, packId?: strin
           ? M8_TEAM_PACK
           : mood === 'lol'
             ? LEAGUE_OF_LEGENDS_COLLECTION_PACK
-            : null);
+            : mood === 'valorant'
+              ? VALORANT_COLLECTION_PACK
+              : null);
   if (pack) {
     const packShop = applyPreviewTeamPackAction({
       ...SHOWCASE_SHOP,
@@ -220,6 +223,7 @@ function previewMood(value?: string): ShowcasePreviewMood {
     || value === 'm8'
     || value === 'minimal'
     || value === 'mythic'
+    || value === 'valorant'
   ) return value;
   return 'standard';
 }

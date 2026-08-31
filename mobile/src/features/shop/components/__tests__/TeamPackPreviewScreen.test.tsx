@@ -99,4 +99,21 @@ describe('TeamPackPreviewScreen', () => {
     }));
     expect(props.previewData.items).toHaveLength(5);
   });
+
+  it('selects the requested Valorant collection with five objects', async () => {
+    mockParams = { packId: 'valorant-collection' };
+    await render(<TeamPackPreviewScreen />);
+
+    const props = mockTeamPackScreen.mock.calls[0][0] as {
+      packId: string;
+      previewData: { items: { id: string }[] };
+    };
+    expect(props).toEqual(expect.objectContaining({
+      packId: 'valorant-collection',
+      previewData: expect.objectContaining({
+        items: expect.arrayContaining([expect.objectContaining({ id: 'valorant-omen' })]),
+      }),
+    }));
+    expect(props.previewData.items).toHaveLength(5);
+  });
 });

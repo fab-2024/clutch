@@ -9,6 +9,7 @@ import {
   KC_TEAM_PACK,
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   M8_TEAM_PACK,
+  VALORANT_COLLECTION_PACK,
   type TeamPackDefinition,
 } from '../../teamPackCatalog';
 import {
@@ -175,6 +176,27 @@ describe('TeamPackScreen', () => {
 
     await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
     expect(screen.getAllByText('Baron Nashor').length).toBeGreaterThan(0);
+    expect(screen.getByText('RIOT GAMES × CLUTCH')).toBeTruthy();
+  });
+
+  it('renders the Valorant game collection and its five inspectable objects', async () => {
+    const screen = await render(
+      <TeamPackScreen
+        packId={VALORANT_COLLECTION_PACK.id}
+        previewData={makeData(1_000, VALORANT_COLLECTION_PACK)}
+      />,
+    );
+
+    expect(screen.getByText('COLLECTION JEU // OFFICIELLE')).toBeTruthy();
+    expect(screen.getAllByText('PROTOCOLE RADIANT')).toHaveLength(2);
+    expect(screen.getAllByTestId(/^team-pack-item-valorant-/)).toHaveLength(5);
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('team-pack-item-valorant-omen'));
+    });
+
+    await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
+    expect(screen.getAllByText('Omen').length).toBeGreaterThan(0);
     expect(screen.getByText('RIOT GAMES × CLUTCH')).toBeTruthy();
   });
 

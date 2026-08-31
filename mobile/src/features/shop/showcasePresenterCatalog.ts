@@ -127,6 +127,14 @@ const LEAGUE_OF_LEGENDS_COLLECTION_SLOTS = [
   { id: 'right-free', label: 'Balise de vision', preferredKind: 'ring', left: '82%', top: '34%', width: '15%', height: '45%' },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
+const VALORANT_COLLECTION_SLOTS = [
+  { id: 'left-free', label: 'Vandal', preferredKind: 'core', left: '3%', top: '39%', width: '19%', height: '40%' },
+  { id: 'left-extra', label: 'Spike', preferredKind: 'core', left: '23%', top: '27%', width: '16%', height: '52%' },
+  { id: 'trophy', label: 'Jett', preferredKind: 'trophy', left: '39%', top: '13%', width: '22%', height: '66%' },
+  { id: 'right-extra', label: 'Omen', preferredKind: 'trophy', left: '61%', top: '23%', width: '20%', height: '56%' },
+  { id: 'right-free', label: 'Wingman', preferredKind: 'ring', left: '82%', top: '34%', width: '15%', height: '45%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
+
 export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] = [
   {
     id: 'supports_gallery',
@@ -246,6 +254,20 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     rarity: 'legendaire',
     showRankDisplay: false,
     slots: LEAGUE_OF_LEGENDS_COLLECTION_SLOTS,
+  },
+  {
+    id: 'valorant-jett-gallery',
+    name: 'Collection Valorant',
+    description: 'Cinq socles obsidienne dans une galerie de pierre claire aux accents corail.',
+    accent: '#FF4655',
+    image: require('../../../assets/shop/collections/valorant/valorant-collection-room-empty.png'),
+    packId: 'valorant-collection',
+    packOnly: true,
+    pedestal: 'obsidian',
+    price: 0,
+    rarity: 'legendaire',
+    showRankDisplay: false,
+    slots: VALORANT_COLLECTION_SLOTS,
   },
 ] as const;
 

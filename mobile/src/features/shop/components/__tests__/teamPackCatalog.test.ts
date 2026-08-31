@@ -13,6 +13,7 @@ import {
   TEAM_PACK_CATALOG,
   teamPackById,
   teamPackPrimaryAction,
+  VALORANT_COLLECTION_PACK,
   type TeamPackDefinition,
 } from '../../teamPackCatalog';
 import {
@@ -73,6 +74,14 @@ const LOL_EXPECTED_IDS = [
   'lol-jinx-fishbones-gallery',
   'lol-baron-nashor',
   'lol-vision-ward',
+];
+
+const VALORANT_EXPECTED_IDS = [
+  'valorant-vandal',
+  'valorant-spike',
+  'valorant-jett-gallery',
+  'valorant-omen',
+  'valorant-wingman',
 ];
 
 describe('Fnatic team pack catalogue', () => {
@@ -197,14 +206,37 @@ describe('M8 team pack catalogue', () => {
 });
 
 describe('League of Legends game collection pack catalogue', () => {
-  it('publishes one game collection outside the team-pack shelf', () => {
-    expect(GAME_COLLECTION_PACK_CATALOG).toEqual([LEAGUE_OF_LEGENDS_COLLECTION_PACK]);
+  it('publishes game collections outside the team-pack shelf', () => {
+    expect(GAME_COLLECTION_PACK_CATALOG).toEqual([
+      LEAGUE_OF_LEGENDS_COLLECTION_PACK,
+      VALORANT_COLLECTION_PACK,
+    ]);
     expect(COSMETIC_PACK_CATALOG).toContain(LEAGUE_OF_LEGENDS_COLLECTION_PACK);
     expect(TEAM_PACK_CATALOG).not.toContain(LEAGUE_OF_LEGENDS_COLLECTION_PACK);
     expect(cosmeticPackById('league-of-legends-collection')).toBe(LEAGUE_OF_LEGENDS_COLLECTION_PACK);
     expect(LEAGUE_OF_LEGENDS_COLLECTION_PACK.kind).toBe('game_collection');
     expect(LEAGUE_OF_LEGENDS_COLLECTION_PACK.price).toBe(900);
     expect(LEAGUE_OF_LEGENDS_COLLECTION_PACK.items.map((item) => item.id)).toEqual(LOL_EXPECTED_IDS);
+  });
+
+  it('publishes and equips the five-object Valorant collection atomically', () => {
+    expect(COSMETIC_PACK_CATALOG).toContain(VALORANT_COLLECTION_PACK);
+    expect(TEAM_PACK_CATALOG).not.toContain(VALORANT_COLLECTION_PACK);
+    expect(cosmeticPackById('valorant-collection')).toBe(VALORANT_COLLECTION_PACK);
+    expect(VALORANT_COLLECTION_PACK.kind).toBe('game_collection');
+    expect(VALORANT_COLLECTION_PACK.price).toBe(900);
+    expect(VALORANT_COLLECTION_PACK.items.map((item) => item.id)).toEqual(VALORANT_EXPECTED_IDS);
+
+    const initial = makeData(1_000, VALORANT_COLLECTION_PACK);
+    const next = applyPreviewTeamPackAction(initial, VALORANT_COLLECTION_PACK);
+
+    expect(next.balance).toBe(100);
+    expect(next.items.every((item) => item.owned)).toBe(true);
+    expect(next.items.filter((item) => item.equipped).map((item) => item.id)).toEqual([
+      'valorant-jett-gallery',
+    ]);
+    expect(next.equipped.showcase.supports?.id).toBe('valorant-jett-gallery');
+    expect(teamPackPrimaryAction(VALORANT_COLLECTION_PACK, next)).toBe('equipped');
   });
 
   it('buys the five objects and equips the collection gallery atomically', () => {

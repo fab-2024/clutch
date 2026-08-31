@@ -12,6 +12,7 @@ export {
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   M8_TEAM_PACK,
   TEAM_PACK_CATALOG,
+  VALORANT_COLLECTION_PACK,
   cosmeticPackById,
   cosmeticPackItemById,
   teamPackById,
