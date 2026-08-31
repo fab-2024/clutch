@@ -18,7 +18,7 @@ import {
   showcaseRankDisplayById,
   type ShowcaseRankDisplayDefinition,
 } from '@/src/features/shop/showcaseRankDisplayCatalog';
-import { teamPackItemById } from '@/src/features/shop/teamPackCatalog';
+import { cosmeticPackItemById } from '@/src/features/shop/teamPackCatalog';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 import ShowcaseAchievementBadge from '@/src/features/profile/achievementBadges/components/ShowcaseAchievementBadge';
 import type { PublicAchievementBadge } from '@/src/features/profile/achievementBadges/types';
@@ -153,7 +153,7 @@ export default function ShowcaseRoomScene({
   const visibleBadges = badgeSlots.filter((badge) => Boolean(badge?.obtained));
   const trophies = loading ? [] : (data?.badges ?? []).filter((badge) => badge.obtained);
   const team = data?.favoriteTeam;
-  const jerseyPackItem = teamPackItemById(cosmetics?.showcase.jersey?.id);
+  const jerseyPackItem = cosmeticPackItemById(cosmetics?.showcase.jersey?.id);
   const teamAccent = team ? `hsl(${teamHue(team.tag, team.nom)}, 72%, 58%)` : '#71808B';
   const light = SHOWCASE_LIGHTING_VISUALS[lighting];
   const pedestalAccent = PEDESTAL_ACCENT[pedestal];
@@ -478,7 +478,7 @@ function physicalCosmeticToken(
   return {
     accent: cosmetic.accent,
     id: cosmetic.id,
-    image: teamPackItemById(cosmetic.id)?.image,
+    image: cosmeticPackItemById(cosmetic.id)?.image,
     kind,
     name: cosmetic.name,
   };

@@ -5,6 +5,8 @@ import {
   SHOWCASE_PRESENTER_CATALOG,
   showcasePresenterById,
 } from '../../showcasePresenterCatalog';
+import { createPresenterRoomAssignments } from '../../showcasePresenterAssignments';
+import { LEAGUE_OF_LEGENDS_COLLECTION_PACK } from '../../teamPackCatalog';
 
 describe('showcase presenter catalog', () => {
   it('keeps the approved presenters and team-pack scenes in visual order', () => {
@@ -18,6 +20,7 @@ describe('showcase presenter catalog', () => {
       'fnatic-pedestals',
       'kc-pedestals',
       'm8-pedestals',
+      'lol-jinx-fishbones-gallery',
     ]);
     expect(SHOWCASE_PRESENTER_CATALOG.map((presenter) => presenter.slots.length)).toEqual([
       8,
@@ -29,6 +32,7 @@ describe('showcase presenter catalog', () => {
       10,
       10,
       10,
+      5,
     ]);
   });
 
@@ -59,6 +63,33 @@ describe('showcase presenter catalog', () => {
       rarity: 'legendaire',
     });
     expect(showcasePresenterById('m8-pedestals')?.slots).toHaveLength(10);
+  });
+
+  it('exposes five fixed collection slots without a rank display for League of Legends', () => {
+    expect(showcasePresenterById('lol-jinx-fishbones-gallery')).toMatchObject({
+      accent: '#D6B56A',
+      name: 'Collection League of Legends',
+      packId: 'league-of-legends-collection',
+      showRankDisplay: false,
+    });
+    expect(showcasePresenterById('lol-jinx-fishbones-gallery')?.slots).toHaveLength(5);
+  });
+
+  it('places the five League of Legends objects on their dedicated pedestals', () => {
+    const items = LEAGUE_OF_LEGENDS_COLLECTION_PACK.items.map((item) => ({
+      accent: item.accent,
+      id: `cosmetic:${item.id}`,
+      image: item.image,
+      kind: item.roomKind!,
+      name: item.name,
+    }));
+    const assignments = createPresenterRoomAssignments(items, 'lol-jinx-fishbones-gallery');
+
+    expect(assignments['left-free']?.name).toBe('Lame d’Infini');
+    expect(assignments['left-extra']?.name).toBe('Fragment du Nexus');
+    expect(assignments.trophy?.name).toBe('Jinx & Fishbones');
+    expect(assignments['right-extra']?.name).toBe('Baron Nashor');
+    expect(assignments['right-free']?.name).toBe('Balise de vision');
   });
 
   it('keeps every placement independently clickable inside each presenter', () => {

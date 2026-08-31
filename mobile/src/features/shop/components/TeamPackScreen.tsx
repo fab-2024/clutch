@@ -29,8 +29,8 @@ import {
 } from '../api';
 import {
   applyPreviewTeamPackAction,
+  cosmeticPackById,
   FNATIC_TEAM_PACK,
-  teamPackById,
   teamPackPrimaryAction,
   type TeamPackDefinition,
   type TeamPackItemDefinition,
@@ -46,7 +46,7 @@ export type TeamPackScreenProps = {
 export default function TeamPackScreen({ packId, previewData }: TeamPackScreenProps) {
   const params = useLocalSearchParams<{ key?: string | string[] }>();
   const routeId = packId ?? readParam(params.key) ?? FNATIC_TEAM_PACK.id;
-  const pack = teamPackById(routeId);
+  const pack = cosmeticPackById(routeId);
   const { refresh: refreshCosmetics } = useCosmetics();
   const { refresh: refreshEconomy } = useEconomy();
   const { showSnackbar } = useSnackbar();
@@ -139,7 +139,7 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
     return (
       <Screen>
         <View style={styles.emptyState}>
-          <Text style={styles.emptyEyebrow}>PACK ÉQUIPE</Text>
+          <Text style={styles.emptyEyebrow}>PACK COSMÉTIQUE</Text>
           <Text style={styles.emptyTitle}>PACK INTROUVABLE</Text>
           <Text style={styles.emptyText}>Cette collection n’est plus disponible dans la Boutique.</Text>
           <Button label="REVENIR À LA BOUTIQUE" onPress={() => router.back()} />
@@ -173,7 +173,9 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
               <Text style={styles.backGlyph}>‹</Text>
             </Pressable>
             <View style={styles.headerCopy}>
-              <Text style={[styles.headerEyebrow, { color: pack.accent }]}>PACK ÉQUIPE // OFFICIEL</Text>
+              <Text style={[styles.headerEyebrow, { color: pack.accent }]}>
+                {pack.kind === 'game_collection' ? 'COLLECTION JEU // OFFICIELLE' : 'PACK ÉQUIPE // OFFICIEL'}
+              </Text>
               <Text style={styles.headerTitle}>{pack.name.toLocaleUpperCase('fr-FR')}</Text>
             </View>
             <View style={styles.itemCount}>
@@ -201,7 +203,9 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
               <View style={styles.heroMeta}>
                 <View style={[styles.officialPill, { borderColor: `${pack.accent}52` }]}>
                   <View style={[styles.officialDot, { backgroundColor: pack.accent }]} />
-                  <Text style={styles.officialText}>COLLECTION OFFICIELLE</Text>
+                  <Text style={styles.officialText}>
+                    {pack.kind === 'game_collection' ? 'COLLECTION PARTENAIRE' : 'COLLECTION OFFICIELLE'}
+                  </Text>
                 </View>
                 <Text style={styles.heroMetaText}>{pack.items.length} COSMÉTIQUES</Text>
               </View>
@@ -295,7 +299,7 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
         />
 
         <BaseSheet
-          eyebrow={`PACK ${pack.title} // OBJET`}
+          eyebrow={`${pack.kind === 'game_collection' ? 'COLLECTION' : 'PACK'} ${pack.title} // OBJET`}
           footer={<Button fullWidth label="FERMER" onPress={() => setSelectedItem(null)} variant="secondary" />}
           onClose={() => setSelectedItem(null)}
           testID="team-pack-item-sheet"
@@ -423,7 +427,7 @@ function friendlyError(caught: unknown) {
   const message = caught instanceof Error ? caught.message : '';
   if (/solde insuffisant/i.test(message)) return 'Ton solde a changé. Recharge le pack avant de réessayer.';
   if (/network|fetch|hors connexion|offline/i.test(message)) return 'Connexion indisponible. Ta collection n’a pas été modifiée.';
-  return message || 'Le pack équipe n’a pas pu être synchronisé.';
+  return message || 'Le pack cosmétique n’a pas pu être synchronisé.';
 }
 
 function readParam(value?: string | string[]) {

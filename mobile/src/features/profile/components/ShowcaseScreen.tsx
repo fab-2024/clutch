@@ -27,7 +27,7 @@ import {
   showcaseRankDisplayById,
 } from '@/src/features/shop/showcaseRankDisplayCatalog';
 import { showcaseRoomById } from '@/src/features/shop/showcaseRoomCatalog';
-import { teamPackItemById } from '@/src/features/shop/teamPackCatalog';
+import { cosmeticPackItemById } from '@/src/features/shop/teamPackCatalog';
 import type { CosmeticItem, CosmeticShopData, EquippedCosmetics } from '@/src/features/shop/types';
 import { resolveEquippedAchievementBadges } from '@/src/features/profile/achievementBadges/equipment';
 import { useAchievementBadgeEquipment } from '@/src/features/profile/achievementBadges/useAchievementBadgeEquipment';
@@ -377,7 +377,7 @@ export default function ShowcaseScreen({
               onAtmospherePerformanceReport={onAtmospherePerformanceReport}
               onSlotPress={setActiveRoomSlot}
               rankAccent={rankAccent}
-              rankDisplay={rankDisplay}
+              rankDisplay={presenter.showRankDisplay === false ? null : rankDisplay}
               rankOrder={profileData?.ranking.grade.ordre}
               reduceMotion={reduceMotion}
               room={editableScene}
@@ -483,7 +483,7 @@ function resolveRoomPlaceableItems({
   const items: ShowcasePlaceableItem[] = [];
 
   ownedItems.forEach((item) => {
-    const packDefinition = teamPackItemById(item.id);
+    const packDefinition = cosmeticPackItemById(item.id);
     const kind = packDefinition?.roomKind ?? roomKindForCosmetic(item);
     if (!kind) return;
     items.push({

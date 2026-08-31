@@ -2,9 +2,13 @@
 
 import {
   applyPreviewTeamPackAction,
+  COSMETIC_PACK_CATALOG,
+  cosmeticPackById,
   createTeamPackPreviewItems,
   FNATIC_TEAM_PACK,
+  GAME_COLLECTION_PACK_CATALOG,
   KC_TEAM_PACK,
+  LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   M8_TEAM_PACK,
   TEAM_PACK_CATALOG,
   teamPackById,
@@ -61,6 +65,14 @@ const M8_EXPECTED_IDS = [
   'm8-sparkle-effect',
   'm8-share-card',
   'm8-title',
+];
+
+const LOL_EXPECTED_IDS = [
+  'lol-infinity-edge',
+  'lol-nexus-fragment',
+  'lol-jinx-fishbones-gallery',
+  'lol-baron-nashor',
+  'lol-vision-ward',
 ];
 
 describe('Fnatic team pack catalogue', () => {
@@ -181,6 +193,31 @@ describe('M8 team pack catalogue', () => {
     expect(next.equipped.showcase.supports?.id).toBe('m8-pedestals');
     expect(next.equipped.factionEffect?.id).toBe('m8-sparkle-effect');
     expect(teamPackPrimaryAction(M8_TEAM_PACK, next)).toBe('equipped');
+  });
+});
+
+describe('League of Legends game collection pack catalogue', () => {
+  it('publishes one game collection outside the team-pack shelf', () => {
+    expect(GAME_COLLECTION_PACK_CATALOG).toEqual([LEAGUE_OF_LEGENDS_COLLECTION_PACK]);
+    expect(COSMETIC_PACK_CATALOG).toContain(LEAGUE_OF_LEGENDS_COLLECTION_PACK);
+    expect(TEAM_PACK_CATALOG).not.toContain(LEAGUE_OF_LEGENDS_COLLECTION_PACK);
+    expect(cosmeticPackById('league-of-legends-collection')).toBe(LEAGUE_OF_LEGENDS_COLLECTION_PACK);
+    expect(LEAGUE_OF_LEGENDS_COLLECTION_PACK.kind).toBe('game_collection');
+    expect(LEAGUE_OF_LEGENDS_COLLECTION_PACK.price).toBe(900);
+    expect(LEAGUE_OF_LEGENDS_COLLECTION_PACK.items.map((item) => item.id)).toEqual(LOL_EXPECTED_IDS);
+  });
+
+  it('buys the five objects and equips the collection gallery atomically', () => {
+    const initial = makeData(1_000, LEAGUE_OF_LEGENDS_COLLECTION_PACK);
+    const next = applyPreviewTeamPackAction(initial, LEAGUE_OF_LEGENDS_COLLECTION_PACK);
+
+    expect(next.balance).toBe(100);
+    expect(next.items.every((item) => item.owned)).toBe(true);
+    expect(next.items.filter((item) => item.equipped).map((item) => item.id)).toEqual([
+      'lol-jinx-fishbones-gallery',
+    ]);
+    expect(next.equipped.showcase.supports?.id).toBe('lol-jinx-fishbones-gallery');
+    expect(teamPackPrimaryAction(LEAGUE_OF_LEGENDS_COLLECTION_PACK, next)).toBe('equipped');
   });
 });
 

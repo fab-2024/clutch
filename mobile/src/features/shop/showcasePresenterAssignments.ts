@@ -8,7 +8,7 @@ import {
   DEFAULT_SHOWCASE_PRESENTER_ID,
   showcasePresenterById,
 } from './showcasePresenterCatalog';
-import { teamPackById } from './teamPackCatalog';
+import { cosmeticPackById } from './teamPackCatalog';
 
 export function createPresenterRoomAssignments(
   items: readonly ShowcasePlaceableItem[],
@@ -17,7 +17,7 @@ export function createPresenterRoomAssignments(
   const presenter = showcasePresenterById(presenterId)
     ?? showcasePresenterById(DEFAULT_SHOWCASE_PRESENTER_ID)!;
   const assignments = createDefaultShowcaseRoomAssignments(items, presenter.slots);
-  const pack = teamPackById(presenter.packId);
+  const pack = cosmeticPackById(presenter.packId);
   if (!pack) return assignments;
 
   const itemById = new Map(items.map((item) => [item.id, item]));

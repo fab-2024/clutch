@@ -7,6 +7,7 @@ import {
   createTeamPackPreviewItems,
   FNATIC_TEAM_PACK,
   KC_TEAM_PACK,
+  LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   M8_TEAM_PACK,
   type TeamPackDefinition,
 } from '../../teamPackCatalog';
@@ -154,6 +155,27 @@ describe('TeamPackScreen', () => {
     expect(screen.getAllByText('Maillot M8 2026').length).toBeGreaterThan(0);
     expect(screen.getByText('Le maillot 2026 blanc et bleu de Gentle Mates, inspiré par Paris.')).toBeTruthy();
     expect(screen.getByText('GENTLE MATES × CLUTCH')).toBeTruthy();
+  });
+
+  it('renders the League of Legends game collection and its five inspectable objects', async () => {
+    const screen = await render(
+      <TeamPackScreen
+        packId={LEAGUE_OF_LEGENDS_COLLECTION_PACK.id}
+        previewData={makeData(1_000, LEAGUE_OF_LEGENDS_COLLECTION_PACK)}
+      />,
+    );
+
+    expect(screen.getByText('COLLECTION JEU // OFFICIELLE')).toBeTruthy();
+    expect(screen.getAllByText('ICÔNES DE RUNETERRA')).toHaveLength(2);
+    expect(screen.getAllByTestId(/^team-pack-item-lol-/)).toHaveLength(5);
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('team-pack-item-lol-baron-nashor'));
+    });
+
+    await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
+    expect(screen.getAllByText('Baron Nashor').length).toBeGreaterThan(0);
+    expect(screen.getByText('RIOT GAMES × CLUTCH')).toBeTruthy();
   });
 
   it('makes an insufficient Volt balance explicit', async () => {

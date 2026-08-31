@@ -19,6 +19,7 @@ export type ShowcasePresenterDefinition = {
   pedestal: ShowcasePedestalSkin;
   price: number;
   rarity: CosmeticRarity;
+  showRankDisplay?: boolean;
   slots: readonly ShowcaseRoomSlotDefinition[];
 };
 
@@ -116,6 +117,14 @@ const M8_TEAM_PACK_SLOTS = [
   { id: 'ring', label: 'Jeton M8 supporter', preferredKind: 'ring', left: '80%', top: '48%', width: '8%', height: '30%' },
   { id: 'right-extra', label: 'Blason 3D M8', preferredKind: 'core', left: '88%', top: '41%', width: '6%', height: '37%' },
   { id: 'right-free', label: 'Carte de partage M8', preferredKind: 'banner', left: '94%', top: '41%', width: '6%', height: '37%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
+
+const LEAGUE_OF_LEGENDS_COLLECTION_SLOTS = [
+  { id: 'left-free', label: 'Lame d’Infini', preferredKind: 'core', left: '3%', top: '39%', width: '19%', height: '40%' },
+  { id: 'left-extra', label: 'Fragment du Nexus', preferredKind: 'core', left: '23%', top: '27%', width: '16%', height: '52%' },
+  { id: 'trophy', label: 'Jinx & Fishbones', preferredKind: 'trophy', left: '39%', top: '13%', width: '22%', height: '66%' },
+  { id: 'right-extra', label: 'Baron Nashor', preferredKind: 'trophy', left: '61%', top: '23%', width: '20%', height: '56%' },
+  { id: 'right-free', label: 'Balise de vision', preferredKind: 'ring', left: '82%', top: '34%', width: '15%', height: '45%' },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
 export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] = [
@@ -223,6 +232,20 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     price: 0,
     rarity: 'legendaire',
     slots: M8_TEAM_PACK_SLOTS,
+  },
+  {
+    id: 'lol-jinx-fishbones-gallery',
+    name: 'Collection League of Legends',
+    description: 'Cinq socles noir et or dans une galerie de pierre claire aux accents cyan.',
+    accent: '#D6B56A',
+    image: require('../../../assets/shop/collections/league-of-legends/league-of-legends-collection-room-empty.png'),
+    packId: 'league-of-legends-collection',
+    packOnly: true,
+    pedestal: 'obsidian',
+    price: 0,
+    rarity: 'legendaire',
+    showRankDisplay: false,
+    slots: LEAGUE_OF_LEGENDS_COLLECTION_SLOTS,
   },
 ] as const;
 

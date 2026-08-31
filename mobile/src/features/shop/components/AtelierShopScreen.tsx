@@ -55,7 +55,11 @@ import {
   SHOWCASE_ROOM_CATALOG,
   type ShowcaseRoomDefinition,
 } from '../showcaseRoomCatalog';
-import { TEAM_PACK_CATALOG, type TeamPackDefinition } from '../teamPackCatalog';
+import {
+  GAME_COLLECTION_PACK_CATALOG,
+  TEAM_PACK_CATALOG,
+  type TeamPackDefinition,
+} from '../teamPackCatalog';
 import type { CosmeticItem, CosmeticShopData } from '../types';
 import { AtelierPurchaseSheet } from './AtelierPurchaseSheet';
 import { RareAcquisitionReveal } from './RareAcquisitionReveal';
@@ -476,11 +480,17 @@ export default function AtelierShopScreen({
                   />
                 ))}
 
-                <TeamPackShelf onOpen={openTeamPack} packs={TEAM_PACK_CATALOG} />
+                <TeamPackShelf
+                  kind="game_collection"
+                  onOpen={openTeamPack}
+                  packs={GAME_COLLECTION_PACK_CATALOG}
+                />
+
+                <TeamPackShelf kind="team" onOpen={openTeamPack} packs={TEAM_PACK_CATALOG} />
 
                 <View style={styles.discoveryLine}>
                   <Text style={styles.discoveryLabel}>PROCHAINEMENT</Text>
-                  <Text style={styles.discoveryValue}>NOUVEAUX PACKS ÉQUIPES · COLLABS</Text>
+                  <Text style={styles.discoveryValue}>NOUVELLES COLLECTIONS · COLLABS</Text>
                 </View>
 
                 <FounderPackBanner preview={Boolean(previewData)} />
@@ -589,19 +599,29 @@ function ShelfHeading({ count, eyebrow, title }: { count: number; eyebrow: strin
 }
 
 function TeamPackShelf({
+  kind,
   onOpen,
   packs,
 }: {
+  kind: TeamPackDefinition['kind'];
   onOpen: (pack: TeamPackDefinition) => void;
   packs: readonly TeamPackDefinition[];
 }) {
+  const isGameCollection = kind === 'game_collection';
   return (
-    <View style={styles.catalogShelf} testID="atelier-shelf-team-packs">
-      <ShelfHeading count={packs.length} eyebrow="COLLECTION // OFFICIELLE" title="PACKS ÉQUIPES" />
+    <View
+      style={styles.catalogShelf}
+      testID={isGameCollection ? 'atelier-shelf-game-collections' : 'atelier-shelf-team-packs'}
+    >
+      <ShelfHeading
+        count={packs.length}
+        eyebrow={isGameCollection ? 'JEUX // COLLECTIONS' : 'COLLECTION // OFFICIELLE'}
+        title={isGameCollection ? 'COLLECTIONS DE JEU' : 'PACKS ÉQUIPES'}
+      />
       <View style={styles.teamPackList}>
         {packs.map((pack) => (
           <Pressable
-            accessibilityHint="Ouvre la collection complète et ses douze objets"
+            accessibilityHint={`Ouvre la collection complète et ses ${pack.items.length} objets`}
             accessibilityLabel={`Ouvrir ${pack.name}, ${pack.items.length} objets, ${formatNumber(pack.price)} Volts`}
             accessibilityRole="button"
             key={pack.id}
@@ -611,7 +631,7 @@ function TeamPackShelf({
               { borderColor: `${pack.accent}72` },
               pressed && styles.pressed,
             ]}
-            testID={`atelier-team-pack-${pack.id}`}
+            testID={`${isGameCollection ? 'atelier-game-collection' : 'atelier-team-pack'}-${pack.id}`}
           >
             <Image
               accessibilityIgnoresInvertColors
@@ -624,7 +644,7 @@ function TeamPackShelf({
               <View style={styles.teamPackTopline}>
                 <View style={[styles.teamPackOfficial, { borderColor: `${pack.accent}80` }]}>
                   <View style={[styles.teamPackDot, { backgroundColor: pack.accent }]} />
-                  <Text style={styles.teamPackOfficialText}>OFFICIEL</Text>
+                  <Text style={styles.teamPackOfficialText}>{isGameCollection ? 'JEU PARTENAIRE' : 'OFFICIEL'}</Text>
                 </View>
                 <Text style={styles.teamPackCount}>{pack.items.length} OBJETS</Text>
               </View>

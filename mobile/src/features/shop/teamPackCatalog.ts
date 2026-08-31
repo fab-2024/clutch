@@ -29,6 +29,8 @@ export type TeamPackItemDefinition = {
   slot: CosmeticSlot;
 };
 
+export type CosmeticPackKind = 'game_collection' | 'team';
+
 export type TeamPackDefinition = {
   accent: string;
   brandKey: string;
@@ -36,6 +38,7 @@ export type TeamPackDefinition = {
   hero: ImageSourcePropType;
   id: string;
   items: readonly TeamPackItemDefinition[];
+  kind: CosmeticPackKind;
   licenseHolder: string;
   name: string;
   price: number;
@@ -53,9 +56,11 @@ export type TeamPackPrimaryAction =
 const FNATIC_ORANGE = '#FF5900';
 const KC_BLUE = '#168DFF';
 const M8_ICE = '#B9DCFF';
+const LOL_GOLD = '#D6B56A';
 
 export const FNATIC_TEAM_PACK: TeamPackDefinition = {
   id: 'fnatic-black-orange',
+  kind: 'team',
   brandKey: 'fnatic',
   name: 'Pack Fnatic',
   title: 'FNATIC',
@@ -221,6 +226,7 @@ export const FNATIC_TEAM_PACK: TeamPackDefinition = {
 
 export const KC_TEAM_PACK: TeamPackDefinition = {
   id: 'kc-blue-wall',
+  kind: 'team',
   brandKey: 'kc',
   name: 'Pack Karmine Corp',
   title: 'KARMINE CORP',
@@ -386,6 +392,7 @@ export const KC_TEAM_PACK: TeamPackDefinition = {
 
 export const M8_TEAM_PACK: TeamPackDefinition = {
   id: 'm8-gentle-mates',
+  kind: 'team',
   brandKey: 'm8',
   name: 'Pack M8',
   title: 'M8',
@@ -549,22 +556,120 @@ export const M8_TEAM_PACK: TeamPackDefinition = {
   ],
 };
 
+export const LEAGUE_OF_LEGENDS_COLLECTION_PACK: TeamPackDefinition = {
+  id: 'league-of-legends-collection',
+  kind: 'game_collection',
+  brandKey: 'league-of-legends',
+  name: 'Pack League of Legends',
+  title: 'LEAGUE OF LEGENDS',
+  subtitle: 'ICÔNES DE RUNETERRA',
+  description: 'Cinq pièces iconiques réunies dans une galerie de pierre, d’or et de lumière cyan.',
+  accent: LOL_GOLD,
+  price: 900,
+  licenseHolder: 'Riot Games',
+  hero: require('../../../assets/shop/collections/league-of-legends/league-of-legends-collection-hero.png'),
+  items: [
+    {
+      id: 'lol-infinity-edge',
+      number: 1,
+      name: 'Lame d’Infini',
+      description: 'Une réplique de collection aux finitions acier, or et cristal azur.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: LOL_GOLD,
+      equipByDefault: false,
+      roomKind: 'core',
+      roomSlot: 'left-free',
+      image: require('../../../assets/shop/collections/league-of-legends/items/infinity-edge.png'),
+    },
+    {
+      id: 'lol-nexus-fragment',
+      number: 2,
+      name: 'Fragment du Nexus',
+      description: 'Un fragment azur suspendu, parcouru d’une énergie cristalline.',
+      slot: 'apparence_core',
+      rarity: 'legendaire',
+      accent: '#35C8FF',
+      equipByDefault: false,
+      roomKind: 'core',
+      roomSlot: 'left-extra',
+      image: require('../../../assets/shop/collections/league-of-legends/items/nexus-fragment.png'),
+    },
+    {
+      id: 'lol-jinx-fishbones-gallery',
+      number: 3,
+      name: 'Jinx & Fishbones',
+      description: 'La pièce centrale de la collection, dressée avec Fishbones sur un podium noir et or.',
+      slot: 'vitrine_supports',
+      rarity: 'legendaire',
+      accent: '#55C9FF',
+      equipByDefault: true,
+      roomKind: 'trophy',
+      roomSlot: 'trophy',
+      image: require('../../../assets/shop/collections/league-of-legends/items/jinx-fishbones.png'),
+    },
+    {
+      id: 'lol-baron-nashor',
+      number: 4,
+      name: 'Baron Nashor',
+      description: 'Une sculpture violette monumentale surgissant d’un bassin d’énergie du Néant.',
+      slot: 'apparence_core',
+      rarity: 'legendaire',
+      accent: '#9B5CFF',
+      equipByDefault: false,
+      roomKind: 'trophy',
+      roomSlot: 'right-extra',
+      image: require('../../../assets/shop/collections/league-of-legends/items/baron-nashor.png'),
+    },
+    {
+      id: 'lol-vision-ward',
+      number: 5,
+      name: 'Balise de vision',
+      description: 'Une balise dorée protégée par une cloche de verre et un halo ambré.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: '#F3B84B',
+      equipByDefault: false,
+      roomKind: 'ring',
+      roomSlot: 'right-free',
+      image: require('../../../assets/shop/collections/league-of-legends/items/vision-ward.png'),
+    },
+  ],
+};
+
 export const TEAM_PACK_CATALOG: readonly TeamPackDefinition[] = [
   FNATIC_TEAM_PACK,
   KC_TEAM_PACK,
   M8_TEAM_PACK,
 ];
 
-const TEAM_PACK_ITEM_BY_ID = new Map(
-  TEAM_PACK_CATALOG.flatMap((pack) => pack.items.map((item) => [item.id, item] as const)),
+export const GAME_COLLECTION_PACK_CATALOG: readonly TeamPackDefinition[] = [
+  LEAGUE_OF_LEGENDS_COLLECTION_PACK,
+];
+
+export const COSMETIC_PACK_CATALOG: readonly TeamPackDefinition[] = [
+  ...TEAM_PACK_CATALOG,
+  ...GAME_COLLECTION_PACK_CATALOG,
+];
+
+const COSMETIC_PACK_ITEM_BY_ID = new Map(
+  COSMETIC_PACK_CATALOG.flatMap((pack) => pack.items.map((item) => [item.id, item] as const)),
 );
 
 export function teamPackById(id: string | null | undefined) {
   return TEAM_PACK_CATALOG.find((pack) => pack.id === id) ?? null;
 }
 
+export function cosmeticPackById(id: string | null | undefined) {
+  return COSMETIC_PACK_CATALOG.find((pack) => pack.id === id) ?? null;
+}
+
 export function teamPackItemById(id: string | null | undefined) {
-  return id ? TEAM_PACK_ITEM_BY_ID.get(id) ?? null : null;
+  return cosmeticPackItemById(id);
+}
+
+export function cosmeticPackItemById(id: string | null | undefined) {
+  return id ? COSMETIC_PACK_ITEM_BY_ID.get(id) ?? null : null;
 }
 
 export function teamPackRuntimeItems(pack: TeamPackDefinition, data: CosmeticShopData | null | undefined) {

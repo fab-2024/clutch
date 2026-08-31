@@ -196,6 +196,20 @@ describe('AtelierShopScreen interactions', () => {
     });
   });
 
+  it('keeps game collections in their own Atelier shelf', async () => {
+    const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
+
+    expect(screen.getByTestId('atelier-shelf-game-collections')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId(
+      'atelier-game-collection-league-of-legends-collection',
+    ));
+
+    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
+      pathname: '/team-pack-preview',
+      params: { packId: 'league-of-legends-collection' },
+    });
+  });
+
   it('reviews a rare purchase before debiting then opens its dedicated reveal', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 

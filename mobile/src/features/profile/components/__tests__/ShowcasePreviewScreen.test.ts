@@ -82,4 +82,13 @@ describe('ShowcasePreviewScreen team-pack moods', () => {
     });
     expect(preview.shop.equipped.factionEffect?.id).toBe('m8-sparkle-effect');
   });
+
+  it('builds the five-object League of Legends collection with its dedicated presenter', () => {
+    const preview = showcasePreviewForMood('lol', 'league-of-legends-collection');
+
+    expect(preview.shop.items.filter((item) => (
+      item.collectionKey === 'league-of-legends-collection'
+    ))).toHaveLength(5);
+    expect(preview.shop.equipped.showcase.supports?.id).toBe('lol-jinx-fishbones-gallery');
+  });
 });

@@ -5,11 +5,12 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 import { PREVIEW_SHOP } from '@/src/features/shop/components/ShopPreviewScreen';
 import {
   applyPreviewTeamPackAction,
+  cosmeticPackById,
   createTeamPackPreviewItems,
   FNATIC_TEAM_PACK,
   KC_TEAM_PACK,
+  LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   M8_TEAM_PACK,
-  teamPackById,
   type TeamPackDefinition,
 } from '@/src/features/shop/teamPackCatalog';
 import { EMPTY_EQUIPPED_COSMETICS, type CosmeticShopData } from '@/src/features/shop/types';
@@ -97,17 +98,19 @@ export default function ShowcasePreviewScreen() {
   );
 }
 
-type ShowcasePreviewMood = 'fnatic' | 'kc' | 'm8' | 'minimal' | 'mythic' | 'standard';
+type ShowcasePreviewMood = 'fnatic' | 'kc' | 'lol' | 'm8' | 'minimal' | 'mythic' | 'standard';
 
 export function showcasePreviewForMood(mood: ShowcasePreviewMood, packId?: string) {
-  const pack = teamPackById(packId)
+  const pack = cosmeticPackById(packId)
     ?? (mood === 'fnatic'
       ? FNATIC_TEAM_PACK
       : mood === 'kc'
         ? KC_TEAM_PACK
         : mood === 'm8'
           ? M8_TEAM_PACK
-          : null);
+          : mood === 'lol'
+            ? LEAGUE_OF_LEGENDS_COLLECTION_PACK
+            : null);
   if (pack) {
     const packShop = applyPreviewTeamPackAction({
       ...SHOWCASE_SHOP,
@@ -213,6 +216,7 @@ function previewMood(value?: string): ShowcasePreviewMood {
   if (
     value === 'fnatic'
     || value === 'kc'
+    || value === 'lol'
     || value === 'm8'
     || value === 'minimal'
     || value === 'mythic'
