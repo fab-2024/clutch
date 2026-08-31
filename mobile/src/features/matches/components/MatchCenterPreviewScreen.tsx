@@ -57,9 +57,11 @@ export const PREVIEW_MATCH_CENTER: MatchCenterData = {
 export default function MatchCenterPreviewScreen() {
   const params = useLocalSearchParams<{ state?: string | string[] }>();
   const state = Array.isArray(params.state) ? params.state[0] : params.state;
-  const previewData = state === 'handoff-locked'
-    ? lockedPreview(PREVIEW_MATCH_CENTER)
-    : PREVIEW_MATCH_CENTER;
+  const previewData = state === 'live'
+    ? livePreview(PREVIEW_MATCH_CENTER)
+    : state === 'handoff-locked'
+      ? lockedPreview(PREVIEW_MATCH_CENTER)
+      : PREVIEW_MATCH_CENTER;
   const snapshot = previewSnapshot(previewData);
   const arenaMotion = Boolean(state?.startsWith('handoff'));
   const previewProgress = handoffPreviewProgress(state);
@@ -78,8 +80,8 @@ export default function MatchCenterPreviewScreen() {
       previewCallLockChoice={callLockChoice}
       previewCallLockProgress={callLockProgress}
       previewData={previewData}
-      previewJourneySnapshot={arenaMotion || callLockChoice ? snapshot : undefined}
-      previewJourneySource={arenaMotion ? 'hub' : undefined}
+      previewJourneySnapshot={arenaMotion || callLockChoice || state === 'live' ? snapshot : undefined}
+      previewJourneySource={arenaMotion || state === 'live' ? 'hub' : undefined}
       previewLoadingSnapshot={state === 'transition' ? snapshot : undefined}
       previewReduceMotion={reduceMotion}
     />
@@ -129,10 +131,60 @@ function lockedPreview(data: MatchCenterData): MatchCenterData {
   };
 }
 
-function previewSnapshot(data: MatchCenterData): MatchJourneySnapshot {
+function livePreview(data: MatchCenterData): MatchCenterData {
+  const startedAt = new Date(Date.now() - 38 * 60 * 1000).toISOString();
   return {
-    accentA: '#69A7FF',
-    accentB: '#FF5900',
+    ...data,
+    match: {
+      ...data.match,
+      id: 'preview-live-kc-vit',
+      debut: startedAt,
+      equipe_a: 'Karmine Corp',
+      tag_a: 'KC',
+      equipe_b: 'Team Vitality',
+      tag_b: 'VIT',
+      evenement: 'LFL Summer Split',
+      format: 3,
+      statut: 'en_cours',
+      score_a: 0,
+      score_b: 0,
+      prediction: null,
+    },
+    projection: {
+      match_id: 'preview-live-kc-vit',
+      choix: [
+        { cle: 'a', proba: .71, gain: 17, perte: 25 },
+        { cle: 'b', proba: .29, gain: 25, perte: 17 },
+      ],
+      k: 60,
+      source: 'elo_v1',
+      figee_le: startedAt,
+    },
+    prediction: null,
+    callContext: {
+      ...data.callContext,
+      match_id: 'preview-live-kc-vit',
+      participants: 1486,
+      ferme_le: startedAt,
+      verrouille_le: startedAt,
+      distribution: {
+        total: 1486,
+        a: 1055,
+        b: 431,
+        a_pct: 71,
+        b_pct: 29,
+      },
+      prediction: null,
+    },
+    related: [],
+  };
+}
+
+function previewSnapshot(data: MatchCenterData): MatchJourneySnapshot {
+  const live = data.match.statut === 'en_cours';
+  return {
+    accentA: live ? '#139DFF' : '#69A7FF',
+    accentB: live ? '#F1D500' : '#FF5900',
     event: data.match.evenement,
     format: data.match.format,
     game: data.match.jeu,

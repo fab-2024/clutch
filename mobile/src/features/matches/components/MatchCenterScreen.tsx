@@ -36,6 +36,7 @@ import {
 import type { MatchCenterData } from '../types';
 import { matchPhase, predictionIsOpen } from '../utils';
 import { CallLockMoment } from './CallLockMoment';
+import { LiveMatchCenter } from './LiveMatchCenter';
 import {
   CallContract,
   LoadingCard,
@@ -272,15 +273,17 @@ export default function MatchCenterScreen({
         }
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.topBar, isShortLandscape && styles.topBarLandscape]}>
-          <Pressable accessibilityLabel={`Revenir à ${returnLabel}`} accessibilityRole="button" onPress={returnToArena} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
-            <Text style={[styles.backArrow, predictionPickerOpen && styles.pickerBackArrow]}>←</Text>
-            <Text style={[styles.backText, predictionPickerOpen && styles.pickerBackText]}>
-              {predictionPickerOpen && match ? `${match.tag_a} VS ${match.tag_b}` : returnLabel}
-            </Text>
-          </Pressable>
-          {predictionPickerOpen ? null : <GriffLockup width={92} />}
-        </View>
+        {phase === 'live' ? null : (
+          <View style={[styles.topBar, isShortLandscape && styles.topBarLandscape]}>
+            <Pressable accessibilityLabel={`Revenir à ${returnLabel}`} accessibilityRole="button" onPress={returnToArena} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
+              <Text style={[styles.backArrow, predictionPickerOpen && styles.pickerBackArrow]}>←</Text>
+              <Text style={[styles.backText, predictionPickerOpen && styles.pickerBackText]}>
+                {predictionPickerOpen && match ? `${match.tag_a} VS ${match.tag_b}` : returnLabel}
+              </Text>
+            </Pressable>
+            {predictionPickerOpen ? null : <GriffLockup width={92} />}
+          </View>
+        )}
 
         {loadingState ? <LoadingCard snapshot={journeySnapshot} /> : null}
 
@@ -304,7 +307,14 @@ export default function MatchCenterScreen({
           />
         ) : null}
 
-        {match ? (
+        {match ? phase === 'live' ? (
+          <LiveMatchCenter
+            compact={isShortLandscape}
+            data={data!}
+            onBack={returnToArena}
+            snapshot={journeySnapshot}
+          />
+        ) : (
           <>
             {predictionPickerOpen ? (
               <>

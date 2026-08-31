@@ -14,11 +14,16 @@ import {
 const mockLoad = jest.fn(async () => undefined);
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
+jest.mock('lucide-react-native/icons/arrow-left', () => ({ __esModule: true, default: 'ArrowLeft' }));
+jest.mock('lucide-react-native/icons/calendar-days', () => ({ __esModule: true, default: 'CalendarDays' }));
 jest.mock('lucide-react-native/icons/check', () => ({ __esModule: true, default: 'Check' }));
+jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, default: 'ChevronRight' }));
 jest.mock('lucide-react-native/icons/circle-alert', () => ({ __esModule: true, default: 'CircleAlert' }));
 jest.mock('lucide-react-native/icons/circle-check', () => ({ __esModule: true, default: 'CircleCheck' }));
+jest.mock('lucide-react-native/icons/external-link', () => ({ __esModule: true, default: 'ExternalLink' }));
 jest.mock('lucide-react-native/icons/inbox', () => ({ __esModule: true, default: 'Inbox' }));
 jest.mock('lucide-react-native/icons/lock', () => ({ __esModule: true, default: 'Lock' }));
+jest.mock('lucide-react-native/icons/share-2', () => ({ __esModule: true, default: 'Share2' }));
 jest.mock('expo-router', () => ({
   Redirect: () => null,
   router: {
@@ -305,6 +310,41 @@ describe('MatchCenterScreen prediction confirmation', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('prediction-confirmation-sheet')).toBeNull();
       expect(screen.queryByTestId('prediction-review-trigger')).toBeNull();
+    });
+  });
+
+  it('uses the dedicated match center when the match is live', async () => {
+    const liveData = {
+      ...PREVIEW_MATCH_CENTER,
+      match: {
+        ...PREVIEW_MATCH_CENTER.match,
+        score_a: 0,
+        score_b: 0,
+        statut: 'en_cours' as const,
+      },
+      callContext: {
+        ...PREVIEW_MATCH_CENTER.callContext,
+        distribution: {
+          total: 100,
+          a: 71,
+          b: 29,
+          a_pct: 71,
+          b_pct: 29,
+        },
+      },
+    };
+    const screen = await render(<MatchCenterScreen previewData={liveData} />);
+
+    expect(screen.getByTestId('live-match-center')).toBeTruthy();
+    expect(screen.getByText('MATCH CENTER')).toBeTruthy();
+    expect(screen.getByText('PRONOSTIC COMMUNAUTÉ')).toBeTruthy();
+    expect(screen.queryByText('COMMENT ÇA MARCHE')).toBeNull();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole('button', { name: 'Voir les règles du call' }));
+    });
+    await waitFor(() => {
+      expect(screen.getByText(PREVIEW_MATCH_CENTER.callContext.regle_resolution.detail)).toBeTruthy();
     });
   });
 });
