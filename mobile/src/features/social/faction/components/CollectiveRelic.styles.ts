@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 
 export const COMPACT_RELIC_SCALE = 2;
+const COMPACT_RELIC_HORIZONTAL_SCALE = 2.2;
 
 const COMPACT_RELIC_HEIGHT = 330;
 const COMPACT_RELIC_BOTTOM_OVERFLOW = ((COMPACT_RELIC_SCALE - 1) * COMPACT_RELIC_HEIGHT) / 2;
@@ -26,7 +27,10 @@ export const relicStyles = StyleSheet.create({
     marginTop: -30,
     marginHorizontal: -22,
     marginBottom: COMPACT_RELIC_BOTTOM_OVERFLOW + 8,
-    transform: [{ scale: COMPACT_RELIC_SCALE }],
+    transform: [
+      { scaleX: COMPACT_RELIC_HORIZONTAL_SCALE },
+      { scaleY: COMPACT_RELIC_SCALE },
+    ],
   },
   vesselSlot: {
     position: 'absolute',

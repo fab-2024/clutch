@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     marginHorizontal: -18,
-    paddingHorizontal: 30,
+    paddingHorizontal: 0,
     paddingVertical: 12,
     backgroundColor: '#0B1218',
   },
@@ -309,6 +309,7 @@ const styles = StyleSheet.create({
   heroTop: {
     zIndex: 6,
     minHeight: 32,
+    paddingHorizontal: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -334,7 +335,7 @@ const styles = StyleSheet.create({
   identity: {
     zIndex: 4,
     minHeight: 62,
-    marginHorizontal: 1,
+    marginHorizontal: 12,
     paddingHorizontal: 10,
     paddingVertical: 7,
     flexDirection: 'row',
@@ -363,6 +364,7 @@ const styles = StyleSheet.create({
   growthValue: { ...typography.metricSmall, marginTop: 1, color: colors.volt },
   progressBlock: { zIndex: 4, marginTop: 8 },
   relicForm: {
+    marginHorizontal: 18,
     color: colors.volt,
     fontFamily: fonts.displayBold,
     fontSize: 13,
@@ -416,7 +418,7 @@ const styles = StyleSheet.create({
   inviteButton: {
     minHeight: 59,
     marginTop: 3,
-    marginHorizontal: 9,
+    marginHorizontal: 12,
     marginBottom: 12,
     padding: 3,
     overflow: 'hidden',
