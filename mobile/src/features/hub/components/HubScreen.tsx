@@ -787,7 +787,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sectionKicker: {
-    color: colors.volt,
+    color: colors.text,
     fontFamily: fonts.bold,
     fontSize: 14,
     lineHeight: 17,
@@ -795,7 +795,7 @@ const styles = StyleSheet.create({
   },
   sectionLink: {
     ...typography.action,
-    color: colors.volt,
+    color: colors.text,
     letterSpacing: .35,
   },
   upNextRail: {
