@@ -1,12 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
-import Check from 'lucide-react-native/icons/check';
-import Play from 'lucide-react-native/icons/play';
 import Sparkles from 'lucide-react-native/icons/sparkles';
-import Target from 'lucide-react-native/icons/target';
 import Trophy from 'lucide-react-native/icons/trophy';
-import UsersRound from 'lucide-react-native/icons/users-round';
 import type { ComponentType } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
@@ -17,6 +13,7 @@ import { openMatchResult } from '@/src/features/matches/matchCenterNavigation';
 
 import type { HubContextItem } from '../hubContext';
 import type { HubFactionMission, HubRecentResult, HubReward } from '../types';
+import DailyMissionArtwork, { type DailyMissionArtworkVariant } from './DailyMissionArtwork';
 
 type ContextPresentation = {
   accent: string;
@@ -38,13 +35,12 @@ type HubContextSlotProps = {
 };
 
 type DailyMissionCard = {
+  borderColor: string;
   colors: [string, string, string];
   current: number;
   eyebrow: string;
   goal: number;
-  iconColor: string;
-  Icon: ComponentType<{ color?: string; fill?: string; size?: number; strokeWidth?: number }>;
-  key: 'faction' | 'call' | 'live' | 'social';
+  key: DailyMissionArtworkVariant;
   reward: number;
   title: string;
 };
@@ -102,10 +98,9 @@ export function HubContextSlot({ context, now = Date.now() }: HubContextSlotProp
 
 function HubMissionChallengeCard({ mission }: { mission: HubFactionMission }) {
   const { width } = useWindowDimensions();
-  const team = (mission.team.tag || mission.team.name || 'FACTION').toUpperCase();
-  const cards = dailyMissionCards(mission, team);
+  const cards = dailyMissionCards();
   const completed = cards.filter((card) => card.current >= card.goal).length;
-  const cardWidth = Math.min(360, Math.max(256, width - 68));
+  const cardWidth = Math.min(328, Math.max(264, width - 68));
   const openMissions = () => openContext({ kind: 'mission', mission });
 
   return (
@@ -113,7 +108,7 @@ function HubMissionChallengeCard({ mission }: { mission: HubFactionMission }) {
       <View style={styles.missionSectionHeader}>
         <Text style={styles.missionSectionTitle}>DÉFIS DU JOUR</Text>
         <Pressable
-          accessibilityLabel={`Voir les quatre défis du jour, ${completed} terminé${completed === 1 ? '' : 's'}`}
+          accessibilityLabel={`Voir les ${cards.length} défis du jour, ${completed} terminé${completed === 1 ? '' : 's'}`}
           accessibilityRole="button"
           onPress={openMissions}
           style={({ pressed }) => [styles.missionCountPill, pressed && styles.pressed]}
@@ -155,15 +150,19 @@ function DailyMissionCardView({
   cardWidth: number;
   onPress: () => void;
 }) {
-  const { Icon } = card;
+  const spokenTitle = card.title.replace(/\s+/g, ' ');
 
   return (
     <Pressable
       accessibilityHint="Ouvre le détail des missions dans Défis"
-      accessibilityLabel={`${card.eyebrow}. ${card.title}. Progression ${card.current} sur ${card.goal}. Récompense ${card.reward} Frags.`}
+      accessibilityLabel={`${card.eyebrow}. ${spokenTitle}. Progression ${card.current} sur ${card.goal}. Récompense ${card.reward} Frags.`}
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [styles.missionPressable, { width: cardWidth }, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.missionPressable,
+        { borderColor: card.borderColor, width: cardWidth },
+        pressed && styles.pressed,
+      ]}
       testID={`hub-daily-mission-${card.key}`}
     >
       <LinearGradient
@@ -172,20 +171,24 @@ function DailyMissionCardView({
         start={{ x: 0, y: 0 }}
         style={styles.missionCard}
       >
+        <View style={[styles.missionCut, styles.missionCutPrimary]} />
+        <View style={[styles.missionCut, styles.missionCutSecondary]} />
+
         <View
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           pointerEvents="none"
-          style={styles.missionBackdropIcon}
+          style={styles.missionArtwork}
         >
-          <Icon color={card.iconColor} size={154} strokeWidth={5.2} />
+          <DailyMissionArtwork variant={card.key} />
         </View>
         <LinearGradient
-          colors={['rgba(255,255,255,.10)', 'rgba(20,12,0,.04)', 'rgba(3,8,12,.32)']}
+          colors={['rgba(255,255,255,.08)', 'rgba(255,255,255,0)', 'rgba(3,8,12,.4)']}
           end={{ x: 1, y: 1 }}
           start={{ x: 0, y: 0 }}
           style={StyleSheet.absoluteFill}
         />
+        <View style={styles.missionTopEdge} />
 
         <View style={styles.missionCopy}>
           <View style={styles.missionEyebrowPlate}>
@@ -216,55 +219,40 @@ function DailyMissionCardView({
   );
 }
 
-function dailyMissionCards(mission: HubFactionMission, team: string): DailyMissionCard[] {
-  const factionGoal = Math.max(1, mission.goal);
-
-  // The Hub API currently exposes only the faction mission. The other three
-  // cards are presentation placeholders until their mission data is available.
+function dailyMissionCards(): DailyMissionCard[] {
+  // These missions remain presentation-only until the Hub API exposes their
+  // individual progress. The collective faction challenge is intentionally
+  // not duplicated in this daily rail.
   return [
     {
-      colors: ['#F6B900', '#D58700', '#713500'],
-      current: Math.min(Math.max(0, mission.progress), factionGoal),
-      eyebrow: `MISSION ${team}`,
-      goal: factionGoal,
-      iconColor: 'rgba(102,55,0,.30)',
-      Icon: Target,
-      key: 'faction',
-      reward: 25,
-      title: `${factionGoal} CALLS EN FACTION`,
-    },
-    {
-      colors: ['#00AD72', '#007750', '#003C2B'],
+      borderColor: 'rgba(76,242,184,.42)',
+      colors: ['#08A96B', '#007A55', '#003D36'],
       current: 0,
       eyebrow: 'MISSION CALL',
       goal: 1,
-      iconColor: 'rgba(0,62,45,.34)',
-      Icon: Check,
       key: 'call',
       reward: 30,
       title: 'VALIDE 1 CALL',
     },
     {
-      colors: ['#842CE5', '#5115B4', '#28036A'],
+      borderColor: 'rgba(198,112,255,.44)',
+      colors: ['#7417D0', '#4B06A3', '#25005E'],
       current: 0,
       eyebrow: 'MISSION LIVE',
       goal: 2,
-      iconColor: 'rgba(43,4,103,.36)',
-      Icon: Play,
       key: 'live',
       reward: 20,
       title: 'SUIS 2 MATCHS',
     },
     {
-      colors: ['#178CE8', '#075DAD', '#052D65'],
+      borderColor: 'rgba(77,195,245,.44)',
+      colors: ['#087FD1', '#005CAC', '#00316E'],
       current: 0,
       eyebrow: 'MISSION SOCIAL',
       goal: 1,
-      iconColor: 'rgba(0,44,98,.36)',
-      Icon: UsersRound,
       key: 'social',
       reward: 25,
-      title: 'INVITE 1 SUPPORTER',
+      title: 'INVITE\n1 SUPPORTER',
     },
   ];
 }
@@ -467,10 +455,10 @@ const styles = StyleSheet.create({
   },
   missionPressable: {
     overflow: 'hidden',
-    borderRadius: 20,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,.14)',
     backgroundColor: '#111A22',
+    elevation: 4,
   },
   missionRailViewport: {
     marginRight: -spacing.md,
@@ -481,55 +469,93 @@ const styles = StyleSheet.create({
     paddingRight: 18,
   },
   missionCard: {
-    height: 170,
+    height: 176,
     overflow: 'hidden',
   },
-  missionBackdropIcon: {
+  missionCut: {
     position: 'absolute',
     zIndex: 0,
-    top: -4,
-    right: -12,
-    width: 170,
-    height: 170,
+    height: 210,
+    backgroundColor: 'rgba(255,255,255,.035)',
+    transform: [{ rotate: '30deg' }],
+  },
+  missionCutPrimary: {
+    top: -104,
+    left: 64,
+    width: 54,
+  },
+  missionCutSecondary: {
+    top: -112,
+    left: 112,
+    width: 18,
+    backgroundColor: 'rgba(255,255,255,.025)',
+  },
+  missionArtwork: {
+    position: 'absolute',
+    zIndex: 0,
+    top: -7,
+    right: -7,
+    width: 184,
+    height: 184,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ rotate: '-7deg' }],
+  },
+  missionTopEdge: {
+    position: 'absolute',
+    top: 0,
+    left: 18,
+    right: 18,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,.28)',
   },
   missionCopy: {
     zIndex: 2,
-    padding: 13,
+    paddingHorizontal: 13,
+    paddingTop: 25,
     paddingBottom: 58,
     alignItems: 'flex-start',
   },
   missionEyebrowPlate: {
     maxWidth: '72%',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: 'rgba(6,8,9,.88)',
+    marginLeft: 2,
+    paddingHorizontal: 9,
+    paddingTop: 4,
+    paddingBottom: 3,
+    borderRadius: 5,
+    backgroundColor: 'rgba(3,10,14,.88)',
+    transform: [{ skewX: '-5deg' }],
   },
   missionEyebrow: {
     ...typography.action,
-    color: colors.volt,
+    color: '#F7FAFC',
     fontFamily: typography.metricSmall.fontFamily,
     fontSize: 14,
     lineHeight: 16,
-    letterSpacing: 0.2,
+    fontStyle: 'italic',
+    letterSpacing: 0.1,
+    transform: [{ skewX: '5deg' }],
   },
   missionTitlePlate: {
     maxWidth: '78%',
-    marginTop: 2,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 6,
-    backgroundColor: 'rgba(6,8,9,.94)',
+    marginTop: -4,
+    paddingHorizontal: 10,
+    paddingTop: 4,
+    paddingBottom: 6,
+    borderRadius: 5,
+    backgroundColor: 'rgba(3,10,14,.94)',
+    transform: [{ skewX: '-4deg' }],
   },
   missionTitle: {
     ...typography.displayMedium,
     color: '#FFFFFF',
     fontSize: 31,
-    lineHeight: 29,
-    letterSpacing: -0.35,
+    lineHeight: 27,
+    fontStyle: 'italic',
+    letterSpacing: -0.45,
+    textShadowColor: 'rgba(0,0,0,.34)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 2,
+    transform: [{ skewX: '4deg' }],
   },
   missionBottomRow: {
     position: 'absolute',
@@ -543,37 +569,46 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   missionProgressPill: {
-    minWidth: 61,
-    minHeight: 35,
-    paddingHorizontal: 10,
+    minWidth: 64,
+    minHeight: 33,
+    paddingHorizontal: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
-    backgroundColor: 'rgba(6,8,9,.9)',
+    borderRadius: 7,
+    backgroundColor: 'rgba(3,10,14,.9)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,.2)',
+    borderColor: 'rgba(255,255,255,.16)',
   },
   missionProgress: {
     ...typography.metricSmall,
     color: '#FFFFFF',
     fontSize: 17,
     lineHeight: 19,
+    letterSpacing: 0.1,
   },
   missionRewardPill: {
-    minWidth: 104,
-    minHeight: 35,
-    paddingHorizontal: 11,
+    minWidth: 108,
+    minHeight: 34,
+    paddingHorizontal: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 9,
+    borderRadius: 8,
     backgroundColor: colors.volt,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,.5)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.28,
+    shadowRadius: 4,
+    elevation: 3,
   },
   missionReward: {
-    ...typography.control,
+    ...typography.metricSmall,
     color: '#080B0D',
-    fontSize: 14,
+    fontSize: 15,
     lineHeight: 17,
-    letterSpacing: -0.1,
+    fontStyle: 'italic',
+    letterSpacing: -0.2,
   },
   accent: {
     position: 'absolute',
