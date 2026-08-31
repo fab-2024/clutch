@@ -21,7 +21,7 @@ function TabIcon({ compact = false, focused, icon: Icon }: TabIconProps) {
   return (
     <View style={[styles.iconWrap, compact && styles.iconWrapCompact]}>
       <Icon
-        color={focused ? colors.volt : '#77838F'}
+        color={focused ? colors.volt : colors.textMuted}
         size={compact ? 19 : 21}
         strokeWidth={focused ? 2.25 : 1.8}
       />
@@ -47,8 +47,8 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.volt,
-        tabBarInactiveTintColor: '#77838F',
-        tabBarActiveBackgroundColor: 'rgba(232, 255, 61, 0.075)',
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarActiveBackgroundColor: 'rgba(232, 255, 61, 0.1)',
         tabBarBackground: SmokedGlassBackground,
         tabBarHideOnKeyboard: true,
         tabBarStyle: [styles.tabBar, isShortLandscape && styles.tabBarLandscape],
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
     borderWidth: 1,
     borderTopWidth: 1,
-    borderColor: 'rgba(197, 211, 222, 0.14)',
+    borderColor: colors.border,
     borderRadius: 23,
     backgroundColor: 'transparent',
     overflow: 'hidden',
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: 'hidden',
     borderRadius: 22,
-    backgroundColor: 'rgba(7, 10, 14, 0.82)',
+    backgroundColor: 'rgba(9, 17, 23, 0.9)',
   },
   glassTint: {
     position: 'absolute',
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: 'rgba(13, 18, 24, 0.86)',
+    backgroundColor: 'rgba(17, 26, 34, 0.92)',
   },
   glassHighlight: {
     position: 'absolute',
@@ -148,6 +148,6 @@ const styles = StyleSheet.create({
     left: 22,
     right: 22,
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(48, 65, 78, 0.9)',
   },
 });

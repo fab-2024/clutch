@@ -3,7 +3,7 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 import { SvgUri } from 'react-native-svg';
 
 import { RemoteImage } from '@/src/components/ui/RemoteImage';
-import { fonts } from '@/src/theme';
+import { colors, fonts } from '@/src/theme';
 
 import { resolveTeamLogoUri } from '../teamLogos';
 
@@ -83,8 +83,8 @@ export default function TeamLogo({ accent, contentScale, frameless = false, name
 }
 
 const styles = StyleSheet.create({
-  holder: { borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0C1116' },
-  imageHolder: { backgroundColor: '#05070A', boxShadow: 'inset 0 0 18px rgba(255,255,255,.035)' },
+  holder: { borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceLow },
+  imageHolder: { backgroundColor: colors.background, boxShadow: 'inset 0 0 18px rgba(255,255,255,.035)' },
   frameless: { borderWidth: 0, backgroundColor: 'transparent' },
   remoteMark: { position: 'absolute' },
   pendingMark: { opacity: 0 },

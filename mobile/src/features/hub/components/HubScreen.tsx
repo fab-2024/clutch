@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingBottom: layout.tabBarContentInset,
     gap: 16,
-    backgroundColor: '#020609',
+    backgroundColor: '#091117',
   },
   contentLandscape: {
     maxWidth: layout.wideContentMaxWidth,
@@ -727,9 +727,9 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     borderRadius: 18,
-    backgroundColor: '#060B10',
+    backgroundColor: '#0B1218',
     borderWidth: 1,
-    borderColor: '#354653',
+    borderColor: '#30414E',
   },
   upNextBackdrop: {
     position: 'absolute',
@@ -848,7 +848,7 @@ const styles = StyleSheet.create({
     width: 11,
     height: 11,
     borderRadius: 6,
-    backgroundColor: '#29323A',
+    backgroundColor: '#152633',
   },
   seasonDotActive: {
     width: 36,
@@ -876,9 +876,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 1,
     borderRadius: 22,
-    backgroundColor: '#12181D',
+    backgroundColor: '#111A22',
     borderWidth: 1,
-    borderColor: '#202931',
+    borderColor: '#30414E',
   },
   seasonHeaderActionText: {
     color: colors.text,
@@ -984,9 +984,9 @@ const styles = StyleSheet.create({
     padding: 16,
     justifyContent: 'space-between',
     borderRadius: 18,
-    backgroundColor: '#091017',
+    backgroundColor: '#0B1218',
     borderWidth: 1,
-    borderColor: '#31414B',
+    borderColor: '#30414E',
   },
   skeletonTop: {
     flexDirection: 'row',

@@ -1,27 +1,30 @@
-const background = '#070A0E';
-const backgroundDeep = '#05080B';
-const surfaceLow = '#0E1319';
-const surfaceRaised = '#141A22';
-const borderSubtle = '#202833';
+const canvas = '#091117';
+const canvasAlternate = '#0B1218';
+const surfaceStandard = '#111A22';
+const surfaceElevated = '#152633';
+const border = '#30414E';
 const textSecondary = '#A5AFB9';
 const focus = '#E8FF3D';
 
 export const colors = {
-  background,
-  backgroundDeep,
-  surfaceLow,
-  surfaceRaised,
-  surfaceInteractive: '#171F28',
-  borderSubtle,
-  borderStrong: '#34404D',
-  overlay: 'rgba(2,5,7,.82)',
+  canvas,
+  canvasAlternate,
+  surfaceStandard,
+  surfaceElevated,
+  border,
+  background: canvas,
+  backgroundDeep: canvasAlternate,
+  surfaceLow: surfaceStandard,
+  surfaceRaised: surfaceElevated,
+  surfaceInteractive: surfaceElevated,
+  borderSubtle: border,
+  borderStrong: border,
+  overlay: 'rgba(0,0,0,.76)',
   focus,
 
-  // Compatibility aliases. Existing screens keep their current rendering
-  // while new primitives consume the semantic surface roles above.
-  surface: surfaceLow,
-  surfaceElevated: surfaceRaised,
-  border: borderSubtle,
+  // Compatibility aliases for feature screens while all shared primitives
+  // consume the semantic roles above.
+  surface: surfaceStandard,
   text: '#F4F7FA',
   textSecondary,
   textMuted: '#8893A0',

@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: 'rgba(3,6,8,.9)',
     borderWidth: 1,
-    borderColor: '#344049',
+    borderColor: '#30414E',
   },
   diagnosticsDot: { width: 6, height: 6, borderRadius: 3 },
   diagnosticsText: { ...typography.metadata, color: colors.textSecondary, letterSpacing: 0.3 },

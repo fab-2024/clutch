@@ -425,7 +425,7 @@ function previewMutationLevel(value: string) {
 function noop() {}
 
 const previewStyles = StyleSheet.create({
-  panel: { paddingHorizontal: 14, paddingVertical: 10, gap: 8, backgroundColor: '#0B1013', borderBottomWidth: 1, borderBottomColor: '#2C361B' },
+  panel: { paddingHorizontal: 14, paddingVertical: 10, gap: 8, backgroundColor: '#0B1218', borderBottomWidth: 1, borderBottomColor: '#2C361B' },
   panelTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   eyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .6 },
   title: { ...typography.label, marginTop: 3, color: '#E8ECE9' },
@@ -433,11 +433,11 @@ const previewStyles = StyleSheet.create({
   controlScroll: { flex: 1 },
   controlLabel: { ...typography.label, width: 82, flexShrink: 0, color: '#87939A' },
   chargeEditor: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 7 },
-  stepButton: { minHeight: 30, paddingHorizontal: 9, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#151C20' },
+  stepButton: { minHeight: 30, paddingHorizontal: 9, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111A22' },
   stepText: { ...typography.label, color: '#C8D0D4' },
-  input: { width: 86, height: 32, paddingHorizontal: 9, borderRadius: 10, color: '#F3F5F4', backgroundColor: '#070A0C', borderWidth: 1, borderColor: '#3A461F', textAlign: 'center' },
+  input: { width: 86, height: 32, paddingHorizontal: 9, borderRadius: 10, color: '#F3F5F4', backgroundColor: '#0B1218', borderWidth: 1, borderColor: '#3A461F', textAlign: 'center' },
   chips: { gap: 6, paddingRight: 12 },
-  chip: { minHeight: 27, paddingHorizontal: 9, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#13191D', borderWidth: 1, borderColor: '#2B353B' },
+  chip: { minHeight: 27, paddingHorizontal: 9, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111A22', borderWidth: 1, borderColor: '#2B353B' },
   chipActive: { backgroundColor: colors.volt, borderColor: colors.volt },
   chipText: { ...typography.label, color: '#8D999F' },
   chipTextActive: { color: '#080B0D' },
@@ -447,5 +447,5 @@ const previewStyles = StyleSheet.create({
   mutationButtonActive: { backgroundColor: '#302814', borderColor: '#D7B773' },
   mutationText: { ...typography.label, color: '#D7B773' },
   diagnostics: { minHeight: 24, flexDirection: 'row', flexWrap: 'wrap', gap: 5, paddingTop: 2 },
-  diagnostic: { ...typography.label, paddingHorizontal: 7, paddingVertical: 4, borderRadius: 8, color: '#87B6BE', backgroundColor: '#091419', borderWidth: 1, borderColor: '#203A42' },
+  diagnostic: { ...typography.label, paddingHorizontal: 7, paddingVertical: 4, borderRadius: 8, color: '#87B6BE', backgroundColor: '#0B1218', borderWidth: 1, borderColor: '#203A42' },
 });

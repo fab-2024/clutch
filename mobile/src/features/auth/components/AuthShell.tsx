@@ -38,7 +38,7 @@ export default function AuthShell({
   return (
     <SafeAreaView style={styles.root}>
       <LinearGradient
-        colors={['#06090C', '#0A100D', '#06090C']}
+        colors={[colors.background, colors.backgroundDeep, colors.background]}
         end={{ x: 1, y: 1 }}
         start={{ x: 0, y: 0 }}
         style={StyleSheet.absoluteFill}
@@ -93,7 +93,7 @@ export default function AuthShell({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, overflow: 'hidden', backgroundColor: '#06090C' },
+  root: { flex: 1, overflow: 'hidden', backgroundColor: colors.background },
   ambientLayer: { position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' },
   ambientVolt: { position: 'absolute', top: 90, right: -120, width: 300, height: 300, borderRadius: 150, backgroundColor: '#BBD21F', opacity: 0.12 },
   ambientBlue: { position: 'absolute', bottom: -120, left: -140, width: 320, height: 320, borderRadius: 160, backgroundColor: '#174A70', opacity: 0.12 },
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   eyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.3 },
   title: { ...typography.displayLarge, maxWidth: 370, color: colors.text },
   subtitle: { ...typography.body, maxWidth: 390, color: '#98A2AC' },
-  panel: { overflow: 'hidden', padding: 14, borderRadius: 26, backgroundColor: 'rgba(9,13,17,.76)', borderWidth: 1, borderColor: '#273029' },
+  panel: { overflow: 'hidden', padding: 14, borderRadius: 26, backgroundColor: 'rgba(17,26,34,.82)', borderWidth: 1, borderColor: colors.border },
   footer: { alignItems: 'center' },
   pressed: { opacity: 0.75 },
 });

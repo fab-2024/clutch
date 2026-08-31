@@ -23,6 +23,22 @@ const SURFACE_COLORS = [
 ];
 
 describe('global accessibility tokens', () => {
+  it('keeps the approved neutral application palette stable', () => {
+    expect({
+      border: colors.border,
+      canvas: colors.canvas,
+      canvasAlternate: colors.canvasAlternate,
+      surfaceElevated: colors.surfaceElevated,
+      surfaceStandard: colors.surfaceStandard,
+    }).toEqual({
+      border: '#30414E',
+      canvas: '#091117',
+      canvasAlternate: '#0B1218',
+      surfaceElevated: '#152633',
+      surfaceStandard: '#111A22',
+    });
+  });
+
   it.each(FUNCTIONAL_TYPE_ROLES)('keeps %s at a readable functional size', (role) => {
     expect(typography[role].fontSize).toBeGreaterThanOrEqual(accessibility.minimumFunctionalFontSize);
   });

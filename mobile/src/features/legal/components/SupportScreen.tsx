@@ -36,12 +36,12 @@ export default function SupportScreen() {
 
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: 620, alignSelf: 'center', paddingHorizontal: spacing.md, paddingBottom: 72, gap: 22 },
-  header: { minHeight: 72, justifyContent: 'center', borderBottomWidth: 1, borderBottomColor: '#171D23' },
-  back: { minHeight: 38, alignSelf: 'flex-start', paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#0D1217', borderWidth: 1, borderColor: '#28313A' }, backText: { ...typography.action, color: colors.text },
+  header: { minHeight: 72, justifyContent: 'center', borderBottomWidth: 1, borderBottomColor: '#30414E' },
+  back: { minHeight: 38, alignSelf: 'flex-start', paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#111A22', borderWidth: 1, borderColor: '#30414E' }, backText: { ...typography.action, color: colors.text },
   intro: { gap: 8 }, eyebrow: { ...typography.eyebrow, color: colors.volt }, title: { ...typography.displayMedium, color: colors.text }, subtitle: { ...typography.body, color: colors.textMuted },
-  card: { padding: 20, gap: 10, borderRadius: radius.lg, backgroundColor: '#0B1015', borderWidth: 1, borderColor: '#35401D' }, cardEyebrow: { ...typography.eyebrow, color: colors.volt }, cardTitle: { ...typography.cardTitle, color: colors.text }, cardCopy: { ...typography.body, color: colors.textMuted },
+  card: { padding: 20, gap: 10, borderRadius: radius.lg, backgroundColor: '#111A22', borderWidth: 1, borderColor: '#35401D' }, cardEyebrow: { ...typography.eyebrow, color: colors.volt }, cardTitle: { ...typography.cardTitle, color: colors.text }, cardCopy: { ...typography.body, color: colors.textMuted },
   action: { minHeight: 52, marginTop: 8, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.volt }, actionText: { ...typography.action, color: '#080A0C' },
   web: { ...typography.caption, color: colors.textSubtle },
-  security: { padding: 17, borderRadius: radius.lg, backgroundColor: '#11161C', borderWidth: 1, borderColor: colors.border }, securityTitle: { ...typography.label, color: colors.text }, securityCopy: { ...typography.body, marginTop: 7, color: colors.textMuted },
+  security: { padding: 17, borderRadius: radius.lg, backgroundColor: '#111A22', borderWidth: 1, borderColor: colors.border }, securityTitle: { ...typography.label, color: colors.text }, securityCopy: { ...typography.body, marginTop: 7, color: colors.textMuted },
   disabled: { opacity: 0.42 }, pressed: { opacity: 0.72 },
 });

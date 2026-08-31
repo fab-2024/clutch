@@ -501,7 +501,7 @@ function badgeAccent(badge: ProfileBadge) {
 }
 
 const styles = StyleSheet.create({
-  viewport: { position: 'relative', overflow: 'hidden', width: '100%', backgroundColor: SHOWCASE_PALETTE.graphiteDeep, borderWidth: 1, borderColor: '#202B33' },
+  viewport: { position: 'relative', overflow: 'hidden', width: '100%', backgroundColor: SHOWCASE_PALETTE.graphiteDeep, borderWidth: 1, borderColor: '#30414E' },
   viewportPreview: { aspectRatio: 1.84, borderRadius: 12 },
   viewportFull: { flex: 1, minHeight: 0, borderWidth: 0, borderRadius: 0 },
   room: { flex: 1, position: 'relative', overflow: 'hidden' },
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
   rankDisplayOverlayPreview: { top: '-14%', left: '-18%', width: '136%', height: '118%' },
   rankBeam: { position: 'absolute', top: '2%', width: '16%', height: '72%', borderRadius: 90, opacity: 0.028 },
   rankHalo: { position: 'absolute', bottom: '20%', width: '34%', aspectRatio: 1, borderRadius: 999, borderWidth: 1, opacity: 0.055 },
-  rankPlaceholder: { borderWidth: 1, borderColor: '#4D5B67', backgroundColor: '#111920', transform: [{ rotate: '45deg' }] },
+  rankPlaceholder: { borderWidth: 1, borderColor: '#30414E', backgroundColor: '#111A22', transform: [{ rotate: '45deg' }] },
   rankObject: { alignItems: 'center', justifyContent: 'center' },
   rankPlate: { position: 'absolute', bottom: '-3%', minWidth: 98, minHeight: 31, paddingHorizontal: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,8,11,.92)', borderWidth: 1, borderRadius: 6 },
   rankPlatePreview: { bottom: '-6%', minWidth: 66, minHeight: 22, paddingHorizontal: 5, borderRadius: 4 },
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
   jerseyLogoPodium: { top: '39%' },
   emptyJersey: { position: 'relative', width: 72, height: 112, marginTop: 12, alignItems: 'center', justifyContent: 'flex-start', opacity: 0.48 },
   emptyJerseyPreview: { width: 36, height: 58, marginTop: 6 },
-  emptyHangerHook: { width: '15%', height: '14%', marginTop: '8%', borderTopWidth: 1, borderRightWidth: 1, borderColor: '#687580', borderTopRightRadius: 999, transform: [{ rotate: '-18deg' }] },
+  emptyHangerHook: { width: '15%', height: '14%', marginTop: '8%', borderTopWidth: 1, borderRightWidth: 1, borderColor: '#30414E', borderTopRightRadius: 999, transform: [{ rotate: '-18deg' }] },
   emptyHangerShoulder: { width: '64%', height: 1, marginTop: '8%', backgroundColor: '#687580' },
   emptyHangerLeft: { position: 'absolute', top: '29%', left: '18%', width: '34%', height: 1, backgroundColor: '#687580', transform: [{ rotate: '-30deg' }] },
   emptyHangerRight: { position: 'absolute', top: '29%', right: '18%', width: '34%', height: 1, backgroundColor: '#687580', transform: [{ rotate: '30deg' }] },
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
   trophyShelfPreview: { top: '15%', height: '62%' },
   trophySlot: { position: 'relative', width: '46%', height: '47%', alignItems: 'center', justifyContent: 'flex-end' },
   trophyAccent: { position: 'absolute', bottom: '4%', width: '48%', height: 2, borderRadius: 5, opacity: 0.72 },
-  seasonPlaque: { position: 'absolute', top: 9, left: '39%', right: '39%', minHeight: 34, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,8,11,.78)', borderWidth: 1, borderColor: '#3A4752' },
+  seasonPlaque: { position: 'absolute', top: 9, left: '39%', right: '39%', minHeight: 34, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,8,11,.78)', borderWidth: 1, borderColor: '#30414E' },
   seasonEyebrow: { ...typography.label, color: '#83909B' },
   seasonName: { ...typography.eyebrow, marginTop: 2, color: colors.text },
 });

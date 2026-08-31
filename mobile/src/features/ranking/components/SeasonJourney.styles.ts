@@ -16,7 +16,7 @@ export const journeyStyles = StyleSheet.create({
     borderRadius: 28,
     backgroundColor: '#06111A',
     borderWidth: 1,
-    borderColor: '#263641',
+    borderColor: '#30414E',
     boxShadow: '0 20px 48px rgba(0,0,0,.42)',
   },
   atmosphere: {

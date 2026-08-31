@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     overflow: 'hidden',
     borderRadius: radius.md,
-    backgroundColor: '#080C10',
+    backgroundColor: '#0B1218',
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },

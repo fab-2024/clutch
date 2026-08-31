@@ -109,18 +109,18 @@ export default function PrivacyConsentGate({ userId }: { userId?: string }) {
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, padding: spacing.lg, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(3,6,9,.94)' },
-  card: { width: '100%', maxWidth: 430, padding: 22, gap: 13, borderRadius: 28, backgroundColor: '#0A0F13', borderWidth: 1, borderColor: '#3F4A20' },
+  card: { width: '100%', maxWidth: 430, padding: 22, gap: 13, borderRadius: 28, backgroundColor: '#0B1218', borderWidth: 1, borderColor: '#3F4A20' },
   mark: { width: 58, height: 58, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
   markText: { ...typography.cardTitle, color: '#080A0C' },
   eyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .8 },
   title: { ...typography.displayMedium, color: colors.text },
   copy: { ...typography.body, color: colors.textMuted },
   loading: { minHeight: 110, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  choice: { minHeight: 126, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: radius.lg, backgroundColor: '#10161C', borderWidth: 1, borderColor: '#29333C' },
+  choice: { minHeight: 126, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: radius.lg, backgroundColor: '#111A22', borderWidth: 1, borderColor: '#30414E' },
   choiceCopy: { flex: 1, minWidth: 0 }, choiceTitle: { ...typography.bodyStrong, color: colors.text }, choiceText: { ...typography.caption, marginTop: 5, color: colors.textMuted },
-  switchTrack: { width: 52, height: 30, padding: 3, borderRadius: 16, justifyContent: 'center', backgroundColor: '#28323B' }, switchTrackActive: { backgroundColor: colors.volt }, switchThumb: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#71808C' }, switchThumbActive: { alignSelf: 'flex-end', backgroundColor: '#080A0C' },
+  switchTrack: { width: 52, height: 30, padding: 3, borderRadius: 16, justifyContent: 'center', backgroundColor: '#152633' }, switchTrackActive: { backgroundColor: colors.volt }, switchThumb: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#71808C' }, switchThumbActive: { alignSelf: 'flex-end', backgroundColor: '#0B1218' },
   primary: { minHeight: 56, alignItems: 'center', justifyContent: 'center', borderRadius: 18, backgroundColor: colors.volt }, primaryText: { ...typography.action, color: '#080A0C' },
   links: { flexDirection: 'row', justifyContent: 'center', gap: 8 }, link: { ...typography.caption, color: colors.textSubtle, textDecorationLine: 'underline' }, separator: { ...typography.caption, color: '#56616A' },
-  legalTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }, legalBack: { minHeight: 36, paddingHorizontal: 11, alignItems: 'center', justifyContent: 'center', borderRadius: 12, borderWidth: 1, borderColor: '#39434C' }, legalBackText: { ...typography.action, color: colors.text }, legalTitle: { ...typography.cardTitle, color: colors.text }, legalScroll: { maxHeight: 520 }, legalContent: { gap: 15, paddingBottom: 8 }, legalSection: { gap: 7, paddingTop: 13, borderTopWidth: 1, borderTopColor: '#222B33' },
+  legalTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }, legalBack: { minHeight: 36, paddingHorizontal: 11, alignItems: 'center', justifyContent: 'center', borderRadius: 12, borderWidth: 1, borderColor: '#30414E' }, legalBackText: { ...typography.action, color: colors.text }, legalTitle: { ...typography.cardTitle, color: colors.text }, legalScroll: { maxHeight: 520 }, legalContent: { gap: 15, paddingBottom: 8 }, legalSection: { gap: 7, paddingTop: 13, borderTopWidth: 1, borderTopColor: '#30414E' },
   leave: { ...typography.caption, color: '#8D979F', textAlign: 'center', textDecorationLine: 'underline' }, error: { ...typography.body, color: '#FF9AA2' }, pressed: { opacity: .72 },
 });

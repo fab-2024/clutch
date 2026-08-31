@@ -28,9 +28,9 @@ export default function SocialLayout() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   top: {
-    backgroundColor: '#06090C',
+    backgroundColor: colors.backgroundDeep,
     borderBottomWidth: 1,
-    borderBottomColor: '#171D23',
+    borderBottomColor: colors.border,
   },
   content: { flex: 1 },
 });

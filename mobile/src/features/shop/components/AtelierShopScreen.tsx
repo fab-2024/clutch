@@ -1532,7 +1532,7 @@ const styles = StyleSheet.create({
     height: 29,
     borderTopWidth: 2,
     borderRadius: 8,
-    backgroundColor: '#080C10',
+    backgroundColor: '#0B1218',
   },
   selectedMark: {
     position: 'absolute',
@@ -1623,7 +1623,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     borderWidth: 1,
     borderRadius: radius.lg,
-    backgroundColor: '#08090B',
+    backgroundColor: '#0B1218',
   },
   teamPackShade: {
     position: 'absolute',

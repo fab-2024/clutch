@@ -456,9 +456,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 3,
     borderRadius: 20,
-    backgroundColor: '#151B20',
+    backgroundColor: '#152633',
     borderWidth: 1,
-    borderColor: '#242D35',
+    borderColor: '#30414E',
   },
   missionCount: {
     ...typography.control,
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,.14)',
-    backgroundColor: '#10151A',
+    backgroundColor: '#111A22',
   },
   missionRailViewport: {
     marginRight: -spacing.md,

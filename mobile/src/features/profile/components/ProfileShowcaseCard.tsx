@@ -168,7 +168,7 @@ function formatNumber(value: number) {
 }
 
 const styles = StyleSheet.create({
-  card: { position: 'relative', overflow: 'hidden', minHeight: 430, marginHorizontal: 16, padding: 18, borderRadius: 31, backgroundColor: '#0A0F14', borderWidth: 1 },
+  card: { position: 'relative', overflow: 'hidden', minHeight: 430, marginHorizontal: 16, padding: 18, borderRadius: 31, backgroundColor: '#111A22', borderWidth: 1 },
   bannerGlow: { position: 'absolute', width: 300, height: 300, top: -185, left: -65, borderRadius: 150, opacity: .2, boxShadow: '0 0 70px rgba(232,255,61,.1)' },
   relicGlow: { position: 'absolute', width: 150, height: 180, right: -28, top: 112, borderRadius: 80, opacity: .1, boxShadow: '0 0 52px rgba(232,255,61,.12)' },
   rankDisplayBackdrop: { position: 'absolute', top: 30, right: -8, width: 178, height: 178, opacity: .34 },
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   actions: { zIndex: 2, marginTop: 14, gap: 8 },
   primaryAction: { minHeight: 50, alignItems: 'center', justifyContent: 'center', borderRadius: 16, backgroundColor: colors.volt, boxShadow: '0 10px 28px rgba(232,255,61,.13)' },
   primaryActionText: { ...typography.action, color: '#070A0E', letterSpacing: .7 },
-  secondaryAction: { minHeight: 47, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 15, backgroundColor: 'rgba(8,12,16,.72)', borderWidth: 1, borderColor: '#34404A' },
+  secondaryAction: { minHeight: 47, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 15, backgroundColor: 'rgba(8,12,16,.72)', borderWidth: 1, borderColor: '#30414E' },
   secondaryActionText: { ...typography.action, color: colors.text, letterSpacing: .45 },
   balance: { ...typography.label, color: colors.volt },
   pressed: { opacity: .76, transform: [{ scale: .995 }] },

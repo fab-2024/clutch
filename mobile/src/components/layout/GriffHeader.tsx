@@ -212,8 +212,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
   },
-  fragsBalance: { backgroundColor: '#0C0B13', borderColor: '#353047' },
-  voltsBalance: { backgroundColor: '#0D120B', borderColor: '#343D1C' },
+  fragsBalance: { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+  voltsBalance: { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
   balanceCompact: {
     minWidth: 0,
     minHeight: 51,
@@ -231,8 +231,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fragsMark: { backgroundColor: '#09080F' },
-  voltsMark: { backgroundColor: '#090D08' },
+  fragsMark: { backgroundColor: colors.surfaceLow },
+  voltsMark: { backgroundColor: colors.surfaceLow },
   balanceMarkCompact: {
     width: 28,
     height: 36,

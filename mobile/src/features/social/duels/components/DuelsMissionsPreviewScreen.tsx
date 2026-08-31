@@ -155,9 +155,9 @@ const styles = StyleSheet.create({
   },
   top: {
     width: '100%',
-    backgroundColor: '#06090C',
+    backgroundColor: '#091117',
     borderBottomWidth: 1,
-    borderBottomColor: '#171D23',
+    borderBottomColor: '#30414E',
   },
   content: {
     flex: 1,

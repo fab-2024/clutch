@@ -80,14 +80,14 @@ function rarityLabel(rarity: PublicAchievementBadge['rarity']) {
 
 const styles = StyleSheet.create({
   root: { gap: spacing.sm },
-  intro: { marginHorizontal: spacing.md, padding: spacing.md, borderRadius: 22, backgroundColor: '#0A1015', borderWidth: 1, borderColor: '#27333C' },
+  intro: { marginHorizontal: spacing.md, padding: spacing.md, borderRadius: 22, backgroundColor: '#0B1218', borderWidth: 1, borderColor: '#30414E' },
   introEyebrow: { ...typography.eyebrow, color: '#D09A50', letterSpacing: 0.65 },
   introTitle: { marginTop: 5, color: colors.text, fontFamily: fonts.display, fontSize: 25, lineHeight: 26 },
   introText: { ...typography.body, maxWidth: 460, marginTop: 7, color: colors.textMuted },
   grid: { marginHorizontal: spacing.md, flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  card: { width: '48%', minHeight: 292, padding: 11, borderRadius: 22, backgroundColor: '#0A0F14', borderWidth: 1 },
-  cardLocked: { borderColor: '#242F37' },
-  visual: { position: 'relative', height: 142, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderRadius: 17, backgroundColor: '#070B0E' },
+  card: { width: '48%', minHeight: 292, padding: 11, borderRadius: 22, backgroundColor: '#111A22', borderWidth: 1 },
+  cardLocked: { borderColor: '#30414E' },
+  visual: { position: 'relative', height: 142, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderRadius: 17, backgroundColor: '#0B1218' },
   glow: { position: 'absolute', width: 92, height: 92, borderRadius: 46, opacity: 0.14 },
   image: { width: 98, height: 124 },
   imageLocked: { opacity: 0.18 },

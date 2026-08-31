@@ -311,7 +311,7 @@ const previewStyles = StyleSheet.create({
   root: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#02070C',
+    backgroundColor: '#0B1218',
   },
   controls: {
     width: '100%',
@@ -321,8 +321,8 @@ const previewStyles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#263641',
-    backgroundColor: '#071018',
+    borderBottomColor: '#30414E',
+    backgroundColor: '#0B1218',
   },
   controlGroup: {
     flexDirection: 'row',
@@ -333,7 +333,7 @@ const previewStyles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: '#334550',
+    borderColor: '#30414E',
     borderRadius: 9,
     backgroundColor: '#0A151E',
   },
