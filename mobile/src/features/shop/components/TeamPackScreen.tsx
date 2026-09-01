@@ -30,6 +30,7 @@ import {
 import {
   applyPreviewTeamPackAction,
   cosmeticPackById,
+  isClutchOriginal,
   NEON_PROTOCOL_PACK,
   teamPackPrimaryAction,
   type TeamPackDefinition,
@@ -93,6 +94,7 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
     [data?.items],
   );
   const action = pack ? teamPackPrimaryAction(pack, data) : 'unavailable';
+  const originalCreation = pack ? isClutchOriginal(pack) : false;
 
   async function handlePrimaryAction() {
     if (!pack || !data || pending || (action !== 'buy' && action !== 'equip')) return;
@@ -176,6 +178,8 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
               <Text style={[styles.headerEyebrow, { color: pack.accent }]}>
                 {pack.kind === 'original'
                   ? 'COLLECTION // ORIGINALE'
+                  : originalCreation
+                    ? 'PACK ÉQUIPES // ORIGINAL'
                   : pack.kind === 'game_collection'
                     ? 'COLLECTION JEU // OFFICIELLE'
                     : 'PACK ÉQUIPE // OFFICIEL'}
@@ -208,7 +212,7 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
                 <View style={[styles.officialPill, { borderColor: `${pack.accent}52` }]}>
                   <View style={[styles.officialDot, { backgroundColor: pack.accent }]} />
                   <Text style={styles.officialText}>
-                    {pack.kind === 'original'
+                    {originalCreation
                       ? 'CRÉATION ORIGINALE'
                       : pack.kind === 'game_collection'
                         ? 'COLLECTION PARTENAIRE'
@@ -292,12 +296,12 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
 
           <View style={[styles.licenseBlock, { borderColor: `${pack.accent}38` }]}>
             <Text style={[styles.licenseTitle, { color: pack.accent }]}>
-              {pack.kind === 'original'
+              {originalCreation
                 ? 'CRÉATION ORIGINALE CLUTCH'
                 : `${pack.licenseHolder.toLocaleUpperCase('fr-FR')} × CLUTCH`}
             </Text>
             <Text style={styles.licenseText}>
-              {pack.kind === 'original'
+              {originalCreation
                 ? 'Collection cosmétique originale. Aucun objet ne modifie le rang, les Calls ou les performances.'
                 : 'Collection cosmétique officielle. Aucun objet ne modifie le rang, les Calls ou les performances.'}
             </Text>

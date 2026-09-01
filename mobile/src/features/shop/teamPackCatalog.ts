@@ -63,6 +63,100 @@ const NEON_CYAN = '#58DFFF';
 const FORGE_ORANGE = '#F06A3A';
 const CIRCUIT_LIME = '#C7F000';
 
+export const CLUTCH_ORIGINALS_TEAM_PACK: TeamPackDefinition = {
+  id: 'clutch-originals-teams',
+  kind: 'team',
+  brandKey: 'clutch-originals',
+  name: 'Pack Clutch Originals',
+  title: 'CLUTCH ORIGINALS',
+  subtitle: 'SIX IDENTITÉS · UNE LIGUE',
+  description: 'Les six emblèmes des équipes fictives Clutch réunis dans une collection originale.',
+  accent: '#35D7FF',
+  price: 900,
+  licenseHolder: 'Clutch',
+  hero: require('../../../assets/shop/packs/clutch-originals/clutch-originals-hero.png'),
+  items: [
+    {
+      id: 'clutch-originals-nebula-rift-badge',
+      number: 1,
+      name: 'Emblème Nebula Rift',
+      description: 'L’étoile orbitale violette et cyan de Nebula Rift, conçue exclusivement pour Clutch.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: '#8257FF',
+      equipByDefault: true,
+      roomKind: 'badge',
+      roomSlot: 'badge',
+      image: require('../../../assets/shop/packs/clutch-originals/items/nebula-rift.png'),
+    },
+    {
+      id: 'clutch-originals-iron-comet-badge',
+      number: 2,
+      name: 'Emblème Iron Comet',
+      description: 'La comète d’acier et de braise d’Iron Comet, créée pour la ligue Clutch Originals.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: '#FF641E',
+      equipByDefault: false,
+      roomKind: 'badge',
+      roomSlot: 'badge',
+      image: require('../../../assets/shop/packs/clutch-originals/items/iron-comet.png'),
+    },
+    {
+      id: 'clutch-originals-polar-vector-badge',
+      number: 3,
+      name: 'Emblème Polar Vector',
+      description: 'Le vecteur polaire bleu glacier de Polar Vector, taillé comme un éclat de vitesse.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: '#39C9FF',
+      equipByDefault: false,
+      roomKind: 'badge',
+      roomSlot: 'badge',
+      image: require('../../../assets/shop/packs/clutch-originals/items/polar-vector.png'),
+    },
+    {
+      id: 'clutch-originals-vanta-six-badge',
+      number: 4,
+      name: 'Emblème Vanta Six',
+      description: 'Les facettes noir profond et vert acide de Vanta Six, assemblées en marque de précision.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: '#C7F321',
+      equipByDefault: false,
+      roomKind: 'badge',
+      roomSlot: 'badge',
+      image: require('../../../assets/shop/packs/clutch-originals/items/vanta-six.png'),
+    },
+    {
+      id: 'clutch-originals-solar-reign-badge',
+      number: 5,
+      name: 'Emblème Solar Reign',
+      description: 'L’éclipse ivoire, or et rouge profond de Solar Reign, pensée pour dominer la Vitrine.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: '#F2B63F',
+      equipByDefault: false,
+      roomKind: 'badge',
+      roomSlot: 'badge',
+      image: require('../../../assets/shop/packs/clutch-originals/items/solar-reign.png'),
+    },
+    {
+      id: 'clutch-originals-ghost-circuit-badge',
+      number: 6,
+      name: 'Emblème Ghost Circuit',
+      description: 'Le circuit spectral graphite, magenta et violet de Ghost Circuit, suspendu dans un halo numérique.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: '#E835A9',
+      equipByDefault: false,
+      roomKind: 'badge',
+      roomSlot: 'badge',
+      image: require('../../../assets/shop/packs/clutch-originals/items/ghost-circuit.png'),
+    },
+  ],
+};
+
 export const NEON_PROTOCOL_PACK: TeamPackDefinition = {
   id: 'neon-protocol',
   kind: 'original',
@@ -1302,7 +1396,9 @@ export const ORIGINAL_PACK_CATALOG: readonly TeamPackDefinition[] = [
   NEON_PROTOCOL_PACK,
 ];
 
-export const TEAM_PACK_CATALOG: readonly TeamPackDefinition[] = [];
+export const TEAM_PACK_CATALOG: readonly TeamPackDefinition[] = [
+  CLUTCH_ORIGINALS_TEAM_PACK,
+];
 
 export const GAME_COLLECTION_PACK_CATALOG: readonly TeamPackDefinition[] = [];
 
@@ -1320,6 +1416,7 @@ export const ARCHIVED_GAME_COLLECTION_PACK_CATALOG: readonly TeamPackDefinition[
 
 export const COSMETIC_PACK_CATALOG: readonly TeamPackDefinition[] = [
   ...ORIGINAL_PACK_CATALOG,
+  ...TEAM_PACK_CATALOG,
 ];
 
 export const ARCHIVED_COSMETIC_PACK_CATALOG: readonly TeamPackDefinition[] = [
@@ -1396,7 +1493,7 @@ export function createTeamPackPreviewItems(pack: TeamPackDefinition = NEON_PROTO
     availableFrom: null,
     availableUntil: null,
     publicationStatus: 'publie',
-    license: { type: pack.kind === 'original' ? 'originale' : 'partenaire', holder: pack.licenseHolder },
+    license: { type: isClutchOriginal(pack) ? 'originale' : 'partenaire', holder: pack.licenseHolder },
     included: false,
     available: true,
     acquirable: false,
@@ -1436,6 +1533,10 @@ export function applyPreviewTeamPackAction(
     items: nextItems,
     equipped: equipmentFromPack(nextItems, data.equipped, defaultBySlot),
   };
+}
+
+export function isClutchOriginal(pack: TeamPackDefinition) {
+  return pack.kind === 'original' || pack.brandKey === 'clutch-originals';
 }
 
 function equipmentFromPack(

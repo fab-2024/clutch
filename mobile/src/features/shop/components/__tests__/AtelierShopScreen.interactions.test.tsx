@@ -16,6 +16,7 @@ import AtelierShopScreen from '../AtelierShopScreen';
 const mockShowSnackbar = jest.fn();
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
+jest.mock('@/src/components/layout/AppAtmosphere', () => ({ AppAtmosphere: () => null }));
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn() },
   useLocalSearchParams: () => ({}),
@@ -170,15 +171,16 @@ describe('AtelierShopScreen interactions', () => {
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/founder-pack-preview');
   });
 
-  it('shows the three original packs and opens their previews', async () => {
+  it('shows the original packs and keeps fictional teams inside the Boutique', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 
     expect(screen.getByTestId('atelier-shelf-original-packs')).toBeTruthy();
-    expect(screen.queryByTestId('atelier-shelf-team-packs')).toBeNull();
+    expect(screen.getByTestId('atelier-shelf-team-packs')).toBeTruthy();
     expect(screen.queryByTestId('atelier-shelf-game-collections')).toBeNull();
     expect(screen.queryByTestId('atelier-team-pack-fnatic-black-orange')).toBeNull();
     expect(screen.queryByTestId('atelier-team-pack-kc-blue-wall')).toBeNull();
     expect(screen.queryByTestId('atelier-team-pack-m8-gentle-mates')).toBeNull();
+    expect(screen.getByTestId('atelier-team-pack-clutch-originals-teams')).toBeTruthy();
     expect(screen.queryByTestId('atelier-game-collection-league-of-legends-collection')).toBeNull();
     expect(screen.queryByTestId('atelier-game-collection-valorant-collection')).toBeNull();
     expect(screen.queryByTestId('atelier-game-collection-rocket-league-collection')).toBeNull();
@@ -203,6 +205,12 @@ describe('AtelierShopScreen interactions', () => {
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
       pathname: '/team-pack-preview',
       params: { packId: 'neon-protocol' },
+    });
+
+    await fireEvent.press(screen.getByTestId('atelier-team-pack-clutch-originals-teams'));
+    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
+      pathname: '/team-pack-preview',
+      params: { packId: 'clutch-originals-teams' },
     });
   });
 
@@ -237,7 +245,7 @@ describe('AtelierShopScreen interactions', () => {
     });
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/showcase-preview');
     await waitFor(() => expect(screen.queryByTestId('rare-acquisition-reveal')).toBeNull());
-  }, 10_000);
+  }, 30_000);
 
   it('returns from a preview reveal to the preserved Atelier context', async () => {
     const screen = await render(

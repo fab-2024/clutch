@@ -83,6 +83,25 @@ describe('TeamPackPreviewScreen', () => {
     expect(props.previewData.items).toHaveLength(12);
   });
 
+  it('selects the Clutch Originals pack with its six fictional team emblems', async () => {
+    mockParams = { packId: 'clutch-originals-teams' };
+    await render(<TeamPackPreviewScreen />);
+
+    const props = mockTeamPackScreen.mock.calls[0][0] as {
+      packId: string;
+      previewData: { items: { id: string }[] };
+    };
+    expect(props).toEqual(expect.objectContaining({
+      packId: 'clutch-originals-teams',
+      previewData: expect.objectContaining({
+        items: expect.arrayContaining([
+          expect.objectContaining({ id: 'clutch-originals-ghost-circuit-badge' }),
+        ]),
+      }),
+    }));
+    expect(props.previewData.items).toHaveLength(6);
+  });
+
   it('selects the requested League of Legends collection with five objects', async () => {
     mockParams = { packId: 'league-of-legends-collection' };
     await render(<TeamPackPreviewScreen />);

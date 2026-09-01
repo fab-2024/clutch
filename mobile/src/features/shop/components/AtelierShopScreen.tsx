@@ -56,7 +56,8 @@ import {
   type ShowcaseRoomDefinition,
 } from '../showcaseRoomCatalog';
 import {
-  COSMETIC_PACK_CATALOG,
+  ORIGINAL_PACK_CATALOG,
+  TEAM_PACK_CATALOG,
   type TeamPackDefinition,
 } from '../teamPackCatalog';
 import type { CosmeticItem, CosmeticShopData } from '../types';
@@ -482,7 +483,13 @@ export default function AtelierShopScreen({
                 <TeamPackShelf
                   kind="original"
                   onOpen={openTeamPack}
-                  packs={COSMETIC_PACK_CATALOG}
+                  packs={ORIGINAL_PACK_CATALOG}
+                />
+
+                <TeamPackShelf
+                  kind="team"
+                  onOpen={openTeamPack}
+                  packs={TEAM_PACK_CATALOG}
                 />
 
                 <View style={styles.discoveryLine}>
@@ -618,8 +625,8 @@ function TeamPackShelf({
     >
       <ShelfHeading
         count={packs.length}
-        eyebrow={isOriginal ? 'CLUTCH // ORIGINAL' : isGameCollection ? 'JEUX // COLLECTIONS' : 'COLLECTION // OFFICIELLE'}
-        title={isOriginal ? 'PACKS ORIGINAUX' : isGameCollection ? 'COLLECTIONS DE JEU' : 'PACKS ÉQUIPES'}
+        eyebrow={isOriginal ? 'CLUTCH // ORIGINAL' : isGameCollection ? 'JEUX // COLLECTIONS' : 'CLUTCH // ÉQUIPES'}
+        title={isOriginal ? 'PACKS ORIGINAUX' : isGameCollection ? 'COLLECTIONS DE JEU' : 'ÉQUIPES ORIGINALES'}
       />
       <View style={styles.teamPackList}>
         {packs.map((pack) => (
@@ -648,7 +655,7 @@ function TeamPackShelf({
                 <View style={[styles.teamPackOfficial, { borderColor: `${pack.accent}80` }]}>
                   <View style={[styles.teamPackDot, { backgroundColor: pack.accent }]} />
                   <Text style={styles.teamPackOfficialText}>
-                    {isOriginal ? 'CRÉATION ORIGINALE' : isGameCollection ? 'JEU PARTENAIRE' : 'OFFICIEL'}
+                    {isOriginal ? 'CRÉATION ORIGINALE' : isGameCollection ? 'JEU PARTENAIRE' : 'IDENTITÉS ORIGINALES'}
                   </Text>
                 </View>
                 <Text style={styles.teamPackCount}>{pack.items.length} OBJETS</Text>

@@ -5,6 +5,7 @@ import {
   ARCHIVED_GAME_COLLECTION_PACK_CATALOG,
   ARCHIVED_TEAM_PACK_CATALOG,
   CIRCUIT_ZERO_PACK,
+  CLUTCH_ORIGINALS_TEAM_PACK,
   COSMETIC_PACK_CATALOG,
   cosmeticPackById,
   createTeamPackPreviewItems,
@@ -144,8 +145,17 @@ const CIRCUIT_ZERO_EXPECTED_IDS = [
   'circuit-zero-chrononaut-title',
 ];
 
+const CLUTCH_ORIGINALS_EXPECTED_IDS = [
+  'clutch-originals-nebula-rift-badge',
+  'clutch-originals-iron-comet-badge',
+  'clutch-originals-polar-vector-badge',
+  'clutch-originals-vanta-six-badge',
+  'clutch-originals-solar-reign-badge',
+  'clutch-originals-ghost-circuit-badge',
+];
+
 describe('original pack catalogue', () => {
-  it('publishes the three original packs while preserving the six archived definitions', () => {
+  it('publishes the original collections and keeps licensed definitions archived', () => {
     expect(ORIGINAL_PACK_CATALOG).toEqual([
       CIRCUIT_ZERO_PACK,
       MYTHS_FORGE_PACK,
@@ -155,8 +165,9 @@ describe('original pack catalogue', () => {
       CIRCUIT_ZERO_PACK,
       MYTHS_FORGE_PACK,
       NEON_PROTOCOL_PACK,
+      CLUTCH_ORIGINALS_TEAM_PACK,
     ]);
-    expect(TEAM_PACK_CATALOG).toEqual([]);
+    expect(TEAM_PACK_CATALOG).toEqual([CLUTCH_ORIGINALS_TEAM_PACK]);
     expect(GAME_COLLECTION_PACK_CATALOG).toEqual([]);
     expect(ARCHIVED_TEAM_PACK_CATALOG).toEqual([
       FNATIC_TEAM_PACK,
@@ -168,6 +179,35 @@ describe('original pack catalogue', () => {
       VALORANT_COLLECTION_PACK,
       ROCKET_LEAGUE_COLLECTION_PACK,
     ]);
+  });
+
+  it('keeps all six fictional team identities inside the active Boutique pack', () => {
+    expect(CLUTCH_ORIGINALS_TEAM_PACK).toMatchObject({
+      id: 'clutch-originals-teams',
+      kind: 'team',
+      licenseHolder: 'Clutch',
+      price: 900,
+    });
+    expect(CLUTCH_ORIGINALS_TEAM_PACK.items.map((item) => item.id)).toEqual(
+      CLUTCH_ORIGINALS_EXPECTED_IDS,
+    );
+    expect(CLUTCH_ORIGINALS_TEAM_PACK.items.every((item) => (
+      item.slot === 'apparence_core' && item.roomKind === 'badge'
+    ))).toBe(true);
+    expect(CLUTCH_ORIGINALS_TEAM_PACK.items.filter((item) => item.equipByDefault)).toHaveLength(1);
+
+    const next = applyPreviewTeamPackAction(
+      makeData(1_000, CLUTCH_ORIGINALS_TEAM_PACK),
+      CLUTCH_ORIGINALS_TEAM_PACK,
+    );
+
+    expect(next.balance).toBe(100);
+    expect(next.items.every((item) => item.owned)).toBe(true);
+    expect(next.items.filter((item) => item.equipped).map((item) => item.id)).toEqual([
+      'clutch-originals-nebula-rift-badge',
+    ]);
+    expect(next.equipped.core?.id).toBe('clutch-originals-nebula-rift-badge');
+    expect(teamPackPrimaryAction(CLUTCH_ORIGINALS_TEAM_PACK, next)).toBe('equipped');
   });
 
   it('publishes twelve original objects across existing cosmetic slots', () => {
@@ -325,7 +365,7 @@ describe('Karmine Corp team pack catalogue', () => {
       'kc-blue-wall',
       'm8-gentle-mates',
     ]);
-    expect(TEAM_PACK_CATALOG).toEqual([]);
+    expect(TEAM_PACK_CATALOG).toEqual([CLUTCH_ORIGINALS_TEAM_PACK]);
     expect(teamPackById('kc-blue-wall')).toBe(KC_TEAM_PACK);
     expect(KC_TEAM_PACK.price).toBe(FNATIC_TEAM_PACK.price);
     expect(KC_TEAM_PACK.items.map((item) => item.id)).toEqual(KC_EXPECTED_IDS);

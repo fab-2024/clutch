@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 
 import {
   CIRCUIT_ZERO_PACK,
+  CLUTCH_ORIGINALS_TEAM_PACK,
   createTeamPackPreviewItems,
   FNATIC_TEAM_PACK,
   KC_TEAM_PACK,
@@ -150,6 +151,26 @@ describe('TeamPackScreen', () => {
 
     await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
     expect(screen.getAllByText('Kairos-6').length).toBeGreaterThan(0);
+  });
+
+  it('renders the six fictional teams only as an original Boutique collection', async () => {
+    const screen = await render(
+      <TeamPackScreen
+        packId={CLUTCH_ORIGINALS_TEAM_PACK.id}
+        previewData={makeData(1_000, CLUTCH_ORIGINALS_TEAM_PACK)}
+      />,
+    );
+
+    expect(screen.getByText('PACK ÉQUIPES // ORIGINAL')).toBeTruthy();
+    expect(screen.getByText('CRÉATION ORIGINALE CLUTCH')).toBeTruthy();
+    expect(screen.getAllByTestId(/^team-pack-item-clutch-originals-/)).toHaveLength(6);
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('team-pack-item-clutch-originals-vanta-six-badge'));
+    });
+
+    await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
+    expect(screen.getAllByText('Emblème Vanta Six').length).toBeGreaterThan(0);
   });
 
   it('renders the Fnatic hero and twelve inspectable objects', async () => {
