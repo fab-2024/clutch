@@ -70,8 +70,8 @@ const PREVIEW_HUB: HubData = {
   },
   factionMission: {
     id: 'preview-faction-mission',
-    title: 'Verrouiller 12 calls en faction',
-    goal: 12,
+    title: 'Valider un call en faction',
+    goal: 1,
     progress: 0,
     personalContribution: 0,
     startsAt: new Date().toISOString(),
