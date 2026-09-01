@@ -31,4 +31,27 @@ describe('ShowcaseAtmosphereFallback', () => {
     expect(screen.getByTestId('showcase-m8-static-star', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.queryByTestId('showcase-blue-wall-static-contour', { includeHiddenElements: true })).toBeNull();
   });
+
+  it('keeps a fixed Protocole Néon pulse when animation is reduced', async () => {
+    const screen = await render(
+      <ShowcaseAtmosphereFallback
+        atmosphere={{
+          cosmeticColor: '#58DFFF',
+          driftDurationMs: 9_000,
+          dustCount: 10,
+          effect: 'neon-pulse',
+          intensity: 0.39,
+          lightingColor: '#58DFFF',
+          rankColor: '#B87845',
+          teamColor: '#E27AFF',
+        }}
+        reason="reduced-motion"
+      />,
+    );
+
+    expect(screen.getByTestId(
+      'showcase-neon-static-pulse',
+      { includeHiddenElements: true },
+    )).toBeTruthy();
+  });
 });

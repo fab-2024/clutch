@@ -5,12 +5,18 @@ export { default as StoreHubScreen } from './components/StoreHubScreen';
 export { default as TeamPackPreviewScreen } from './components/TeamPackPreviewScreen';
 export { default as TeamPackScreen } from './components/TeamPackScreen';
 export {
+  ALL_COSMETIC_PACK_CATALOG,
+  ARCHIVED_COSMETIC_PACK_CATALOG,
+  ARCHIVED_GAME_COLLECTION_PACK_CATALOG,
+  ARCHIVED_TEAM_PACK_CATALOG,
   COSMETIC_PACK_CATALOG,
   FNATIC_TEAM_PACK,
   GAME_COLLECTION_PACK_CATALOG,
   KC_TEAM_PACK,
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   M8_TEAM_PACK,
+  NEON_PROTOCOL_PACK,
+  ORIGINAL_PACK_CATALOG,
   ROCKET_LEAGUE_COLLECTION_PACK,
   TEAM_PACK_CATALOG,
   VALORANT_COLLECTION_PACK,

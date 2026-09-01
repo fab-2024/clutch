@@ -232,7 +232,7 @@ export const ATELIER_DISCOVERY_ENTRIES: readonly {
   kind: AtelierDiscoveryKind;
   label: string;
 }[] = [
-  { kind: 'team_pack', label: 'PACKS ÉQUIPES', description: 'Fnatic et Karmine Corp disponibles', glyph: '⬡' },
+  { kind: 'team_pack', label: 'PACKS ORIGINAUX', description: 'Protocole Néon disponible', glyph: '⬡' },
   { kind: 'partner_pack', label: 'COLLABS', description: 'Collaborations autorisées à venir', glyph: '✦' },
 ] as const;
 

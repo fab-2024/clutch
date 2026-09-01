@@ -168,6 +168,36 @@ describe('showcase adaptive atmosphere', () => {
     expect(M8_SPARKLE_ARRIVAL_MS).toBe(1_100);
   });
 
+  it('uses the Protocole Néon cyan and magenta impulse profile', () => {
+    const atmosphere = resolveShowcaseAtmosphere({
+      cosmetics: {
+        ...EMPTY_EQUIPPED_COSMETICS,
+        factionEffect: {
+          accent: '#54CFFF',
+          description: '',
+          id: 'neon-protocol-impulse-effect',
+          level: 5,
+          name: 'Effet Impulsion',
+          rarity: 'legendaire',
+          slot: 'effet_faction',
+          styleKey: 'neon-protocol-impulse-effect',
+        },
+      },
+      favoriteTeam: null,
+      lightingAccent: '#58DFFF',
+      rankAccent: '#B87845',
+      rankOrder: 0,
+    });
+
+    expect(atmosphere).toMatchObject({
+      cosmeticColor: '#58DFFF',
+      driftDurationMs: 9_000,
+      dustCount: 10,
+      effect: 'neon-pulse',
+      intensity: 0.39,
+    });
+  });
+
   it('raises density modestly for a mythic rank and legendary object', () => {
     const atmosphere = resolveShowcaseAtmosphere({
       cosmetics: {

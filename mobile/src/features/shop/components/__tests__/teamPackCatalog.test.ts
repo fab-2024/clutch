@@ -2,6 +2,8 @@
 
 import {
   applyPreviewTeamPackAction,
+  ARCHIVED_GAME_COLLECTION_PACK_CATALOG,
+  ARCHIVED_TEAM_PACK_CATALOG,
   COSMETIC_PACK_CATALOG,
   cosmeticPackById,
   createTeamPackPreviewItems,
@@ -10,6 +12,8 @@ import {
   KC_TEAM_PACK,
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   M8_TEAM_PACK,
+  NEON_PROTOCOL_PACK,
+  ORIGINAL_PACK_CATALOG,
   ROCKET_LEAGUE_COLLECTION_PACK,
   TEAM_PACK_CATALOG,
   teamPackById,
@@ -93,6 +97,73 @@ const ROCKET_LEAGUE_EXPECTED_IDS = [
   'rocket-league-goal-explosion',
 ];
 
+const NEON_PROTOCOL_EXPECTED_IDS = [
+  'neon-protocol-room',
+  'neon-protocol-armor-vega',
+  'neon-protocol-glyph-node',
+  'neon-protocol-banner-phase',
+  'neon-protocol-vector-pedestals',
+  'neon-protocol-syn-token',
+  'neon-protocol-null-totem',
+  'neon-protocol-pioneer-badge',
+  'neon-protocol-phase-frame',
+  'neon-protocol-impulse-effect',
+  'neon-protocol-share-card',
+  'neon-protocol-architect-title',
+];
+
+describe('Pack Protocole Néon catalogue', () => {
+  it('is the only active pack while preserving the six archived definitions', () => {
+    expect(ORIGINAL_PACK_CATALOG).toEqual([NEON_PROTOCOL_PACK]);
+    expect(COSMETIC_PACK_CATALOG).toEqual([NEON_PROTOCOL_PACK]);
+    expect(TEAM_PACK_CATALOG).toEqual([]);
+    expect(GAME_COLLECTION_PACK_CATALOG).toEqual([]);
+    expect(ARCHIVED_TEAM_PACK_CATALOG).toEqual([
+      FNATIC_TEAM_PACK,
+      KC_TEAM_PACK,
+      M8_TEAM_PACK,
+    ]);
+    expect(ARCHIVED_GAME_COLLECTION_PACK_CATALOG).toEqual([
+      LEAGUE_OF_LEGENDS_COLLECTION_PACK,
+      VALORANT_COLLECTION_PACK,
+      ROCKET_LEAGUE_COLLECTION_PACK,
+    ]);
+  });
+
+  it('publishes twelve original objects across existing cosmetic slots', () => {
+    expect(NEON_PROTOCOL_PACK.id).toBe('neon-protocol');
+    expect(NEON_PROTOCOL_PACK.kind).toBe('original');
+    expect(NEON_PROTOCOL_PACK.price).toBe(1200);
+    expect(NEON_PROTOCOL_PACK.items.map((item) => item.id)).toEqual(NEON_PROTOCOL_EXPECTED_IDS);
+    expect(NEON_PROTOCOL_PACK.items.every((item) => COSMETIC_SLOTS.includes(item.slot))).toBe(true);
+    expect(NEON_PROTOCOL_PACK.items.filter((item) => item.equipByDefault)).toHaveLength(8);
+    expect(new Set(
+      NEON_PROTOCOL_PACK.items.filter((item) => item.equipByDefault).map((item) => item.slot),
+    ).size).toBe(8);
+  });
+
+  it('buys and equips the complete original pack atomically', () => {
+    const initial = makeData(1280, NEON_PROTOCOL_PACK);
+    const next = applyPreviewTeamPackAction(initial, NEON_PROTOCOL_PACK);
+
+    expect(next.balance).toBe(80);
+    expect(next.items.every((item) => item.owned)).toBe(true);
+    expect(next.items.filter((item) => item.equipped).map((item) => item.id)).toEqual([
+      'neon-protocol-room',
+      'neon-protocol-armor-vega',
+      'neon-protocol-glyph-node',
+      'neon-protocol-vector-pedestals',
+      'neon-protocol-phase-frame',
+      'neon-protocol-impulse-effect',
+      'neon-protocol-share-card',
+      'neon-protocol-architect-title',
+    ]);
+    expect(next.equipped.showcase.supports?.id).toBe('neon-protocol-vector-pedestals');
+    expect(next.equipped.factionEffect?.id).toBe('neon-protocol-impulse-effect');
+    expect(teamPackPrimaryAction(NEON_PROTOCOL_PACK, next)).toBe('equipped');
+  });
+});
+
 describe('Fnatic team pack catalogue', () => {
   it('publishes the twelve referenced objects without adding a cosmetic slot', () => {
     expect(FNATIC_TEAM_PACK.id).toBe('fnatic-black-orange');
@@ -119,7 +190,7 @@ describe('Fnatic team pack catalogue', () => {
     const initial = makeData(1280);
     expect(teamPackPrimaryAction(FNATIC_TEAM_PACK, initial)).toBe('buy');
 
-    const next = applyPreviewTeamPackAction(initial);
+    const next = applyPreviewTeamPackAction(initial, FNATIC_TEAM_PACK);
 
     expect(next.balance).toBe(80);
     expect(next.items.filter((item) => EXPECTED_IDS.includes(item.id)).every((item) => item.owned)).toBe(true);
@@ -144,12 +215,13 @@ describe('Fnatic team pack catalogue', () => {
 });
 
 describe('Karmine Corp team pack catalogue', () => {
-  it('publishes the official team packs and the twelve Blue Wall objects', () => {
-    expect(TEAM_PACK_CATALOG.map((pack) => pack.id)).toEqual([
+  it('keeps the archived team definitions and the twelve Blue Wall objects resolvable', () => {
+    expect(ARCHIVED_TEAM_PACK_CATALOG.map((pack) => pack.id)).toEqual([
       'fnatic-black-orange',
       'kc-blue-wall',
       'm8-gentle-mates',
     ]);
+    expect(TEAM_PACK_CATALOG).toEqual([]);
     expect(teamPackById('kc-blue-wall')).toBe(KC_TEAM_PACK);
     expect(KC_TEAM_PACK.price).toBe(FNATIC_TEAM_PACK.price);
     expect(KC_TEAM_PACK.items.map((item) => item.id)).toEqual(KC_EXPECTED_IDS);
@@ -215,13 +287,14 @@ describe('M8 team pack catalogue', () => {
 });
 
 describe('League of Legends game collection pack catalogue', () => {
-  it('publishes game collections outside the team-pack shelf', () => {
-    expect(GAME_COLLECTION_PACK_CATALOG).toEqual([
+  it('keeps game collections archived outside the active shelf', () => {
+    expect(GAME_COLLECTION_PACK_CATALOG).toEqual([]);
+    expect(ARCHIVED_GAME_COLLECTION_PACK_CATALOG).toEqual([
       LEAGUE_OF_LEGENDS_COLLECTION_PACK,
       VALORANT_COLLECTION_PACK,
       ROCKET_LEAGUE_COLLECTION_PACK,
     ]);
-    expect(COSMETIC_PACK_CATALOG).toContain(LEAGUE_OF_LEGENDS_COLLECTION_PACK);
+    expect(COSMETIC_PACK_CATALOG).not.toContain(LEAGUE_OF_LEGENDS_COLLECTION_PACK);
     expect(TEAM_PACK_CATALOG).not.toContain(LEAGUE_OF_LEGENDS_COLLECTION_PACK);
     expect(cosmeticPackById('league-of-legends-collection')).toBe(LEAGUE_OF_LEGENDS_COLLECTION_PACK);
     expect(LEAGUE_OF_LEGENDS_COLLECTION_PACK.kind).toBe('game_collection');
@@ -230,7 +303,7 @@ describe('League of Legends game collection pack catalogue', () => {
   });
 
   it('publishes and equips the five-object Valorant collection atomically', () => {
-    expect(COSMETIC_PACK_CATALOG).toContain(VALORANT_COLLECTION_PACK);
+    expect(COSMETIC_PACK_CATALOG).not.toContain(VALORANT_COLLECTION_PACK);
     expect(TEAM_PACK_CATALOG).not.toContain(VALORANT_COLLECTION_PACK);
     expect(cosmeticPackById('valorant-collection')).toBe(VALORANT_COLLECTION_PACK);
     expect(VALORANT_COLLECTION_PACK.kind).toBe('game_collection');
@@ -250,7 +323,7 @@ describe('League of Legends game collection pack catalogue', () => {
   });
 
   it('publishes and equips the five-object Rocket League collection atomically', () => {
-    expect(COSMETIC_PACK_CATALOG).toContain(ROCKET_LEAGUE_COLLECTION_PACK);
+    expect(COSMETIC_PACK_CATALOG).not.toContain(ROCKET_LEAGUE_COLLECTION_PACK);
     expect(TEAM_PACK_CATALOG).not.toContain(ROCKET_LEAGUE_COLLECTION_PACK);
     expect(cosmeticPackById('rocket-league-collection')).toBe(ROCKET_LEAGUE_COLLECTION_PACK);
     expect(ROCKET_LEAGUE_COLLECTION_PACK.kind).toBe('game_collection');

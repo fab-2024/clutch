@@ -182,6 +182,12 @@ function ShowcaseAtmosphereCanvas({
         }),
         withTiming(0, { duration: 350, easing: Easing.inOut(Easing.quad) }),
       );
+    } else if (atmosphere.effect === 'neon-pulse') {
+      impulse.value = withSequence(
+        withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) }),
+        withTiming(0.18, { duration: 760, easing: Easing.inOut(Easing.quad) }),
+        withTiming(0, { duration: 420, easing: Easing.inOut(Easing.quad) }),
+      );
     }
     return () => cancelAnimation(impulse);
   }, [atmosphere.effect, impulse]);
@@ -208,6 +214,10 @@ function ShowcaseAtmosphereCanvas({
   const m8StarOpacity = useDerivedValue(() => (
     Math.max(0, (impulse.value - 0.3) / 0.7) * 0.92 + m8IdleSparkle.value
   ));
+  const neonPulseOpacity = useDerivedValue(() => (
+    0.12 + impulse.value * 0.78 + breath.value * 0.08
+  ));
+  const neonPulseRadius = useDerivedValue(() => 54 + impulse.value * 210 + breath.value * 12);
 
   return (
     <>
@@ -330,6 +340,30 @@ function ShowcaseAtmosphereCanvas({
                 <Circle color="#DDEEFF" cx={277} cy={133} r={2.2} />
                 <Circle color="#DDEEFF" cx={742} cy={151} r={2.4} />
               </Group>
+            </Group>
+          ) : null}
+
+          {atmosphere.effect === 'neon-pulse' ? (
+            <Group blendMode="screen" opacity={neonPulseOpacity}>
+              <Circle
+                color="#58DFFF"
+                cx={500}
+                cy={245}
+                r={neonPulseRadius}
+                style="stroke"
+                strokeWidth={3}
+              />
+              <Circle
+                color="#E27AFF"
+                cx={500}
+                cy={245}
+                r={118}
+                style="stroke"
+                strokeWidth={2}
+              />
+              <Rect color="#58DFFF" height={2} width={650} x={175} y={244} />
+              <Rect color="#E27AFF" height={1} opacity={0.8} width={430} x={285} y={250} />
+              <Circle color="#FFFFFF" cx={500} cy={245} r={5} />
             </Group>
           ) : null}
 

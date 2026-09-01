@@ -30,7 +30,7 @@ import {
 import {
   applyPreviewTeamPackAction,
   cosmeticPackById,
-  FNATIC_TEAM_PACK,
+  NEON_PROTOCOL_PACK,
   teamPackPrimaryAction,
   type TeamPackDefinition,
   type TeamPackItemDefinition,
@@ -45,7 +45,7 @@ export type TeamPackScreenProps = {
 
 export default function TeamPackScreen({ packId, previewData }: TeamPackScreenProps) {
   const params = useLocalSearchParams<{ key?: string | string[] }>();
-  const routeId = packId ?? readParam(params.key) ?? FNATIC_TEAM_PACK.id;
+  const routeId = packId ?? readParam(params.key) ?? NEON_PROTOCOL_PACK.id;
   const pack = cosmeticPackById(routeId);
   const { refresh: refreshCosmetics } = useCosmetics();
   const { refresh: refreshEconomy } = useEconomy();
@@ -174,7 +174,11 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
             </Pressable>
             <View style={styles.headerCopy}>
               <Text style={[styles.headerEyebrow, { color: pack.accent }]}>
-                {pack.kind === 'game_collection' ? 'COLLECTION JEU // OFFICIELLE' : 'PACK ÉQUIPE // OFFICIEL'}
+                {pack.kind === 'original'
+                  ? 'COLLECTION // ORIGINALE'
+                  : pack.kind === 'game_collection'
+                    ? 'COLLECTION JEU // OFFICIELLE'
+                    : 'PACK ÉQUIPE // OFFICIEL'}
               </Text>
               <Text style={styles.headerTitle}>{pack.name.toLocaleUpperCase('fr-FR')}</Text>
             </View>
@@ -204,7 +208,11 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
                 <View style={[styles.officialPill, { borderColor: `${pack.accent}52` }]}>
                   <View style={[styles.officialDot, { backgroundColor: pack.accent }]} />
                   <Text style={styles.officialText}>
-                    {pack.kind === 'game_collection' ? 'COLLECTION PARTENAIRE' : 'COLLECTION OFFICIELLE'}
+                    {pack.kind === 'original'
+                      ? 'CRÉATION ORIGINALE'
+                      : pack.kind === 'game_collection'
+                        ? 'COLLECTION PARTENAIRE'
+                        : 'COLLECTION OFFICIELLE'}
                   </Text>
                 </View>
                 <Text style={styles.heroMetaText}>{pack.items.length} COSMÉTIQUES</Text>
@@ -283,9 +291,15 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
           )}
 
           <View style={[styles.licenseBlock, { borderColor: `${pack.accent}38` }]}>
-            <Text style={[styles.licenseTitle, { color: pack.accent }]}>{pack.licenseHolder.toLocaleUpperCase('fr-FR')} × CLUTCH</Text>
+            <Text style={[styles.licenseTitle, { color: pack.accent }]}>
+              {pack.kind === 'original'
+                ? 'CRÉATION ORIGINALE CLUTCH'
+                : `${pack.licenseHolder.toLocaleUpperCase('fr-FR')} × CLUTCH`}
+            </Text>
             <Text style={styles.licenseText}>
-              Collection cosmétique officielle. Aucun objet ne modifie le rang, les Calls ou les performances.
+              {pack.kind === 'original'
+                ? 'Collection cosmétique originale. Aucun objet ne modifie le rang, les Calls ou les performances.'
+                : 'Collection cosmétique officielle. Aucun objet ne modifie le rang, les Calls ou les performances.'}
             </Text>
           </View>
         </ScrollView>

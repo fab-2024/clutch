@@ -75,6 +75,15 @@ export default function ShowcaseAtmosphereFallback({
           <View style={styles.m8StarCore} />
         </View>
       ) : null}
+      {atmosphere.effect === 'neon-pulse' ? (
+        <View style={styles.neonPulse} testID="showcase-neon-static-pulse">
+          <View style={[styles.neonPulseRing, styles.neonPulseRingOuter]} />
+          <View style={[styles.neonPulseRing, styles.neonPulseRingInner]} />
+          <View style={styles.neonPulseRayCyan} />
+          <View style={styles.neonPulseRayMagenta} />
+          <View style={styles.neonPulseCore} />
+        </View>
+      ) : null}
       {STATIC_DUST.slice(0, atmosphere.dustCount).map(([left, top], index) => (
         <View
           key={`static-showcase-dust-${left}-${top}`}
@@ -155,5 +164,55 @@ const styles = StyleSheet.create({
   m8StarRayVertical: {
     width: 2,
     height: 70,
+  },
+  neonPulse: {
+    position: 'absolute',
+    top: '46%',
+    left: '50%',
+    width: 240,
+    height: 96,
+    marginLeft: -120,
+    marginTop: -48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  neonPulseCore: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+    boxShadow: '0 0 16px rgba(88,223,255,.95)',
+  },
+  neonPulseRayCyan: {
+    position: 'absolute',
+    width: 240,
+    height: 2,
+    borderRadius: 999,
+    backgroundColor: '#58DFFF',
+    opacity: 0.72,
+  },
+  neonPulseRayMagenta: {
+    position: 'absolute',
+    width: 150,
+    height: 1,
+    top: 52,
+    borderRadius: 999,
+    backgroundColor: '#E27AFF',
+    opacity: 0.76,
+  },
+  neonPulseRing: {
+    position: 'absolute',
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  neonPulseRingInner: {
+    width: 58,
+    height: 58,
+    borderColor: 'rgba(226,122,255,.72)',
+  },
+  neonPulseRingOuter: {
+    width: 92,
+    height: 92,
+    borderColor: 'rgba(88,223,255,.68)',
   },
 });

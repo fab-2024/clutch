@@ -29,7 +29,7 @@ export type TeamPackItemDefinition = {
   slot: CosmeticSlot;
 };
 
-export type CosmeticPackKind = 'game_collection' | 'team';
+export type CosmeticPackKind = 'game_collection' | 'original' | 'team';
 
 export type TeamPackDefinition = {
   accent: string;
@@ -59,6 +59,173 @@ const M8_ICE = '#B9DCFF';
 const LOL_GOLD = '#D6B56A';
 const VALORANT_RED = '#FF4655';
 const ROCKET_LEAGUE_ORANGE = '#FF8A24';
+const NEON_CYAN = '#58DFFF';
+
+export const NEON_PROTOCOL_PACK: TeamPackDefinition = {
+  id: 'neon-protocol',
+  kind: 'original',
+  brandKey: 'clutch-originals',
+  name: 'Pack Protocole Néon',
+  title: 'PROTOCOLE NÉON',
+  subtitle: 'SYNAPSE // ARCHITECTE',
+  description: 'Douze cosmétiques originaux pour transformer ta Vitrine en chambre Synapse.',
+  accent: NEON_CYAN,
+  price: 1200,
+  licenseHolder: 'Clutch',
+  hero: require('../../../assets/shop/packs/neon-protocol/neon-protocol-hero.png'),
+  items: [
+    {
+      id: 'neon-protocol-room',
+      number: 1,
+      name: 'Salle Synapse',
+      description: 'Une chambre orbitale graphite ouverte sur l’espace et soulignée de cyan néon.',
+      slot: 'vitrine_eclairage',
+      rarity: 'legendaire',
+      accent: NEON_CYAN,
+      equipByDefault: true,
+      image: require('../../../assets/shop/packs/neon-protocol/neon-protocol-room-empty.png'),
+    },
+    {
+      id: 'neon-protocol-armor-vega',
+      number: 2,
+      name: 'Armure Vega',
+      description: 'Une armure céramique ivoire sur exostructure graphite, traversée de lignes cyan.',
+      slot: 'vitrine_maillot',
+      rarity: 'epique',
+      accent: NEON_CYAN,
+      equipByDefault: true,
+      roomKind: 'jersey',
+      roomSlot: 'jersey',
+      image: require('../../../assets/shop/packs/neon-protocol/items/armor-vega.png'),
+    },
+    {
+      id: 'neon-protocol-glyph-node',
+      number: 3,
+      name: 'Glyphe Nœud',
+      description: 'Trois plaques ivoire convergent autour d’un nœud d’énergie magenta.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: '#E27AFF',
+      equipByDefault: true,
+      roomKind: 'core',
+      roomSlot: 'right-extra',
+      image: require('../../../assets/shop/packs/neon-protocol/items/glyph-node.png'),
+    },
+    {
+      id: 'neon-protocol-banner-phase',
+      number: 4,
+      name: 'Bannière Phase',
+      description: 'Une bannière graphite portant le glyphe du Protocole et ses liserés de phase.',
+      slot: 'carte_profil',
+      rarity: 'rare',
+      accent: NEON_CYAN,
+      equipByDefault: false,
+      roomKind: 'banner',
+      roomSlot: 'left-extra',
+      image: require('../../../assets/shop/packs/neon-protocol/items/banner-phase.png'),
+    },
+    {
+      id: 'neon-protocol-vector-pedestals',
+      number: 5,
+      name: 'Socle Vectoriel',
+      description: 'Un réseau de socles en sustentation porté par des anneaux holographiques cyan.',
+      slot: 'vitrine_supports',
+      rarity: 'legendaire',
+      accent: NEON_CYAN,
+      equipByDefault: true,
+      image: require('../../../assets/shop/packs/neon-protocol/items/vector-pedestal.png'),
+    },
+    {
+      id: 'neon-protocol-syn-token',
+      number: 6,
+      name: 'Jeton Syn',
+      description: 'Un jeton de circuit radial dont les pistes convergent vers un cristal magenta.',
+      slot: 'apparence_core',
+      rarity: 'rare',
+      accent: NEON_CYAN,
+      equipByDefault: false,
+      roomKind: 'ring',
+      roomSlot: 'ring',
+      image: require('../../../assets/shop/packs/neon-protocol/items/syn-token.png'),
+    },
+    {
+      id: 'neon-protocol-null-totem',
+      number: 7,
+      name: 'Totem Null',
+      description: 'Une colonne de modules graphite maintenus en équilibre par un flux cyan.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: NEON_CYAN,
+      equipByDefault: false,
+      roomKind: 'trophy',
+      roomSlot: 'trophy',
+      image: require('../../../assets/shop/packs/neon-protocol/items/null-totem.png'),
+    },
+    {
+      id: 'neon-protocol-pioneer-badge',
+      number: 8,
+      name: 'Badge Pionnier',
+      description: 'Un badge octogonal cerclé d’une orbite métallique et signé du glyphe Nœud.',
+      slot: 'apparence_core',
+      rarity: 'epique',
+      accent: '#E27AFF',
+      equipByDefault: false,
+      roomKind: 'badge',
+      roomSlot: 'badge',
+      image: require('../../../assets/shop/packs/neon-protocol/items/pioneer-badge.png'),
+    },
+    {
+      id: 'neon-protocol-phase-frame',
+      number: 9,
+      name: 'Cadre Phase',
+      description: 'Un cadre graphite angulaire aux inserts cyan et à l’éclat magenta.',
+      slot: 'cadre_profil',
+      rarity: 'epique',
+      accent: NEON_CYAN,
+      equipByDefault: true,
+      roomKind: 'frame',
+      roomSlot: 'left-free',
+      image: require('../../../assets/shop/packs/neon-protocol/items/phase-frame.png'),
+    },
+    {
+      id: 'neon-protocol-impulse-effect',
+      number: 10,
+      name: 'Effet Impulsion',
+      description: 'Une impulsion cyan et magenta traverse la Vitrine avant de se stabiliser en halo.',
+      slot: 'effet_faction',
+      rarity: 'legendaire',
+      accent: '#54CFFF',
+      equipByDefault: true,
+      image: require('../../../assets/shop/packs/neon-protocol/items/impulse-effect.png'),
+    },
+    {
+      id: 'neon-protocol-share-card',
+      number: 11,
+      name: 'Carte de partage',
+      description: 'Une carte paysage qui met en scène la chambre Synapse et sa collection équipée.',
+      slot: 'carte_profil',
+      rarity: 'epique',
+      accent: '#E27AFF',
+      equipByDefault: true,
+      roomKind: 'banner',
+      roomSlot: 'right-free',
+      image: require('../../../assets/shop/packs/neon-protocol/items/share-card.png'),
+    },
+    {
+      id: 'neon-protocol-architect-title',
+      number: 12,
+      name: 'Titre Architecte',
+      description: 'Le titre « Architecte » pour signer les Vitrines conçues sous Protocole Néon.',
+      slot: 'titre_profil',
+      rarity: 'epique',
+      accent: NEON_CYAN,
+      equipByDefault: true,
+      roomKind: 'title',
+      roomSlot: 'title',
+      image: require('../../../assets/shop/packs/neon-protocol/items/architect-title.png'),
+    },
+  ],
+};
 
 export const FNATIC_TEAM_PACK: TeamPackDefinition = {
   id: 'fnatic-black-orange',
@@ -801,33 +968,50 @@ export const ROCKET_LEAGUE_COLLECTION_PACK: TeamPackDefinition = {
   ],
 };
 
-export const TEAM_PACK_CATALOG: readonly TeamPackDefinition[] = [
+export const ORIGINAL_PACK_CATALOG: readonly TeamPackDefinition[] = [
+  NEON_PROTOCOL_PACK,
+];
+
+export const TEAM_PACK_CATALOG: readonly TeamPackDefinition[] = [];
+
+export const GAME_COLLECTION_PACK_CATALOG: readonly TeamPackDefinition[] = [];
+
+export const ARCHIVED_TEAM_PACK_CATALOG: readonly TeamPackDefinition[] = [
   FNATIC_TEAM_PACK,
   KC_TEAM_PACK,
   M8_TEAM_PACK,
 ];
 
-export const GAME_COLLECTION_PACK_CATALOG: readonly TeamPackDefinition[] = [
+export const ARCHIVED_GAME_COLLECTION_PACK_CATALOG: readonly TeamPackDefinition[] = [
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   VALORANT_COLLECTION_PACK,
   ROCKET_LEAGUE_COLLECTION_PACK,
 ];
 
 export const COSMETIC_PACK_CATALOG: readonly TeamPackDefinition[] = [
-  ...TEAM_PACK_CATALOG,
-  ...GAME_COLLECTION_PACK_CATALOG,
+  ...ORIGINAL_PACK_CATALOG,
+];
+
+export const ARCHIVED_COSMETIC_PACK_CATALOG: readonly TeamPackDefinition[] = [
+  ...ARCHIVED_TEAM_PACK_CATALOG,
+  ...ARCHIVED_GAME_COLLECTION_PACK_CATALOG,
+];
+
+export const ALL_COSMETIC_PACK_CATALOG: readonly TeamPackDefinition[] = [
+  ...COSMETIC_PACK_CATALOG,
+  ...ARCHIVED_COSMETIC_PACK_CATALOG,
 ];
 
 const COSMETIC_PACK_ITEM_BY_ID = new Map(
-  COSMETIC_PACK_CATALOG.flatMap((pack) => pack.items.map((item) => [item.id, item] as const)),
+  ALL_COSMETIC_PACK_CATALOG.flatMap((pack) => pack.items.map((item) => [item.id, item] as const)),
 );
 
 export function teamPackById(id: string | null | undefined) {
-  return TEAM_PACK_CATALOG.find((pack) => pack.id === id) ?? null;
+  return ALL_COSMETIC_PACK_CATALOG.find((pack) => pack.kind === 'team' && pack.id === id) ?? null;
 }
 
 export function cosmeticPackById(id: string | null | undefined) {
-  return COSMETIC_PACK_CATALOG.find((pack) => pack.id === id) ?? null;
+  return ALL_COSMETIC_PACK_CATALOG.find((pack) => pack.id === id) ?? null;
 }
 
 export function teamPackItemById(id: string | null | undefined) {
@@ -861,7 +1045,7 @@ export function teamPackPrimaryAction(
   return data.balance >= pack.price ? 'buy' : 'insufficient';
 }
 
-export function createTeamPackPreviewItems(pack: TeamPackDefinition = FNATIC_TEAM_PACK): CosmeticItem[] {
+export function createTeamPackPreviewItems(pack: TeamPackDefinition = NEON_PROTOCOL_PACK): CosmeticItem[] {
   return pack.items.map((definition, index) => ({
     id: definition.id,
     slot: definition.slot,
@@ -882,7 +1066,7 @@ export function createTeamPackPreviewItems(pack: TeamPackDefinition = FNATIC_TEA
     availableFrom: null,
     availableUntil: null,
     publicationStatus: 'publie',
-    license: { type: 'partenaire', holder: pack.licenseHolder },
+    license: { type: pack.kind === 'original' ? 'originale' : 'partenaire', holder: pack.licenseHolder },
     included: false,
     available: true,
     acquirable: false,
@@ -893,7 +1077,7 @@ export function createTeamPackPreviewItems(pack: TeamPackDefinition = FNATIC_TEA
 
 export function applyPreviewTeamPackAction(
   data: CosmeticShopData,
-  pack: TeamPackDefinition = FNATIC_TEAM_PACK,
+  pack: TeamPackDefinition = NEON_PROTOCOL_PACK,
 ): CosmeticShopData {
   const action = teamPackPrimaryAction(pack, data);
   if (action !== 'buy' && action !== 'equip') return data;

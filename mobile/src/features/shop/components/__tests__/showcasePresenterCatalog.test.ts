@@ -8,6 +8,7 @@ import {
 import { createPresenterRoomAssignments } from '../../showcasePresenterAssignments';
 import {
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
+  NEON_PROTOCOL_PACK,
   ROCKET_LEAGUE_COLLECTION_PACK,
   VALORANT_COLLECTION_PACK,
 } from '../../teamPackCatalog';
@@ -21,6 +22,7 @@ describe('showcase presenter catalog', () => {
       'supports_crystal',
       'supports_vault',
       'supports_champagne',
+      'neon-protocol-vector-pedestals',
       'fnatic-pedestals',
       'kc-pedestals',
       'm8-pedestals',
@@ -35,6 +37,7 @@ describe('showcase presenter catalog', () => {
       8,
       10,
       6,
+      9,
       10,
       10,
       10,
@@ -42,6 +45,36 @@ describe('showcase presenter catalog', () => {
       5,
       5,
     ]);
+  });
+
+  it('places the nine Protocole Néon objects on the Synapse stations', () => {
+    expect(showcasePresenterById('neon-protocol-vector-pedestals')).toMatchObject({
+      accent: '#58DFFF',
+      name: 'Socle Vectoriel',
+      packId: 'neon-protocol',
+      showRankDisplay: false,
+    });
+
+    const items = NEON_PROTOCOL_PACK.items
+      .filter((item) => item.roomKind)
+      .map((item) => ({
+        accent: item.accent,
+        id: `cosmetic:${item.id}`,
+        image: item.image,
+        kind: item.roomKind!,
+        name: item.name,
+      }));
+    const assignments = createPresenterRoomAssignments(items, 'neon-protocol-vector-pedestals');
+
+    expect(assignments.jersey?.name).toBe('Armure Vega');
+    expect(assignments.trophy?.name).toBe('Totem Null');
+    expect(assignments['left-extra']?.name).toBe('Bannière Phase');
+    expect(assignments['right-extra']?.name).toBe('Glyphe Nœud');
+    expect(assignments.badge?.name).toBe('Badge Pionnier');
+    expect(assignments.ring?.name).toBe('Jeton Syn');
+    expect(assignments.title?.name).toBe('Titre Architecte');
+    expect(assignments['left-free']?.name).toBe('Cadre Phase');
+    expect(assignments['right-free']?.name).toBe('Carte de partage');
   });
 
   it('exposes and fills the five fixed Valorant collection slots', () => {

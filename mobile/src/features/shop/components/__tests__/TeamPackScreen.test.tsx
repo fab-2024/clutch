@@ -9,6 +9,7 @@ import {
   KC_TEAM_PACK,
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   M8_TEAM_PACK,
+  NEON_PROTOCOL_PACK,
   ROCKET_LEAGUE_COLLECTION_PACK,
   VALORANT_COLLECTION_PACK,
   type TeamPackDefinition,
@@ -87,6 +88,27 @@ jest.mock('@/src/providers/SnackbarProvider', () => ({
 
 describe('TeamPackScreen', () => {
   beforeEach(() => jest.clearAllMocks());
+
+  it('renders the original Protocole Néon pack and its twelve inspectable objects', async () => {
+    const screen = await render(
+      <TeamPackScreen
+        packId={NEON_PROTOCOL_PACK.id}
+        previewData={makeData(1280, NEON_PROTOCOL_PACK)}
+      />,
+    );
+
+    expect(screen.getByText('COLLECTION // ORIGINALE')).toBeTruthy();
+    expect(screen.getByText('CRÉATION ORIGINALE')).toBeTruthy();
+    expect(screen.getByText('CRÉATION ORIGINALE CLUTCH')).toBeTruthy();
+    expect(screen.getAllByTestId(/^team-pack-item-neon-protocol-/)).toHaveLength(12);
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('team-pack-item-neon-protocol-armor-vega'));
+    });
+
+    await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
+    expect(screen.getAllByText('Armure Vega').length).toBeGreaterThan(0);
+  });
 
   it('renders the Fnatic hero and twelve inspectable objects', async () => {
     const screen = await render(<TeamPackScreen packId={FNATIC_TEAM_PACK.id} previewData={makeData()} />);

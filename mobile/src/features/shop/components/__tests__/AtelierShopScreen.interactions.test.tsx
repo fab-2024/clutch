@@ -170,55 +170,23 @@ describe('AtelierShopScreen interactions', () => {
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/founder-pack-preview');
   });
 
-  it('keeps all official team packs in the Atelier shelf and opens their previews', async () => {
+  it('shows only the original Protocole Néon pack and opens its preview', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 
-    expect(screen.getByTestId('atelier-shelf-team-packs')).toBeTruthy();
-    expect(screen.getByTestId('atelier-team-pack-kc-blue-wall')).toBeTruthy();
-    expect(screen.getByTestId('atelier-team-pack-m8-gentle-mates')).toBeTruthy();
-    await fireEvent.press(screen.getByTestId('atelier-team-pack-fnatic-black-orange'));
+    expect(screen.getByTestId('atelier-shelf-original-packs')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-shelf-team-packs')).toBeNull();
+    expect(screen.queryByTestId('atelier-shelf-game-collections')).toBeNull();
+    expect(screen.queryByTestId('atelier-team-pack-fnatic-black-orange')).toBeNull();
+    expect(screen.queryByTestId('atelier-team-pack-kc-blue-wall')).toBeNull();
+    expect(screen.queryByTestId('atelier-team-pack-m8-gentle-mates')).toBeNull();
+    expect(screen.queryByTestId('atelier-game-collection-league-of-legends-collection')).toBeNull();
+    expect(screen.queryByTestId('atelier-game-collection-valorant-collection')).toBeNull();
+    expect(screen.queryByTestId('atelier-game-collection-rocket-league-collection')).toBeNull();
 
+    await fireEvent.press(screen.getByTestId('atelier-original-pack-neon-protocol'));
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
       pathname: '/team-pack-preview',
-      params: { packId: 'fnatic-black-orange' },
-    });
-
-    await fireEvent.press(screen.getByTestId('atelier-team-pack-kc-blue-wall'));
-    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
-      pathname: '/team-pack-preview',
-      params: { packId: 'kc-blue-wall' },
-    });
-
-    await fireEvent.press(screen.getByTestId('atelier-team-pack-m8-gentle-mates'));
-    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
-      pathname: '/team-pack-preview',
-      params: { packId: 'm8-gentle-mates' },
-    });
-  });
-
-  it('keeps game collections in their own Atelier shelf', async () => {
-    const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
-
-    expect(screen.getByTestId('atelier-shelf-game-collections')).toBeTruthy();
-    await fireEvent.press(screen.getByTestId(
-      'atelier-game-collection-league-of-legends-collection',
-    ));
-
-    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
-      pathname: '/team-pack-preview',
-      params: { packId: 'league-of-legends-collection' },
-    });
-
-    await fireEvent.press(screen.getByTestId('atelier-game-collection-valorant-collection'));
-    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
-      pathname: '/team-pack-preview',
-      params: { packId: 'valorant-collection' },
-    });
-
-    await fireEvent.press(screen.getByTestId('atelier-game-collection-rocket-league-collection'));
-    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
-      pathname: '/team-pack-preview',
-      params: { packId: 'rocket-league-collection' },
+      params: { packId: 'neon-protocol' },
     });
   });
 

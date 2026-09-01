@@ -119,6 +119,18 @@ const M8_TEAM_PACK_SLOTS = [
   { id: 'right-free', label: 'Carte de partage M8', preferredKind: 'banner', left: '94%', top: '41%', width: '6%', height: '37%' },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
+const NEON_PROTOCOL_PACK_SLOTS = [
+  { id: 'jersey', label: 'Armure Vega', preferredKind: 'jersey', left: '2%', top: '27%', width: '15%', height: '51%' },
+  { id: 'trophy', label: 'Totem Null', preferredKind: 'trophy', left: '18%', top: '38%', width: '9%', height: '40%' },
+  { id: 'left-extra', label: 'Bannière Phase', preferredKind: 'banner', left: '28%', top: '29%', width: '10%', height: '49%' },
+  { id: 'right-extra', label: 'Glyphe Nœud', preferredKind: 'core', left: '41%', top: '25%', width: '18%', height: '54%' },
+  { id: 'badge', label: 'Badge Pionnier', preferredKind: 'badge', left: '60%', top: '35%', width: '10%', height: '43%' },
+  { id: 'ring', label: 'Jeton Syn', preferredKind: 'ring', left: '71%', top: '42%', width: '9%', height: '36%' },
+  { id: 'title', label: 'Titre Architecte', preferredKind: 'title', left: '80%', top: '48%', width: '9%', height: '29%' },
+  { id: 'left-free', label: 'Cadre Phase', preferredKind: 'frame', left: '10%', top: '58%', width: '11%', height: '21%' },
+  { id: 'right-free', label: 'Carte de partage', preferredKind: 'banner', left: '88%', top: '56%', width: '11%', height: '23%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
+
 const LEAGUE_OF_LEGENDS_COLLECTION_SLOTS = [
   { id: 'left-free', label: 'Lame d’Infini', preferredKind: 'core', left: '3%', top: '39%', width: '19%', height: '40%' },
   { id: 'left-extra', label: 'Fragment du Nexus', preferredKind: 'core', left: '23%', top: '27%', width: '16%', height: '52%' },
@@ -209,6 +221,20 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     price: 240,
     rarity: 'rare',
     slots: CHAMPAGNE_PODIUM_SLOTS,
+  },
+  {
+    id: 'neon-protocol-vector-pedestals',
+    name: 'Socle Vectoriel',
+    description: 'Neuf stations graphite en sustentation dans la chambre orbitale Synapse.',
+    accent: '#58DFFF',
+    image: require('../../../assets/shop/packs/neon-protocol/neon-protocol-room-empty.png'),
+    packId: 'neon-protocol',
+    packOnly: true,
+    pedestal: 'obsidian',
+    price: 0,
+    rarity: 'legendaire',
+    showRankDisplay: false,
+    slots: NEON_PROTOCOL_PACK_SLOTS,
   },
   {
     id: 'fnatic-pedestals',

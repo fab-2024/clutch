@@ -6,7 +6,7 @@ import {
   applyPreviewTeamPackAction,
   cosmeticPackById,
   createTeamPackPreviewItems,
-  FNATIC_TEAM_PACK,
+  NEON_PROTOCOL_PACK,
   type TeamPackDefinition,
 } from '../teamPackCatalog';
 import type { CosmeticShopData } from '../types';
@@ -20,7 +20,7 @@ export default function TeamPackPreviewScreen() {
   }>();
   if (!previewRoutesEnabled) return <Redirect href="/" />;
 
-  const pack = cosmeticPackById(readParam(params.packId)) ?? FNATIC_TEAM_PACK;
+  const pack = cosmeticPackById(readParam(params.packId)) ?? NEON_PROTOCOL_PACK;
   const state = readParam(params.state);
   const initial = previewPackData(state === 'insufficient' ? 320 : PREVIEW_SHOP.balance, pack);
   const data = state === 'equipped' ? applyPreviewTeamPackAction(initial, pack) : initial;

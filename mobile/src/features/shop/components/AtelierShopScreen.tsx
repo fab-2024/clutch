@@ -56,8 +56,7 @@ import {
   type ShowcaseRoomDefinition,
 } from '../showcaseRoomCatalog';
 import {
-  GAME_COLLECTION_PACK_CATALOG,
-  TEAM_PACK_CATALOG,
+  COSMETIC_PACK_CATALOG,
   type TeamPackDefinition,
 } from '../teamPackCatalog';
 import type { CosmeticItem, CosmeticShopData } from '../types';
@@ -481,12 +480,10 @@ export default function AtelierShopScreen({
                 ))}
 
                 <TeamPackShelf
-                  kind="game_collection"
+                  kind="original"
                   onOpen={openTeamPack}
-                  packs={GAME_COLLECTION_PACK_CATALOG}
+                  packs={COSMETIC_PACK_CATALOG}
                 />
-
-                <TeamPackShelf kind="team" onOpen={openTeamPack} packs={TEAM_PACK_CATALOG} />
 
                 <View style={styles.discoveryLine}>
                   <Text style={styles.discoveryLabel}>PROCHAINEMENT</Text>
@@ -608,15 +605,21 @@ function TeamPackShelf({
   packs: readonly TeamPackDefinition[];
 }) {
   const isGameCollection = kind === 'game_collection';
+  const isOriginal = kind === 'original';
+  const shelfTestId = isOriginal
+    ? 'atelier-shelf-original-packs'
+    : isGameCollection
+      ? 'atelier-shelf-game-collections'
+      : 'atelier-shelf-team-packs';
   return (
     <View
       style={styles.catalogShelf}
-      testID={isGameCollection ? 'atelier-shelf-game-collections' : 'atelier-shelf-team-packs'}
+      testID={shelfTestId}
     >
       <ShelfHeading
         count={packs.length}
-        eyebrow={isGameCollection ? 'JEUX // COLLECTIONS' : 'COLLECTION // OFFICIELLE'}
-        title={isGameCollection ? 'COLLECTIONS DE JEU' : 'PACKS ÉQUIPES'}
+        eyebrow={isOriginal ? 'CLUTCH // ORIGINAL' : isGameCollection ? 'JEUX // COLLECTIONS' : 'COLLECTION // OFFICIELLE'}
+        title={isOriginal ? 'PACKS ORIGINAUX' : isGameCollection ? 'COLLECTIONS DE JEU' : 'PACKS ÉQUIPES'}
       />
       <View style={styles.teamPackList}>
         {packs.map((pack) => (
@@ -631,7 +634,7 @@ function TeamPackShelf({
               { borderColor: `${pack.accent}72` },
               pressed && styles.pressed,
             ]}
-            testID={`${isGameCollection ? 'atelier-game-collection' : 'atelier-team-pack'}-${pack.id}`}
+            testID={`${isOriginal ? 'atelier-original-pack' : isGameCollection ? 'atelier-game-collection' : 'atelier-team-pack'}-${pack.id}`}
           >
             <Image
               accessibilityIgnoresInvertColors
@@ -644,7 +647,9 @@ function TeamPackShelf({
               <View style={styles.teamPackTopline}>
                 <View style={[styles.teamPackOfficial, { borderColor: `${pack.accent}80` }]}>
                   <View style={[styles.teamPackDot, { backgroundColor: pack.accent }]} />
-                  <Text style={styles.teamPackOfficialText}>{isGameCollection ? 'JEU PARTENAIRE' : 'OFFICIEL'}</Text>
+                  <Text style={styles.teamPackOfficialText}>
+                    {isOriginal ? 'CRÉATION ORIGINALE' : isGameCollection ? 'JEU PARTENAIRE' : 'OFFICIEL'}
+                  </Text>
                 </View>
                 <Text style={styles.teamPackCount}>{pack.items.length} OBJETS</Text>
               </View>
