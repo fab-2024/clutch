@@ -4,6 +4,7 @@ import {
   applyPreviewTeamPackAction,
   ARCHIVED_GAME_COLLECTION_PACK_CATALOG,
   ARCHIVED_TEAM_PACK_CATALOG,
+  CIRCUIT_ZERO_PACK,
   COSMETIC_PACK_CATALOG,
   cosmeticPackById,
   createTeamPackPreviewItems,
@@ -128,10 +129,33 @@ const MYTHS_FORGE_EXPECTED_IDS = [
   'mythes-forge-master-smith-title',
 ];
 
+const CIRCUIT_ZERO_EXPECTED_IDS = [
+  'circuit-zero-room',
+  'circuit-zero-kairos-6',
+  'circuit-zero-zero-glyph',
+  'circuit-zero-sector-banner',
+  'circuit-zero-aero-pedestals',
+  'circuit-zero-chrono-token',
+  'circuit-zero-delta-totem',
+  'circuit-zero-pilot-badge',
+  'circuit-zero-wake-frame',
+  'circuit-zero-afterimage-effect',
+  'circuit-zero-share-card',
+  'circuit-zero-chrononaut-title',
+];
+
 describe('original pack catalogue', () => {
-  it('publishes the two original packs while preserving the six archived definitions', () => {
-    expect(ORIGINAL_PACK_CATALOG).toEqual([MYTHS_FORGE_PACK, NEON_PROTOCOL_PACK]);
-    expect(COSMETIC_PACK_CATALOG).toEqual([MYTHS_FORGE_PACK, NEON_PROTOCOL_PACK]);
+  it('publishes the three original packs while preserving the six archived definitions', () => {
+    expect(ORIGINAL_PACK_CATALOG).toEqual([
+      CIRCUIT_ZERO_PACK,
+      MYTHS_FORGE_PACK,
+      NEON_PROTOCOL_PACK,
+    ]);
+    expect(COSMETIC_PACK_CATALOG).toEqual([
+      CIRCUIT_ZERO_PACK,
+      MYTHS_FORGE_PACK,
+      NEON_PROTOCOL_PACK,
+    ]);
     expect(TEAM_PACK_CATALOG).toEqual([]);
     expect(GAME_COLLECTION_PACK_CATALOG).toEqual([]);
     expect(ARCHIVED_TEAM_PACK_CATALOG).toEqual([
@@ -209,6 +233,38 @@ describe('original pack catalogue', () => {
     expect(next.equipped.showcase.supports?.id).toBe('mythes-forge-magma-pedestals');
     expect(next.equipped.factionEffect?.id).toBe('mythes-forge-resonance-effect');
     expect(teamPackPrimaryAction(MYTHS_FORGE_PACK, next)).toBe('equipped');
+  });
+
+  it('publishes, buys and equips the twelve Circuit Zéro objects atomically', () => {
+    expect(CIRCUIT_ZERO_PACK).toMatchObject({
+      id: 'circuit-zero',
+      kind: 'original',
+      price: 1200,
+    });
+    expect(CIRCUIT_ZERO_PACK.items.map((item) => item.id)).toEqual(CIRCUIT_ZERO_EXPECTED_IDS);
+    expect(CIRCUIT_ZERO_PACK.items.every((item) => COSMETIC_SLOTS.includes(item.slot))).toBe(true);
+    expect(CIRCUIT_ZERO_PACK.items.filter((item) => item.equipByDefault)).toHaveLength(8);
+    expect(new Set(
+      CIRCUIT_ZERO_PACK.items.filter((item) => item.equipByDefault).map((item) => item.slot),
+    ).size).toBe(8);
+
+    const next = applyPreviewTeamPackAction(makeData(1280, CIRCUIT_ZERO_PACK), CIRCUIT_ZERO_PACK);
+
+    expect(next.balance).toBe(80);
+    expect(next.items.every((item) => item.owned)).toBe(true);
+    expect(next.items.filter((item) => item.equipped).map((item) => item.id)).toEqual([
+      'circuit-zero-room',
+      'circuit-zero-kairos-6',
+      'circuit-zero-zero-glyph',
+      'circuit-zero-aero-pedestals',
+      'circuit-zero-wake-frame',
+      'circuit-zero-afterimage-effect',
+      'circuit-zero-share-card',
+      'circuit-zero-chrononaut-title',
+    ]);
+    expect(next.equipped.showcase.supports?.id).toBe('circuit-zero-aero-pedestals');
+    expect(next.equipped.factionEffect?.id).toBe('circuit-zero-afterimage-effect');
+    expect(teamPackPrimaryAction(CIRCUIT_ZERO_PACK, next)).toBe('equipped');
   });
 });
 

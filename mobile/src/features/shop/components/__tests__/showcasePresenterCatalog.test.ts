@@ -7,6 +7,7 @@ import {
 } from '../../showcasePresenterCatalog';
 import { createPresenterRoomAssignments } from '../../showcasePresenterAssignments';
 import {
+  CIRCUIT_ZERO_PACK,
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   MYTHS_FORGE_PACK,
   NEON_PROTOCOL_PACK,
@@ -25,6 +26,7 @@ describe('showcase presenter catalog', () => {
       'supports_champagne',
       'neon-protocol-vector-pedestals',
       'mythes-forge-magma-pedestals',
+      'circuit-zero-aero-pedestals',
       'fnatic-pedestals',
       'kc-pedestals',
       'm8-pedestals',
@@ -41,6 +43,7 @@ describe('showcase presenter catalog', () => {
       6,
       9,
       8,
+      7,
       10,
       10,
       10,
@@ -107,6 +110,34 @@ describe('showcase presenter catalog', () => {
     expect(assignments.trophy?.name).toBe('Totem Basalte');
     expect(assignments.badge?.name).toBe('Badge Artisan');
     expect(assignments['right-free']?.name).toBe('Carte de partage');
+  });
+
+  it('places the seven physical Circuit Zéro objects on the aerodynamic stations', () => {
+    expect(showcasePresenterById('circuit-zero-aero-pedestals')).toMatchObject({
+      accent: '#C7F000',
+      name: 'Socle Aéro',
+      packId: 'circuit-zero',
+      showRankDisplay: false,
+    });
+
+    const items = CIRCUIT_ZERO_PACK.items
+      .filter((item) => item.roomKind)
+      .map((item) => ({
+        accent: item.accent,
+        id: `cosmetic:${item.id}`,
+        image: item.image,
+        kind: item.roomKind!,
+        name: item.name,
+      }));
+    const assignments = createPresenterRoomAssignments(items, 'circuit-zero-aero-pedestals');
+
+    expect(assignments['left-free']?.name).toBe('Cadre Sillage');
+    expect(assignments['left-extra']?.name).toBe('Bannière Secteur');
+    expect(assignments.ring?.name).toBe('Jeton Chrono');
+    expect(assignments.jersey?.name).toBe('Kairos-6');
+    expect(assignments['right-extra']?.name).toBe('Glyphe Zéro');
+    expect(assignments.trophy?.name).toBe('Totem Delta');
+    expect(assignments.badge?.name).toBe('Badge Pilote');
   });
 
   it('exposes and fills the five fixed Valorant collection slots', () => {

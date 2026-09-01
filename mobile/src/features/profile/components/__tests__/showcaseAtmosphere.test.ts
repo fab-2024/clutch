@@ -228,6 +228,36 @@ describe('showcase adaptive atmosphere', () => {
     });
   });
 
+  it('uses the Circuit Zéro aerodynamic afterimage profile', () => {
+    const atmosphere = resolveShowcaseAtmosphere({
+      cosmetics: {
+        ...EMPTY_EQUIPPED_COSMETICS,
+        factionEffect: {
+          accent: '#C7F000',
+          description: '',
+          id: 'circuit-zero-afterimage-effect',
+          level: 5,
+          name: 'Effet Postimage',
+          rarity: 'legendaire',
+          slot: 'effet_faction',
+          styleKey: 'circuit-zero-afterimage-effect',
+        },
+      },
+      favoriteTeam: null,
+      lightingAccent: '#C7F000',
+      rankAccent: '#B87845',
+      rankOrder: 0,
+    });
+
+    expect(atmosphere).toMatchObject({
+      cosmeticColor: '#C7F000',
+      driftDurationMs: 8_500,
+      dustCount: 9,
+      effect: 'circuit-afterimage',
+      intensity: 0.39,
+    });
+  });
+
   it('raises density modestly for a mythic rank and legendary object', () => {
     const atmosphere = resolveShowcaseAtmosphere({
       cosmetics: {

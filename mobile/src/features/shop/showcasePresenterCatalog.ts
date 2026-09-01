@@ -142,6 +142,16 @@ const MYTHS_FORGE_PACK_SLOTS = [
   { id: 'right-free', label: 'Carte de partage', preferredKind: 'banner', left: '91%', top: '44%', width: '8%', height: '34%' },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
+const CIRCUIT_ZERO_PACK_SLOTS = [
+  { id: 'left-free', label: 'Cadre Sillage', preferredKind: 'frame', left: '2%', top: '45%', width: '11%', height: '33%' },
+  { id: 'left-extra', label: 'Bannière Secteur', preferredKind: 'banner', left: '14%', top: '34%', width: '11%', height: '44%' },
+  { id: 'ring', label: 'Jeton Chrono', preferredKind: 'ring', left: '26%', top: '42%', width: '10%', height: '36%' },
+  { id: 'jersey', label: 'Kairos-6', preferredKind: 'jersey', left: '36%', top: '33%', width: '28%', height: '45%' },
+  { id: 'right-extra', label: 'Glyphe Zéro', preferredKind: 'core', left: '65%', top: '36%', width: '11%', height: '42%' },
+  { id: 'trophy', label: 'Totem Delta', preferredKind: 'trophy', left: '77%', top: '38%', width: '10%', height: '40%' },
+  { id: 'badge', label: 'Badge Pilote', preferredKind: 'badge', left: '88%', top: '43%', width: '10%', height: '35%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
+
 const LEAGUE_OF_LEGENDS_COLLECTION_SLOTS = [
   { id: 'left-free', label: 'Lame d’Infini', preferredKind: 'core', left: '3%', top: '39%', width: '19%', height: '40%' },
   { id: 'left-extra', label: 'Fragment du Nexus', preferredKind: 'core', left: '23%', top: '27%', width: '16%', height: '52%' },
@@ -260,6 +270,20 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     rarity: 'legendaire',
     showRankDisplay: false,
     slots: MYTHS_FORGE_PACK_SLOTS,
+  },
+  {
+    id: 'circuit-zero-aero-pedestals',
+    name: 'Socle Aéro',
+    description: 'Sept stations aérodynamiques distribuées dans le tunnel d’essai Circuit Zéro.',
+    accent: '#C7F000',
+    image: require('../../../assets/shop/packs/circuit-zero/circuit-zero-room-empty.png'),
+    packId: 'circuit-zero',
+    packOnly: true,
+    pedestal: 'steel',
+    price: 0,
+    rarity: 'legendaire',
+    showRankDisplay: false,
+    slots: CIRCUIT_ZERO_PACK_SLOTS,
   },
   {
     id: 'fnatic-pedestals',

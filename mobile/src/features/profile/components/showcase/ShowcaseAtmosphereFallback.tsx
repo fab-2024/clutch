@@ -94,6 +94,17 @@ export default function ShowcaseAtmosphereFallback({
           <View style={styles.forgeResonanceCore} />
         </View>
       ) : null}
+      {atmosphere.effect === 'circuit-afterimage' ? (
+        <View style={styles.circuitAfterimage} testID="showcase-circuit-static-afterimage">
+          <View style={styles.circuitAfterimageRayLime} />
+          <View style={styles.circuitAfterimageRayMagenta} />
+          <View style={[styles.circuitAfterimageVehicle, styles.circuitAfterimageVehicleLeft]} />
+          <View style={[styles.circuitAfterimageVehicle, styles.circuitAfterimageVehicleCenter]} />
+          <View style={[styles.circuitAfterimageVehicle, styles.circuitAfterimageVehicleRight]} />
+          <View style={styles.circuitAfterimageGateLime} />
+          <View style={styles.circuitAfterimageGateMagenta} />
+        </View>
+      ) : null}
       {STATIC_DUST.slice(0, atmosphere.dustCount).map(([left, top], index) => (
         <View
           key={`static-showcase-dust-${left}-${top}`}
@@ -132,6 +143,78 @@ const styles = StyleSheet.create({
     left: '34%',
     width: '32%',
     opacity: 0.72,
+  },
+  circuitAfterimage: {
+    position: 'absolute',
+    top: '49%',
+    left: '50%',
+    width: 300,
+    height: 100,
+    marginLeft: -150,
+    marginTop: -50,
+  },
+  circuitAfterimageGateLime: {
+    position: 'absolute',
+    top: 3,
+    right: 19,
+    width: 2,
+    height: 88,
+    borderRadius: 999,
+    backgroundColor: '#C7F000',
+    opacity: 0.8,
+  },
+  circuitAfterimageGateMagenta: {
+    position: 'absolute',
+    top: 13,
+    right: 13,
+    width: 1,
+    height: 68,
+    backgroundColor: '#EA4FC9',
+    opacity: 0.78,
+  },
+  circuitAfterimageRayLime: {
+    position: 'absolute',
+    top: 48,
+    left: 8,
+    right: 8,
+    height: 2,
+    borderRadius: 999,
+    backgroundColor: '#C7F000',
+    opacity: 0.72,
+  },
+  circuitAfterimageRayMagenta: {
+    position: 'absolute',
+    top: 55,
+    left: 38,
+    right: 16,
+    height: 1,
+    backgroundColor: '#EA4FC9',
+    opacity: 0.72,
+  },
+  circuitAfterimageVehicle: {
+    position: 'absolute',
+    top: 38,
+    width: 62,
+    height: 12,
+    borderTopLeftRadius: 999,
+    borderBottomLeftRadius: 6,
+    borderTopRightRadius: 14,
+    borderBottomRightRadius: 4,
+    backgroundColor: '#EDE5D7',
+    borderBottomWidth: 2,
+    borderBottomColor: '#C7F000',
+  },
+  circuitAfterimageVehicleCenter: {
+    left: 119,
+    opacity: 0.68,
+  },
+  circuitAfterimageVehicleLeft: {
+    left: 35,
+    opacity: 0.32,
+  },
+  circuitAfterimageVehicleRight: {
+    left: 203,
+    opacity: 0.92,
   },
   dust: {
     position: 'absolute',

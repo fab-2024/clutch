@@ -78,6 +78,18 @@ describe('ShowcasePreviewScreen team-pack moods', () => {
     expect(preview.shop.equipped.factionEffect?.id).toBe('mythes-forge-resonance-effect');
   });
 
+  it('builds the Circuit Zéro showcase with its aerodynamic presenter and afterimage', () => {
+    const preview = showcasePreviewForMood('circuit', 'circuit-zero');
+
+    expect(preview.shop.items.filter((item) => item.collectionKey === 'circuit-zero')).toHaveLength(12);
+    expect(preview.shop.equipped.showcase).toMatchObject({
+      jersey: expect.objectContaining({ id: 'circuit-zero-kairos-6' }),
+      lighting: expect.objectContaining({ id: 'circuit-zero-room' }),
+      supports: expect.objectContaining({ id: 'circuit-zero-aero-pedestals' }),
+    });
+    expect(preview.shop.equipped.factionEffect?.id).toBe('circuit-zero-afterimage-effect');
+  });
+
   it('builds the M8 Gentle Mates Paris showcase with its dedicated mood', () => {
     const preview = showcasePreviewForMood('m8', 'm8-gentle-mates');
 

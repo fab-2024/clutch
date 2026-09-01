@@ -77,4 +77,27 @@ describe('ShowcaseAtmosphereFallback', () => {
       { includeHiddenElements: true },
     )).toBeTruthy();
   });
+
+  it('keeps a fixed Circuit Zéro afterimage when animation is reduced', async () => {
+    const screen = await render(
+      <ShowcaseAtmosphereFallback
+        atmosphere={{
+          cosmeticColor: '#C7F000',
+          driftDurationMs: 8_500,
+          dustCount: 9,
+          effect: 'circuit-afterimage',
+          intensity: 0.39,
+          lightingColor: '#C7F000',
+          rankColor: '#B87845',
+          teamColor: '#EA4FC9',
+        }}
+        reason="reduced-motion"
+      />,
+    );
+
+    expect(screen.getByTestId(
+      'showcase-circuit-static-afterimage',
+      { includeHiddenElements: true },
+    )).toBeTruthy();
+  });
 });

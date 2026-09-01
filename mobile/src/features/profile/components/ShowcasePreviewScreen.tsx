@@ -5,6 +5,7 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 import { PREVIEW_SHOP } from '@/src/features/shop/components/ShopPreviewScreen';
 import {
   applyPreviewTeamPackAction,
+  CIRCUIT_ZERO_PACK,
   cosmeticPackById,
   createTeamPackPreviewItems,
   FNATIC_TEAM_PACK,
@@ -102,6 +103,7 @@ export default function ShowcasePreviewScreen() {
 }
 
 type ShowcasePreviewMood =
+  | 'circuit'
   | 'fnatic'
   | 'forge'
   | 'kc'
@@ -115,7 +117,9 @@ type ShowcasePreviewMood =
 
 export function showcasePreviewForMood(mood: ShowcasePreviewMood, packId?: string) {
   const pack = cosmeticPackById(packId)
-    ?? (mood === 'fnatic'
+    ?? (mood === 'circuit'
+      ? CIRCUIT_ZERO_PACK
+      : mood === 'fnatic'
       ? FNATIC_TEAM_PACK
       : mood === 'forge'
         ? MYTHS_FORGE_PACK
@@ -233,7 +237,8 @@ export function showcasePreviewForMood(mood: ShowcasePreviewMood, packId?: strin
 
 function previewMood(value?: string): ShowcasePreviewMood {
   if (
-    value === 'fnatic'
+    value === 'circuit'
+    || value === 'fnatic'
     || value === 'forge'
     || value === 'kc'
     || value === 'lol'

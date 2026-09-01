@@ -4,6 +4,7 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 import {
+  CIRCUIT_ZERO_PACK,
   createTeamPackPreviewItems,
   FNATIC_TEAM_PACK,
   KC_TEAM_PACK,
@@ -129,6 +130,26 @@ describe('TeamPackScreen', () => {
 
     await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
     expect(screen.getAllByText('Armure Oréa').length).toBeGreaterThan(0);
+  });
+
+  it('renders Circuit Zéro and its twelve inspectable original objects', async () => {
+    const screen = await render(
+      <TeamPackScreen
+        packId={CIRCUIT_ZERO_PACK.id}
+        previewData={makeData(1280, CIRCUIT_ZERO_PACK)}
+      />,
+    );
+
+    expect(screen.getByText('COLLECTION // ORIGINALE')).toBeTruthy();
+    expect(screen.getAllByText('KAIROS-6 // CHRONONAUTE')).toHaveLength(2);
+    expect(screen.getAllByTestId(/^team-pack-item-circuit-zero-/)).toHaveLength(12);
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('team-pack-item-circuit-zero-kairos-6'));
+    });
+
+    await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
+    expect(screen.getAllByText('Kairos-6').length).toBeGreaterThan(0);
   });
 
   it('renders the Fnatic hero and twelve inspectable objects', async () => {

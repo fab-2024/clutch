@@ -61,6 +61,7 @@ export type ShowcaseAtmosphereLayerProps = {
 const ARTBOARD_WIDTH = 1_000;
 const ARTBOARD_HEIGHT = 420;
 const PERFORMANCE_FRAME_LIMIT_MS = 22;
+const CIRCUIT_AFTERIMAGE_VEHICLE_CENTERS = [332, 500, 668] as const;
 const DUST = [
   [82, 344, 0.08, 0.75],
   [158, 252, 0.26, 0.45],
@@ -194,6 +195,12 @@ function ShowcaseAtmosphereCanvas({
         withTiming(0.22, { duration: 820, easing: Easing.inOut(Easing.quad) }),
         withTiming(0, { duration: 460, easing: Easing.inOut(Easing.quad) }),
       );
+    } else if (atmosphere.effect === 'circuit-afterimage') {
+      impulse.value = withSequence(
+        withTiming(1, { duration: 360, easing: Easing.out(Easing.cubic) }),
+        withTiming(0.28, { duration: 620, easing: Easing.inOut(Easing.quad) }),
+        withTiming(0, { duration: 460, easing: Easing.inOut(Easing.quad) }),
+      );
     }
     return () => cancelAnimation(impulse);
   }, [atmosphere.effect, impulse]);
@@ -230,6 +237,13 @@ function ShowcaseAtmosphereCanvas({
   const forgeResonanceRadius = useDerivedValue(() => (
     72 + impulse.value * 205 + breath.value * 16
   ));
+  const circuitAfterimageOpacity = useDerivedValue(() => (
+    0.12 + impulse.value * 0.78 + breath.value * 0.08
+  ));
+  const circuitTrailWidth = useDerivedValue(() => 310 + impulse.value * 390);
+  const circuitTrailX = useDerivedValue(() => 500 - circuitTrailWidth.value / 2);
+  const circuitGateHeight = useDerivedValue(() => 94 + impulse.value * 190);
+  const circuitGateY = useDerivedValue(() => 250 - circuitGateHeight.value / 2);
 
   return (
     <>
@@ -419,6 +433,32 @@ function ShowcaseAtmosphereCanvas({
                 />
               ))}
               <Circle color="#FFF3DF" cx={500} cy={282} r={5} />
+            </Group>
+          ) : null}
+
+          {atmosphere.effect === 'circuit-afterimage' ? (
+            <Group blendMode="screen" opacity={circuitAfterimageOpacity}>
+              <Rect color="#C7F000" height={3} width={circuitTrailWidth} x={circuitTrailX} y={246} />
+              <Rect color="#EA4FC9" height={1.5} opacity={0.82} width={circuitTrailWidth} x={circuitTrailX} y={254} />
+              <Rect color="#EDE5D7" height={1} opacity={0.7} width={circuitTrailWidth} x={circuitTrailX} y={239} />
+              {CIRCUIT_AFTERIMAGE_VEHICLE_CENTERS.map((centerX, index) => (
+                <Group key={`circuit-afterimage-vehicle-${centerX}`} opacity={0.32 + index * 0.24}>
+                  <Rect color={index === 1 ? '#EDE5D7' : '#C7F000'} height={15} width={88} x={centerX - 44} y={235} />
+                  <Rect color="#0C1113" height={6} width={57} x={centerX - 28} y={232} />
+                  <Circle color="#EDE5D7" cx={centerX - 27} cy={253} r={4} />
+                  <Circle color="#EDE5D7" cx={centerX + 27} cy={253} r={4} />
+                </Group>
+              ))}
+              <Rect color="#C7F000" height={circuitGateHeight} opacity={0.78} width={2} x={811} y={circuitGateY} />
+              <Rect color="#EA4FC9" height={circuitGateHeight} opacity={0.72} width={1} x={819} y={circuitGateY} />
+              <Circle cx={815} cy={250} r={70}>
+                <RadialGradient
+                  c={vec(815, 250)}
+                  colors={['rgba(199,240,0,.22)', 'rgba(234,79,201,.08)', 'rgba(0,0,0,0)']}
+                  positions={[0, 0.52, 1]}
+                  r={70}
+                />
+              </Circle>
             </Group>
           ) : null}
 

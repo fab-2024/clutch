@@ -235,7 +235,7 @@ export const ATELIER_DISCOVERY_ENTRIES: readonly {
   {
     kind: 'team_pack',
     label: 'PACKS ORIGINAUX',
-    description: 'Mythes de la Forge et Protocole Néon',
+    description: 'Circuit Zéro, Mythes de la Forge et Protocole Néon',
     glyph: '⬡',
   },
   { kind: 'partner_pack', label: 'COLLABS', description: 'Collaborations autorisées à venir', glyph: '✦' },
