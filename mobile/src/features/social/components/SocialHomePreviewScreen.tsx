@@ -1,16 +1,12 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { previewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import { COMMUNITY_FORMS } from '@/src/features/social/faction/constants';
-import type {
-  RelicDiagnostics,
-  SupporterContributionPresentation,
-} from '@/src/features/social/faction/relicState';
 import { relicContainerForPreview } from '@/src/features/social/faction/relicArtwork';
 import type { CommunityData, CommunityFaction, CommunityMutationPresentation } from '@/src/features/social/faction/types';
 import { communityFormForLevel, factionProgress } from '@/src/features/social/faction/utils';
@@ -52,16 +48,7 @@ const PREVIEW_COMMUNITY: CommunityData = {
   },
 };
 
-const CHARGE_PRESETS = [0, 1, 99, 100, 499, 500, 1_999, 2_000, 4_999, 5_000, 9_999, 10_000];
 const TESTABLE_FORMS = COMMUNITY_FORMS.filter((form) => form.level >= 1 && form.level <= 5);
-const MUTATION_TRANSITIONS = [
-  { fromLevel: 1, toLevel: 2 },
-  { fromLevel: 2, toLevel: 3 },
-  { fromLevel: 3, toLevel: 4 },
-  { fromLevel: 4, toLevel: 5 },
-  { fromLevel: 5, toLevel: 6 },
-  { fromLevel: 1, toLevel: 5 },
-] as const;
 
 export default function SocialHomePreviewScreen({
   factionHeroVariant = 'current',
@@ -98,29 +85,19 @@ export default function SocialHomePreviewScreen({
     requestedInstability === null ? undefined : { charge: requestedInstability, objective: 100 },
   );
   const [mutation, setMutation] = useState<CommunityMutationPresentation | null>(null);
-  const [selectedMutation, setSelectedMutation] = useState({ fromLevel: 1, toLevel: 2 });
-  const [presentedMutationEventId, setPresentedMutationEventId] = useState<string | null>(null);
-  const [supporterContribution, setSupporterContribution] = useState<SupporterContributionPresentation | null>(null);
-  const [diagnostics, setDiagnostics] = useState<RelicDiagnostics>({
-    tier: 'calm',
-    ratio: 0,
-    mutationFromForm: null,
-    mutationToForm: null,
-    mutationEventId: null,
-    mutationEventPresented: false,
-  });
+  const [supporterEditorOpen, setSupporterEditorOpen] = useState(false);
+  const [supporterDraft, setSupporterDraft] = useState(() => String(
+    requestedInstability ?? chargeForInstability(requestedForm.level, requestedInstability),
+  ));
   const previewSessionId = useRef(Date.now().toString(36));
   const eventSequence = useRef(0);
   const previewProgress = factionProgress(charge);
+  const supporterCount = Math.round(instabilityOverride?.charge ?? charge);
   const relicProgressOverride = instabilityOverride ? {
     ...previewProgress,
-    charge: instabilityOverride.charge >= instabilityOverride.objective
-      ? previewProgress.objective
-      : previewProgress.charge,
+    charge: supporterCount,
     progress: Math.max(0, Math.min(1, instabilityOverride.charge / instabilityOverride.objective)),
-    remaining: instabilityOverride.charge >= instabilityOverride.objective
-      ? 0
-      : previewProgress.remaining,
+    remaining: Math.max(0, previewProgress.objective - supporterCount),
   } : undefined;
   const data = useMemo<CommunityData>(() => {
     const moi = activity === 'empty' && PREVIEW_COMMUNITY.moi
@@ -140,10 +117,10 @@ export default function SocialHomePreviewScreen({
       ...PREVIEW_COMMUNITY,
       moi,
       factions: PREVIEW_COMMUNITY.factions.map((faction) => faction.equipe_id === 'kc'
-        ? { ...faction, membres: charge, niveau_atteint: factionProgress(charge).level }
+        ? { ...faction, membres: supporterCount, niveau_atteint: previewProgress.level }
         : faction),
     };
-  }, [activity, charge]);
+  }, [activity, previewProgress.level, supporterCount]);
 
   useEffect(() => {
     if (requestedMutationFrom !== null && requestedMutationTo !== null && requestedMutationTo > requestedMutationFrom) {
@@ -160,19 +137,18 @@ export default function SocialHomePreviewScreen({
         occurred_at: new Date().toISOString(),
       } satisfies CommunityMutationPresentation;
       setCharge(target.threshold);
+      setSupporterDraft(String(target.threshold));
       setInstabilityOverride(undefined);
-      setSupporterContribution(null);
-      setSelectedMutation({ fromLevel: requestedMutationFrom, toLevel: requestedMutationTo });
-      setPresentedMutationEventId(null);
       setMutation(nextMutation);
       return;
     }
-    setCharge(chargeForInstability(requestedForm.level, requestedInstability));
+    const nextCharge = chargeForInstability(requestedForm.level, requestedInstability);
+    setCharge(nextCharge);
+    setSupporterDraft(String(requestedInstability ?? nextCharge));
     setInstabilityOverride(requestedInstability === null
       ? undefined
       : { charge: requestedInstability, objective: 100 });
     setMutation(null);
-    setSupporterContribution(null);
   }, [requestedForm.level, requestedInstability, requestedMutationFrom, requestedMutationTo]);
 
   if (!previewRoutesEnabled) return <Redirect href="/" />;
@@ -181,10 +157,9 @@ export default function SocialHomePreviewScreen({
     const target = communityFormForLevel(toLevel);
     eventSequence.current += 1;
     setInstabilityOverride(undefined);
-    setSupporterContribution(null);
     setCharge(target.threshold);
-    setSelectedMutation({ fromLevel, toLevel });
-    setPresentedMutationEventId(null);
+    setSupporterDraft(String(target.threshold));
+    setSupporterEditorOpen(false);
     setMutation({
       id: `preview-mutation-${previewSessionId.current}-${eventSequence.current}`,
       from_level: fromLevel,
@@ -197,36 +172,31 @@ export default function SocialHomePreviewScreen({
     });
   };
 
-  const selectForm = (level: number) => {
-    const preservedInstability = instabilityOverride
-      ? Math.round((instabilityOverride.charge / Math.max(1, instabilityOverride.objective)) * 100)
-      : null;
-    setCharge(chargeForInstability(level, preservedInstability));
-    setMutation(null);
-    setSupporterContribution(null);
-  };
-
-  const playSupporterArrival = (amount: number) => {
-    eventSequence.current += 1;
-    const fromCharge = charge;
-    const toCharge = Math.min(50_000, fromCharge + amount);
-    setMutation(null);
+  const resetRelicPreview = () => {
+    setCharge(communityFormForLevel(1).threshold);
+    setSupporterDraft(String(communityFormForLevel(1).threshold));
+    setSupporterEditorOpen(false);
     setInstabilityOverride(undefined);
-    setCharge(toCharge);
-    setSupporterContribution({
-      id: `preview-supporter-${Date.now()}-${eventSequence.current}`,
-      amount,
-      fromCharge,
-      toCharge,
-    });
+    setMutation(null);
   };
 
-  const selectInstability = (percent: number) => {
-    const level = Math.max(1, previewProgress.current.level);
-    setCharge(chargeForInstability(level, percent));
-    setInstabilityOverride({ charge: percent, objective: 100 });
+  const applySupporterCount = (value: number) => {
+    const normalized = Math.max(0, Math.min(100, Math.round(value)));
+    setSupporterDraft(String(normalized));
+    setCharge(chargeForInstability(requestedForm.level, normalized));
+    setInstabilityOverride({ charge: normalized, objective: 100 });
     setMutation(null);
-    setSupporterContribution(null);
+  };
+
+  const handleSupporterDraftChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 3);
+    setSupporterDraft(digits);
+    if (digits) applySupporterCount(Number(digits));
+  };
+
+  const toggleSupporterEditor = () => {
+    setSupporterDraft(String(supporterCount));
+    setSupporterEditorOpen((current) => !current);
   };
 
   const experience = (
@@ -241,108 +211,84 @@ export default function SocialHomePreviewScreen({
           <View style={previewStyles.panelTop}>
             <View>
               <Text style={previewStyles.eyebrow}>LABO RELIQUE · DEV UNIQUEMENT</Text>
-              <Text style={previewStyles.title}>{previewProgress.current.name.toUpperCase()} · {charge.toLocaleString('fr-FR')}</Text>
+              <Text style={previewStyles.title}>{previewProgress.current.name.toUpperCase()} · {supporterCount.toLocaleString('fr-FR')}</Text>
+            </View>
+            <View style={[previewStyles.status, mutation && previewStyles.statusReady]}>
+              <Text style={[previewStyles.statusText, mutation && previewStyles.statusTextReady]}>
+                {mutation ? 'MUTATION PRÊTE' : 'AU REPOS'}
+              </Text>
             </View>
           </View>
-          <View style={previewStyles.controlRow}>
-            <Text style={previewStyles.controlLabel}>RÉCIPIENTS</Text>
-            <ScrollView contentContainerStyle={previewStyles.chips} horizontal showsHorizontalScrollIndicator={false} style={previewStyles.controlScroll}>
-              {TESTABLE_FORMS.map((form) => (
-                <Pressable
-                  accessibilityLabel={`Afficher le récipient ${form.name}`}
-                  accessibilityRole="button"
-                  key={form.state}
-                  onPress={() => selectForm(form.level)}
-                  style={[previewStyles.chip, previewProgress.current.container === form.container && previewStyles.chipActive]}
-                >
-                  <Text style={[previewStyles.chipText, previewProgress.current.container === form.container && previewStyles.chipTextActive]}>{form.code} · {form.name.toUpperCase()}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+          <Text style={previewStyles.instructions}>
+            Touche la relique pour la réaction simple. Prépare la mutation, puis touche-la à nouveau pour l’explosion.
+          </Text>
+          <View style={previewStyles.actions}>
+            <Pressable
+              accessibilityLabel={supporterEditorOpen
+                ? 'Fermer le réglage du nombre de supporters'
+                : `Régler le nombre de supporters, actuellement ${supporterCount}`}
+              accessibilityRole="button"
+              onPress={toggleSupporterEditor}
+              style={[previewStyles.supporterButton, supporterEditorOpen && previewStyles.supporterButtonOpen]}
+            >
+              <Text style={previewStyles.supporterButtonText}>SUPPORTERS · {supporterCount}</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="Réinitialiser la relique en Ampoule"
+              accessibilityRole="button"
+              onPress={resetRelicPreview}
+              style={previewStyles.secondaryButton}
+            >
+              <Text style={previewStyles.secondaryButtonText}>RÉINITIALISER</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="Préparer la mutation de l’Ampoule vers la Fiole"
+              accessibilityRole="button"
+              disabled={Boolean(mutation)}
+              onPress={() => playMutation(1, 2)}
+              style={[previewStyles.primaryButton, mutation && previewStyles.primaryButtonDisabled]}
+            >
+              <Text style={previewStyles.primaryButtonText}>
+                {mutation ? 'TOUCHE LA RELIQUE' : 'PRÉPARER LA MUTATION'}
+              </Text>
+            </Pressable>
           </View>
-          <View style={previewStyles.controlRow}>
-            <Text style={previewStyles.controlLabel}>SUPPORTERS</Text>
-            <View style={previewStyles.chips}>
-              {[1, 5, 20].map((amount) => (
-                <Pressable
-                  accessibilityLabel={`Ajouter ${amount} supporter${amount > 1 ? 's' : ''}`}
-                  accessibilityRole="button"
-                  key={amount}
-                  onPress={() => playSupporterArrival(amount)}
-                  style={previewStyles.supporterButton}
-                >
-                  <Text style={previewStyles.supporterText}>+{amount} SUPPORTER{amount > 1 ? 'S' : ''}</Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-          <View style={previewStyles.controlRow}>
-            <Text style={previewStyles.controlLabel}>INSTABILITÉ</Text>
-            <ScrollView contentContainerStyle={previewStyles.chips} horizontal showsHorizontalScrollIndicator={false} style={previewStyles.controlScroll}>
-              {[49, 50, 74, 75, 89, 90, 99, 100].map((percent) => (
-                <Pressable
-                  accessibilityLabel={`Afficher la progression à ${percent} pour cent`}
-                  accessibilityRole="button"
-                  key={percent}
-                  onPress={() => selectInstability(percent)}
-                  style={[previewStyles.chip, instabilityOverride?.charge === percent && previewStyles.chipActive]}
-                >
-                  <Text style={[previewStyles.chipText, instabilityOverride?.charge === percent && previewStyles.chipTextActive]}>{percent} %</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-          <View style={previewStyles.controlRow}>
-            <Text style={previewStyles.controlLabel}>MUTATIONS</Text>
-            <ScrollView contentContainerStyle={previewStyles.chips} horizontal showsHorizontalScrollIndicator={false} style={previewStyles.controlScroll}>
-              {MUTATION_TRANSITIONS.map((transition) => (
-                <Pressable
-                  accessibilityRole="button"
-                  key={`${transition.fromLevel}-${transition.toLevel}`}
-                  onPress={() => playMutation(transition.fromLevel, transition.toLevel)}
+          {supporterEditorOpen ? (
+            <View style={previewStyles.supporterEditor}>
+              <Text style={previewStyles.supporterEditorLabel}>REMPLISSAGE</Text>
+              <View style={previewStyles.supporterInputGroup}>
+                <TextInput
+                  accessibilityLabel="Nombre de supporters entre 0 et 100"
+                  inputMode="numeric"
+                  keyboardType="number-pad"
+                  maxLength={3}
+                  onBlur={() => {
+                    if (!supporterDraft) applySupporterCount(0);
+                  }}
+                  onChangeText={handleSupporterDraftChange}
+                  onSubmitEditing={() => setSupporterEditorOpen(false)}
+                  returnKeyType="done"
+                  selectTextOnFocus
+                  style={previewStyles.supporterInput}
+                  value={supporterDraft}
+                />
+                <Text style={previewStyles.supporterInputSuffix}>/ 100</Text>
+              </View>
+              <View
+                accessibilityLabel={`Remplissage de la relique à ${supporterCount} pour cent`}
+                accessibilityRole="progressbar"
+                style={previewStyles.supporterTrack}
+              >
+                <View
                   style={[
-                    previewStyles.mutationButton,
-                    selectedMutation.fromLevel === transition.fromLevel
-                      && selectedMutation.toLevel === transition.toLevel
-                      && previewStyles.mutationButtonActive,
+                    previewStyles.supporterTrackFill,
+                    { width: `${supporterCount}%` as `${number}%` },
                   ]}
-                >
-                  <Text style={previewStyles.mutationText}>{communityFormForLevel(transition.fromLevel).name.toUpperCase()} → {communityFormForLevel(transition.toLevel).name.toUpperCase()}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-          <View style={previewStyles.chargeEditor}>
-            <Text style={previewStyles.controlLabel}>CHARGE</Text>
-            <Pressable onPress={() => { setInstabilityOverride(undefined); setSupporterContribution(null); setCharge((value) => Math.max(0, value - 100)); }} style={previewStyles.stepButton}><Text style={previewStyles.stepText}>−100</Text></Pressable>
-            <TextInput
-              accessibilityLabel="Charge artificielle de la relique"
-              keyboardType="number-pad"
-              onChangeText={(value) => {
-                setInstabilityOverride(undefined);
-                setSupporterContribution(null);
-                setCharge(Math.max(0, Math.min(50_000, Number(value.replace(/\D/g, '')) || 0)));
-              }}
-              style={previewStyles.input}
-              value={String(charge)}
-            />
-            <Pressable onPress={() => { setInstabilityOverride(undefined); setSupporterContribution(null); setCharge((value) => Math.min(50_000, value + 100)); }} style={previewStyles.stepButton}><Text style={previewStyles.stepText}>+100</Text></Pressable>
-            <ScrollView contentContainerStyle={previewStyles.chips} horizontal showsHorizontalScrollIndicator={false} style={previewStyles.controlScroll}>
-              {CHARGE_PRESETS.map((value) => (
-                <Pressable key={value} onPress={() => { setCharge(value); setMutation(null); setInstabilityOverride(undefined); setSupporterContribution(null); }} style={[previewStyles.chip, charge === value && previewStyles.chipActive]}>
-                  <Text style={[previewStyles.chipText, charge === value && previewStyles.chipTextActive]}>{value.toLocaleString('fr-FR')}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-          <View style={previewStyles.diagnostics}>
-            <Text style={previewStyles.diagnostic}>TIER · {diagnostics.tier}</Text>
-            <Text style={previewStyles.diagnostic}>RATIO · {(diagnostics.ratio * 100).toFixed(1)} %</Text>
-            <Text style={previewStyles.diagnostic}>DE · {diagnostics.mutationFromForm ?? '—'}</Text>
-            <Text style={previewStyles.diagnostic}>VERS · {diagnostics.mutationToForm ?? '—'}</Text>
-            <Text style={previewStyles.diagnostic}>EVENT · {diagnostics.mutationEventId ?? presentedMutationEventId ?? '—'}</Text>
-            <Text style={previewStyles.diagnostic}>PRÉSENTÉ · {diagnostics.mutationEventPresented || Boolean(presentedMutationEventId) ? 'OUI' : 'NON'}</Text>
-          </View>
+                />
+              </View>
+              <Text style={previewStyles.supporterHint}>MISE À JOUR EN DIRECT</Text>
+            </View>
+          ) : null}
         </View> : null}
         <SocialHomeExperience
           data={data}
@@ -352,17 +298,11 @@ export default function SocialHomePreviewScreen({
           instabilityPreviewOverride={instabilityOverride}
           loading={false}
           mutationOverride={mutation}
-          onRelicDiagnosticsChange={setDiagnostics}
           relicProgressOverride={relicProgressOverride}
           onMutationPresented={(eventId) => {
-            setPresentedMutationEventId(eventId);
             setMutation((current) => current?.id === eventId ? null : current);
           }}
-          onSupporterContributionPresented={(contributionId) => setSupporterContribution((current) => (
-            current?.id === contributionId ? null : current
-          ))}
           refreshing={false}
-          supporterContribution={supporterContribution}
           onRefresh={noop}
           onRetry={noop}
         />
@@ -425,27 +365,30 @@ function previewMutationLevel(value: string) {
 function noop() {}
 
 const previewStyles = StyleSheet.create({
-  panel: { paddingHorizontal: 14, paddingVertical: 10, gap: 8, backgroundColor: '#0B1218', borderBottomWidth: 1, borderBottomColor: '#2C361B' },
+  panel: { paddingHorizontal: 16, paddingVertical: 12, gap: 10, backgroundColor: '#0B1218', borderBottomWidth: 1, borderBottomColor: '#2C361B' },
   panelTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   eyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .6 },
   title: { ...typography.label, marginTop: 3, color: '#E8ECE9' },
-  controlRow: { minHeight: 31, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  controlScroll: { flex: 1 },
-  controlLabel: { ...typography.label, width: 82, flexShrink: 0, color: '#87939A' },
-  chargeEditor: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 7 },
-  stepButton: { minHeight: 30, paddingHorizontal: 9, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111A22' },
-  stepText: { ...typography.label, color: '#C8D0D4' },
-  input: { width: 86, height: 32, paddingHorizontal: 9, borderRadius: 10, color: '#F3F5F4', backgroundColor: '#0B1218', borderWidth: 1, borderColor: '#3A461F', textAlign: 'center' },
-  chips: { gap: 6, paddingRight: 12 },
-  chip: { minHeight: 27, paddingHorizontal: 9, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111A22', borderWidth: 1, borderColor: '#2B353B' },
-  chipActive: { backgroundColor: colors.volt, borderColor: colors.volt },
-  chipText: { ...typography.label, color: '#8D999F' },
-  chipTextActive: { color: '#080B0D' },
-  supporterButton: { minHeight: 29, paddingHorizontal: 10, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1B170C', borderWidth: 1, borderColor: '#6D5427' },
-  supporterText: { ...typography.label, color: '#F1C56D' },
-  mutationButton: { minHeight: 29, paddingHorizontal: 10, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#17170E', borderWidth: 1, borderColor: '#615128' },
-  mutationButtonActive: { backgroundColor: '#302814', borderColor: '#D7B773' },
-  mutationText: { ...typography.label, color: '#D7B773' },
-  diagnostics: { minHeight: 24, flexDirection: 'row', flexWrap: 'wrap', gap: 5, paddingTop: 2 },
-  diagnostic: { ...typography.label, paddingHorizontal: 7, paddingVertical: 4, borderRadius: 8, color: '#87B6BE', backgroundColor: '#0B1218', borderWidth: 1, borderColor: '#203A42' },
+  status: { paddingHorizontal: 9, paddingVertical: 5, borderRadius: 999, backgroundColor: '#111A22', borderWidth: 1, borderColor: '#2B353B' },
+  statusReady: { backgroundColor: '#302814', borderColor: '#D7B773' },
+  statusText: { ...typography.label, color: '#8D999F' },
+  statusTextReady: { color: '#F1C56D' },
+  instructions: { ...typography.body, maxWidth: 620, color: '#AAB4B8' },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  supporterButton: { minHeight: 36, paddingHorizontal: 13, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1A1021', borderWidth: 1, borderColor: '#694576' },
+  supporterButtonOpen: { backgroundColor: '#281631', borderColor: '#B17CC1' },
+  supporterButtonText: { ...typography.label, color: '#E1C6E8' },
+  supporterEditor: { minHeight: 48, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 12, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, backgroundColor: '#120D18', borderWidth: 1, borderColor: '#422B4D' },
+  supporterEditorLabel: { ...typography.eyebrow, color: '#BFA7C7', letterSpacing: .5 },
+  supporterInputGroup: { minHeight: 30, paddingHorizontal: 9, borderRadius: 8, flexDirection: 'row', alignItems: 'center', backgroundColor: '#080A0D', borderWidth: 1, borderColor: '#684873' },
+  supporterInput: { width: 42, padding: 0, color: '#FFFFFF', fontFamily: typography.label.fontFamily, fontSize: 14, fontWeight: '700', textAlign: 'right' },
+  supporterInputSuffix: { ...typography.label, marginLeft: 4, color: '#8F9AA0' },
+  supporterTrack: { width: 150, height: 7, overflow: 'hidden', borderRadius: 99, backgroundColor: '#07090B', borderWidth: 1, borderColor: '#35263B' },
+  supporterTrackFill: { height: '100%', borderRadius: 99, backgroundColor: '#8E3AA4' },
+  supporterHint: { ...typography.eyebrow, color: '#778187', letterSpacing: .4 },
+  secondaryButton: { minHeight: 36, paddingHorizontal: 13, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111A22', borderWidth: 1, borderColor: '#344149' },
+  secondaryButtonText: { ...typography.label, color: '#C8D0D4' },
+  primaryButton: { minHeight: 36, paddingHorizontal: 14, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt, borderWidth: 1, borderColor: colors.volt },
+  primaryButtonDisabled: { backgroundColor: '#302814', borderColor: '#D7B773' },
+  primaryButtonText: { ...typography.label, color: '#080B0D' },
 });

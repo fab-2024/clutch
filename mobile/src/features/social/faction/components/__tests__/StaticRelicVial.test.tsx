@@ -6,7 +6,7 @@ import { RELIC_CONTAINER_SEQUENCE, RELIC_STAGE_ARTWORK } from '../../relicArtwor
 import StaticRelicVial from '../StaticRelicVial';
 
 jest.mock('react-native-svg', () => {
-  const { View } = require('react-native');
+  const { View } = jest.requireActual('react-native') as typeof import('react-native');
   return {
     __esModule: true,
     default: View,
@@ -14,6 +14,7 @@ jest.mock('react-native-svg', () => {
     Defs: View,
     Ellipse: View,
     G: View,
+    Image: View,
     LinearGradient: View,
     Path: View,
     RadialGradient: View,
@@ -31,6 +32,24 @@ describe('StaticRelicVial', () => {
 
     expect(screen.getByTestId(`${id}-elixir`)).toBeTruthy();
     expect(screen.getByTestId(`${id}-scene`).props.source).toBe(RELIC_STAGE_ARTWORK[container].asset);
+    expect(Boolean(screen.queryByTestId(`${id}-foreground`))).toBe(
+      Boolean(RELIC_STAGE_ARTWORK[container].foregroundPaths?.length),
+    );
     expect(screen.queryByTestId(`${id}-heart`)).toBeNull();
+  });
+
+  it('can omit its static elixir when an interactive volume owns the rendering', async () => {
+    const screen = await render(
+      <StaticRelicVial
+        container="ampoule"
+        height={330}
+        renderLiquid={false}
+        testID="interactive-shell"
+        width={300}
+      />,
+    );
+
+    expect(screen.getByTestId('interactive-shell-scene')).toBeTruthy();
+    expect(screen.queryByTestId('interactive-shell-elixir')).toBeNull();
   });
 });

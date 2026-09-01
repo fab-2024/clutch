@@ -22,3 +22,27 @@ jest.mock('./src/features/profile/components/showcase/ShowcaseAtmosphereLayer', 
     });
   };
 });
+
+// The relic interaction canvas is verified through its pure presentation rules.
+// Keep native Skia out of feature tests that only exercise Social behavior.
+jest.mock('./src/features/social/faction/components/InteractiveRelicVial', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  return {
+    __esModule: true,
+    default: React.forwardRef(function InteractiveRelicVialMock(
+      props: { onMutationBurst?: () => void; onMutationComplete?: () => void; testID?: string },
+      ref: unknown,
+    ) {
+      React.useImperativeHandle(ref, () => ({
+        playReaction: () => undefined,
+        playMutation: () => {
+          props.onMutationBurst?.();
+          props.onMutationComplete?.();
+        },
+      }));
+      return React.createElement(View, { testID: props.testID ?? 'interactive-relic-vial' });
+    }),
+  };
+});

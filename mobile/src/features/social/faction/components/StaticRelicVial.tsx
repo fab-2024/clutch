@@ -1,15 +1,21 @@
 import { Image, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { RELIC_STAGE_ARTWORK } from '@/src/features/social/faction/relicArtwork';
+import {
+  RELIC_STAGE_ARTWORK,
+} from '@/src/features/social/faction/relicArtwork';
 import type { RelicContainer } from '@/src/features/social/faction/types';
 
-import { RelicStaticLiquidArtwork } from './RelicEnergyArtwork';
+import {
+  RelicStaticLiquidArtwork,
+  RelicVesselForegroundArtwork,
+} from './RelicEnergyArtwork';
 
 type Props = {
   container: RelicContainer;
+  fillRatio?: number;
   height: number;
-  levelLift?: number;
   opacity?: number;
+  renderLiquid?: boolean;
   style?: StyleProp<ViewStyle>;
   testID?: string;
   width: number;
@@ -17,9 +23,10 @@ type Props = {
 
 export default function StaticRelicVial({
   container,
+  fillRatio = 1,
   height,
-  levelLift = 0,
   opacity = 1,
+  renderLiquid = true,
   style,
   testID,
   width,
@@ -35,9 +42,16 @@ export default function StaticRelicVial({
         style={styles.scene}
         testID={testID ? `${testID}-scene` : undefined}
       />
-      <View style={StyleSheet.absoluteFill} testID={testID ? `${testID}-elixir` : undefined}>
-        <RelicStaticLiquidArtwork config={config} container={container} levelLift={levelLift} />
-      </View>
+      {renderLiquid ? (
+        <View style={StyleSheet.absoluteFill} testID={testID ? `${testID}-elixir` : undefined}>
+          <RelicStaticLiquidArtwork config={config} container={container} fillRatio={fillRatio} />
+        </View>
+      ) : null}
+      {config.foregroundPaths?.length ? (
+        <View style={StyleSheet.absoluteFill} testID={testID ? `${testID}-foreground` : undefined}>
+          <RelicVesselForegroundArtwork config={config} container={container} />
+        </View>
+      ) : null}
     </View>
   );
 }
