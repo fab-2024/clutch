@@ -63,6 +63,7 @@ export type LevelState = {
 };
 
 export type ProfileData = {
+  avatarId?: string | null;
   pseudo: string;
   createdAt: string;
   profileTitle: string | null;
@@ -82,6 +83,7 @@ export type ProfileData = {
 };
 
 export type RawProfile = {
+  avatar_id?: string | null;
   pseudo?: string;
   cree_le?: string;
   titre_profil?: string | null;

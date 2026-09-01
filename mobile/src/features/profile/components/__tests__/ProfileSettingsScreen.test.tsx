@@ -28,7 +28,7 @@ jest.mock('@/src/providers/SnackbarProvider', () => ({
   useSnackbar: () => ({ showSnackbar: mockShowSnackbar }),
 }));
 jest.mock('@/src/lib/feedback', () => ({ errorFeedback: jest.fn(), successFeedback: jest.fn() }));
-jest.mock('@/src/features/profile/api', () => ({ saveFavoriteTeam: jest.fn(), saveProfilePreferences: jest.fn() }));
+jest.mock('@/src/features/profile/api', () => ({ saveFavoriteTeam: jest.fn(), saveProfileAvatar: jest.fn(), saveProfilePreferences: jest.fn() }));
 jest.mock('../FavoriteTeamConfirmationSheet', () => ({
   FavoriteTeamConfirmationSheet: ({ onClose, onConfirm, organization }: {
     onClose: () => void;
@@ -120,5 +120,16 @@ describe('ProfileSettingsScreen', () => {
       tone: 'success',
     }));
     expect(screen.getByRole('radio', { name: /G2 Esports/ }).props.accessibilityState.checked).toBe(true);
+  });
+
+  it('lets the player choose an avatar and autosaves the selection', async () => {
+    const screen = await render(<ProfileSettingsScreen previewState={previewState} />);
+    const avatar = screen.getByRole('radio', { name: 'Choisir l’avatar Drone pulsar' });
+
+    expect(avatar.props.accessibilityState.checked).toBe(false);
+    await fireEvent.press(avatar);
+
+    expect(avatar.props.accessibilityState.checked).toBe(true);
+    await waitFor(() => expect(screen.getByText('ENREGISTRÉ')).toBeTruthy());
   });
 });

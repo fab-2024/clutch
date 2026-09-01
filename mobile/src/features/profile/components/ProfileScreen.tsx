@@ -213,6 +213,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
         {publicView ? <ProfileSafetyActions onBlocked={handlePublicBlocked} pseudo={pseudo} /> : null}
 
         <ProfileShowcaseCard
+          avatarId={data?.avatarId}
           cosmetics={cosmetics}
           level={data?.level.level ?? 0}
           loading={loading}

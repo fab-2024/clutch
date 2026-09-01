@@ -43,6 +43,7 @@ export async function loadProfileData(pseudo: string): Promise<ProfileData> {
   const xp = calculateProfileXp(recap, badges);
 
   return {
+    avatarId: raw.avatar_id ?? null,
     pseudo: raw.pseudo || pseudo,
     createdAt: raw.cree_le || new Date().toISOString(),
     profileTitle: raw.titre_profil ?? null,
@@ -94,6 +95,18 @@ export async function saveFavoriteTeam(userId: string, teamId: string) {
     .update({ equipe_favorite_id: teamId })
     .eq('id', userId)
     .select('equipe_favorite_id')
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function saveProfileAvatar(userId: string, avatarId: string) {
+  const { data, error } = await supabase
+    .from('profils')
+    .update({ avatar_id: avatarId })
+    .eq('id', userId)
+    .select('avatar_id')
     .single();
 
   if (error) throw error;

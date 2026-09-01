@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import PlayerAvatar from '@/src/features/profile/avatars/PlayerAvatar';
 import { LEVEL_FRAME_CATALOG } from '@/src/features/profile/levelFrames/catalog';
 import LevelFrame from '@/src/features/profile/levelFrames/components/LevelFrame';
 import type { LevelFrameVariant } from '@/src/features/profile/levelFrames/types';
@@ -14,6 +15,7 @@ import { relicContainerForLevel } from '@/src/features/social/faction/relicArtwo
 import { colors, fonts, radius, typography } from '@/src/theme';
 
 type ProfileShowcaseCardProps = {
+  avatarId?: string | null;
   cosmetics?: EquippedCosmetics | null;
   level: number;
   loading: boolean;
@@ -30,6 +32,7 @@ type ProfileShowcaseCardProps = {
 };
 
 export default function ProfileShowcaseCard({
+  avatarId,
   cosmetics,
   level,
   loading,
@@ -88,7 +91,12 @@ export default function ProfileShowcaseCard({
 
       <View style={styles.stage}>
         <View style={styles.supporterBlock}>
-          <LevelFrame level={level} size={104} variant={levelFrameVariant} />
+          <View style={styles.avatarStack}>
+            <PlayerAvatar avatarId={avatarId} cosmetics={cosmetics} label={pseudo} size={104} />
+            <View style={styles.levelFrameBadge}>
+              <LevelFrame level={level} size={38} variant={levelFrameVariant} />
+            </View>
+          </View>
           <Text numberOfLines={1} style={styles.frameName}>{LEVEL_FRAME_CATALOG[levelFrameVariant].name.toUpperCase()}</Text>
           <Text numberOfLines={1} style={[styles.title, { color: cosmetics?.title?.accent ?? frameAccent }]}>{profileTitle.toUpperCase()}</Text>
         </View>
@@ -183,6 +191,8 @@ const styles = StyleSheet.create({
   identityRank: { fontFamily: fonts.display },
   stage: { zIndex: 2, minHeight: 190, marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
   supporterBlock: { flex: 1, minWidth: 0, alignItems: 'flex-start' },
+  avatarStack: { position: 'relative' },
+  levelFrameBadge: { position: 'absolute', right: -7, bottom: -5, width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: '#0B1218', borderWidth: 1, borderColor: '#30414E' },
   frameName: { ...typography.label, maxWidth: 150, marginTop: 9, color: colors.textMuted, letterSpacing: .5 },
   title: { ...typography.bodyStrong, maxWidth: 170, marginTop: 2 },
   relicBlock: { position: 'relative', width: 142, minHeight: 178, alignItems: 'center', justifyContent: 'center' },

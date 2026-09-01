@@ -9,3 +9,6 @@ captures/*.tmp
 # Dossiers de transfert temporaires
 _a_supprimer/
 _to_delete/
+
+# Avatars conservés localement en attente de validation des droits.
+mobile/assets/avatars/_rights-review/

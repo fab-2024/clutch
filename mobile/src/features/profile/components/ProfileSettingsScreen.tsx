@@ -10,6 +10,8 @@ import { Screen } from '@/src/components/layout/Screen';
 import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import type { ClutchProfile } from '@/src/features/auth/types';
 import { signOut } from '@/src/features/auth/api';
+import PlayerAvatar from '@/src/features/profile/avatars/PlayerAvatar';
+import { PLAYER_AVATARS } from '@/src/features/profile/avatars/catalog';
 import { loadTeamOrganizations } from '@/src/features/onboarding/api';
 import { GAMES } from '@/src/features/onboarding/constants';
 import type { GameId, TeamOrganization } from '@/src/features/onboarding/types';
@@ -27,7 +29,7 @@ import { useAuth } from '@/src/providers/AuthProvider';
 import { useSnackbar } from '@/src/providers/SnackbarProvider';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
-import { saveFavoriteTeam, saveProfilePreferences } from '../api';
+import { saveFavoriteTeam, saveProfileAvatar, saveProfilePreferences } from '../api';
 import { useQueuedAutosave, type AutosaveStatus } from '../hooks/useQueuedAutosave';
 import { FavoriteTeamConfirmationSheet } from './FavoriteTeamConfirmationSheet';
 
@@ -56,6 +58,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
   const initialGames = GAMES.map((game) => game.id).filter((id) => activeProfile?.jeux_suivis.includes(id));
   const initialProfileDraft = { games: initialGames, publicProfile: activeProfile?.profil_public !== false };
   const [games, setGames] = useState<GameId[]>(() => initialGames);
+  const [selectedAvatarId, setSelectedAvatarId] = useState<string | null>(activeProfile?.avatar_id ?? null);
   const [organizations, setOrganizations] = useState<TeamOrganization[]>(() => previewState?.organizations ?? []);
   const [selectedOrganization, setSelectedOrganization] = useState<string | null>(null);
   const [pendingOrganization, setPendingOrganization] = useState<TeamOrganization | null>(null);
@@ -102,6 +105,34 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
       return result;
     },
     signature: profilePreferencesSignature,
+  });
+
+  const avatarAutosave = useQueuedAutosave({
+    initialValue: activeProfile?.avatar_id ?? null,
+    onError: (caught, retry) => {
+      errorFeedback();
+      showSnackbar({
+        action: {
+          accessibilityLabel: 'Réessayer la synchronisation de l’avatar',
+          label: 'RÉESSAYER',
+          onPress: retry,
+        },
+        message: settingsError(caught),
+        tone: 'error',
+      });
+    },
+    save: async (avatarId: string | null) => {
+      if (!avatarId) throw new Error('Choisis un avatar dans la collection.');
+      if (previewState) {
+        await previewSaveDelay(previewState.saveDelayMs);
+        return { avatar_id: avatarId };
+      }
+      if (!userId) throw new Error('La session ne permet plus de modifier ce profil.');
+      const result = await saveProfileAvatar(userId, avatarId);
+      void refreshProfile().catch(() => undefined);
+      return result;
+    },
+    signature: (avatarId) => avatarId ?? '',
   });
 
   const notificationAutosave = useQueuedAutosave({
@@ -202,7 +233,17 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
   }, [activeProfile?.equipe_favorite_id, games, previewState]);
 
   const currentOrganization = organizations.find((organization) => organization.key === selectedOrganization) ?? null;
-  const syncStatus = aggregateAutosaveStatus(profileAutosave.status, notificationAutosave.status);
+  const syncStatus = aggregateAutosaveStatus(
+    profileAutosave.status,
+    avatarAutosave.status,
+    notificationAutosave.status,
+  );
+
+  function chooseAvatar(avatarId: string) {
+    if (avatarId === selectedAvatarId) return;
+    setSelectedAvatarId(avatarId);
+    avatarAutosave.commit(avatarId);
+  }
 
   function toggleGame(id: GameId) {
     const nextGames = games.includes(id)
@@ -332,6 +373,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
               compact={isShortLandscape}
               onRetry={() => {
                 if (profileAutosave.status === 'error') profileAutosave.retry();
+                if (avatarAutosave.status === 'error') avatarAutosave.retry();
                 if (notificationAutosave.status === 'error') notificationAutosave.retry();
               }}
               status={syncStatus}
@@ -341,7 +383,42 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
         {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text></View> : null}
 
         <View style={styles.section}>
-          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>01 // JEUX SUIVIS</Text><Text style={styles.sectionTitle}>TES TERRAINS.</Text></View><Text style={styles.sectionMeta}>{games.length}/3</Text></View>
+          <View style={styles.sectionHeading}>
+            <View><Text style={styles.sectionEyebrow}>01 // AVATAR</Text><Text style={styles.sectionTitle}>CHOISIS TON VISAGE.</Text></View>
+            <Text style={styles.sectionMeta}>{PLAYER_AVATARS.length} CHOIX</Text>
+          </View>
+          <Text style={styles.sectionCopy}>Ton avatar te représente dans l’en-tête et sur ton profil. Les cadres cosmétiques équipés restent visibles.</Text>
+          <View style={styles.avatarGrid}>
+            {PLAYER_AVATARS.map((avatar) => {
+              const active = avatar.id === selectedAvatarId;
+              const focusKey = `avatar:${avatar.id}`;
+              return (
+                <Pressable
+                  key={avatar.id}
+                  accessibilityLabel={`Choisir l’avatar ${avatar.label}`}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: active }}
+                  onBlur={() => handleCardBlur(focusKey)}
+                  onFocus={() => handleCardFocus(focusKey)}
+                  onPress={() => chooseAvatar(avatar.id)}
+                  style={({ pressed }) => [
+                    styles.avatarChoice,
+                    active && styles.avatarChoiceActive,
+                    focusedCard === focusKey && styles.cardFocused,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <PlayerAvatar avatarId={avatar.id} label={avatar.label} size={78} />
+                  <Text numberOfLines={2} style={[styles.avatarLabel, active && styles.avatarLabelActive]}>{avatar.label}</Text>
+                  {active ? <View style={styles.avatarSelected}><Text style={styles.avatarSelectedText}>✓</Text></View> : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>02 // JEUX SUIVIS</Text><Text style={styles.sectionTitle}>TES TERRAINS.</Text></View><Text style={styles.sectionMeta}>{games.length}/3</Text></View>
           <View style={styles.gamesGrid}>
             {GAMES.map((game) => {
               const active = games.includes(game.id);
@@ -375,7 +452,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
         </View>
 
         <View style={styles.section}>
-          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>02 // ÉQUIPE FAVORITE</Text><Text style={styles.sectionTitle}>TA COULEUR.</Text></View></View>
+          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>03 // ÉQUIPE FAVORITE</Text><Text style={styles.sectionTitle}>TA COULEUR.</Text></View></View>
           <Text style={styles.sectionCopy}>Ce choix n’est jamais enregistré automatiquement : une confirmation explicite déclenche le verrouillage de 7 jours.</Text>
           {loadingTeams ? <View style={styles.teamSkeleton} /> : organizations.length ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.teamRail}>
@@ -415,7 +492,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
         </View>
 
         <View style={styles.section}>
-          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>03 // VISIBILITÉ</Text><Text style={styles.sectionTitle}>TON PROFIL.</Text></View></View>
+          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>04 // VISIBILITÉ</Text><Text style={styles.sectionTitle}>TON PROFIL.</Text></View></View>
           <Pressable
             accessibilityLabel="Profil public"
             accessibilityRole="switch"
@@ -430,7 +507,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
 
         <View style={styles.section}>
           <View style={styles.sectionHeading}>
-            <View><Text style={styles.sectionEyebrow}>04 // NOTIFICATIONS</Text><Text style={styles.sectionTitle}>SEULEMENT QUAND ÇA COMPTE.</Text></View>
+            <View><Text style={styles.sectionEyebrow}>05 // NOTIFICATIONS</Text><Text style={styles.sectionTitle}>SEULEMENT QUAND ÇA COMPTE.</Text></View>
             <Text style={styles.sectionMeta}>{notificationPreferences?.activeDevices ?? 0} APP.</Text>
           </View>
           <Text style={styles.sectionCopy}>Aucun rappel générique : chaque alerte correspond à un match, un verdict ou une progression réelle. Fuseau · {notificationPreferences?.timezone ?? detectedTimezone()}</Text>
@@ -459,7 +536,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
         </View>
 
         <View style={styles.section}>
-          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>05 // COMPTE & DONNÉES</Text><Text style={styles.sectionTitle}>TU GARDES LA MAIN.</Text></View></View>
+          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>06 // COMPTE & DONNÉES</Text><Text style={styles.sectionTitle}>TU GARDES LA MAIN.</Text></View></View>
           <View style={styles.accountLinks}>
             <AccountLink label="Confidentialité, sécurité et blocages" onPress={() => router.push('/settings/safety')} />
             <AccountLink label="Compte, données et suppression" onPress={() => router.push('/settings/account')} />
@@ -669,6 +746,13 @@ const styles = StyleSheet.create({
   syncRetry: { ...typography.action, color: colors.volt },
   error: { padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' }, errorText: { ...typography.body, color: '#FF9AA2' },
   section: { gap: 12 }, sectionHeading: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }, sectionEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .8 }, sectionTitle: { ...typography.sectionTitle, marginTop: 4, color: colors.text }, sectionMeta: { ...typography.label, color: colors.textMuted }, sectionCopy: { ...typography.body, color: colors.textMuted },
+  avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  avatarChoice: { position: 'relative', width: '31%', minHeight: 126, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center', gap: 7, borderRadius: 21, backgroundColor: '#111A22', borderWidth: 1, borderColor: colors.border, outlineStyle: 'solid', outlineWidth: 2, outlineColor: 'transparent' },
+  avatarChoiceActive: { backgroundColor: '#15210F', borderColor: colors.volt },
+  avatarLabel: { ...typography.caption, minHeight: 28, color: colors.textSecondary, textAlign: 'center' },
+  avatarLabelActive: { color: colors.text },
+  avatarSelected: { position: 'absolute', top: 6, right: 6, width: 21, height: 21, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.volt, borderWidth: 2, borderColor: '#0B1218' },
+  avatarSelectedText: { color: '#080A0C', fontSize: 12, fontWeight: '900' },
   gamesGrid: { flexDirection: 'row', gap: 8 },
   gameCard: { flex: 1, minHeight: 170, padding: 11, borderRadius: 21, backgroundColor: '#111A22', borderWidth: 1, borderColor: colors.border, outlineStyle: 'solid', outlineWidth: 2, outlineColor: 'transparent' }, gameCardActive: { backgroundColor: '#11170E', borderColor: '#48541E' },
   gameMark: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, backgroundColor: '#111A22' }, gameCode: { ...typography.cardTitle }, gameShort: { ...typography.bodyStrong, marginTop: 15, color: colors.text }, gameName: { ...typography.caption, marginTop: 3, color: colors.textMuted }, gameNameCompact: { minHeight: 28 }, gameState: { ...typography.label, marginTop: 'auto', color: colors.textMuted, letterSpacing: .3 }, gameStateActive: { color: colors.volt },

@@ -2,6 +2,7 @@ import type { Session } from '@supabase/supabase-js';
 
 export type ClutchProfile = {
   id: string;
+  avatar_id?: string | null;
   pseudo: string;
   email: string | null;
   est_admin: boolean;

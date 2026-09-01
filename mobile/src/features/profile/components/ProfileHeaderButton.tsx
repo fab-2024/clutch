@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { CosmeticAvatar } from '@/src/features/shop/components/CosmeticRenderer';
+import PlayerAvatar from '@/src/features/profile/avatars/PlayerAvatar';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, typography } from '@/src/theme';
@@ -38,7 +38,12 @@ export default function ProfileHeaderButton({
         importantForAccessibility="no-hide-descendants"
         style={styles.avatar}
       >
-        <CosmeticAvatar cosmetics={equipped} label={pseudo} size={PROFILE_AVATAR_SIZE} />
+        <PlayerAvatar
+          avatarId={preview ? 'chaos-smile' : profile?.avatar_id}
+          cosmetics={equipped}
+          label={pseudo}
+          size={PROFILE_AVATAR_SIZE}
+        />
       </View>
       <View style={styles.copy}>
         <Text numberOfLines={1} style={styles.label}>PROFIL</Text>

@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import type { ReactNode } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, typography } from '@/src/theme';
@@ -13,6 +14,7 @@ import type {
 const DEFAULT_JERSEY_ASSET = require('../../../../assets/showcase/showcase-jersey-base-v1.png');
 
 type CosmeticAvatarProps = {
+  artwork?: ReactNode;
   cosmetics?: EquippedCosmetics | null;
   fallback?: string;
   label: string;
@@ -27,6 +29,7 @@ type SupporterIdentityProps = {
 };
 
 export function CosmeticAvatar({
+  artwork,
   cosmetics,
   fallback,
   label,
@@ -36,7 +39,7 @@ export function CosmeticAvatar({
   const accent = frame?.accent ?? '#46515C';
   const mark = fallback?.trim() || initials(label);
   const outerRadius = Math.round(size * 0.31);
-  const innerSize = Math.round(size * 0.7);
+  const innerSize = artwork ? Math.max(18, size - 6) : Math.round(size * 0.7);
 
   return (
     <View
@@ -64,13 +67,15 @@ export function CosmeticAvatar({
           },
         ]}
       >
-        <Text
-          adjustsFontSizeToFit
-          numberOfLines={1}
-          style={[styles.avatarText, { color: frame ? accent : colors.volt, fontSize: Math.max(10, Math.round(size * 0.25)) }]}
-        >
-          {mark}
-        </Text>
+        {artwork ?? (
+          <Text
+            adjustsFontSizeToFit
+            numberOfLines={1}
+            style={[styles.avatarText, { color: frame ? accent : colors.volt, fontSize: Math.max(10, Math.round(size * 0.25)) }]}
+          >
+            {mark}
+          </Text>
+        )}
       </View>
       {frame ? (
         <>
@@ -186,7 +191,7 @@ function alpha(color: string, opacity: string) {
 
 const styles = StyleSheet.create({
   avatarShell: { position: 'relative', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', backgroundColor: '#111A22', borderWidth: 1.5 },
-  avatarCore: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E' },
+  avatarCore: { overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E' },
   avatarText: { fontFamily: fonts.display, letterSpacing: -.5 },
   frameCornerTop: { position: 'absolute', top: -1, right: -1, width: '42%', height: '32%', borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 13 },
   frameCornerBottom: { position: 'absolute', left: -1, bottom: -1, width: '42%', height: '32%', borderLeftWidth: 3, borderBottomWidth: 3, borderBottomLeftRadius: 13 },

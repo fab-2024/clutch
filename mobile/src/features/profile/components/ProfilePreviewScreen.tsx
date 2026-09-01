@@ -89,6 +89,7 @@ const PREVIEW_BADGES = evaluateBadges({
 });
 
 export const PREVIEW_PROFILE: ProfileData = {
+  avatarId: 'gale-agent',
   pseudo: 'FabTheTap',
   createdAt: '2025-05-01T12:00:00.000Z',
   profileTitle: null,

@@ -59,7 +59,7 @@ export async function loadClutchProfile(userId: string): Promise<ClutchProfile> 
 async function fetchClutchProfile(userId: string): Promise<ClutchProfile | null> {
   const { data, error } = await supabase
     .from('profils')
-    .select('id,pseudo,email,est_admin,equipe_favorite_id,jeux_suivis,profil_public')
+    .select('id,avatar_id,pseudo,email,est_admin,equipe_favorite_id,jeux_suivis,profil_public')
     .eq('id', userId)
     .maybeSingle();
 

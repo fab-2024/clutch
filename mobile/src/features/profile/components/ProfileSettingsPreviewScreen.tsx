@@ -7,6 +7,7 @@ import ProfileSettingsScreen, { type ProfileSettingsPreviewState } from './Profi
 const PREVIEW_SETTINGS: ProfileSettingsPreviewState = {
   profile: {
     id: 'preview-settings-user',
+    avatar_id: 'chaos-smile',
     pseudo: 'FabTheTap',
     email: 'preview@clutch.gg',
     est_admin: false,

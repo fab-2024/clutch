@@ -4,7 +4,7 @@ import UserRoundPlus from 'lucide-react-native/icons/user-round-plus';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
-import { CosmeticAvatar } from '@/src/features/shop/components/CosmeticRenderer';
+import PlayerAvatar from '@/src/features/profile/avatars/PlayerAvatar';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 import type { LevelFrameVariant } from '@/src/features/profile/levelFrames/types';
 import { colors, radius, spacing, typography } from '@/src/theme';
@@ -114,7 +114,7 @@ function ProfileIdentityCard({
         start={{ x: 0, y: 0 }}
         style={StyleSheet.absoluteFill}
       />
-      <CosmeticAvatar cosmetics={cosmetics} label={displayedPseudo} size={94} />
+      <PlayerAvatar avatarId={data?.avatarId} cosmetics={cosmetics} label={displayedPseudo} size={94} />
 
       <View style={styles.identityContent}>
         <View style={styles.identityTopRow}>

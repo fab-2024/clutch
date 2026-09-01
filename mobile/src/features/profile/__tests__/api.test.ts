@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 
-import { saveFavoriteTeam, saveProfilePreferences } from '../api';
+import { saveFavoriteTeam, saveProfileAvatar, saveProfilePreferences } from '../api';
 
 const mockSingle = jest.fn();
 const mockSelect = jest.fn(() => ({ single: mockSingle }));
@@ -43,5 +43,14 @@ describe('profile settings mutations', () => {
     expect(mockUpdate).toHaveBeenCalledWith({ equipe_favorite_id: 'g2-lol' });
     expect(mockUpdate.mock.calls[0]?.[0]).not.toHaveProperty('jeux_suivis');
     expect(mockUpdate.mock.calls[0]?.[0]).not.toHaveProperty('profil_public');
+  });
+
+  it('persists only the selected avatar id', async () => {
+    await saveProfileAvatar('user-1', 'gale-agent');
+
+    expect(mockFrom).toHaveBeenCalledWith('profils');
+    expect(mockUpdate).toHaveBeenCalledWith({ avatar_id: 'gale-agent' });
+    expect(mockEq).toHaveBeenCalledWith('id', 'user-1');
+    expect(mockSelect).toHaveBeenCalledWith('avatar_id');
   });
 });
