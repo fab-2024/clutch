@@ -11,6 +11,7 @@ import {
   KC_TEAM_PACK,
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   M8_TEAM_PACK,
+  MYTHS_FORGE_PACK,
   ROCKET_LEAGUE_COLLECTION_PACK,
   VALORANT_COLLECTION_PACK,
   type TeamPackDefinition,
@@ -102,6 +103,7 @@ export default function ShowcasePreviewScreen() {
 
 type ShowcasePreviewMood =
   | 'fnatic'
+  | 'forge'
   | 'kc'
   | 'lol'
   | 'm8'
@@ -115,17 +117,19 @@ export function showcasePreviewForMood(mood: ShowcasePreviewMood, packId?: strin
   const pack = cosmeticPackById(packId)
     ?? (mood === 'fnatic'
       ? FNATIC_TEAM_PACK
-      : mood === 'kc'
-        ? KC_TEAM_PACK
-        : mood === 'm8'
-          ? M8_TEAM_PACK
-          : mood === 'lol'
-            ? LEAGUE_OF_LEGENDS_COLLECTION_PACK
-            : mood === 'valorant'
-              ? VALORANT_COLLECTION_PACK
-              : mood === 'rocket-league'
-                ? ROCKET_LEAGUE_COLLECTION_PACK
-                : null);
+      : mood === 'forge'
+        ? MYTHS_FORGE_PACK
+        : mood === 'kc'
+          ? KC_TEAM_PACK
+          : mood === 'm8'
+            ? M8_TEAM_PACK
+            : mood === 'lol'
+              ? LEAGUE_OF_LEGENDS_COLLECTION_PACK
+              : mood === 'valorant'
+                ? VALORANT_COLLECTION_PACK
+                : mood === 'rocket-league'
+                  ? ROCKET_LEAGUE_COLLECTION_PACK
+                  : null);
   if (pack) {
     const packShop = applyPreviewTeamPackAction({
       ...SHOWCASE_SHOP,
@@ -230,6 +234,7 @@ export function showcasePreviewForMood(mood: ShowcasePreviewMood, packId?: strin
 function previewMood(value?: string): ShowcasePreviewMood {
   if (
     value === 'fnatic'
+    || value === 'forge'
     || value === 'kc'
     || value === 'lol'
     || value === 'm8'

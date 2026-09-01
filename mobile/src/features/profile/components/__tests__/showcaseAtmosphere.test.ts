@@ -198,6 +198,36 @@ describe('showcase adaptive atmosphere', () => {
     });
   });
 
+  it('uses the Mythes de la Forge telluric resonance profile', () => {
+    const atmosphere = resolveShowcaseAtmosphere({
+      cosmetics: {
+        ...EMPTY_EQUIPPED_COSMETICS,
+        factionEffect: {
+          accent: '#F06A3A',
+          description: '',
+          id: 'mythes-forge-resonance-effect',
+          level: 5,
+          name: 'Effet Résonance',
+          rarity: 'legendaire',
+          slot: 'effet_faction',
+          styleKey: 'mythes-forge-resonance-effect',
+        },
+      },
+      favoriteTeam: null,
+      lightingAccent: '#F06A3A',
+      rankAccent: '#B87845',
+      rankOrder: 0,
+    });
+
+    expect(atmosphere).toMatchObject({
+      cosmeticColor: '#F06A3A',
+      driftDurationMs: 10_500,
+      dustCount: 10,
+      effect: 'forge-resonance',
+      intensity: 0.39,
+    });
+  });
+
   it('raises density modestly for a mythic rank and legendary object', () => {
     const atmosphere = resolveShowcaseAtmosphere({
       cosmetics: {

@@ -188,6 +188,12 @@ function ShowcaseAtmosphereCanvas({
         withTiming(0.18, { duration: 760, easing: Easing.inOut(Easing.quad) }),
         withTiming(0, { duration: 420, easing: Easing.inOut(Easing.quad) }),
       );
+    } else if (atmosphere.effect === 'forge-resonance') {
+      impulse.value = withSequence(
+        withTiming(1, { duration: 480, easing: Easing.out(Easing.cubic) }),
+        withTiming(0.22, { duration: 820, easing: Easing.inOut(Easing.quad) }),
+        withTiming(0, { duration: 460, easing: Easing.inOut(Easing.quad) }),
+      );
     }
     return () => cancelAnimation(impulse);
   }, [atmosphere.effect, impulse]);
@@ -218,6 +224,12 @@ function ShowcaseAtmosphereCanvas({
     0.12 + impulse.value * 0.78 + breath.value * 0.08
   ));
   const neonPulseRadius = useDerivedValue(() => 54 + impulse.value * 210 + breath.value * 12);
+  const forgeResonanceOpacity = useDerivedValue(() => (
+    0.14 + impulse.value * 0.72 + breath.value * 0.1
+  ));
+  const forgeResonanceRadius = useDerivedValue(() => (
+    72 + impulse.value * 205 + breath.value * 16
+  ));
 
   return (
     <>
@@ -364,6 +376,49 @@ function ShowcaseAtmosphereCanvas({
               <Rect color="#58DFFF" height={2} width={650} x={175} y={244} />
               <Rect color="#E27AFF" height={1} opacity={0.8} width={430} x={285} y={250} />
               <Circle color="#FFFFFF" cx={500} cy={245} r={5} />
+            </Group>
+          ) : null}
+
+          {atmosphere.effect === 'forge-resonance' ? (
+            <Group blendMode="screen" opacity={forgeResonanceOpacity}>
+              <Circle
+                color="#F06A3A"
+                cx={500}
+                cy={282}
+                r={forgeResonanceRadius}
+                style="stroke"
+                strokeWidth={3}
+              />
+              <Circle
+                color="#43BFC1"
+                cx={500}
+                cy={282}
+                r={132}
+                style="stroke"
+                strokeWidth={1.5}
+              />
+              <Circle
+                color="#FFB06F"
+                cx={500}
+                cy={282}
+                r={72}
+                style="stroke"
+                strokeWidth={1}
+              />
+              <Rect color="#F06A3A" height={2} width={590} x={205} y={281} />
+              <Rect color="#43BFC1" height={1} opacity={0.72} width={390} x={305} y={287} />
+              {[-172, -112, -54, 54, 112, 172].map((offset, index) => (
+                <Rect
+                  color={index % 2 === 0 ? '#F06A3A' : '#FFB06F'}
+                  height={index % 2 === 0 ? 26 : 18}
+                  key={`forge-resonance-fissure-${offset}`}
+                  opacity={0.72}
+                  width={2}
+                  x={499 + offset}
+                  y={282 - (index % 2 === 0 ? 10 : 4)}
+                />
+              ))}
+              <Circle color="#FFF3DF" cx={500} cy={282} r={5} />
             </Group>
           ) : null}
 

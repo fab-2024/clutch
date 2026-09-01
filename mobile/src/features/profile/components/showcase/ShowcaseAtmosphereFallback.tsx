@@ -84,6 +84,16 @@ export default function ShowcaseAtmosphereFallback({
           <View style={styles.neonPulseCore} />
         </View>
       ) : null}
+      {atmosphere.effect === 'forge-resonance' ? (
+        <View style={styles.forgeResonance} testID="showcase-forge-static-resonance">
+          <View style={[styles.forgeResonanceRing, styles.forgeResonanceRingOuter]} />
+          <View style={[styles.forgeResonanceRing, styles.forgeResonanceRingMiddle]} />
+          <View style={[styles.forgeResonanceRing, styles.forgeResonanceRingInner]} />
+          <View style={styles.forgeResonanceRayOrange} />
+          <View style={styles.forgeResonanceRayTeal} />
+          <View style={styles.forgeResonanceCore} />
+        </View>
+      ) : null}
       {STATIC_DUST.slice(0, atmosphere.dustCount).map(([left, top], index) => (
         <View
           key={`static-showcase-dust-${left}-${top}`}
@@ -126,6 +136,61 @@ const styles = StyleSheet.create({
   dust: {
     position: 'absolute',
     borderRadius: 999,
+  },
+  forgeResonance: {
+    position: 'absolute',
+    top: '51%',
+    left: '50%',
+    width: 260,
+    height: 120,
+    marginLeft: -130,
+    marginTop: -60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  forgeResonanceCore: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: '#FFF3DF',
+    boxShadow: '0 0 16px rgba(240,106,58,.95)',
+  },
+  forgeResonanceRayOrange: {
+    position: 'absolute',
+    width: 260,
+    height: 2,
+    borderRadius: 999,
+    backgroundColor: '#F06A3A',
+    opacity: 0.74,
+  },
+  forgeResonanceRayTeal: {
+    position: 'absolute',
+    top: 66,
+    width: 168,
+    height: 1,
+    borderRadius: 999,
+    backgroundColor: '#43BFC1',
+    opacity: 0.7,
+  },
+  forgeResonanceRing: {
+    position: 'absolute',
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  forgeResonanceRingInner: {
+    width: 52,
+    height: 52,
+    borderColor: 'rgba(255,176,111,.72)',
+  },
+  forgeResonanceRingMiddle: {
+    width: 82,
+    height: 82,
+    borderColor: 'rgba(67,191,193,.68)',
+  },
+  forgeResonanceRingOuter: {
+    width: 112,
+    height: 112,
+    borderColor: 'rgba(240,106,58,.66)',
   },
   m8Star: {
     position: 'absolute',

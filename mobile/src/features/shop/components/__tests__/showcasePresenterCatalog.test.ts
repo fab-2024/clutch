@@ -8,6 +8,7 @@ import {
 import { createPresenterRoomAssignments } from '../../showcasePresenterAssignments';
 import {
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
+  MYTHS_FORGE_PACK,
   NEON_PROTOCOL_PACK,
   ROCKET_LEAGUE_COLLECTION_PACK,
   VALORANT_COLLECTION_PACK,
@@ -23,6 +24,7 @@ describe('showcase presenter catalog', () => {
       'supports_vault',
       'supports_champagne',
       'neon-protocol-vector-pedestals',
+      'mythes-forge-magma-pedestals',
       'fnatic-pedestals',
       'kc-pedestals',
       'm8-pedestals',
@@ -38,6 +40,7 @@ describe('showcase presenter catalog', () => {
       10,
       6,
       9,
+      8,
       10,
       10,
       10,
@@ -74,6 +77,35 @@ describe('showcase presenter catalog', () => {
     expect(assignments.ring?.name).toBe('Jeton Syn');
     expect(assignments.title?.name).toBe('Titre Architecte');
     expect(assignments['left-free']?.name).toBe('Cadre Phase');
+    expect(assignments['right-free']?.name).toBe('Carte de partage');
+  });
+
+  it('places the eight physical Mythes de la Forge objects on the Magma stations', () => {
+    expect(showcasePresenterById('mythes-forge-magma-pedestals')).toMatchObject({
+      accent: '#F06A3A',
+      name: 'Socle Magmatique',
+      packId: 'mythes-forge',
+      showRankDisplay: false,
+    });
+
+    const items = MYTHS_FORGE_PACK.items
+      .filter((item) => item.roomKind)
+      .map((item) => ({
+        accent: item.accent,
+        id: `cosmetic:${item.id}`,
+        image: item.image,
+        kind: item.roomKind!,
+        name: item.name,
+      }));
+    const assignments = createPresenterRoomAssignments(items, 'mythes-forge-magma-pedestals');
+
+    expect(assignments['left-free']?.name).toBe('Cadre Fissure');
+    expect(assignments['left-extra']?.name).toBe('Bannière Strate');
+    expect(assignments.ring?.name).toBe('Jeton Tellurique');
+    expect(assignments.jersey?.name).toBe('Armure Oréa');
+    expect(assignments['right-extra']?.name).toBe('Sigil de Braise');
+    expect(assignments.trophy?.name).toBe('Totem Basalte');
+    expect(assignments.badge?.name).toBe('Badge Artisan');
     expect(assignments['right-free']?.name).toBe('Carte de partage');
   });
 

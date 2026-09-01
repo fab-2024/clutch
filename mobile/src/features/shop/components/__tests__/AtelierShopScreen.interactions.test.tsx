@@ -170,7 +170,7 @@ describe('AtelierShopScreen interactions', () => {
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/founder-pack-preview');
   });
 
-  it('shows only the original Protocole Néon pack and opens its preview', async () => {
+  it('shows both original packs and opens their previews', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 
     expect(screen.getByTestId('atelier-shelf-original-packs')).toBeTruthy();
@@ -182,6 +182,15 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.queryByTestId('atelier-game-collection-league-of-legends-collection')).toBeNull();
     expect(screen.queryByTestId('atelier-game-collection-valorant-collection')).toBeNull();
     expect(screen.queryByTestId('atelier-game-collection-rocket-league-collection')).toBeNull();
+
+    expect(screen.getByTestId('atelier-original-pack-mythes-forge')).toBeTruthy();
+    expect(screen.getByTestId('atelier-original-pack-neon-protocol')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('atelier-original-pack-mythes-forge'));
+    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
+      pathname: '/team-pack-preview',
+      params: { packId: 'mythes-forge' },
+    });
 
     await fireEvent.press(screen.getByTestId('atelier-original-pack-neon-protocol'));
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({

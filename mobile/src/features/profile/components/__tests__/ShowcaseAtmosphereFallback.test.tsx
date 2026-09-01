@@ -54,4 +54,27 @@ describe('ShowcaseAtmosphereFallback', () => {
       { includeHiddenElements: true },
     )).toBeTruthy();
   });
+
+  it('keeps a fixed Forge resonance when animation is reduced', async () => {
+    const screen = await render(
+      <ShowcaseAtmosphereFallback
+        atmosphere={{
+          cosmeticColor: '#F06A3A',
+          driftDurationMs: 10_500,
+          dustCount: 10,
+          effect: 'forge-resonance',
+          intensity: 0.39,
+          lightingColor: '#F06A3A',
+          rankColor: '#B87845',
+          teamColor: '#43BFC1',
+        }}
+        reason="reduced-motion"
+      />,
+    );
+
+    expect(screen.getByTestId(
+      'showcase-forge-static-resonance',
+      { includeHiddenElements: true },
+    )).toBeTruthy();
+  });
 });

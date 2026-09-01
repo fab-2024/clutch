@@ -12,6 +12,7 @@ import {
   KC_TEAM_PACK,
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   M8_TEAM_PACK,
+  MYTHS_FORGE_PACK,
   NEON_PROTOCOL_PACK,
   ORIGINAL_PACK_CATALOG,
   ROCKET_LEAGUE_COLLECTION_PACK,
@@ -112,10 +113,25 @@ const NEON_PROTOCOL_EXPECTED_IDS = [
   'neon-protocol-architect-title',
 ];
 
-describe('Pack Protocole Néon catalogue', () => {
-  it('is the only active pack while preserving the six archived definitions', () => {
-    expect(ORIGINAL_PACK_CATALOG).toEqual([NEON_PROTOCOL_PACK]);
-    expect(COSMETIC_PACK_CATALOG).toEqual([NEON_PROTOCOL_PACK]);
+const MYTHS_FORGE_EXPECTED_IDS = [
+  'mythes-forge-room',
+  'mythes-forge-armor-orea',
+  'mythes-forge-ember-sigil',
+  'mythes-forge-strata-banner',
+  'mythes-forge-magma-pedestals',
+  'mythes-forge-telluric-token',
+  'mythes-forge-basalt-totem',
+  'mythes-forge-artisan-badge',
+  'mythes-forge-rift-frame',
+  'mythes-forge-resonance-effect',
+  'mythes-forge-share-card',
+  'mythes-forge-master-smith-title',
+];
+
+describe('original pack catalogue', () => {
+  it('publishes the two original packs while preserving the six archived definitions', () => {
+    expect(ORIGINAL_PACK_CATALOG).toEqual([MYTHS_FORGE_PACK, NEON_PROTOCOL_PACK]);
+    expect(COSMETIC_PACK_CATALOG).toEqual([MYTHS_FORGE_PACK, NEON_PROTOCOL_PACK]);
     expect(TEAM_PACK_CATALOG).toEqual([]);
     expect(GAME_COLLECTION_PACK_CATALOG).toEqual([]);
     expect(ARCHIVED_TEAM_PACK_CATALOG).toEqual([
@@ -161,6 +177,38 @@ describe('Pack Protocole Néon catalogue', () => {
     expect(next.equipped.showcase.supports?.id).toBe('neon-protocol-vector-pedestals');
     expect(next.equipped.factionEffect?.id).toBe('neon-protocol-impulse-effect');
     expect(teamPackPrimaryAction(NEON_PROTOCOL_PACK, next)).toBe('equipped');
+  });
+
+  it('publishes, buys and equips the twelve Mythes de la Forge objects atomically', () => {
+    expect(MYTHS_FORGE_PACK).toMatchObject({
+      id: 'mythes-forge',
+      kind: 'original',
+      price: 1200,
+    });
+    expect(MYTHS_FORGE_PACK.items.map((item) => item.id)).toEqual(MYTHS_FORGE_EXPECTED_IDS);
+    expect(MYTHS_FORGE_PACK.items.every((item) => COSMETIC_SLOTS.includes(item.slot))).toBe(true);
+    expect(MYTHS_FORGE_PACK.items.filter((item) => item.equipByDefault)).toHaveLength(8);
+    expect(new Set(
+      MYTHS_FORGE_PACK.items.filter((item) => item.equipByDefault).map((item) => item.slot),
+    ).size).toBe(8);
+
+    const next = applyPreviewTeamPackAction(makeData(1280, MYTHS_FORGE_PACK), MYTHS_FORGE_PACK);
+
+    expect(next.balance).toBe(80);
+    expect(next.items.every((item) => item.owned)).toBe(true);
+    expect(next.items.filter((item) => item.equipped).map((item) => item.id)).toEqual([
+      'mythes-forge-room',
+      'mythes-forge-armor-orea',
+      'mythes-forge-ember-sigil',
+      'mythes-forge-magma-pedestals',
+      'mythes-forge-rift-frame',
+      'mythes-forge-resonance-effect',
+      'mythes-forge-share-card',
+      'mythes-forge-master-smith-title',
+    ]);
+    expect(next.equipped.showcase.supports?.id).toBe('mythes-forge-magma-pedestals');
+    expect(next.equipped.factionEffect?.id).toBe('mythes-forge-resonance-effect');
+    expect(teamPackPrimaryAction(MYTHS_FORGE_PACK, next)).toBe('equipped');
   });
 });
 

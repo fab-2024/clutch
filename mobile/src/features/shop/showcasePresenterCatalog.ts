@@ -131,6 +131,17 @@ const NEON_PROTOCOL_PACK_SLOTS = [
   { id: 'right-free', label: 'Carte de partage', preferredKind: 'banner', left: '88%', top: '56%', width: '11%', height: '23%' },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
+const MYTHS_FORGE_PACK_SLOTS = [
+  { id: 'left-free', label: 'Cadre Fissure', preferredKind: 'frame', left: '2%', top: '43%', width: '11%', height: '35%' },
+  { id: 'left-extra', label: 'Bannière Strate', preferredKind: 'banner', left: '14%', top: '34%', width: '11%', height: '44%' },
+  { id: 'ring', label: 'Jeton Tellurique', preferredKind: 'ring', left: '26%', top: '42%', width: '10%', height: '36%' },
+  { id: 'jersey', label: 'Armure Oréa', preferredKind: 'jersey', left: '37%', top: '18%', width: '21%', height: '60%' },
+  { id: 'right-extra', label: 'Sigil de Braise', preferredKind: 'core', left: '59%', top: '31%', width: '11%', height: '47%' },
+  { id: 'trophy', label: 'Totem Basalte', preferredKind: 'trophy', left: '71%', top: '35%', width: '10%', height: '43%' },
+  { id: 'badge', label: 'Badge Artisan', preferredKind: 'badge', left: '82%', top: '40%', width: '8%', height: '38%' },
+  { id: 'right-free', label: 'Carte de partage', preferredKind: 'banner', left: '91%', top: '44%', width: '8%', height: '34%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
+
 const LEAGUE_OF_LEGENDS_COLLECTION_SLOTS = [
   { id: 'left-free', label: 'Lame d’Infini', preferredKind: 'core', left: '3%', top: '39%', width: '19%', height: '40%' },
   { id: 'left-extra', label: 'Fragment du Nexus', preferredKind: 'core', left: '23%', top: '27%', width: '16%', height: '52%' },
@@ -235,6 +246,20 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     rarity: 'legendaire',
     showRankDisplay: false,
     slots: NEON_PROTOCOL_PACK_SLOTS,
+  },
+  {
+    id: 'mythes-forge-magma-pedestals',
+    name: 'Socle Magmatique',
+    description: 'Huit stations de basalte et de cuivre dressées dans la Forge des Failles.',
+    accent: '#F06A3A',
+    image: require('../../../assets/shop/packs/mythes-forge/mythes-forge-room-empty.png'),
+    packId: 'mythes-forge',
+    packOnly: true,
+    pedestal: 'bronze',
+    price: 0,
+    rarity: 'legendaire',
+    showRankDisplay: false,
+    slots: MYTHS_FORGE_PACK_SLOTS,
   },
   {
     id: 'fnatic-pedestals',

@@ -9,6 +9,7 @@ import {
   KC_TEAM_PACK,
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   M8_TEAM_PACK,
+  MYTHS_FORGE_PACK,
   NEON_PROTOCOL_PACK,
   ROCKET_LEAGUE_COLLECTION_PACK,
   VALORANT_COLLECTION_PACK,
@@ -108,6 +109,26 @@ describe('TeamPackScreen', () => {
 
     await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
     expect(screen.getAllByText('Armure Vega').length).toBeGreaterThan(0);
+  });
+
+  it('renders Mythes de la Forge and its twelve inspectable original objects', async () => {
+    const screen = await render(
+      <TeamPackScreen
+        packId={MYTHS_FORGE_PACK.id}
+        previewData={makeData(1280, MYTHS_FORGE_PACK)}
+      />,
+    );
+
+    expect(screen.getByText('COLLECTION // ORIGINALE')).toBeTruthy();
+    expect(screen.getAllByText('ORÉA // MAÎTRE-FORGE')).toHaveLength(2);
+    expect(screen.getAllByTestId(/^team-pack-item-mythes-forge-/)).toHaveLength(12);
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('team-pack-item-mythes-forge-armor-orea'));
+    });
+
+    await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
+    expect(screen.getAllByText('Armure Oréa').length).toBeGreaterThan(0);
   });
 
   it('renders the Fnatic hero and twelve inspectable objects', async () => {

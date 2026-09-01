@@ -66,6 +66,18 @@ describe('ShowcasePreviewScreen team-pack moods', () => {
     expect(preview.shop.equipped.factionEffect?.id).toBe('fnatic-embers');
   });
 
+  it('builds the Mythes de la Forge showcase with its magma presenter and resonance', () => {
+    const preview = showcasePreviewForMood('forge', 'mythes-forge');
+
+    expect(preview.shop.items.filter((item) => item.collectionKey === 'mythes-forge')).toHaveLength(12);
+    expect(preview.shop.equipped.showcase).toMatchObject({
+      jersey: expect.objectContaining({ id: 'mythes-forge-armor-orea' }),
+      lighting: expect.objectContaining({ id: 'mythes-forge-room' }),
+      supports: expect.objectContaining({ id: 'mythes-forge-magma-pedestals' }),
+    });
+    expect(preview.shop.equipped.factionEffect?.id).toBe('mythes-forge-resonance-effect');
+  });
+
   it('builds the M8 Gentle Mates Paris showcase with its dedicated mood', () => {
     const preview = showcasePreviewForMood('m8', 'm8-gentle-mates');
 

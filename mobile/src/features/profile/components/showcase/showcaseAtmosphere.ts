@@ -31,7 +31,7 @@ export type ShowcaseAtmosphere = {
   cosmeticColor: string;
   driftDurationMs: number;
   dustCount: number;
-  effect: 'ambient' | 'blue-wall' | 'embers' | 'm8-sparkle' | 'neon-pulse';
+  effect: 'ambient' | 'blue-wall' | 'embers' | 'forge-resonance' | 'm8-sparkle' | 'neon-pulse';
   intensity: number;
   lightingColor: string;
   rankColor: string;
@@ -69,20 +69,38 @@ export function resolveShowcaseAtmosphere({
     || cosmetics?.factionEffect?.styleKey === 'm8-sparkle-effect';
   const neonPulse = cosmetics?.factionEffect?.id === 'neon-protocol-impulse-effect'
     || cosmetics?.factionEffect?.styleKey === 'neon-protocol-impulse-effect';
-  const brandedEffect = embers || blueWall || m8Sparkle || neonPulse;
+  const forgeResonance = cosmetics?.factionEffect?.id === 'mythes-forge-resonance-effect'
+    || cosmetics?.factionEffect?.styleKey === 'mythes-forge-resonance-effect';
+  const brandedEffect = embers || blueWall || m8Sparkle || neonPulse || forgeResonance;
   const intensity = brandedEffect
     ? 0.39
     : clamp(0.22 + safeRankOrder * 0.022 + rarityWeight * 0.018, 0.22, 0.39);
 
   return {
     cosmeticColor: brandedEffect
-      ? (blueWall ? '#168DFF' : m8Sparkle ? '#B9DCFF' : neonPulse ? '#58DFFF' : '#FF5900')
+      ? (blueWall
+        ? '#168DFF'
+        : m8Sparkle
+          ? '#B9DCFF'
+          : neonPulse
+            ? '#58DFFF'
+            : forgeResonance
+              ? '#F06A3A'
+              : '#FF5900')
       : normalizeHex(signatureCosmetic?.accent, normalizeHex(cosmetics?.core?.accent, rankAccent)),
     driftDurationMs: brandedEffect
-      ? (blueWall ? 14_000 : m8Sparkle ? 10_000 : neonPulse ? 9_000 : 12_000)
+      ? (blueWall
+        ? 14_000
+        : m8Sparkle
+          ? 10_000
+          : neonPulse
+            ? 9_000
+            : forgeResonance
+              ? 10_500
+              : 12_000)
       : clamp(17_000 - safeRankOrder * 480 - rarityWeight * 420, 12_200, 17_000),
     dustCount: brandedEffect
-      ? (blueWall ? 9 : m8Sparkle ? 8 : neonPulse ? 10 : 11)
+      ? (blueWall ? 9 : m8Sparkle ? 8 : neonPulse || forgeResonance ? 10 : 11)
       : clamp(6 + Math.floor(safeRankOrder / 2) + rarityWeight, 6, 11),
     effect: embers
       ? 'embers'
@@ -92,7 +110,9 @@ export function resolveShowcaseAtmosphere({
           ? 'm8-sparkle'
           : neonPulse
             ? 'neon-pulse'
-            : 'ambient',
+            : forgeResonance
+              ? 'forge-resonance'
+              : 'ambient',
     intensity,
     lightingColor: normalizeHex(lightingAccent, '#31D7E2'),
     rankColor: normalizeHex(rankAccent, '#E8FF3D'),
