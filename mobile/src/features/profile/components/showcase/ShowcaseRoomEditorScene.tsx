@@ -16,6 +16,7 @@ import { colors, fonts, typography } from '@/src/theme';
 
 import type { ProfileTeam } from '../../types';
 import ShowcaseAtmosphereLayer from './ShowcaseAtmosphereLayer';
+import ShowcasePlaceableArtwork from './ShowcasePlaceableArtwork';
 import type {
   ShowcaseAtmospherePerformanceReport,
   ShowcaseAtmosphereQuality,
@@ -30,6 +31,7 @@ import {
 } from './roomEditor';
 import { SHOWCASE_LIGHTING_VISUALS } from './showcaseLighting';
 import { SHOWCASE_PALETTE } from './showcasePalette';
+import { showcaseSceneLayout, type ShowcaseSceneFrame } from './showcaseSceneLayout';
 import type { ShowcaseLighting } from './types';
 
 type ShowcaseRoomEditorSceneProps = {
@@ -45,16 +47,11 @@ type ShowcaseRoomEditorSceneProps = {
   rankDisplay?: Pick<ShowcaseRankDisplayDefinition, 'id' | 'name' | 'overlayImage'> | null;
   rankOrder?: number | null;
   reduceMotion?: boolean;
-  room: Pick<ShowcaseRoomDefinition, 'accent' | 'id' | 'image' | 'name'>;
+  room: Pick<ShowcaseRoomDefinition, 'accent' | 'id' | 'image' | 'name'> & {
+    sceneFrame?: ShowcaseSceneFrame;
+  };
   slots?: readonly ShowcaseRoomSlotDefinition[];
 };
-
-const ROOM_REFERENCE = {
-  height: 853,
-  sceneBottom: 676,
-  sceneTop: 87,
-  width: 1844,
-} as const;
 
 export default function ShowcaseRoomEditorScene({
   assignments,
@@ -72,7 +69,7 @@ export default function ShowcaseRoomEditorScene({
   room,
   slots = SHOWCASE_ROOM_SLOTS,
 }: ShowcaseRoomEditorSceneProps) {
-  const [viewport, setViewport] = useState({ height: 276, width: 844 });
+  const [viewport, setViewport] = useState({ height: 390, width: 844 });
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const next = {
       height: Math.max(1, Math.round(event.nativeEvent.layout.height)),
@@ -82,12 +79,9 @@ export default function ShowcaseRoomEditorScene({
       current.height === next.height && current.width === next.width ? current : next
     ));
   }, []);
-  const sceneHeightRatio = (ROOM_REFERENCE.sceneBottom - ROOM_REFERENCE.sceneTop) / ROOM_REFERENCE.height;
-  const imageHeight = viewport.height / sceneHeightRatio;
-  const imageWidth = imageHeight * (ROOM_REFERENCE.width / ROOM_REFERENCE.height);
-  const imageLeft = (viewport.width - imageWidth) / 2;
-  const imageTop = -imageHeight * (ROOM_REFERENCE.sceneTop / ROOM_REFERENCE.height);
+  const layout = showcaseSceneLayout(viewport, room.sceneFrame);
   const lightingVisual = SHOWCASE_LIGHTING_VISUALS[lighting];
+  const rankSlot = slots.find((slot) => slot.id === 'rank');
 
   return (
     <View
@@ -96,132 +90,119 @@ export default function ShowcaseRoomEditorScene({
       style={styles.viewport}
       testID="showcase-room-editor"
     >
-      <Image
-        resizeMode="stretch"
-        source={room.image}
-        style={{
-          height: imageHeight,
-          left: imageLeft,
-          position: 'absolute',
-          top: imageTop,
-          width: imageWidth,
-        }}
-        testID={`showcase-room-background-${room.id}`}
-      />
-      <LinearGradient
-        colors={['rgba(2,5,8,.04)', `${room.accent}0B`, 'rgba(2,5,8,.18)']}
-        end={{ x: 1, y: 1 }}
-        pointerEvents="none"
-        start={{ x: 0, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <LinearGradient
-        colors={lightingVisual.wash}
-        end={{ x: 0.5, y: 1 }}
-        pointerEvents="none"
-        start={{ x: 0.5, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
-      {lightingVisual.horizontalWash ? (
+      <View style={[styles.canvas, layout.canvas]} testID="showcase-room-canvas">
+        <Image
+          resizeMode="stretch"
+          source={room.image}
+          style={[styles.background, layout.image]}
+          testID={`showcase-room-background-${room.id}`}
+        />
         <LinearGradient
-          colors={lightingVisual.horizontalWash}
-          end={{ x: 1, y: 0.5 }}
+          colors={['rgba(2,5,8,.04)', `${room.accent}0B`, 'rgba(2,5,8,.18)']}
+          end={{ x: 1, y: 1 }}
           pointerEvents="none"
-          start={{ x: 0, y: 0.5 }}
+          start={{ x: 0, y: 0 }}
           style={StyleSheet.absoluteFill}
         />
-      ) : null}
-      <ShowcaseAtmosphereLayer
-        active={atmosphereActive}
-        cosmetics={cosmetics}
-        favoriteTeam={favoriteTeam}
-        height={viewport.height}
-        lightingAccent={lightingVisual.glow}
-        onPerformanceReport={onAtmospherePerformanceReport}
-        quality={atmosphereQuality}
-        rankAccent={rankAccent}
-        rankOrder={rankOrder}
-        reduceMotion={reduceMotion}
-        width={viewport.width}
-      />
-      {rankDisplay ? (
-        <>
-          <View pointerEvents="none" style={styles.rankDisplayMask} />
-          <View
+        <LinearGradient
+          colors={lightingVisual.wash}
+          end={{ x: 0.5, y: 1 }}
+          pointerEvents="none"
+          start={{ x: 0.5, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+        {lightingVisual.horizontalWash ? (
+          <LinearGradient
+            colors={lightingVisual.horizontalWash}
+            end={{ x: 1, y: 0.5 }}
             pointerEvents="none"
-            style={styles.rankDisplayLayer}
-            testID={`showcase-rank-display-${rankDisplay.id}`}
-          >
-            <Image
-              accessibilityLabel={`Écrin de rang ${rankDisplay.name}`}
-              accessible
-              resizeMode="contain"
-              source={rankDisplay.overlayImage}
-              style={styles.rankDisplayOverlay}
-            />
-          </View>
-        </>
-      ) : null}
-      <View pointerEvents="none" style={styles.instructions}>
-        <View style={[styles.roomDot, { backgroundColor: room.accent }]} />
-        <View style={styles.instructionCopy}>
-          <Text numberOfLines={1} style={styles.roomName}>{room.name.toUpperCase()}</Text>
-          <Text numberOfLines={1} style={styles.instructionText}>TOUCHE UN EMPLACEMENT POUR L’ÉQUIPER</Text>
-        </View>
+            start={{ x: 0, y: 0.5 }}
+            style={StyleSheet.absoluteFill}
+          />
+        ) : null}
+        <ShowcaseAtmosphereLayer
+          active={atmosphereActive}
+          cosmetics={cosmetics}
+          favoriteTeam={favoriteTeam}
+          height={layout.canvas.height}
+          lightingAccent={lightingVisual.glow}
+          onPerformanceReport={onAtmospherePerformanceReport}
+          quality={atmosphereQuality}
+          rankAccent={rankAccent}
+          rankOrder={rankOrder}
+          reduceMotion={reduceMotion}
+          width={layout.canvas.width}
+        />
+        {rankDisplay && rankSlot && assignments.rank?.kind === 'rank' ? (
+          <>
+            <View
+              pointerEvents="none"
+              style={[styles.rankDisplayLayer, {
+                height: rankSlot.height,
+                left: rankSlot.left,
+                top: rankSlot.top,
+                width: rankSlot.width,
+              }]}
+              testID={`showcase-rank-display-${rankDisplay.id}`}
+            >
+              <Image
+                accessibilityLabel={`Écrin de rang ${rankDisplay.name}`}
+                accessible
+                resizeMode="contain"
+                source={rankDisplay.overlayImage}
+                style={styles.rankDisplayOverlay}
+              />
+            </View>
+          </>
+        ) : null}
+        {slots.map((slot) => {
+          const item = assignments[slot.id];
+          return (
+            <Pressable
+              accessibilityHint={item ? 'Changer ou retirer cet objet' : 'Ajouter un objet de ta collection'}
+              accessibilityLabel={`${slot.label}${item ? `, ${showcasePlaceableKindLabel(item.kind)} ${item.name}` : ', vide'}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: Boolean(item) }}
+              key={slot.id}
+              onPress={() => onSlotPress(slot.id)}
+              style={({ pressed }) => [
+                styles.slot,
+                {
+                  height: slot.height,
+                  left: slot.left,
+                  top: slot.top,
+                  width: slot.width,
+                },
+                pressed && styles.slotPressed,
+              ]}
+              testID={`showcase-room-slot-${slot.id}`}
+            >
+              {item ? (
+                <View style={styles.slotSelection}>
+                  <View style={styles.slotArtifact}>
+                    <ShowcasePlaceableArtwork
+                      item={item}
+                      size={Math.max(16, Math.min(
+                        layout.canvas.width * Number.parseFloat(slot.width) / 100,
+                        layout.canvas.height * Number.parseFloat(slot.height) / 100 - 20,
+                      ) * 0.88)}
+                    />
+                  </View>
+                  <View style={styles.slotCaption}>
+                    <Text style={[styles.slotGlyph, { color: item.accent }]}>{showcasePlaceableGlyph(item.kind)}</Text>
+                    <Text numberOfLines={1} style={styles.slotItemName}>{item.name.toUpperCase()}</Text>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.emptySlot} testID={`showcase-room-empty-${slot.id}`}>
+                  <Text style={styles.emptySlotPlus}>+</Text>
+                  <Text numberOfLines={1} style={styles.emptySlotText}>AJOUTER</Text>
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
       </View>
-
-      {slots.map((slot) => {
-        const item = assignments[slot.id];
-        return (
-          <Pressable
-            accessibilityHint="Ouvre les objets disponibles dans ta collection"
-            accessibilityLabel={`${slot.label}${item ? `, ${showcasePlaceableKindLabel(item.kind)} ${item.name}` : ', vide'}`}
-            accessibilityRole="button"
-            accessibilityState={{ selected: Boolean(item) }}
-            hitSlop={slots.length > 8 ? 6 : undefined}
-            key={slot.id}
-            onPress={() => onSlotPress(slot.id)}
-            style={({ pressed }) => [
-              styles.slot,
-              {
-                height: slot.height,
-                left: slot.left,
-                top: slot.top,
-                width: slot.width,
-              },
-              slots.length > 8 && styles.slotDense,
-              slot.id === 'rank' && styles.rankSlot,
-              item && { borderColor: `${item.accent}A8` },
-              pressed && styles.slotPressed,
-            ]}
-            testID={`showcase-room-slot-${slot.id}`}
-          >
-            {item ? (
-              <View style={styles.slotSelection}>
-                <View style={styles.slotArtifact}>
-                  <View style={[styles.slotArtifactGlow, { backgroundColor: `${item.accent}24` }]} />
-                  {item.image ? (
-                    <Image resizeMode="contain" source={item.image} style={styles.slotArtifactImage} />
-                  ) : (
-                    <Text style={[styles.slotArtifactGlyph, { color: item.accent }]}>
-                      {showcasePlaceableGlyph(item.kind)}
-                    </Text>
-                  )}
-                </View>
-                <View style={styles.slotCaption}>
-                  <Text style={[styles.slotGlyph, { color: item.accent }]}>{showcasePlaceableGlyph(item.kind)}</Text>
-                  <Text numberOfLines={1} style={styles.slotItemName}>{item.name.toUpperCase()}</Text>
-                </View>
-              </View>
-            ) : (
-              <View style={styles.emptySlot}>
-                <Text style={styles.emptySlotPlus}>+</Text>
-                <Text numberOfLines={1} style={styles.emptySlotText}>AJOUTER</Text>
-              </View>
-            )}
-          </Pressable>
-        );
-      })}
     </View>
   );
 }
@@ -236,91 +217,34 @@ const styles = StyleSheet.create({
   },
   rankDisplayLayer: {
     position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: '20%',
-    right: '20%',
-  },
-  rankDisplayMask: {
-    position: 'absolute',
-    top: '12%',
-    bottom: '7%',
-    left: '38%',
-    right: '38%',
-    borderRadius: 999,
-    backgroundColor: '#03070A',
   },
   rankDisplayOverlay: {
     width: '100%',
     height: '100%',
     opacity: 0.96,
   },
-  instructions: {
+  canvas: {
     position: 'absolute',
-    top: 9,
-    left: 12,
-    maxWidth: '42%',
-    minHeight: 36,
-    paddingHorizontal: 9,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    borderWidth: 1,
-    borderColor: 'rgba(111,128,140,.48)',
-    backgroundColor: 'rgba(4,8,11,.82)',
+    overflow: 'hidden',
   },
-  roomDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-  },
-  instructionCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  roomName: {
-    ...typography.label,
-    color: colors.text,
-  },
-  instructionText: {
-    ...typography.eyebrow,
-    marginTop: 1,
-    color: colors.volt,
-    fontSize: 8,
-    lineHeight: 10,
+  background: {
+    position: 'absolute',
   },
   slot: {
     position: 'absolute',
     minWidth: 44,
     minHeight: 44,
-    padding: 3,
     alignItems: 'center',
     justifyContent: 'flex-end',
-    borderWidth: 1,
-    borderColor: 'rgba(166,180,190,.38)',
-    backgroundColor: 'rgba(3,7,10,.06)',
   },
   slotPressed: {
-    backgroundColor: 'rgba(232,255,61,.13)',
-    borderColor: colors.volt,
-  },
-  rankSlot: {
-    overflow: 'hidden',
-    borderRadius: 18,
-  },
-  slotDense: {
-    minWidth: 32,
-    minHeight: 36,
-    padding: 2,
+    opacity: 0.65,
   },
   slotSelection: {
     width: '100%',
     height: '100%',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(3,7,10,.52)',
-    borderWidth: 1,
-    borderColor: 'rgba(140,154,164,.42)',
   },
   slotArtifact: {
     position: 'relative',
@@ -331,32 +255,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  slotArtifactGlow: {
-    position: 'absolute',
-    width: '72%',
-    aspectRatio: 1,
-    borderRadius: 999,
-  },
-  slotArtifactImage: {
-    width: '88%',
-    height: '88%',
-  },
-  slotArtifactGlyph: {
-    fontFamily: fonts.display,
-    fontSize: 28,
-    lineHeight: 30,
-  },
   slotCaption: {
     width: '100%',
-    minHeight: 23,
+    minHeight: 20,
     paddingHorizontal: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    backgroundColor: 'rgba(3,7,10,.88)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(140,154,164,.38)',
+    backgroundColor: 'rgba(3,7,10,.66)',
+    borderRadius: 4,
   },
   slotGlyph: {
     fontFamily: fonts.display,
@@ -373,19 +281,28 @@ const styles = StyleSheet.create({
   emptySlot: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 38,
+    minWidth: 44,
+    minHeight: 48,
+    paddingBottom: 6,
   },
   emptySlotPlus: {
     color: colors.volt,
-    fontFamily: fonts.display,
-    fontSize: 24,
-    lineHeight: 22,
+    fontSize: 30,
+    fontWeight: '600',
+    lineHeight: 32,
+    textShadowColor: 'rgba(0,0,0,.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 5,
   },
   emptySlotText: {
     ...typography.eyebrow,
-    marginTop: 1,
-    color: colors.textSecondary,
-    fontSize: 7,
-    lineHeight: 9,
+    marginTop: 2,
+    color: colors.text,
+    fontSize: 9,
+    lineHeight: 12,
+    letterSpacing: 1,
+    textShadowColor: 'rgba(0,0,0,.95)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 5,
   },
 });

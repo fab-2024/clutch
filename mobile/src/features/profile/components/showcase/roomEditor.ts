@@ -1,4 +1,5 @@
 import type { ImageSourcePropType } from 'react-native';
+import type { PublicAchievementBadge } from '../../achievementBadges/types';
 
 export const SHOWCASE_ROOM_SLOT_IDS = [
   'left-free',
@@ -28,6 +29,7 @@ export type ShowcasePlaceableKind =
 
 export type ShowcasePlaceableItem = {
   accent: string;
+  badge?: PublicAchievementBadge;
   id: string;
   image?: ImageSourcePropType;
   kind: ShowcasePlaceableKind;

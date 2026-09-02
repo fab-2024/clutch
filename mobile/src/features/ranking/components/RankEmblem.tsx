@@ -28,6 +28,10 @@ const RANK_ASSETS: Record<SeasonalGradeKey, ImageSourcePropType> = {
   eternel: require('../../../../assets/rank/eternel-transparent.png'),
 };
 
+export function rankEmblemSource(key?: SeasonalGradeKey) {
+  return RANK_ASSETS[key ?? 'bronze'];
+}
+
 /** Shared premium rank artwork used at every scale across the app. */
 export function RankEmblem({ decorative = false, grade, size = 72 }: Props) {
   const key = grade?.cle ?? 'bronze';
@@ -54,7 +58,7 @@ export function RankEmblem({ decorative = false, grade, size = 72 }: Props) {
       />
       <Image
         resizeMode="contain"
-        source={RANK_ASSETS[key]}
+        source={rankEmblemSource(key)}
         style={{ height: size, width: size }}
         testID="rank-emblem-image"
       />

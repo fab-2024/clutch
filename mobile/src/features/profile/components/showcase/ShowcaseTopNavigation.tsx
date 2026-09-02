@@ -14,7 +14,7 @@ type ShowcaseTopNavigationProps = {
   refreshing: boolean;
 };
 
-const ITEMS: { glyph: string; label: string; value: ShowcaseSection }[] = [
+export const SHOWCASE_NAVIGATION_ITEMS: { glyph: string; label: string; value: ShowcaseSection }[] = [
   { glyph: '◎', label: 'MA VITRINE', value: 'showcase' },
   { glyph: '◇', label: 'COLLECTION', value: 'collection' },
   { glyph: '□', label: 'SAISON', value: 'season' },
@@ -43,7 +43,7 @@ export default function ShowcaseTopNavigation({
       </Pressable>
 
       <View accessibilityRole="tablist" style={styles.tabs}>
-        {ITEMS.map((item) => {
+        {SHOWCASE_NAVIGATION_ITEMS.map((item) => {
           const selected = item.value === active;
           return (
             <Pressable

@@ -12,6 +12,7 @@ import {
 import type { ShowcaseLighting, ShowcaseRoomTheme } from './types';
 
 type ShowcaseCustomizationBarProps = {
+  layout?: 'bar' | 'sheet';
   lighting: ShowcaseLighting;
   onLightingChange: (value: ShowcaseLighting) => void;
   onPresenterChange: (value: string) => void;
@@ -58,6 +59,7 @@ export function showcasePresenterOptions(
 }
 
 export default function ShowcaseCustomizationBar({
+  layout = 'bar',
   lighting,
   onLightingChange,
   onPresenterChange,
@@ -76,15 +78,23 @@ export default function ShowcaseCustomizationBar({
     value: display.id,
   }));
   const presenterOptions = showcasePresenterOptions(presenterId, unlockedPresenterIds);
+  const wrap = layout === 'sheet';
+  const groups = (
+    <>
+      <ShowcaseControlGroup label="PRÉSENTOIR" onChange={onPresenterChange} options={presenterOptions} selected={presenterId} variant="presenter" wrap={wrap} />
+      <ShowcaseControlGroup disabled={rankDisplayDisabled} label="ÉCRIN DU RANG" onChange={onRankDisplayChange} options={rankDisplayOptions} selected={rankDisplayId} variant="rank" wrap={wrap} />
+      <ShowcaseControlGroup label="THÈME DE VITRINE" onChange={onThemeChange} options={THEMES} selected={theme} variant="theme" wrap={wrap} />
+      <ShowcaseControlGroup label="COULEUR D’ÉCLAIRAGE" onChange={onLightingChange} options={LIGHTS} selected={lighting} variant="lighting" wrap={wrap} />
+    </>
+  );
+
+  if (wrap) return <View style={styles.sheetGroups}>{groups}</View>;
 
   return (
     <View style={styles.root}>
       <Text style={styles.title}>PERSONNALISER</Text>
       <ScrollView contentContainerStyle={styles.groups} horizontal showsHorizontalScrollIndicator={false}>
-        <ShowcaseControlGroup label="PRÉSENTOIR" onChange={onPresenterChange} options={presenterOptions} selected={presenterId} variant="presenter" />
-        <ShowcaseControlGroup disabled={rankDisplayDisabled} label="ÉCRIN DU RANG" onChange={onRankDisplayChange} options={rankDisplayOptions} selected={rankDisplayId} variant="rank" />
-        <ShowcaseControlGroup label="THÈME DE VITRINE" onChange={onThemeChange} options={THEMES} selected={theme} variant="theme" />
-        <ShowcaseControlGroup label="COULEUR D’ÉCLAIRAGE" onChange={onLightingChange} options={LIGHTS} selected={lighting} variant="lighting" />
+        {groups}
       </ScrollView>
     </View>
   );
@@ -97,6 +107,7 @@ export function ShowcaseControlGroup<T extends string>({
   options,
   selected,
   variant,
+  wrap = false,
 }: {
   disabled?: boolean;
   label: string;
@@ -104,6 +115,7 @@ export function ShowcaseControlGroup<T extends string>({
   options: readonly { color: string; label: string; value: T }[];
   selected: T;
   variant?: ShowcaseControlVariant;
+  wrap?: boolean;
 }) {
   const resolvedVariant = variant ?? controlVariantForLabel(label);
 
@@ -113,9 +125,10 @@ export function ShowcaseControlGroup<T extends string>({
       resolvedVariant === 'presenter' && styles.groupPresenter,
       resolvedVariant === 'rank' && styles.groupRank,
       resolvedVariant === 'lighting' && styles.groupLighting,
+      wrap && styles.groupWrapped,
     ]}>
       <Text style={styles.groupLabel}>{label}</Text>
-      <View style={styles.options}>
+      <View style={[styles.options, wrap && styles.optionsWrapped]}>
         {options.map((option) => {
           const active = option.value === selected;
           return (
@@ -192,6 +205,9 @@ function alpha(color: string, opacity: string) {
 
 const styles = StyleSheet.create({
   root: { minHeight: 78, paddingTop: 5, backgroundColor: '#0B1218', borderTopWidth: 1, borderTopColor: '#30414E' },
+  sheetGroups: { gap: 16 },
+  groupWrapped: { minWidth: 0, width: '100%', padding: 10, borderRadius: 8 },
+  optionsWrapped: { flexWrap: 'wrap', marginTop: 8, justifyContent: 'flex-start' },
   title: { ...typography.eyebrow, color: '#C9DA38', textAlign: 'center', letterSpacing: 0.68 },
   groups: { flexGrow: 1, paddingHorizontal: 12, paddingBottom: 5, justifyContent: 'center', gap: 8 },
   group: { minWidth: 190, minHeight: 58, paddingHorizontal: 7, paddingVertical: 4, backgroundColor: '#0B1218', borderWidth: 1, borderColor: '#30414E' },

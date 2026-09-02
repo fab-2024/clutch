@@ -1,15 +1,15 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { BaseSheet } from '@/src/components/overlays/BaseSheet';
 import { colors, fonts, radius, spacing, typography } from '@/src/theme';
 
 import {
-  showcasePlaceableGlyph,
   showcasePlaceableKindLabel,
   type ShowcasePlaceableItem,
   type ShowcasePlaceableKind,
   type ShowcaseRoomSlotDefinition,
 } from './roomEditor';
+import ShowcasePlaceableArtwork from './ShowcasePlaceableArtwork';
 
 type ShowcaseObjectPickerSheetProps = {
   current: ShowcasePlaceableItem | null;
@@ -89,13 +89,7 @@ export default function ShowcaseObjectPickerSheet({
                     testID={`showcase-placeable-${item.id}`}
                   >
                     <View style={[styles.itemVisual, { borderColor: `${item.accent}72` }]}>
-                      {item.image ? (
-                        <Image resizeMode="contain" source={item.image} style={styles.itemImage} />
-                      ) : (
-                        <Text style={[styles.itemGlyph, { color: item.accent }]}>
-                          {showcasePlaceableGlyph(item.kind)}
-                        </Text>
-                      )}
+                      <ShowcasePlaceableArtwork item={item} size={36} />
                     </View>
                     <View style={styles.itemCopy}>
                       <Text numberOfLines={1} style={styles.itemName}>{item.name}</Text>
@@ -189,15 +183,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1,
     backgroundColor: colors.background,
-  },
-  itemGlyph: {
-    fontFamily: fonts.display,
-    fontSize: 24,
-    lineHeight: 26,
-  },
-  itemImage: {
-    width: 36,
-    height: 36,
   },
   itemCopy: {
     flex: 1,

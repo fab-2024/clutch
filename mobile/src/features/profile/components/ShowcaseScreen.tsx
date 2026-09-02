@@ -1,4 +1,6 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import ArrowLeft from 'lucide-react-native/icons/arrow-left';
+import Settings2 from 'lucide-react-native/icons/settings-2';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -14,6 +16,7 @@ import { useReducedMotion } from 'react-native-reanimated';
 import { Screen } from '@/src/components/layout/Screen';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
+import { rankEmblemSource } from '@/src/features/ranking/components/RankEmblem';
 import { equipCosmetic, loadCosmeticShop } from '@/src/features/shop/api';
 import { applyPreviewAtelierAction, resolveAtelierSceneConfig } from '@/src/features/shop/atelierState';
 import { createPresenterRoomAssignments } from '@/src/features/shop/showcasePresenterAssignments';
@@ -50,9 +53,10 @@ import ShowcaseObjectPickerSheet from './showcase/ShowcaseObjectPickerSheet';
 import { SHOWCASE_COLLECTIBLE_ASSETS } from './showcase/ShowcasePhysicalObject';
 import ShowcaseRoomEditorScene from './showcase/ShowcaseRoomEditorScene';
 import ShowcaseRoomScene from './showcase/ShowcaseRoomScene';
-import ShowcaseTopNavigation from './showcase/ShowcaseTopNavigation';
+import ShowcaseSettingsSheet from './showcase/ShowcaseSettingsSheet';
 import {
   createEmptyShowcaseRoomAssignments,
+  SHOWCASE_ROOM_SLOTS,
   type ShowcasePlaceableItem,
   type ShowcasePlaceableKind,
   type ShowcaseRoomSlotId,
@@ -78,10 +82,6 @@ type ShowcaseScreenProps = {
   reduceMotionOverride?: boolean;
 };
 
-const JERSEY_ASSET = require('../../../../assets/showcase/showcase-jersey-base-v1.png');
-const RANK_ASSET = require('../../../../assets/showcase/showcase-placement-artifact-v1.png');
-const TROPHY_ASSET = require('../../../../assets/showcase/showcase-trophy-v1.png');
-
 export default function ShowcaseScreen({
   atmosphereQualityOverride,
   onAtmospherePerformanceReport,
@@ -105,6 +105,7 @@ export default function ShowcaseScreen({
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [section, setSection] = useState<ShowcaseSection>(requestedSection);
+  const [settingsVisible, setSettingsVisible] = useState(false);
   const [pedestal, setPedestal] = useState<ShowcasePedestalSkin>('obsidian');
   const [theme, setTheme] = useState<ShowcaseRoomTheme>('graphite');
   const [lighting, setLighting] = useState<ShowcaseLighting>('cyan');
@@ -244,8 +245,13 @@ export default function ShowcaseScreen({
     ?? showcasePresenterById(DEFAULT_SHOWCASE_PRESENTER_ID)!;
   const rankDisplay = showcaseRankDisplayById(rankDisplayId)
     ?? showcaseRankDisplayById(DEFAULT_SHOWCASE_RANK_DISPLAY_ID)!;
-  const activeSlots = presenter.slots;
-  const editableScene = selectedRoom ?? presenter;
+  const activeSlots = selectedRoom && presenter.id === DEFAULT_SHOWCASE_PRESENTER_ID
+    ? SHOWCASE_ROOM_SLOTS
+    : presenter.slots;
+  const editableScene = selectedRoom ?? {
+    ...presenter,
+    image: presenter.editorImage ?? presenter.image,
+  };
   const assignmentLayoutKey = `${selectedRoom?.id ?? 'equipped'}:${presenter.id}`;
   const ringStats = useMemo(() => adaptShowcaseRingStats(profileData), [profileData]);
   const ringProgressions = useMemo(
@@ -353,23 +359,11 @@ export default function ShowcaseScreen({
   return (
     <Screen>
       <View style={styles.screen}>
-        <ShowcaseTopNavigation
-          active={section}
-          loading={loading}
-          objectCount={ownedItems.length + ringProgressions.filter((progress) => progress.current).length + (profileData?.badges.filter((badge) => badge.obtained).length ?? 0)}
-          onBack={() => router.back()}
-          onRefresh={() => {
-            if (!rankDisplayMutationRef.current) void load(true);
-          }}
-          onSelect={setSection}
-          refreshing={refreshing}
-        />
-
         <View style={styles.sceneWrap}>
           {section === 'showcase' ? (
             <ShowcaseRoomEditorScene
               assignments={roomAssignments}
-              atmosphereActive={atmosphereActive && !loading}
+              atmosphereActive={atmosphereActive && !loading && !settingsVisible && !activeRoomSlot}
               atmosphereQuality={atmosphereQualityOverride}
               cosmetics={cosmetics}
               favoriteTeam={profileData?.favoriteTeam}
@@ -408,6 +402,26 @@ export default function ShowcaseScreen({
             />
           )}
 
+          <View pointerEvents="box-none" style={styles.floatingControls}>
+            <Pressable
+              accessibilityLabel="Revenir au Magasin"
+              accessibilityRole="button"
+              onPress={() => router.back()}
+              style={({ pressed }) => [styles.floatingButton, pressed && styles.pressed]}
+            >
+              <ArrowLeft color={colors.text} size={20} />
+            </Pressable>
+            <Pressable
+              accessibilityLabel="Ouvrir les réglages de la vitrine"
+              accessibilityRole="button"
+              accessibilityState={{ expanded: settingsVisible }}
+              onPress={() => setSettingsVisible(true)}
+              style={({ pressed }) => [styles.floatingButton, pressed && styles.pressed]}
+            >
+              <Settings2 color={colors.text} size={20} />
+            </Pressable>
+          </View>
+
           {loading ? (
             <View accessibilityLabel="Installation de ta collection" accessibilityRole="progressbar" pointerEvents="none" style={styles.loading}>
               <ActivityIndicator color={colors.volt} size="small" />
@@ -433,19 +447,33 @@ export default function ShowcaseScreen({
           ) : null}
         </View>
 
-        <ShowcaseCustomizationBar
-          lighting={lighting}
-          onLightingChange={setLighting}
-          onPresenterChange={changePresenter}
-          onRankDisplayChange={(nextId) => { void changeRankDisplay(nextId); }}
-          onThemeChange={setTheme}
-          presenterId={presenter.id}
-          rankDisplayDisabled={Boolean(rankDisplayPendingId) || refreshing || loading}
-          rankDisplayId={rankDisplay.id}
-          rankDisplays={rankDisplayOptions}
-          theme={theme}
-          unlockedPresenterIds={unlockedPresenterIds}
-        />
+        <ShowcaseSettingsSheet
+          loading={loading}
+          objectCount={placeableItems.length}
+          onClose={() => setSettingsVisible(false)}
+          onRefresh={() => {
+            if (!rankDisplayMutationRef.current) void load(true);
+          }}
+          onSelect={setSection}
+          refreshing={refreshing}
+          section={section}
+          visible={settingsVisible}
+        >
+          <ShowcaseCustomizationBar
+            layout="sheet"
+            lighting={lighting}
+            onLightingChange={setLighting}
+            onPresenterChange={changePresenter}
+            onRankDisplayChange={(nextId) => { void changeRankDisplay(nextId); }}
+            onThemeChange={setTheme}
+            presenterId={presenter.id}
+            rankDisplayDisabled={Boolean(rankDisplayPendingId) || refreshing || loading}
+            rankDisplayId={rankDisplay.id}
+            rankDisplays={rankDisplayOptions}
+            theme={theme}
+            unlockedPresenterIds={unlockedPresenterIds}
+          />
+        </ShowcaseSettingsSheet>
 
         <ShowcaseRingDetailSheet
           onClose={() => setSelectedRingFamily(null)}
@@ -466,7 +494,7 @@ export default function ShowcaseScreen({
   );
 }
 
-function resolveRoomPlaceableItems({
+export function resolveRoomPlaceableItems({
   ownedItems,
   profileData,
   rankAccent,
@@ -496,19 +524,8 @@ function resolveRoomPlaceableItems({
   });
 
   profileData.badges.filter((badge) => badge.obtained).forEach((badge) => {
-    items.push({ accent: badge.accent, id: `badge:${badge.id}`, image: SHOWCASE_COLLECTIBLE_ASSETS.badge, kind: 'badge', name: badge.name });
-    items.push({ accent: badge.accent, id: `trophy:${badge.id}`, image: TROPHY_ASSET, kind: 'trophy', name: badge.name });
+    items.push({ accent: badge.accent, badge, id: `badge:${badge.id}`, kind: 'badge', name: badge.name });
   });
-
-  if (profileData.favoriteTeam) {
-    items.push({
-      accent: '#F5792A',
-      id: `jersey:${profileData.favoriteTeam.id}`,
-      image: JERSEY_ASSET,
-      kind: 'jersey',
-      name: profileData.favoriteTeam.nom,
-    });
-  }
 
   ringProgressions.forEach((progress) => {
     if (!progress.current) return;
@@ -524,7 +541,7 @@ function resolveRoomPlaceableItems({
   items.push({
     accent: rankAccent,
     id: `rank:${profileData.ranking.grade.cle}`,
-    image: RANK_ASSET,
+    image: rankEmblemSource(profileData.ranking.grade.cle),
     kind: 'rank',
     name: rankLabel,
   });
@@ -576,6 +593,8 @@ function readParam(value?: string | string[]) {
 const styles = StyleSheet.create({
   screen: { flex: 1, minWidth: 0, backgroundColor: SHOWCASE_PALETTE.graphiteDeep },
   sceneWrap: { position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden' },
+  floatingControls: { position: 'absolute', top: 12, right: 12, left: 12, flexDirection: 'row', justifyContent: 'space-between' },
+  floatingButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: 'rgba(3,7,10,.64)', borderWidth: 1, borderColor: 'rgba(164,188,204,.2)' },
   loading: { position: 'absolute', top: 12, left: '50%', minHeight: 30, marginLeft: -96, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(5,8,11,.86)', borderWidth: 1, borderColor: '#30414E' },
   loadingText: { ...typography.label, color: colors.textMuted, letterSpacing: 0.45 },
   error: { position: 'absolute', right: 14, bottom: 12, left: 14, minHeight: 54, padding: 9, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(27,12,15,.94)', borderWidth: 1, borderColor: '#71323C' },

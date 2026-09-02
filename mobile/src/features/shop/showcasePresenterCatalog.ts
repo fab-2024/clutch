@@ -1,10 +1,8 @@
 import type { ImageSourcePropType } from 'react-native';
 
-import {
-  SHOWCASE_ROOM_SLOTS,
-  type ShowcaseRoomSlotDefinition,
-} from '@/src/features/profile/components/showcase/roomEditor';
+import type { ShowcaseRoomSlotDefinition } from '@/src/features/profile/components/showcase/roomEditor';
 import type { ShowcasePedestalSkin } from '@/src/features/profile/components/showcase/types';
+import type { ShowcaseSceneFrame } from '@/src/features/profile/components/showcase/showcaseSceneLayout';
 
 import type { CosmeticRarity } from './types';
 
@@ -13,6 +11,8 @@ export type ShowcasePresenterDefinition = {
   description: string;
   id: string;
   image: ImageSourcePropType;
+  editorImage?: ImageSourcePropType;
+  sceneFrame?: ShowcaseSceneFrame;
   name: string;
   packId?: string;
   packOnly?: boolean;
@@ -22,6 +22,17 @@ export type ShowcasePresenterDefinition = {
   showRankDisplay?: boolean;
   slots: readonly ShowcaseRoomSlotDefinition[];
 };
+
+const OBSIDIAN_GALLERY_SLOTS = [
+  { id: 'left-free', label: 'Emplacement gauche', preferredKind: 'frame', left: '1.8%', top: '35%', width: '9.2%', height: '28%' },
+  { id: 'jersey', label: 'Emplacement maillot', preferredKind: 'jersey', left: '12.3%', top: '29%', width: '13%', height: '32%' },
+  { id: 'trophy', label: 'Emplacement trophée', preferredKind: 'trophy', left: '25.1%', top: '31%', width: '13%', height: '29%' },
+  { id: 'rank', label: 'Emplacement central', preferredKind: 'rank', left: '41%', top: '24%', width: '18%', height: '38%' },
+  { id: 'badge', label: 'Emplacement badge', preferredKind: 'badge', left: '59.7%', top: '33%', width: '10%', height: '27%' },
+  { id: 'title', label: 'Emplacement titre', preferredKind: 'title', left: '70.5%', top: '42%', width: '9%', height: '19%' },
+  { id: 'ring', label: 'Emplacement anneau', preferredKind: 'ring', left: '80.1%', top: '40%', width: '8%', height: '23%' },
+  { id: 'right-free', label: 'Emplacement droit', preferredKind: 'core', left: '89.5%', top: '36%', width: '8.5%', height: '27.5%' },
+] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
 const BRONZE_GALLERY_SLOTS = [
   { id: 'trophy', label: 'Emplacement trophée', preferredKind: 'trophy', left: '2%', top: '37%', width: '11%', height: '40%' },
@@ -183,10 +194,12 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     description: 'Huit socles circulaires noirs organisés autour du rang central.',
     accent: '#31D7E2',
     image: require('../../../assets/shop/atelier/supports/scenes/presenter-circle-obsidian.png'),
+    editorImage: require('../../../assets/shop/atelier/supports/scenes/presenter-circle-obsidian-empty-v2.png'),
+    sceneFrame: { width: 1844, height: 853, top: 0, bottom: 853 },
     pedestal: 'obsidian',
     price: 0,
     rarity: 'commun',
-    slots: SHOWCASE_ROOM_SLOTS,
+    slots: OBSIDIAN_GALLERY_SLOTS,
   },
   {
     id: 'supports_forge',

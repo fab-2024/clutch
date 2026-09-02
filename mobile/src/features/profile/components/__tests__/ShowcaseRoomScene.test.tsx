@@ -523,7 +523,7 @@ describe('Showcase room composition', () => {
     );
 
     expect(screen.getByLabelText('Carbone Mécanique, 10 emplacements personnalisables')).toBeTruthy();
-    expect(screen.getByTestId('showcase-rank-display-rank_orbital_core')).toBeTruthy();
+    expect(screen.queryByTestId('showcase-rank-display-rank_orbital_core')).toBeNull();
     expect(screen.getAllByRole('button')).toHaveLength(10);
 
     await fireEvent.press(screen.getByTestId('showcase-room-slot-left-extra'));
