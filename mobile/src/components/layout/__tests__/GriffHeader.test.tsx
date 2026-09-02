@@ -71,8 +71,22 @@ describe('GriffHeader', () => {
 
     expect(screen.getByTestId('wallet-accessory')).toBeTruthy();
     expect(headerStyle.paddingHorizontal).toBe(8);
+    expect(headerStyle.paddingRight).toBe(8);
     expect(lockupStyle.width).toBe(88);
     expect(economyStyle.width).toBe(162);
+  });
+
+  it('aligns compact wallet actions with the right content edge', async () => {
+    const screen = await render(
+      <GriffHeader
+        accessory={<View testID="wallet-accessory" />}
+        compact
+        variant="wallet"
+      />,
+    );
+    const headerStyle = StyleSheet.flatten(screen.getByTestId('griff-header-wallet').props.style);
+
+    expect(headerStyle.paddingRight).toBe(14);
   });
 
   it('lets tab screens replace the lockup with a compact profile identity', async () => {

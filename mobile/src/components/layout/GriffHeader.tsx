@@ -60,6 +60,8 @@ export function GriffHeader({ accessory, compact = false, economy, leading, vari
       narrowWallet && styles.rootWalletNarrow,
       hasWalletAccessory && styles.rootWalletAccessory,
       narrowWalletAccessory && styles.rootWalletAccessoryNarrow,
+      hasWalletAccessory && compact && styles.rootWalletCompactAccessory,
+      narrowWalletAccessory && compact && styles.rootWalletCompactAccessoryNarrow,
     ]} testID={`griff-header-${variant}`}>
       {leading ? (
         <View style={[styles.leading, { width: leadingWidth }]} testID="griff-header-leading">{leading}</View>
@@ -161,6 +163,12 @@ const styles = StyleSheet.create({
   rootWalletAccessoryNarrow: {
     paddingHorizontal: 8,
     gap: 6,
+  },
+  rootWalletCompactAccessory: {
+    paddingRight: 14,
+  },
+  rootWalletCompactAccessoryNarrow: {
+    paddingRight: 8,
   },
   brandRow: {
     minWidth: 0,

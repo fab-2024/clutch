@@ -59,33 +59,37 @@ describe('StoreHubScreen', () => {
     const screen = await render(<StoreHubScreen />);
 
     await fireEvent.press(screen.getByTestId('profile-header-button'));
+    await fireEvent.press(screen.getByTestId('store-hub-profile'));
     await fireEvent.press(screen.getByTestId('store-hub-showcase'));
     await fireEvent.press(screen.getByTestId('store-hub-shop'));
     await fireEvent.press(screen.getByTestId('store-hub-settings'));
 
     expect(push).toHaveBeenNthCalledWith(1, '/my-profile');
-    expect(push).toHaveBeenNthCalledWith(2, '/showcase');
-    expect(push).toHaveBeenNthCalledWith(3, {
+    expect(push).toHaveBeenNthCalledWith(2, '/my-profile');
+    expect(push).toHaveBeenNthCalledWith(3, '/showcase');
+    expect(push).toHaveBeenNthCalledWith(4, {
       pathname: '/shop',
       params: { scope: 'catalog' },
     });
-    expect(push).toHaveBeenNthCalledWith(4, '/settings/profile');
+    expect(push).toHaveBeenNthCalledWith(5, '/settings/profile');
   });
 
   it('keeps preview navigation inside preview routes', async () => {
     const screen = await render(<StoreHubScreen preview />);
 
     await fireEvent.press(screen.getByTestId('profile-header-button'));
+    await fireEvent.press(screen.getByTestId('store-hub-profile'));
     await fireEvent.press(screen.getByTestId('store-hub-showcase'));
     await fireEvent.press(screen.getByTestId('store-hub-shop'));
     await fireEvent.press(screen.getByTestId('store-hub-settings'));
 
     expect(push).toHaveBeenNthCalledWith(1, '/profile-preview');
-    expect(push).toHaveBeenNthCalledWith(2, '/showcase-preview');
-    expect(push).toHaveBeenNthCalledWith(3, {
+    expect(push).toHaveBeenNthCalledWith(2, '/profile-preview');
+    expect(push).toHaveBeenNthCalledWith(3, '/showcase-preview');
+    expect(push).toHaveBeenNthCalledWith(4, {
       pathname: '/shop-preview',
       params: { scope: 'catalog' },
     });
-    expect(push).toHaveBeenNthCalledWith(4, '/settings-preview');
+    expect(push).toHaveBeenNthCalledWith(5, '/settings-preview');
   });
 });

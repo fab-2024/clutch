@@ -43,6 +43,7 @@ export default function StoreHubScreen({ preview = false }: StoreHubScreenProps 
     pathname: preview ? '/shop-preview' : '/shop',
     params: { scope: 'catalog' },
   } as never);
+  const openProfile = () => router.push(preview ? '/profile-preview' : '/my-profile');
   const openSettings = () => router.push(preview ? '/settings-preview' : '/settings/profile');
   const pseudo = preview ? 'FabTheTap' : profile?.pseudo || 'Supporter';
   const profileTitle = preview ? 'Rookie du Call' : equipped.title?.name || 'Rookie du Call';
@@ -80,7 +81,14 @@ export default function StoreHubScreen({ preview = false }: StoreHubScreenProps 
           <Text style={styles.subtitle}>Ta collection, en deux espaces.</Text>
         </View>
 
-        <View style={styles.profileCard} testID="store-hub-profile">
+        <Pressable
+          accessibilityHint="Affiche ton profil, ton classement et tes objets équipés."
+          accessibilityLabel={`Ouvrir mon profil, ${pseudo}`}
+          accessibilityRole="button"
+          onPress={openProfile}
+          style={({ pressed }) => [styles.profileCard, pressed && styles.cardPressed]}
+          testID="store-hub-profile"
+        >
           <ProfileVitrineIdentity
             level={null}
             loading={!preview && profileLoading}
@@ -88,7 +96,7 @@ export default function StoreHubScreen({ preview = false }: StoreHubScreenProps 
             pseudo={pseudo}
             publicProfile={publicProfile}
           />
-        </View>
+        </Pressable>
 
         <View accessibilityLabel="Espaces du Magasin" style={styles.destinations}>
           <StoreDestinationCard
