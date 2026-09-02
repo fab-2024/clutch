@@ -43,7 +43,6 @@ import Animated, {
   useDerivedValue,
   useReducedMotion,
   useSharedValue,
-  withRepeat,
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
@@ -62,7 +61,6 @@ import StaticRelicVial from './StaticRelicVial';
 import { RelicVesselForegroundArtwork } from './RelicEnergyArtwork';
 
 const ARTBOARD_SIZE = 1_000;
-const IDLE_LIQUID_CYCLE_MS = 6_200;
 const REACTION_DURATION_MS = 1_650;
 const MUTATION_CHARGE_MS = 760;
 const MUTATION_RELEASE_MS = 1_840;
@@ -266,17 +264,13 @@ function relicLiquidCurrentPath(
 }
 
 function relicLiquidSurfaceOffsets(
-  idleProgress: number,
   reactionProgress: number,
   mutationProgress: number,
 ) {
   'worklet';
-  const idlePhase = idleProgress * Math.PI * 2;
-  const tilt = Math.sin(idlePhase) * 1.65;
-  const breathing = Math.sin(idlePhase * 2 + .58) * .58;
-  let left = tilt + breathing * .2;
-  let center = -breathing;
-  let right = -tilt + breathing * .2;
+  let left = 0;
+  let center = 0;
+  let right = 0;
 
   const reactionActive = reactionProgress < 1;
   const driver = reactionActive ? reactionProgress : mutationProgress;
@@ -327,7 +321,6 @@ const InteractiveRelicVial = forwardRef<InteractiveRelicVialHandle, Props>(funct
   width,
 }, ref) {
   const reduceMotion = useReducedMotion();
-  const idleProgress = useSharedValue(0);
   const reactionProgress = useSharedValue(1);
   const mutationProgress = useSharedValue(toContainer ? 0 : 1);
   const hasMutationTransition = Boolean(toContainer);
@@ -383,25 +376,10 @@ const InteractiveRelicVial = forwardRef<InteractiveRelicVialHandle, Props>(funct
     mutationProgress.value = toContainer ? 0 : 1;
   }, [fromContainer, mutationProgress, toContainer]);
 
-  useEffect(() => {
-    cancelAnimation(idleProgress);
-    idleProgress.value = 0;
-    if (reduceMotion) return;
-    idleProgress.value = withRepeat(
-      withTiming(1, {
-        duration: IDLE_LIQUID_CYCLE_MS,
-        easing: Easing.linear,
-      }),
-      -1,
-      false,
-    );
-  }, [idleProgress, reduceMotion]);
-
   useEffect(() => () => {
-    cancelAnimation(idleProgress);
     cancelAnimation(reactionProgress);
     cancelAnimation(mutationProgress);
-  }, [idleProgress, mutationProgress, reactionProgress]);
+  }, [mutationProgress, reactionProgress]);
 
   const oldVesselMotion = useAnimatedStyle(() => {
     if (!hasMutationTransition) return { opacity: 1, transform: [{ scale: 1 }] };
@@ -469,7 +447,6 @@ const InteractiveRelicVial = forwardRef<InteractiveRelicVialHandle, Props>(funct
         container={fromContainer}
         fillRatio={fillRatio}
         height={height}
-        idleProgress={idleProgress}
         mutationProgress={mutationProgress}
         reactionProgress={reactionProgress}
         width={width}
@@ -493,7 +470,6 @@ type RelicInteractionArtworkProps = {
   container: RelicContainer;
   fillRatio: number;
   height: number;
-  idleProgress: SharedValue<number>;
   mutationProgress: SharedValue<number>;
   reactionProgress: SharedValue<number>;
   width: number;
@@ -508,7 +484,6 @@ function RelicInteractionSkiaArtwork({
   container,
   fillRatio,
   height,
-  idleProgress,
   mutationProgress,
   reactionProgress,
   width,
@@ -524,7 +499,6 @@ function RelicInteractionSkiaArtwork({
   const dormantAmpouleAnatomy = useImage(AMPOULE_DORMANT_ANATOMY_ASSET);
   const animatedLiquidPath = useDerivedValue(() => {
     const offsets = relicLiquidSurfaceOffsets(
-      idleProgress.value,
       reactionProgress.value,
       mutationProgress.value,
     );
@@ -532,7 +506,6 @@ function RelicInteractionSkiaArtwork({
   });
   const animatedSurfacePath = useDerivedValue(() => {
     const offsets = relicLiquidSurfaceOffsets(
-      idleProgress.value,
       reactionProgress.value,
       mutationProgress.value,
     );
@@ -553,13 +526,6 @@ function RelicInteractionSkiaArtwork({
   const liquidEnergy = useDerivedValue(() => liquidPresent
     ? liquidActivationEnergy(reactionProgress.value, mutationProgress.value)
     : 0, [liquidPresent]);
-  const idleCurrentTransform = useDerivedValue(() => {
-    const phase = idleProgress.value * Math.PI * 2;
-    return [
-      { translateX: Math.sin(phase + 1.35) * 3.1 },
-      { translateY: Math.cos(phase * .72) * 1.45 },
-    ];
-  });
   const flashProgress = useDerivedValue(() => mutationFlashPhase(mutationProgress.value));
   const flashRadius = useDerivedValue(() => 18 + flashProgress.value * 165);
   const flashOpacity = useDerivedValue(() => mutationFlashOpacity(mutationProgress.value));
@@ -572,17 +538,6 @@ function RelicInteractionSkiaArtwork({
         src={rect(0, 0, ARTBOARD_SIZE, ARTBOARD_SIZE)}
       >
         <Group clip={config.interiorPath}>
-          <Group clip={AMPOULE_ROOT_REGION} opacity={prototypeEnabled ? 1 : 0}>
-            <SkiaImage
-              fit="fill"
-              height={ARTBOARD_SIZE}
-              image={dormantAmpouleAnatomy}
-              width={ARTBOARD_SIZE}
-              x={0}
-              y={0}
-            />
-          </Group>
-
           {liquidPresent ? (
             <Path path={animatedLiquidPath}>
               <LinearGradient
@@ -596,7 +551,7 @@ function RelicInteractionSkiaArtwork({
 
           {idleCurrentPath && liquidVolumePath ? (
             <Group clip={liquidVolumePath}>
-              <Group opacity={.06} transform={idleCurrentTransform}>
+              <Group opacity={.06}>
                 <Path
                   color="#B77AC2"
                   path={idleCurrentPath}
@@ -641,16 +596,6 @@ function RelicInteractionSkiaArtwork({
             />
           </Group>
 
-          <Group clip={AMPOULE_HEART_REGION} opacity={prototypeEnabled ? .92 : 0}>
-            <SkiaImage
-              fit="fill"
-              height={ARTBOARD_SIZE}
-              image={ampouleAnatomy}
-              width={ARTBOARD_SIZE}
-              x={0}
-              y={0}
-            />
-          </Group>
           <Group blendMode="screen" clip={AMPOULE_HEART_REGION} opacity={heartEnergy}>
             <SkiaImage
               fit="fill"
@@ -661,6 +606,31 @@ function RelicInteractionSkiaArtwork({
               y={0}
             />
           </Group>
+
+          {prototypeEnabled && liquidPresent ? (
+            <Group clip={animatedLiquidPath}>
+              <Group clip={AMPOULE_ROOT_REGION}>
+                <SkiaImage
+                  fit="fill"
+                  height={ARTBOARD_SIZE}
+                  image={dormantAmpouleAnatomy}
+                  width={ARTBOARD_SIZE}
+                  x={0}
+                  y={0}
+                />
+              </Group>
+              <Group clip={AMPOULE_HEART_REGION}>
+                <SkiaImage
+                  fit="fill"
+                  height={ARTBOARD_SIZE}
+                  image={dormantAmpouleAnatomy}
+                  width={ARTBOARD_SIZE}
+                  x={0}
+                  y={0}
+                />
+              </Group>
+            </Group>
+          ) : null}
 
           {liquidPresent ? (
             <Path
@@ -719,15 +689,14 @@ function RelicInteractionSkiaArtwork({
 function RelicInteractionSvgArtwork({
   container,
   fillRatio,
-  idleProgress,
   mutationProgress,
   reactionProgress,
 }: RelicInteractionArtworkProps) {
   const config = RELIC_STAGE_ARTWORK[container];
   const uniqueId = useId().replace(/:/g, '');
   const clipId = `interactive-relic-clip-${uniqueId}`;
-  const dormantClipId = `interactive-relic-dormant-clip-${uniqueId}`;
-  const dormantRootRegionId = `interactive-relic-dormant-roots-${uniqueId}`;
+  const anatomyRegionId = `interactive-relic-anatomy-${uniqueId}`;
+  const immersedLiquidClipId = `interactive-relic-immersed-liquid-${uniqueId}`;
   const heartRegionId = `interactive-relic-heart-${uniqueId}`;
   const flashId = `interactive-relic-flash-${uniqueId}`;
   const liquidGradientId = `interactive-relic-liquid-depth-${uniqueId}`;
@@ -739,7 +708,6 @@ function RelicInteractionSvgArtwork({
   const bubbleSource = relicLiquidSurfaceForLevel(config, config.liquidFloor);
   const liquidVolumeProps = useAnimatedProps(() => {
     const offsets = relicLiquidSurfaceOffsets(
-      idleProgress.value,
       reactionProgress.value,
       mutationProgress.value,
     );
@@ -749,7 +717,6 @@ function RelicInteractionSvgArtwork({
   }, [config, level]);
   const liquidSurfaceProps = useAnimatedProps(() => {
     const offsets = relicLiquidSurfaceOffsets(
-      idleProgress.value,
       reactionProgress.value,
       mutationProgress.value,
     );
@@ -764,41 +731,8 @@ function RelicInteractionSvgArtwork({
         : 0,
     };
   }, [prototypeEnabled]);
-  const idleCurrentStyle = useAnimatedStyle(() => {
-    const phase = idleProgress.value * Math.PI * 2;
-    return {
-      transform: [
-        { translateX: Math.sin(phase + 1.35) * 3.1 },
-        { translateY: Math.cos(phase * .72) * 1.45 },
-      ],
-    };
-  });
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      {prototypeEnabled ? (
-        <View style={StyleSheet.absoluteFill}>
-          <Svg height="100%" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 1000" width="100%">
-            <SvgDefs>
-              <SvgClipPath id={dormantClipId}><SvgPath d={config.interiorPath} /></SvgClipPath>
-              <SvgClipPath id={dormantRootRegionId}><SvgPath d={AMPOULE_ROOT_REGION} /></SvgClipPath>
-            </SvgDefs>
-            <SvgGroup clipPath={`url(#${dormantClipId})`}>
-              <SvgGroup clipPath={`url(#${dormantRootRegionId})`}>
-                <SvgImage
-                  height={ARTBOARD_SIZE}
-                  href={AMPOULE_DORMANT_ANATOMY_ASSET}
-                  opacity={1}
-                  preserveAspectRatio="xMidYMid slice"
-                  width={ARTBOARD_SIZE}
-                  x={0}
-                  y={0}
-                />
-              </SvgGroup>
-            </SvgGroup>
-          </Svg>
-        </View>
-      ) : null}
-
       {liquidPresent ? (
         <View style={StyleSheet.absoluteFill}>
           <Svg height="100%" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 1000" width="100%">
@@ -822,7 +756,7 @@ function RelicInteractionSvgArtwork({
       ) : null}
 
       {idleCurrentPath && liquidVolumePath ? (
-        <Animated.View style={[StyleSheet.absoluteFill, idleCurrentStyle]}>
+        <View style={StyleSheet.absoluteFill}>
           <Svg height="100%" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 1000" width="100%">
             <SvgDefs>
               <SvgClipPath id={`${clipId}-idle-current`}><SvgPath d={liquidVolumePath} /></SvgClipPath>
@@ -838,7 +772,7 @@ function RelicInteractionSvgArtwork({
               />
             </SvgGroup>
           </Svg>
-        </Animated.View>
+        </View>
       ) : null}
 
       <RelicSvgRootBand
@@ -878,30 +812,6 @@ function RelicInteractionSvgArtwork({
         uniqueId={`${uniqueId}-upper`}
       />
 
-      {prototypeEnabled ? (
-        <View style={StyleSheet.absoluteFill}>
-          <Svg height="100%" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 1000" width="100%">
-            <SvgDefs>
-              <SvgClipPath id={`${clipId}-heart-base`}><SvgPath d={config.interiorPath} /></SvgClipPath>
-              <SvgClipPath id={`${heartRegionId}-base`}><SvgPath d={AMPOULE_HEART_REGION} /></SvgClipPath>
-            </SvgDefs>
-            <SvgGroup clipPath={`url(#${clipId}-heart-base)`}>
-              <SvgGroup clipPath={`url(#${heartRegionId}-base)`}>
-                <SvgImage
-                  height={ARTBOARD_SIZE}
-                  href={AMPOULE_ANATOMY_ASSET}
-                  opacity=".92"
-                  preserveAspectRatio="xMidYMid slice"
-                  width={ARTBOARD_SIZE}
-                  x={0}
-                  y={0}
-                />
-              </SvgGroup>
-            </SvgGroup>
-          </Svg>
-        </View>
-      ) : null}
-
       <Animated.View style={[StyleSheet.absoluteFill, heartEnergyStyle]}>
         <Svg height="100%" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 1000" width="100%">
           <SvgDefs>
@@ -922,6 +832,39 @@ function RelicInteractionSvgArtwork({
           </SvgGroup>
         </Svg>
       </Animated.View>
+
+      {prototypeEnabled && liquidPresent ? (
+        <View style={StyleSheet.absoluteFill}>
+          <Svg height="100%" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 1000" width="100%">
+            <SvgDefs>
+              <SvgClipPath id={`${clipId}-immersed-interior`}>
+                <SvgPath d={config.interiorPath} />
+              </SvgClipPath>
+              <SvgClipPath id={immersedLiquidClipId}>
+                <AnimatedSvgPath animatedProps={liquidVolumeProps} />
+              </SvgClipPath>
+              <SvgClipPath id={anatomyRegionId}>
+                <SvgPath d={AMPOULE_ROOT_REGION} />
+                <SvgPath d={AMPOULE_HEART_REGION} />
+              </SvgClipPath>
+            </SvgDefs>
+            <SvgGroup clipPath={`url(#${clipId}-immersed-interior)`}>
+              <SvgGroup clipPath={`url(#${immersedLiquidClipId})`}>
+                <SvgGroup clipPath={`url(#${anatomyRegionId})`}>
+                  <SvgImage
+                    height={ARTBOARD_SIZE}
+                    href={AMPOULE_DORMANT_ANATOMY_ASSET}
+                    preserveAspectRatio="xMidYMid slice"
+                    width={ARTBOARD_SIZE}
+                    x={0}
+                    y={0}
+                  />
+                </SvgGroup>
+              </SvgGroup>
+            </SvgGroup>
+          </Svg>
+        </View>
+      ) : null}
 
       {liquidPresent ? (
         <View style={StyleSheet.absoluteFill}>

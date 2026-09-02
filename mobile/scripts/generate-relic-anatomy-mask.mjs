@@ -30,12 +30,19 @@ for (let index = 0; index < source.data.length; index += 4) {
   const green = source.data[index + 1];
   const blue = source.data[index + 2];
   const brightness = Math.max(red, green, blue) / 255;
+  const pixel = index / 4;
+  const x = (pixel % source.width) / source.width * 1_000;
+  const y = Math.floor(pixel / source.width) / source.height * 1_000;
+  const insideRoots = x >= 445 && x <= 555 && y >= 430 && y <= 625;
+  const insideHeart = x >= 465 && x <= 535 && y >= 585 && y <= 705;
 
   // The relic anatomy is the only warm orange subject inside the vessel.
   // Red-vs-blue separation preserves its antialiased pixels while rejecting
   // the surrounding violet liquid and blue chamber.
   const warmth = 1.6 * red + .2 * green - 1.5 * blue - .16 * 255;
-  const coverage = smoothstep(5, 105, warmth) * (.42 + brightness * .58);
+  const coverage = (insideRoots || insideHeart)
+    ? smoothstep(5, 105, warmth) * (.42 + brightness * .58)
+    : 0;
 
   output.data[index] = 255;
   output.data[index + 1] = Math.round(38 + 95 * brightness);
@@ -49,7 +56,11 @@ for (let index = 0; index < source.data.length; index += 4) {
   dormantOutput.data[index] = Math.round(66 + 35 * brightness);
   dormantOutput.data[index + 1] = Math.round(25 + 20 * brightness);
   dormantOutput.data[index + 2] = Math.round(96 + 48 * brightness);
-  dormantOutput.data[index + 3] = Math.round(255 * coverage * .96);
+  // Reuse the exact warm-pixel extraction for the immersed colour. A steeper
+  // alpha curve makes the purple opaque enough to replace orange without
+  // widening the mask onto the glass or the background.
+  const dormantCoverage = smoothstep(.008, .16, coverage);
+  dormantOutput.data[index + 3] = Math.round(255 * dormantCoverage * .985);
 }
 
 fs.writeFileSync(outputPath, PNG.sync.write(output));
