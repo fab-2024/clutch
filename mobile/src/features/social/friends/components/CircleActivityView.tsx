@@ -5,10 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/src/components/ui/Button';
 import { FEATURE_STATE_COPY } from '@/src/components/ui/FeatureStateView';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
-import { StateView } from '@/src/components/ui/StateView';
 import { Surface } from '@/src/components/ui/Surface';
-import { CosmeticAvatar } from '@/src/features/shop/components/CosmeticRenderer';
-import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
 import type { CircleWeeklyData, CircleWeeklyRow, FriendRow, FriendsData } from '../types';
@@ -18,33 +15,22 @@ const RANKING_PAGE_SIZE = 10;
 type CircleActivityViewProps = {
   busy: string | null;
   data: FriendsData;
-  focusRequests: boolean;
   loading: boolean;
   onAccept: (id: string) => void;
   onCancel: (id: string) => void;
   onChallenge: (player: CircleWeeklyRow) => void;
-  onOpenMatches: () => void;
   onOpenProfile: (pseudo: string) => void;
   onReject: (id: string) => void;
-  onShare: () => void;
 };
 
 export default function CircleActivityView(props: CircleActivityViewProps) {
   if (props.loading) return <CircleActivitySkeleton />;
 
-  const performance = (
-    <WeeklyPerformanceCard
-      onOpenMatches={props.onOpenMatches}
-      onShare={props.onShare}
-      weekly={props.data.weekly}
-    />
-  );
   const requests = <FriendRequestsSection {...props} />;
 
   return (
     <View style={styles.activity} testID="circle-activity-view">
-      {props.focusRequests ? requests : performance}
-      {props.focusRequests ? performance : requests}
+      {requests}
       <WeeklyRanking
         onChallenge={props.onChallenge}
         onOpen={props.onOpenProfile}
@@ -61,20 +47,6 @@ function CircleActivitySkeleton() {
       style={styles.activity}
       testID="circle-activity-loading"
     >
-      <View style={[styles.skeleton, styles.performanceSkeleton]}>
-        <View style={styles.skeletonHeading}>
-          <Skeleton height={9} radius="pill" width={84} />
-          <Skeleton height={9} radius="pill" tone="subtle" width={74} />
-        </View>
-        <View style={styles.skeletonRank}>
-          <Skeleton height={58} radius="md" width={78} />
-          <Skeleton height={24} radius="sm" tone="subtle" width={88} />
-        </View>
-        <View style={styles.skeletonMetrics}>
-          {[0, 1, 2].map((item) => <Skeleton height={48} key={item} radius="md" width="29%" />)}
-        </View>
-        <Skeleton height={44} radius="md" width="100%" />
-      </View>
       <View style={[styles.skeleton, styles.requestsSkeleton]}>
         <View style={styles.skeletonHeading}>
           <Skeleton height={10} radius="pill" width={112} />
@@ -110,81 +82,6 @@ function CircleActivitySkeleton() {
         ))}
       </View>
     </SkeletonGroup>
-  );
-}
-
-function WeeklyPerformanceCard({
-  onOpenMatches,
-  onShare,
-  weekly,
-}: {
-  onOpenMatches: () => void;
-  onShare: () => void;
-  weekly: CircleWeeklyData | null;
-}) {
-  const me = weekly?.moi;
-  if (!me) {
-    return (
-      <StateView
-        action={{ label: 'FAIRE UN CALL', onPress: onOpenMatches }}
-        compact
-        description="Tes calls réglés et ceux de tes amis apparaîtront ici du lundi au dimanche."
-        testID="circle-weekly-empty"
-        title="Le classement démarre avec ton premier verdict."
-        variant="empty"
-      />
-    );
-  }
-
-  const precision = me.precision_pct == null ? '—' : `${Math.round(me.precision_pct)}%`;
-  const accessibilityLabel = `Cette semaine, rang ${me.rang} sur ${me.participants}, ${signed(me.frags_hebdo)} Frags, ${me.victoires} victoires sur ${me.calls} calls, ${precision} de réussite`;
-
-  return (
-    <View style={styles.performanceCard} testID="circle-performance-card">
-      <View style={styles.performanceAccent} />
-      <View accessible accessibilityLabel={accessibilityLabel}>
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <View style={styles.performanceTop}>
-            <View>
-              <Text style={styles.sectionEyebrow}>TA SEMAINE</Text>
-              <Text style={styles.performancePeriod}>{weekLabel(weekly)}</Text>
-            </View>
-            <Text style={styles.performanceWeek}>{weekly?.semaine || 'SEMAINE EN COURS'}</Text>
-          </View>
-
-          <View style={styles.performanceRankRow}>
-            <Text style={styles.performanceRank}>#{me.rang}</Text>
-            <Text style={styles.performanceOf}>SUR {me.participants}{'\n'}DANS TON CERCLE</Text>
-          </View>
-
-          <View style={styles.performanceStats}>
-            <WeeklyStat accent label="FRAGS" value={signed(me.frags_hebdo)} />
-            <View style={styles.performanceDivider} />
-            <WeeklyStat label="CALLS" value={`${me.victoires}/${me.calls}`} />
-            <View style={styles.performanceDivider} />
-            <WeeklyStat label="RÉUSSITE" value={precision} />
-          </View>
-        </View>
-      </View>
-
-      <Button
-        accessibilityLabel="Partager mon bilan de la semaine"
-        fullWidth
-        label="PARTAGER MON BILAN"
-        onPress={onShare}
-        size="compact"
-        variant="secondary"
-      />
-    </View>
-  );
-}
-
-function WeeklyStat({ accent = false, label, value }: { accent?: boolean; label: string; value: string }) {
-  return (
-    <View style={styles.weeklyStat}>
-      <Text style={[styles.weeklyStatValue, accent && styles.weeklyStatValueAccent]}>{value}</Text>
-      <Text style={styles.weeklyStatLabel}>{label}</Text>
-    </View>
   );
 }
 
@@ -347,17 +244,17 @@ function WeeklyRanking({
   onOpen: (pseudo: string) => void;
   weekly: CircleWeeklyData | null;
 }) {
-  const { equipped } = useCosmetics();
   const [visibleCount, setVisibleCount] = useState(RANKING_PAGE_SIZE);
   useEffect(() => setVisibleCount(RANKING_PAGE_SIZE), [weekly?.semaine]);
-  if (!weekly?.classement.length) return null;
-  const visibleRanking = weekly.classement.slice(0, visibleCount);
+  const ranking = weekly?.classement.filter((player) => !player.moi) ?? [];
+  if (!ranking.length) return null;
+  const visibleRanking = ranking.slice(0, visibleCount);
 
   return (
     <View style={styles.section} testID="circle-weekly-ranking">
       <SectionHeading
         eyebrow="ACTIVITÉ"
-        meta={`${weekly.classement.length} JOUEURS`}
+        meta={`${ranking.length} JOUEURS`}
         title="CLASSEMENT DE LA SEMAINE"
       />
       <Surface border="subtle" padding="none" radius="lg" tone="low">
@@ -366,7 +263,6 @@ function WeeklyRanking({
             key={player.id}
             style={[
               styles.rankingRow,
-              player.moi && styles.rankingRowMine,
               index > 0 && styles.rowSeparated,
             ]}
           >
@@ -379,11 +275,9 @@ function WeeklyRanking({
               onPress={() => onOpen(player.pseudo)}
               style={({ pressed }) => [styles.rankingIdentity, pressed && styles.pressed]}
             >
-              {player.moi ? (
-                <CosmeticAvatar cosmetics={equipped} label={player.pseudo} size={36} />
-              ) : <Avatar pseudo={player.pseudo} small />}
+              <Avatar pseudo={player.pseudo} small />
               <View style={styles.rankingCopy}>
-                <Text numberOfLines={1} style={styles.rankingName}>{player.moi ? 'TOI' : player.pseudo}</Text>
+                <Text numberOfLines={1} style={styles.rankingName}>{player.pseudo}</Text>
                 <Text style={styles.rankingMeta}>
                   {player.victoires}/{player.calls} calls · {player.precision_pct == null ? '—' : `${Math.round(player.precision_pct)}%`}
                 </Text>
@@ -392,24 +286,22 @@ function WeeklyRanking({
             <Text style={[styles.rankingDelta, player.frags_hebdo < 0 && styles.rankingDeltaLoss]}>
               {signed(player.frags_hebdo)}
             </Text>
-            {!player.moi ? (
-              <Pressable
-                accessibilityLabel={`Défier ${player.pseudo}`}
-                accessibilityRole="button"
-                onPress={() => onChallenge(player)}
-                style={({ pressed }) => [styles.challengeButton, pressed && styles.pressed]}
-              >
-                <Swords color={colors.volt} size={19} strokeWidth={2.1} />
-              </Pressable>
-            ) : null}
+            <Pressable
+              accessibilityLabel={`Défier ${player.pseudo}`}
+              accessibilityRole="button"
+              onPress={() => onChallenge(player)}
+              style={({ pressed }) => [styles.challengeButton, pressed && styles.pressed]}
+            >
+              <Swords color={colors.volt} size={19} strokeWidth={2.1} />
+            </Pressable>
           </View>
         ))}
 
-        {visibleRanking.length < weekly.classement.length ? (
+        {visibleRanking.length < ranking.length ? (
           <View style={styles.rankingMore}>
             <Button
               fullWidth
-              label={`VOIR LA SUITE · ${visibleRanking.length}/${weekly.classement.length}`}
+              label={`VOIR LA SUITE · ${visibleRanking.length}/${ranking.length}`}
               onPress={() => setVisibleCount((count) => count + RANKING_PAGE_SIZE)}
               size="compact"
               variant="ghost"
@@ -457,94 +349,9 @@ function signed(value: number) {
   return `${amount > 0 ? '+' : amount < 0 ? '−' : ''}${Math.abs(amount)}`;
 }
 
-function weekLabel(weekly: CircleWeeklyData | null) {
-  if (!weekly?.debut || !weekly.fin) return 'SEMAINE EN COURS';
-  const start = new Date(weekly.debut);
-  const end = new Date(new Date(weekly.fin).getTime() - 1);
-  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) return 'SEMAINE EN COURS';
-  return `${start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} — ${end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`.toUpperCase();
-}
-
 const styles = StyleSheet.create({
   activity: {
     gap: spacing.lg,
-  },
-  performanceCard: {
-    position: 'relative',
-    overflow: 'hidden',
-    padding: spacing.md,
-    gap: spacing.md,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surfaceLow,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-  },
-  performanceAccent: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 3,
-    backgroundColor: colors.volt,
-  },
-  performanceTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  performancePeriod: {
-    ...typography.metadata,
-    marginTop: 2,
-    color: colors.textSecondary,
-  },
-  performanceWeek: {
-    ...typography.metadata,
-    flexShrink: 1,
-    color: colors.textSecondary,
-    textAlign: 'right',
-  },
-  performanceRankRow: {
-    marginTop: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.sm,
-  },
-  performanceRank: {
-    ...typography.displayLarge,
-    color: colors.text,
-  },
-  performanceOf: {
-    ...typography.control,
-    marginBottom: 2,
-    color: colors.textSecondary,
-  },
-  performanceStats: {
-    minHeight: 62,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  weeklyStat: {
-    minWidth: 68,
-    alignItems: 'center',
-  },
-  weeklyStatValue: {
-    ...typography.metricSmall,
-    color: colors.text,
-  },
-  weeklyStatValueAccent: {
-    color: colors.volt,
-  },
-  weeklyStatLabel: {
-    ...typography.metadata,
-    marginTop: 2,
-    color: colors.textSecondary,
-  },
-  performanceDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: colors.borderSubtle,
   },
   section: {
     gap: spacing.sm,
@@ -659,9 +466,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  rankingRowMine: {
-    backgroundColor: colors.surfaceInteractive,
-  },
   rankingPosition: {
     ...typography.control,
     width: 24,
@@ -737,12 +541,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
-  performanceSkeleton: {
-    minHeight: 268,
-    padding: spacing.md,
-    justifyContent: 'space-between',
-    borderRadius: radius.lg,
-  },
   requestsSkeleton: {
     minHeight: 138,
     padding: spacing.md,
@@ -756,8 +554,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
   },
   skeletonHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  skeletonRank: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm },
-  skeletonMetrics: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   skeletonRequestRow: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   skeletonRequestCopy: { flex: 1, minWidth: 0, gap: spacing.xs },
   skeletonRankingRow: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

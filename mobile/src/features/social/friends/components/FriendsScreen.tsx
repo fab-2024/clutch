@@ -1,12 +1,11 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, Share, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { BaseSheet } from '@/src/components/overlays/BaseSheet';
 import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { Button } from '@/src/components/ui/Button';
 import { FeatureStateView } from '@/src/components/ui/FeatureStateView';
-import { publicAppUrl } from '@/src/config/release';
 import CircleViewSwitch from '@/src/features/social/components/CircleViewSwitch';
 import { useSnackbar } from '@/src/providers/SnackbarProvider';
 import { colors, spacing, typography } from '@/src/theme';
@@ -197,26 +196,6 @@ export function CirclePeopleScreen({
     }
   }
 
-  async function sharePerformance() {
-    const me = data.weekly?.moi;
-    if (!me) return;
-    const precision = me.precision_pct == null ? '—' : `${Math.round(me.precision_pct)}%`;
-    const message = `Mon bilan GRIFF : #${me.rang}/${me.participants} dans mon Cercle · ${signed(me.frags_hebdo)} Frags · ${me.victoires}/${me.calls} calls · ${precision} de réussite.`;
-    const url = publicAppUrl('/') ?? '';
-    const shareText = url ? `${message} ${url}` : message;
-    try {
-      if (Platform.OS === 'web' && globalThis.navigator?.clipboard) {
-        await globalThis.navigator.clipboard.writeText(shareText);
-        showSnackbar({ message: 'Bilan copié, prêt à être partagé.', tone: 'success' });
-      } else {
-        await Share.share({ message: shareText, ...(url ? { url } : {}) });
-        showSnackbar({ message: 'Ton bilan est prêt à être partagé.', tone: 'success' });
-      }
-    } catch {
-      showSnackbar({ message: 'Le partage a été interrompu. Réessaie depuis ton bilan.', tone: 'error' });
-    }
-  }
-
   const pendingCount = data.recues.length + data.envoyees.length;
   const header = (
     <CircleHeader
@@ -250,15 +229,12 @@ export function CirclePeopleScreen({
               <CircleActivityView
                 busy={busy}
                 data={data}
-                focusRequests={focusRequests}
                 loading={loading}
                 onAccept={(id) => void act(id, 'accept')}
                 onCancel={(id) => void act(id, 'cancel')}
                 onChallenge={challengePlayer}
-                onOpenMatches={() => router.push('/(tabs)/matches')}
                 onOpenProfile={openProfile}
                 onReject={(id) => void act(id, 'reject')}
-                onShare={() => void sharePerformance()}
               />
             ) : null}
           </>
@@ -412,11 +388,6 @@ function updatePreviewResults(
     if (kind === 'cancel' || kind === 'reject') return { ...player, relation: 'aucune' };
     return player;
   });
-}
-
-function signed(value: number) {
-  const amount = Number(value || 0);
-  return `${amount > 0 ? '+' : amount < 0 ? '−' : ''}${Math.abs(amount)}`;
 }
 
 const styles = StyleSheet.create({

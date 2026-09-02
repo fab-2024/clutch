@@ -131,11 +131,12 @@ describe('CirclePeopleScreen', () => {
     mockShowSnackbar.mockClear();
   });
 
-  it('merges activity and friends into one Circle feed', async () => {
+  it('keeps the weekly summary and current-user ranking row out of the Circle feed', async () => {
     const screen = await render(<CirclePeopleScreen previewState={previewState} />);
 
     expect(screen.getByText('TOUT TON CERCLE.')).toBeTruthy();
-    expect(screen.getByTestId('circle-performance-card')).toBeTruthy();
+    expect(screen.queryByTestId('circle-performance-card')).toBeNull();
+    expect(screen.queryByLabelText('Voir le profil de Testeur')).toBeNull();
     expect(screen.getByTestId('circle-requests-section')).toBeTruthy();
     expect(screen.getByTestId('circle-weekly-ranking')).toBeTruthy();
     expect(screen.getByTestId('circle-directory-view')).toBeTruthy();
