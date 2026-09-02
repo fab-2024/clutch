@@ -9,6 +9,7 @@ import {
   Path,
   RadialGradient,
   rect,
+  type SkImage,
   useImage,
   vec,
 } from '@shopify/react-native-skia';
@@ -19,7 +20,7 @@ import {
   useId,
   useImperativeHandle,
 } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { type ImageSourcePropType, Platform, StyleSheet, View } from 'react-native';
 import Svg, {
   Circle as SvgCircle,
   ClipPath as SvgClipPath,
@@ -55,6 +56,29 @@ import {
   relicLiquidSurfaceForLevel,
   relicLiquidVolumePathForLevel,
 } from '@/src/features/social/faction/relicArtwork';
+import {
+  RELIC_MUTATION_RELEASE_MS,
+  RELIC_MUTATION_RUPTURE_MS,
+  RELIC_MUTATION_RUPTURE_PROGRESS,
+  relicMutationBoilEnergy,
+  relicMutationBurstPhase,
+  relicMutationCharge,
+  relicMutationCrackOpacity,
+  relicMutationCrackProgress,
+  relicMutationFlashOpacity,
+  relicMutationHeartScale,
+  relicMutationMaterialization,
+  relicMutationOldVesselOpacity,
+  relicMutationOverheatEnergy,
+  relicMutationShardGlintOpacity,
+  relicMutationShardOpacity,
+  relicMutationShockwaveOpacity,
+  relicMutationShockwavePhase,
+  relicMutationSplashDryProgress,
+  relicMutationSplashEdgeOpacity,
+  relicMutationSplashFillOpacity,
+  relicMutationSplashSheenOpacity,
+} from '@/src/features/social/faction/relicMutationMotion';
 import type { RelicContainer } from '@/src/features/social/faction/types';
 
 import StaticRelicVial from './StaticRelicVial';
@@ -62,8 +86,8 @@ import { RelicVesselForegroundArtwork } from './RelicEnergyArtwork';
 
 const ARTBOARD_SIZE = 1_000;
 const REACTION_DURATION_MS = 1_650;
-const MUTATION_CHARGE_MS = 760;
-const MUTATION_RELEASE_MS = 1_840;
+const REDUCED_MUTATION_CHARGE_MS = 160;
+const REDUCED_MUTATION_RELEASE_MS = 260;
 
 // Generated deterministically from the scene's warm pixels. It contains the
 // exact antialiased heart and roots on transparency, with no invented drawing.
@@ -87,14 +111,159 @@ const BUBBLES = [
   { duration: .3, horizontalPosition: -.04, radius: 3, sourceLift: 8, start: .48, sway: 6 },
 ] as const;
 
-const BURST_PARTICLES = [
-  [-2.8, 210, 10], [-2.48, 250, 7], [-2.12, 218, 9], [-1.78, 280, 6],
-  [-1.46, 245, 11], [-1.12, 220, 7], [-.74, 265, 9], [-.32, 205, 6],
-  [.14, 240, 8], [.56, 275, 5], [.92, 225, 10], [1.26, 255, 7],
-  [1.72, 210, 8], [2.1, 250, 6], [2.48, 225, 9], [2.84, 265, 5],
+const MUTATION_BUBBLES = [
+  { duration: .31, horizontalPosition: -.82, radius: 6, sourceLift: 4, start: .02, sway: -14 },
+  { duration: .23, horizontalPosition: -.64, radius: 10, sourceLift: 28, start: .09, sway: 18 },
+  { duration: .36, horizontalPosition: -.46, radius: 7, sourceLift: 13, start: .17, sway: -11 },
+  { duration: .2, horizontalPosition: -.25, radius: 13, sourceLift: 42, start: .24, sway: 15 },
+  { duration: .28, horizontalPosition: -.08, radius: 8, sourceLift: 6, start: .31, sway: -17 },
+  { duration: .18, horizontalPosition: .12, radius: 11, sourceLift: 22, start: .39, sway: 12 },
+  { duration: .33, horizontalPosition: .3, radius: 6.5, sourceLift: 52, start: .47, sway: -10 },
+  { duration: .22, horizontalPosition: .48, radius: 14, sourceLift: 33, start: .55, sway: 19 },
+  { duration: .3, horizontalPosition: .67, radius: 8, sourceLift: 10, start: .64, sway: -16 },
+  { duration: .25, horizontalPosition: .84, radius: 5.5, sourceLift: 46, start: .72, sway: 9 },
+  { duration: .19, horizontalPosition: -.55, radius: 5, sourceLift: 64, start: .81, sway: 13 },
+  { duration: .27, horizontalPosition: .56, radius: 7, sourceLift: 61, start: .9, sway: -12 },
 ] as const;
 
+const MUTATION_CRACKS = [
+  { length: 152, path: 'M500 636 L493 626 L497 615 L486 604 L489 590 L478 581 L483 568 L470 557 L473 543 L462 532' },
+  { length: 148, path: 'M501 635 L508 623 L504 612 L516 601 L511 587 L523 576 L518 562 L532 549 L529 535 L541 521' },
+  { length: 112, path: 'M486 604 L474 600 L467 590 L453 588 L446 576 L433 572 L426 559' },
+  { length: 116, path: 'M516 601 L528 596 L535 585 L548 582 L556 569 L570 565 L578 550' },
+  { length: 138, path: 'M497 615 L505 606 L501 594 L509 583 L505 570 L513 558 L508 545 L516 532 L511 518 L519 503' },
+  { length: 102, path: 'M470 557 L459 552 L454 541 L442 537 L437 525 L426 520' },
+  { length: 106, path: 'M532 549 L544 544 L549 532 L562 527 L566 514 L578 508' },
+  { length: 92, path: 'M500 636 L489 645 L491 657 L479 666 L480 680 L468 690' },
+  { length: 96, path: 'M501 635 L512 644 L510 657 L522 667 L520 681 L532 691' },
+  { length: 118, path: 'M462 532 L451 519 L454 505 L440 491 L443 475 L429 462 L431 449' },
+  { length: 122, path: 'M541 521 L553 507 L549 492 L563 477 L559 461 L573 447' },
+  { length: 86, path: 'M468 690 L457 699 L443 696 L432 707 L418 704' },
+] as const;
+
+const MUTATION_SHARDS = [
+  { centerX: 477, centerY: 486, delay: 0, dx: -92, dy: -192, path: 'M481 447 L500 447 L494 506 L462 523 L441 492 Z', rotation: -34 },
+  { centerX: 523, centerY: 486, delay: .008, dx: 176, dy: -146, path: 'M500 447 L519 447 L559 492 L538 523 L506 506 Z', rotation: 38 },
+  { centerX: 441, centerY: 552, delay: .012, dx: -240, dy: -42, path: 'M441 492 L462 523 L478 570 L437 600 L414 578 L420 535 Z', rotation: -52 },
+  { centerX: 478, centerY: 550, delay: .018, dx: -76, dy: -162, path: 'M462 523 L494 506 L500 548 L478 590 L437 600 L478 570 Z', rotation: -28 },
+  { centerX: 522, centerY: 550, delay: .014, dx: 144, dy: -88, path: 'M506 506 L538 523 L522 570 L563 600 L522 590 L500 548 Z', rotation: 31 },
+  { centerX: 559, centerY: 552, delay: .021, dx: 206, dy: -118, path: 'M538 523 L559 492 L580 535 L586 578 L563 600 L522 570 Z', rotation: 54 },
+  { centerX: 442, centerY: 626, delay: .026, dx: -258, dy: 68, path: 'M414 578 L437 600 L474 624 L456 664 L425 650 L410 614 Z', rotation: -66 },
+  { centerX: 479, centerY: 625, delay: .032, dx: -83, dy: 84, path: 'M437 600 L478 590 L500 617 L486 663 L456 664 L474 624 Z', rotation: -41 },
+  { centerX: 521, centerY: 625, delay: .028, dx: 154, dy: 58, path: 'M522 590 L563 600 L526 624 L544 664 L514 663 L500 617 Z', rotation: 44 },
+  { centerX: 558, centerY: 626, delay: .036, dx: 226, dy: 6, path: 'M563 600 L586 578 L590 614 L575 650 L544 664 L526 624 Z', rotation: 69 },
+  { centerX: 470, centerY: 678, delay: .041, dx: -186, dy: 152, path: 'M456 664 L486 663 L500 700 L467 703 L438 684 Z', rotation: -58 },
+  { centerX: 530, centerY: 678, delay: .045, dx: 116, dy: 138, path: 'M514 663 L544 664 L562 684 L533 703 L500 700 Z', rotation: 61 },
+] as const;
+
+const MUTATION_SPLASHES = [
+  {
+    centerX: 78,
+    centerY: 242,
+    delay: 0,
+    driftX: -16,
+    driftY: 18,
+    highlightPath: 'M34 222 C50 207 70 210 81 225 M48 251 C60 260 73 260 82 252',
+    path: 'M15 220 C27 197 51 191 70 204 C83 213 86 229 98 234 C114 240 132 231 140 247 C149 266 130 281 108 276 C90 272 84 289 64 285 C43 281 41 262 27 254 C11 246 7 232 15 220 Z M110 190 C118 181 131 185 133 196 C134 207 121 212 114 205 C110 201 108 195 110 190 Z',
+    startScale: .62,
+  },
+  {
+    centerX: 915,
+    centerY: 230,
+    delay: .016,
+    driftX: 18,
+    driftY: 14,
+    highlightPath: 'M877 215 C891 202 910 205 920 221 M916 253 C927 260 940 257 946 247',
+    path: 'M857 204 C873 184 896 188 909 205 C919 218 917 232 932 236 C951 240 970 226 981 243 C992 262 974 280 951 274 C936 270 928 287 908 282 C890 278 887 260 872 255 C852 248 844 222 857 204 Z M963 190 C971 181 984 186 984 197 C984 206 974 212 967 206 C962 202 960 196 963 190 Z',
+    startScale: .66,
+  },
+  {
+    centerX: 47,
+    centerY: 520,
+    delay: .034,
+    driftX: -13,
+    driftY: 27,
+    highlightPath: 'M16 493 C27 484 43 487 50 500 M62 523 C71 532 72 545 66 554',
+    path: 'M-8 484 C8 467 32 470 45 486 C55 499 50 514 64 521 C79 529 101 520 108 539 C115 559 93 573 75 565 C61 559 53 570 39 565 C22 559 24 542 8 535 C-11 527 -20 500 -8 484 Z M69 571 C78 561 91 566 91 578 C90 590 76 594 70 585 C67 581 66 575 69 571 Z',
+    startScale: .58,
+  },
+  {
+    centerX: 956,
+    centerY: 532,
+    delay: .026,
+    driftX: 15,
+    driftY: 24,
+    highlightPath: 'M918 509 C930 497 947 502 953 516 M966 544 C973 552 975 563 970 570',
+    path: 'M900 500 C915 482 939 487 951 504 C960 517 956 532 970 538 C987 545 1004 537 1013 554 C1023 573 1003 590 983 583 C968 578 961 592 944 587 C927 582 927 566 913 558 C893 547 886 517 900 500 Z M939 601 C947 592 960 596 961 607 C961 618 949 623 942 616 C938 612 937 606 939 601 Z',
+    startScale: .61,
+  },
+  {
+    centerX: 205,
+    centerY: 842,
+    delay: .048,
+    driftX: -11,
+    driftY: 20,
+    highlightPath: 'M168 822 C181 808 203 811 213 827 M213 852 C222 860 232 860 239 853',
+    path: 'M145 814 C163 790 190 794 207 812 C220 825 215 842 230 849 C247 857 267 848 276 865 C286 884 266 900 245 894 C229 889 218 904 198 900 C180 896 178 878 162 871 C142 862 132 833 145 814 Z M278 824 C286 815 299 819 301 830 C302 841 290 847 282 841 C277 837 276 829 278 824 Z',
+    startScale: .67,
+  },
+  {
+    centerX: 797,
+    centerY: 850,
+    delay: .043,
+    driftX: 12,
+    driftY: 23,
+    highlightPath: 'M754 829 C769 815 791 818 801 835 M805 858 C814 866 826 866 833 858',
+    path: 'M733 819 C750 796 779 800 795 818 C807 831 803 848 818 855 C835 863 855 854 865 872 C874 890 855 907 834 901 C817 896 808 910 788 906 C770 902 768 884 752 877 C731 868 721 838 733 819 Z M699 852 C708 843 721 847 722 859 C722 870 709 875 702 868 C698 864 697 857 699 852 Z',
+    startScale: .64,
+  },
+  {
+    centerX: 238,
+    centerY: 402,
+    delay: .06,
+    driftX: -9,
+    driftY: 31,
+    highlightPath: 'M211 384 C220 376 233 379 238 389',
+    path: 'M190 374 C203 358 224 361 235 375 C244 386 240 399 251 404 C264 410 274 422 267 434 C259 448 242 442 233 433 C223 424 212 434 201 426 C189 417 193 403 185 394 C180 388 183 381 190 374 Z M250 451 C257 443 268 447 268 457 C267 467 256 470 251 463 C248 459 248 455 250 451 Z',
+    startScale: .55,
+  },
+  {
+    centerX: 776,
+    centerY: 420,
+    delay: .055,
+    driftX: 8,
+    driftY: 29,
+    highlightPath: 'M752 401 C761 393 774 396 779 406',
+    path: 'M733 392 C746 376 767 379 778 394 C786 405 782 417 794 423 C806 429 817 441 809 453 C801 466 784 460 776 451 C766 442 755 451 744 444 C731 435 735 420 727 412 C721 405 726 398 733 392 Z M731 466 C739 458 750 462 750 472 C749 482 738 485 732 478 C729 475 729 470 731 466 Z',
+    startScale: .57,
+  },
+  {
+    centerX: 356,
+    centerY: 520,
+    delay: .021,
+    driftX: -7,
+    driftY: 36,
+    highlightPath: 'M341 477 C348 487 349 497 343 503 M374 516 C380 526 379 536 373 542',
+    path: 'M337 454 C351 469 354 486 344 495 C334 503 321 495 323 482 C325 471 331 461 337 454 Z M373 499 C387 514 390 531 379 540 C369 548 356 539 359 526 C361 516 367 506 373 499 Z M409 548 C421 560 424 575 414 583 C404 590 392 582 394 571 C396 561 402 553 409 548 Z',
+    startScale: .73,
+  },
+  {
+    centerX: 681,
+    centerY: 505,
+    delay: .03,
+    driftX: 6,
+    driftY: 34,
+    highlightPath: 'M658 471 C668 462 682 464 690 475 M689 503 C699 509 707 518 706 528',
+    path: 'M641 456 C654 441 675 443 687 457 C697 469 693 481 706 487 C719 493 735 489 743 503 C752 519 737 534 719 531 C704 528 700 542 684 539 C669 536 668 521 655 516 C638 509 629 471 641 456 Z M715 548 C724 538 738 543 738 555 C737 566 724 571 717 563 C713 559 712 553 715 548 Z',
+    startScale: .7,
+  },
+] as const;
+
+type MutationShard = (typeof MUTATION_SHARDS)[number];
+type MutationSplash = (typeof MUTATION_SPLASHES)[number];
+
 const AnimatedSvgCircle = Animated.createAnimatedComponent(SvgCircle);
+const AnimatedSvgGroup = Animated.createAnimatedComponent(SvgGroup);
 const AnimatedSvgPath = Animated.createAnimatedComponent(SvgPath);
 
 function clamp01(value: number) {
@@ -140,34 +309,19 @@ function liquidActivationEnergy(reactionProgress: number, mutationProgress: numb
   'worklet';
   return Math.max(
     stagedEnvelope(reactionProgress, .045, .14, .82),
-    stagedEnvelope(mutationProgress, .1, .23, .58),
+    relicMutationBoilEnergy(mutationProgress),
   );
 }
 
 function heartActivationEnergy(reactionProgress: number, mutationProgress: number) {
   'worklet';
   const reactionActivation = stagedEnvelope(reactionProgress, .036, .11, .76);
-  const mutationActivation = stagedEnvelope(mutationProgress, 0, .12, .56);
   const reactionPulse = .68 + Math.pow(Math.sin(reactionProgress * 3 * Math.PI), 2) * .32;
-  const mutationPulse = .9 + Math.pow(Math.sin(mutationProgress * 5 * Math.PI), 2) * .1;
 
   return Math.max(
     reactionActivation * reactionPulse,
-    mutationActivation * mutationPulse,
+    relicMutationOverheatEnergy(mutationProgress),
   );
-}
-
-function mutationFlashPhase(progress: number) {
-  'worklet';
-  return clamp01((progress - .3) / .22);
-}
-
-function mutationFlashOpacity(progress: number) {
-  'worklet';
-  if (progress < .3 || progress > .64) return 0;
-  if (progress < .36) return clamp01((progress - .3) / .06) * .9;
-  if (progress <= .43) return .9;
-  return (1 - clamp01((progress - .43) / .21)) * .9;
 }
 
 function positiveModulo(value: number, modulus: number) {
@@ -185,7 +339,11 @@ function relicBubblePhase(
   if (reactionProgress < 1) {
     return clamp01((reactionProgress - start) / Math.max(.01, duration));
   }
-  return positiveModulo(mutationProgress * 1.62 + start * .83, 1);
+  const cycleCount = 1.65 + clamp01((.38 - duration) / .22) * 1.55;
+  return positiveModulo(
+    relicMutationCharge(mutationProgress) * cycleCount + start * 1.37,
+    1,
+  );
 }
 
 function relicBubbleBodyOpacity(phase: number, energy: number, rise: number) {
@@ -204,6 +362,19 @@ function relicBubbleBurstOpacity(phase: number, energy: number, rise: number) {
   'worklet';
   const burst = relicBubbleBurstPhase(phase);
   return energy * Math.sin(burst * Math.PI) * .58 * clamp01(rise / 12);
+}
+
+function relicBubbleEnergy(
+  enabled: boolean,
+  mutationOnly: boolean,
+  reactionProgress: number,
+  mutationProgress: number,
+) {
+  'worklet';
+  if (!enabled) return 0;
+  return mutationOnly
+    ? relicMutationBoilEnergy(mutationProgress)
+    : liquidActivationEnergy(reactionProgress, mutationProgress);
 }
 
 function relicBubbleHorizontalOffset(phase: number, start: number, sway: number) {
@@ -273,15 +444,24 @@ function relicLiquidSurfaceOffsets(
   let right = 0;
 
   const reactionActive = reactionProgress < 1;
-  const driver = reactionActive ? reactionProgress : mutationProgress;
+  const driver = reactionActive ? reactionProgress : relicMutationCharge(mutationProgress);
   const energy = liquidActivationEnergy(reactionProgress, mutationProgress);
   if (energy > 0) {
-    const strength = reactionActive ? 1 : 1.7;
-    const damping = 1 - clamp01(driver) * .58;
+    const strength = reactionActive ? 1 : 1.78;
+    const damping = reactionActive ? 1 - clamp01(driver) * .58 : .72 + energy * .28;
     const sidePhase = clamp01((driver - .065) / .78);
-    center += Math.sin(driver * Math.PI * 5) * 8.2 * damping * energy * strength;
-    left += Math.sin(sidePhase * Math.PI * 4 + .48) * 4.4 * damping * energy * strength;
-    right += Math.sin(sidePhase * Math.PI * 4 - .48) * 4.4 * damping * energy * strength;
+    const frequency = reactionActive ? 5 : 5.4;
+    const centerWave = Math.sin(driver * Math.PI * frequency)
+      + Math.sin(driver * Math.PI * 9.2 + .73) * (reactionActive ? .08 : .26);
+    center += centerWave * 8.2 * damping * energy * strength;
+    left += (
+      Math.sin(sidePhase * Math.PI * (reactionActive ? 4 : 5.2) + .48)
+      + Math.sin(sidePhase * Math.PI * 8.4 + 1.2) * .16
+    ) * 4.4 * damping * energy * strength;
+    right += (
+      Math.sin(sidePhase * Math.PI * (reactionActive ? 4 : 5.2) - .48)
+      + Math.sin(sidePhase * Math.PI * 7.7 - .84) * .16
+    ) * 4.4 * damping * energy * strength;
   }
 
   // Simpson weighting keeps the represented surface height—and therefore the
@@ -348,22 +528,16 @@ const InteractiveRelicVial = forwardRef<InteractiveRelicVialHandle, Props>(funct
     playMutation() {
       cancelAnimation(mutationProgress);
       mutationProgress.value = 0;
-      if (reduceMotion) {
-        mutationProgress.value = 1;
-        finishMutationBurst();
-        finishMutation();
-        return;
-      }
       mutationProgress.value = withSequence(
-        withTiming(.36, {
-          duration: MUTATION_CHARGE_MS,
-          easing: Easing.in(Easing.quad),
+        withTiming(RELIC_MUTATION_RUPTURE_PROGRESS, {
+          duration: reduceMotion ? REDUCED_MUTATION_CHARGE_MS : RELIC_MUTATION_RUPTURE_MS,
+          easing: Easing.linear,
         }, (finished) => {
           if (finished) runOnJS(finishMutationBurst)();
         }),
         withTiming(1, {
-          duration: MUTATION_RELEASE_MS,
-          easing: Easing.out(Easing.cubic),
+          duration: reduceMotion ? REDUCED_MUTATION_RELEASE_MS : RELIC_MUTATION_RELEASE_MS,
+          easing: Easing.linear,
         }, (finished) => {
           if (finished) runOnJS(finishMutation)();
         }),
@@ -384,38 +558,30 @@ const InteractiveRelicVial = forwardRef<InteractiveRelicVialHandle, Props>(funct
   const oldVesselMotion = useAnimatedStyle(() => {
     if (!hasMutationTransition) return { opacity: 1, transform: [{ scale: 1 }] };
     return {
-      opacity: interpolate(
-        mutationProgress.value,
-        [0, .4, .55, .66],
-        [1, 1, .92, 0],
-        Extrapolation.CLAMP,
-      ),
-      transform: [{
-        scale: interpolate(
-          mutationProgress.value,
-          [0, .36, .52, .66],
-          [1, 1.018, 1.08, .94],
-          Extrapolation.CLAMP,
-        ),
-      }],
+      opacity: reduceMotion
+        ? interpolate(mutationProgress.value, [.34, .58], [1, 0], Extrapolation.CLAMP)
+        : relicMutationOldVesselOpacity(mutationProgress.value),
+      transform: [{ scale: 1 }],
     };
-  }, [hasMutationTransition]);
-  const newVesselMotion = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      mutationProgress.value,
-      [.57, .66, .82, 1],
-      [0, .08, 1, 1],
-      Extrapolation.CLAMP,
-    ),
-    transform: [{
-      scale: interpolate(
-        mutationProgress.value,
-        [.57, .68, .84, 1],
-        [.84, .94, 1.02, 1],
-        Extrapolation.CLAMP,
-      ),
-    }],
-  }));
+  }, [hasMutationTransition, reduceMotion]);
+  const newVesselMotion = useAnimatedStyle(() => {
+    const materialization = reduceMotion
+      ? clamp01((mutationProgress.value - .38) / .28)
+      : relicMutationMaterialization(mutationProgress.value);
+    const ambientReveal = reduceMotion
+      ? 0
+      : clamp01((mutationProgress.value - .67) / .13) * .16;
+    const materializedOpacity = interpolate(
+      materialization,
+      [0, .16, .7, 1],
+      [0, .18, .92, 1],
+    );
+    return {
+      // Both scene assets share the same artboard. Keeping their transforms
+      // fixed prevents the chamber itself from jumping while the vessel changes.
+      opacity: Math.max(ambientReveal, materializedOpacity),
+    };
+  }, [reduceMotion]);
 
   return (
     <View pointerEvents="none" style={[styles.viewport, { height, width }]} testID={testID}>
@@ -446,19 +612,21 @@ const InteractiveRelicVial = forwardRef<InteractiveRelicVialHandle, Props>(funct
       <RelicInteractionArtwork
         container={fromContainer}
         fillRatio={fillRatio}
+        hasMutationTransition={hasMutationTransition}
         height={height}
         mutationProgress={mutationProgress}
         reactionProgress={reactionProgress}
+        reduceMotion={reduceMotion}
         width={width}
       />
 
       {RELIC_STAGE_ARTWORK[fromContainer].foregroundPaths?.length ? (
-        <View style={StyleSheet.absoluteFill}>
+        <Animated.View style={[StyleSheet.absoluteFill, oldVesselMotion]}>
           <RelicVesselForegroundArtwork
             config={RELIC_STAGE_ARTWORK[fromContainer]}
             container={fromContainer}
           />
-        </View>
+        </Animated.View>
       ) : null}
     </View>
   );
@@ -469,9 +637,11 @@ export default InteractiveRelicVial;
 type RelicInteractionArtworkProps = {
   container: RelicContainer;
   fillRatio: number;
+  hasMutationTransition: boolean;
   height: number;
   mutationProgress: SharedValue<number>;
   reactionProgress: SharedValue<number>;
+  reduceMotion: boolean;
   width: number;
 };
 
@@ -483,9 +653,11 @@ function RelicInteractionArtwork(props: RelicInteractionArtworkProps) {
 function RelicInteractionSkiaArtwork({
   container,
   fillRatio,
+  hasMutationTransition,
   height,
   mutationProgress,
   reactionProgress,
+  reduceMotion,
   width,
 }: RelicInteractionArtworkProps) {
   const config = RELIC_STAGE_ARTWORK[container];
@@ -497,6 +669,7 @@ function RelicInteractionSkiaArtwork({
   const bubbleSource = relicLiquidSurfaceForLevel(config, config.liquidFloor);
   const ampouleAnatomy = useImage(AMPOULE_ANATOMY_ASSET);
   const dormantAmpouleAnatomy = useImage(AMPOULE_DORMANT_ANATOMY_ASSET);
+  const vesselImage = useImage(config.asset as number);
   const animatedLiquidPath = useDerivedValue(() => {
     const offsets = relicLiquidSurfaceOffsets(
       reactionProgress.value,
@@ -526,9 +699,52 @@ function RelicInteractionSkiaArtwork({
   const liquidEnergy = useDerivedValue(() => liquidPresent
     ? liquidActivationEnergy(reactionProgress.value, mutationProgress.value)
     : 0, [liquidPresent]);
-  const flashProgress = useDerivedValue(() => mutationFlashPhase(mutationProgress.value));
-  const flashRadius = useDerivedValue(() => 18 + flashProgress.value * 165);
-  const flashOpacity = useDerivedValue(() => mutationFlashOpacity(mutationProgress.value));
+  const mutationLiquidEnergy = useDerivedValue(() => (
+    hasMutationTransition && liquidPresent && !reduceMotion
+      ? relicMutationBoilEnergy(mutationProgress.value)
+      : 0
+  ), [hasMutationTransition, liquidPresent, reduceMotion]);
+  const oldContentOpacity = useDerivedValue(() => (
+    hasMutationTransition
+      ? reduceMotion
+        ? 1 - clamp01((mutationProgress.value - .34) / .24)
+        : relicMutationOldVesselOpacity(mutationProgress.value)
+      : 1
+  ), [hasMutationTransition, reduceMotion]);
+  const overheatOpacity = useDerivedValue(() => (
+    hasMutationTransition
+      ? relicMutationOverheatEnergy(mutationProgress.value) * (reduceMotion ? .38 : .66)
+      : 0
+  ), [hasMutationTransition, reduceMotion]);
+  const overheatAnatomyOpacity = useDerivedValue(() => (
+    hasMutationTransition
+      ? relicMutationOverheatEnergy(mutationProgress.value) * (reduceMotion ? .52 : .94)
+      : 0
+  ), [hasMutationTransition, reduceMotion]);
+  const overheatHeartTransform = useDerivedValue(() => ([
+    { scale: relicMutationHeartScale(mutationProgress.value) },
+  ]));
+  const overheatRadius = useDerivedValue(() => (
+    30 + relicMutationCharge(mutationProgress.value) * 50
+  ));
+  const flashPhase = useDerivedValue(() => relicMutationBurstPhase(mutationProgress.value));
+  const flashRadius = useDerivedValue(() => 34 + flashPhase.value * 184);
+  const flashOpacity = useDerivedValue(() => (
+    hasMutationTransition ? relicMutationFlashOpacity(mutationProgress.value) : 0
+  ), [hasMutationTransition]);
+  const shockwavePhase = useDerivedValue(() => (
+    relicMutationShockwavePhase(mutationProgress.value)
+  ));
+  const shockwaveRadius = useDerivedValue(() => 42 + shockwavePhase.value * 210);
+  const shockwaveOpacity = useDerivedValue(() => (
+    hasMutationTransition ? relicMutationShockwaveOpacity(mutationProgress.value) : 0
+  ), [hasMutationTransition]);
+  const shockwaveGlowOpacity = useDerivedValue(() => shockwaveOpacity.value * .28);
+  const materialization = useDerivedValue(() => (
+    hasMutationTransition && !reduceMotion
+      ? relicMutationMaterialization(mutationProgress.value)
+      : 0
+  ), [hasMutationTransition, reduceMotion]);
 
   return (
     <Canvas style={StyleSheet.absoluteFill}>
@@ -537,7 +753,7 @@ function RelicInteractionSkiaArtwork({
         fit="cover"
         src={rect(0, 0, ARTBOARD_SIZE, ARTBOARD_SIZE)}
       >
-        <Group clip={config.interiorPath}>
+        <Group clip={config.interiorPath} opacity={oldContentOpacity}>
           {liquidPresent ? (
             <Path path={animatedLiquidPath}>
               <LinearGradient
@@ -658,29 +874,122 @@ function RelicInteractionSkiaArtwork({
               sway={bubble.sway}
             />
           ))}
-        </Group>
 
-        <Group blendMode="screen">
-          {BURST_PARTICLES.map(([angle, distance, radius], index) => (
-            <RelicBurstParticle
-              angle={angle}
-              color={index % 3 === 1 ? '#FFD36B' : index % 3 === 2 ? '#A56BFF' : '#FF9B25'}
-              distance={distance}
-              key={`relic-burst-particle-${index}`}
-              progress={mutationProgress}
-              radius={radius}
+          {MUTATION_BUBBLES.map((bubble, index) => (
+            <RelicBubble
+              cx={bubbleSource.x + bubbleSource.width * .42 * bubble.horizontalPosition}
+              duration={bubble.duration}
+              energy={mutationLiquidEnergy}
+              floor={config.liquidFloor}
+              key={`relic-mutation-bubble-${index}`}
+              mutationProgress={mutationProgress}
+              radius={bubble.radius}
+              reactionProgress={reactionProgress}
+              sourceLift={bubble.sourceLift}
+              start={bubble.start}
+              surfaceLevel={level}
+              sway={bubble.sway}
             />
           ))}
 
+          {prototypeEnabled ? (
+            <Group
+              blendMode="screen"
+              clip={AMPOULE_HEART_REGION}
+              opacity={overheatAnatomyOpacity}
+              origin={vec(500, 638)}
+              transform={overheatHeartTransform}
+            >
+              <SkiaImage
+                fit="fill"
+                height={ARTBOARD_SIZE}
+                image={ampouleAnatomy}
+                width={ARTBOARD_SIZE}
+                x={0}
+                y={0}
+              />
+            </Group>
+          ) : null}
+          <Group blendMode="screen" clip={config.interiorPath} opacity={overheatOpacity}>
+            <Circle cx={500} cy={638} r={overheatRadius}>
+              <RadialGradient
+                c={vec(500, 638)}
+                colors={['#FFFFFF', '#FFD37A', 'rgba(255,55,0,.9)', 'rgba(119,0,20,0)']}
+                positions={[0, .12, .5, 1]}
+                r={overheatRadius}
+              />
+              <BlurMask blur={12} style="normal" />
+            </Circle>
+          </Group>
+        </Group>
+
+        {hasMutationTransition && !reduceMotion ? (
+          <Group clip={config.interiorPath}>
+            {MUTATION_CRACKS.map((crack, index) => (
+              <RelicMutationCrack
+                index={index}
+                key={`relic-mutation-crack-${index}`}
+                path={crack.path}
+                progress={mutationProgress}
+              />
+            ))}
+          </Group>
+        ) : null}
+
+        {hasMutationTransition && !reduceMotion ? MUTATION_SHARDS.map((shard, index) => (
+          <RelicMutationShard
+            image={vesselImage}
+            key={`relic-mutation-shard-${index}`}
+            progress={mutationProgress}
+            shard={shard}
+          />
+        )) : null}
+
+        <Group blendMode="screen">
           <Circle cx={500} cy={630} opacity={flashOpacity} r={flashRadius}>
             <RadialGradient
               c={vec(500, 630)}
-              colors={['#FFFFFF', '#FFD36B', 'rgba(255,104,0,.45)', 'rgba(255,80,0,0)']}
-              positions={[0, .18, .52, 1]}
-              r={183}
+              colors={['#FFFFFF', '#F2D8FF', 'rgba(169,74,255,.58)', 'rgba(112,20,184,0)']}
+              positions={[0, .16, .5, 1]}
+              r={flashRadius}
             />
           </Circle>
+
+          <Circle
+            color="#F6DEFF"
+            cx={500}
+            cy={630}
+            opacity={shockwaveGlowOpacity}
+            r={shockwaveRadius}
+            strokeWidth={9}
+            style="stroke"
+          >
+            <BlurMask blur={9} style="normal" />
+          </Circle>
+          <Circle
+            color="#F3CBFF"
+            cx={500}
+            cy={630}
+            opacity={shockwaveOpacity}
+            r={shockwaveRadius}
+            strokeWidth={2.2}
+            style="stroke"
+          />
+
+          {hasMutationTransition && !reduceMotion ? (
+            <RelicMutationMaterialization
+              phase={materialization}
+            />
+          ) : null}
         </Group>
+
+        {hasMutationTransition && !reduceMotion ? MUTATION_SPLASHES.map((splash, index) => (
+          <RelicMutationSplash
+            key={`relic-mutation-splash-${index}`}
+            progress={mutationProgress}
+            splash={splash}
+          />
+        )) : null}
       </FitBox>
     </Canvas>
   );
@@ -689,8 +998,10 @@ function RelicInteractionSkiaArtwork({
 function RelicInteractionSvgArtwork({
   container,
   fillRatio,
+  hasMutationTransition,
   mutationProgress,
   reactionProgress,
+  reduceMotion,
 }: RelicInteractionArtworkProps) {
   const config = RELIC_STAGE_ARTWORK[container];
   const uniqueId = useId().replace(/:/g, '');
@@ -699,6 +1010,7 @@ function RelicInteractionSvgArtwork({
   const immersedLiquidClipId = `interactive-relic-immersed-liquid-${uniqueId}`;
   const heartRegionId = `interactive-relic-heart-${uniqueId}`;
   const flashId = `interactive-relic-flash-${uniqueId}`;
+  const overheatId = `interactive-relic-overheat-${uniqueId}`;
   const liquidGradientId = `interactive-relic-liquid-depth-${uniqueId}`;
   const prototypeEnabled = container === 'ampoule';
   const level = relicLiquidLevelForRatio(config, fillRatio);
@@ -731,8 +1043,16 @@ function RelicInteractionSvgArtwork({
         : 0,
     };
   }, [prototypeEnabled]);
+  const oldContentStyle = useAnimatedStyle(() => ({
+    opacity: hasMutationTransition
+      ? reduceMotion
+        ? 1 - clamp01((mutationProgress.value - .34) / .24)
+        : relicMutationOldVesselOpacity(mutationProgress.value)
+      : 1,
+  }), [hasMutationTransition, reduceMotion]);
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <Animated.View style={[StyleSheet.absoluteFill, oldContentStyle]}>
       {liquidPresent ? (
         <View style={StyleSheet.absoluteFill}>
           <Svg height="100%" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 1000" width="100%">
@@ -908,36 +1228,108 @@ function RelicInteractionSvgArtwork({
                 sway={bubble.sway}
               />
             ))}
+            {MUTATION_BUBBLES.map((bubble, index) => (
+              <RelicSvgBubble
+                cx={bubbleSource.x + bubbleSource.width * .42 * bubble.horizontalPosition}
+                duration={bubble.duration}
+                enabled={hasMutationTransition && liquidPresent && !reduceMotion}
+                floor={config.liquidFloor}
+                key={`svg-relic-mutation-bubble-${index}`}
+                mutationOnly
+                mutationProgress={mutationProgress}
+                radius={bubble.radius}
+                reactionProgress={reactionProgress}
+                sourceLift={bubble.sourceLift}
+                start={bubble.start}
+                surfaceLevel={level}
+                sway={bubble.sway}
+              />
+            ))}
           </SvgGroup>
         </Svg>
       </View>
+      </Animated.View>
 
+      {hasMutationTransition ? (
       <View style={StyleSheet.absoluteFill}>
         <Svg height="100%" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 1000" width="100%">
           <SvgDefs>
             <SvgRadialGradient cx="50%" cy="50%" id={flashId} r="50%">
               <SvgStop offset="0" stopColor="#FFFFFF" />
-              <SvgStop offset=".22" stopColor="#FFD36B" />
-              <SvgStop offset=".58" stopColor="#FF6800" stopOpacity=".48" />
-              <SvgStop offset="1" stopColor="#FF5000" stopOpacity="0" />
+              <SvgStop offset=".16" stopColor="#F2D8FF" />
+              <SvgStop offset=".5" stopColor="#A94AFF" stopOpacity=".58" />
+              <SvgStop offset="1" stopColor="#7014B8" stopOpacity="0" />
             </SvgRadialGradient>
+            <SvgRadialGradient cx="50%" cy="50%" id={overheatId} r="50%">
+              <SvgStop offset="0" stopColor="#FFFFFF" />
+              <SvgStop offset=".12" stopColor="#FFD37A" />
+              <SvgStop offset=".5" stopColor="#FF3700" stopOpacity=".9" />
+              <SvgStop offset="1" stopColor="#770014" stopOpacity="0" />
+            </SvgRadialGradient>
+            <SvgClipPath id={`${clipId}-mutation-interior`}><SvgPath d={config.interiorPath} /></SvgClipPath>
+            <SvgClipPath id={`${clipId}-mutation-heart`}>
+              <SvgPath d={prototypeEnabled ? AMPOULE_HEART_REGION : config.interiorPath} />
+            </SvgClipPath>
+            {MUTATION_SHARDS.map((shard, index) => (
+              <SvgClipPath id={`${clipId}-shard-${index}`} key={`svg-relic-shard-clip-${index}`}>
+                <SvgPath d={shard.path} />
+              </SvgClipPath>
+            ))}
           </SvgDefs>
+          <SvgGroup clipPath={`url(#${clipId}-mutation-interior)`}>
+            <RelicSvgOverheatGlow
+              fill={`url(#${overheatId})`}
+              progress={mutationProgress}
+              reduceMotion={reduceMotion}
+            />
+          </SvgGroup>
+          {prototypeEnabled ? (
+            <SvgGroup clipPath={`url(#${clipId}-mutation-heart)`}>
+              <RelicSvgOverheatAnatomy
+                progress={mutationProgress}
+                reduceMotion={reduceMotion}
+              />
+            </SvgGroup>
+          ) : null}
+          {!reduceMotion ? (
+            <SvgGroup clipPath={`url(#${clipId}-mutation-interior)`}>
+              {MUTATION_CRACKS.map((crack, index) => (
+                <RelicSvgMutationCrack
+                  index={index}
+                  key={`svg-relic-mutation-crack-${index}`}
+                  length={crack.length}
+                  path={crack.path}
+                  progress={mutationProgress}
+                />
+              ))}
+            </SvgGroup>
+          ) : null}
+          {!reduceMotion ? MUTATION_SHARDS.map((shard, index) => (
+            <RelicSvgMutationShard
+              asset={config.asset}
+              clipId={`${clipId}-shard-${index}`}
+              key={`svg-relic-mutation-shard-${index}`}
+              progress={mutationProgress}
+              shard={shard}
+            />
+          )) : null}
           <RelicSvgMutationFlash
             fill={`url(#${flashId})`}
             progress={mutationProgress}
           />
-          {BURST_PARTICLES.map(([angle, distance, radius], index) => (
-            <RelicSvgBurstParticle
-              angle={angle}
-              distance={distance}
-              fill={index % 3 === 1 ? '#FFD36B' : index % 3 === 2 ? '#A56BFF' : '#FF9B25'}
-              key={`svg-relic-burst-particle-${index}`}
+          {!reduceMotion ? (
+            <RelicSvgMutationMaterialization progress={mutationProgress} />
+          ) : null}
+          {!reduceMotion ? MUTATION_SPLASHES.map((splash, index) => (
+            <RelicSvgMutationSplash
+              key={`svg-relic-mutation-splash-${index}`}
               progress={mutationProgress}
-              radius={radius}
+              splash={splash}
             />
-          ))}
+          )) : null}
         </Svg>
       </View>
+      ) : null}
     </View>
   );
 }
@@ -1009,6 +1401,7 @@ function RelicSvgBubble({
   duration,
   enabled,
   floor,
+  mutationOnly = false,
   mutationProgress,
   radius,
   reactionProgress,
@@ -1021,6 +1414,7 @@ function RelicSvgBubble({
   duration: number;
   enabled: boolean;
   floor: number;
+  mutationOnly?: boolean;
   mutationProgress: SharedValue<number>;
   radius: number;
   reactionProgress: SharedValue<number>;
@@ -1032,9 +1426,12 @@ function RelicSvgBubble({
   const sourceY = floor - sourceLift;
   const rise = Math.max(0, sourceY - (surfaceLevel + 2));
   const bodyProps = useAnimatedProps(() => {
-    const energy = enabled
-      ? liquidActivationEnergy(reactionProgress.value, mutationProgress.value)
-      : 0;
+    const energy = relicBubbleEnergy(
+      enabled,
+      mutationOnly,
+      reactionProgress.value,
+      mutationProgress.value,
+    );
     const phase = relicBubblePhase(
       reactionProgress.value,
       mutationProgress.value,
@@ -1047,12 +1444,15 @@ function RelicSvgBubble({
       d: relicBubbleBodyPath(bubbleCx, bubbleCy, radius, phase, start),
       opacity: relicBubbleBodyOpacity(phase, energy, rise),
     };
-  }, [cx, duration, enabled, radius, rise, sourceY, start, sway]);
+  }, [cx, duration, enabled, mutationOnly, radius, rise, sourceY, start, sway]);
 
   const ringProps = useAnimatedProps(() => {
-    const energy = enabled
-      ? liquidActivationEnergy(reactionProgress.value, mutationProgress.value)
-      : 0;
+    const energy = relicBubbleEnergy(
+      enabled,
+      mutationOnly,
+      reactionProgress.value,
+      mutationProgress.value,
+    );
     const phase = relicBubblePhase(
       reactionProgress.value,
       mutationProgress.value,
@@ -1065,12 +1465,15 @@ function RelicSvgBubble({
       d: relicBubbleBurstRingPath(surfaceCx, surfaceLevel + 2, radius, burst),
       opacity: relicBubbleBurstOpacity(phase, energy, rise),
     };
-  }, [cx, duration, enabled, radius, rise, start, surfaceLevel, sway]);
+  }, [cx, duration, enabled, mutationOnly, radius, rise, start, surfaceLevel, sway]);
 
   const leftDropletProps = useAnimatedProps(() => {
-    const energy = enabled
-      ? liquidActivationEnergy(reactionProgress.value, mutationProgress.value)
-      : 0;
+    const energy = relicBubbleEnergy(
+      enabled,
+      mutationOnly,
+      reactionProgress.value,
+      mutationProgress.value,
+    );
     const phase = relicBubblePhase(
       reactionProgress.value,
       mutationProgress.value,
@@ -1084,12 +1487,15 @@ function RelicSvgBubble({
       opacity: relicBubbleBurstOpacity(phase, energy, rise) * .76,
       r: Math.max(1, radius * .22) * (1 - burst * .35),
     };
-  }, [cx, duration, enabled, radius, rise, start, surfaceLevel, sway]);
+  }, [cx, duration, enabled, mutationOnly, radius, rise, start, surfaceLevel, sway]);
 
   const rightDropletProps = useAnimatedProps(() => {
-    const energy = enabled
-      ? liquidActivationEnergy(reactionProgress.value, mutationProgress.value)
-      : 0;
+    const energy = relicBubbleEnergy(
+      enabled,
+      mutationOnly,
+      reactionProgress.value,
+      mutationProgress.value,
+    );
     const phase = relicBubblePhase(
       reactionProgress.value,
       mutationProgress.value,
@@ -1103,7 +1509,7 @@ function RelicSvgBubble({
       opacity: relicBubbleBurstOpacity(phase, energy, rise) * .68,
       r: Math.max(.9, radius * .18) * (1 - burst * .3),
     };
-  }, [cx, duration, enabled, radius, rise, start, surfaceLevel, sway]);
+  }, [cx, duration, enabled, mutationOnly, radius, rise, start, surfaceLevel, sway]);
 
   return (
     <>
@@ -1132,49 +1538,473 @@ function RelicSvgMutationFlash({
   fill: string;
   progress: SharedValue<number>;
 }) {
-  const animatedProps = useAnimatedProps(() => ({
-    opacity: mutationFlashOpacity(progress.value),
-    r: 18 + mutationFlashPhase(progress.value) * 165,
+  const flashProps = useAnimatedProps(() => ({
+    opacity: relicMutationFlashOpacity(progress.value),
+    r: 34 + relicMutationBurstPhase(progress.value) * 184,
+  }));
+  const shockwaveProps = useAnimatedProps(() => ({
+    opacity: relicMutationShockwaveOpacity(progress.value),
+    r: 42 + relicMutationShockwavePhase(progress.value) * 210,
+  }));
+  const shockwaveGlowProps = useAnimatedProps(() => ({
+    opacity: relicMutationShockwaveOpacity(progress.value) * .28,
+    r: 42 + relicMutationShockwavePhase(progress.value) * 210,
   }));
 
   return (
-    <AnimatedSvgCircle
-      animatedProps={animatedProps}
-      cx={500}
-      cy={630}
-      fill={fill}
-    />
+    <>
+      <AnimatedSvgCircle
+        animatedProps={flashProps}
+        cx={500}
+        cy={630}
+        fill={fill}
+      />
+      <AnimatedSvgCircle
+        animatedProps={shockwaveGlowProps}
+        cx={500}
+        cy={630}
+        fill="none"
+        stroke="#F6DEFF"
+        strokeOpacity=".7"
+        strokeWidth="9"
+      />
+      <AnimatedSvgCircle
+        animatedProps={shockwaveProps}
+        cx={500}
+        cy={630}
+        fill="none"
+        stroke="#F3CBFF"
+        strokeWidth="2.2"
+      />
+    </>
   );
 }
 
-function RelicSvgBurstParticle({
-  angle,
-  distance,
+function RelicSvgOverheatGlow({
   fill,
   progress,
-  radius,
+  reduceMotion,
 }: {
-  angle: number;
-  distance: number;
   fill: string;
   progress: SharedValue<number>;
-  radius: number;
+  reduceMotion: boolean;
+}) {
+  const animatedProps = useAnimatedProps(() => ({
+    opacity: relicMutationOverheatEnergy(progress.value) * (reduceMotion ? .38 : .66),
+    r: 30 + relicMutationCharge(progress.value) * 50,
+  }), [reduceMotion]);
+
+  return <AnimatedSvgCircle animatedProps={animatedProps} cx={500} cy={638} fill={fill} />;
+}
+
+function RelicSvgOverheatAnatomy({
+  progress,
+  reduceMotion,
+}: {
+  progress: SharedValue<number>;
+  reduceMotion: boolean;
+}) {
+  const animatedProps = useAnimatedProps(() => ({
+    opacity: relicMutationOverheatEnergy(progress.value) * (reduceMotion ? .52 : .94),
+    transform: `translate(500 638) scale(${relicMutationHeartScale(progress.value)}) translate(-500 -638)`,
+  }), [reduceMotion]);
+
+  return (
+    <AnimatedSvgGroup animatedProps={animatedProps}>
+      <SvgImage
+        height={ARTBOARD_SIZE}
+        href={AMPOULE_ANATOMY_ASSET}
+        preserveAspectRatio="xMidYMid slice"
+        width={ARTBOARD_SIZE}
+        x={0}
+        y={0}
+      />
+    </AnimatedSvgGroup>
+  );
+}
+
+function RelicSvgMutationCrack({
+  index,
+  length,
+  path,
+  progress,
+}: {
+  index: number;
+  length: number;
+  path: string;
+  progress: SharedValue<number>;
+}) {
+  const animatedProps = useAnimatedProps(() => ({
+    opacity: relicMutationCrackOpacity(progress.value, index),
+    strokeDashoffset: length * (1 - relicMutationCrackProgress(progress.value, index)),
+  }), [index, length]);
+
+  return (
+    <>
+      <AnimatedSvgPath
+        animatedProps={animatedProps}
+        d={path}
+        fill="none"
+        stroke="#B8D9EE"
+        strokeDasharray={`${length} ${length}`}
+        strokeLinecap="butt"
+        strokeLinejoin="miter"
+        strokeOpacity=".38"
+        strokeWidth={1.7}
+      />
+      <AnimatedSvgPath
+        animatedProps={animatedProps}
+        d={path}
+        fill="none"
+        stroke="#F4E4FF"
+        strokeDasharray={`${length} ${length}`}
+        strokeLinecap="butt"
+        strokeLinejoin="miter"
+        strokeWidth={.62}
+      />
+    </>
+  );
+}
+
+function RelicSvgMutationShard({
+  asset,
+  clipId,
+  progress,
+  shard,
+}: {
+  asset: ImageSourcePropType;
+  clipId: string;
+  progress: SharedValue<number>;
+  shard: MutationShard;
 }) {
   const animatedProps = useAnimatedProps(() => {
-    const phase = clamp01((progress.value - .34) / .43);
+    const phase = relicMutationBurstPhase(progress.value, shard.delay);
     const eased = 1 - Math.pow(1 - phase, 3);
-    const opacity = progress.value < .34 || progress.value > .92
-      ? 0
-      : 1 - clamp01((progress.value - .68) / .24);
+    const translateX = shard.dx * eased;
+    const translateY = shard.dy * eased + 164 * phase * phase;
+    const rotation = shard.rotation * phase * 1.35;
     return {
-      cx: 500 + Math.cos(angle) * distance * eased,
-      cy: 630 + Math.sin(angle) * distance * eased + 120 * phase * phase,
-      opacity,
-      r: radius * (1 - phase * .54),
+      opacity: relicMutationShardOpacity(progress.value, shard.delay),
+      transform: `translate(${translateX} ${translateY}) rotate(${rotation} ${shard.centerX} ${shard.centerY})`,
     };
-  }, [angle, distance, radius]);
+  }, [shard]);
+  const glintProps = useAnimatedProps(() => ({
+    opacity: relicMutationShardGlintOpacity(progress.value, shard.delay),
+  }), [shard.delay]);
 
-  return <AnimatedSvgCircle animatedProps={animatedProps} fill={fill} />;
+  return (
+    <AnimatedSvgGroup animatedProps={animatedProps} clipPath={`url(#${clipId})`}>
+      <SvgImage
+        height={ARTBOARD_SIZE}
+        href={asset}
+        preserveAspectRatio="xMidYMid slice"
+        width={ARTBOARD_SIZE}
+        x={0}
+        y={0}
+      />
+      <SvgPath d={shard.path} fill="#31033E" fillOpacity=".22" stroke="#EED9FA" strokeOpacity=".76" strokeWidth="1.5" />
+      <AnimatedSvgPath
+        animatedProps={glintProps}
+        d={shard.path}
+        fill="none"
+        stroke="#FFFFFF"
+        strokeLinecap="round"
+        strokeWidth=".65"
+      />
+    </AnimatedSvgGroup>
+  );
+}
+
+function RelicSvgMutationSplash({
+  progress,
+  splash,
+}: {
+  progress: SharedValue<number>;
+  splash: MutationSplash;
+}) {
+  const groupProps = useAnimatedProps(() => {
+    const phase = relicMutationBurstPhase(progress.value, splash.delay);
+    const eased = 1 - Math.pow(1 - phase, 3);
+    const dry = relicMutationSplashDryProgress(progress.value, splash.delay);
+    const scale = splash.startScale + eased * (1.12 - splash.startScale) - dry * .09;
+    const translateX = splash.driftX * eased;
+    const translateY = splash.driftY * (.35 * eased + .65 * dry);
+    return {
+      transform: `translate(${translateX} ${translateY}) translate(${splash.centerX} ${splash.centerY}) scale(${scale}) translate(${-splash.centerX} ${-splash.centerY})`,
+    };
+  }, [splash]);
+  const fillProps = useAnimatedProps(() => ({
+    opacity: relicMutationSplashFillOpacity(progress.value, splash.delay),
+  }), [splash.delay]);
+  const edgeProps = useAnimatedProps(() => ({
+    opacity: relicMutationSplashEdgeOpacity(progress.value, splash.delay),
+  }), [splash.delay]);
+  const sheenProps = useAnimatedProps(() => ({
+    opacity: relicMutationSplashSheenOpacity(progress.value, splash.delay),
+  }), [splash.delay]);
+
+  return (
+    <AnimatedSvgGroup animatedProps={groupProps}>
+      <AnimatedSvgPath animatedProps={fillProps} d={splash.path} fill="#30033D" />
+      <AnimatedSvgPath
+        animatedProps={edgeProps}
+        d={splash.path}
+        fill="none"
+        stroke="#9A58A7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.75}
+      />
+      <AnimatedSvgPath
+        animatedProps={sheenProps}
+        d={splash.highlightPath}
+        fill="none"
+        stroke="#E6B9ED"
+        strokeLinecap="round"
+        strokeWidth={2.4}
+      />
+    </AnimatedSvgGroup>
+  );
+}
+
+function RelicSvgMutationMaterialization({
+  progress,
+}: {
+  progress: SharedValue<number>;
+}) {
+  const outerRingProps = useAnimatedProps(() => {
+    const phase = relicMutationMaterialization(progress.value);
+    return {
+      opacity: Math.sin(phase * Math.PI) * .52,
+      r: 30 + phase * 170,
+    };
+  });
+  const innerRingProps = useAnimatedProps(() => {
+    const phase = clamp01((relicMutationMaterialization(progress.value) - .14) / .86);
+    return {
+      opacity: Math.sin(phase * Math.PI) * .34,
+      r: 20 + phase * 120,
+    };
+  });
+  const coreProps = useAnimatedProps(() => {
+    const phase = relicMutationMaterialization(progress.value);
+    return {
+      opacity: Math.sin(phase * Math.PI) * .22,
+      r: 14 + phase * 64,
+    };
+  });
+  const streakProps = useAnimatedProps(() => {
+    const phase = relicMutationMaterialization(progress.value);
+    return { opacity: Math.sin(phase * Math.PI) * .32 };
+  });
+
+  return (
+    <>
+      <AnimatedSvgCircle animatedProps={outerRingProps} cx={500} cy={610} fill="none" stroke="#D5A6FF" strokeWidth={2} />
+      <AnimatedSvgCircle animatedProps={innerRingProps} cx={500} cy={610} fill="none" stroke="#7A2DAD" strokeWidth={4} />
+      <AnimatedSvgCircle animatedProps={coreProps} cx={500} cy={610} fill="#8A32C2" />
+      <AnimatedSvgPath
+        animatedProps={streakProps}
+        d="M500 300 L500 735 M464 340 L448 700 M536 340 L552 700"
+        fill="none"
+        stroke="#EBD9FF"
+        strokeLinecap="round"
+        strokeWidth={1.5}
+      />
+    </>
+  );
+}
+
+function RelicMutationCrack({
+  index,
+  path,
+  progress,
+}: {
+  index: number;
+  path: string;
+  progress: SharedValue<number>;
+}) {
+  const drawProgress = useDerivedValue(() => (
+    relicMutationCrackProgress(progress.value, index)
+  ));
+  const opacity = useDerivedValue(() => (
+    relicMutationCrackOpacity(progress.value, index)
+  ));
+  const glowOpacity = useDerivedValue(() => opacity.value * .24);
+
+  return (
+    <Group>
+      <Path
+        color="#B8D9EE"
+        end={drawProgress}
+        opacity={glowOpacity}
+        path={path}
+        strokeCap="butt"
+        strokeJoin="miter"
+        strokeWidth={1.7}
+        style="stroke"
+      >
+        <BlurMask blur={5} style="normal" />
+      </Path>
+      <Path
+        color="#F4E4FF"
+        end={drawProgress}
+        opacity={opacity}
+        path={path}
+        strokeCap="butt"
+        strokeJoin="miter"
+        strokeWidth={.62}
+        style="stroke"
+      />
+    </Group>
+  );
+}
+
+function RelicMutationShard({
+  image,
+  progress,
+  shard,
+}: {
+  image: SkImage | null;
+  progress: SharedValue<number>;
+  shard: MutationShard;
+}) {
+  const phase = useDerivedValue(() => relicMutationBurstPhase(progress.value, shard.delay));
+  const opacity = useDerivedValue(() => (
+    relicMutationShardOpacity(progress.value, shard.delay)
+  ));
+  const glintOpacity = useDerivedValue(() => (
+    relicMutationShardGlintOpacity(progress.value, shard.delay)
+  ));
+  const transform = useDerivedValue(() => {
+    const eased = 1 - Math.pow(1 - phase.value, 3);
+    return [
+      { translateX: shard.dx * eased },
+      { translateY: shard.dy * eased + 164 * phase.value * phase.value },
+      { rotate: shard.rotation * (Math.PI / 180) * phase.value * 1.35 },
+    ];
+  });
+
+  return (
+    <Group
+      clip={shard.path}
+      opacity={opacity}
+      origin={vec(shard.centerX, shard.centerY)}
+      transform={transform}
+    >
+      <SkiaImage
+        fit="fill"
+        height={ARTBOARD_SIZE}
+        image={image}
+        width={ARTBOARD_SIZE}
+        x={0}
+        y={0}
+      />
+      <Path color="rgba(49,3,62,.22)" path={shard.path} />
+      <Path
+        color="rgba(238,217,250,.76)"
+        path={shard.path}
+        strokeWidth={1.5}
+        style="stroke"
+      />
+      <Path
+        color="#FFFFFF"
+        opacity={glintOpacity}
+        path={shard.path}
+        strokeCap="round"
+        strokeWidth={.65}
+        style="stroke"
+      />
+    </Group>
+  );
+}
+
+function RelicMutationSplash({
+  progress,
+  splash,
+}: {
+  progress: SharedValue<number>;
+  splash: MutationSplash;
+}) {
+  const phase = useDerivedValue(() => relicMutationBurstPhase(progress.value, splash.delay));
+  const transform = useDerivedValue(() => {
+    const eased = 1 - Math.pow(1 - phase.value, 3);
+    const dry = relicMutationSplashDryProgress(progress.value, splash.delay);
+    const scale = splash.startScale + eased * (1.12 - splash.startScale) - dry * .09;
+    return [
+      { translateX: splash.driftX * eased },
+      { translateY: splash.driftY * (.35 * eased + .65 * dry) },
+      { scale },
+    ];
+  });
+  const fillOpacity = useDerivedValue(() => (
+    relicMutationSplashFillOpacity(progress.value, splash.delay)
+  ));
+  const edgeOpacity = useDerivedValue(() => (
+    relicMutationSplashEdgeOpacity(progress.value, splash.delay)
+  ));
+  const sheenOpacity = useDerivedValue(() => (
+    relicMutationSplashSheenOpacity(progress.value, splash.delay)
+  ));
+
+  return (
+    <Group
+      origin={vec(splash.centerX, splash.centerY)}
+      transform={transform}
+    >
+      <Path color="#30033D" opacity={fillOpacity} path={splash.path} />
+      <Path
+        color="#9A58A7"
+        opacity={edgeOpacity}
+        path={splash.path}
+        strokeCap="round"
+        strokeJoin="round"
+        strokeWidth={1.75}
+        style="stroke"
+      />
+      <Path
+        color="#E6B9ED"
+        opacity={sheenOpacity}
+        path={splash.highlightPath}
+        strokeCap="round"
+        strokeWidth={2.4}
+        style="stroke"
+      />
+    </Group>
+  );
+}
+
+function RelicMutationMaterialization({
+  phase,
+}: {
+  phase: SharedValue<number>;
+}) {
+  const outerRadius = useDerivedValue(() => 30 + phase.value * 170);
+  const outerOpacity = useDerivedValue(() => Math.sin(phase.value * Math.PI) * .52);
+  const innerPhase = useDerivedValue(() => clamp01((phase.value - .14) / .86));
+  const innerRadius = useDerivedValue(() => 20 + innerPhase.value * 120);
+  const innerOpacity = useDerivedValue(() => Math.sin(innerPhase.value * Math.PI) * .34);
+  const coreRadius = useDerivedValue(() => 14 + phase.value * 64);
+  const coreOpacity = useDerivedValue(() => Math.sin(phase.value * Math.PI) * .22);
+  const streakOpacity = useDerivedValue(() => Math.sin(phase.value * Math.PI) * .32);
+
+  return (
+    <Group>
+      <Circle color="#D5A6FF" cx={500} cy={610} opacity={outerOpacity} r={outerRadius} strokeWidth={2} style="stroke" />
+      <Circle color="#7A2DAD" cx={500} cy={610} opacity={innerOpacity} r={innerRadius} strokeWidth={4} style="stroke" />
+      <Circle color="#8A32C2" cx={500} cy={610} opacity={coreOpacity} r={coreRadius}>
+        <BlurMask blur={14} style="normal" />
+      </Circle>
+      <Path
+        color="#EBD9FF"
+        opacity={streakOpacity}
+        path="M500 300 L500 735 M464 340 L448 700 M536 340 L552 700"
+        strokeCap="round"
+        strokeWidth={1.5}
+        style="stroke"
+      />
+    </Group>
+  );
 }
 
 function RelicBubble({
@@ -1275,38 +2105,6 @@ function RelicBubble({
         r={rightDropletRadius}
       />
     </Group>
-  );
-}
-
-function RelicBurstParticle({
-  angle,
-  color,
-  distance,
-  progress,
-  radius,
-}: {
-  angle: number;
-  color: string;
-  distance: number;
-  progress: SharedValue<number>;
-  radius: number;
-}) {
-  const phase = useDerivedValue(() => clamp01((progress.value - .34) / .43));
-  const eased = useDerivedValue(() => 1 - Math.pow(1 - phase.value, 3));
-  const cx = useDerivedValue(() => 500 + Math.cos(angle) * distance * eased.value);
-  const cy = useDerivedValue(() => (
-    630 + Math.sin(angle) * distance * eased.value + 120 * phase.value * phase.value
-  ));
-  const opacity = useDerivedValue(() => {
-    if (progress.value < .34 || progress.value > .92) return 0;
-    return 1 - clamp01((progress.value - .68) / .24);
-  });
-  const animatedRadius = useDerivedValue(() => radius * (1 - phase.value * .54));
-
-  return (
-    <Circle color={color} cx={cx} cy={cy} opacity={opacity} r={animatedRadius}>
-      <BlurMask blur={3} style="solid" />
-    </Circle>
   );
 }
 

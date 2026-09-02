@@ -99,6 +99,7 @@ export default function CollectiveRelic({
   }, []);
 
   const handleLongPress = useCallback(() => {
+    if (mutationInFlightRef.current) return;
     longPressTriggeredRef.current = true;
     haptic(Haptics.ImpactFeedbackStyle.Medium);
     vialRef.current?.playReaction();

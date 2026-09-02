@@ -5,6 +5,22 @@ import {
   resolveRelicInteractionPresentation,
   resolveRelicPressAction,
 } from '../relicInteraction';
+import {
+  RELIC_MUTATION_DURATION_MS,
+  RELIC_MUTATION_RELEASE_MS,
+  RELIC_MUTATION_RUPTURE_MS,
+  RELIC_MUTATION_RUPTURE_PROGRESS,
+  relicMutationBoilEnergy,
+  relicMutationCrackOpacity,
+  relicMutationCrackProgress,
+  relicMutationHeartScale,
+  relicMutationMaterialization,
+  relicMutationOldVesselOpacity,
+  relicMutationOverheatEnergy,
+  relicMutationShockwaveOpacity,
+  relicMutationSplashEdgeOpacity,
+  relicMutationSplashFillOpacity,
+} from '../relicMutationMotion';
 import type { CommunityMutationPresentation } from '../types';
 
 const AMPOULE_TO_FIOLE: CommunityMutationPresentation = {
@@ -129,5 +145,59 @@ describe('relic elixir fill ratio', () => {
       levelProgress: 3,
       mutationPending: false,
     })).toBe(1);
+  });
+});
+
+describe('relic mutation motion', () => {
+  it('keeps the detailed mutation on an exact four-second timeline', () => {
+    expect(RELIC_MUTATION_DURATION_MS).toBe(4_000);
+    expect(RELIC_MUTATION_RUPTURE_MS).toBe(2_200);
+    expect(RELIC_MUTATION_RELEASE_MS).toBe(1_800);
+    expect(RELIC_MUTATION_RUPTURE_PROGRESS).toBe(.55);
+    expect(RELIC_MUTATION_RUPTURE_MS / RELIC_MUTATION_DURATION_MS).toBe(
+      RELIC_MUTATION_RUPTURE_PROGRESS,
+    );
+  });
+
+  it('builds heat and viscous boiling before the 2 200 ms rupture', () => {
+    expect(relicMutationOverheatEnergy(0)).toBe(0);
+    expect(relicMutationBoilEnergy(0)).toBe(0);
+    expect(relicMutationOverheatEnergy(.32)).toBeGreaterThan(0);
+    expect(relicMutationBoilEnergy(.32)).toBeGreaterThan(.75);
+    expect(relicMutationHeartScale(.32)).toBeGreaterThan(1);
+    expect(relicMutationOverheatEnergy(.7)).toBe(0);
+    expect(relicMutationBoilEnergy(.7)).toBe(0);
+  });
+
+  it('draws staggered cracks and clears them immediately after rupture', () => {
+    expect(relicMutationCrackProgress(.42, 0)).toBe(0);
+    expect(relicMutationCrackProgress(.49, 0)).toBeGreaterThan(0);
+    expect(relicMutationCrackProgress(.49, 6)).toBeLessThan(
+      relicMutationCrackProgress(.49, 0),
+    );
+    expect(relicMutationCrackOpacity(RELIC_MUTATION_RUPTURE_PROGRESS, 0)).toBe(1);
+    expect(relicMutationCrackOpacity(.64, 0)).toBe(0);
+  });
+
+  it('removes the old vessel and materializes the next one after rupture', () => {
+    expect(relicMutationOldVesselOpacity(RELIC_MUTATION_RUPTURE_PROGRESS)).toBe(1);
+    expect(relicMutationOldVesselOpacity(.66)).toBe(0);
+    expect(relicMutationMaterialization(.79)).toBe(0);
+    expect(relicMutationMaterialization(.9)).toBeGreaterThan(0);
+    expect(relicMutationMaterialization(1)).toBe(1);
+  });
+
+  it('emits a short shockwave only after the rupture', () => {
+    expect(relicMutationShockwaveOpacity(.54)).toBe(0);
+    expect(relicMutationShockwaveOpacity(.62)).toBeGreaterThan(0);
+    expect(relicMutationShockwaveOpacity(.72)).toBeCloseTo(0);
+  });
+
+  it('dries splash fill before its remaining edge evaporates', () => {
+    expect(relicMutationSplashFillOpacity(.64)).toBeGreaterThan(0);
+    expect(relicMutationSplashEdgeOpacity(.64)).toBeGreaterThan(0);
+    expect(relicMutationSplashFillOpacity(.82)).toBe(0);
+    expect(relicMutationSplashEdgeOpacity(.82)).toBeGreaterThan(0);
+    expect(relicMutationSplashEdgeOpacity(1)).toBe(0);
   });
 });
