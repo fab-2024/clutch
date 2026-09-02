@@ -101,6 +101,26 @@ const AMPOULE_ROOT_BANDS = {
   upper: 'M445 430 H555 V505 H445 Z',
 } as const;
 
+const GLASS_REFRACTION_STREAKS = [
+  { opacity: .1, path: 'M479 302 C485 374 481 438 474 497 C467 560 471 628 486 681', width: 1.15 },
+  { opacity: .075, path: 'M521 319 C516 388 519 451 527 514 C533 572 528 632 515 680', width: .85 },
+  { opacity: .06, path: 'M488 330 C493 401 491 466 486 528 C482 578 485 625 493 665', width: .6 },
+] as const;
+
+const GLASS_MICRO_SCRATCHES = [
+  { opacity: .13, path: 'M476 510 L484 493', width: .72 },
+  { opacity: .09, path: 'M521 548 L516 568', width: .58 },
+  { opacity: .11, path: 'M481 619 L487 606', width: .65 },
+  { opacity: .08, path: 'M516 383 L512 397', width: .52 },
+  { opacity: .07, path: 'M491 458 L496 448', width: .46 },
+] as const;
+
+const GLASS_THERMAL_VEILS = [
+  'M474 490 C488 501 492 519 483 535 C476 549 478 564 490 576',
+  'M523 506 C510 519 509 537 518 551 C526 564 523 580 512 591',
+  'M479 601 C490 612 492 627 486 641',
+] as const;
+
 const BUBBLES = [
   { duration: .4, horizontalPosition: -.72, radius: 5, sourceLift: 12, start: .08, sway: -10 },
   { duration: .48, horizontalPosition: -.35, radius: 7, sourceLift: 34, start: .13, sway: 13 },
@@ -302,6 +322,22 @@ function rootBandEnergy(
   const pulse = .78 + Math.pow(Math.sin(
     (reactionProgress * 2.2 + mutationProgress * 3.8) * Math.PI,
   ), 2) * .22;
+  return activation * pulse;
+}
+
+function mutationRootBandOverheatEnergy(
+  mutationProgress: number,
+  mutationStart: number,
+  mutationEnd: number,
+) {
+  'worklet';
+  const activation = stagedEnvelope(
+    mutationProgress,
+    mutationStart,
+    mutationEnd,
+    .54,
+  );
+  const pulse = .78 + Math.pow(Math.sin(mutationProgress * 3.8 * Math.PI), 2) * .22;
   return activation * pulse;
 }
 
@@ -721,6 +757,24 @@ function RelicInteractionSkiaArtwork({
       ? relicMutationOverheatEnergy(mutationProgress.value) * (reduceMotion ? .52 : .94)
       : 0
   ), [hasMutationTransition, reduceMotion]);
+  const lowerRootOverheatOpacity = useDerivedValue(() => (
+    prototypeEnabled && hasMutationTransition
+      ? mutationRootBandOverheatEnergy(mutationProgress.value, .06, .17)
+        * (reduceMotion ? .3 : .58)
+      : 0
+  ), [hasMutationTransition, prototypeEnabled, reduceMotion]);
+  const middleRootOverheatOpacity = useDerivedValue(() => (
+    prototypeEnabled && hasMutationTransition
+      ? mutationRootBandOverheatEnergy(mutationProgress.value, .11, .22)
+        * (reduceMotion ? .3 : .58)
+      : 0
+  ), [hasMutationTransition, prototypeEnabled, reduceMotion]);
+  const upperRootOverheatOpacity = useDerivedValue(() => (
+    prototypeEnabled && hasMutationTransition
+      ? mutationRootBandOverheatEnergy(mutationProgress.value, .17, .3)
+        * (reduceMotion ? .3 : .58)
+      : 0
+  ), [hasMutationTransition, prototypeEnabled, reduceMotion]);
   const overheatHeartTransform = useDerivedValue(() => ([
     { scale: relicMutationHeartScale(mutationProgress.value) },
   ]));
@@ -781,6 +835,31 @@ function RelicInteractionSkiaArtwork({
             </Group>
           ) : null}
 
+          {prototypeEnabled && liquidPresent ? (
+            <Group clip={animatedLiquidPath}>
+              <Group clip={AMPOULE_ROOT_REGION}>
+                <SkiaImage
+                  fit="fill"
+                  height={ARTBOARD_SIZE}
+                  image={dormantAmpouleAnatomy}
+                  width={ARTBOARD_SIZE}
+                  x={0}
+                  y={0}
+                />
+              </Group>
+              <Group clip={AMPOULE_HEART_REGION}>
+                <SkiaImage
+                  fit="fill"
+                  height={ARTBOARD_SIZE}
+                  image={dormantAmpouleAnatomy}
+                  width={ARTBOARD_SIZE}
+                  x={0}
+                  y={0}
+                />
+              </Group>
+            </Group>
+          ) : null}
+
           <Group blendMode="screen" clip={AMPOULE_ROOT_BANDS.lower} opacity={lowerRootEnergy}>
             <SkiaImage
               fit="fill"
@@ -822,31 +901,6 @@ function RelicInteractionSkiaArtwork({
               y={0}
             />
           </Group>
-
-          {prototypeEnabled && liquidPresent ? (
-            <Group clip={animatedLiquidPath}>
-              <Group clip={AMPOULE_ROOT_REGION}>
-                <SkiaImage
-                  fit="fill"
-                  height={ARTBOARD_SIZE}
-                  image={dormantAmpouleAnatomy}
-                  width={ARTBOARD_SIZE}
-                  x={0}
-                  y={0}
-                />
-              </Group>
-              <Group clip={AMPOULE_HEART_REGION}>
-                <SkiaImage
-                  fit="fill"
-                  height={ARTBOARD_SIZE}
-                  image={dormantAmpouleAnatomy}
-                  width={ARTBOARD_SIZE}
-                  x={0}
-                  y={0}
-                />
-              </Group>
-            </Group>
-          ) : null}
 
           {liquidPresent ? (
             <Path
@@ -892,6 +946,53 @@ function RelicInteractionSkiaArtwork({
             />
           ))}
 
+          {prototypeEnabled && hasMutationTransition ? (
+            <>
+              <Group
+                blendMode="screen"
+                clip={AMPOULE_ROOT_BANDS.lower}
+                opacity={lowerRootOverheatOpacity}
+              >
+                <SkiaImage
+                  fit="fill"
+                  height={ARTBOARD_SIZE}
+                  image={ampouleAnatomy}
+                  width={ARTBOARD_SIZE}
+                  x={0}
+                  y={0}
+                />
+              </Group>
+              <Group
+                blendMode="screen"
+                clip={AMPOULE_ROOT_BANDS.middle}
+                opacity={middleRootOverheatOpacity}
+              >
+                <SkiaImage
+                  fit="fill"
+                  height={ARTBOARD_SIZE}
+                  image={ampouleAnatomy}
+                  width={ARTBOARD_SIZE}
+                  x={0}
+                  y={0}
+                />
+              </Group>
+              <Group
+                blendMode="screen"
+                clip={AMPOULE_ROOT_BANDS.upper}
+                opacity={upperRootOverheatOpacity}
+              >
+                <SkiaImage
+                  fit="fill"
+                  height={ARTBOARD_SIZE}
+                  image={ampouleAnatomy}
+                  width={ARTBOARD_SIZE}
+                  x={0}
+                  y={0}
+                />
+              </Group>
+            </>
+          ) : null}
+
           {prototypeEnabled ? (
             <Group
               blendMode="screen"
@@ -921,6 +1022,12 @@ function RelicInteractionSkiaArtwork({
               <BlurMask blur={12} style="normal" />
             </Circle>
           </Group>
+
+          <RelicSkiaGlassTexture
+            interiorPath={config.interiorPath}
+            mutationProgress={mutationProgress}
+            thermalEnabled={hasMutationTransition && !reduceMotion}
+          />
         </Group>
 
         {hasMutationTransition && !reduceMotion ? (
@@ -985,6 +1092,7 @@ function RelicInteractionSkiaArtwork({
 
         {hasMutationTransition && !reduceMotion ? MUTATION_SPLASHES.map((splash, index) => (
           <RelicMutationSplash
+            image={vesselImage}
             key={`relic-mutation-splash-${index}`}
             progress={mutationProgress}
             splash={splash}
@@ -1012,6 +1120,11 @@ function RelicInteractionSvgArtwork({
   const flashId = `interactive-relic-flash-${uniqueId}`;
   const overheatId = `interactive-relic-overheat-${uniqueId}`;
   const liquidGradientId = `interactive-relic-liquid-depth-${uniqueId}`;
+  const splashGradientId = `interactive-relic-splash-volume-${uniqueId}`;
+  const mutationHeartClipId = `${clipId}-mutation-heart`;
+  const mutationLowerRootClipId = `${clipId}-mutation-root-lower`;
+  const mutationMiddleRootClipId = `${clipId}-mutation-root-middle`;
+  const mutationUpperRootClipId = `${clipId}-mutation-root-upper`;
   const prototypeEnabled = container === 'ampoule';
   const level = relicLiquidLevelForRatio(config, fillRatio);
   const liquidVolumePath = relicLiquidVolumePathForLevel(config, level, 10);
@@ -1095,6 +1208,39 @@ function RelicInteractionSvgArtwork({
         </View>
       ) : null}
 
+      {prototypeEnabled && liquidPresent ? (
+        <View style={StyleSheet.absoluteFill}>
+          <Svg height="100%" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 1000" width="100%">
+            <SvgDefs>
+              <SvgClipPath id={`${clipId}-immersed-interior`}>
+                <SvgPath d={config.interiorPath} />
+              </SvgClipPath>
+              <SvgClipPath id={immersedLiquidClipId}>
+                <AnimatedSvgPath animatedProps={liquidVolumeProps} />
+              </SvgClipPath>
+              <SvgClipPath id={anatomyRegionId}>
+                <SvgPath d={AMPOULE_ROOT_REGION} />
+                <SvgPath d={AMPOULE_HEART_REGION} />
+              </SvgClipPath>
+            </SvgDefs>
+            <SvgGroup clipPath={`url(#${clipId}-immersed-interior)`}>
+              <SvgGroup clipPath={`url(#${immersedLiquidClipId})`}>
+                <SvgGroup clipPath={`url(#${anatomyRegionId})`}>
+                  <SvgImage
+                    height={ARTBOARD_SIZE}
+                    href={AMPOULE_DORMANT_ANATOMY_ASSET}
+                    preserveAspectRatio="xMidYMid slice"
+                    width={ARTBOARD_SIZE}
+                    x={0}
+                    y={0}
+                  />
+                </SvgGroup>
+              </SvgGroup>
+            </SvgGroup>
+          </Svg>
+        </View>
+      ) : null}
+
       <RelicSvgRootBand
         enabled={prototypeEnabled}
         interiorPath={config.interiorPath}
@@ -1152,39 +1298,6 @@ function RelicInteractionSvgArtwork({
           </SvgGroup>
         </Svg>
       </Animated.View>
-
-      {prototypeEnabled && liquidPresent ? (
-        <View style={StyleSheet.absoluteFill}>
-          <Svg height="100%" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 1000" width="100%">
-            <SvgDefs>
-              <SvgClipPath id={`${clipId}-immersed-interior`}>
-                <SvgPath d={config.interiorPath} />
-              </SvgClipPath>
-              <SvgClipPath id={immersedLiquidClipId}>
-                <AnimatedSvgPath animatedProps={liquidVolumeProps} />
-              </SvgClipPath>
-              <SvgClipPath id={anatomyRegionId}>
-                <SvgPath d={AMPOULE_ROOT_REGION} />
-                <SvgPath d={AMPOULE_HEART_REGION} />
-              </SvgClipPath>
-            </SvgDefs>
-            <SvgGroup clipPath={`url(#${clipId}-immersed-interior)`}>
-              <SvgGroup clipPath={`url(#${immersedLiquidClipId})`}>
-                <SvgGroup clipPath={`url(#${anatomyRegionId})`}>
-                  <SvgImage
-                    height={ARTBOARD_SIZE}
-                    href={AMPOULE_DORMANT_ANATOMY_ASSET}
-                    preserveAspectRatio="xMidYMid slice"
-                    width={ARTBOARD_SIZE}
-                    x={0}
-                    y={0}
-                  />
-                </SvgGroup>
-              </SvgGroup>
-            </SvgGroup>
-          </Svg>
-        </View>
-      ) : null}
 
       {liquidPresent ? (
         <View style={StyleSheet.absoluteFill}>
@@ -1248,6 +1361,13 @@ function RelicInteractionSvgArtwork({
           </SvgGroup>
         </Svg>
       </View>
+
+      <RelicSvgGlassTexture
+        interiorPath={config.interiorPath}
+        mutationProgress={mutationProgress}
+        thermalEnabled={hasMutationTransition && !reduceMotion}
+        uniqueId={uniqueId}
+      />
       </Animated.View>
 
       {hasMutationTransition ? (
@@ -1266,13 +1386,40 @@ function RelicInteractionSvgArtwork({
               <SvgStop offset=".5" stopColor="#FF3700" stopOpacity=".9" />
               <SvgStop offset="1" stopColor="#770014" stopOpacity="0" />
             </SvgRadialGradient>
+            <SvgRadialGradient
+              cx="58%"
+              cy="64%"
+              fx="30%"
+              fy="22%"
+              id={splashGradientId}
+              r="78%"
+            >
+              <SvgStop offset="0" stopColor="#120018" stopOpacity=".98" />
+              <SvgStop offset=".42" stopColor="#25002F" stopOpacity=".97" />
+              <SvgStop offset=".76" stopColor="#52145F" stopOpacity=".9" />
+              <SvgStop offset="1" stopColor="#B47ABE" stopOpacity=".5" />
+            </SvgRadialGradient>
             <SvgClipPath id={`${clipId}-mutation-interior`}><SvgPath d={config.interiorPath} /></SvgClipPath>
-            <SvgClipPath id={`${clipId}-mutation-heart`}>
+            <SvgClipPath id={mutationHeartClipId}>
               <SvgPath d={prototypeEnabled ? AMPOULE_HEART_REGION : config.interiorPath} />
+            </SvgClipPath>
+            <SvgClipPath id={mutationLowerRootClipId}>
+              <SvgPath d={AMPOULE_ROOT_BANDS.lower} />
+            </SvgClipPath>
+            <SvgClipPath id={mutationMiddleRootClipId}>
+              <SvgPath d={AMPOULE_ROOT_BANDS.middle} />
+            </SvgClipPath>
+            <SvgClipPath id={mutationUpperRootClipId}>
+              <SvgPath d={AMPOULE_ROOT_BANDS.upper} />
             </SvgClipPath>
             {MUTATION_SHARDS.map((shard, index) => (
               <SvgClipPath id={`${clipId}-shard-${index}`} key={`svg-relic-shard-clip-${index}`}>
                 <SvgPath d={shard.path} />
+              </SvgClipPath>
+            ))}
+            {MUTATION_SPLASHES.map((splash, index) => (
+              <SvgClipPath id={`${clipId}-splash-${index}`} key={`svg-relic-splash-clip-${index}`}>
+                <SvgPath d={splash.path} />
               </SvgClipPath>
             ))}
           </SvgDefs>
@@ -1284,10 +1431,14 @@ function RelicInteractionSvgArtwork({
             />
           </SvgGroup>
           {prototypeEnabled ? (
-            <SvgGroup clipPath={`url(#${clipId}-mutation-heart)`}>
+            <SvgGroup clipPath={`url(#${clipId}-mutation-interior)`}>
               <RelicSvgOverheatAnatomy
+                heartClipId={mutationHeartClipId}
+                lowerRootClipId={mutationLowerRootClipId}
+                middleRootClipId={mutationMiddleRootClipId}
                 progress={mutationProgress}
                 reduceMotion={reduceMotion}
+                upperRootClipId={mutationUpperRootClipId}
               />
             </SvgGroup>
           ) : null}
@@ -1322,6 +1473,9 @@ function RelicInteractionSvgArtwork({
           ) : null}
           {!reduceMotion ? MUTATION_SPLASHES.map((splash, index) => (
             <RelicSvgMutationSplash
+              asset={config.asset}
+              clipId={`${clipId}-splash-${index}`}
+              fill={`url(#${splashGradientId})`}
               key={`svg-relic-mutation-splash-${index}`}
               progress={mutationProgress}
               splash={splash}
@@ -1330,6 +1484,159 @@ function RelicInteractionSvgArtwork({
         </Svg>
       </View>
       ) : null}
+    </View>
+  );
+}
+
+function RelicSkiaGlassTexture({
+  interiorPath,
+  mutationProgress,
+  thermalEnabled,
+}: {
+  interiorPath: string;
+  mutationProgress: SharedValue<number>;
+  thermalEnabled: boolean;
+}) {
+  const thermalOpacity = useDerivedValue(() => (
+    thermalEnabled
+      ? Math.max(
+          relicMutationOverheatEnergy(mutationProgress.value),
+          relicMutationBoilEnergy(mutationProgress.value),
+        ) * .2
+      : 0
+  ), [thermalEnabled]);
+
+  return (
+    <Group clip={interiorPath}>
+      <Path
+        path={interiorPath}
+        strokeWidth={2.4}
+        style="stroke"
+      >
+        <LinearGradient
+          colors={['rgba(235,232,255,.16)', 'rgba(115,87,154,.04)', 'rgba(224,216,255,.13)']}
+          end={vec(556, 690)}
+          positions={[0, .52, 1]}
+          start={vec(447, 300)}
+        />
+      </Path>
+      {GLASS_REFRACTION_STREAKS.map((detail, index) => (
+        <Path
+          color="#E5E1FF"
+          key={`relic-glass-refraction-${index}`}
+          opacity={detail.opacity}
+          path={detail.path}
+          strokeCap="round"
+          strokeWidth={detail.width}
+          style="stroke"
+        />
+      ))}
+      {GLASS_MICRO_SCRATCHES.map((detail, index) => (
+        <Path
+          color="#F7F3FF"
+          key={`relic-glass-scratch-${index}`}
+          opacity={detail.opacity}
+          path={detail.path}
+          strokeCap="round"
+          strokeWidth={detail.width}
+          style="stroke"
+        />
+      ))}
+      <Group blendMode="screen" opacity={thermalOpacity}>
+        {GLASS_THERMAL_VEILS.map((path, index) => (
+          <Path
+            color={index === 1 ? '#CF94D8' : '#F5D8EA'}
+            key={`relic-glass-thermal-${index}`}
+            path={path}
+            strokeCap="round"
+            strokeWidth={index === 2 ? 7 : 10}
+            style="stroke"
+          >
+            <BlurMask blur={index === 2 ? 3 : 5} style="normal" />
+          </Path>
+        ))}
+      </Group>
+    </Group>
+  );
+}
+
+function RelicSvgGlassTexture({
+  interiorPath,
+  mutationProgress,
+  thermalEnabled,
+  uniqueId,
+}: {
+  interiorPath: string;
+  mutationProgress: SharedValue<number>;
+  thermalEnabled: boolean;
+  uniqueId: string;
+}) {
+  const clipId = `interactive-relic-glass-clip-${uniqueId}`;
+  const gradientId = `interactive-relic-glass-edge-${uniqueId}`;
+  const thermalProps = useAnimatedProps(() => ({
+    opacity: thermalEnabled
+      ? Math.max(
+          relicMutationOverheatEnergy(mutationProgress.value),
+          relicMutationBoilEnergy(mutationProgress.value),
+        ) * .2
+      : 0,
+  }), [thermalEnabled]);
+
+  return (
+    <View style={StyleSheet.absoluteFill}>
+      <Svg height="100%" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 1000" width="100%">
+        <SvgDefs>
+          <SvgClipPath id={clipId}><SvgPath d={interiorPath} /></SvgClipPath>
+          <SvgLinearGradient id={gradientId} x1="0" x2="1" y1="0" y2="1">
+            <SvgStop offset="0" stopColor="#EBE8FF" stopOpacity=".16" />
+            <SvgStop offset=".52" stopColor="#73579A" stopOpacity=".04" />
+            <SvgStop offset="1" stopColor="#E0D8FF" stopOpacity=".13" />
+          </SvgLinearGradient>
+        </SvgDefs>
+        <SvgGroup clipPath={`url(#${clipId})`}>
+          <SvgPath
+            d={interiorPath}
+            fill="none"
+            stroke={`url(#${gradientId})`}
+            strokeWidth="2.4"
+          />
+          {GLASS_REFRACTION_STREAKS.map((detail, index) => (
+            <SvgPath
+              d={detail.path}
+              fill="none"
+              key={`svg-relic-glass-refraction-${index}`}
+              stroke="#E5E1FF"
+              strokeLinecap="round"
+              strokeOpacity={detail.opacity}
+              strokeWidth={detail.width}
+            />
+          ))}
+          {GLASS_MICRO_SCRATCHES.map((detail, index) => (
+            <SvgPath
+              d={detail.path}
+              fill="none"
+              key={`svg-relic-glass-scratch-${index}`}
+              stroke="#F7F3FF"
+              strokeLinecap="round"
+              strokeOpacity={detail.opacity}
+              strokeWidth={detail.width}
+            />
+          ))}
+          <AnimatedSvgGroup animatedProps={thermalProps}>
+            {GLASS_THERMAL_VEILS.map((path, index) => (
+              <SvgPath
+                d={path}
+                fill="none"
+                key={`svg-relic-glass-thermal-${index}`}
+                stroke={index === 1 ? '#CF94D8' : '#F5D8EA'}
+                strokeLinecap="round"
+                strokeOpacity={index === 2 ? .3 : .2}
+                strokeWidth={index === 2 ? 7 : 10}
+              />
+            ))}
+          </AnimatedSvgGroup>
+        </SvgGroup>
+      </Svg>
     </View>
   );
 }
@@ -1598,28 +1905,63 @@ function RelicSvgOverheatGlow({
 }
 
 function RelicSvgOverheatAnatomy({
+  heartClipId,
+  lowerRootClipId,
+  middleRootClipId,
   progress,
   reduceMotion,
+  upperRootClipId,
 }: {
+  heartClipId: string;
+  lowerRootClipId: string;
+  middleRootClipId: string;
   progress: SharedValue<number>;
   reduceMotion: boolean;
+  upperRootClipId: string;
 }) {
-  const animatedProps = useAnimatedProps(() => ({
+  const heartProps = useAnimatedProps(() => ({
     opacity: relicMutationOverheatEnergy(progress.value) * (reduceMotion ? .52 : .94),
     transform: `translate(500 638) scale(${relicMutationHeartScale(progress.value)}) translate(-500 -638)`,
   }), [reduceMotion]);
+  const lowerRootProps = useAnimatedProps(() => ({
+    opacity: mutationRootBandOverheatEnergy(progress.value, .06, .17)
+      * (reduceMotion ? .3 : .58),
+  }), [reduceMotion]);
+  const middleRootProps = useAnimatedProps(() => ({
+    opacity: mutationRootBandOverheatEnergy(progress.value, .11, .22)
+      * (reduceMotion ? .3 : .58),
+  }), [reduceMotion]);
+  const upperRootProps = useAnimatedProps(() => ({
+    opacity: mutationRootBandOverheatEnergy(progress.value, .17, .3)
+      * (reduceMotion ? .3 : .58),
+  }), [reduceMotion]);
+
+  const renderAnatomyImage = () => (
+    <SvgImage
+      height={ARTBOARD_SIZE}
+      href={AMPOULE_ANATOMY_ASSET}
+      preserveAspectRatio="xMidYMid slice"
+      width={ARTBOARD_SIZE}
+      x={0}
+      y={0}
+    />
+  );
 
   return (
-    <AnimatedSvgGroup animatedProps={animatedProps}>
-      <SvgImage
-        height={ARTBOARD_SIZE}
-        href={AMPOULE_ANATOMY_ASSET}
-        preserveAspectRatio="xMidYMid slice"
-        width={ARTBOARD_SIZE}
-        x={0}
-        y={0}
-      />
-    </AnimatedSvgGroup>
+    <>
+      <SvgGroup clipPath={`url(#${lowerRootClipId})`}>
+        <AnimatedSvgGroup animatedProps={lowerRootProps}>{renderAnatomyImage()}</AnimatedSvgGroup>
+      </SvgGroup>
+      <SvgGroup clipPath={`url(#${middleRootClipId})`}>
+        <AnimatedSvgGroup animatedProps={middleRootProps}>{renderAnatomyImage()}</AnimatedSvgGroup>
+      </SvgGroup>
+      <SvgGroup clipPath={`url(#${upperRootClipId})`}>
+        <AnimatedSvgGroup animatedProps={upperRootProps}>{renderAnatomyImage()}</AnimatedSvgGroup>
+      </SvgGroup>
+      <SvgGroup clipPath={`url(#${heartClipId})`}>
+        <AnimatedSvgGroup animatedProps={heartProps}>{renderAnatomyImage()}</AnimatedSvgGroup>
+      </SvgGroup>
+    </>
   );
 }
 
@@ -1716,9 +2058,15 @@ function RelicSvgMutationShard({
 }
 
 function RelicSvgMutationSplash({
+  asset,
+  clipId,
+  fill,
   progress,
   splash,
 }: {
+  asset: ImageSourcePropType;
+  clipId: string;
+  fill: string;
   progress: SharedValue<number>;
   splash: MutationSplash;
 }) {
@@ -1742,26 +2090,77 @@ function RelicSvgMutationSplash({
   const sheenProps = useAnimatedProps(() => ({
     opacity: relicMutationSplashSheenOpacity(progress.value, splash.delay),
   }), [splash.delay]);
+  const refractionProps = useAnimatedProps(() => {
+    const dry = relicMutationSplashDryProgress(progress.value, splash.delay);
+    return {
+      opacity: relicMutationSplashFillOpacity(progress.value, splash.delay)
+        * (1 - dry * .72)
+        * .36,
+    };
+  }, [splash.delay]);
+  const coreProps = useAnimatedProps(() => {
+    const dry = relicMutationSplashDryProgress(progress.value, splash.delay);
+    return {
+      opacity: relicMutationSplashFillOpacity(progress.value, splash.delay)
+        * (1 - dry * .65)
+        * .48,
+    };
+  }, [splash.delay]);
+  const residueProps = useAnimatedProps(() => {
+    const dry = relicMutationSplashDryProgress(progress.value, splash.delay);
+    return { opacity: Math.sin(dry * Math.PI) * .24 };
+  }, [splash.delay]);
+  const refractionOffsetX = splash.driftX > 0 ? -4 : 4;
 
   return (
     <AnimatedSvgGroup animatedProps={groupProps}>
-      <AnimatedSvgPath animatedProps={fillProps} d={splash.path} fill="#30033D" />
+      <AnimatedSvgGroup
+        animatedProps={refractionProps}
+        clipPath={`url(#${clipId})`}
+      >
+        <SvgImage
+          height={ARTBOARD_SIZE}
+          href={asset}
+          preserveAspectRatio="xMidYMid slice"
+          width={ARTBOARD_SIZE}
+          x={refractionOffsetX}
+          y={3}
+        />
+      </AnimatedSvgGroup>
+      <AnimatedSvgPath animatedProps={fillProps} d={splash.path} fill={fill} />
+      <AnimatedSvgPath
+        animatedProps={coreProps}
+        d={splash.path}
+        fill="none"
+        stroke="#100016"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={3.6}
+      />
       <AnimatedSvgPath
         animatedProps={edgeProps}
         d={splash.path}
         fill="none"
-        stroke="#9A58A7"
+        stroke="#B77DC0"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth={1.75}
+        strokeWidth={1.15}
       />
       <AnimatedSvgPath
         animatedProps={sheenProps}
         d={splash.highlightPath}
         fill="none"
-        stroke="#E6B9ED"
+        stroke="#F7DDF9"
         strokeLinecap="round"
-        strokeWidth={2.4}
+        strokeWidth={1.35}
+      />
+      <AnimatedSvgPath
+        animatedProps={residueProps}
+        d={splash.highlightPath}
+        fill="none"
+        stroke="#82518A"
+        strokeLinecap="round"
+        strokeWidth={.82}
       />
     </AnimatedSvgGroup>
   );
@@ -1920,9 +2319,11 @@ function RelicMutationShard({
 }
 
 function RelicMutationSplash({
+  image,
   progress,
   splash,
 }: {
+  image: SkImage | null;
   progress: SharedValue<number>;
   splash: MutationSplash;
 }) {
@@ -1946,28 +2347,79 @@ function RelicMutationSplash({
   const sheenOpacity = useDerivedValue(() => (
     relicMutationSplashSheenOpacity(progress.value, splash.delay)
   ));
+  const refractionOpacity = useDerivedValue(() => {
+    const dry = relicMutationSplashDryProgress(progress.value, splash.delay);
+    return relicMutationSplashFillOpacity(progress.value, splash.delay)
+      * (1 - dry * .72)
+      * .36;
+  });
+  const coreOpacity = useDerivedValue(() => {
+    const dry = relicMutationSplashDryProgress(progress.value, splash.delay);
+    return relicMutationSplashFillOpacity(progress.value, splash.delay)
+      * (1 - dry * .65)
+      * .48;
+  });
+  const residueOpacity = useDerivedValue(() => {
+    const dry = relicMutationSplashDryProgress(progress.value, splash.delay);
+    return Math.sin(dry * Math.PI) * .24;
+  });
+  const refractionOffsetX = splash.driftX > 0 ? -4 : 4;
 
   return (
     <Group
       origin={vec(splash.centerX, splash.centerY)}
       transform={transform}
     >
-      <Path color="#30033D" opacity={fillOpacity} path={splash.path} />
+      <Group clip={splash.path} opacity={refractionOpacity}>
+        <SkiaImage
+          fit="fill"
+          height={ARTBOARD_SIZE}
+          image={image}
+          width={ARTBOARD_SIZE}
+          x={refractionOffsetX}
+          y={3}
+        />
+      </Group>
+      <Path opacity={fillOpacity} path={splash.path}>
+        <RadialGradient
+          c={vec(splash.centerX + 10, splash.centerY + 12)}
+          colors={['#120018', '#25002F', '#52145F', 'rgba(180,122,190,.5)']}
+          positions={[0, .42, .76, 1]}
+          r={96}
+        />
+      </Path>
       <Path
-        color="#9A58A7"
+        color="#100016"
+        opacity={coreOpacity}
+        path={splash.path}
+        strokeCap="round"
+        strokeJoin="round"
+        strokeWidth={3.6}
+        style="stroke"
+      />
+      <Path
+        color="#B77DC0"
         opacity={edgeOpacity}
         path={splash.path}
         strokeCap="round"
         strokeJoin="round"
-        strokeWidth={1.75}
+        strokeWidth={1.15}
         style="stroke"
       />
       <Path
-        color="#E6B9ED"
+        color="#F7DDF9"
         opacity={sheenOpacity}
         path={splash.highlightPath}
         strokeCap="round"
-        strokeWidth={2.4}
+        strokeWidth={1.35}
+        style="stroke"
+      />
+      <Path
+        color="#82518A"
+        opacity={residueOpacity}
+        path={splash.highlightPath}
+        strokeCap="round"
+        strokeWidth={.82}
         style="stroke"
       />
     </Group>
