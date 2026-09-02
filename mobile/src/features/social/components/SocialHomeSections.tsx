@@ -1,12 +1,22 @@
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Platform, Pressable, Share, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import Svg, { Defs, LinearGradient as SvgLinearGradient, Path, Stop } from 'react-native-svg';
+import {
+  Image,
+  Platform,
+  Pressable,
+  Share,
+  StyleSheet,
+  Text,
+  type ImageSourcePropType,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 
 import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { publicAppUrl } from '@/src/config/release';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
+import PlayerAvatar from '@/src/features/profile/avatars/PlayerAvatar';
 import CollectiveRelic from '@/src/features/social/faction/components/CollectiveRelic';
 import FactionEvolutionRail from '@/src/features/social/faction/components/FactionEvolutionRail';
 import {
@@ -15,7 +25,6 @@ import {
   type SupporterContributionPresentation,
 } from '@/src/features/social/faction/relicState';
 import type {
-  CommunityActivity,
   CommunityFaction,
   CommunityMe,
   CommunityMutationPresentation,
@@ -25,6 +34,11 @@ import { factionProgress, gameLabel } from '@/src/features/social/faction/utils'
 import { colors } from '@/src/theme';
 
 import { styles } from './SocialHomeScreen.styles';
+
+const FACTION_RANKING_ARTWORK: Record<string, ImageSourcePropType> = {
+  M8: require('../../../../assets/shop/team-packs/m8/items/m8-crest-3d.png'),
+  GM8: require('../../../../assets/shop/team-packs/m8/items/m8-crest-3d.png'),
+};
 
 export function FactionRelicHero({
   faction,
@@ -158,174 +172,183 @@ export function FactionRelicHero({
 export function FactionWar({ factions, mine }: { factions: CommunityFaction[]; mine: CommunityFaction | null }) {
   const compact = useWindowDimensions().width <= 340;
   const leaders = factions.slice(0, 3);
+  const leader = leaders[0];
 
   return (
     <View style={styles.warSection}>
       <View style={[styles.sectionHeading, styles.warSectionHeading]}>
-        <View style={styles.sectionHeadingCopy}>
-          <Text style={styles.sectionEyebrow}>CLASSEMENT DES FACTIONS</Text>
-          <Text style={[styles.sectionTitle, styles.warSectionTitle, compact && styles.warSectionTitleCompact]}>QUI DOMINE LE TERRAIN ?</Text>
-        </View>
+        <Text adjustsFontSizeToFit minimumFontScale={0.82} numberOfLines={1} style={[styles.warSectionTitle, compact && styles.warSectionTitleCompact]}>CLASSEMENT DES FACTIONS</Text>
         <View style={styles.warPeriod}>
           <View style={styles.warPeriodDot} />
           <Text style={styles.warPeriodText}>24 H</Text>
         </View>
       </View>
-      <LinearGradient
-        colors={['#0B151D', '#081119', '#060D13']}
-        end={{ x: 1, y: 1 }}
-        start={{ x: 0, y: 0 }}
-        style={styles.warBoard}
-        testID="faction-ranking-board"
-      >
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={[styles.warTableHeader, compact && styles.warTableHeaderCompact]}
-        >
-          <Text style={[styles.warTableHeading, compact && styles.warTableHeadingCompact, styles.warTableRankHeading, compact && styles.warTableRankHeadingCompact]}>RANG</Text>
-          <Text style={[styles.warTableHeading, compact && styles.warTableHeadingCompact, styles.warTableFactionHeading]}>FACTION</Text>
-          <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={1} style={[styles.warTableHeading, compact && styles.warTableHeadingCompact, styles.warTableSupportersHeading, compact && styles.warTableSupportersHeadingCompact]}>SUPPORTERS</Text>
-        </View>
-        {leaders.map((faction, index) => (
-          <FactionTableRow
+      <View style={styles.warBoard} testID="faction-ranking-board">
+        {leader ? <FactionLeaderCard compact={compact} faction={leader} mine={mine} /> : null}
+        {leaders.slice(1).map((faction, index) => (
+          <FactionPodiumRow
             compact={compact}
             faction={faction}
-            isLast={index === leaders.length - 1}
             key={faction.equipe_id}
             mine={mine}
-            rank={index + 1}
+            rank={index + 2}
           />
         ))}
-      </LinearGradient>
+      </View>
     </View>
   );
 }
 
-function FactionTableRow({
+function FactionLeaderCard({
   compact,
   faction,
-  isLast,
   mine,
-  rank,
 }: {
   compact: boolean;
   faction: CommunityFaction;
-  isLast: boolean;
   mine: CommunityFaction | null;
-  rank: number;
 }) {
   const selected = faction.equipe_id === mine?.equipe_id;
-  const accent = factionRankAccent(rank);
+  const palette = factionRankingPalette(faction, 1);
   const supporterLabel = faction.membres === 1 ? 'SUPPORTER' : 'SUPPORTERS';
 
   return (
     <LinearGradient
       accessible
-      accessibilityLabel={`${rank}. ${faction.nom}, ${faction.membres} ${supporterLabel.toLowerCase()}${selected ? ', ma faction' : ''}`}
+      accessibilityLabel={`1. ${faction.nom}, ${faction.membres} ${supporterLabel.toLowerCase()}, progression ${signed(faction.croissance_24h)} sur 24 heures${selected ? ', ma faction' : ''}`}
       accessibilityRole="summary"
-      colors={selected ? ['#261508', '#160D08', '#0A1015'] : ['#0A141C', '#081119', '#071018']}
-      end={{ x: 1, y: .8 }}
-      start={{ x: 0, y: .2 }}
-      style={[
-        styles.warTableRow,
-        compact && styles.warTableRowCompact,
-        !isLast && styles.warTableRowDivider,
-        selected && styles.warTableRowMine,
-      ]}
+      colors={palette.gradient}
+      end={{ x: 1, y: 1 }}
+      start={{ x: 0, y: 0 }}
+      style={[styles.factionLeaderCard, compact && styles.factionLeaderCardCompact, { borderColor: palette.border }]}
+      testID="faction-ranking-leader"
     >
-      <View style={[styles.warTableRail, { backgroundColor: accent }]} />
-      <Text style={[styles.warTableRank, compact && styles.warTableRankCompact, { color: accent }]}>#{rank}</Text>
-      <FactionRankingShield compact={compact} faction={faction} rank={rank} />
-      <View style={styles.warTableIdentity}>
-        <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={[styles.warTableName, compact && styles.warTableNameCompact]}>
-          {faction.nom}
-        </Text>
-        {selected ? <Text numberOfLines={1} style={[styles.warTableMine, compact && styles.warTableMineCompact]}>MA FACTION</Text> : null}
+      <View style={[styles.factionLeaderBeam, { backgroundColor: palette.accent }]} />
+      <View style={[styles.factionLeaderBeam, styles.factionLeaderBeamSecondary, { backgroundColor: palette.accent }]} />
+      <View style={styles.factionLeaderVisual}>
+        <Text style={[styles.factionLeaderRank, compact && styles.factionLeaderRankCompact]}>#1</Text>
+        <FactionRankingLogo compact={compact} faction={faction} hero />
       </View>
-      <View style={[styles.warTableSupporters, compact && styles.warTableSupportersCompact]}>
-        <Text style={[styles.warTableSupporterValue, compact && styles.warTableSupporterValueCompact]}>{formatNumber(faction.membres)}</Text>
-        <Text numberOfLines={1} style={[styles.warTableSupporterLabel, compact && styles.warTableSupporterLabelCompact]}>{supporterLabel}</Text>
+      <View style={[styles.factionLeaderInfo, compact && styles.factionLeaderInfoCompact]}>
+        <Text adjustsFontSizeToFit minimumFontScale={0.62} numberOfLines={2} style={[styles.factionLeaderName, compact && styles.factionLeaderNameCompact]}>
+          {faction.nom.toUpperCase()}
+        </Text>
+        <View style={styles.factionLeaderMetaRow}>
+          <Text style={styles.factionLeaderTag}>{faction.tag.toUpperCase()}</Text>
+          {selected ? (
+            <>
+              <Text style={styles.factionLeaderBullet}>•</Text>
+              <Text style={styles.factionLeaderMine}>MA FACTION</Text>
+            </>
+          ) : null}
+        </View>
+        <View style={styles.factionRankingDivider} />
+        <Text style={[styles.factionLeaderSupporters, compact && styles.factionLeaderSupportersCompact]}>{formatNumber(faction.membres)}</Text>
+        <Text style={styles.factionLeaderSupporterLabel}>{supporterLabel}</Text>
+        <View style={styles.factionRankingDivider} />
+        <Text style={styles.factionLeaderGrowth}>
+          {signed(faction.croissance_24h)} <Text style={styles.factionLeaderGrowthPeriod}>· 24 H</Text>
+        </Text>
       </View>
     </LinearGradient>
   );
 }
 
-function FactionRankingShield({
+function FactionPodiumRow({
   compact,
   faction,
+  mine,
   rank,
 }: {
   compact: boolean;
   faction: CommunityFaction;
+  mine: CommunityFaction | null;
   rank: number;
 }) {
-  const size = compact ? 40 : 56;
-  const [metalDark, metalLight] = podiumMetalGradient(rank);
-  const gradientId = `faction-ranking-shield-${faction.equipe_id}`;
-  const teamAccent = factionAccent(faction, 0);
-  const normalizedTag = faction.tag.trim().toUpperCase();
-  const logoScale = normalizedTag === 'G2' ? 1.28 : 1.02;
-  const logoTint = normalizedTag === 'KC' || normalizedTag === 'KCORP' ? teamAccent : undefined;
+  const selected = faction.equipe_id === mine?.equipe_id;
+  const palette = factionRankingPalette(faction, rank);
+  const supporterLabel = faction.membres === 1 ? 'SUPPORTER' : 'SUPPORTERS';
 
   return (
-    <View style={[styles.warTableShield, { height: size * 1.08, width: size }]}>
-      <Svg height="100%" viewBox="0 0 100 110" width="100%">
-        <Defs>
-          <SvgLinearGradient id={gradientId} x1="0" x2="1" y1="0" y2="1">
-            <Stop offset="0" stopColor={metalLight} />
-            <Stop offset="0.48" stopColor={metalDark} />
-            <Stop offset="1" stopColor={metalLight} />
-          </SvgLinearGradient>
-        </Defs>
-        <Path
-          d="M50 4C62 13 75 18 89 20L85 60C82 79 68 94 50 104C32 94 18 79 15 60L11 20C25 18 38 13 50 4Z"
-          fill="#030709"
-          opacity={0.72}
-          stroke="#010203"
-          strokeWidth={8}
-          transform="translate(0 3)"
-        />
-        <Path
-          d="M50 4C62 13 75 18 89 20L85 60C82 79 68 94 50 104C32 94 18 79 15 60L11 20C25 18 38 13 50 4Z"
-          fill="#080D10"
-          stroke={`url(#${gradientId})`}
-          strokeLinejoin="round"
-          strokeWidth={6}
-        />
-        <Path
-          d="M50 12C61 19 70 23 80 25L77 57C75 71 65 83 50 92C35 83 25 71 23 57L20 25C30 23 39 19 50 12Z"
-          fill="#070C0F"
-          stroke={metalDark}
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-        />
-      </Svg>
-      <View style={styles.warTableShieldLogo}>
-        <TeamLogo
-          accent={teamAccent}
-          contentScale={logoScale}
-          frameless
-          name={faction.nom}
-          size={compact ? 26 : 36}
-          tag={faction.tag}
-          tintColor={logoTint}
-          uri={faction.logo}
-        />
+    <LinearGradient
+      accessible
+      accessibilityLabel={`${rank}. ${faction.nom}, ${faction.membres} ${supporterLabel.toLowerCase()}, progression ${signed(faction.croissance_24h)} sur 24 heures${selected ? ', ma faction' : ''}`}
+      accessibilityRole="summary"
+      colors={palette.gradient}
+      end={{ x: 1, y: .5 }}
+      start={{ x: 0, y: .5 }}
+      style={[styles.factionPodiumRow, compact && styles.factionPodiumRowCompact, { borderColor: palette.border }]}
+      testID={`faction-ranking-row-${rank}`}
+    >
+      <View style={[styles.factionPodiumGlow, { backgroundColor: palette.accent }]} />
+      <Text style={[styles.factionPodiumRank, compact && styles.factionPodiumRankCompact]}>#{rank}</Text>
+      <View style={[styles.factionPodiumLogo, compact && styles.factionPodiumLogoCompact]}>
+        <FactionRankingLogo compact={compact} faction={faction} />
       </View>
-    </View>
+      <View style={styles.factionPodiumIdentity}>
+        <Text adjustsFontSizeToFit minimumFontScale={0.68} numberOfLines={1} style={[styles.factionPodiumName, compact && styles.factionPodiumNameCompact]}>
+          {faction.nom.toUpperCase()}
+        </Text>
+        <View style={styles.factionPodiumMetaRow}>
+          <Text style={styles.factionPodiumTag}>{faction.tag.toUpperCase()}</Text>
+          {selected ? <Text style={styles.factionPodiumMine}>MA FACTION</Text> : null}
+        </View>
+      </View>
+      <View style={[styles.factionPodiumMetrics, compact && styles.factionPodiumMetricsCompact]}>
+        <Text style={[styles.factionPodiumSupporters, compact && styles.factionPodiumSupportersCompact]}>{formatNumber(faction.membres)}</Text>
+        <Text style={styles.factionPodiumSupporterLabel}>{supporterLabel}</Text>
+        <View style={styles.factionPodiumDivider} />
+        <Text style={styles.factionPodiumGrowth}>{signed(faction.croissance_24h)} <Text style={styles.factionPodiumPeriod}>· 24 H</Text></Text>
+      </View>
+    </LinearGradient>
   );
 }
 
-function podiumMetalGradient(rank: number): [string, string] {
-  if (rank === 1) return ['#8F7116', '#FFE25A'];
-  if (rank === 2) return ['#6F7A84', '#E1E7EC'];
-  return ['#476B80', '#9EC9E4'];
+function FactionRankingLogo({ compact, faction, hero = false }: { compact: boolean; faction: CommunityFaction; hero?: boolean }) {
+  const tag = faction.tag.trim().toUpperCase();
+  const artwork = FACTION_RANKING_ARTWORK[tag];
+  const size = hero ? (compact ? 124 : 148) : (compact ? 58 : 72);
+  const accent = factionAccent(faction, 0);
+
+  if (artwork) {
+    return (
+      <View style={[styles.factionRankingArtworkBlend, { height: size, width: size }]}>
+        <Image accessibilityIgnoresInvertColors resizeMode="contain" source={artwork} style={styles.factionRankingArtwork} />
+      </View>
+    );
+  }
+
+  return (
+    <TeamLogo
+      accent={accent}
+      contentScale={hero ? 1 : 1.08}
+      frameless
+      name={faction.nom}
+      size={size}
+      tag={faction.tag}
+      uri={faction.logo}
+    />
+  );
 }
 
-function factionRankAccent(rank: number) {
-  if (rank === 3) return '#20A9E8';
-  return colors.volt;
+function factionRankingPalette(faction: CommunityFaction, rank: number) {
+  const tag = faction.tag.trim().toUpperCase();
+  if (tag === 'KC' || tag === 'KCORP') {
+    return { accent: '#247DFF', border: '#237CFF', gradient: ['#0A3B99', '#071E4C', '#07121D'] as const };
+  }
+  if (tag === 'M8' || tag === 'GM8') {
+    return { accent: '#B9D2E8', border: '#87A6BF', gradient: ['#587289', '#1D2E3D', '#09121A'] as const };
+  }
+  if (tag === 'FNC') {
+    return { accent: '#FF6A00', border: '#D35A08', gradient: ['#9B410A', '#351709', '#0B0F12'] as const };
+  }
+  if (rank === 2) {
+    return { accent: '#C5D3DD', border: '#7891A4', gradient: ['#40566A', '#172631', '#081119'] as const };
+  }
+  if (rank === 3) {
+    return { accent: '#D67925', border: '#A85318', gradient: ['#66300D', '#2A170B', '#081016'] as const };
+  }
+  return { accent: factionAccent(faction, rank), border: '#2778E5', gradient: ['#0B367A', '#0A1F42', '#07121D'] as const };
 }
 
 function factionAccent(faction: CommunityFaction, rank: number) {
@@ -334,39 +357,77 @@ function factionAccent(faction: CommunityFaction, rank: number) {
   const tag = faction.tag.trim().toUpperCase();
   if (tag === 'FNC') return '#FF6A21';
   if (tag === 'KC' || tag === 'KCORP') return '#38A0FF';
+  if (tag === 'M8' || tag === 'GM8') return '#D5E2EC';
   if (tag === 'G2') return '#5A9CFF';
   if (tag === 'VIT') return '#F5C542';
   if (tag === 'T1') return '#F04B55';
   return colors.volt;
 }
 
-export function FactionMemberRanking({ faction, me }: { faction: CommunityFaction; me: CommunityMe }) {
+export function FactionMemberRanking({
+  avatarId,
+  faction,
+  me,
+}: {
+  avatarId?: string | null;
+  faction: CommunityFaction;
+  me: CommunityMe;
+}) {
   const compact = useWindowDimensions().width <= 340;
-  const person = me.top_activite.find((activity) => activity.user_id === me.user_id) ?? fallbackActivity(me);
-  const rankingLabel = me.rang_activite && me.total_activite
-    ? `#${me.rang_activite}/${me.total_activite}`
-    : 'NON CLASSÉ';
-  const accent = factionAccent(faction, 0);
+  const palette = factionRankingPalette(faction, 1);
+  const accent = palette.accent;
+  const ranking = memberRankingState(me);
 
   return (
     <View style={styles.memberSection}>
-      <View style={styles.sectionHeading}>
-        <View style={styles.sectionHeadingCopy}>
-          <Text style={styles.sectionEyebrow}>DANS TA FACTION</Text>
-          <Text style={styles.sectionTitle}>TON CLASSEMENT {faction.tag}</Text>
-        </View>
-        <Text style={styles.memberPlacement}>{rankingLabel}</Text>
+      <View style={styles.memberHeading}>
+        <Text style={styles.sectionEyebrow}>DANS TA FACTION</Text>
+        <Text style={styles.sectionTitle}>TON CLASSEMENT {faction.tag.toUpperCase()}</Text>
       </View>
 
       <LinearGradient
-        colors={['#161018', '#100D13', '#090D12']}
+        accessible
+        accessibilityLabel={me.rang_activite && me.total_activite
+          ? `Rang ${me.rang_activite} sur ${me.total_activite}, ${me.pseudo}, toi`
+          : `${me.pseudo}, non classé`}
+        accessibilityRole="summary"
+        colors={palette.gradient}
         end={{ x: 1, y: 1 }}
         start={{ x: 0, y: 0 }}
-        style={styles.memberIdentityCard}
+        style={[styles.memberIdentityCard, { borderColor: accent }]}
         testID="faction-member-identity"
       >
-        <View style={styles.memberIdentityTopRule} />
-        <FactionMemberRow accent={accent} compact={compact} person={person} />
+        <View style={[styles.memberIdentityGlow, { backgroundColor: accent }]} />
+        <View style={[styles.memberIdentityBody, compact && styles.memberIdentityBodyCompact]}>
+          <View style={[styles.memberAvatar, compact && styles.memberAvatarCompact]}>
+            <PlayerAvatar avatarId={avatarId} label={me.pseudo} size={compact ? 62 : 72} />
+          </View>
+          <View style={styles.memberRankingBody}>
+            <View style={styles.memberRankingHeadline}>
+              <View style={styles.memberCopy}>
+                <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={[styles.memberName, compact && styles.memberNameCompact]}>{me.pseudo}</Text>
+                <Text style={styles.memberMeta}>TOI</Text>
+              </View>
+              <View style={styles.memberRankGroup}>
+                <Text style={[styles.memberRankPrimary, compact && styles.memberRankPrimaryCompact]}>{ranking.rankLabel}</Text>
+                {ranking.totalLabel ? <Text style={[styles.memberRankTotal, compact && styles.memberRankTotalCompact]}>/ {ranking.totalLabel}</Text> : null}
+              </View>
+            </View>
+            <View
+              accessibilityLabel={`Progression vers ${ranking.goalLabel}`}
+              accessibilityRole="progressbar"
+              accessibilityValue={{ min: 0, max: 100, now: Math.round(ranking.progress * 100) }}
+              style={styles.memberProgressTrack}
+              testID="faction-member-progress"
+            >
+              <View style={[styles.memberProgressFill, { width: `${Math.round(ranking.progress * 100)}%` as `${number}%` }]} />
+              <View style={[styles.memberProgressMarker, styles.memberProgressMarkerFirst]} />
+              <View style={[styles.memberProgressMarker, styles.memberProgressMarkerSecond]} />
+              <View style={[styles.memberProgressMarker, styles.memberProgressMarkerThird]} />
+            </View>
+            <Text numberOfLines={1} style={[styles.memberProgressHint, compact && styles.memberProgressHintCompact]}>{ranking.hint}</Text>
+          </View>
+        </View>
       </LinearGradient>
       <LinearGradient
         colors={['#0B1720', '#08131B', '#070E14']}
@@ -376,7 +437,7 @@ export function FactionMemberRanking({ faction, me }: { faction: CommunityFactio
         testID="faction-member-stats"
       >
         <View style={styles.memberStats}>
-          <MemberStat label="CALLS · 7 J" value={String(me.pronos_7j)} />
+          <MemberStat label="CALLS" value={String(me.pronos_7j)} />
           <View style={styles.memberStatDivider} />
           <MemberStat label="VALIDÉS" value={String(me.gagnes_7j)} />
           <View style={styles.memberStatDivider} />
@@ -405,25 +466,6 @@ function SupporterGroupIcon() {
       <View style={[styles.supporterShoulder, styles.supporterShoulderLeft]} />
       <View style={[styles.supporterShoulder, styles.supporterShoulderCenter]} />
       <View style={[styles.supporterShoulder, styles.supporterShoulderRight]} />
-    </View>
-  );
-}
-
-function FactionMemberRow({ accent, compact, person }: { accent: string; compact: boolean; person: CommunityActivity }) {
-  return (
-    <View
-      accessible
-      accessibilityLabel={`Rang ${person.rang}, ${person.pseudo}, toi`}
-      accessibilityRole="summary"
-      style={[styles.memberRow, compact && styles.memberRowCompact, styles.memberRowMine]}
-    >
-      <Text style={[styles.memberRowRank, compact && styles.memberRowRankCompact, styles.memberRowRankMine]}>#{person.rang}</Text>
-      <View style={[styles.memberIdentityDivider, compact && styles.memberIdentityDividerCompact]} />
-      <View style={[styles.memberAvatar, compact && styles.memberAvatarCompact, { borderColor: accent }]}><Text style={styles.memberAvatarText}>{initials(person.pseudo)}</Text></View>
-      <View style={styles.memberCopy}>
-        <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={[styles.memberName, compact && styles.memberNameCompact]}>{person.pseudo}</Text>
-        <Text style={styles.memberMeta}>Toi</Text>
-      </View>
     </View>
   );
 }
@@ -522,20 +564,53 @@ export function SocialHomeSkeleton() {
   );
 }
 
-function fallbackActivity(me: CommunityMe): CommunityActivity {
+function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(value); }
+function signed(value: number) { return `${value >= 0 ? '+' : '−'}${formatNumber(Math.abs(value))}`; }
+
+function memberRankingState(me: CommunityMe) {
+  const rank = Number(me.rang_activite ?? 0);
+  const total = Number(me.total_activite ?? 0);
+
+  if (rank <= 0 || total <= 0) {
+    return {
+      goalLabel: 'le classement',
+      hint: 'JOUE UN CALL POUR ENTRER AU CLASSEMENT',
+      progress: 0,
+      rankLabel: '—',
+      totalLabel: '',
+    };
+  }
+
+  if (rank === 1) {
+    return {
+      goalLabel: 'la première place',
+      hint: 'PREMIER DE TA FACTION',
+      progress: 1,
+      rankLabel: '#1',
+      totalLabel: formatNumber(total),
+    };
+  }
+
+  const { baseline, target } = memberRankGoal(rank, total);
+  const places = Math.max(1, rank - target);
+  const progress = Math.max(0, Math.min(1, (baseline - rank) / Math.max(1, baseline - target)));
+  const goalLabel = target === 1 ? 'la première place' : `le top ${target}`;
+  const goalCopy = target === 1 ? 'LA #1' : `LE TOP ${target}`;
+
   return {
-    user_id: me.user_id,
-    pseudo: me.pseudo,
-    pronos_7j: me.pronos_7j,
-    gagnes_7j: me.gagnes_7j,
-    rang: me.rang_activite ?? 1,
+    goalLabel,
+    hint: `${places} PLACE${places > 1 ? 'S' : ''} AVANT ${goalCopy}`,
+    progress,
+    rankLabel: `#${formatNumber(rank)}`,
+    totalLabel: formatNumber(total),
   };
 }
 
-function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(value); }
-function signed(value: number) { return `${value >= 0 ? '+' : '−'}${formatNumber(Math.abs(value))}`; }
-function initials(value: string) {
-  const parts = value.trim().split(/[\s._-]+/).filter(Boolean);
-  if (!parts.length) return '?';
-  return parts.length > 1 ? `${parts[0][0]}${parts[1][0]}`.toUpperCase() : parts[0].slice(0, 2).toUpperCase();
+function memberRankGoal(rank: number, total: number) {
+  if (rank > 100) return { baseline: Math.max(rank, total), target: 100 };
+  if (rank > 50) return { baseline: 100, target: 50 };
+  if (rank > 25) return { baseline: 50, target: 25 };
+  if (rank > 10) return { baseline: 25, target: 10 };
+  if (rank > 3) return { baseline: 10, target: 3 };
+  return { baseline: 3, target: 1 };
 }

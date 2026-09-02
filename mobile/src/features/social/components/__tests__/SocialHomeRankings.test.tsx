@@ -53,30 +53,53 @@ const me: CommunityMe = {
 };
 
 describe('Social faction rankings', () => {
-  it('renders the faction ranking as the three-row reference table', async () => {
+  it('renders the faction podium with an emphasized leader and two compact rows', async () => {
     const screen = await render(<FactionWar factions={factions} mine={factions[0]} />);
 
     expect(screen.getByTestId('faction-ranking-board')).toBeTruthy();
-    expect(screen.getByText('RANG', { includeHiddenElements: true })).toBeTruthy();
-    expect(screen.getByText('FACTION', { includeHiddenElements: true })).toBeTruthy();
-    expect(screen.getAllByText('SUPPORTERS', { includeHiddenElements: true })).toHaveLength(4);
-    expect(screen.getByLabelText('1. Fnatic, 12 supporters, ma faction')).toBeTruthy();
-    expect(screen.getByLabelText('2. Team Vitality, 9 supporters')).toBeTruthy();
-    expect(screen.getByLabelText('3. Karmine Corp, 7 supporters')).toBeTruthy();
-    expect(screen.queryByText('G2 Esports')).toBeNull();
+    expect(screen.getByTestId('faction-ranking-leader')).toBeTruthy();
+    expect(screen.getByTestId('faction-ranking-row-2')).toBeTruthy();
+    expect(screen.getByTestId('faction-ranking-row-3')).toBeTruthy();
+    expect(screen.getByText('24 H')).toBeTruthy();
+    expect(screen.getByLabelText('1. Fnatic, 12 supporters, progression +0 sur 24 heures, ma faction')).toBeTruthy();
+    expect(screen.getByLabelText('2. Team Vitality, 9 supporters, progression +0 sur 24 heures')).toBeTruthy();
+    expect(screen.getByLabelText('3. Karmine Corp, 7 supporters, progression +0 sur 24 heures')).toBeTruthy();
+    expect(screen.queryByText('G2 ESPORTS')).toBeNull();
   });
 
   it('keeps the member rank and seven-day metrics in separate cards', async () => {
     const screen = await render(<FactionMemberRanking faction={factions[0]} me={me} />);
 
     expect(screen.getByText('TON CLASSEMENT FNC')).toBeTruthy();
-    expect(screen.getByText('#2/8')).toBeTruthy();
-    expect(screen.getByLabelText('Rang 2, FabTheTap, toi')).toBeTruthy();
+    expect(screen.getByText('#2')).toBeTruthy();
+    expect(screen.getByText('/ 8')).toBeTruthy();
+    expect(screen.getByLabelText('Rang 2 sur 8, FabTheTap, toi')).toBeTruthy();
     expect(screen.getByTestId('faction-member-identity')).toBeTruthy();
+    expect(screen.getByTestId('faction-member-progress')).toBeTruthy();
     expect(screen.getByTestId('faction-member-stats')).toBeTruthy();
+    expect(screen.getByText('1 PLACE AVANT LA #1')).toBeTruthy();
     expect(screen.getByText('4')).toBeTruthy();
     expect(screen.getByText('3')).toBeTruthy();
     expect(screen.getByText('+28')).toBeTruthy();
+  });
+
+  it('formats a large faction rank and targets the next meaningful milestone', async () => {
+    const screen = await render(
+      <FactionMemberRanking
+        avatarId="chaos-smile"
+        faction={factions[2]}
+        me={{ ...me, equipe_id: 'kc', rang_activite: 86, total_activite: 1420 }}
+      />,
+    );
+
+    expect(screen.getByText('#86')).toBeTruthy();
+    expect(screen.getByText('/ 1 420')).toBeTruthy();
+    expect(screen.getByText('36 PLACES AVANT LE TOP 50')).toBeTruthy();
+    expect(screen.getByLabelText('Progression vers le top 50').props.accessibilityValue).toEqual({
+      min: 0,
+      max: 100,
+      now: 28,
+    });
   });
 });
 

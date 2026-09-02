@@ -24,6 +24,7 @@ import { styles } from './SocialHomeScreen.styles';
 export type FactionHeroVariant = 'current' | 'v2';
 
 type SocialHomeExperienceProps = {
+  avatarId?: string | null;
   data: CommunityData;
   error: string | null;
   factionHeroVariant?: FactionHeroVariant;
@@ -55,6 +56,7 @@ function SocialHomeScreenForVariant({ factionHeroVariant }: { factionHeroVariant
 
   return (
     <SocialHomeExperience
+      avatarId={profile?.avatar_id}
       data={data}
       error={error}
       factionHeroVariant={factionHeroVariant}
@@ -69,6 +71,7 @@ function SocialHomeScreenForVariant({ factionHeroVariant }: { factionHeroVariant
 }
 
 export function SocialHomeExperience({
+  avatarId,
   data,
   error,
   factionHeroVariant = 'current',
@@ -143,7 +146,7 @@ export function SocialHomeExperience({
 
       {!loading && data.moi && faction ? (
         <View>
-          <FactionMemberRanking faction={faction} me={data.moi} />
+          <FactionMemberRanking avatarId={avatarId} faction={faction} me={data.moi} />
         </View>
       ) : null}
 

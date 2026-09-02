@@ -291,6 +291,7 @@ export default function SocialHomePreviewScreen({
           ) : null}
         </View> : null}
         <SocialHomeExperience
+          avatarId="chaos-smile"
           data={data}
           error={null}
           factionHeroVariant={factionHeroVariant}
