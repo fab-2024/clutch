@@ -102,16 +102,14 @@ describe('ProfileScreen private navigation', () => {
     const screen = await render(<ProfileScreen previewData={PREVIEW_PROFILE} />);
 
     await fireEvent.press(screen.getByTestId('profile-section-progression'));
-    await fireEvent.press(screen.getByLabelText(/Ouvrir mes badges/));
-    await fireEvent.press(screen.getByLabelText(/Ouvrir mes anneaux/));
+    await fireEvent.press(screen.getByLabelText(/Ouvrir mes badges et anneaux/));
     await fireEvent.press(screen.getByLabelText(/Ouvrir mes trophées/));
     await fireEvent.press(screen.getByLabelText(/Ouvrir mes maillots/));
 
     expect(push).toHaveBeenNthCalledWith(1, '/(tabs)/rank');
-    expect(push).toHaveBeenNthCalledWith(2, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'badges' } });
-    expect(push).toHaveBeenNthCalledWith(3, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'rings' } });
-    expect(push).toHaveBeenNthCalledWith(4, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'trophies' } });
-    expect(push).toHaveBeenNthCalledWith(5, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'jerseys' } });
+    expect(push).toHaveBeenNthCalledWith(2, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'badges-rings' } });
+    expect(push).toHaveBeenNthCalledWith(3, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'trophies' } });
+    expect(push).toHaveBeenNthCalledWith(4, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'jerseys' } });
   });
 
   it('returns to the previous tab from the standalone profile', async () => {

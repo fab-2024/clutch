@@ -13,7 +13,7 @@ import {
 } from '../../types';
 import LockerScreen from '../LockerScreen';
 
-let mockParams: Record<string, string> = { scope: 'owned', tab: 'badges' };
+let mockParams: Record<string, string> = { scope: 'owned', tab: 'badges-rings' };
 
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn(), replace: jest.fn(), setParams: jest.fn() },
@@ -148,10 +148,23 @@ const previewProfile = {
 
 describe('LockerScreen focused collections', () => {
   beforeEach(() => {
-    mockParams = { scope: 'owned', tab: 'badges' };
+    mockParams = { scope: 'owned', tab: 'badges-rings' };
+  });
+
+  it('shows badges and rings together from the merged profile entry', async () => {
+    const screen = await render(
+      <LockerScreen previewData={previewData} previewProfile={previewProfile} />,
+    );
+
+    expect(screen.getByTestId('locker-achievement-collection')).toBeTruthy();
+    expect(screen.getByText('BADGE COLLECTION')).toBeTruthy();
+    expect(screen.getByText('RING COLLECTION')).toBeTruthy();
+    expect(screen.queryByText('TROPHY COLLECTION')).toBeNull();
+    expect(screen.queryByText('LE PACTE GRIFF')).toBeNull();
   });
 
   it('shows only badges when opened from the Badges profile entry', async () => {
+    mockParams = { scope: 'owned', tab: 'badges' };
     const screen = await render(
       <LockerScreen previewData={previewData} previewProfile={previewProfile} />,
     );

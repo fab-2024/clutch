@@ -26,10 +26,9 @@ type ProfileOverviewSectionsProps = {
   cosmetics?: EquippedCosmetics | null;
   data: ProfileData | null;
   loading: boolean;
-  onOpenBadges: () => void;
+  onOpenAchievements: () => void;
   onOpenJerseys: () => void;
   onOpenRank: () => void;
-  onOpenRings: () => void;
   onOpenShowcase: () => void;
   onOpenTrophies: () => void;
   rankAccent: string;
@@ -43,6 +42,7 @@ type CollectionEntry = {
   label: string;
   meta: string;
   onPress: () => void;
+  secondaryAsset?: ImageSourcePropType;
 };
 
 const COLLECTION_ASSETS = {
@@ -56,10 +56,9 @@ export default function ProfileOverviewSections({
   cosmetics,
   data,
   loading,
-  onOpenBadges,
+  onOpenAchievements,
   onOpenJerseys,
   onOpenRank,
-  onOpenRings,
   onOpenShowcase,
   onOpenTrophies,
   rankAccent,
@@ -80,9 +79,8 @@ export default function ProfileOverviewSections({
         data={data}
         loading={loading}
         onOpenAll={onOpenShowcase}
-        onOpenBadges={onOpenBadges}
+        onOpenAchievements={onOpenAchievements}
         onOpenJerseys={onOpenJerseys}
-        onOpenRings={onOpenRings}
         onOpenTrophies={onOpenTrophies}
       />
     </View>
@@ -252,18 +250,16 @@ function ProfileCollectionSection({
   data,
   loading,
   onOpenAll,
-  onOpenBadges,
+  onOpenAchievements,
   onOpenJerseys,
-  onOpenRings,
   onOpenTrophies,
 }: {
   cosmetics?: EquippedCosmetics | null;
   data: ProfileData | null;
   loading: boolean;
   onOpenAll: () => void;
-  onOpenBadges: () => void;
+  onOpenAchievements: () => void;
   onOpenJerseys: () => void;
-  onOpenRings: () => void;
   onOpenTrophies: () => void;
 }) {
   const unlockedBadges = loading ? 0 : (data?.badges ?? []).filter((badge) => badge.obtained).length;
@@ -274,19 +270,12 @@ function ProfileCollectionSection({
   const entries: CollectionEntry[] = [
     {
       accent: '#28B7F6',
-      accessibilityLabel: `Ouvrir mes badges, ${loading ? 'synchronisation' : `${unlockedBadges} débloqués`}`,
+      accessibilityLabel: `Ouvrir mes badges et anneaux, ${loading ? 'synchronisation' : `${unlockedBadges} badges débloqués et ${unlockedRings} anneaux sur ${ringProgressions.length}`}`,
       asset: COLLECTION_ASSETS.badge,
-      label: 'BADGES',
-      meta: loading ? 'SYNCHRONISATION' : `${unlockedBadges} DÉBLOQUÉ${unlockedBadges === 1 ? '' : 'S'}`,
-      onPress: onOpenBadges,
-    },
-    {
-      accent: '#FF970F',
-      accessibilityLabel: `Ouvrir mes anneaux, ${loading ? 'synchronisation' : `${unlockedRings} sur ${ringProgressions.length}`}`,
-      asset: COLLECTION_ASSETS.ring,
-      label: 'ANNEAUX',
-      meta: loading ? 'SYNCHRONISATION' : `${unlockedRings} / ${ringProgressions.length}`,
-      onPress: onOpenRings,
+      label: 'BADGES & ANNEAUX',
+      meta: loading ? 'SYNCHRONISATION' : `${unlockedBadges} BADGE${unlockedBadges === 1 ? '' : 'S'} · ${unlockedRings}/${ringProgressions.length} ANNEAUX`,
+      onPress: onOpenAchievements,
+      secondaryAsset: COLLECTION_ASSETS.ring,
     },
     {
       accent: '#C98B45',
@@ -336,7 +325,16 @@ function ProfileCollectionLink({ entry }: { entry: CollectionEntry }) {
       style={({ pressed }) => [styles.profileLink, pressed && styles.pressed]}
     >
       <View style={[styles.collectionAccent, { backgroundColor: entry.accent }]} />
-      <Image resizeMode="contain" source={entry.asset} style={styles.collectionArtwork} />
+      <View style={styles.collectionArtworkStage}>
+        <Image
+          resizeMode="contain"
+          source={entry.asset}
+          style={[styles.collectionArtwork, entry.secondaryAsset ? styles.collectionArtworkPrimary : undefined]}
+        />
+        {entry.secondaryAsset ? (
+          <Image resizeMode="contain" source={entry.secondaryAsset} style={styles.collectionArtworkSecondary} />
+        ) : null}
+      </View>
       <View style={styles.profileLinkCopy}>
         <Text style={[styles.profileLinkLabel, { color: entry.accent }]}>{entry.label}</Text>
         <Text numberOfLines={1} style={styles.profileLinkMeta}>{entry.meta}</Text>
@@ -558,10 +556,28 @@ const styles = StyleSheet.create({
     left: 0,
     width: 3,
   },
-  collectionArtwork: {
+  collectionArtworkStage: {
     width: 76,
     height: 76,
     flexShrink: 0,
+  },
+  collectionArtwork: {
+    width: 76,
+    height: 76,
+  },
+  collectionArtworkPrimary: {
+    position: 'absolute',
+    left: 0,
+    bottom: 2,
+    width: 52,
+    height: 52,
+  },
+  collectionArtworkSecondary: {
+    position: 'absolute',
+    top: 2,
+    right: 0,
+    width: 52,
+    height: 52,
   },
   profileLinkCopy: {
     flex: 1,

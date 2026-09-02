@@ -19,10 +19,9 @@ type OwnProfileOverviewProps = {
   levelFrameVariant: LevelFrameVariant;
   onAddFriend: () => void;
   onModify: () => void;
-  onOpenBadges: () => void;
+  onOpenAchievements: () => void;
   onOpenJerseys: () => void;
   onOpenRank: () => void;
-  onOpenRings: () => void;
   onOpenShowcase: () => void;
   onOpenTrophies: () => void;
   onOpenVisitor: () => void;
@@ -37,10 +36,9 @@ export default function OwnProfileOverview({
   loading,
   onAddFriend,
   onModify,
-  onOpenBadges,
+  onOpenAchievements,
   onOpenJerseys,
   onOpenRank,
-  onOpenRings,
   onOpenShowcase,
   onOpenTrophies,
   onOpenVisitor,
@@ -65,10 +63,9 @@ export default function OwnProfileOverview({
         cosmetics={cosmetics}
         data={data}
         loading={loading}
-        onOpenBadges={onOpenBadges}
+        onOpenAchievements={onOpenAchievements}
         onOpenJerseys={onOpenJerseys}
         onOpenRank={onOpenRank}
-        onOpenRings={onOpenRings}
         onOpenShowcase={onOpenShowcase}
         onOpenTrophies={onOpenTrophies}
         rankAccent={rankAccent}

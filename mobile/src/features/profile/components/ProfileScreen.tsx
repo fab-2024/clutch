@@ -161,19 +161,15 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             levelFrameVariant={levelFrameEquipment.variant}
             onAddFriend={() => router.push('/(tabs)/social/friends')}
             onModify={() => router.push('/settings/profile')}
-            onOpenBadges={() => router.push({
+            onOpenAchievements={() => router.push({
               pathname: previewData ? '/shop-preview' : '/shop',
-              params: { scope: 'owned', tab: 'badges' },
+              params: { scope: 'owned', tab: 'badges-rings' },
             } as never)}
             onOpenJerseys={() => router.push({
               pathname: previewData ? '/shop-preview' : '/shop',
               params: { scope: 'owned', tab: 'jerseys' },
             } as never)}
             onOpenRank={() => router.push('/(tabs)/rank')}
-            onOpenRings={() => router.push({
-              pathname: previewData ? '/shop-preview' : '/shop',
-              params: { scope: 'owned', tab: 'rings' },
-            } as never)}
             onOpenShowcase={() => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
             onOpenTrophies={() => router.push({
               pathname: previewData ? '/shop-preview' : '/shop',

@@ -96,10 +96,9 @@ async function renderHub({
   loading = false,
   onAddFriend = jest.fn(),
   onModify = jest.fn(),
-  onOpenBadges = jest.fn(),
+  onOpenAchievements = jest.fn(),
   onOpenJerseys = jest.fn(),
   onOpenRank = jest.fn(),
-  onOpenRings = jest.fn(),
   onOpenShowcase = jest.fn(),
   onOpenTrophies = jest.fn(),
   onOpenVisitor = jest.fn(),
@@ -109,10 +108,9 @@ async function renderHub({
   loading?: boolean;
   onAddFriend?: jest.Mock;
   onModify?: jest.Mock;
-  onOpenBadges?: jest.Mock;
+  onOpenAchievements?: jest.Mock;
   onOpenJerseys?: jest.Mock;
   onOpenRank?: jest.Mock;
-  onOpenRings?: jest.Mock;
   onOpenShowcase?: jest.Mock;
   onOpenTrophies?: jest.Mock;
   onOpenVisitor?: jest.Mock;
@@ -125,10 +123,9 @@ async function renderHub({
       levelFrameVariant="signalAscendant"
       onAddFriend={onAddFriend}
       onModify={onModify}
-      onOpenBadges={onOpenBadges}
+      onOpenAchievements={onOpenAchievements}
       onOpenJerseys={onOpenJerseys}
       onOpenRank={onOpenRank}
-      onOpenRings={onOpenRings}
       onOpenShowcase={onOpenShowcase}
       onOpenTrophies={onOpenTrophies}
       onOpenVisitor={onOpenVisitor}
@@ -156,28 +153,24 @@ describe('OwnProfileOverview', () => {
   });
 
   it('keeps Ranked and every collection destination wired', async () => {
-    const onOpenBadges = jest.fn();
+    const onOpenAchievements = jest.fn();
     const onOpenJerseys = jest.fn();
     const onOpenRank = jest.fn();
-    const onOpenRings = jest.fn();
     const onOpenTrophies = jest.fn();
     const screen = await renderHub({
-      onOpenBadges,
+      onOpenAchievements,
       onOpenJerseys,
       onOpenRank,
-      onOpenRings,
       onOpenTrophies,
     });
 
     await fireEvent.press(screen.getByTestId('profile-section-progression'));
-    await fireEvent.press(screen.getByLabelText(/Ouvrir mes badges/));
-    await fireEvent.press(screen.getByLabelText(/Ouvrir mes anneaux/));
+    await fireEvent.press(screen.getByLabelText(/Ouvrir mes badges et anneaux/));
     await fireEvent.press(screen.getByLabelText(/Ouvrir mes trophées/));
     await fireEvent.press(screen.getByLabelText(/Ouvrir mes maillots/));
 
     expect(onOpenRank).toHaveBeenCalledTimes(1);
-    expect(onOpenBadges).toHaveBeenCalledTimes(1);
-    expect(onOpenRings).toHaveBeenCalledTimes(1);
+    expect(onOpenAchievements).toHaveBeenCalledTimes(1);
     expect(onOpenTrophies).toHaveBeenCalledTimes(1);
     expect(onOpenJerseys).toHaveBeenCalledTimes(1);
   });
@@ -226,15 +219,13 @@ describe('OwnProfileOverview', () => {
     expect(onOpenVisitor).not.toHaveBeenCalled();
   });
 
-  it('surfaces the four requested profile collections without the old spaces block', async () => {
+  it('merges badges and rings into one profile collection entry', async () => {
     const screen = await renderHub();
 
-    expect(screen.getByText('BADGES')).toBeTruthy();
-    expect(screen.getByText('ANNEAUX')).toBeTruthy();
+    expect(screen.getByText('BADGES & ANNEAUX')).toBeTruthy();
     expect(screen.getByText('TROPHÉES')).toBeTruthy();
     expect(screen.getByText('MAILLOTS')).toBeTruthy();
-    expect(screen.getByText('0 DÉBLOQUÉS')).toBeTruthy();
-    expect(screen.getByText('2 / 5')).toBeTruthy();
+    expect(screen.getByText('0 BADGES · 2/5 ANNEAUX')).toBeTruthy();
     expect(screen.getByText('0 / 4')).toBeTruthy();
     expect(screen.getByText('AUCUN ÉQUIPÉ')).toBeTruthy();
     expect(screen.queryByText('TES ESPACES')).toBeNull();
