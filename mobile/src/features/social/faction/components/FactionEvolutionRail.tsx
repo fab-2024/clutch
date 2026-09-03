@@ -51,6 +51,7 @@ export default function FactionEvolutionRail({
                 styles.evolutionLabel,
                 comfortable && styles.evolutionLabelComfortable,
                 state === 'current' && styles.evolutionLabelCurrent,
+                state === 'current' && comfortable && styles.evolutionLabelCurrentComfortable,
                 (state === 'locked' || state === 'next') && styles.evolutionLabelLocked,
               ]}
             >
@@ -295,5 +296,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
   },
   evolutionLabelCurrent: { color: colors.volt },
+  evolutionLabelCurrentComfortable: { color: colors.text },
   evolutionLabelLocked: { color: '#78838C' },
 });

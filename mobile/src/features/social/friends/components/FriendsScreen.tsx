@@ -320,19 +320,18 @@ function CircleHeader({
   pendingCount: number;
 }) {
   const { isShortLandscape } = useResponsiveLayout();
-  const title = focusRequests ? 'TES DEMANDES.' : 'TOUT TON CERCLE.';
-  const subtitle = focusRequests
-    ? 'Réponds aux invitations avant de reprendre le fil de la semaine.'
-    : 'Ta semaine, tes demandes et tous tes amis réunis dans un seul flux.';
 
   return (
     <View style={[styles.header, isShortLandscape && styles.headerLandscape]}>
-      <View style={[styles.headerCopy, isShortLandscape && styles.headerCopyLandscape]}>
-        <Text style={styles.eyebrow}>SOCIAL // CERCLE</Text>
-        <Text style={[styles.title, isShortLandscape && styles.titleLandscape]}>{title}</Text>
-        <Text numberOfLines={isShortLandscape ? 2 : undefined} style={styles.subtitle}>{subtitle}</Text>
-      </View>
-      <View style={[styles.segmentWrap, isShortLandscape && styles.segmentWrapLandscape]}>
+      {focusRequests ? (
+        <View style={[styles.headerCopy, isShortLandscape && styles.headerCopyLandscape]}>
+          <Text style={[styles.title, isShortLandscape && styles.titleLandscape]}>TES DEMANDES.</Text>
+          <Text numberOfLines={isShortLandscape ? 2 : undefined} style={styles.subtitle}>
+            Réponds aux invitations avant de reprendre le fil de la semaine.
+          </Text>
+        </View>
+      ) : null}
+      <View style={[styles.segmentWrap, isShortLandscape && focusRequests && styles.segmentWrapLandscape]}>
         <CircleViewSwitch pendingCount={pendingCount} value="activity" />
       </View>
     </View>
@@ -409,10 +408,6 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   headerCopyLandscape: { flex: 1, minWidth: 0 },
-  eyebrow: {
-    ...typography.control,
-    color: colors.volt,
-  },
   title: {
     ...typography.displayMedium,
     maxWidth: 390,

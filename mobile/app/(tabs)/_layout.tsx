@@ -1,153 +1,19 @@
-import { BlurView } from 'expo-blur';
 import { Tabs } from 'expo-router';
-import type { LucideIcon } from 'lucide-react-native';
-import CalendarDays from 'lucide-react-native/icons/calendar-days';
-import House from 'lucide-react-native/icons/house';
-import Store from 'lucide-react-native/icons/store';
-import Trophy from 'lucide-react-native/icons/trophy';
-import UsersRound from 'lucide-react-native/icons/users-round';
-import { StyleSheet, View } from 'react-native';
 
-import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
-import { colors, layout, typography } from '@/src/theme';
-
-type TabIconProps = {
-  compact?: boolean;
-  focused: boolean;
-  icon: LucideIcon;
-};
-
-function TabIcon({ compact = false, focused, icon: Icon }: TabIconProps) {
-  return (
-    <View style={[styles.iconWrap, compact && styles.iconWrapCompact]}>
-      <Icon
-        color={focused ? colors.volt : colors.textMuted}
-        size={compact ? 19 : 21}
-        strokeWidth={focused ? 2.25 : 1.8}
-      />
-    </View>
-  );
-}
-
-function SmokedGlassBackground() {
-  return (
-    <View pointerEvents="none" style={styles.glassBackground}>
-      <BlurView intensity={54} style={StyleSheet.absoluteFill} tint="dark" />
-      <View style={styles.glassTint} />
-      <View style={styles.glassHighlight} />
-    </View>
-  );
-}
+import { useLiquidGlassTabOptions } from '@/src/components/navigation/LiquidGlassTabBar';
 
 export default function TabsLayout() {
-  const { isShortLandscape } = useResponsiveLayout();
+  const screenOptions = useLiquidGlassTabOptions();
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.volt,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarActiveBackgroundColor: 'rgba(232, 255, 61, 0.1)',
-        tabBarBackground: SmokedGlassBackground,
-        tabBarHideOnKeyboard: true,
-        tabBarStyle: [styles.tabBar, isShortLandscape && styles.tabBarLandscape],
-        tabBarLabelStyle: [styles.label, isShortLandscape && styles.labelLandscape],
-        tabBarItemStyle: [styles.item, isShortLandscape && styles.itemLandscape],
-      }}
-    >
-      <Tabs.Screen name="index" options={{ title: 'Hub', tabBarIcon: ({ focused }) => <TabIcon compact={isShortLandscape} focused={focused} icon={House} /> }} />
-      <Tabs.Screen name="matches" options={{ title: 'Matchs', tabBarIcon: ({ focused }) => <TabIcon compact={isShortLandscape} focused={focused} icon={CalendarDays} /> }} />
-      <Tabs.Screen name="social" options={{ title: 'Social', tabBarIcon: ({ focused }) => <TabIcon compact={isShortLandscape} focused={focused} icon={UsersRound} /> }} />
-      <Tabs.Screen name="rank" options={{ title: 'Rank', tabBarIcon: ({ focused }) => <TabIcon compact={isShortLandscape} focused={focused} icon={Trophy} /> }} />
-      <Tabs.Screen
-        name="room"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen name="profile" options={{ title: 'Magasin', tabBarIcon: ({ focused }) => <TabIcon compact={isShortLandscape} focused={focused} icon={Store} /> }} />
+    <Tabs screenOptions={screenOptions}>
+      <Tabs.Screen name="index" />
+      <Tabs.Screen name="matches" />
+      <Tabs.Screen name="social" />
+      <Tabs.Screen name="rank" />
+      <Tabs.Screen name="room" options={{ href: null }} />
+      <Tabs.Screen name="profile" />
       <Tabs.Screen name="community" options={{ href: null }} />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    position: 'absolute',
-    left: 12,
-    right: 12,
-    bottom: layout.tabBarBottom,
-    height: 70,
-    paddingHorizontal: 5,
-    paddingTop: 4,
-    paddingBottom: 4,
-    borderWidth: 1,
-    borderTopWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 23,
-    backgroundColor: 'transparent',
-    overflow: 'hidden',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.38,
-    shadowRadius: 18,
-    elevation: 12,
-  },
-  tabBarLandscape: {
-    bottom: 6,
-    height: 58,
-    paddingHorizontal: 4,
-    paddingTop: 2,
-    paddingBottom: 2,
-    borderRadius: 19,
-  },
-  item: {
-    minHeight: 60,
-    marginHorizontal: 1,
-    borderRadius: 18,
-    overflow: 'hidden',
-    paddingTop: 3,
-  },
-  itemLandscape: {
-    minHeight: layout.controlHeight,
-    borderRadius: 15,
-    paddingTop: 1,
-  },
-  iconWrap: {
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconWrapCompact: { height: 23 },
-  label: {
-    ...typography.label,
-    marginTop: 2,
-    fontSize: 11,
-    lineHeight: 14,
-    letterSpacing: 0.15,
-  },
-  labelLandscape: { marginTop: 0, fontSize: 11, lineHeight: 14 },
-  glassBackground: {
-    flex: 1,
-    overflow: 'hidden',
-    borderRadius: 22,
-    backgroundColor: 'rgba(9, 17, 23, 0.9)',
-  },
-  glassTint: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: 'rgba(17, 26, 34, 0.92)',
-  },
-  glassHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 22,
-    right: 22,
-    height: 1,
-    backgroundColor: 'rgba(48, 65, 78, 0.9)',
-  },
-});

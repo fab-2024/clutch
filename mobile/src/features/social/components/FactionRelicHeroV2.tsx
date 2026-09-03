@@ -15,10 +15,9 @@ import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { relicSignatureTheme } from '@/src/features/shop/components/CosmeticRenderer';
 import CollectiveRelic from '@/src/features/social/faction/components/CollectiveRelic';
 import FactionEvolutionRail from '@/src/features/social/faction/components/FactionEvolutionRail';
-import {
-  resolveRelicInstability,
-  type RelicDiagnostics,
-  type SupporterContributionPresentation,
+import type {
+  RelicDiagnostics,
+  SupporterContributionPresentation,
 } from '@/src/features/social/faction/relicState';
 import type {
   CommunityFaction,
@@ -55,19 +54,8 @@ export default function FactionRelicHeroV2({
 }: FactionRelicHeroV2Props) {
   const { equipped } = useCosmetics();
   const progress = relicProgressOverride ?? factionProgress(faction?.membres ?? 0, faction?.niveau_atteint);
-  const instability = resolveRelicInstability(
-    instabilityPreviewOverride?.charge ?? progress.charge,
-    instabilityPreviewOverride?.objective ?? progress.objective,
-  );
   const signature = relicSignatureTheme(equipped.factionEffect);
   const mutation = mutationOverride === undefined ? me?.mutation_a_presenter : mutationOverride;
-  const status = progress.awakened
-    ? 'CŒUR ÉVEILLÉ'
-    : instability.tier === 'mutationReady'
-      ? 'MUTATION PRÊTE'
-      : progress.level > 0
-        ? `FORME ${progress.current.code}`
-        : 'DORMANT';
 
   async function inviteSupporters() {
     if (!faction) return;
@@ -98,16 +86,6 @@ export default function FactionRelicHeroV2({
       />
       <View style={[styles.heroAura, { backgroundColor: signature.aura, boxShadow: signature.glow }]} />
       <View style={styles.coldAura} />
-
-      <View style={styles.heroTop}>
-        <View style={styles.heroHeading}>
-          <Text style={styles.heroEyebrow}>QG SOCIAL · FACTION</Text>
-        </View>
-        <View style={styles.levelPill}>
-          <View style={styles.levelDot} />
-          <Text style={styles.levelText}>{status}</Text>
-        </View>
-      </View>
 
       <CollectiveRelic
         compact
@@ -284,7 +262,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginHorizontal: -18,
     paddingHorizontal: 0,
-    paddingVertical: 12,
+    paddingTop: 44,
+    paddingBottom: 12,
     backgroundColor: '#0B1218',
   },
   heroAura: {
@@ -306,32 +285,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(23,123,145,.035)',
     boxShadow: '0 0 84px rgba(32,140,162,.055)',
   },
-  heroTop: {
-    zIndex: 6,
-    minHeight: 32,
-    paddingHorizontal: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  heroHeading: { flex: 1, minWidth: 0 },
-  heroEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .9 },
-  levelPill: {
-    flexShrink: 0,
-    minHeight: 30,
-    paddingHorizontal: 10,
-    borderRadius: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    backgroundColor: 'rgba(5,10,14,.84)',
-    borderWidth: 1,
-    borderColor: '#30414E',
-  },
-  levelDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.volt },
-  levelText: { ...typography.label, color: '#D6DCE0', letterSpacing: .3 },
-  relicQuestion: { ...typography.metricSmall, color: colors.volt },
+  relicQuestion: { ...typography.metricSmall, color: colors.text },
   identity: {
     zIndex: 4,
     minHeight: 62,
@@ -361,11 +315,11 @@ const styles = StyleSheet.create({
   factionMeta: { ...typography.caption, marginTop: 2, color: '#8D99A2' },
   growthBlock: { flexShrink: 0, alignItems: 'flex-end' },
   growthLabel: { ...typography.label, color: colors.textMuted, letterSpacing: .15 },
-  growthValue: { ...typography.metricSmall, marginTop: 1, color: colors.volt },
+  growthValue: { ...typography.metricSmall, marginTop: 1, color: colors.text },
   progressBlock: { zIndex: 4, marginTop: 8 },
   relicForm: {
     marginHorizontal: 18,
-    color: colors.volt,
+    color: colors.text,
     fontFamily: fonts.displayBold,
     fontSize: 13,
     lineHeight: 16,
@@ -401,7 +355,7 @@ const styles = StyleSheet.create({
     letterSpacing: -.45,
     textAlign: 'center',
   },
-  progressCharge: { color: colors.volt, fontFamily: fonts.display, fontSize: 30, lineHeight: 32 },
+  progressCharge: { color: colors.text, fontFamily: fonts.display, fontSize: 30, lineHeight: 32 },
   progressObjective: { color: '#F0F2F2', fontFamily: fonts.display, fontSize: 24, lineHeight: 28 },
   thresholdText: {
     width: '100%',
@@ -413,7 +367,7 @@ const styles = StyleSheet.create({
     letterSpacing: .15,
     textAlign: 'center',
   },
-  thresholdValue: { color: colors.volt, fontFamily: fonts.display, fontSize: 20, lineHeight: 21 },
+  thresholdValue: { color: colors.text, fontFamily: fonts.display, fontSize: 20, lineHeight: 21 },
   thresholdLabel: { color: '#AEB7BD', fontFamily: fonts.displayBold, fontSize: 14, lineHeight: 18 },
   inviteButton: {
     minHeight: 59,

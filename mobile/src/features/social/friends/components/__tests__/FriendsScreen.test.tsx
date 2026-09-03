@@ -134,7 +134,7 @@ describe('CirclePeopleScreen', () => {
   it('keeps the weekly summary and current-user ranking row out of the Circle feed', async () => {
     const screen = await render(<CirclePeopleScreen previewState={previewState} />);
 
-    expect(screen.getByText('TOUT TON CERCLE.')).toBeTruthy();
+    expect(screen.queryByText('TOUT TON CERCLE.')).toBeNull();
     expect(screen.queryByTestId('circle-performance-card')).toBeNull();
     expect(screen.queryByLabelText('Voir le profil de Testeur')).toBeNull();
     expect(screen.getByTestId('circle-requests-section')).toBeTruthy();
