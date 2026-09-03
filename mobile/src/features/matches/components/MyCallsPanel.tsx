@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
+import { resolveTeamAccent } from '@/src/utils/teamColors';
 import type { GameId } from '@/src/features/onboarding/types';
 import { SupporterIdentity } from '@/src/features/shop/components/CosmeticRenderer';
 import { useAuth } from '@/src/providers/AuthProvider';
@@ -172,12 +173,12 @@ function CallCard({ call, onPrepareMatch }: { call: MyCallItem; onPrepareMatch?:
       </View>
 
       <View style={styles.duel}>
-        <CallTeam accent="#20BDF2" name={call.equipe_a} selected={call.choix === 'a'} side="left" tag={call.tag_a} />
+        <CallTeam accent={resolveTeamAccent({ name: call.equipe_a, tag: call.tag_a })} name={call.equipe_a} selected={call.choix === 'a'} side="left" tag={call.tag_a} />
         <View style={styles.scoreBlock}>
           {resolved ? <Text style={styles.score}>{call.score_a ?? 0}–{call.score_b ?? 0}</Text> : <Text style={styles.vs}>VS</Text>}
           {selectedTag ? <Text style={[styles.selectedTag, { color: accent }]}>CALL · {selectedTag}</Text> : <Text style={styles.noChoice}>CHOIX LIBRE</Text>}
         </View>
-        <CallTeam accent="#FF4E63" name={call.equipe_b} selected={call.choix === 'b'} side="right" tag={call.tag_b} />
+        <CallTeam accent={resolveTeamAccent({ name: call.equipe_b, tag: call.tag_b })} name={call.equipe_b} selected={call.choix === 'b'} side="right" tag={call.tag_b} />
       </View>
 
       <View style={styles.contract}>
@@ -232,6 +233,8 @@ function ContractLine({ label, value }: { label: string; value: string }) {
 
 function Distribution({ call }: { call: MyCallItem }) {
   const distribution = call.distribution!;
+  const accentA = resolveTeamAccent({ name: call.equipe_a, tag: call.tag_a });
+  const accentB = resolveTeamAccent({ name: call.equipe_b, tag: call.tag_b });
   const width = `${Math.max(2, Math.min(98, distribution.a_pct))}%` as `${number}%`;
   return (
     <View style={styles.distribution}>
@@ -240,10 +243,10 @@ function Distribution({ call }: { call: MyCallItem }) {
         <Text style={styles.distributionTotal}>{distribution.total} VALIDÉ{distribution.total > 1 ? 'S' : ''}</Text>
       </View>
       <View style={styles.distributionValues}>
-        <Text style={styles.distributionA}>{call.tag_a} {Math.round(distribution.a_pct)}%</Text>
-        <Text style={styles.distributionB}>{Math.round(distribution.b_pct)}% {call.tag_b}</Text>
+        <Text style={[styles.distributionValue, { color: accentA }]}>{call.tag_a} {Math.round(distribution.a_pct)}%</Text>
+        <Text style={[styles.distributionValue, { color: accentB }]}>{Math.round(distribution.b_pct)}% {call.tag_b}</Text>
       </View>
-      <View style={styles.distributionTrack}><View style={[styles.distributionFill, { width }]} /></View>
+      <View style={[styles.distributionTrack, { backgroundColor: accentB }]}><View style={[styles.distributionFill, { width, backgroundColor: accentA }]} /></View>
     </View>
   );
 }
@@ -342,10 +345,9 @@ const styles = StyleSheet.create({
   distributionLabel: { ...typography.label, color: colors.volt, letterSpacing: .35 },
   distributionTotal: { ...typography.label, color: '#7BB9D7' },
   distributionValues: { flexDirection: 'row', justifyContent: 'space-between' },
-  distributionA: { ...typography.bodyStrong, color: '#65B7FF' },
-  distributionB: { ...typography.bodyStrong, color: '#FF6C7C' },
-  distributionTrack: { height: 7, overflow: 'hidden', borderRadius: 4, backgroundColor: '#FF4E63' },
-  distributionFill: { height: '100%', backgroundColor: '#20BDF2' },
+  distributionValue: { ...typography.bodyStrong },
+  distributionTrack: { height: 7, overflow: 'hidden', borderRadius: 4 },
+  distributionFill: { height: '100%' },
   verdict: { minHeight: 52, padding: 10, borderRadius: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#080C10', borderWidth: 1, borderColor: '#202932' },
   verdictLabel: { ...typography.label, color: colors.textMuted, letterSpacing: .35 },
   verdictSource: { ...typography.caption, marginTop: 3, color: colors.text },

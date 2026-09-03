@@ -1,4 +1,8 @@
+import { resolveTeamAccent } from '@/src/utils/teamColors';
+
 import type { HubMatch, HubPrediction } from './types';
+
+export { resolveTeamAccent } from '@/src/utils/teamColors';
 
 export type HubMatchPhase = 'upcoming' | 'live' | 'finished' | 'cancelled';
 export type HubTeamSide = 'a' | 'b';
@@ -22,44 +26,6 @@ export type MatchConfrontationState = {
   teamA: ConfrontationTeam;
   teamB: ConfrontationTeam;
   winner: HubTeamSide | null;
-};
-
-const FALLBACK_ACCENTS: Record<HubTeamSide, string> = {
-  a: '#3F88FF',
-  b: '#FF6A21',
-};
-
-// Mobile brand catalogue. The match model can override these values when the
-// API eventually exposes official team colours.
-const TEAM_ACCENTS: Record<string, string> = {
-  AST: '#E5333A',
-  ASTRALIS: '#E5333A',
-  BDS: '#E84A9B',
-  DRX: '#4D71FF',
-  EDG: '#D62E38',
-  FAZE: '#E43B32',
-  FNC: '#FF5900',
-  FNATIC: '#FF5900',
-  G2: '#69A7FF',
-  'G2 ESPORTS': '#69A7FF',
-  GEN: '#C8A45D',
-  'GEN.G': '#C8A45D',
-  GX: '#6ED6B8',
-  HERETICS: '#F2C94C',
-  KC: '#30A9FF',
-  'KARMINE CORP': '#30A9FF',
-  MKOI: '#1AC8FF',
-  MOUZ: '#E53742',
-  NAVI: '#FFE000',
-  'NATUS VINCERE': '#FFE000',
-  PRX: '#E44755',
-  RGE: '#9BE447',
-  SEN: '#E64B50',
-  SK: '#47D377',
-  T1: '#E22D38',
-  TH: '#F0C14B',
-  TL: '#6A8DD8',
-  VIT: '#F3D933',
 };
 
 export function getHubMatchPhase(match: HubMatch, now = Date.now()): HubMatchPhase {
@@ -122,24 +88,6 @@ export function getMatchConfrontationState(
   };
 }
 
-export function resolveTeamAccent({
-  fallback,
-  name,
-  provided,
-  tag,
-}: {
-  fallback: HubTeamSide;
-  name: string;
-  provided?: string | null;
-  tag: string;
-}) {
-  const explicit = normalizeHexColor(provided);
-  if (explicit) return explicit;
-  return TEAM_ACCENTS[String(tag || '').trim().toUpperCase()]
-    ?? TEAM_ACCENTS[String(name || '').trim().toUpperCase()]
-    ?? FALLBACK_ACCENTS[fallback];
-}
-
 export function withAlpha(color: string, alpha: number) {
   const normalized = normalizeHexColor(color) ?? '#000000';
   const value = Math.round(Math.max(0, Math.min(1, alpha)) * 255).toString(16).padStart(2, '0');
@@ -176,7 +124,6 @@ function buildTeam(match: HubMatch, side: HubTeamSide): ConfrontationTeam {
   const tag = safeTag(rawTag, name, side);
   return {
     accent: resolveTeamAccent({
-      fallback: side,
       name,
       provided: side === 'a' ? match.couleur_a : match.couleur_b,
       tag,

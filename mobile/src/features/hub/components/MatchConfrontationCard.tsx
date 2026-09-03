@@ -10,6 +10,7 @@ import Svg, {
   Stop,
 } from 'react-native-svg';
 
+import { LiveBadge } from '@/src/components/ui/LiveBadge';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { colors, fonts, layout, typography } from '@/src/theme';
 
@@ -324,26 +325,7 @@ function ConfrontationMarker({
         ]}
       >
         <View style={styles.liveMarkerLine} />
-        <View
-          style={[
-            styles.liveMarkerBadge,
-            {
-              minHeight: 27 * sceneScale,
-              minWidth: 58 * sceneScale,
-            },
-          ]}
-        >
-          <LinearGradient
-            colors={['#F52B39', '#D00920', '#990A17']}
-            end={{ x: .5, y: 1 }}
-            start={{ x: .5, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.liveMarkerHighlight} />
-          <Text style={[styles.liveMarkerText, { fontSize: 13 * sceneScale, lineHeight: 16 * sceneScale }]}>
-            LIVE
-          </Text>
-        </View>
+        <LiveBadge scale={sceneScale} />
         <View style={styles.liveMarkerLine} />
       </View>
     );
@@ -508,34 +490,6 @@ const styles = StyleSheet.create({
     borderRadius: 1,
     backgroundColor: 'rgba(247,249,250,.9)',
     boxShadow: '0 0 6px rgba(255,255,255,.3)',
-  },
-  liveMarkerBadge: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#FF5963',
-    backgroundColor: '#D00920',
-    boxShadow: '0 6px 16px rgba(212,9,32,.34)',
-  },
-  liveMarkerHighlight: {
-    position: 'absolute',
-    top: 1,
-    right: 5,
-    left: 5,
-    height: 1,
-    borderRadius: 1,
-    backgroundColor: 'rgba(255,255,255,.44)',
-  },
-  liveMarkerText: {
-    color: '#FFFFFF',
-    fontFamily: fonts.bold,
-    fontStyle: 'italic',
-    letterSpacing: .3,
-    textShadowColor: 'rgba(70,0,8,.72)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   matchStatus: {
     position: 'absolute',

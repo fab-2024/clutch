@@ -6,6 +6,7 @@ import {
   withAlpha,
 } from '../matchPresentation';
 import type { HubMatch } from '../types';
+import { UNKNOWN_TEAM_ACCENT } from '@/src/utils/teamColors';
 
 const NOW = Date.parse('2026-08-23T18:00:00.000Z');
 
@@ -84,14 +85,37 @@ describe('hub match confrontation presentation', () => {
 
     expect(state.teamA.name).toBe('Équipe 1');
     expect(state.teamA.tag).toBe('EQ1');
-    expect(state.teamA.accent).toBe('#3F88FF');
+    expect(state.teamA.accent).toBe(UNKNOWN_TEAM_ACCENT);
     expect(state.teamB.tag).toBe('UC');
-    expect(state.teamB.accent).toBe('#FF6A21');
+    expect(state.teamB.accent).toBe(UNKNOWN_TEAM_ACCENT);
   });
 
   it('prefers an explicit valid colour and creates alpha variants', () => {
-    const accent = resolveTeamAccent({ fallback: 'a', name: 'Any Team', provided: '#1a2', tag: 'ANY' });
+    const accent = resolveTeamAccent({ name: 'Any Team', provided: '#1a2', tag: 'ANY' });
     expect(accent).toBe('#11AA22');
     expect(withAlpha(accent, .5)).toBe('#11AA2280');
+  });
+
+  it('keeps the FEARX and Dplus colours when their sides are swapped', () => {
+    const match = { ...BASE_MATCH, equipe_a: 'BNK FEARX', tag_a: 'BFX', equipe_b: 'Dplus KIA', tag_b: 'DK' };
+    const original = getMatchConfrontationState(match, null, NOW);
+    const swapped = getMatchConfrontationState({
+      ...match, equipe_a: match.equipe_b, tag_a: match.tag_b, equipe_b: match.equipe_a, tag_b: match.tag_a,
+    }, null, NOW);
+
+    expect(original.teamA.accent).toBe('#FFD600');
+    expect(original.teamB.accent).toBe('#E5E7EB');
+    expect(swapped.teamA.accent).toBe(original.teamB.accent);
+    expect(swapped.teamB.accent).toBe(original.teamA.accent);
+  });
+
+  it.each([
+    ['  bnk-fearx ', '', '#FFD600'],
+    ['Dplus Kia', 'UNKNOWN', '#E5E7EB'],
+    ['Gen G', 'GEN', '#C8A45D'],
+    ['Team Vitality', 'VITALITY', '#F3D933'],
+    ['', 'KOI', '#1AC8FF'],
+  ])('recognizes provider names and aliases for %s / %s', (name, tag, expected) => {
+    expect(resolveTeamAccent({ name, tag, provided: 'invalid' })).toBe(expected);
   });
 });

@@ -12,27 +12,24 @@ type Rgb = { blue: number; green: number; red: number };
 type Hsl = { hue: number; lightness: number; saturation: number };
 
 export function buildMatchTerritoryPalette(accent: string): MatchTerritoryPalette {
-  const source = hexToRgb(accent) ?? { red: 63, green: 136, blue: 255 };
+  const source = hexToRgb(accent) ?? { red: 167, green: 173, blue: 181 };
   const hsl = rgbToHsl(source);
-  const yellowAccent = hsl.hue >= 40 && hsl.hue <= 70 && hsl.saturation > .42;
-  const localHue = hsl.hue >= 8 && hsl.hue <= 35
-    ? hsl.hue - 4
-    : hsl.hue >= 205 && hsl.hue <= 235
-      ? hsl.hue - 3
-      : hsl.hue;
-  const backgroundHue = yellowAccent ? 26 : localHue;
-  const saturation = clamp(Math.max(.78, hsl.saturation * 1.26), 0, 1);
+  const neutral = hsl.saturation < .12
+    || Math.max(source.red, source.green, source.blue) - Math.min(source.red, source.green, source.blue) < 18;
+  const localHue = hsl.hue;
+  const backgroundHue = localHue;
+  const saturation = neutral ? 0 : clamp(Math.max(.52, hsl.saturation * 1.12), 0, 1);
   const localLightness = clamp(
     hsl.lightness > .6 ? hsl.lightness * .74 : hsl.lightness,
-    .5,
-    .53,
+    neutral ? .65 : .5,
+    neutral ? .78 : .53,
   );
   const local = hslToHex({ hue: localHue, saturation, lightness: localLightness });
   const backgroundLocal = hslToHex({ hue: backgroundHue, saturation, lightness: localLightness });
   const nearFracture = hslToHex({
     hue: backgroundHue,
     saturation,
-    lightness: clamp(localLightness + .03, 0, .56),
+    lightness: clamp(localLightness + .03, 0, neutral ? .82 : .56),
   });
 
   return {

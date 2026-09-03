@@ -130,7 +130,7 @@ export default function HubPreviewScreen() {
 
 type PreviewMatchState = 'open' | 'upcoming' | 'live' | 'finished' | 'cancelled' | 'fallback';
 type PreviewScoreMode = 'score' | 'none';
-type PreviewTeams = 'g2-fnatic' | 'kc-vitality' | 'light-pair';
+type PreviewTeams = 'g2-fnatic' | 'kc-vitality' | 'light-pair' | 'fearx-dplus';
 type PreviewContext = 'auto' | 'mission' | 'none' | 'result' | 'reward';
 
 function normalizePreviewContext(value?: string | string[]): PreviewContext {
@@ -159,7 +159,7 @@ function normalizePreviewState(value?: string | string[]): PreviewMatchState {
 
 function normalizePreviewTeams(value?: string | string[]): PreviewTeams {
   const teams = Array.isArray(value) ? value[0] : value;
-  return teams === 'kc-vitality' || teams === 'light-pair' ? teams : 'g2-fnatic';
+  return teams === 'kc-vitality' || teams === 'light-pair' || teams === 'fearx-dplus' ? teams : 'g2-fnatic';
 }
 
 function normalizePreviewScore(value?: string | string[]): PreviewScoreMode {
@@ -168,7 +168,16 @@ function normalizePreviewScore(value?: string | string[]): PreviewScoreMode {
 }
 
 function matchForPreviewState(state: PreviewMatchState, teams: PreviewTeams, scoreMode: PreviewScoreMode): HubMatch {
-  const matchup = teams === 'kc-vitality'
+  const matchup = teams === 'fearx-dplus'
+    ? {
+        event: 'LCK · Playoffs',
+        id: 'fearx-dplus',
+        teamA: 'BNK FEARX',
+        teamB: 'Dplus KIA',
+        tagA: 'BFX',
+        tagB: 'DK',
+      }
+    : teams === 'kc-vitality'
     ? {
         event: 'LFL Summer Split',
         id: 'kc-vitality',

@@ -8,14 +8,25 @@ describe('hub confrontation territory palette', () => {
     expect(brightness(palette.nearFracture)).toBeGreaterThan(brightness(palette.local));
   });
 
-  it('turns a yellow team accent into dark amber without dulling its luminous edge', () => {
+  it('preserves a yellow team identity in both the dark territory and luminous edge', () => {
     const palette = buildMatchTerritoryPalette('#F3D933');
     const outer = channels(palette.outer);
     const local = channels(palette.local);
     expect(outer.red).toBeGreaterThan(outer.green);
+    expect(outer.green).toBeGreaterThan(outer.red * .75);
     expect(outer.blue).toBeLessThan(outer.green / 3);
     expect(local.red).toBeGreaterThan(220);
     expect(local.green).toBeGreaterThan(180);
+  });
+
+  it.each(['#FFFFFF', '#000000', '#E5E7EB'])('keeps monochrome team %s neutral instead of tinting it red or blue', (accent) => {
+    const palette = buildMatchTerritoryPalette(accent);
+    for (const color of [palette.outer, palette.middle, palette.local, palette.nearFracture]) {
+      const { red, green, blue } = channels(color);
+      expect(red).toBe(green);
+      expect(green).toBe(blue);
+    }
+    expect(brightness(palette.outer)).toBeLessThan(45);
   });
 
   it('normalizes two pale accents into readable energetic local colours', () => {

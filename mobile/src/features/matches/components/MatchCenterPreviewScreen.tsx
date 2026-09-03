@@ -1,5 +1,7 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 
+import { resolveTeamAccent } from '@/src/utils/teamColors';
+
 import type { MatchCenterData } from '../types';
 import type { MatchJourneySnapshot } from '../matchJourney';
 import { CALL_LOCK_DURATION_MS, CALL_LOCK_MILESTONE_MS } from './CallLockMoment';
@@ -181,10 +183,9 @@ function livePreview(data: MatchCenterData): MatchCenterData {
 }
 
 function previewSnapshot(data: MatchCenterData): MatchJourneySnapshot {
-  const live = data.match.statut === 'en_cours';
   return {
-    accentA: live ? '#139DFF' : '#69A7FF',
-    accentB: live ? '#F1D500' : '#FF5900',
+    accentA: resolveTeamAccent({ name: data.match.equipe_a, tag: data.match.tag_a }),
+    accentB: resolveTeamAccent({ name: data.match.equipe_b, tag: data.match.tag_b }),
     event: data.match.evenement,
     format: data.match.format,
     game: data.match.jeu,

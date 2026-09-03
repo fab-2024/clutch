@@ -10,6 +10,7 @@ import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { colors } from '@/src/theme';
+import { resolveTeamAccent } from '@/src/utils/teamColors';
 
 import { openMatchResult, replaceMatchCenter, warmMatchCenter } from '../matchCenterNavigation';
 import type { MatchJourneySnapshot, MatchJourneySource } from '../matchJourney';
@@ -307,6 +308,8 @@ export function ProjectionMeta({ projection }: { projection: MatchProjection }) 
 
 export function CallContract({ data }: { data: MatchCenterData }) {
   const { callContext, match, prediction } = data;
+  const accentA = resolveTeamAccent({ name: match.equipe_a, tag: match.tag_a });
+  const accentB = resolveTeamAccent({ name: match.equipe_b, tag: match.tag_b });
   const distribution = callContext.distribution;
   const resolved = prediction?.statut === 'gagne' || prediction?.statut === 'perdu';
   const lockedAt = callContext.verrouille_le
@@ -337,10 +340,10 @@ export function CallContract({ data }: { data: MatchCenterData }) {
             <Text style={styles.contractDistributionTotal}>{distribution.total} CALL{distribution.total > 1 ? 'S' : ''}</Text>
           </View>
           <View style={styles.contractDistributionValues}>
-            <Text style={styles.contractDistributionA}>{match.tag_a} {Math.round(distribution.a_pct)}%</Text>
-            <Text style={styles.contractDistributionB}>{Math.round(distribution.b_pct)}% {match.tag_b}</Text>
+            <Text style={[styles.contractDistributionValue, { color: accentA }]}>{match.tag_a} {Math.round(distribution.a_pct)}%</Text>
+            <Text style={[styles.contractDistributionValue, { color: accentB }]}>{Math.round(distribution.b_pct)}% {match.tag_b}</Text>
           </View>
-          <View style={styles.contractDistributionTrack}><View style={[styles.contractDistributionFill, { width }]} /></View>
+          <View style={[styles.contractDistributionTrack, { backgroundColor: accentB }]}><View style={[styles.contractDistributionFill, { width, backgroundColor: accentA }]} /></View>
         </View>
       ) : (
         <View style={styles.contractHidden}><Text style={styles.contractHiddenGlyph}>◌</Text><Text style={styles.contractHiddenText}>La répartition restera masquée jusqu’à ce que tu valides ton choix.</Text></View>
@@ -414,6 +417,8 @@ export function RiskCell({ label, value, positive = false }: { label: string; va
 }
 
 export function LoadingCard({ snapshot }: { snapshot?: MatchJourneySnapshot | null }) {
+  const accentA = resolveTeamAccent({ name: snapshot?.teamA, tag: snapshot?.tagA, provided: snapshot?.accentA });
+  const accentB = resolveTeamAccent({ name: snapshot?.teamB, tag: snapshot?.tagB, provided: snapshot?.accentB });
   const accessibleLabel = snapshot
     ? `Chargement du Match Center, ${snapshot.teamA} contre ${snapshot.teamB}`
     : 'Chargement du Match Center';
@@ -421,7 +426,7 @@ export function LoadingCard({ snapshot }: { snapshot?: MatchJourneySnapshot | nu
     <View style={styles.loadingCard}>
       {snapshot ? (
         <LinearGradient
-          colors={[`${snapshot.accentA ?? '#5BABFF'}20`, '#0D1218', `${snapshot.accentB ?? '#FF6375'}1C`]}
+          colors={[`${accentA}20`, '#0D1218', `${accentB}1C`]}
           end={{ x: 1, y: .55 }}
           pointerEvents="none"
           start={{ x: 0, y: .45 }}
@@ -435,7 +440,7 @@ export function LoadingCard({ snapshot }: { snapshot?: MatchJourneySnapshot | nu
       {snapshot?.game ? <Text style={styles.loadingGame}>{gameLabel(snapshot.game)}</Text> : <Skeleton height={9} radius="pill" tone="subtle" width="38%" />}
       <View style={styles.loadingDuel}>
         <View style={styles.loadingTeam}>
-          {snapshot ? <><View style={[styles.loadingTeamMark, { borderColor: `${snapshot.accentA ?? '#5BABFF'}70` }]}><TeamLogo accent={snapshot.accentA ?? '#5BABFF'} contentScale={1.02} frameless name={snapshot.teamA} size={62} tag={snapshot.tagA} uri={snapshot.logoA} /></View><Text adjustsFontSizeToFit numberOfLines={1} style={styles.loadingTeamTag}>{snapshot.tagA}</Text><Text numberOfLines={2} style={styles.loadingTeamName}>{snapshot.teamA}</Text></> : <><Skeleton height={72} radius="lg" width={72} /><Skeleton height={18} radius="pill" width={54} /><Skeleton height={9} radius="pill" tone="subtle" width={72} /></>}
+          {snapshot ? <><View style={[styles.loadingTeamMark, { borderColor: `${accentA}70` }]}><TeamLogo accent={accentA} contentScale={1.02} frameless name={snapshot.teamA} size={62} tag={snapshot.tagA} uri={snapshot.logoA} /></View><Text adjustsFontSizeToFit numberOfLines={1} style={styles.loadingTeamTag}>{snapshot.tagA}</Text><Text numberOfLines={2} style={styles.loadingTeamName}>{snapshot.teamA}</Text></> : <><Skeleton height={72} radius="lg" width={72} /><Skeleton height={18} radius="pill" width={54} /><Skeleton height={9} radius="pill" tone="subtle" width={72} /></>}
         </View>
         <View style={styles.loadingVersus}>
           <Skeleton height={8} radius="pill" tone="subtle" width={38} />
@@ -443,7 +448,7 @@ export function LoadingCard({ snapshot }: { snapshot?: MatchJourneySnapshot | nu
           <Skeleton height={9} radius="pill" tone="subtle" width={34} />
         </View>
         <View style={styles.loadingTeam}>
-          {snapshot ? <><View style={[styles.loadingTeamMark, { borderColor: `${snapshot.accentB ?? '#FF6375'}70` }]}><TeamLogo accent={snapshot.accentB ?? '#FF6375'} contentScale={1.02} frameless name={snapshot.teamB} size={62} tag={snapshot.tagB} uri={snapshot.logoB} /></View><Text adjustsFontSizeToFit numberOfLines={1} style={styles.loadingTeamTag}>{snapshot.tagB}</Text><Text numberOfLines={2} style={styles.loadingTeamName}>{snapshot.teamB}</Text></> : <><Skeleton height={72} radius="lg" width={72} /><Skeleton height={18} radius="pill" width={54} /><Skeleton height={9} radius="pill" tone="subtle" width={72} /></>}
+          {snapshot ? <><View style={[styles.loadingTeamMark, { borderColor: `${accentB}70` }]}><TeamLogo accent={accentB} contentScale={1.02} frameless name={snapshot.teamB} size={62} tag={snapshot.tagB} uri={snapshot.logoB} /></View><Text adjustsFontSizeToFit numberOfLines={1} style={styles.loadingTeamTag}>{snapshot.tagB}</Text><Text numberOfLines={2} style={styles.loadingTeamName}>{snapshot.teamB}</Text></> : <><Skeleton height={72} radius="lg" width={72} /><Skeleton height={18} radius="pill" width={54} /><Skeleton height={9} radius="pill" tone="subtle" width={72} /></>}
         </View>
       </View>
     </View>

@@ -26,7 +26,7 @@ import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
-import { teamHue } from '@/src/utils/teams';
+import { resolveTeamAccent } from '@/src/utils/teamColors';
 
 import {
   loadMatchResultReveal,
@@ -488,7 +488,7 @@ function RevealState({ action, copy, onPress, title }: { action?: string; copy: 
   return <Screen><LinearGradient colors={['#0B1115', '#070A0E']} style={StyleSheet.absoluteFill} /><View style={styles.state}><GriffEmblem size={64} style={styles.stateEmblem} /><Text style={styles.stateTitle}>{title}</Text><Text style={styles.stateCopy}>{copy}</Text>{action && onPress ? <Pressable accessibilityRole="button" onPress={onPress} style={styles.stateButton}><Text style={styles.stateButtonText}>{action}</Text></Pressable> : null}</View></Screen>;
 }
 
-function teamColor(tag: string, name: string) { return `hsl(${teamHue(tag, name)}, 72%, 59%)`; }
+function teamColor(tag: string, name: string) { return resolveTeamAccent({ tag, name }); }
 function signed(value: number) { return `${value >= 0 ? '+' : '−'}${formatNumber(Math.abs(value))}`; }
 function formatNumber(value: number) { return NUMBER_FORMATTER.format(Number(value || 0)); }
 function formatResolutionDate(value: string) { return new Date(value).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).replace('.', '').toUpperCase(); }

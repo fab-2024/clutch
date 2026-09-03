@@ -15,6 +15,7 @@ import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/Featur
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import GameLogo from '@/src/features/onboarding/components/GameLogo';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
+import { resolveTeamAccent } from '@/src/utils/teamColors';
 import type { GameId } from '@/src/features/onboarding/types';
 import { openMatchCenter, warmMatchCenter, type MatchCenterTarget } from '../matchCenterNavigation';
 import type { ArenaMatch } from '../types';
@@ -244,19 +245,21 @@ export function SectionHead({ callsOnly, count, date, status }: { callsOnly: boo
 
 export function LiveMatchCard({ match, onPrepareMatch, rivalId, rivalPseudo }: { match: ArenaMatch; onPrepareMatch?: (match: MatchCenterTarget) => void; rivalId?: string; rivalPseudo?: string }) {
   const callTag = predictionTag(match);
-  const target = arenaTransitionTarget(match, '#66B3FF', '#FF6C7C');
+  const target = arenaTransitionTarget(match);
+  const accentA = target.couleur_a;
+  const accentB = target.couleur_b;
   const prepare = () => onPrepareMatch ? onPrepareMatch(target) : warmMatchCenter(target);
   return (
     <Pressable accessibilityHint="Ouvre le Match Center" accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}, en direct`} accessibilityRole="button" onPress={() => { prepare(); openMatchCenter(target, { rivalId, rivalPseudo, source: 'matches' }); }} onPressIn={prepare} style={({ pressed }) => [styles.liveCard, pressed && styles.pressed]}>
-      <LinearGradient colors={['rgba(3,7,10,.16)', 'rgba(3,7,10,.48)', 'rgba(3,7,10,.76)']} end={{ x: .5, y: 1 }} start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[`${accentA}38`, 'rgba(3,7,10,.74)', `${accentB}38`]} end={{ x: 1, y: .5 }} start={{ x: 0, y: .5 }} style={StyleSheet.absoluteFill} />
       <View style={styles.liveTop}>
         <Text numberOfLines={1} style={styles.liveEvent}>{gameLabel(match.jeu).toUpperCase()} · {match.evenement}</Text>
         <View style={styles.livePill}><View style={styles.liveDot} /><Text style={styles.liveText}>LIVE</Text></View>
       </View>
       <View style={styles.liveDuel}>
-        <LiveTeam accent="#66B3FF" name={match.equipe_a} tag={match.tag_a} />
+        <LiveTeam accent={accentA} name={match.equipe_a} tag={match.tag_a} />
         <View style={styles.liveScore}><Text style={styles.liveBo}>BO{match.format}</Text><Text style={styles.liveScoreText}>{match.score_a ?? 0}–{match.score_b ?? 0}</Text></View>
-        <LiveTeam accent="#FF6C7C" name={match.equipe_b} tag={match.tag_b} />
+        <LiveTeam accent={accentB} name={match.equipe_b} tag={match.tag_b} />
       </View>
       <View style={styles.liveFooter}><Text style={[styles.liveFooterText, callTag && styles.liveFooterCall]}>{callTag ? `TON CALL · ${callTag}` : 'SUIVRE LE MATCH'}</Text><Text style={styles.liveFooterArrow}>→</Text></View>
     </Pressable>
@@ -274,12 +277,12 @@ export function MatchRow({ match, onPrepareMatch, rivalId, rivalPseudo }: { matc
   const verdict = predictionVerdict(match);
   const open = predictionIsOpen(match);
   const state = verdict || (callTag ? `CALL · ${callTag}` : finished ? 'FINAL' : open ? 'OUVERT' : 'CLOS');
-  const target = arenaTransitionTarget(match, '#5BABFF', '#FF6375');
+  const target = arenaTransitionTarget(match);
   const prepare = () => onPrepareMatch ? onPrepareMatch(target) : warmMatchCenter(target);
   return (
     <Pressable accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}${callTag ? `, ton call ${callTag}` : ''}`} accessibilityRole="button" onPress={() => { prepare(); openMatchCenter(target, { rivalId, rivalPseudo, source: 'matches' }); }} onPressIn={prepare} style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}>
       <View style={styles.rowWhen}><Text style={styles.rowTime}>{finished ? 'FINAL' : formatTime(match.debut)}</Text><Text style={styles.rowGame}>{gameLabel(match.jeu)}</Text></View>
-      <View style={styles.rowLogos}><TeamLogo accent="#5BABFF" name={match.equipe_a} size={34} tag={match.tag_a} /><View style={styles.rowLogoOverlap}><TeamLogo accent="#FF6375" name={match.equipe_b} size={34} tag={match.tag_b} /></View></View>
+      <View style={styles.rowLogos}><TeamLogo accent={target.couleur_a} name={match.equipe_a} size={34} tag={match.tag_a} /><View style={styles.rowLogoOverlap}><TeamLogo accent={target.couleur_b} name={match.equipe_b} size={34} tag={match.tag_b} /></View></View>
       <View style={styles.rowMain}><Text numberOfLines={1} style={styles.rowEvent}>{match.evenement} · BO{match.format}</Text><Text numberOfLines={1} style={styles.rowTeams}>{match.tag_a}  {finished ? `${match.score_a ?? 0} — ${match.score_b ?? 0}` : 'VS'}  {match.tag_b}</Text></View>
       <View style={styles.rowTrailing}><Text style={[styles.rowState, (callTag || open) && styles.rowStateAccent, verdict && Number(match.prediction?.delta_frags ?? 0) < 0 && styles.rowStateLoss]}>{state}</Text><Text style={styles.rowArrow}>›</Text></View>
     </Pressable>
@@ -334,8 +337,12 @@ export function MatchSkeleton() {
   );
 }
 
-function arenaTransitionTarget(match: ArenaMatch, couleurA: string, couleurB: string): MatchCenterTarget {
-  return { ...match, couleur_a: couleurA, couleur_b: couleurB };
+function arenaTransitionTarget(match: ArenaMatch) {
+  return {
+    ...match,
+    couleur_a: resolveTeamAccent({ name: match.equipe_a, tag: match.tag_a }),
+    couleur_b: resolveTeamAccent({ name: match.equipe_b, tag: match.tag_b }),
+  };
 }
 
 function SearchIcon({ color, size }: { color: string; size: number }) {

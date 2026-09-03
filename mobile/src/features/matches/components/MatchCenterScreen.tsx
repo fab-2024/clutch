@@ -20,6 +20,7 @@ import { errorFeedback, selectionFeedback, successFeedback } from '@/src/lib/fee
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors } from '@/src/theme';
+import { resolveTeamAccent } from '@/src/utils/teamColors';
 
 import { submitRankedPrediction } from '../api';
 import { useMatchCenterData } from '../hooks/useMatchCenterData';
@@ -477,8 +478,8 @@ export default function MatchCenterScreen({
 
       {match && (previewCallLockChoice || callLockPresentation?.matchId === match.id) ? (
         <CallLockMoment
-          accentA={journeySnapshot?.accentA ?? '#69A7FF'}
-          accentB={journeySnapshot?.accentB ?? '#FF6C7C'}
+          accentA={resolveTeamAccent({ name: match.equipe_a, tag: match.tag_a, provided: journeySnapshot?.matchId === match.id ? journeySnapshot.accentA : null })}
+          accentB={resolveTeamAccent({ name: match.equipe_b, tag: match.tag_b, provided: journeySnapshot?.matchId === match.id ? journeySnapshot.accentB : null })}
           choice={previewCallLockChoice ?? callLockPresentation?.choice ?? 'a'}
           fixedProgress={previewCallLockProgress}
           onComplete={previewCallLockChoice ? NOOP : finishCallLockMoment}

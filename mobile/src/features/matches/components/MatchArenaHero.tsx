@@ -11,7 +11,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { LiveBadge } from '@/src/components/ui/LiveBadge';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
+import { resolveTeamAccent } from '@/src/utils/teamColors';
 import type { MatchJourneySnapshot } from '../matchJourney';
 import type { ArenaMatch, MatchProjection, ProjectionChoice } from '../types';
 import { gameLabel, type MatchPhase } from '../utils';
@@ -20,8 +22,6 @@ import { styles } from './MatchCenterScreen.styles';
 
 const ARENA_HANDOFF_DURATION_MS = 320;
 const REDUCED_HANDOFF_DURATION_MS = 140;
-const LEFT_FALLBACK = '#5BABFF';
-const RIGHT_FALLBACK = '#FF6375';
 
 type MatchArenaHeroProps = {
   choiceA: ProjectionChoice | null;
@@ -55,8 +55,8 @@ export function MatchArenaHero({
   const handoff = Boolean(motionEnabled && snapshotMatches);
   const fixedProgress = previewProgress == null ? null : clamp(previewProgress, 0, 1);
   const progress = useSharedValue(fixedProgress ?? (handoff ? 0 : 1));
-  const accentA = snapshotMatches ? snapshot?.accentA ?? LEFT_FALLBACK : LEFT_FALLBACK;
-  const accentB = snapshotMatches ? snapshot?.accentB ?? RIGHT_FALLBACK : RIGHT_FALLBACK;
+  const accentA = resolveTeamAccent({ name: match.equipe_a, tag: match.tag_a, provided: snapshotMatches ? snapshot?.accentA : null });
+  const accentB = resolveTeamAccent({ name: match.equipe_b, tag: match.tag_b, provided: snapshotMatches ? snapshot?.accentB : null });
   const logoA = snapshotMatches ? snapshot?.logoA : null;
   const logoB = snapshotMatches ? snapshot?.logoB : null;
 
@@ -176,7 +176,7 @@ export function MatchArenaHero({
           winner={match.statut === 'termine' && Number(match.score_a) > Number(match.score_b)}
         />
         <Animated.View style={[styles.duelCenter, detailStyle]}>
-          <Text style={styles.vsLabel}>{phaseLabel(phase)}</Text>
+          {phase === 'live' ? <LiveBadge /> : <Text style={styles.vsLabel}>{phaseLabel(phase)}</Text>}
           <Text style={styles.vs}>{phase === 'finished' || phase === 'cancelled' ? '—' : 'VS'}</Text>
           <Text style={styles.kickoff}>{formatTime(match.debut)}</Text>
         </Animated.View>
@@ -264,7 +264,7 @@ function phaseLabel(phase: MatchPhase) {
 }
 
 function withAlpha(color: string, alpha: number) {
-  const normalized = /^#[0-9a-f]{6}$/i.test(color) ? color : LEFT_FALLBACK;
+  const normalized = resolveTeamAccent({ provided: color });
   const channel = Math.round(clamp(alpha, 0, 1) * 255).toString(16).padStart(2, '0');
   return `${normalized}${channel}`;
 }

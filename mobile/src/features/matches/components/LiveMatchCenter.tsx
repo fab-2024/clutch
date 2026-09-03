@@ -15,7 +15,9 @@ import {
   View,
 } from 'react-native';
 
+import { LiveBadge } from '@/src/components/ui/LiveBadge';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
+import { resolveTeamAccent } from '@/src/utils/teamColors';
 
 import type { MatchJourneySnapshot } from '../matchJourney';
 import type { ArenaMatch, MatchCenterData } from '../types';
@@ -37,8 +39,8 @@ export function LiveMatchCenter({
 }: LiveMatchCenterProps) {
   const { match } = data;
   const snapshotMatches = snapshot?.matchId === match.id;
-  const accentA = snapshotMatches ? snapshot?.accentA ?? LEFT_FALLBACK : LEFT_FALLBACK;
-  const accentB = snapshotMatches ? snapshot?.accentB ?? RIGHT_FALLBACK : RIGHT_FALLBACK;
+  const accentA = resolveTeamAccent({ name: match.equipe_a, tag: match.tag_a, provided: snapshotMatches ? snapshot?.accentA : null });
+  const accentB = resolveTeamAccent({ name: match.equipe_b, tag: match.tag_b, provided: snapshotMatches ? snapshot?.accentB : null });
   const logoA = snapshotMatches ? snapshot?.logoA : null;
   const logoB = snapshotMatches ? snapshot?.logoB : null;
   const percentages = communityPercentages(data);
@@ -92,10 +94,7 @@ export function LiveMatchCenter({
             <Text numberOfLines={1} style={styles.arenaEvent}>
               {gameLabel(match.jeu)} · {match.evenement.toUpperCase()}
             </Text>
-            <View style={styles.liveStatus}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>LIVE</Text>
-            </View>
+            <LiveBadge />
             <Text style={styles.format}>BO{match.format}</Text>
           </View>
 
@@ -408,6 +407,3 @@ function withAlpha(color: string, alpha: number) {
   const value = Math.round(Math.max(0, Math.min(1, alpha)) * 255).toString(16).padStart(2, '0');
   return /^#[0-9a-f]{6}$/i.test(color) ? `${color}${value}` : `rgba(255,255,255,${alpha})`;
 }
-
-const LEFT_FALLBACK = '#169CFF';
-const RIGHT_FALLBACK = '#F4D800';
