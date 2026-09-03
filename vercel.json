@@ -33,6 +33,18 @@
       "destination": "/api/profile-page?pseudo=:pseudo"
     },
     {
+      "source": "/i/:code",
+      "destination": "/api/growth-page?kind=invite&id=:code"
+    },
+    {
+      "source": "/v/:pseudo",
+      "destination": "/api/growth-page?kind=showcase&id=:pseudo"
+    },
+    {
+      "source": "/s/:pseudo/:milestone",
+      "destination": "/api/growth-page?kind=milestone&id=:pseudo&milestone=:milestone"
+    },
+    {
       "source": "/l/:code",
       "destination": "/api/public-page?kind=league&id=:code"
     },

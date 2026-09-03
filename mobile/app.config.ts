@@ -21,6 +21,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           data: [
             { scheme: 'https', host, pathPrefix: '/c/' },
             { scheme: 'https', host, pathPrefix: '/u/' },
+            { scheme: 'https', host, pathPrefix: '/i/' },
+            { scheme: 'https', host, pathPrefix: '/v/' },
+            { scheme: 'https', host, pathPrefix: '/s/' },
           ],
         },
       ] : [],

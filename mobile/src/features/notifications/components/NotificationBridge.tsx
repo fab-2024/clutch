@@ -66,5 +66,6 @@ export function allowedNotificationPath(path: string) {
   if (path.length > 300 || !path.startsWith('/') || path.startsWith('//')) return false;
   return (/^\/(match|result|duel)\/[A-Za-z0-9_~-][A-Za-z0-9._~-]*$/.test(path) && !path.includes('/..'))
     || path === '/(tabs)/social'
-    || path === '/streak';
+    || path === '/streak'
+    || path === '/showcase-activity';
 }

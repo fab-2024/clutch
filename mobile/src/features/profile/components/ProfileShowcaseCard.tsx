@@ -22,6 +22,7 @@ type ProfileShowcaseCardProps = {
   levelFrameVariant: LevelFrameVariant;
   onOpenLoadout?: () => void;
   onOpenShowcase?: () => void;
+  showcaseActionLabel?: string;
   profileTitle: string;
   pseudo: string;
   rankAccent: string;
@@ -39,6 +40,7 @@ export default function ProfileShowcaseCard({
   levelFrameVariant,
   onOpenLoadout,
   onOpenShowcase,
+  showcaseActionLabel = 'Voir ma Vitrine',
   profileTitle,
   pseudo,
   rankAccent,
@@ -112,12 +114,12 @@ export default function ProfileShowcaseCard({
 
       {onOpenShowcase || onOpenLoadout ? <View style={styles.actions}>
         {onOpenShowcase ? <Pressable
-          accessibilityLabel="Voir ma Vitrine"
+          accessibilityLabel={showcaseActionLabel}
           accessibilityRole="button"
           onPress={onOpenShowcase}
           style={({ pressed }) => [styles.primaryAction, pressed && styles.pressed]}
         >
-          <Text style={styles.primaryActionText}>VOIR MA VITRINE</Text>
+          <Text style={styles.primaryActionText}>{showcaseActionLabel.toUpperCase()}</Text>
         </Pressable> : null}
         {onOpenLoadout ? (
           <Pressable

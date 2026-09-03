@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { InvitationEntry } from '../referrals/components/InvitationEntry';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -197,12 +198,13 @@ export function CirclePeopleScreen({
   }
 
   const pendingCount = data.recues.length + data.envoyees.length;
-  const header = (
+  const header = (<>
     <CircleHeader
       focusRequests={focusRequests}
       pendingCount={pendingCount}
     />
-  );
+    <InvitationEntry preview={Boolean(previewState)} />
+  </>);
   const hasContent = Boolean(data.weekly || data.amis.length || data.recues.length || data.envoyees.length);
   const errorState = error ? (
     <FeatureStateView

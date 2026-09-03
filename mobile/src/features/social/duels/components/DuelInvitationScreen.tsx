@@ -15,6 +15,8 @@ import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { Screen } from '@/src/components/layout/Screen';
 import { Button } from '@/src/components/ui/Button';
 import { publicAppUrl } from '@/src/config/release';
+import { t } from '@/src/lib/i18n';
+import { showcasePath } from '@/src/lib/publicLinks';
 import { colors, radius, spacing, typography } from '@/src/theme';
 
 import { acceptDuel, cancelDuel, loadDuelInvitation, loadDuelResult } from '../api';
@@ -187,7 +189,7 @@ export default function DuelInvitationScreen() {
               <View style={styles.faceoff}>
                 <Fighter pseudo={duel.createur_pseudo} tag={choiceTag(duel, duel.createur_choix)} role="CHALLENGER" />
                 <View style={styles.vsBlock}><Text style={styles.vs}>VS</Text><View style={styles.vsLine} /></View>
-                <Fighter pseudo={duel.accepteur_pseudo || duel.cible_pseudo || 'PLACE LIBRE'} tag={duel.tag_oppose} role={duel.cible_pseudo && !duel.accepteur_pseudo ? 'CIBLÉ' : 'RIVAL'} right />
+                <Fighter pseudo={duel.accepteur_pseudo || duel.cible_pseudo || 'PLACE LIBRE'} tag={duel.tag_oppose} role={duel.cible_pseudo && !duel.accepteur_pseudo ? 'CIBLÉ' : 'RIVAL'} right participant={Boolean(duel.accepteur_pseudo || duel.cible_pseudo)} />
               </View>
               <Text style={styles.date}>{formatDate(duel.debut)}</Text>
               {duel.statut === 'termine' && duel.score_a != null && duel.score_b != null ? (
@@ -312,8 +314,12 @@ function ActionPanel({ duel, canAccept, wrongCamp, busy, invitationUrl, onAccept
   );
 }
 
-function Fighter({ pseudo, tag, role, right = false }: { pseudo: string; tag: string; role: string; right?: boolean }) {
-  return <View style={[styles.fighter, right && styles.fighterRight]}><View style={[styles.fighterMark, right && styles.fighterMarkRight]}><Text style={styles.fighterTag}>{tag}</Text></View><Text numberOfLines={1} style={styles.fighterName}>{pseudo}</Text><Text style={styles.fighterRole}>{role}</Text></View>;
+function Fighter({ pseudo, tag, role, right = false, participant = true }: { pseudo: string; tag: string; role: string; right?: boolean; participant?: boolean }) {
+  const path = participant ? showcasePath(pseudo) : null;
+  const content = <><View style={[styles.fighterMark, right && styles.fighterMarkRight]}><Text style={styles.fighterTag}>{tag}</Text></View><Text numberOfLines={1} style={styles.fighterName}>{pseudo}</Text><Text style={styles.fighterRole}>{role}</Text></>;
+  return path ? <Pressable accessibilityRole="link" accessibilityLabel={t('showcase.social.openPlayer', { pseudo })}
+    onPress={() => router.push(path as never)} style={[styles.fighter, right && styles.fighterRight]}>{content}</Pressable>
+    : <View style={[styles.fighter, right && styles.fighterRight]}>{content}</View>;
 }
 function Status({ status }: { status: DuelStatus }) {
   const labels: Record<DuelStatus, string> = { en_attente: 'OUVERT', accepte: 'VERROUILLÉ', termine: 'TERMINÉ', annule: 'ANNULÉ', expire: 'EXPIRÉ' };

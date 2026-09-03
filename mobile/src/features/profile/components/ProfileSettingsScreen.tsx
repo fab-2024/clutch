@@ -25,6 +25,7 @@ import {
   type NotificationPreferences,
 } from '@/src/features/notifications';
 import { errorFeedback, successFeedback } from '@/src/lib/feedback';
+import { t } from '@/src/lib/i18n';
 import StreakNotificationPreferences from '@/src/features/notifications/components/StreakNotificationPreferences';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useSnackbar } from '@/src/providers/SnackbarProvider';
@@ -527,6 +528,8 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
                 setNotificationPreferences(next);
                 notificationAutosave.commit(next);
               }} />
+              <AccountLink label={t('showcase.social.entry')}
+                onPress={() => router.push((previewState ? '/growth-preview?section=activity' : '/showcase-activity') as never)} />
             </View>
           ) : null}
 

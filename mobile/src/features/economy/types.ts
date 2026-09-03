@@ -6,6 +6,7 @@ export type PlayerEconomy = {
 
 export type VoltMovementSource =
   | 'bonus_quotidien'
+  | 'parrainage'
   | 'onboarding'
   | 'progression'
   | 'mission'

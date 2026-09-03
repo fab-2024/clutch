@@ -16,7 +16,7 @@ export default function handler(req, res) {
     payload = {
       applinks: {
         apps: [],
-        details: [{ appID: `${teamId}.${BUNDLE_ID}`, paths: ['/c/*', '/u/*'] }],
+        details: [{ appID: `${teamId}.${BUNDLE_ID}`, paths: ['/c/*', '/u/*', '/i/*', '/v/*', '/s/*'] }],
       },
     };
   } else if (platform === 'android') {

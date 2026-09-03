@@ -4,11 +4,16 @@ import Check from 'lucide-react-native/icons/check';
 import Flame from 'lucide-react-native/icons/flame';
 import ShieldCheck from 'lucide-react-native/icons/shield-check';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Screen } from '@/src/components/layout/Screen';
 import { BaseSheet } from '@/src/components/overlays/BaseSheet';
 import { Button } from '@/src/components/ui/Button';
+import { publicAppUrl } from '@/src/config/release';
+import { prepareMilestoneShare } from '@/src/features/profile/showcaseSocial/api';
+import { GrowthError, growthError } from '@/src/lib/growthErrors';
+import { milestonePath } from '@/src/lib/publicLinks';
+import { sharePublicLink } from '@/src/lib/share';
 import { formatDateTime, formatNumber, t, type TranslationKey } from '@/src/lib/i18n';
 import { useSnackbar } from '@/src/providers/SnackbarProvider';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
@@ -33,6 +38,7 @@ export default function CallStreakScreen({ previewState }: { previewState?: Call
   const [storageAttempt, setStorageAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const [sharedMilestoneUrl, setSharedMilestoneUrl] = useState<string | null>(null);
   const mutationLock = useRef(false);
   const ownerRef = useRef(ownerId);
   const purchaseButton = useRef<View>(null);
@@ -45,6 +51,7 @@ export default function CallStreakScreen({ previewState }: { previewState?: Call
     setStorageReady(Boolean(previewState));
     setMutationError(null);
     setBusy(false);
+    setSharedMilestoneUrl(null);
     mutationLock.current = false;
     let active = true;
     if (ownerId && !previewState) {
@@ -96,6 +103,7 @@ export default function CallStreakScreen({ previewState }: { previewState?: Call
 
   async function chooseMilestone(days: StreakMilestone | null) {
     if (mutationLock.current || !state) return;
+    setSharedMilestoneUrl(null);
     if (preview) { setPreview({ ...preview, selectedMilestone: days }); return; }
     const owner = state.userId;
     mutationLock.current = true;
@@ -103,6 +111,24 @@ export default function CallStreakScreen({ previewState }: { previewState?: Call
     setMutationError(null);
     try { await streak.selectMilestone(days); }
     catch (caught) { if (ownerRef.current === owner) setMutationError(caught instanceof Error ? caught.message : t('streak.error.unavailable')); }
+    finally { if (ownerRef.current === owner) { mutationLock.current = false; setBusy(false); } }
+  }
+
+  async function shareMilestone() {
+    if (!state?.selectedMilestone || mutationLock.current) return;
+    if (preview) { showSnackbar({ message: t('growth.preview'), tone: 'info' }); return; }
+    const owner = state.userId;
+    mutationLock.current = true; setBusy(true); setMutationError(null); setSharedMilestoneUrl(null);
+    try {
+      const verified = await prepareMilestoneShare(state.selectedMilestone, owner);
+      if (ownerRef.current !== owner) return;
+      const path = milestonePath(verified.pseudo, verified.milestone);
+      const url = path ? publicAppUrl(path) : null;
+      if (!url) throw new GrowthError('public_origin_missing');
+      setSharedMilestoneUrl(url);
+      const outcome = await sharePublicLink(t('milestone.title', { count: verified.milestone }), t('streak.milestone.share', { count: verified.milestone }), url);
+      if (ownerRef.current === owner && outcome === 'copied') showSnackbar({ message: t('growth.share.copied'), tone: 'success' });
+    } catch (caught) { if (ownerRef.current === owner) setMutationError(growthError(caught)); }
     finally { if (ownerRef.current === owner) { mutationLock.current = false; setBusy(false); } }
   }
 
@@ -171,7 +197,8 @@ export default function CallStreakScreen({ previewState }: { previewState?: Call
                   </Pressable>;
                 })}
               </View>
-              {state.selectedMilestone ? <><Button fullWidth variant="secondary" label={t('streak.share')} onPress={() => { void Share.share({ message: t('streak.milestone.share', { count: state.selectedMilestone! }) }).catch(() => undefined); }} /><Button fullWidth variant="ghost" disabled={busy} label={t('streak.milestone.none')} onPress={() => { void chooseMilestone(null); }} /></> : null}
+              {state.selectedMilestone ? <><Button fullWidth variant="secondary" disabled={busy} label={t('streak.share')} onPress={() => { void shareMilestone(); }} /><Button fullWidth variant="ghost" disabled={busy} label={t('streak.milestone.none')} onPress={() => { void chooseMilestone(null); }} /></> : null}
+              {sharedMilestoneUrl ? <Text selectable style={styles.meta}>{sharedMilestoneUrl}</Text> : null}
             </View>
             <View style={styles.panel}>
               <Text style={styles.sectionTitle}>{t('streak.protector.history')}</Text>

@@ -87,6 +87,18 @@ describe('VoltLedgerScreen', () => {
     expect(list.props.removeClippedSubviews).toBe(true);
     expect(screen.getByText('48 AFFICHÉS')).toBeTruthy();
   });
+
+  it('labels the confirmed referral credit without presenting an installation reward', async () => {
+    const ledger = makeLedger(1);
+    ledger.hasMore = false;
+    ledger.movements[0] = { ...ledger.movements[0], amount: 30, source: 'parrainage',
+      origin: 'parrainage', reference: 'parrainage:proof', balanceAfter: 330 };
+    const screen = await render(<VoltLedgerScreen previewData={ledger} />);
+    expect(screen.getByText('Parrainage')).toBeTruthy();
+    expect(screen.getByText('Premier call classé éligible d’un ami invité. Récompense plafonnée, sans effet sur les Frags.')).toBeTruthy();
+    expect(screen.getByText('+30')).toBeTruthy();
+    expect(screen.getByText('SOLDE 330')).toBeTruthy();
+  });
 });
 
 function makeLedger(size: number): VoltLedger {

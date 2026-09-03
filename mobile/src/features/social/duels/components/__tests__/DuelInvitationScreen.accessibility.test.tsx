@@ -1,6 +1,7 @@
 /// <reference types="jest" />
 
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { router } from 'expo-router';
 
 import { acceptDuel, cancelDuel, loadDuelInvitation, loadDuelResult } from '../../api';
 import type { DuelInvitation, DuelMutation } from '../../types';
@@ -90,6 +91,14 @@ describe('DuelInvitationScreen accessibility states', () => {
     loadInvitation.mockResolvedValue(INVITATION);
     loadResult.mockResolvedValue(null);
     cancelInvitation.mockResolvedValue({ token: INVITATION.token, statut: 'annule' });
+  });
+
+  it('opens the real challenger showcase without inventing a profile for a free slot', async () => {
+    const screen = await render(<DuelInvitationScreen />);
+    await fireEvent.press(screen.getByRole('link', { name: 'Voir la vitrine de Nova' }));
+    expect(router.push).toHaveBeenCalledWith('/v/Nova');
+    expect(screen.queryByRole('link', { name: 'Voir la vitrine de PLACE LIBRE' })).toBeNull();
+    expect(acceptInvitation).not.toHaveBeenCalled();
   });
 
   it('announces a deep-link loading failure and retries without losing the route', async () => {

@@ -1,5 +1,6 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import ArrowLeft from 'lucide-react-native/icons/arrow-left';
+import Eye from 'lucide-react-native/icons/eye';
 import Settings2 from 'lucide-react-native/icons/settings-2';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -14,6 +15,7 @@ import {
 import { useReducedMotion } from 'react-native-reanimated';
 
 import { Screen } from '@/src/components/layout/Screen';
+import { t } from '@/src/lib/i18n';
 import { StreakShowcaseBadge } from '@/src/features/retention/components/CallStreakCard';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
@@ -412,6 +414,11 @@ export default function ShowcaseScreen({
               style={({ pressed }) => [styles.floatingButton, pressed && styles.pressed]}
             >
               <ArrowLeft color={colors.text} size={20} />
+            </Pressable>
+            <Pressable accessibilityLabel={t('showcase.social.entry')} accessibilityRole="button"
+              onPress={() => router.push((previewProfile || previewShop ? '/growth-preview?section=activity' : '/showcase-activity') as never)}
+              style={({ pressed }) => [styles.floatingButton, pressed && styles.pressed]}>
+              <Eye color={colors.text} size={20} />
             </Pressable>
             <Pressable
               accessibilityLabel="Ouvrir les réglages de la vitrine"

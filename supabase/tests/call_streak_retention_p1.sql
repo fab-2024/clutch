@@ -26,7 +26,7 @@ declare
   v_day record;
 begin
   contract := public.clutch_contrat_analytics_v1();
-  if (contract ->> 'version')::integer <> 6 or not (contract -> 'evenements') ?&
+  if (contract ->> 'version')::integer < 6 or not (contract -> 'evenements') ?&
     array['daily_bonus_awarded','call_created','call_streak_extended','streak_protector_used','notification_sent','notification_opened'] then
     raise exception 'Missing P1 analytics contract';
   end if;

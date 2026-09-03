@@ -12,6 +12,8 @@ const mockShow = jest.fn();
 const mockLoadPending = jest.fn();
 const mockRemember = jest.fn();
 const mockForget = jest.fn();
+const mockPrepareShare = jest.fn();
+const mockShareLink = jest.fn();
 let mockState = state;
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
 jest.mock('@/src/components/layout/Screen', () => ({ Screen: jest.requireActual('react-native').View }));
@@ -26,6 +28,9 @@ jest.mock('@/src/components/overlays/BaseSheet', () => ({ BaseSheet: ({ visible,
   return visible ? React.createElement(jest.requireActual('react-native').View, { testID: 'confirmation-sheet' }, children, footer) : null;
 } }));
 jest.mock('@/src/providers/SnackbarProvider', () => ({ useSnackbar: () => ({ showSnackbar: mockShow }) }));
+jest.mock('@/src/features/profile/showcaseSocial/api', () => ({ prepareMilestoneShare: (...args: unknown[]) => mockPrepareShare(...args) }));
+jest.mock('@/src/lib/share', () => ({ sharePublicLink: (...args: unknown[]) => mockShareLink(...args) }));
+jest.mock('@/src/config/release', () => ({ publicAppUrl: (path: string) => `https://clutch.example${path}` }));
 jest.mock('../context', () => ({ monotonicNow: () => 0, useCallStreak: () => ({
   state: mockState, loading: false, error: null, receivedAt: 0, refresh: mockRefresh,
   purchase: mockPurchase, selectMilestone: mockSelect,
@@ -48,6 +53,8 @@ describe('protector purchase interaction', () => {
     mockRemember.mockResolvedValue(undefined);
     mockForget.mockResolvedValue(undefined);
     mockPurchase.mockResolvedValue(receipt);
+    mockPrepareShare.mockResolvedValue({ pseudo: 'Nova', milestone: 7, earnedAt: '2026-09-03T09:00:00Z' });
+    mockShareLink.mockResolvedValue('shared');
   });
 
   it('shows a clear price, confirms, persists the operation, then debits once', async () => {
@@ -125,5 +132,22 @@ describe('protector purchase interaction', () => {
     expect(screen.getByRole('button', { name: 'Choisir le jalon 30 jours' })).toBeDisabled();
     await fireEvent.press(screen.getByRole('button', { name: 'Choisir le jalon 7 jours' }));
     expect(mockSelect).toHaveBeenCalledWith(7);
+  });
+
+  it('shares an earned, server-verified milestone link and preserves a selectable fallback', async () => {
+    mockState = { ...state, selectedMilestone: 7 };
+    const screen = await render(<CallStreakScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'PARTAGER' }));
+    expect(mockPrepareShare).toHaveBeenCalledWith(7, state.userId);
+    expect(mockShareLink).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'https://clutch.example/s/Nova/7');
+    expect(screen.getByText('https://clutch.example/s/Nova/7')).toBeTruthy();
+  });
+
+  it('never fabricates a public milestone when verification fails', async () => {
+    mockState = { ...state, selectedMilestone: 7 };
+    mockPrepareShare.mockRejectedValue(new Error('hidden'));
+    const screen = await render(<CallStreakScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'PARTAGER' }));
+    expect(mockShareLink).not.toHaveBeenCalled();
   });
 });

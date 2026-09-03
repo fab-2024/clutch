@@ -23,7 +23,7 @@ jest.mock('@/src/features/analytics/api', () => ({ trackAnalyticsEvent: (...args
 const eventId = '11111111-1111-4111-8111-111111111111';
 const response = { notification: { request: { identifier: 'native-event-1', content: { data: { path: '/streak', notification_id: eventId } } } } } as unknown as NotificationResponse;
 
-describe('P1 notification deep links', () => {
+describe('product notification deep links', () => {
   let listener: (response: NotificationResponse) => void;
   const remove = jest.fn();
   beforeEach(() => {
@@ -33,10 +33,10 @@ describe('P1 notification deep links', () => {
     mockOpened.mockResolvedValue(true);
   });
 
-  it.each(['/streak', '/match/pandascore-123', '/result/match-42', '/duel/abcd', '/(tabs)/social'])('allows product route %s', (path) => {
+  it.each(['/streak', '/showcase-activity', '/match/pandascore-123', '/result/match-42', '/duel/abcd', '/(tabs)/social'])('allows product route %s', (path) => {
     expect(allowedNotificationPath(path)).toBe(true);
   });
-  it.each(['https://evil.test', '//evil.test', '/settings/profile', '/match/../settings', '/streak?user=other', '/duel/x/../../', '/match/%2e%2e'])('rejects unsafe or unrelated route %s', (path) => {
+  it.each(['https://evil.test', '//evil.test', '/settings/profile', '/match/../settings', '/streak?user=other', '/showcase-activity?user=other', '/duel/x/../../', '/match/%2e%2e'])('rejects unsafe or unrelated route %s', (path) => {
     expect(allowedNotificationPath(path)).toBe(false);
   });
 

@@ -19,7 +19,7 @@ assert.equal(ios.statusCode, 200);
 assert.deepEqual(JSON.parse(ios.body), {
   applinks: {
     apps: [],
-    details: [{ appID: 'AB12CD34EF.com.fabthetap.clutch', paths: ['/c/*', '/u/*'] }],
+    details: [{ appID: 'AB12CD34EF.com.fabthetap.clutch', paths: ['/c/*', '/u/*', '/i/*', '/v/*', '/s/*'] }],
   },
 });
 

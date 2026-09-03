@@ -25,6 +25,10 @@ import { loadProfileData } from '../api';
 import type { ProfileBadge, ProfileData, ProfileRanking, RecentPrediction } from '../types';
 import OwnProfileOverview from './OwnProfileOverview';
 import ProfileShowcaseCard from './ProfileShowcaseCard';
+import { InvitationEntry } from '@/src/features/social/friends/referrals/components/InvitationEntry';
+import { Button } from '@/src/components/ui/Button';
+import { t } from '@/src/lib/i18n';
+import { showcasePath } from '@/src/lib/publicLinks';
 import ProfileShareCard from './ProfileShareCard';
 
 type ProfileScreenProps = {
@@ -180,6 +184,11 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             rankAccent={rankColor}
             rankLabel={rankLabel}
           />}
+          <View style={styles.stateInset}>
+            <InvitationEntry preview={Boolean(previewData)} />
+            <Button fullWidth label={t('showcase.social.entry')} variant="ghost"
+              onPress={() => router.push((previewData ? '/growth-preview?section=activity' : '/showcase-activity') as never)} />
+          </View>
         </ScrollView>
       </Screen>
     );
@@ -215,7 +224,12 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
           loading={loading}
           levelFrameVariant={levelFrameEquipment.variant}
           onOpenLoadout={publicView ? undefined : () => router.push((previewData ? '/shop-preview' : '/shop') as never)}
-          onOpenShowcase={publicView ? undefined : () => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
+          onOpenShowcase={publicView ? () => {
+            const path = showcasePath(data?.pseudo || pseudo);
+            if (previewData) router.push('/growth-preview?section=showcase' as never);
+            else if (path) router.push(path as never);
+          } : () => router.push((previewData ? '/showcase-preview' : '/showcase') as never)}
+          showcaseActionLabel={publicView ? t('showcase.social.open') : undefined}
           profileTitle={profileTitle}
           pseudo={data?.pseudo || pseudo}
           rankAccent={rankColor}
