@@ -11,6 +11,7 @@ import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import ProfileVitrineIdentity from '@/src/features/profile/components/ProfileVitrineIdentity';
+import { ProtectorShopCard } from '@/src/features/retention/components/CallStreakCard';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
@@ -123,6 +124,7 @@ export default function StoreHubScreen({ preview = false }: StoreHubScreenProps 
             variant="shop"
           />
         </View>
+        <ProtectorShopCard preview={preview} />
       </ScrollView>
     </Screen>
   );

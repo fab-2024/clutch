@@ -27,6 +27,8 @@ import {
 } from '@/src/features/matches/matchCenterNavigation';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
+import CallStreakCard from '@/src/features/retention/components/CallStreakCard';
+import type { CallStreakState } from '@/src/features/retention/types';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
 import { gradeAccent } from '@/src/features/ranking/grades';
 import { useAuth } from '@/src/providers/AuthProvider';
@@ -113,6 +115,7 @@ export default function HomeScreen() {
 }
 
 type HubExperienceProps = {
+  callStreakPreview?: CallStreakState;
   error: string | null;
   headerEconomy?: { frags: number; volts: number };
   hub: HubData;
@@ -124,6 +127,7 @@ type HubExperienceProps = {
 };
 
 export function HubExperience({
+  callStreakPreview,
   error,
   headerEconomy,
   hub,
@@ -212,6 +216,8 @@ export function HubExperience({
         <View>
           <SeasonProgressCard hub={hub} loading={loading} />
         </View>
+
+        {!headerEconomy || callStreakPreview ? <CallStreakCard previewState={callStreakPreview} /> : null}
 
         {loading || contextualItem ? (
           <View style={styles.contextSlot}>

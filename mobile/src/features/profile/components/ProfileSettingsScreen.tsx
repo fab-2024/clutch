@@ -25,6 +25,7 @@ import {
   type NotificationPreferences,
 } from '@/src/features/notifications';
 import { errorFeedback, successFeedback } from '@/src/lib/feedback';
+import StreakNotificationPreferences from '@/src/features/notifications/components/StreakNotificationPreferences';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useSnackbar } from '@/src/providers/SnackbarProvider';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
@@ -522,6 +523,10 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
               <NotificationToggle label="Promotion" detail="Seulement lors d’un vrai changement de grade" enabled={notificationPreferences.promotion} onPress={() => toggleNotification('promotion')} />
               <NotificationToggle label="Mutation" detail="Quand la relique de ta faction évolue" enabled={notificationPreferences.mutation} onPress={() => toggleNotification('mutation')} />
               <NotificationToggle label="Duel reçu" detail="Quand un ami te cible sur un match classé" enabled={notificationPreferences.duelReceived} onPress={() => toggleNotification('duelReceived')} />
+              <StreakNotificationPreferences preferences={notificationPreferences} onChange={(next) => {
+                setNotificationPreferences(next);
+                notificationAutosave.commit(next);
+              }} />
             </View>
           ) : null}
 
@@ -617,6 +622,11 @@ function notificationSignature(preferences: NotificationPreferences | null) {
     preferences.promotion,
     preferences.mutation,
     preferences.duelReceived,
+    preferences.streakRisk,
+    preferences.streakProtected,
+    preferences.quietHoursEnabled,
+    preferences.quietHoursStart,
+    preferences.quietHoursEnd,
   ].join('|');
 }
 

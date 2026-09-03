@@ -2,8 +2,9 @@
 
 Ce lot livre le bonus automatique de **10 Volts** et les premières fondations
 communes : calendrier serveur, registre existant, analytics et traductions.
-Les séries de calls, protecteurs, consommables, invitations, likes et sélecteur
-de langue restent des lots suivants. La Clutch Room reste inchangée.
+Les séries de calls, protecteurs et rappels sont désormais décrits dans le
+[lot P1](retention-p1.md). Invitations, likes et sélecteur de langue restent
+des lots suivants. La Clutch Room reste inchangée.
 
 ## Règles livrées
 
@@ -18,7 +19,8 @@ de langue restent des lots suivants. La Clutch Room reste inchangée.
   série. Les comptes anonymes Supabase Auth ne sont pas éligibles.
 - Les Volts n’affectent ni Frags, ni résultat de call, ni classement.
 
-Le fuseau est volontairement ancré à la première attribution. Un futur changement
+Le fuseau est volontairement ancré à la première initialisation du calendrier
+serveur (bonus ou série P1). Un futur changement
 assisté par le support nécessitera une politique de transition anti-doublon ;
 il ne faut pas ajouter une simple édition de cette colonne dans le profil.
 
@@ -49,9 +51,9 @@ client. Le rôle de support conserve seulement le droit de lecture explicite.
 
 Le journal et le solde sont déjà consultables via les RPC existantes. Le support
 peut examiner le registre serveur par compte et par référence, sans créer une
-seconde comptabilité. Les futurs motifs série/parrainage/consommable devront
-réutiliser ce registre et le même verrou, avec leur propre preuve serveur et
-contrainte d’idempotence ; ils ne sont pas encore des origines autorisées.
+seconde comptabilité. P1 réutilise ce registre et ce verrou pour le débit
+`achat_consommable` du protecteur, avec preuve serveur et clé d’idempotence.
+Les crédits de série ou de parrainage ne sont pas encore des origines autorisées.
 
 ## Application et réseau
 
@@ -77,7 +79,8 @@ protégé par le mécanisme de prévisualisation existant et sans attribution r�
 
 ## Analytics et traductions
 
-Le contrat analytics passe en version 5, sans renommer les événements existants.
+Ce premier lot porte le contrat analytics en version 5 ; P1 l’étend ensuite à 6,
+sans renommer les événements existants.
 Le crédit fonctionne même sans consentement analytics. Les événements facultatifs
 réutilisent le consentement, la conservation et les restrictions existants.
 
@@ -138,8 +141,9 @@ Cela ne remplace pas le test de concurrence ni les migrations Supabase complète
 le moteur Docker local était indisponible. Les advisors locaux échouent également
 à se connecter à PostgreSQL sur le port 54322. Aucune migration distante appliquée.
 
-Avant activation, revoir aussi l’impact économique ci-dessous et prévoir le lot
-consommables rapidement, conformément à la roadmap.
+Avant activation, revoir aussi l’impact économique ci-dessous avec le protecteur
+livré en P1. La présence d’un consommable ne suffit pas à valider l’équilibre
+économique sans hypothèses de consommation observées.
 
 ## Impact économique, sans changement de prix
 

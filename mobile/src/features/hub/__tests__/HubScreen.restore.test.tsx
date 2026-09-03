@@ -1,6 +1,9 @@
 /// <reference types="jest" />
 
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
+import { router } from 'expo-router';
+
+import { PREVIEW_STREAK } from '@/src/features/retention/preview';
 
 import type { HubData, HubMatch } from '../types';
 import { HubExperience } from '../components/HubScreen';
@@ -118,5 +121,25 @@ describe('HubExperience restoration', () => {
     expect(screen.getByText('RESTORED CONTEXT')).toBeTruthy();
     expect(screen.getByTestId('hub-season-controls')).toBeTruthy();
     expect(screen.getByText('À SUIVRE')).toBeTruthy();
+  });
+
+  it('connects the preview streak card to its detail screen without changing the main match', async () => {
+    const screen = await render(
+      <HubExperience
+        callStreakPreview={PREVIEW_STREAK}
+        error={null}
+        headerEconomy={{ frags: 1000, volts: 300 }}
+        hub={HUB}
+        loading={false}
+        onRefresh={jest.fn()}
+        onRetry={jest.fn()}
+        refreshing={false}
+      />,
+    );
+
+    expect(screen.getByText('PRIMARY MATCH POSTER')).toBeTruthy();
+    expect(screen.getByText('6 JOURS')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('call-streak-card'));
+    expect(router.push).toHaveBeenCalledWith('/streak-preview');
   });
 });

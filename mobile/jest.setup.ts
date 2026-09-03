@@ -11,6 +11,12 @@ jest.mock('lucide-react-native/icons/circle-alert', () => 'CircleAlert');
 jest.mock('lucide-react-native/icons/circle-check', () => 'CircleCheck');
 jest.mock('lucide-react-native/icons/inbox', () => 'Inbox');
 
+// P1 cards are shared by Hub, profile and shop. Keep their icon-only native
+// boundary lightweight while retaining the real cards and navigation in tests.
+jest.mock('lucide-react-native/icons/flame', () => 'Flame');
+jest.mock('lucide-react-native/icons/shield-check', () => 'ShieldCheck');
+jest.mock('lucide-react-native/icons/chevron-right', () => 'ChevronRight');
+
 // Skia ships an ESM-native renderer. Unit tests exercise the adaptive atmosphere
 // rules directly and replace only this visual boundary with a lightweight host.
 jest.mock('./src/features/profile/components/showcase/ShowcaseAtmosphereLayer', () => {

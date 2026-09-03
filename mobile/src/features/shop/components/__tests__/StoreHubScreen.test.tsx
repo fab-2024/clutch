@@ -45,6 +45,8 @@ describe('StoreHubScreen', () => {
     expect(screen.getByText('MAGASIN')).toBeTruthy();
     expect(screen.getByTestId('store-hub-showcase')).toBeTruthy();
     expect(screen.getByTestId('store-hub-shop')).toBeTruthy();
+    expect(screen.getByTestId('shop-streak-protector')).toBeTruthy();
+    expect(screen.getByText('OBTENIR · 90 VOLTS')).toBeTruthy();
     expect(screen.getByTestId('store-hub-profile')).toBeTruthy();
     expect(screen.getAllByText('TesteurGRIFF')).toHaveLength(2);
     expect(screen.getByText('ROOKIE DU CALL')).toBeTruthy();
@@ -73,6 +75,8 @@ describe('StoreHubScreen', () => {
       params: { scope: 'catalog' },
     });
     expect(push).toHaveBeenNthCalledWith(5, '/settings/profile');
+    await fireEvent.press(screen.getByTestId('shop-streak-protector'));
+    expect(push).toHaveBeenNthCalledWith(6, '/streak');
   });
 
   it('keeps preview navigation inside preview routes', async () => {
@@ -92,5 +96,7 @@ describe('StoreHubScreen', () => {
       params: { scope: 'catalog' },
     });
     expect(push).toHaveBeenNthCalledWith(5, '/settings-preview');
+    await fireEvent.press(screen.getByTestId('shop-streak-protector'));
+    expect(push).toHaveBeenNthCalledWith(6, '/streak-preview');
   });
 });

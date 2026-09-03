@@ -64,6 +64,17 @@ describe('VoltLedgerScreen', () => {
     expect(screen.getByLabelText('BONUS QUOTIDIEN, Bonus quotidien, plus 10 Volts, solde 310')).toBeTruthy();
   }, 15_000);
 
+  it('shows a protector purchase as a named debit, not a cosmetic or reward', async () => {
+    const ledger = makeLedger(1);
+    ledger.hasMore = false;
+    ledger.movements[0] = { ...ledger.movements[0], amount: -90, source: 'achat_consommable',
+      origin: 'achat_consommable', reference: 'protecteur-serie:purchase', balanceAfter: 220 };
+    const screen = await render(<VoltLedgerScreen previewData={ledger} />);
+    expect(screen.getByText('Protecteur de série')).toBeTruthy();
+    expect(screen.getByText('−90')).toBeTruthy();
+    expect(screen.getByText('SOLDE 220')).toBeTruthy();
+  });
+
   it('keeps a long journal on a bounded virtualized list', async () => {
     const ledger = makeLedger(48);
     const screen = await render(<VoltLedgerScreen previewData={ledger} />);

@@ -16,6 +16,7 @@ import AppErrorBoundary from '@/src/components/errors/AppErrorBoundary';
 import AuthRecoveryScreen from '@/src/features/auth/components/AuthRecoveryScreen';
 import { consumePendingRoute } from '@/src/features/auth/pendingRoute';
 import DailyBonusBridge from '@/src/features/economy/components/DailyBonusBridge';
+import { CallStreakProvider } from '@/src/features/retention/CallStreakProvider';
 import ResultRevealGate from '@/src/features/matches/components/ResultRevealGate';
 import { NotificationBridge } from '@/src/features/notifications';
 import { PrivacyConsentGate } from '@/src/features/safety';
@@ -94,6 +95,7 @@ function RootNavigator() {
           <Stack.Screen name="founder-pack" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="team-pack/[key]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="economy" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="streak" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="my-profile" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="campaign/[key]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="admin/matches" />
@@ -119,6 +121,7 @@ function RootNavigator() {
         <Stack.Screen name="founder-pack-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="team-pack-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="economy-preview" options={{ animation: 'fade' }} />
+        <Stack.Screen name="streak-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="campaign-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="campaign-report-preview" options={{ animation: 'fade' }} />
       </Stack>
@@ -151,7 +154,7 @@ export default function RootLayout() {
           <EconomyProvider>
             <CosmeticsProvider>
               <StatusBar style="light" />
-              <RootNavigator />
+              <CallStreakProvider><RootNavigator /></CallStreakProvider>
             </CosmeticsProvider>
           </EconomyProvider>
         </AuthProvider>

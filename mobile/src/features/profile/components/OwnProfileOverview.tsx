@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import PlayerAvatar from '@/src/features/profile/avatars/PlayerAvatar';
+import CallStreakCard from '@/src/features/retention/components/CallStreakCard';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 import type { LevelFrameVariant } from '@/src/features/profile/levelFrames/types';
 import { colors, radius, spacing, typography } from '@/src/theme';
@@ -71,6 +72,7 @@ export default function OwnProfileOverview({
         rankAccent={rankAccent}
         rankLabel={rankLabel}
       />
+      <CallStreakCard />
     </>
   );
 }

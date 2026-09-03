@@ -1,6 +1,7 @@
 import { supabase } from '@/src/lib/supabase';
 import { visibleBrandLabel } from '@/src/config/brand';
 import { normalizeGradeState } from '@/src/features/ranking/grades';
+import { notifyCallStreakChanged } from '@/src/features/retention/events';
 
 import type {
   ArenaMatch,
@@ -166,6 +167,7 @@ export async function submitRankedPrediction(matchId: string, choice: 'a' | 'b')
   });
 
   if (error) throw error;
+  notifyCallStreakChanged();
   return data;
 }
 

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
+import { recordNotificationOpened } from '../api';
 
 import { syncPushTokenIfGranted } from '../registration';
 
@@ -21,22 +22,37 @@ if (Platform.OS !== 'web') {
 export default function NotificationBridge({ userId }: { userId?: string }) {
   useEffect(() => {
     if (!userId || Platform.OS === 'web') return undefined;
-    void syncPushTokenIfGranted();
-
-    const subscription = Notifications.addNotificationResponseReceivedListener(openNotification);
+    void syncPushTokenIfGranted().catch(() => undefined);
+    let active = true;
+    const opened = new Set<string>();
+    const open = (response: Notifications.NotificationResponse) => {
+      const id = response.notification.request.identifier;
+      if (!active || opened.has(id)) return;
+      opened.add(id);
+      void openNotification(response, () => active);
+      void Notifications.clearLastNotificationResponseAsync().catch(() => undefined);
+    };
+    const subscription = Notifications.addNotificationResponseReceivedListener(open);
     void Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (!response) return;
-      openNotification(response);
-      void Notifications.clearLastNotificationResponseAsync();
-    });
-    return () => subscription.remove();
+      if (!active || !response) return;
+      open(response);
+    }).catch(() => undefined);
+    return () => { active = false; subscription.remove(); };
   }, [userId]);
 
   return null;
 }
 
-function openNotification(response: Notifications.NotificationResponse) {
+async function openNotification(response: Notifications.NotificationResponse, isCurrent: () => boolean) {
   const notificationId = response.notification.request.identifier;
+  const eventId = response.notification.request.content.data?.notification_id;
+  if (typeof eventId === 'string' && /^[0-9a-f-]{36}$/i.test(eventId)) {
+    // A confirmed ownership mismatch must not open another account's old alert.
+    // Offline/older servers still permit a safe, authorization-checked route.
+    const owned = await recordNotificationOpened(eventId).catch(() => null);
+    if (owned === false || !isCurrent()) return;
+  }
+  if (!isCurrent()) return;
   void trackAnalyticsEvent({
     type: 'notification_ouverte',
     idempotencyKey: notificationId ? `notification:${notificationId}` : null,
@@ -46,10 +62,9 @@ function openNotification(response: Notifications.NotificationResponse) {
   router.push(path as never);
 }
 
-function allowedNotificationPath(path: string) {
+export function allowedNotificationPath(path: string) {
   if (path.length > 300 || !path.startsWith('/') || path.startsWith('//')) return false;
-  return path.startsWith('/match/')
-    || path.startsWith('/result/')
-    || path.startsWith('/duel/')
-    || path === '/(tabs)/social';
+  return (/^\/(match|result|duel)\/[A-Za-z0-9_~-][A-Za-z0-9._~-]*$/.test(path) && !path.includes('/..'))
+    || path === '/(tabs)/social'
+    || path === '/streak';
 }

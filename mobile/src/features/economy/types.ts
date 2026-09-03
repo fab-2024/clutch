@@ -12,6 +12,7 @@ export type VoltMovementSource =
   | 'activation'
   | 'exceptionnelle'
   | 'achat_cosmetique'
+  | 'achat_consommable'
   | 'ajustement';
 
 export type VoltMovementObject = {

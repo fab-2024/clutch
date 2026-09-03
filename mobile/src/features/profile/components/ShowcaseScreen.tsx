@@ -14,6 +14,7 @@ import {
 import { useReducedMotion } from 'react-native-reanimated';
 
 import { Screen } from '@/src/components/layout/Screen';
+import { StreakShowcaseBadge } from '@/src/features/retention/components/CallStreakCard';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import { rankEmblemSource } from '@/src/features/ranking/components/RankEmblem';
@@ -403,6 +404,7 @@ export default function ShowcaseScreen({
           )}
 
           <View pointerEvents="box-none" style={styles.floatingControls}>
+            {!previewProfile && !previewShop ? <StreakShowcaseBadge /> : null}
             <Pressable
               accessibilityLabel="Revenir au Magasin"
               accessibilityRole="button"

@@ -1,6 +1,7 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 
 import { previewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
+import { PREVIEW_STREAK } from '@/src/features/retention/preview';
 
 import type { HubData, HubMatch } from '../types';
 import { HubExperience } from './HubScreen';
@@ -117,6 +118,7 @@ export default function HubPreviewScreen() {
   };
   return (
     <HubExperience
+      callStreakPreview={PREVIEW_STREAK}
       error={null}
       headerEconomy={{ frags: 1000, volts: 300 }}
       hub={previewHub}

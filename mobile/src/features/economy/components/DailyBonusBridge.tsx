@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { AppState } from 'react-native';
 
 import { deviceTimeZone, formatNumber, t } from '@/src/lib/i18n';
+import { notifyCallStreakChanged } from '@/src/features/retention/events';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
 import { useSnackbar } from '@/src/providers/SnackbarProvider';
@@ -24,6 +25,7 @@ export default function DailyBonusBridge() {
         setConfirmedVolts(receipt.userId, receipt.balance);
         void refresh();
         if (receipt.awarded) {
+          notifyCallStreakChanged();
           snackbarId = showSnackbar({
             message: t('economy.dailyBonus.awarded', { amount: formatNumber(receipt.amount) }),
             tone: 'success',

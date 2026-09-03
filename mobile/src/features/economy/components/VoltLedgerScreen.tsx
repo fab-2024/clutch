@@ -39,6 +39,7 @@ const SOURCE_META: Record<VoltMovementSource, SourceMeta> = {
   activation: { label: 'economy.source.activation', glyph: '◎', tone: '#FFB84D', detail: 'economy.detail.activation' },
   exceptionnelle: { label: 'economy.source.exceptional', glyph: '★', tone: '#FF75D8', detail: 'economy.detail.exceptional' },
   achat_cosmetique: { label: 'economy.source.cosmetic', glyph: '−', tone: '#FF8B66', detail: 'economy.detail.cosmetic' },
+  achat_consommable: { label: 'economy.source.consumable', glyph: '◇', tone: colors.info, detail: 'economy.detail.consumable' },
   ajustement: { label: 'economy.source.adjustment', glyph: '≈', tone: '#AAB4BE', detail: 'economy.detail.adjustment' },
 };
 
@@ -376,6 +377,7 @@ function LedgerSkeleton() {
 
 function movementTitle(movement: VoltMovement) {
   if (movement.source === 'bonus_quotidien') return t('economy.dailyBonus.title');
+  if (movement.source === 'achat_consommable') return t('economy.movement.protector');
   if (movement.object) return movement.object.name;
   if (movement.source === 'onboarding') return t('economy.movement.onboarding');
   if (movement.source === 'mission') return t('economy.movement.mission');

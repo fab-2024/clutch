@@ -99,6 +99,7 @@ const VOLT_SOURCES: VoltMovementSource[] = [
   'activation',
   'exceptionnelle',
   'achat_cosmetique',
+  'achat_consommable',
   'ajustement',
 ];
 

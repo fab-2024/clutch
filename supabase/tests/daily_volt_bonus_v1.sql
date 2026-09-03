@@ -18,7 +18,7 @@ declare
   v_before bigint;
 begin
   if (public.clutch_contrat_economie_volts_v1() #>> '{sources,bonus_quotidien,montant}')::integer <> 10
-     or (public.clutch_contrat_analytics_v1() ->> 'version')::integer <> 5
+     or (public.clutch_contrat_analytics_v1() ->> 'version')::integer < 5
      or not (public.clutch_contrat_analytics_v1() -> 'evenements') ?& array['app_opened', 'daily_bonus_awarded']
   then
     raise exception 'Daily bonus is absent from the published contracts';

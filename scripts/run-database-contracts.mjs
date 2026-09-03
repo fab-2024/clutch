@@ -16,6 +16,7 @@ const contractFiles = [
   'supabase/tests/catalog_inventory_equipment_v2.sql',
   'supabase/tests/volts_economy_ledger_v2.sql',
   'supabase/tests/daily_volt_bonus_v1.sql',
+  'supabase/tests/call_streak_retention_p1.sql',
   'supabase/tests/neon_protocol_pack.sql',
   'supabase/tests/myths_forge_pack.sql',
   'supabase/tests/circuit_zero_pack.sql',
