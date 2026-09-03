@@ -52,7 +52,7 @@ const GAME_BACKGROUNDS: Record<HubGame, ImageSourcePropType> = {
   valorant: require('../../../../assets/onboarding/valorant-characters.jpg'),
 };
 
-const SEASON_HEADER_DOTS = [0, 1, 2, 3] as const;
+const SEASON_HEADER_DOTS = [0, 1, 2] as const;
 
 const EMPTY_HUB: HubData = {
   seasonId: null,
@@ -927,12 +927,12 @@ const styles = StyleSheet.create({
     width: 11,
     height: 11,
     borderRadius: 6,
-    backgroundColor: '#152633',
+    backgroundColor: '#FFFFFF',
   },
   seasonDotActive: {
     width: 36,
-    backgroundColor: colors.volt,
-    shadowColor: colors.volt,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#FFFFFF',
     shadowOpacity: .38,
     shadowRadius: 8,
   },
