@@ -5,6 +5,7 @@ export type PlayerEconomy = {
 };
 
 export type VoltMovementSource =
+  | 'bonus_quotidien'
   | 'onboarding'
   | 'progression'
   | 'mission'

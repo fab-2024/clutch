@@ -2,13 +2,25 @@ import type { VoltLedger } from '../types';
 import VoltLedgerScreen from './VoltLedgerScreen';
 
 const PREVIEW_LEDGER: VoltLedger = {
-  balance: 870,
+  balance: 880,
   hasMore: false,
   integrity: {
     convertsToFrags: false,
     affectsRanking: false,
   },
   movements: [
+    {
+      id: 'preview-daily-bonus',
+      amount: 10,
+      source: 'bonus_quotidien',
+      origin: 'bonus_quotidien',
+      reference: '2026-09-03',
+      object: null,
+      campaignKey: null,
+      createdAt: '2026-09-03T10:00:00+02:00',
+      idempotencyKey: 'bonus_quotidien:2026-09-03',
+      balanceAfter: 880,
+    },
     {
       id: 'preview-purchase',
       amount: -350,

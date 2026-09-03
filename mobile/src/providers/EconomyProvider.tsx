@@ -11,6 +11,7 @@ import {
 
 import { loadPlayerEconomy } from '@/src/features/economy/api';
 import type { PlayerEconomy } from '@/src/features/economy/types';
+import { t } from '@/src/lib/i18n';
 
 import { useAuth } from './AuthProvider';
 
@@ -18,6 +19,7 @@ type EconomyContextValue = PlayerEconomy & {
   error: string | null;
   loading: boolean;
   refresh: () => Promise<void>;
+  setConfirmedVolts: (ownerId: string, balance: number) => void;
 };
 
 const EMPTY_ECONOMY: PlayerEconomy = {
@@ -35,10 +37,19 @@ export function EconomyProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
+  const ownerRef = useRef(userId);
 
   const invalidateRequests = useCallback(() => {
     requestIdRef.current += 1;
   }, []);
+
+  const setConfirmedVolts = useCallback((ownerId: string, balance: number) => {
+    if (ownerId !== ownerRef.current || !Number.isSafeInteger(balance) || balance < 0) return;
+    invalidateRequests();
+    setEconomy((current) => ({ ...current, volts: balance }));
+    setLoading(false);
+    setError(null);
+  }, [invalidateRequests]);
 
   const refresh = useCallback(async () => {
     const requestId = ++requestIdRef.current;
@@ -57,23 +68,24 @@ export function EconomyProvider({ children }: PropsWithChildren) {
       if (requestId === requestIdRef.current) setEconomy(nextEconomy);
     } catch (caught) {
       if (requestId !== requestIdRef.current) return;
-      setError(caught instanceof Error ? caught.message : 'Soldes indisponibles.');
+      setError(caught instanceof Error ? caught.message : t('economy.errors.balancesUnavailable'));
     } finally {
       if (requestId === requestIdRef.current) setLoading(false);
     }
   }, [userId]);
 
   useEffect(() => {
+    ownerRef.current = userId;
     setEconomy(EMPTY_ECONOMY);
     void refresh();
     return () => {
       invalidateRequests();
     };
-  }, [invalidateRequests, refresh]);
+  }, [invalidateRequests, refresh, userId]);
 
   const value = useMemo<EconomyContextValue>(
-    () => ({ ...economy, error, loading, refresh }),
-    [economy, error, loading, refresh],
+    () => ({ ...economy, error, loading, refresh, setConfirmedVolts }),
+    [economy, error, loading, refresh, setConfirmedVolts],
   );
 
   return <EconomyContext.Provider value={value}>{children}</EconomyContext.Provider>;

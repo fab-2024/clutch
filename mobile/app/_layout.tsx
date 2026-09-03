@@ -15,6 +15,7 @@ import { AnalyticsBridge } from '@/src/features/analytics';
 import AppErrorBoundary from '@/src/components/errors/AppErrorBoundary';
 import AuthRecoveryScreen from '@/src/features/auth/components/AuthRecoveryScreen';
 import { consumePendingRoute } from '@/src/features/auth/pendingRoute';
+import DailyBonusBridge from '@/src/features/economy/components/DailyBonusBridge';
 import ResultRevealGate from '@/src/features/matches/components/ResultRevealGate';
 import { NotificationBridge } from '@/src/features/notifications';
 import { PrivacyConsentGate } from '@/src/features/safety';
@@ -69,6 +70,7 @@ function RootNavigator() {
   return (
     <>
       <AnalyticsBridge userId={userId} />
+      <DailyBonusBridge />
       <NotificationBridge userId={userId} />
       <ResultRevealGate />
       <PrivacyConsentGate userId={userId} />

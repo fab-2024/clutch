@@ -7,6 +7,7 @@ Les Volts financent uniquement l’identité visuelle du supporter. Ils ne sont 
 | Source | Récompense cible | Limite de conception |
 | --- | ---: | --- |
 | Onboarding | 300 une seule fois | Clé idempotente par joueur |
+| Bonus quotidien | 10 par jour éligible | Jour civil serveur, fuseau ancré au compte, aucun rattrapage |
 | Progression | 40–120 | Environ 600 par mois |
 | Missions | 60–150 | Environ 900 par mois |
 | Activations | 100–180 | Participation uniquement, environ 360 par mois |
@@ -25,7 +26,7 @@ Les paliers actuels sont :
 
 ## Simulation de référence
 
-La simulation exclut les 300 Volts d’onboarding et les récompenses exceptionnelles afin de mesurer uniquement le rythme récurrent.
+La simulation historique exclut les 300 Volts d’onboarding, les récompenses exceptionnelles **et le nouveau bonus quotidien**. Elle ne valide donc pas à elle seule l’économie après ajout du bonus.
 
 | Profil | Revenu mensuel | Premier objet | Objet médian | Objet prestige | Revenu / dépense cible |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -34,3 +35,8 @@ La simulation exclut les 300 Volts d’onboarding et les récompenses exceptionn
 | Core | 1 600 | 5 jours | 0,56 mois | 0,94 mois | 0,73 |
 
 Deux garde-fous rendent la simulation bloquante : le premier objet doit rester accessible en 21 jours maximum et le revenu mensuel ne doit pas dépasser 80 % du budget de dépenses cosmétiques cible. Exécuter `npm run economy:simulate` pour les vérifier.
+
+Le simulateur affiche aussi un scénario additionnel avec le bonus de 10 Volts.
+Pour 8/20/30 jours actifs, les ratios passent à 0,71/0,92/0,86 : une revue produit
+est nécessaire avant activation générale, sans modifier arbitrairement les prix.
+Voir [le contrat et les validations du bonus quotidien](daily-volt-bonus-v1.md).

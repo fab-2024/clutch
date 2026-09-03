@@ -1,4 +1,5 @@
 export const CLIENT_ANALYTICS_EVENTS = [
+  'app_opened',
   'application_active',
   'collection_affichee',
   'objet_consulte',

@@ -1,5 +1,7 @@
 import { supabase } from '@/src/lib/supabase';
 
+import { DailyBonusError, parseDailyBonusReceipt } from './dailyBonus';
+
 import type {
   PlayerEconomy,
   VoltLedger,
@@ -10,6 +12,28 @@ import type {
 type FragsState = {
   frags?: number | null;
 };
+
+export async function claimDailyVoltBonus(userId: string, timeZone: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
+  try {
+    // The account, amount, date and idempotency key are never supplied by the
+    // client. The timezone is only a suggestion for the first-ever claim.
+    const { data, error } = await supabase
+      .rpc('clutch_reclamer_bonus_quotidien_v1', { p_fuseau: timeZone })
+      .abortSignal(controller.signal);
+    if (error) {
+      const code = typeof error.code === 'string' ? error.code : 'network';
+      throw new DailyBonusError(code, !['28000', '42501', '22023', 'PGRST202', '42883'].includes(code));
+    }
+    return parseDailyBonusReceipt(data, userId);
+  } catch (error) {
+    if (error instanceof DailyBonusError) throw error;
+    throw new DailyBonusError('network', true);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 export async function loadPlayerEconomy(userId: string): Promise<PlayerEconomy> {
   const [seasonResult, voltsResult] = await Promise.all([
@@ -68,6 +92,7 @@ function toBalance(value: unknown): number | null {
 }
 
 const VOLT_SOURCES: VoltMovementSource[] = [
+  'bonus_quotidien',
   'onboarding',
   'progression',
   'mission',

@@ -27,9 +27,16 @@ export function AnalyticsBridge({ userId }: { userId?: string }) {
         });
     };
 
-    trackDailyActivity();
+    const trackOpened = () => {
+      void trackAnalyticsEvent({ type: 'app_opened' }).catch(() => undefined);
+      trackDailyActivity();
+    };
+
+    if (AppState.currentState === 'active' || AppState.currentState === null) trackOpened();
+    let previousState = AppState.currentState;
     const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') trackDailyActivity();
+      if (state === 'active' && previousState !== 'active') trackOpened();
+      previousState = state;
     });
 
     return () => subscription.remove();

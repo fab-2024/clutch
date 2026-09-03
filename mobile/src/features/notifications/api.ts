@@ -1,4 +1,5 @@
 import { supabase } from '@/src/lib/supabase';
+import { deviceTimeZone } from '@/src/lib/i18n';
 
 import { DEFAULT_NOTIFICATION_PREFERENCES } from './types';
 import type { NotificationPreferences } from './types';
@@ -83,9 +84,5 @@ function booleanOrDefault(value: unknown, fallback: boolean) {
 }
 
 export function detectedTimezone() {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  } catch {
-    return 'UTC';
-  }
+  return deviceTimeZone();
 }

@@ -26,7 +26,7 @@ const failures = simulation.filter((profile) => (
   || profile.ratio_revenu_sur_depense_cible > 0.8
 ));
 
-console.log('Simulation Volts v1 — revenus récurrents, hors onboarding et récompenses exceptionnelles');
+console.log('Simulation historique Volts v1 — hors bonus quotidien, onboarding et récompenses exceptionnelles');
 console.table(simulation);
 console.log(`Catalogue de référence : ${catalogue.paidItems} objets, ${catalogue.entryPrice} à ${catalogue.maximumPrice} Volts, médiane ${catalogue.medianPrice}.`);
 
@@ -34,7 +34,28 @@ if (failures.length) {
   console.error('Échec des garde-fous économie :', failures.map((profile) => profile.profil).join(', '));
   process.exitCode = 1;
 } else {
-  console.log('Garde-fous OK : premier objet en 21 jours maximum et pression monétaire <= 0,80.');
+  console.log('Garde-fous historiques OK : premier objet en 21 jours maximum et pression monétaire <= 0,80 (hors bonus quotidien).');
+}
+
+// Sensitivity analysis only: do not silently change catalogue prices, income
+// caps or spending targets to make the new daily source fit the old gate.
+const activeDays = [8, 20, 30];
+const dailyScenario = profiles.map((profile, index) => {
+  const days = activeDays[index];
+  const income = profile.monthlyIncome + days * 10;
+  return {
+    profil: profile.id,
+    jours_actifs_hypothese: days,
+    bonus_quotidien_mensuel: days * 10,
+    revenu_avec_bonus: income,
+    ratio_revenu_sur_depense_cible: round(income / profile.targetMonthlySpend),
+    revue_economique_requise: income / profile.targetMonthlySpend > 0.8,
+  };
+});
+console.log('Scénario additionnel — bonus fixe de 10 Volts, prix et budgets inchangés');
+console.table(dailyScenario);
+if (dailyScenario.some((profile) => profile.revue_economique_requise)) {
+  console.warn('Avant activation générale : le bonus dépasse le ratio historique pour certains profils. Revue produit requise, voir docs/daily-volt-bonus-v1.md.');
 }
 
 function round(value) {

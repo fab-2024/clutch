@@ -15,6 +15,7 @@ import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { useEconomy } from '@/src/providers/EconomyProvider';
+import { formatDateTime, formatNumber, t, type TranslationKey } from '@/src/lib/i18n';
 import { colors, fonts, layout, spacing, typography } from '@/src/theme';
 
 import { loadVoltLedger } from '../api';
@@ -23,28 +24,22 @@ import type { VoltLedger, VoltMovement, VoltMovementSource } from '../types';
 type LoadMode = 'initial' | 'refresh' | 'more';
 
 type SourceMeta = {
-  label: string;
+  label: TranslationKey;
   glyph: string;
   tone: string;
-  detail: string;
+  detail: TranslationKey;
 };
 
 const PAGE_SIZE = 24;
-const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
-  day: '2-digit',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-});
-const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
 const SOURCE_META: Record<VoltMovementSource, SourceMeta> = {
-  onboarding: { label: 'BIENVENUE', glyph: '✦', tone: colors.volt, detail: 'Entrée dans GRIFF' },
-  progression: { label: 'PROGRESSION', glyph: '↗', tone: '#68B8FF', detail: 'Progression et saison' },
-  mission: { label: 'MISSION', glyph: '◆', tone: '#A982FF', detail: 'Objectif accompli' },
-  activation: { label: 'ACTIVATION', glyph: '◎', tone: '#FFB84D', detail: 'Participation validée' },
-  exceptionnelle: { label: 'RÉCOMPENSE', glyph: '★', tone: '#FF75D8', detail: 'Attribution exceptionnelle' },
-  achat_cosmetique: { label: 'LOCKER', glyph: '−', tone: '#FF8B66', detail: 'Objet cosmétique permanent' },
-  ajustement: { label: 'AJUSTEMENT', glyph: '≈', tone: '#AAB4BE', detail: 'Correction du registre' },
+  bonus_quotidien: { label: 'economy.dailyBonus.label', glyph: '✦', tone: colors.volt, detail: 'economy.dailyBonus.detail' },
+  onboarding: { label: 'economy.source.onboarding', glyph: '✦', tone: colors.volt, detail: 'economy.detail.onboarding' },
+  progression: { label: 'economy.source.progression', glyph: '↗', tone: '#68B8FF', detail: 'economy.detail.progression' },
+  mission: { label: 'economy.source.mission', glyph: '◆', tone: '#A982FF', detail: 'economy.detail.mission' },
+  activation: { label: 'economy.source.activation', glyph: '◎', tone: '#FFB84D', detail: 'economy.detail.activation' },
+  exceptionnelle: { label: 'economy.source.exceptional', glyph: '★', tone: '#FF75D8', detail: 'economy.detail.exceptional' },
+  achat_cosmetique: { label: 'economy.source.cosmetic', glyph: '−', tone: '#FF8B66', detail: 'economy.detail.cosmetic' },
+  ajustement: { label: 'economy.source.adjustment', glyph: '≈', tone: '#AAB4BE', detail: 'economy.detail.adjustment' },
 };
 
 type VoltLedgerScreenProps = {
@@ -52,7 +47,7 @@ type VoltLedgerScreenProps = {
 };
 
 export default function VoltLedgerScreen({ previewData }: VoltLedgerScreenProps) {
-  const { refresh: refreshEconomy } = useEconomy();
+  const { refresh: refreshEconomy, volts } = useEconomy();
   const [ledger, setLedger] = useState<VoltLedger | null>(previewData ?? null);
   const [loading, setLoading] = useState(!previewData);
   const [refreshing, setRefreshing] = useState(false);
@@ -98,7 +93,7 @@ export default function VoltLedgerScreen({ previewData }: VoltLedgerScreenProps)
       });
     } catch (caught) {
       if (requestId !== requestRef.current) return;
-      setError(caught instanceof Error ? caught.message : 'Journal des Volts indisponible.');
+      setError(caught instanceof Error ? caught.message : t('economy.errors.unavailable'));
     } finally {
       if (requestId === requestRef.current) {
         setLoading(false);
@@ -111,7 +106,7 @@ export default function VoltLedgerScreen({ previewData }: VoltLedgerScreenProps)
   useEffect(() => {
     void load('initial');
     return () => { requestRef.current += 1; };
-  }, [load]);
+  }, [load, volts]);
 
   const movements = ledger?.movements ?? [];
   const renderMovement = useCallback(({ index, item }: ListRenderItemInfo<VoltMovement>) => (
@@ -184,25 +179,25 @@ function LedgerHeader({
     <View style={styles.headerStack}>
       <View style={styles.header}>
         <Pressable
-          accessibilityLabel="Revenir au profil"
+          accessibilityLabel={t('economy.backLabel')}
           accessibilityRole="button"
           onPress={() => router.back()}
           style={({ pressed }) => [styles.back, pressed && styles.pressed]}
         >
-          <Text style={styles.backText}>← MOI</Text>
+          <Text style={styles.backText}>{t('economy.back')}</Text>
         </Pressable>
         <View style={styles.headerCopy}>
-          <Text style={styles.headerEyebrow}>ÉCONOMIE PERSONNELLE</Text>
-          <Text style={styles.headerTitle}>JOURNAL DES VOLTS</Text>
+          <Text style={styles.headerEyebrow}>{t('economy.eyebrow')}</Text>
+          <Text style={styles.headerTitle}>{t('economy.title')}</Text>
         </View>
-        <View style={styles.liveBadge}><View style={styles.liveDot} /><Text style={styles.liveText}>TRAÇABLE</Text></View>
+        <View style={styles.liveBadge}><View style={styles.liveDot} /><Text style={styles.liveText}>{t('economy.traceable')}</Text></View>
       </View>
 
       <View style={styles.hero}>
         <View style={styles.heroGlow} />
         <View style={styles.heroTop}>
           <View style={styles.currencyMark}><CurrencyIcon kind="volts" size={42} /></View>
-          <Text style={styles.heroLabel}>SOLDE DISPONIBLE</Text>
+          <Text style={styles.heroLabel}>{t('economy.availableBalance')}</Text>
         </View>
         {loading && !ledger ? (
           <SkeletonGroup style={styles.balanceSkeleton} testID="volt-balance-loading">
@@ -211,31 +206,31 @@ function LedgerHeader({
           </SkeletonGroup>
         ) : (
           <>
-            <Text accessibilityLabel={`${formatNumber(ledger?.balance ?? 0)} Volts disponibles`} style={styles.balance}>
+            <Text accessibilityLabel={t('economy.availableBalanceLabel', { amount: formatNumber(ledger?.balance ?? 0) })} style={styles.balance}>
               {formatNumber(ledger?.balance ?? 0)}
             </Text>
-            <Text style={styles.balanceUnit}>VOLTS</Text>
+            <Text style={styles.balanceUnit}>{t('economy.unit')}</Text>
           </>
         )}
-        <Text style={styles.heroCopy}>Chaque gain et chaque dépense laisse une trace. Ton classement reste complètement séparé.</Text>
+        <Text style={styles.heroCopy}>{t('economy.description')}</Text>
         <View style={styles.guardrailRow}>
-          <Guardrail label="0 CONVERSION FRAGS" />
-          <Guardrail label="0 IMPACT CLASSEMENT" />
+          <Guardrail label={t('economy.noFragsConversion')} />
+          <Guardrail label={t('economy.noRankingImpact')} />
         </View>
       </View>
 
       <View style={styles.sectionHeading}>
         <View>
-          <Text style={styles.sectionEyebrow}>REGISTRE PERSONNEL</Text>
-          <Text style={styles.sectionTitle}>TES MOUVEMENTS.</Text>
+          <Text style={styles.sectionEyebrow}>{t('economy.register')}</Text>
+          <Text style={styles.sectionTitle}>{t('economy.movements')}</Text>
         </View>
-        <Text style={styles.sectionMeta}>{ledger ? `${ledger.movements.length} AFFICHÉ${ledger.movements.length > 1 ? 'S' : ''}` : '—'}</Text>
+        <Text style={styles.sectionMeta}>{ledger ? t('economy.displayed', { count: ledger.movements.length }) : '—'}</Text>
       </View>
 
       {error ? (
         <View accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.errorCard}>
-          <View style={styles.errorCopy}><Text style={styles.errorTitle}>SYNCHRONISATION INTERROMPUE</Text><Text style={styles.errorText}>{error}</Text></View>
-          <Pressable accessibilityRole="button" onPress={onRetry}><Text style={styles.retry}>RÉESSAYER</Text></Pressable>
+          <View style={styles.errorCopy}><Text style={styles.errorTitle}>{t('economy.syncInterrupted')}</Text><Text style={styles.errorText}>{error}</Text></View>
+          <Pressable accessibilityRole="button" onPress={onRetry}><Text style={styles.retry}>{t('common.retry')}</Text></Pressable>
         </View>
       ) : null}
     </View>
@@ -257,9 +252,9 @@ function LedgerEmpty({
   return (
     <View style={styles.emptyCard}>
       <View style={styles.emptyMark}><CurrencyIcon kind="volts" size={36} /></View>
-      <Text style={styles.emptyEyebrow}>REGISTRE VIERGE</Text>
-      <Text style={styles.emptyTitle}>Ton premier mouvement apparaîtra ici.</Text>
-      <Text style={styles.emptyText}>Termine l’onboarding, progresse ou accomplis une mission pour recevoir tes premiers Volts.</Text>
+      <Text style={styles.emptyEyebrow}>{t('economy.empty.eyebrow')}</Text>
+      <Text style={styles.emptyTitle}>{t('economy.empty.title')}</Text>
+      <Text style={styles.emptyText}>{t('economy.empty.description')}</Text>
     </View>
   );
 }
@@ -284,16 +279,16 @@ function LedgerFooter({
           style={({ pressed }) => [styles.moreButton, loadingMore && styles.disabled, pressed && styles.pressed]}
         >
           {loadingMore ? <ActivityIndicator color={colors.volt} size="small" /> : null}
-          <Text style={styles.moreText}>{loadingMore ? 'CHARGEMENT…' : 'AFFICHER LA SUITE'}</Text>
+          <Text style={styles.moreText}>{loadingMore ? t('common.loading') : t('economy.loadMore')}</Text>
         </Pressable>
       ) : null}
 
       <View style={styles.promiseCard}>
         <View style={styles.promiseMark}><Text style={styles.promiseGlyph}>◇</Text></View>
         <View style={styles.promiseCopy}>
-          <Text style={styles.promiseEyebrow}>PACTE GRIFF</Text>
-          <Text style={styles.promiseTitle}>L’identité du supporter. Jamais ses performances.</Text>
-          <Text style={styles.promiseText}>Les Volts servent uniquement aux objets visuels connus à l’avance. Ils ne deviennent ni Frags, ni rang, ni avantage.</Text>
+          <Text style={styles.promiseEyebrow}>{t('economy.promise.eyebrow')}</Text>
+          <Text style={styles.promiseTitle}>{t('economy.promise.title')}</Text>
+          <Text style={styles.promiseText}>{t('economy.promise.description')}</Text>
         </View>
       </View>
     </View>
@@ -317,14 +312,17 @@ const MovementRow = memo(function MovementRow({
   const positive = movement.amount > 0;
   const title = movementTitle(movement);
   const detail = movement.object
-    ? `LOCKER · ${humanize(movement.object.slot)}`
+    ? t('economy.movement.cosmetic', { slot: humanize(movement.object.slot) })
     : movement.campaignKey
-      ? `CAMPAGNE · ${humanize(movement.campaignKey)}`
-      : meta.detail;
+      ? t('economy.movement.campaign', { campaign: humanize(movement.campaignKey) })
+      : t(meta.detail);
 
   return (
     <View
-      accessibilityLabel={`${meta.label}, ${title}, ${positive ? 'plus' : 'moins'} ${formatNumber(Math.abs(movement.amount))} Volts, solde ${formatNumber(movement.balanceAfter)}`}
+      accessibilityLabel={t('economy.movement.accessibility', {
+        source: t(meta.label), title, direction: t(positive ? 'economy.plus' : 'economy.minus'),
+        amount: formatNumber(Math.abs(movement.amount)), balance: formatNumber(movement.balanceAfter),
+      })}
       accessible
       style={[
         styles.movement,
@@ -337,13 +335,13 @@ const MovementRow = memo(function MovementRow({
         <Text style={[styles.movementGlyph, { color: meta.tone }]}>{meta.glyph}</Text>
       </View>
       <View style={styles.movementCopy}>
-        <View style={styles.movementLabelRow}><Text style={[styles.movementLabel, { color: meta.tone }]}>{meta.label}</Text><Text style={styles.movementDate}>{formatDate(movement.createdAt)}</Text></View>
+        <View style={styles.movementLabelRow}><Text style={[styles.movementLabel, { color: meta.tone }]}>{t(meta.label)}</Text><Text style={styles.movementDate}>{formatDate(movement.createdAt)}</Text></View>
         <Text numberOfLines={1} style={styles.movementTitle}>{title}</Text>
         <Text numberOfLines={1} style={styles.movementDetail}>{detail}</Text>
       </View>
       <View style={styles.movementAmount}>
         <View style={styles.amountRow}><CurrencyIcon color={positive ? colors.volt : '#FF9B78'} kind="volts" size={13} /><Text style={[styles.amount, positive ? styles.credit : styles.debit]}>{positive ? '+' : '−'}{formatNumber(Math.abs(movement.amount))}</Text></View>
-        <Text style={styles.balanceAfter}>SOLDE {formatNumber(movement.balanceAfter)}</Text>
+        <Text style={styles.balanceAfter}>{t('economy.balanceAfter', { amount: formatNumber(movement.balanceAfter) })}</Text>
       </View>
     </View>
   );
@@ -352,7 +350,7 @@ const MovementRow = memo(function MovementRow({
 function LedgerSkeleton() {
   return (
     <SkeletonGroup
-      label="Chargement du journal des Volts"
+      label={t('economy.loadingLedger')}
       style={styles.ledgerSkeleton}
       testID="volt-ledger-loading"
     >
@@ -377,17 +375,18 @@ function LedgerSkeleton() {
 }
 
 function movementTitle(movement: VoltMovement) {
+  if (movement.source === 'bonus_quotidien') return t('economy.dailyBonus.title');
   if (movement.object) return movement.object.name;
-  if (movement.source === 'onboarding') return 'Bienvenue dans GRIFF';
-  if (movement.source === 'mission') return 'Mission accomplie';
-  if (movement.source === 'activation') return 'Participation validée';
-  if (movement.source === 'exceptionnelle') return 'Récompense exceptionnelle';
-  if (movement.source === 'ajustement') return 'Ajustement du registre';
-  if (movement.origin === 'badge') return 'Badge débloqué';
-  if (movement.origin === 'saison') return 'Progression de saison';
-  if (movement.origin === 'faction') return 'Mutation de faction';
-  if (movement.origin === 'call' || movement.origin === 'pari') return 'Progression Calls';
-  return 'Progression GRIFF';
+  if (movement.source === 'onboarding') return t('economy.movement.onboarding');
+  if (movement.source === 'mission') return t('economy.movement.mission');
+  if (movement.source === 'activation') return t('economy.movement.activation');
+  if (movement.source === 'exceptionnelle') return t('economy.movement.exceptional');
+  if (movement.source === 'ajustement') return t('economy.movement.adjustment');
+  if (movement.origin === 'badge') return t('economy.movement.badge');
+  if (movement.origin === 'saison') return t('economy.movement.season');
+  if (movement.origin === 'faction') return t('economy.movement.faction');
+  if (movement.origin === 'call' || movement.origin === 'pari') return t('economy.movement.call');
+  return t('economy.movement.progression');
 }
 
 function mergeMovements(current: VoltMovement[], next: VoltMovement[]) {
@@ -399,14 +398,8 @@ function humanize(value: string) {
   return value.replace(/[-_]+/g, ' ').trim().toUpperCase();
 }
 
-function formatNumber(value: number) {
-  return NUMBER_FORMATTER.format(Number(value || 0));
-}
-
 function formatDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'DATE INCONNUE';
-  return DATE_FORMATTER.format(date).replace('.', '').toUpperCase();
+  return formatDateTime(value).replace('.', '').toUpperCase();
 }
 
 const styles = StyleSheet.create({
