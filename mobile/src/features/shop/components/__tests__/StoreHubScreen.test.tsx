@@ -14,6 +14,7 @@ jest.mock('lucide-react-native/icons/shopping-bag', () => ({ __esModule: true, d
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() },
 }));
+jest.mock('@/src/features/profile/hooks/useProfileLevel', () => ({ useProfileLevel: () => null }));
 jest.mock('@/src/components/layout/GriffHeader', () => ({
   GriffHeader: ({ accessory, leading }: { accessory?: ReactNode; leading?: ReactNode }) => <>{leading}{accessory}</>,
 }));

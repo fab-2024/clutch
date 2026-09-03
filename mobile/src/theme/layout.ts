@@ -6,6 +6,7 @@ export const layout = {
   minTouchTarget: 44,
   compactControlHeight: 44,
   controlHeight: 48,
+  headerControlHeight: 52,
   tabBarHeight: 76,
   tabBarBottom: 10,
   tabBarContentInset: 128,

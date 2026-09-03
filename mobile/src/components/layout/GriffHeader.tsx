@@ -6,7 +6,7 @@ import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
 import type { PlayerEconomy } from '@/src/features/economy/types';
 import { useEconomy } from '@/src/providers/EconomyProvider';
-import { colors, fonts, typography } from '@/src/theme';
+import { colors, fonts, layout, typography } from '@/src/theme';
 
 type Props = {
   accessory?: ReactNode;
@@ -177,7 +177,8 @@ const styles = StyleSheet.create({
   },
   leading: {
     minWidth: 0,
-    flexShrink: 0,
+    flexGrow: 1,
+    flexShrink: 1,
   },
   economy: {
     flexShrink: 1,
@@ -187,7 +188,7 @@ const styles = StyleSheet.create({
   },
   economyWallet: {
     width: 209,
-    minHeight: 52,
+    minHeight: layout.headerControlHeight,
     paddingHorizontal: 5,
     gap: 0,
     borderRadius: 18,
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
-  economyWalletCompact: { width: 170, minHeight: 50, borderRadius: 17 },
+  economyWalletCompact: { width: 170, borderRadius: 17 },
   economyWalletNarrow: { flexShrink: 0 },
   economyWalletAccessoryNarrow: { width: 162 },
   walletActions: {
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
   voltsBalance: { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
   balanceCompact: {
     minWidth: 0,
-    minHeight: 51,
+    minHeight: layout.headerControlHeight - 2,
     flex: 1,
     paddingHorizontal: 6,
     gap: 5,
