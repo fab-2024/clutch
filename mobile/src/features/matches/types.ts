@@ -7,8 +7,10 @@ export type ArenaMatch = {
   jeu: string;
   equipe_a: string;
   tag_a: string;
+  logo_a?: string | null;
   equipe_b: string;
   tag_b: string;
+  logo_b?: string | null;
   evenement: string;
   format: number;
   statut: 'a_venir' | 'en_cours' | 'termine' | 'annule';

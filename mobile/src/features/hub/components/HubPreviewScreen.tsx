@@ -132,7 +132,7 @@ export default function HubPreviewScreen() {
 
 type PreviewMatchState = 'open' | 'upcoming' | 'live' | 'finished' | 'cancelled' | 'fallback';
 type PreviewScoreMode = 'score' | 'none';
-type PreviewTeams = 'g2-fnatic' | 'kc-vitality' | 'light-pair' | 'fearx-dplus';
+type PreviewTeams = 'g2-fnatic' | 'kc-vitality' | 'light-pair' | 'fearx-dplus' | 'blg-we';
 type PreviewContext = 'auto' | 'mission' | 'none' | 'result' | 'reward';
 
 function normalizePreviewContext(value?: string | string[]): PreviewContext {
@@ -161,7 +161,7 @@ function normalizePreviewState(value?: string | string[]): PreviewMatchState {
 
 function normalizePreviewTeams(value?: string | string[]): PreviewTeams {
   const teams = Array.isArray(value) ? value[0] : value;
-  return teams === 'kc-vitality' || teams === 'light-pair' || teams === 'fearx-dplus' ? teams : 'g2-fnatic';
+  return teams === 'kc-vitality' || teams === 'light-pair' || teams === 'fearx-dplus' || teams === 'blg-we' ? teams : 'g2-fnatic';
 }
 
 function normalizePreviewScore(value?: string | string[]): PreviewScoreMode {
@@ -178,6 +178,15 @@ function matchForPreviewState(state: PreviewMatchState, teams: PreviewTeams, sco
         teamB: 'Dplus KIA',
         tagA: 'BFX',
         tagB: 'DK',
+      }
+    : teams === 'blg-we'
+    ? {
+        event: 'LPL · Playoffs',
+        id: 'blg-we',
+        teamA: 'Bilibili Gaming',
+        teamB: 'Team WE',
+        tagA: 'BLG',
+        tagB: 'WE',
       }
     : teams === 'kc-vitality'
     ? {
@@ -208,8 +217,9 @@ function matchForPreviewState(state: PreviewMatchState, teams: PreviewTeams, sco
   const accentOverrides = teams === 'light-pair'
     ? { couleur_a: '#86F6DD', couleur_b: '#FFE27A' }
     : {};
+  const format = teams === 'blg-we' ? 5 : 3;
   if (state === 'live') {
-    return previewMatch(`${matchup.id}-live`, -1, 'lol', matchup.teamA, matchup.tagA, matchup.teamB, matchup.tagB, matchup.event, 3, {
+    return previewMatch(`${matchup.id}-live`, -1, 'lol', matchup.teamA, matchup.tagA, matchup.teamB, matchup.tagB, matchup.event, format, {
       ...accentOverrides,
       score_a: scoreMode === 'none' ? null : 1,
       score_b: scoreMode === 'none' ? null : 0,
@@ -217,7 +227,7 @@ function matchForPreviewState(state: PreviewMatchState, teams: PreviewTeams, sco
     });
   }
   if (state === 'finished') {
-    return previewMatch(`${matchup.id}-finished`, -2, 'lol', matchup.teamA, matchup.tagA, matchup.teamB, matchup.tagB, matchup.event, 3, {
+    return previewMatch(`${matchup.id}-finished`, -2, 'lol', matchup.teamA, matchup.tagA, matchup.teamB, matchup.tagB, matchup.event, format, {
       ...accentOverrides,
       score_a: 2,
       score_b: 1,
@@ -225,7 +235,7 @@ function matchForPreviewState(state: PreviewMatchState, teams: PreviewTeams, sco
     });
   }
   if (state === 'cancelled') {
-    return previewMatch(`${matchup.id}-cancelled`, 3, 'lol', matchup.teamA, matchup.tagA, matchup.teamB, matchup.tagB, matchup.event, 3, {
+    return previewMatch(`${matchup.id}-cancelled`, 3, 'lol', matchup.teamA, matchup.tagA, matchup.teamB, matchup.tagB, matchup.event, format, {
       ...accentOverrides,
       statut: 'annule',
     });
@@ -238,7 +248,7 @@ function matchForPreviewState(state: PreviewMatchState, teams: PreviewTeams, sco
       logo_b: null,
     });
   }
-  return previewMatch(matchup.id, 3, 'lol', matchup.teamA, matchup.tagA, matchup.teamB, matchup.tagB, matchup.event, 3, accentOverrides);
+  return previewMatch(matchup.id, 3, 'lol', matchup.teamA, matchup.tagA, matchup.teamB, matchup.tagB, matchup.event, format, accentOverrides);
 }
 
 function previewMatch(

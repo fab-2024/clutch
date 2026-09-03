@@ -8,6 +8,7 @@ import { colors, fonts } from '@/src/theme';
 import { resolveTeamLogoUri } from '../teamLogos';
 
 const LIGHT_MONOCHROME_LOGOS = new Set(['G2 Esports', 'Karmine Corp', 'SK Gaming']);
+const ACCENT_MONOCHROME_LOGOS = new Set(['BNK FEARX', 'Dplus KIA']);
 
 type TeamLogoProps = {
   accent: string;
@@ -35,7 +36,9 @@ export default function TeamLogo({ accent, contentScale, frameless = false, name
     || (showImage && !imageReady)
     || (showSvgFallback && !svgReady);
   const markSize = Math.round(size * (contentScale ?? (frameless ? 0.86 : 0.72)));
-  const defaultTintColor = LIGHT_MONOCHROME_LOGOS.has(name) ? '#F6F8F3' : undefined;
+  const defaultTintColor = ACCENT_MONOCHROME_LOGOS.has(name)
+    ? accent
+    : LIGHT_MONOCHROME_LOGOS.has(name) ? '#F6F8F3' : undefined;
   const tintColor = tintOverride === null ? undefined : (tintOverride ?? defaultTintColor);
 
   return (

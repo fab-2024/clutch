@@ -257,17 +257,29 @@ export function LiveMatchCard({ match, onPrepareMatch, rivalId, rivalPseudo }: {
         <View style={styles.livePill}><View style={styles.liveDot} /><Text style={styles.liveText}>LIVE</Text></View>
       </View>
       <View style={styles.liveDuel}>
-        <LiveTeam accent={accentA} name={match.equipe_a} tag={match.tag_a} />
+        <MatchTeam accent={accentA} name={match.equipe_a} tag={match.tag_a} uri={match.logo_a} />
         <View style={styles.liveScore}><Text style={styles.liveBo}>BO{match.format}</Text><Text style={styles.liveScoreText}>{match.score_a ?? 0}–{match.score_b ?? 0}</Text></View>
-        <LiveTeam accent={accentB} name={match.equipe_b} tag={match.tag_b} />
+        <MatchTeam accent={accentB} name={match.equipe_b} tag={match.tag_b} uri={match.logo_b} />
       </View>
       <View style={styles.liveFooter}><Text style={[styles.liveFooterText, callTag && styles.liveFooterCall]}>{callTag ? `TON CALL · ${callTag}` : 'SUIVRE LE MATCH'}</Text><Text style={styles.liveFooterArrow}>→</Text></View>
     </Pressable>
   );
 }
 
-function LiveTeam({ accent, name, tag }: { accent: string; name: string; tag: string }) {
-  return <View style={styles.liveTeam}><TeamLogo accent={accent} name={name} size={56} tag={tag} /><Text numberOfLines={1} style={styles.liveTeamTag}>{tag}</Text></View>;
+function MatchTeam({ accent, compact = false, name, tag, uri }: { accent: string; compact?: boolean; name: string; tag: string; uri?: string | null }) {
+  return (
+    <View style={styles.matchTeam}>
+      <TeamLogo accent={accent} name={name} size={compact ? 42 : 56} tag={tag} uri={uri} />
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={.85}
+        numberOfLines={2}
+        style={[styles.matchTeamName, compact && styles.matchTeamNameCompact]}
+      >
+        {name || tag}
+      </Text>
+    </View>
+  );
 }
 
 export function MatchRow({ match, onPrepareMatch, rivalId, rivalPseudo }: { match: ArenaMatch; onPrepareMatch?: (match: MatchCenterTarget) => void; rivalId?: string; rivalPseudo?: string }) {
@@ -281,10 +293,16 @@ export function MatchRow({ match, onPrepareMatch, rivalId, rivalPseudo }: { matc
   const prepare = () => onPrepareMatch ? onPrepareMatch(target) : warmMatchCenter(target);
   return (
     <Pressable accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}${callTag ? `, ton call ${callTag}` : ''}`} accessibilityRole="button" onPress={() => { prepare(); openMatchCenter(target, { rivalId, rivalPseudo, source: 'matches' }); }} onPressIn={prepare} style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}>
-      <View style={styles.rowWhen}><Text style={styles.rowTime}>{finished ? 'FINAL' : formatTime(match.debut)}</Text><Text style={styles.rowGame}>{gameLabel(match.jeu)}</Text></View>
-      <View style={styles.rowLogos}><TeamLogo accent={target.couleur_a} name={match.equipe_a} size={34} tag={match.tag_a} /><View style={styles.rowLogoOverlap}><TeamLogo accent={target.couleur_b} name={match.equipe_b} size={34} tag={match.tag_b} /></View></View>
-      <View style={styles.rowMain}><Text numberOfLines={1} style={styles.rowEvent}>{match.evenement} · BO{match.format}</Text><Text numberOfLines={1} style={styles.rowTeams}>{match.tag_a}  {finished ? `${match.score_a ?? 0} — ${match.score_b ?? 0}` : 'VS'}  {match.tag_b}</Text></View>
-      <View style={styles.rowTrailing}><Text style={[styles.rowState, (callTag || open) && styles.rowStateAccent, verdict && Number(match.prediction?.delta_frags ?? 0) < 0 && styles.rowStateLoss]}>{state}</Text><Text style={styles.rowArrow}>›</Text></View>
+      <View style={styles.rowHeader}>
+        <View style={styles.rowWhen}><Text style={styles.rowTime}>{finished ? 'FINAL' : formatTime(match.debut)}</Text><Text style={styles.rowGame}>{gameLabel(match.jeu)}</Text></View>
+        <Text numberOfLines={2} style={styles.rowEvent}>{match.evenement} · BO{match.format}</Text>
+        <View style={styles.rowTrailing}><Text style={[styles.rowState, (callTag || open) && styles.rowStateAccent, verdict && Number(match.prediction?.delta_frags ?? 0) < 0 && styles.rowStateLoss]}>{state}</Text><Text style={styles.rowArrow}>›</Text></View>
+      </View>
+      <View style={styles.rowDuel}>
+        <MatchTeam accent={target.couleur_a} compact name={match.equipe_a} tag={match.tag_a} uri={match.logo_a} />
+        <View style={styles.rowScore}><Text style={styles.rowTeams}>{finished ? `${match.score_a ?? 0} — ${match.score_b ?? 0}` : 'VS'}</Text></View>
+        <MatchTeam accent={target.couleur_b} compact name={match.equipe_b} tag={match.tag_b} uri={match.logo_b} />
+      </View>
     </Pressable>
   );
 }

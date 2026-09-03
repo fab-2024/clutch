@@ -19,7 +19,12 @@ import type {
 } from './types';
 
 const MATCH_FIELDS =
-  'id,saison_id,debut,jeu,equipe_a,tag_a,equipe_b,tag_b,evenement,format,statut,score_a,score_b,resultat_source,resultat_source_label,resultat_identifiant_externe,resultat_recu_le,resultat_regle_le,resultat_maj_le,resultat_revision,resultat_motif_correction';
+  'id,saison_id,debut,jeu,equipe_a,tag_a,equipe_b,tag_b,evenement,format,statut,score_a,score_b,resultat_source,resultat_source_label,resultat_identifiant_externe,resultat_recu_le,resultat_regle_le,resultat_maj_le,resultat_revision,resultat_motif_correction,team_a:equipes!matchs_equipe_a_id_fkey(logo),team_b:equipes!matchs_equipe_b_id_fkey(logo)';
+
+type ArenaMatchRow = Omit<ArenaMatch, 'prediction'> & {
+  team_a?: { logo: string | null } | null;
+  team_b?: { logo: string | null } | null;
+};
 
 export async function loadArenaMatches(userId: string) {
   const now = new Date().toISOString();
@@ -36,27 +41,31 @@ export async function loadArenaMatches(userId: string) {
       .select(MATCH_FIELDS)
       .eq('statut', 'en_cours')
       .order('debut', { ascending: false })
-      .limit(20),
+      .limit(20)
+      .overrideTypes<ArenaMatchRow[], { merge: false }>(),
     supabase
       .from('v_matchs')
       .select(MATCH_FIELDS)
       .eq('statut', 'a_venir')
       .lte('debut', now)
       .order('debut', { ascending: false })
-      .limit(20),
+      .limit(20)
+      .overrideTypes<ArenaMatchRow[], { merge: false }>(),
     supabase
       .from('v_matchs')
       .select(MATCH_FIELDS)
       .eq('statut', 'a_venir')
       .gt('debut', now)
       .order('debut', { ascending: true })
-      .limit(40),
+      .limit(40)
+      .overrideTypes<ArenaMatchRow[], { merge: false }>(),
     supabase
       .from('v_matchs')
       .select(MATCH_FIELDS)
       .eq('statut', 'termine')
       .order('debut', { ascending: false })
-      .limit(40),
+      .limit(40)
+      .overrideTypes<ArenaMatchRow[], { merge: false }>(),
     supabase
       .from('pronostics_classes')
       .select('match_id,choix,statut,delta_frags')
@@ -83,19 +92,19 @@ export async function loadArenaMatches(userId: string) {
   const live = [
     ...(inProgressResult.data ?? []),
     ...(startedResult.data ?? []),
-  ].map((match) => withPrediction(match as Omit<ArenaMatch, 'prediction'>, predictions));
+  ].map((match) => withPrediction(match, predictions));
   live.sort((a, b) => new Date(b.debut).getTime() - new Date(a.debut).getTime());
 
   return {
     upcoming: [
       ...live,
       ...(upcomingResult.data ?? []).map((match) => withPrediction(
-        match as Omit<ArenaMatch, 'prediction'>,
+        match,
         predictions,
       )),
     ],
     finished: (finishedResult.data ?? []).map((match) => withPrediction(
-      match as Omit<ArenaMatch, 'prediction'>,
+      match,
       predictions,
     )),
     calls: normalizeCallsDashboard(callsResult.data),
@@ -107,10 +116,11 @@ export async function loadMatchCenter(matchId: string): Promise<MatchCenterData>
     .from('v_matchs')
     .select(MATCH_FIELDS)
     .eq('id', matchId)
-    .single();
+    .single()
+    .overrideTypes<ArenaMatchRow, { merge: false }>();
 
   if (matchError) throw matchError;
-  const typedMatch = { ...match, prediction: null } as ArenaMatch;
+  const typedMatch = normalizeArenaMatch(match);
 
   const projectionPromise = typedMatch.statut === 'termine' || typedMatch.statut === 'annule'
     ? Promise.resolve({ data: null, error: null })
@@ -130,7 +140,8 @@ export async function loadMatchCenter(matchId: string): Promise<MatchCenterData>
     .gt('debut', relatedAfter)
     .neq('id', matchId)
     .order('debut', { ascending: true })
-    .limit(3);
+    .limit(3)
+    .overrideTypes<ArenaMatchRow[], { merge: false }>();
 
   const [projectionResult, callContextResult, relatedResult] = await Promise.all([
     projectionPromise,
@@ -153,10 +164,7 @@ export async function loadMatchCenter(matchId: string): Promise<MatchCenterData>
       : (projectionResult.data as MatchProjection | null),
     prediction: callContext.prediction,
     callContext,
-    related: (relatedResult.data ?? []).map((item) => ({
-      ...item,
-      prediction: null,
-    })) as ArenaMatch[],
+    related: (relatedResult.data ?? []).map(normalizeArenaMatch),
   };
 }
 
@@ -193,12 +201,21 @@ export async function markMatchResultRevealed(predictionId: string) {
   return data;
 }
 
+function normalizeArenaMatch({ team_a, team_b, ...match }: ArenaMatchRow): ArenaMatch {
+  return {
+    ...match,
+    logo_a: team_a?.logo ?? match.logo_a ?? null,
+    logo_b: team_b?.logo ?? match.logo_b ?? null,
+    prediction: null,
+  };
+}
+
 function withPrediction(
-  match: Omit<ArenaMatch, 'prediction'>,
+  match: ArenaMatchRow,
   predictions: Map<string, ArenaPrediction>,
 ): ArenaMatch {
   return {
-    ...match,
+    ...normalizeArenaMatch(match),
     prediction: predictions.get(match.id) ?? null,
   };
 }

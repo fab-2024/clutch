@@ -1,9 +1,24 @@
-import { Redirect } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 
 import type { ArenaMatch, ArenaPrediction, MyCallItem, MyCallsDashboard, MyCallState } from '../types';
 import { MatchesExperience } from './MatchesScreen';
 
 const NOW = new Date();
+
+const PREVIEW_IMPORTED_MATCHES: ArenaMatch[] = [
+  previewMatch({
+    id: 'preview-live-blg-we', date: NOW, game: 'lol', event: 'LPL · Playoffs', status: 'en_cours',
+    teamA: 'Bilibili Gaming', tagA: 'BLG', teamB: 'Team WE', tagB: 'WE', scoreA: 0, scoreB: 0,
+    logoA: 'https://cdn-api.pandascore.co/images/team/image/1566/qw_yi_qu_j.png',
+    logoB: 'https://cdn-api.pandascore.co/images/team/image/2574/300px-Team_WElogo_square.png',
+  }),
+  previewMatch({
+    id: 'preview-live-fearx-dplus', date: NOW, game: 'lol', event: 'LCK · Playoffs', status: 'en_cours',
+    teamA: 'BNK FEARX', tagA: 'BFX', teamB: 'Dplus KIA', tagB: 'DK', scoreA: 0, scoreB: 0,
+    logoA: 'https://cdn-api.pandascore.co/images/team/image/134115/663px_fear_x_icon_lightmode.png',
+    logoB: 'https://cdn-api.pandascore.co/images/team/image/132531/800px_dplus_lightmode.png',
+  }),
+];
 
 const PREVIEW_UPCOMING: ArenaMatch[] = [
   previewMatch({
@@ -108,6 +123,7 @@ const PREVIEW_CALLS: MyCallsDashboard = {
 };
 
 export default function MatchesPreviewScreen() {
+  const { teams } = useLocalSearchParams<{ teams?: string }>();
   if (!__DEV__) return <Redirect href="/" />;
   return (
     <MatchesExperience
@@ -119,7 +135,7 @@ export default function MatchesPreviewScreen() {
       isAdmin={false}
       loading={false}
       refreshing={false}
-      upcoming={PREVIEW_UPCOMING}
+      upcoming={teams === 'imported' ? [...PREVIEW_IMPORTED_MATCHES, ...PREVIEW_UPCOMING.slice(1)] : PREVIEW_UPCOMING}
       onRefresh={noop}
       onRetry={noop}
     />
@@ -178,6 +194,8 @@ type PreviewMatchInput = {
   event: string;
   game: string;
   id: string;
+  logoA?: string;
+  logoB?: string;
   prediction?: ArenaPrediction | null;
   scoreA?: number | null;
   scoreB?: number | null;
@@ -193,6 +211,8 @@ function previewMatch({
   event,
   game,
   id,
+  logoA,
+  logoB,
   prediction: matchPrediction = null,
   scoreA = null,
   scoreB = null,
@@ -209,8 +229,10 @@ function previewMatch({
     jeu: game,
     equipe_a: teamA,
     tag_a: tagA,
+    logo_a: logoA,
     equipe_b: teamB,
     tag_b: tagB,
+    logo_b: logoB,
     evenement: event,
     format: 3,
     statut: status,

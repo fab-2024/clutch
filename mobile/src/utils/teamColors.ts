@@ -5,6 +5,7 @@ type TeamBrand = { accent: string; aliases: string[] };
 const TEAM_BRANDS: TeamBrand[] = [
   { accent: '#E5333A', aliases: ['AST', 'Astralis'] },
   { accent: '#E84A9B', aliases: ['BDS', 'Team BDS'] },
+  { accent: '#2FC0D7', aliases: ['BLG', 'Bilibili Gaming'] },
   { accent: '#FFD600', aliases: ['BFX', 'FOX', 'BNK FEARX', 'FEARX', 'Liiv SANDBOX', 'LSB'] },
   { accent: '#E5E7EB', aliases: ['DK', 'Dplus', 'Dplus KIA', 'DWG', 'DWG KIA', 'DAMWON Gaming'] },
   { accent: '#4D71FF', aliases: ['DRX'] },
@@ -31,6 +32,7 @@ const TEAM_BRANDS: TeamBrand[] = [
   { accent: '#F0C14B', aliases: ['TH', 'HRTS', 'Heretics', 'Team Heretics'] },
   { accent: '#597BB2', aliases: ['TL', 'Team Liquid', 'Team Liquid Honda'] },
   { accent: '#F3D933', aliases: ['VIT', 'Vitality', 'Team Vitality'] },
+  { accent: '#D92329', aliases: ['WE', 'Team WE'] },
   { accent: '#2DBB7F', aliases: ['FLC', 'FAL', 'FALCONS', 'Team Falcons'] },
   { accent: '#E5E7EB', aliases: ['FUR', 'FURIA', 'FURIA Esports'] },
   { accent: '#F9BD2D', aliases: ['SSG', 'Spacestation Gaming'] },

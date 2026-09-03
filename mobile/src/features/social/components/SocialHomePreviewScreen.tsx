@@ -206,7 +206,7 @@ export default function SocialHomePreviewScreen({
           leading={<ProfileHeaderButton preview />}
           variant="wallet"
         />
-        <SocialSectionNav activeOverride="faction" variant={factionHeroVariant === 'v2' ? 'v2' : 'default'} />
+        <SocialSectionNav activeOverride="faction" />
         {showLab ? <View style={previewStyles.panel}>
           <View style={previewStyles.panelTop}>
             <View>
