@@ -48,6 +48,7 @@ const PREVIEW_SETTINGS: ProfileSettingsPreviewState = {
     },
   ],
   notifications: {
+    locale: 'fr-FR',
     timezone: 'Europe/Paris',
     lockImminent: true,
     matchStart: true,
@@ -61,6 +62,15 @@ const PREVIEW_SETTINGS: ProfileSettingsPreviewState = {
     quietHoursStart: 1320,
     quietHoursEnd: 480,
     retentionAvailable: true,
+    expansionAvailable: true,
+    recommendation: {
+      source: 'activity',
+      sampleSize: 18,
+      quietHoursStart: 1380,
+      quietHoursEnd: 450,
+      categories: ['streakRisk', 'matchStart', 'duelReceived'],
+      generatedAt: '2026-09-04T08:00:00.000Z',
+    },
     activeDevices: 2,
   },
   saveDelayMs: 700,

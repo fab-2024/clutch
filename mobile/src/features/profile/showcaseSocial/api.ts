@@ -1,4 +1,5 @@
 import { normalizeEquipped } from '@/src/features/shop/api';
+import { parsePublicVisualEffects } from '@/src/features/consumables/model';
 import { GrowthError } from '@/src/lib/growthErrors';
 import { publicPseudo } from '@/src/lib/publicLinks';
 import { supabase } from '@/src/lib/supabase';
@@ -28,19 +29,31 @@ function showcase(value: unknown) {
   return parseShowcase(value, normalizeEquipped(raw?.cosmetiques));
 }
 
+async function showcaseWithEffects(value: unknown, pseudo: string, viewerId?: string) {
+  const result = showcase(value);
+  if (!result) return result;
+  try {
+    const effects = parsePublicVisualEffects(await request('clutch_effets_vitrine_p3', { p_pseudo: pseudo || result.pseudo }, viewerId));
+    return { ...result, effects };
+  } catch (error) {
+    if (error instanceof GrowthError && ['PGRST202', '42883'].includes(error.reason)) return result;
+    throw error;
+  }
+}
+
 export async function loadPublicShowcase(pseudo: string, viewerId?: string, countVisit = true) {
   if (!publicPseudo(pseudo)) return null;
-  return showcase(await request(viewerId && countVisit ? 'clutch_visiter_vitrine_v1' : 'clutch_vitrine_v1', { p_pseudo: pseudo }, viewerId));
+  return showcaseWithEffects(await request(viewerId && countVisit ? 'clutch_visiter_vitrine_v1' : 'clutch_vitrine_v1', { p_pseudo: pseudo }, viewerId), pseudo, viewerId);
 }
 
 export async function setShowcaseLike(pseudo: string, liked: boolean, viewerId: string) {
-  return showcase(await request('clutch_aimer_vitrine_v1', { p_pseudo: pseudo, p_aime: liked }, viewerId));
+  return showcaseWithEffects(await request('clutch_aimer_vitrine_v1', { p_pseudo: pseudo, p_aime: liked }, viewerId), pseudo, viewerId);
 }
 
 export async function saveShowcasePreferences(preferences: ShowcasePreferences, ownerId: string) {
-  return showcase(await request('clutch_preferences_vitrine_v1', { p_visibilite: preferences.visibility,
+  return showcaseWithEffects(await request('clutch_preferences_vitrine_v1', { p_visibilite: preferences.visibility,
     p_rang: preferences.showRank, p_serie: preferences.showStreak, p_jalons: preferences.showMilestones,
-    p_notifications: preferences.likeNotifications }, ownerId));
+    p_notifications: preferences.likeNotifications }, ownerId), '', ownerId);
 }
 
 export async function prepareMilestoneShare(milestone: number, ownerId: string) {

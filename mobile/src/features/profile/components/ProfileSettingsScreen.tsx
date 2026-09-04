@@ -34,6 +34,7 @@ import { colors, layout, radius, spacing, typography } from '@/src/theme';
 import { saveFavoriteTeam, saveProfileAvatar, saveProfilePreferences } from '../api';
 import { useQueuedAutosave, type AutosaveStatus } from '../hooks/useQueuedAutosave';
 import { FavoriteTeamConfirmationSheet } from './FavoriteTeamConfirmationSheet';
+import LanguagePreferences from './LanguagePreferences';
 
 export type ProfileSettingsPreviewState = {
   notifications: NotificationPreferences;
@@ -88,8 +89,8 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
       errorFeedback();
       showSnackbar({
         action: {
-          accessibilityLabel: 'Réessayer la synchronisation du profil',
-          label: 'RÉESSAYER',
+          accessibilityLabel: t('settings.autosave.profileRetry'),
+          label: t('settings.autosave.retry'),
           onPress: retry,
         },
         message: settingsError(caught),
@@ -101,7 +102,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
         await previewSaveDelay(previewState.saveDelayMs);
         return draft;
       }
-      if (!userId) throw new Error('La session ne permet plus de modifier ce profil.');
+      if (!userId) throw new Error(t('settings.error.session'));
       const result = await saveProfilePreferences(userId, draft.games, draft.publicProfile);
       void refreshProfile().catch(() => undefined);
       return result;
@@ -115,8 +116,8 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
       errorFeedback();
       showSnackbar({
         action: {
-          accessibilityLabel: 'Réessayer la synchronisation de l’avatar',
-          label: 'RÉESSAYER',
+          accessibilityLabel: t('settings.autosave.avatarRetry'),
+          label: t('settings.autosave.retry'),
           onPress: retry,
         },
         message: settingsError(caught),
@@ -124,12 +125,12 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
       });
     },
     save: async (avatarId: string | null) => {
-      if (!avatarId) throw new Error('Choisis un avatar dans la collection.');
+      if (!avatarId) throw new Error(t('settings.error.avatarRequired'));
       if (previewState) {
         await previewSaveDelay(previewState.saveDelayMs);
         return { avatar_id: avatarId };
       }
-      if (!userId) throw new Error('La session ne permet plus de modifier ce profil.');
+      if (!userId) throw new Error(t('settings.error.session'));
       const result = await saveProfileAvatar(userId, avatarId);
       void refreshProfile().catch(() => undefined);
       return result;
@@ -143,8 +144,8 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
       errorFeedback();
       showSnackbar({
         action: {
-          accessibilityLabel: 'Réessayer la synchronisation des notifications',
-          label: 'RÉESSAYER',
+          accessibilityLabel: t('settings.autosave.notificationRetry'),
+          label: t('settings.autosave.retry'),
           onPress: retry,
         },
         message: notificationSettingsError(caught),
@@ -152,7 +153,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
       });
     },
     save: async (preferences: NotificationPreferences | null) => {
-      if (!preferences) throw new Error('Les préférences de notification ne sont pas disponibles.');
+      if (!preferences) throw new Error(t('settings.error.notificationUnavailable'));
       if (previewState) {
         await previewSaveDelay(previewState.saveDelayMs);
         return preferences;
@@ -182,7 +183,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
         resetNotificationAutosave(localized);
       })
       .catch(() => {
-        if (active) setError('Impossible de charger les préférences de notification.');
+        if (active) setError(t('settings.error.notificationLoad'));
       })
       .finally(() => {
         if (active) setLoadingNotifications(false);
@@ -227,7 +228,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
         if (requestId !== teamRequest.current) return;
         setOrganizations([]);
         setSelectedOrganization(null);
-        setError('Impossible de charger les équipes pour le moment.');
+        setError(t('settings.error.teamLoad'));
       })
       .finally(() => {
         if (requestId === teamRequest.current) setLoadingTeams(false);
@@ -274,6 +275,16 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
     });
   }
 
+  function syncNotificationLocale(locale: NotificationPreferences['locale']) {
+    setNotificationPreferences((current) => {
+      if (!current) return current;
+      const next = { ...current, locale };
+      if (current.expansionAvailable) notificationAutosave.commit(next);
+      else showSnackbar({ message: t('language.notificationError'), tone: 'info' });
+      return next;
+    });
+  }
+
   function openTeamConfirmation(organization: TeamOrganization) {
     if (organization.key === selectedOrganization || teamSaving) return;
     teamReturnFocusRef.current = teamCardRefs.current.get(organization.key) ?? null;
@@ -308,7 +319,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
       setPendingOrganization(null);
       successFeedback();
       showSnackbar({
-        message: `${pendingOrganization.name} devient ta faction pour les 7 prochains jours.`,
+        message: t('settings.team.changed', { team: pendingOrganization.name }),
         tone: 'success',
       });
       if (!previewState) void refreshProfile().catch(() => undefined);
@@ -327,13 +338,13 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
     const result = await requestAndRegisterPushToken();
     if (result.status === 'registered') {
       setNotificationPreferences((current) => current ? { ...current, activeDevices: result.activeDevices } : current);
-      setPushMessage('APPAREIL ENREGISTRÉ · LES ALERTES GRIFF SONT ACTIVES.');
+      setPushMessage(t('settings.notifications.registered'));
     } else if (result.status === 'denied') {
-      setPushMessage('AUTORISATION REFUSÉE · ACTIVE-LA DANS LES RÉGLAGES DU TÉLÉPHONE.');
+      setPushMessage(t('settings.notifications.denied'));
     } else if (result.status === 'unconfigured') {
-      setPushMessage('LA BUILD MOBILE DOIT D’ABORD ÊTRE LIÉE À UN PROJET EAS.');
+      setPushMessage(t('settings.notifications.unconfigured'));
     } else if (result.status === 'unsupported') {
-      setPushMessage('L’APERÇU WEB SYNCHRONISE LES CHOIX, PAS LES JETONS PUSH.');
+      setPushMessage(t('settings.notifications.unsupported'));
     } else {
       setPushMessage(result.message.toUpperCase());
     }
@@ -348,7 +359,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
       await deactivateCurrentDevicePushToken();
       await signOut();
     } catch {
-      setSignOutError('Déconnexion impossible. Vérifie ta connexion puis réessaie.');
+      setSignOutError(t('settings.account.signOutError'));
     } finally {
       setSigningOut(false);
     }
@@ -358,15 +369,15 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
     <Screen>
       <ScrollView style={styles.root} contentContainerStyle={[styles.content, isShortLandscape && styles.contentLandscape]} showsVerticalScrollIndicator={false}>
         <View style={[styles.header, isShortLandscape && styles.headerLandscape]}>
-          <Pressable accessibilityLabel="Revenir au profil" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><Text style={styles.backText}>← MOI</Text></Pressable>
+          <Pressable accessibilityLabel={t('settings.backLabel')} accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><Text style={styles.backText}>{t('settings.back')}</Text></Pressable>
           <View style={styles.headerMark}><Text style={styles.headerMarkText}>⚙</Text></View>
         </View>
 
         <View style={[styles.introStatus, isShortLandscape && styles.introStatusLandscape]}>
           <View style={[styles.intro, isShortLandscape && styles.introLandscape]}>
-            <Text style={styles.eyebrow}>MOI // PARAMÈTRES</Text>
-            <Text style={styles.title}>RÈGLE TON TERRAIN.</Text>
-            <Text style={styles.subtitle}>Tes choix alimentent le Hub, les matchs proposés et l’identité publique de ton profil.</Text>
+            <Text style={styles.eyebrow}>{t('settings.eyebrow')}</Text>
+            <Text style={styles.title}>{t('settings.title')}</Text>
+            <Text style={styles.subtitle}>{t('settings.subtitle')}</Text>
           </View>
 
           <View style={[styles.syncWrap, isShortLandscape && styles.syncWrapLandscape]}>
@@ -386,10 +397,10 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
 
         <View style={styles.section}>
           <View style={styles.sectionHeading}>
-            <View><Text style={styles.sectionEyebrow}>01 // AVATAR</Text><Text style={styles.sectionTitle}>CHOISIS TON VISAGE.</Text></View>
-            <Text style={styles.sectionMeta}>{PLAYER_AVATARS.length} CHOIX</Text>
+            <View><Text style={styles.sectionEyebrow}>{t('settings.avatar.eyebrow')}</Text><Text style={styles.sectionTitle}>{t('settings.avatar.title')}</Text></View>
+            <Text style={styles.sectionMeta}>{t('settings.avatar.choices', { count: PLAYER_AVATARS.length })}</Text>
           </View>
-          <Text style={styles.sectionCopy}>Ton avatar te représente dans l’en-tête et sur ton profil. Les cadres cosmétiques équipés restent visibles.</Text>
+          <Text style={styles.sectionCopy}>{t('settings.avatar.copy')}</Text>
           <View style={styles.avatarGrid}>
             {PLAYER_AVATARS.map((avatar) => {
               const active = avatar.id === selectedAvatarId;
@@ -397,7 +408,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
               return (
                 <Pressable
                   key={avatar.id}
-                  accessibilityLabel={`Choisir l’avatar ${avatar.label}`}
+                  accessibilityLabel={t('settings.avatar.choose', { avatar: avatar.label })}
                   accessibilityRole="radio"
                   accessibilityState={{ checked: active }}
                   onBlur={() => handleCardBlur(focusKey)}
@@ -420,7 +431,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
         </View>
 
         <View style={styles.section}>
-          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>02 // JEUX SUIVIS</Text><Text style={styles.sectionTitle}>TES TERRAINS.</Text></View><Text style={styles.sectionMeta}>{games.length}/3</Text></View>
+          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>{t('settings.games.eyebrow')}</Text><Text style={styles.sectionTitle}>{t('settings.games.title')}</Text></View><Text style={styles.sectionMeta}>{games.length}/3</Text></View>
           <View style={styles.gamesGrid}>
             {GAMES.map((game) => {
               const active = games.includes(game.id);
@@ -445,17 +456,17 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
                   <View style={[styles.gameMark, { borderColor: game.accent }, active && { backgroundColor: `${game.accent}22` }]}><Text style={[styles.gameCode, { color: game.accent }]}>{game.code}</Text></View>
                   <Text style={styles.gameShort}>{game.short}</Text>
                   <Text numberOfLines={isCompactWidth ? 2 : 1} style={[styles.gameName, isCompactWidth && styles.gameNameCompact]}>{game.name}</Text>
-                  <Text style={[styles.gameState, active && styles.gameStateActive]}>{active ? 'SUIVI ✓' : 'AJOUTER'}</Text>
+                  <Text style={[styles.gameState, active && styles.gameStateActive]}>{t(active ? 'settings.games.following' : 'settings.games.add')}</Text>
                 </Pressable>
               );
             })}
           </View>
-          {!games.length ? <Text style={styles.validation}>Choisis au moins un jeu pour continuer.</Text> : null}
+          {!games.length ? <Text style={styles.validation}>{t('settings.games.required')}</Text> : null}
         </View>
 
         <View style={styles.section}>
-          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>03 // ÉQUIPE FAVORITE</Text><Text style={styles.sectionTitle}>TA COULEUR.</Text></View></View>
-          <Text style={styles.sectionCopy}>Ce choix n’est jamais enregistré automatiquement : une confirmation explicite déclenche le verrouillage de 7 jours.</Text>
+          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>{t('settings.team.eyebrow')}</Text><Text style={styles.sectionTitle}>{t('settings.team.title')}</Text></View></View>
+          <Text style={styles.sectionCopy}>{t('settings.team.copy')}</Text>
           {loadingTeams ? <View style={styles.teamSkeleton} /> : organizations.length ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.teamRail}>
               {organizations.map((organization) => {
@@ -464,7 +475,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
                 return (
                   <Pressable
                     key={organization.key}
-                    accessibilityHint={active ? 'Faction actuellement active' : 'Ouvre la confirmation du verrouillage de 7 jours'}
+                    accessibilityHint={t(active ? 'settings.team.currentHint' : 'settings.team.confirmHint')}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: active }}
                     onBlur={() => handleCardBlur(focusKey)}
@@ -490,40 +501,45 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
                 );
               })}
             </ScrollView>
-          ) : games.length ? <Text style={styles.validation}>Aucune équipe disponible pour cette sélection.</Text> : null}
+          ) : games.length ? <Text style={styles.validation}>{t('settings.team.empty')}</Text> : null}
         </View>
 
         <View style={styles.section}>
-          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>04 // VISIBILITÉ</Text><Text style={styles.sectionTitle}>TON PROFIL.</Text></View></View>
+          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>{t('settings.visibility.eyebrow')}</Text><Text style={styles.sectionTitle}>{t('settings.visibility.title')}</Text></View></View>
           <Pressable
-            accessibilityLabel="Profil public"
+            accessibilityLabel={t('settings.visibility.label')}
             accessibilityRole="switch"
             accessibilityState={{ checked: publicProfile }}
             onPress={toggleVisibility}
             style={({ pressed }) => [styles.visibilityCard, pressed && styles.pressed]}
           >
-            <View style={styles.visibilityCopy}><Text style={styles.visibilityTitle}>{publicProfile ? 'PROFIL PUBLIC' : 'PROFIL PRIVÉ'}</Text><Text style={styles.visibilityMeta}>{publicProfile ? 'Les joueurs peuvent ouvrir ton identité GRIFF.' : 'Toi seul peux consulter ton profil complet.'}</Text></View>
+            <View style={styles.visibilityCopy}><Text style={styles.visibilityTitle}>{t(publicProfile ? 'settings.visibility.public' : 'settings.visibility.private')}</Text><Text style={styles.visibilityMeta}>{t(publicProfile ? 'settings.visibility.publicDetail' : 'settings.visibility.privateDetail')}</Text></View>
             <View style={[styles.switchTrack, publicProfile && styles.switchTrackActive]}><View style={[styles.switchThumb, publicProfile && styles.switchThumbActive]} /></View>
           </Pressable>
         </View>
 
         <View style={styles.section}>
+          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>{t('settings.language.eyebrow')}</Text><Text style={styles.sectionTitle}>{t('settings.language.title')}</Text></View></View>
+          <LanguagePreferences onLocaleChange={syncNotificationLocale} />
+        </View>
+
+        <View style={styles.section}>
           <View style={styles.sectionHeading}>
-            <View><Text style={styles.sectionEyebrow}>05 // NOTIFICATIONS</Text><Text style={styles.sectionTitle}>SEULEMENT QUAND ÇA COMPTE.</Text></View>
-            <Text style={styles.sectionMeta}>{notificationPreferences?.activeDevices ?? 0} APP.</Text>
+            <View><Text style={styles.sectionEyebrow}>{t('settings.notifications.eyebrow')}</Text><Text style={styles.sectionTitle}>{t('settings.notifications.title')}</Text></View>
+            <Text style={styles.sectionMeta}>{t('settings.notifications.devices', { count: notificationPreferences?.activeDevices ?? 0 })}</Text>
           </View>
-          <Text style={styles.sectionCopy}>Aucun rappel générique : chaque alerte correspond à un match, un verdict ou une progression réelle. Fuseau · {notificationPreferences?.timezone ?? detectedTimezone()}</Text>
+          <Text style={styles.sectionCopy}>{t('settings.notifications.copy', { zone: notificationPreferences?.timezone ?? detectedTimezone() })}</Text>
 
           {loadingNotifications ? <View style={styles.notificationSkeleton} /> : notificationPreferences ? (
             <View style={styles.notificationCard}>
-              <Text style={styles.notificationGroup}>MATCHS</Text>
-              <NotificationToggle label="Verrouillage imminent" detail="15 min avant un marché pertinent" enabled={notificationPreferences.lockImminent} onPress={() => toggleNotification('lockImminent')} />
-              <NotificationToggle label="Début du match" detail="Quand une affiche suivie commence" enabled={notificationPreferences.matchStart} onPress={() => toggleNotification('matchStart')} />
-              <NotificationToggle label="Verdict" detail="Quand les Frags sont définitivement réglés" enabled={notificationPreferences.verdict} onPress={() => toggleNotification('verdict')} />
-              <Text style={[styles.notificationGroup, styles.notificationGroupSpaced]}>PROGRESSION & SOCIAL</Text>
-              <NotificationToggle label="Promotion" detail="Seulement lors d’un vrai changement de grade" enabled={notificationPreferences.promotion} onPress={() => toggleNotification('promotion')} />
-              <NotificationToggle label="Mutation" detail="Quand la relique de ta faction évolue" enabled={notificationPreferences.mutation} onPress={() => toggleNotification('mutation')} />
-              <NotificationToggle label="Duel reçu" detail="Quand un ami te cible sur un match classé" enabled={notificationPreferences.duelReceived} onPress={() => toggleNotification('duelReceived')} />
+              <Text style={styles.notificationGroup}>{t('settings.notifications.matches')}</Text>
+              <NotificationToggle label={t('settings.notifications.lock')} detail={t('settings.notifications.lockDetail')} enabled={notificationPreferences.lockImminent} onPress={() => toggleNotification('lockImminent')} />
+              <NotificationToggle label={t('settings.notifications.matchStart')} detail={t('settings.notifications.matchStartDetail')} enabled={notificationPreferences.matchStart} onPress={() => toggleNotification('matchStart')} />
+              <NotificationToggle label={t('settings.notifications.verdict')} detail={t('settings.notifications.verdictDetail')} enabled={notificationPreferences.verdict} onPress={() => toggleNotification('verdict')} />
+              <Text style={[styles.notificationGroup, styles.notificationGroupSpaced]}>{t('settings.notifications.social')}</Text>
+              <NotificationToggle label={t('settings.notifications.promotion')} detail={t('settings.notifications.promotionDetail')} enabled={notificationPreferences.promotion} onPress={() => toggleNotification('promotion')} />
+              <NotificationToggle label={t('settings.notifications.mutation')} detail={t('settings.notifications.mutationDetail')} enabled={notificationPreferences.mutation} onPress={() => toggleNotification('mutation')} />
+              <NotificationToggle label={t('settings.notifications.duel')} detail={t('settings.notifications.duelDetail')} enabled={notificationPreferences.duelReceived} onPress={() => toggleNotification('duelReceived')} />
               <StreakNotificationPreferences preferences={notificationPreferences} onChange={(next) => {
                 setNotificationPreferences(next);
                 notificationAutosave.commit(next);
@@ -535,32 +551,32 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
 
           <View style={styles.deviceCard}>
             <View style={styles.deviceCopy}>
-              <Text style={styles.deviceTitle}>{Platform.OS === 'web' ? 'APERÇU WEB' : 'CET APPAREIL'}</Text>
-              <Text style={styles.deviceMeta}>{Platform.OS === 'web' ? 'Tes choix sont enregistrés ici. Le jeton push s’active depuis la build iPhone ou Android.' : notificationPreferences?.activeDevices ? `${notificationPreferences.activeDevices} appareil${notificationPreferences.activeDevices > 1 ? 's' : ''} actif${notificationPreferences.activeDevices > 1 ? 's' : ''}.` : 'Autorise GRIFF à recevoir les événements sélectionnés.'}</Text>
+              <Text style={styles.deviceTitle}>{t(Platform.OS === 'web' ? 'settings.notifications.web' : 'settings.notifications.device')}</Text>
+              <Text style={styles.deviceMeta}>{Platform.OS === 'web' ? t('settings.notifications.webDetail') : notificationPreferences?.activeDevices ? t('settings.notifications.activeDevices', { count: notificationPreferences.activeDevices }) : t('settings.notifications.authorize')}</Text>
             </View>
-            {Platform.OS !== 'web' ? <Pressable accessibilityRole="button" disabled={pushBusy} onPress={() => void enablePushOnDevice()} style={({ pressed }) => [styles.deviceButton, (pressed || pushBusy) && styles.pressed]}><Text style={styles.deviceButtonText}>{pushBusy ? 'ACTIVATION…' : notificationPreferences?.activeDevices ? 'RESYNCHRONISER' : 'ACTIVER'}</Text></Pressable> : null}
+            {Platform.OS !== 'web' ? <Pressable accessibilityRole="button" disabled={pushBusy} onPress={() => void enablePushOnDevice()} style={({ pressed }) => [styles.deviceButton, (pressed || pushBusy) && styles.pressed]}><Text style={styles.deviceButtonText}>{t(pushBusy ? 'settings.notifications.activating' : notificationPreferences?.activeDevices ? 'settings.notifications.resync' : 'settings.notifications.activate')}</Text></Pressable> : null}
           </View>
           {pushMessage ? <Text style={styles.pushMessage}>{pushMessage}</Text> : null}
         </View>
 
         <View style={styles.section}>
-          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>06 // COMPTE & DONNÉES</Text><Text style={styles.sectionTitle}>TU GARDES LA MAIN.</Text></View></View>
+          <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>{t('settings.account.eyebrow')}</Text><Text style={styles.sectionTitle}>{t('settings.account.title')}</Text></View></View>
           <View style={styles.accountLinks}>
-            <AccountLink label="Confidentialité, sécurité et blocages" onPress={() => router.push('/settings/safety')} />
-            <AccountLink label="Compte, données et suppression" onPress={() => router.push('/settings/account')} />
-            <AccountLink label="Politique de confidentialité" onPress={() => router.push('/legal/privacy')} />
-            <AccountLink label="Conditions d’utilisation" onPress={() => router.push('/legal/terms')} />
-            <AccountLink label="Support" onPress={() => router.push('/support')} />
+            <AccountLink label={t('settings.account.safety')} onPress={() => router.push('/settings/safety')} />
+            <AccountLink label={t('settings.account.data')} onPress={() => router.push('/settings/account')} />
+            <AccountLink label={t('settings.account.privacy')} onPress={() => router.push('/legal/privacy')} />
+            <AccountLink label={t('settings.account.terms')} onPress={() => router.push('/legal/terms')} />
+            <AccountLink label={t('settings.account.support')} onPress={() => router.push('/support')} />
           </View>
           <Pressable
-            accessibilityLabel="Se déconnecter"
+            accessibilityLabel={t('settings.account.signOutLabel')}
             accessibilityRole="button"
             accessibilityState={{ busy: signingOut, disabled: signingOut }}
             disabled={signingOut}
             onPress={() => void leaveSession()}
             style={({ pressed }) => [styles.logout, signingOut && styles.disabled, pressed && !signingOut && styles.pressed]}
           >
-            <Text style={styles.logoutText}>{signingOut ? 'DÉCONNEXION…' : 'SE DÉCONNECTER'}</Text>
+            <Text style={styles.logoutText}>{t(signingOut ? 'settings.account.signingOut' : 'settings.account.signOut')}</Text>
             <Text style={styles.logoutArrow}>→</Text>
           </Pressable>
           {signOutError ? <Text accessibilityLiveRegion="polite" accessibilityRole="alert" style={styles.signOutError}>{signOutError}</Text> : null}
@@ -582,14 +598,14 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
 
 function settingsError(caught: unknown) {
   const message = caught instanceof Error ? caught.message : '';
-  if (message.includes('Changement de faction bloqué')) return message;
-  if (message.toLowerCase().includes('row-level security')) return 'La session ne permet plus de modifier ce profil. Reconnecte-toi puis réessaie.';
-  return message || 'Impossible d’enregistrer les paramètres.';
+  if (message.includes('Changement de faction bloqué')) return t('settings.error.teamLocked');
+  if (message.toLowerCase().includes('row-level security')) return t('settings.error.session');
+  return message || t('settings.error.profile');
 }
 
 function notificationSettingsError(caught: unknown) {
   const message = caught instanceof Error ? caught.message : '';
-  return message || 'Les préférences de notification n’ont pas pu être synchronisées.';
+  return message || t('settings.error.notifications');
 }
 
 function profilePreferencesSignature(value: ProfilePreferencesDraft) {
@@ -618,6 +634,7 @@ type NotificationToggleKey = 'lockImminent' | 'matchStart' | 'verdict' | 'promot
 function notificationSignature(preferences: NotificationPreferences | null) {
   if (!preferences) return '';
   return [
+    preferences.locale,
     preferences.timezone,
     preferences.lockImminent,
     preferences.matchStart,
@@ -645,26 +662,26 @@ function AutosaveIndicator({
   status: AutosaveStatus;
 }) {
   const presentation = blocked
-    ? { label: 'CHOISIS AU MOINS UN JEU', tone: 'error' as const }
+    ? { label: t('settings.autosave.chooseGame'), tone: 'error' as const }
     : status === 'error'
-      ? { label: 'ÉCHEC D’ENREGISTREMENT', tone: 'error' as const }
+      ? { label: t('settings.autosave.failed'), tone: 'error' as const }
       : status === 'saving'
-        ? { label: 'ENREGISTREMENT…', tone: 'saving' as const }
+        ? { label: t('settings.autosave.saving'), tone: 'saving' as const }
         : status === 'saved'
-          ? { label: 'ENREGISTRÉ', tone: 'saved' as const }
-          : { label: 'ENREGISTREMENT AUTO ACTIF', tone: 'idle' as const };
+          ? { label: t('settings.autosave.saved'), tone: 'saved' as const }
+          : { label: t('settings.autosave.active'), tone: 'idle' as const };
   const content = (
     <>
       <AutosaveIcon tone={presentation.tone} />
       <Text numberOfLines={compact ? 2 : 1} style={[styles.syncLabel, presentation.tone === 'error' && styles.syncLabelError]}>{presentation.label}</Text>
-      {presentation.tone === 'error' && !blocked ? <Text style={styles.syncRetry}>RÉESSAYER</Text> : null}
+      {presentation.tone === 'error' && !blocked ? <Text style={styles.syncRetry}>{t('settings.autosave.retry')}</Text> : null}
     </>
   );
 
   if (presentation.tone === 'error' && !blocked) {
     return (
       <Pressable
-        accessibilityLabel="Synchronisation interrompue, réessayer"
+        accessibilityLabel={t('settings.autosave.retryLabel')}
         accessibilityRole="button"
         onPress={onRetry}
         style={({ pressed }) => [styles.syncStatus, compact && styles.syncStatusLandscape, styles.syncStatusError, pressed && styles.pressed]}

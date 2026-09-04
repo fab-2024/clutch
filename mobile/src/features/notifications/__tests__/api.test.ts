@@ -41,33 +41,41 @@ describe('push destination logout APIs', () => {
   });
 });
 
-describe('P1 notification preferences', () => {
+describe('P3 notification preferences', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('round-trips independent categories and a midnight-crossing quiet range atomically', async () => {
-    mockRpc.mockResolvedValue({ error: null, data: { retention_disponible: true, fuseau: 'Europe/Paris',
+    mockRpc.mockResolvedValue({ error: null, data: { retention_disponible: true, expansion_disponible: true,
+      locale: 'en-US', fuseau: 'Europe/Paris',
       serie_en_danger: false, serie_protegee: true, silence_actif: true, silence_debut: 1320, silence_fin: 480,
-      verrouillage_imminent: false, verdict: true, appareils_actifs: 2 } });
+      verrouillage_imminent: false, verdict: true, appareils_actifs: 2,
+      recommandation: { source: 'activity', echantillon: 9, silence_debut: 1380, silence_fin: 540,
+        categories: ['streakRisk', 'matchStart'], genere_le: '2026-09-04T08:00:00Z' } } });
     const preferences = await loadNotificationPreferences();
     expect(preferences).toMatchObject({ streakRisk: false, streakProtected: true, quietHoursEnabled: true,
-      quietHoursStart: 1320, quietHoursEnd: 480, retentionAvailable: true, lockImminent: false, verdict: true });
+      quietHoursStart: 1320, quietHoursEnd: 480, retentionAvailable: true, expansionAvailable: true,
+      locale: 'en-US', lockImminent: false, verdict: true,
+      recommendation: { source: 'activity', sampleSize: 9, quietHoursStart: 1380, quietHoursEnd: 540,
+        categories: ['streakRisk', 'matchStart'] } });
     await saveNotificationPreferences(preferences);
-    expect(mockRpc).toHaveBeenLastCalledWith('clutch_enregistrer_preferences_notification_v2', expect.objectContaining({
+    expect(mockRpc).toHaveBeenLastCalledWith('clutch_enregistrer_preferences_notification_v3', expect.objectContaining({
       p_fuseau: 'Europe/Paris', p_serie_en_danger: false, p_serie_protegee: true,
       p_silence_actif: true, p_silence_debut: 1320, p_silence_fin: 480,
-      p_verrouillage_imminent: false, p_verdict: true,
+      p_verrouillage_imminent: false, p_verdict: true, p_locale: 'en-US',
     }));
   });
 
   it('keeps legacy settings usable before P1 is deployed without pretending streak preferences are saved', async () => {
     mockRpc.mockResolvedValueOnce({ data: null, error: { code: 'PGRST202' } })
+      .mockResolvedValueOnce({ data: null, error: { code: 'PGRST202' } })
       .mockResolvedValueOnce({ error: null, data: { fuseau: 'UTC', verdict: false } });
     const preferences = await loadNotificationPreferences();
     expect(preferences.retentionAvailable).toBe(false);
-    expect(mockRpc).toHaveBeenNthCalledWith(2, 'clutch_mes_preferences_notification_v1');
+    expect(preferences.expansionAvailable).toBe(false);
+    expect(mockRpc).toHaveBeenNthCalledWith(3, 'clutch_mes_preferences_notification_v1');
     mockRpc.mockResolvedValue({ data: { fuseau: 'UTC', verdict: false }, error: null });
     await saveNotificationPreferences(preferences);
-    const [rpc, args] = mockRpc.mock.calls[2];
+    const [rpc, args] = mockRpc.mock.calls[3];
     expect(rpc).toBe('clutch_enregistrer_preferences_notification_v1');
     expect(args).not.toHaveProperty('p_serie_en_danger');
     expect(args.p_verdict).toBe(false);

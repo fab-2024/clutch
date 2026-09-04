@@ -11,7 +11,9 @@ import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import ProfileVitrineIdentity from '@/src/features/profile/components/ProfileVitrineIdentity';
+import { VisualConsumablesEntryCard } from '@/src/features/consumables/components/VisualConsumablesScreen';
 import { ProtectorShopCard } from '@/src/features/retention/components/CallStreakCard';
+import { t } from '@/src/lib/i18n';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
@@ -46,7 +48,7 @@ export default function StoreHubScreen({ preview = false }: StoreHubScreenProps 
   } as never);
   const openProfile = () => router.push(preview ? '/profile-preview' : '/my-profile');
   const openSettings = () => router.push(preview ? '/settings-preview' : '/settings/profile');
-  const pseudo = preview ? 'FabTheTap' : profile?.pseudo || 'Supporter';
+  const pseudo = preview ? 'FabTheTap' : profile?.pseudo || t('store.fallbackPseudo');
   const profileTitle = preview ? 'Rookie du Call' : equipped.title?.name || 'Rookie du Call';
   const publicProfile = preview || profile?.profil_public !== false;
 
@@ -60,7 +62,7 @@ export default function StoreHubScreen({ preview = false }: StoreHubScreenProps 
         <GriffHeader
           accessory={(
             <Pressable
-              accessibilityLabel="Ouvrir les paramètres"
+              accessibilityLabel={t('store.settingsLabel')}
               accessibilityRole="button"
               hitSlop={4}
               onPress={openSettings}
@@ -77,14 +79,14 @@ export default function StoreHubScreen({ preview = false }: StoreHubScreenProps 
         />
 
         <View style={styles.intro} testID="store-hub-intro">
-          <Text style={styles.eyebrow}>COLLECTION & STYLE</Text>
-          <Text accessibilityRole="header" style={styles.title}>MAGASIN</Text>
-          <Text style={styles.subtitle}>Ta collection, en deux espaces.</Text>
+          <Text style={styles.eyebrow}>{t('store.eyebrow')}</Text>
+          <Text accessibilityRole="header" style={styles.title}>{t('store.title')}</Text>
+          <Text style={styles.subtitle}>{t('store.subtitle')}</Text>
         </View>
 
         <Pressable
-          accessibilityHint="Affiche ton profil, ton classement et tes objets équipés."
-          accessibilityLabel={`Ouvrir mon profil, ${pseudo}`}
+          accessibilityHint={t('store.profileHint')}
+          accessibilityLabel={t('store.profileLabel', { pseudo })}
           accessibilityRole="button"
           onPress={openProfile}
           style={({ pressed }) => [styles.profileCard, pressed && styles.cardPressed]}
@@ -99,31 +101,32 @@ export default function StoreHubScreen({ preview = false }: StoreHubScreenProps 
           />
         </Pressable>
 
-        <View accessibilityLabel="Espaces du Magasin" style={styles.destinations}>
+        <View accessibilityLabel={t('store.destinationsLabel')} style={styles.destinations}>
           <StoreDestinationCard
-            accessibilityLabel="Ouvrir ma Vitrine"
+            accessibilityLabel={t('store.showcaseLabel')}
             accent={colors.volt}
-            description="Compose ton espace et expose les objets que tu possèdes."
+            description={t('store.showcase.description')}
             image={SHOWCASE_IMAGE}
-            label="OUVRIR"
+            label={t('store.showcase.action')}
             onPress={openShowcase}
             testID="store-hub-showcase"
-            title="MA VITRINE"
+            title={t('store.showcase.title')}
             variant="showcase"
           />
           <StoreDestinationCard
-            accessibilityLabel="Ouvrir la Boutique d’achat"
+            accessibilityLabel={t('store.shopLabel')}
             accent="#C68458"
-            description="Découvre et achète de nouveaux objets avec tes Volts."
+            description={t('store.shop.description')}
             image={SHOP_IMAGE}
             imageStyle={styles.shopImage}
-            label="EXPLORER"
+            label={t('store.shop.action')}
             onPress={openShop}
             testID="store-hub-shop"
-            title="BOUTIQUE"
+            title={t('store.shop.title')}
             variant="shop"
           />
         </View>
+        <VisualConsumablesEntryCard preview={preview} />
         <ProtectorShopCard preview={preview} />
       </ScrollView>
     </Screen>
@@ -147,8 +150,8 @@ function StoreDestinationCard({
   return (
     <Pressable
       accessibilityHint={variant === 'showcase'
-        ? 'Affiche et personnalise tes objets possédés.'
-        : 'Affiche le catalogue des objets disponibles à l’achat.'}
+        ? t('store.showcaseHint')
+        : t('store.shopHint')}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
       onPress={onPress}

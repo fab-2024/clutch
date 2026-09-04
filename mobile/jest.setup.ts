@@ -19,6 +19,9 @@ jest.mock('lucide-react-native/icons/chevron-right', () => 'ChevronRight');
 jest.mock('lucide-react-native/icons/user-round-plus', () => 'UserRoundPlus');
 jest.mock('lucide-react-native/icons/eye', () => 'Eye');
 jest.mock('lucide-react-native/icons/heart', () => 'Heart');
+jest.mock('lucide-react-native/icons/activity', () => 'Activity');
+jest.mock('lucide-react-native/icons/sparkles', () => 'Sparkles');
+jest.mock('lucide-react-native/icons/languages', () => 'Languages');
 
 // Skia ships an ESM-native renderer. Unit tests exercise the adaptive atmosphere
 // rules directly and replace only this visual boundary with a lightweight host.

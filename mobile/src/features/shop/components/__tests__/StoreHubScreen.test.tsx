@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import StoreHubScreen from '../StoreHubScreen';
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
+jest.mock('lucide-react-native/icons/arrow-left', () => ({ __esModule: true, default: 'ArrowLeft' }));
 jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, default: 'ChevronRight' }));
 jest.mock('lucide-react-native/icons/expand', () => ({ __esModule: true, default: 'Expand' }));
 jest.mock('lucide-react-native/icons/settings-2', () => ({ __esModule: true, default: 'Settings2' }));
@@ -14,6 +15,24 @@ jest.mock('lucide-react-native/icons/shopping-bag', () => ({ __esModule: true, d
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() },
 }));
+jest.mock('@/src/features/consumables/components/VisualConsumablesScreen', () => {
+  const React = jest.requireActual('react') as typeof import('react');
+  const { Pressable, Text } = jest.requireActual('react-native') as typeof import('react-native');
+  const { router: mockedRouter } = jest.requireMock('expo-router') as typeof import('expo-router');
+  return {
+    __esModule: true,
+    default: () => null,
+    VisualConsumablesEntryCard: ({ preview = false }: { preview?: boolean }) => React.createElement(
+      Pressable,
+      {
+        accessibilityRole: 'button',
+        testID: 'store-visual-consumables',
+        onPress: () => mockedRouter.push(preview ? '/consumables-preview' : '/consumables'),
+      },
+      React.createElement(Text, null, 'EFFETS TEMPORAIRES'),
+    ),
+  };
+});
 jest.mock('@/src/features/profile/hooks/useProfileLevel', () => ({ useProfileLevel: () => null }));
 jest.mock('@/src/components/layout/GriffHeader', () => ({
   GriffHeader: ({ accessory, leading }: { accessory?: ReactNode; leading?: ReactNode }) => <>{leading}{accessory}</>,
@@ -45,6 +64,7 @@ describe('StoreHubScreen', () => {
     expect(screen.getByText('MAGASIN')).toBeTruthy();
     expect(screen.getByTestId('store-hub-showcase')).toBeTruthy();
     expect(screen.getByTestId('store-hub-shop')).toBeTruthy();
+    expect(screen.getByTestId('store-visual-consumables')).toBeTruthy();
     expect(screen.getByTestId('shop-streak-protector')).toBeTruthy();
     expect(screen.getByText('OBTENIR · 90 VOLTS')).toBeTruthy();
     expect(screen.getByTestId('store-hub-profile')).toBeTruthy();
@@ -66,6 +86,7 @@ describe('StoreHubScreen', () => {
     await fireEvent.press(screen.getByTestId('store-hub-showcase'));
     await fireEvent.press(screen.getByTestId('store-hub-shop'));
     await fireEvent.press(screen.getByTestId('store-hub-settings'));
+    await fireEvent.press(screen.getByTestId('store-visual-consumables'));
 
     expect(push).toHaveBeenNthCalledWith(1, '/my-profile');
     expect(push).toHaveBeenNthCalledWith(2, '/my-profile');
@@ -75,8 +96,9 @@ describe('StoreHubScreen', () => {
       params: { scope: 'catalog' },
     });
     expect(push).toHaveBeenNthCalledWith(5, '/settings/profile');
+    expect(push).toHaveBeenNthCalledWith(6, '/consumables');
     await fireEvent.press(screen.getByTestId('shop-streak-protector'));
-    expect(push).toHaveBeenNthCalledWith(6, '/streak');
+    expect(push).toHaveBeenNthCalledWith(7, '/streak');
   });
 
   it('keeps preview navigation inside preview routes', async () => {
@@ -87,6 +109,7 @@ describe('StoreHubScreen', () => {
     await fireEvent.press(screen.getByTestId('store-hub-showcase'));
     await fireEvent.press(screen.getByTestId('store-hub-shop'));
     await fireEvent.press(screen.getByTestId('store-hub-settings'));
+    await fireEvent.press(screen.getByTestId('store-visual-consumables'));
 
     expect(push).toHaveBeenNthCalledWith(1, '/profile-preview');
     expect(push).toHaveBeenNthCalledWith(2, '/profile-preview');
@@ -96,7 +119,8 @@ describe('StoreHubScreen', () => {
       params: { scope: 'catalog' },
     });
     expect(push).toHaveBeenNthCalledWith(5, '/settings-preview');
+    expect(push).toHaveBeenNthCalledWith(6, '/consumables-preview');
     await fireEvent.press(screen.getByTestId('shop-streak-protector'));
-    expect(push).toHaveBeenNthCalledWith(6, '/streak-preview');
+    expect(push).toHaveBeenNthCalledWith(7, '/streak-preview');
   });
 });

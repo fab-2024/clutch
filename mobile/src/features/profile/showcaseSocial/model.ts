@@ -1,4 +1,5 @@
 import type { EquippedCosmetics } from '@/src/features/shop/types';
+import { parsePublicVisualEffects } from '@/src/features/consumables/model';
 import { GrowthError, growthCount, growthPayload } from '@/src/lib/growthErrors';
 import { publicPseudo, SHARED_MILESTONES } from '@/src/lib/publicLinks';
 
@@ -28,6 +29,7 @@ export function parseShowcase(value: unknown, cosmetics: EquippedCosmetics): Pub
     streak: streak ? { current: raw.montrer_serie ? nullableCount(streak.actuelle) : null,
       best: raw.montrer_serie ? nullableCount(streak.meilleure) : null, milestone: raw.montrer_jalons ? nullableCount(streak.jalon) : null } : null,
     cosmetics, owner: raw.proprietaire, publicProfile: raw.profil_public === true,
+    effects: parsePublicVisualEffects(raw.effets_temporaires),
     preferences: { visibility: raw.visibilite as ShowcaseVisibility, showRank: raw.montrer_rang, showStreak: raw.montrer_serie,
       showMilestones: raw.montrer_jalons, likeNotifications: raw.notifications_likes === true },
     likes: growthCount(raw.likes), liked: raw.aime, canLike: raw.peut_aimer,

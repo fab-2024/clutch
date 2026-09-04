@@ -33,17 +33,21 @@ describe('account-bound showcase transport', () => {
     respond(rawShowcase);
     const showcase = await loadPublicShowcase('Nova');
     expect(showcase?.cosmetics).toEqual(EMPTY_EQUIPPED_COSMETICS);
-    expect(mockRpc).toHaveBeenLastCalledWith('clutch_vitrine_v1', { p_pseudo: 'Nova' });
+    expect(mockRpc).toHaveBeenNthCalledWith(1, 'clutch_vitrine_v1', { p_pseudo: 'Nova' });
+    expect(mockRpc).toHaveBeenNthCalledWith(2, 'clutch_effets_vitrine_p3', { p_pseudo: 'Nova' });
     expect(mockSession).not.toHaveBeenCalled();
     await loadPublicShowcase('Nova', 'viewer', false);
-    expect(mockRpc).toHaveBeenLastCalledWith('clutch_vitrine_v1', { p_pseudo: 'Nova' });
+    expect(mockRpc).toHaveBeenNthCalledWith(3, 'clutch_vitrine_v1', { p_pseudo: 'Nova' });
+    expect(mockRpc).toHaveBeenNthCalledWith(4, 'clutch_effets_vitrine_p3', { p_pseudo: 'Nova' });
     await loadPublicShowcase('Nova', 'viewer', true);
-    expect(mockRpc).toHaveBeenLastCalledWith('clutch_visiter_vitrine_v1', { p_pseudo: 'Nova' });
+    expect(mockRpc).toHaveBeenNthCalledWith(5, 'clutch_visiter_vitrine_v1', { p_pseudo: 'Nova' });
+    expect(mockRpc).toHaveBeenNthCalledWith(6, 'clutch_effets_vitrine_p3', { p_pseudo: 'Nova' });
   });
   it('pins the initiating identity, sending only the intended like state', async () => {
     const query = respond(rawShowcase);
     await setShowcaseLike('Nova', true, 'viewer');
-    expect(mockRpc).toHaveBeenLastCalledWith('clutch_aimer_vitrine_v1', { p_pseudo: 'Nova', p_aime: true });
+    expect(mockRpc).toHaveBeenNthCalledWith(1, 'clutch_aimer_vitrine_v1', { p_pseudo: 'Nova', p_aime: true });
+    expect(mockRpc).toHaveBeenNthCalledWith(2, 'clutch_effets_vitrine_p3', { p_pseudo: 'Nova' });
     expect(query.header).toHaveBeenCalledWith('Authorization', 'Bearer fixture-token');
   });
   it('refuses to dispatch preferences, likes or shares after an account switch', async () => {

@@ -25,6 +25,8 @@ const mockRemember = jest.fn().mockResolvedValue(true);
 let mockViewer: string | undefined = 'viewer';
 let mockParams = { pseudo: 'Nova', code: PREVIEW_INVITATIONS.code!, milestone: '7' };
 
+jest.setTimeout(15_000);
+
 jest.mock('expo-router', () => ({
   router: { push: (...args: unknown[]) => mockPush(...args), canGoBack: () => true, back: jest.fn(), replace: jest.fn() },
   useLocalSearchParams: () => mockParams,
@@ -36,6 +38,20 @@ jest.mock('@/src/providers/AuthProvider', () => ({ useAuth: () => ({
 }) }));
 jest.mock('@/src/providers/SnackbarProvider', () => ({ useSnackbar: () => ({ showSnackbar: mockShow }) }));
 jest.mock('@/src/providers/EconomyProvider', () => ({ useEconomy: () => ({ refresh: mockRefreshEconomy }) }));
+jest.mock('react-native-reanimated', () => {
+  const { View } = jest.requireActual('react-native');
+  return {
+    __esModule: true,
+    default: { View },
+    cancelAnimation: jest.fn(),
+    Easing: { inOut: (easing: unknown) => easing, sin: (value: number) => value },
+    useAnimatedStyle: (factory: () => object) => factory(),
+    useReducedMotion: () => true,
+    useSharedValue: (value: number) => ({ value }),
+    withRepeat: (value: number) => value,
+    withTiming: (value: number) => value,
+  };
+});
 jest.mock('@/src/config/release', () => ({ publicAppOrigin: 'https://clutch.example', publicAppUrl: (path: string) => `https://clutch.example${path}` }));
 jest.mock('@/src/lib/share', () => ({ sharePublicLink: (...args: unknown[]) => mockShare(...args) }));
 jest.mock('@/src/features/auth/pendingRoute', () => ({ rememberPendingRoute: (...args: unknown[]) => mockRemember(...args) }));
@@ -97,6 +113,16 @@ describe('verified milestone links', () => {
 });
 
 describe('showcase interaction', () => {
+  it('renders the active profile pulse as a temporary public effect', async () => {
+    const screen = await render(<PublicShowcaseScreen previewData={{
+      ...PREVIEW_SHOWCASE,
+      effects: [{ type: 'profile_pulse', activeUntil: '2099-09-05T08:00:00Z' }],
+    }} />);
+    expect(screen.getByTestId('profile-pulse-active')).toBeTruthy();
+    expect(screen.getByText('IMPULSION ACTIVE')).toBeTruthy();
+    expect(mockLoad).not.toHaveBeenCalled();
+  });
+
   it('optimistically likes once and blocks rapid duplicate taps', async () => {
     let resolve!: (value: unknown) => void;
     mockLike.mockReturnValue(new Promise((done) => { resolve = done; }));

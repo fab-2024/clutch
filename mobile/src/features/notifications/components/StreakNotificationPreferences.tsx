@@ -3,7 +3,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { t } from '@/src/lib/i18n';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
-import type { NotificationPreferences } from '../types';
+import {
+  applyNotificationRecommendation,
+  notificationRecommendationIsApplied,
+  type NotificationPreferences,
+  type NotificationRecommendationCategory,
+} from '../types';
 
 export function formatQuietTime(minutes: number) {
   return `${Math.floor(minutes / 60).toString().padStart(2, '0')}:${(minutes % 60).toString().padStart(2, '0')}`;
@@ -27,6 +32,7 @@ export default function StreakNotificationPreferences({ preferences, onChange }:
         onPress={() => onChange({ ...preferences, streakRisk: !preferences.streakRisk })} />
       <Toggle label={t('notifications.streak.protected')} detail={t('notifications.streak.protectedDetail')} value={preferences.streakProtected}
         onPress={() => onChange({ ...preferences, streakProtected: !preferences.streakProtected })} />
+      {preferences.expansionAvailable ? <RecommendationCard preferences={preferences} onApply={() => onChange(applyNotificationRecommendation(preferences))} /> : null}
       <Toggle label={t('notifications.quiet.label')} detail={t('notifications.quiet.detail')} value={preferences.quietHoursEnabled}
         onPress={() => onChange({ ...preferences, quietHoursEnabled: !preferences.quietHoursEnabled })} />
       {preferences.quietHoursEnabled ? <View style={styles.times}>
@@ -42,6 +48,35 @@ export default function StreakNotificationPreferences({ preferences, onChange }:
       </View> : null}
     </View>
   );
+}
+
+function RecommendationCard({ preferences, onApply }: { preferences: NotificationPreferences; onApply: () => void }) {
+  const recommendation = preferences.recommendation;
+  if (!recommendation) return <View style={styles.recommendation}>
+    <Text style={styles.group}>{t('notifications.recommendation.title')}</Text>
+    <Text style={styles.detail}>{t('notifications.recommendation.unavailable')}</Text>
+  </View>;
+  const aligned = notificationRecommendationIsApplied(preferences);
+  const categories = recommendation.categories.map(recommendationCategoryLabel).join(' · ');
+  return <View accessibilityLabel={t('notifications.recommendation.title')} style={styles.recommendation}>
+    <Text style={styles.group}>{t('notifications.recommendation.title')}</Text>
+    <Text style={styles.detail}>{t(recommendation.source === 'activity'
+      ? 'notifications.recommendation.activity'
+      : 'notifications.recommendation.defaults')}</Text>
+    <Text style={styles.recommendationValue}>{t('notifications.recommendation.quiet', {
+      start: formatQuietTime(recommendation.quietHoursStart),
+      end: formatQuietTime(recommendation.quietHoursEnd),
+    })}</Text>
+    {categories ? <Text style={styles.recommendationValue}>{t('notifications.recommendation.categories', { categories })}</Text> : null}
+    {aligned ? <Text style={styles.recommendationAligned}>{t('notifications.recommendation.aligned')}</Text>
+      : <Pressable accessibilityRole="button" onPress={onApply} style={({ pressed }) => [styles.applyButton, pressed && styles.pressed]}>
+        <Text style={styles.applyButtonText}>{t('notifications.recommendation.apply')}</Text>
+      </Pressable>}
+  </View>;
+}
+
+function recommendationCategoryLabel(category: NotificationRecommendationCategory) {
+  return t(`notifications.recommendation.category.${category}`);
 }
 
 function Toggle({ label, detail, value, onPress }: { label: string; detail: string; value: boolean; onPress: () => void }) {
@@ -63,6 +98,12 @@ const styles = StyleSheet.create({
   thumb: { width: 20, height: 20, borderRadius: radius.pill, backgroundColor: colors.textSecondary },
   thumbOn: { alignSelf: 'flex-end', backgroundColor: colors.background },
   times: { paddingTop: spacing.md, gap: spacing.sm },
+  recommendation: { marginTop: spacing.md, marginBottom: spacing.xs, padding: spacing.md, gap: spacing.sm, borderRadius: radius.md, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.borderStrong },
+  recommendationValue: { ...typography.bodyStrong, color: colors.text },
+  recommendationAligned: { ...typography.caption, color: colors.success },
+  applyButton: { minHeight: layout.minTouchTarget, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm, backgroundColor: colors.volt },
+  applyButtonText: { ...typography.action, color: colors.background },
+  pressed: { opacity: 0.72 },
   time: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   timeControls: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
   timeButton: { width: layout.minTouchTarget, height: layout.minTouchTarget, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm, backgroundColor: colors.surfaceRaised },

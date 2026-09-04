@@ -25,6 +25,7 @@ import { CosmeticsProvider } from '@/src/providers/CosmeticsProvider';
 import { EconomyProvider } from '@/src/providers/EconomyProvider';
 import { SnackbarProvider, useSnackbar } from '@/src/providers/SnackbarProvider';
 import { t } from '@/src/lib/i18n';
+import { I18nProvider } from '@/src/lib/i18n/I18nProvider';
 import { colors, typography } from '@/src/theme';
 
 function RootNavigator() {
@@ -70,7 +71,7 @@ function RootNavigator() {
     return (
       <View style={styles.loading}>
         <ActivityIndicator color={colors.volt} />
-        <Text style={styles.loadingText}>Chargement de GRIFF…</Text>
+        <Text style={styles.loadingText}>{t('app.loading')}</Text>
       </View>
     );
   }
@@ -107,6 +108,7 @@ function RootNavigator() {
           <Stack.Screen name="team-pack/[key]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="economy" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="streak" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="consumables" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="invitations" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="showcase-activity" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="my-profile" options={{ animation: 'slide_from_right' }} />
@@ -138,6 +140,7 @@ function RootNavigator() {
         <Stack.Screen name="team-pack-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="economy-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="streak-preview" options={{ animation: 'fade' }} />
+        <Stack.Screen name="consumables-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="growth-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="campaign-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="campaign-report-preview" options={{ animation: 'fade' }} />
@@ -167,14 +170,16 @@ export default function RootLayout() {
   return (
     <AppErrorBoundary>
       <SnackbarProvider>
-        <AuthProvider>
-          <EconomyProvider>
-            <CosmeticsProvider>
-              <StatusBar style="light" />
-              <CallStreakProvider><RootNavigator /></CallStreakProvider>
-            </CosmeticsProvider>
-          </EconomyProvider>
-        </AuthProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <EconomyProvider>
+              <CosmeticsProvider>
+                <StatusBar style="light" />
+                <CallStreakProvider><RootNavigator /></CallStreakProvider>
+              </CosmeticsProvider>
+            </EconomyProvider>
+          </AuthProvider>
+        </I18nProvider>
       </SnackbarProvider>
     </AppErrorBoundary>
   );

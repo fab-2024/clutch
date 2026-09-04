@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 
 import StreakNotificationPreferences, { formatQuietTime } from '../components/StreakNotificationPreferences';
-import { DEFAULT_NOTIFICATION_PREFERENCES as defaults } from '../types';
+import { applyNotificationRecommendation, DEFAULT_NOTIFICATION_PREFERENCES as defaults, type NotificationPreferences } from '../types';
 
 describe('streak preferences controls', () => {
   it('toggles streak reminders without changing calls/results or social preferences', async () => {
@@ -32,5 +32,16 @@ describe('streak preferences controls', () => {
   it('does not offer controls the old server cannot persist', async () => {
     const screen = await render(<StreakNotificationPreferences preferences={{ ...defaults, retentionAvailable: false }} onChange={jest.fn()} />);
     expect(screen.queryByRole('switch')).toBeNull();
+  });
+
+  it('applies a server recommendation only after an explicit press', async () => {
+    const change = jest.fn();
+    const preferences: NotificationPreferences = { ...defaults, quietHoursEnabled: false, matchStart: false, streakRisk: false,
+      recommendation: { source: 'activity', sampleSize: 12, quietHoursStart: 1380, quietHoursEnd: 540,
+        categories: ['matchStart', 'streakRisk'], generatedAt: '2026-09-04T08:00:00Z' } };
+    const screen = await render(<StreakNotificationPreferences preferences={preferences} onChange={change} />);
+    expect(change).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('button', { name: 'APPLIQUER LES CONSEILS' }));
+    expect(change).toHaveBeenCalledWith(applyNotificationRecommendation(preferences));
   });
 });

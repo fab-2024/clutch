@@ -18,6 +18,7 @@ export const PREVIEW_SHOWCASE: PublicShowcase = {
     profileCard: item('neon-protocol-share-card'), showcase: { ...EMPTY_EQUIPPED_COSMETICS.showcase,
       jersey: item('neon-protocol-armor-vega'), material: item('neon-protocol-room') } },
   owner: false, publicProfile: true, preferences: { visibility: 'publique', showRank: true, showStreak: true, showMilestones: true, likeNotifications: true },
+  effects: [{ type: 'showcase_spotlight', activeUntil: '2099-09-04T18:00:00.000Z' }],
   likes: 12, liked: false, canLike: true, views: null, weeklyViews: null, previousWeeklyViews: null,
 };
 export const PREVIEW_SHOWCASE_OWNER: PublicShowcase = { ...PREVIEW_SHOWCASE, owner: true, canLike: false, views: 86, weeklyViews: 24, previousWeeklyViews: 16 };

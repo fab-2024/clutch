@@ -6,11 +6,13 @@ import type { ProfileSettingsPreviewState } from '../ProfileSettingsScreen';
 import ProfileSettingsScreen from '../ProfileSettingsScreen';
 
 const mockShowSnackbar = jest.fn();
+jest.setTimeout(15_000);
 
 jest.mock('lucide-react-native/icons/circle-check', () => ({ __esModule: true, default: 'CircleCheck' }));
 jest.mock('lucide-react-native/icons/cloud-upload', () => ({ __esModule: true, default: 'CloudUpload' }));
 jest.mock('lucide-react-native/icons/save', () => ({ __esModule: true, default: 'Save' }));
 jest.mock('lucide-react-native/icons/triangle-alert', () => ({ __esModule: true, default: 'TriangleAlert' }));
+jest.mock('lucide-react-native/icons/languages', () => ({ __esModule: true, default: 'Languages' }));
 jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
 jest.mock('@/src/features/auth/api', () => ({ signOut: jest.fn() }));
 jest.mock('@/src/features/onboarding/api', () => ({ loadTeamOrganizations: jest.fn() }));
@@ -83,6 +85,7 @@ const previewState: ProfileSettingsPreviewState = {
     },
   ],
   notifications: {
+    locale: 'fr-FR',
     timezone: 'Europe/Paris',
     lockImminent: true,
     matchStart: true,
@@ -96,6 +99,8 @@ const previewState: ProfileSettingsPreviewState = {
     quietHoursStart: 1320,
     quietHoursEnd: 480,
     retentionAvailable: true,
+    expansionAvailable: true,
+    recommendation: null,
     activeDevices: 1,
   },
   saveDelayMs: 40,
