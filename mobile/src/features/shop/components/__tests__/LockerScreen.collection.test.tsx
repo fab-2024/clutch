@@ -151,26 +151,26 @@ describe('LockerScreen focused collections', () => {
     mockParams = { scope: 'owned', tab: 'badges-rings' };
   });
 
-  it('shows badges and rings together from the merged profile entry', async () => {
+  it('shows only evolving rings from the profile entry', async () => {
     const screen = await render(
       <LockerScreen previewData={previewData} previewProfile={previewProfile} />,
     );
 
-    expect(screen.getByTestId('locker-achievement-collection')).toBeTruthy();
-    expect(screen.getByText('BADGE COLLECTION')).toBeTruthy();
+    expect(screen.queryByTestId('locker-achievement-collection')).toBeNull();
+    expect(screen.queryByText('BADGE COLLECTION')).toBeNull();
     expect(screen.getByText('RING COLLECTION')).toBeTruthy();
     expect(screen.queryByText('TROPHY COLLECTION')).toBeNull();
     expect(screen.queryByText('LE PACTE GRIFF')).toBeNull();
   });
 
-  it('shows only badges when opened from the Badges profile entry', async () => {
+  it('redirects former badge links to evolving rings', async () => {
     mockParams = { scope: 'owned', tab: 'badges' };
     const screen = await render(
       <LockerScreen previewData={previewData} previewProfile={previewProfile} />,
     );
 
-    expect(screen.getByText('BADGE COLLECTION')).toBeTruthy();
-    expect(screen.queryByText('RING COLLECTION')).toBeNull();
+    expect(screen.queryByText('BADGE COLLECTION')).toBeNull();
+    expect(screen.getByText('RING COLLECTION')).toBeTruthy();
     expect(screen.queryByText('Cadres')).toBeNull();
     expect(screen.queryByText('NOVA WEEK')).toBeNull();
     expect(screen.queryByText('FOUNDER PACK')).toBeNull();

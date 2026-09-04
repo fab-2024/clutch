@@ -173,12 +173,12 @@ function CallCard({ call, onPrepareMatch }: { call: MyCallItem; onPrepareMatch?:
       </View>
 
       <View style={styles.duel}>
-        <CallTeam accent={resolveTeamAccent({ name: call.equipe_a, tag: call.tag_a })} name={call.equipe_a} selected={call.choix === 'a'} side="left" tag={call.tag_a} />
+        <CallTeam accent={resolveTeamAccent({ name: call.equipe_a, side: 'a', tag: call.tag_a })} name={call.equipe_a} selected={call.choix === 'a'} side="left" tag={call.tag_a} />
         <View style={styles.scoreBlock}>
           {resolved ? <Text style={styles.score}>{call.score_a ?? 0}–{call.score_b ?? 0}</Text> : <Text style={styles.vs}>VS</Text>}
           {selectedTag ? <Text style={[styles.selectedTag, { color: accent }]}>CALL · {selectedTag}</Text> : <Text style={styles.noChoice}>CHOIX LIBRE</Text>}
         </View>
-        <CallTeam accent={resolveTeamAccent({ name: call.equipe_b, tag: call.tag_b })} name={call.equipe_b} selected={call.choix === 'b'} side="right" tag={call.tag_b} />
+        <CallTeam accent={resolveTeamAccent({ name: call.equipe_b, side: 'b', tag: call.tag_b })} name={call.equipe_b} selected={call.choix === 'b'} side="right" tag={call.tag_b} />
       </View>
 
       <View style={styles.contract}>
@@ -233,8 +233,8 @@ function ContractLine({ label, value }: { label: string; value: string }) {
 
 function Distribution({ call }: { call: MyCallItem }) {
   const distribution = call.distribution!;
-  const accentA = resolveTeamAccent({ name: call.equipe_a, tag: call.tag_a });
-  const accentB = resolveTeamAccent({ name: call.equipe_b, tag: call.tag_b });
+  const accentA = resolveTeamAccent({ name: call.equipe_a, side: 'a', tag: call.tag_a });
+  const accentB = resolveTeamAccent({ name: call.equipe_b, side: 'b', tag: call.tag_b });
   const width = `${Math.max(2, Math.min(98, distribution.a_pct))}%` as `${number}%`;
   return (
     <View style={styles.distribution}>

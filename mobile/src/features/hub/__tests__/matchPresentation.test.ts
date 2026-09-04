@@ -6,7 +6,7 @@ import {
   withAlpha,
 } from '../matchPresentation';
 import type { HubMatch } from '../types';
-import { UNKNOWN_TEAM_ACCENT } from '@/src/utils/teamColors';
+import { MATCH_TEAM_FALLBACK_ACCENTS } from '@/src/utils/teamColors';
 
 const NOW = Date.parse('2026-08-23T18:00:00.000Z');
 
@@ -85,9 +85,9 @@ describe('hub match confrontation presentation', () => {
 
     expect(state.teamA.name).toBe('Équipe 1');
     expect(state.teamA.tag).toBe('EQ1');
-    expect(state.teamA.accent).toBe(UNKNOWN_TEAM_ACCENT);
+    expect(state.teamA.accent).toBe(MATCH_TEAM_FALLBACK_ACCENTS.a);
     expect(state.teamB.tag).toBe('UC');
-    expect(state.teamB.accent).toBe(UNKNOWN_TEAM_ACCENT);
+    expect(state.teamB.accent).toBe(MATCH_TEAM_FALLBACK_ACCENTS.b);
   });
 
   it('prefers an explicit valid colour and creates alpha variants', () => {
@@ -115,6 +115,8 @@ describe('hub match confrontation presentation', () => {
     ['Gen G', 'GEN', '#C8A45D'],
     ['Team Vitality', 'VITALITY', '#F3D933'],
     ['', 'KOI', '#1AC8FF'],
+    ['Maryville University', 'MVU', '#C91235'],
+    ['Contingent Esports', 'CONT', '#238BCB'],
   ])('recognizes provider names and aliases for %s / %s', (name, tag, expected) => {
     expect(resolveTeamAccent({ name, tag, provided: 'invalid' })).toBe(expected);
   });

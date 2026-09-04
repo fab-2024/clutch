@@ -39,8 +39,8 @@ export function LiveMatchCenter({
 }: LiveMatchCenterProps) {
   const { match } = data;
   const snapshotMatches = snapshot?.matchId === match.id;
-  const accentA = resolveTeamAccent({ name: match.equipe_a, tag: match.tag_a, provided: snapshotMatches ? snapshot?.accentA : null });
-  const accentB = resolveTeamAccent({ name: match.equipe_b, tag: match.tag_b, provided: snapshotMatches ? snapshot?.accentB : null });
+  const accentA = resolveTeamAccent({ name: match.equipe_a, side: 'a', tag: match.tag_a, provided: snapshotMatches ? snapshot?.accentA : null });
+  const accentB = resolveTeamAccent({ name: match.equipe_b, side: 'b', tag: match.tag_b, provided: snapshotMatches ? snapshot?.accentB : null });
   const logoA = (snapshotMatches ? snapshot?.logoA : null) ?? match.logo_a ?? null;
   const logoB = (snapshotMatches ? snapshot?.logoB : null) ?? match.logo_b ?? null;
   const percentages = communityPercentages(data);

@@ -20,6 +20,7 @@ const TEAM_BRANDS: TeamBrand[] = [
   { accent: '#30A9FF', aliases: ['KC', 'KCB', 'Karmine Corp', 'Karmine Corp Blue'] },
   { accent: '#1AC8FF', aliases: ['MKOI', 'KOI', 'Movistar KOI', 'MAD Lions KOI'] },
   { accent: '#B9DCFF', aliases: ['M8', 'Gentle Mates', 'Gentle Mates Alpine'] },
+  { accent: '#C91235', aliases: ['MU', 'MVU', 'Maryville', 'Maryville University', 'Maryville University Esports', 'Maryville Esports'] },
   { accent: '#E53742', aliases: ['MOUZ', 'Mousesports'] },
   { accent: '#FFE000', aliases: ['NAVI', 'Natus Vincere'] },
   { accent: '#E5E7EB', aliases: ['NRG', 'NRG Esports'] },
@@ -39,9 +40,14 @@ const TEAM_BRANDS: TeamBrand[] = [
   { accent: '#0FAC66', aliases: ['BRO', 'OK BRION', 'OKSavingsBank BRION', 'BRION'] },
   { accent: '#EB3845', aliases: ['KDF', 'DNF', 'DN SOOPers', 'DN Freecs', 'Kwangdong Freecs'] },
   { accent: '#1D80DE', aliases: ['DR', 'Duro', 'Duro Esports'] },
+  { accent: '#238BCB', aliases: ['CE', 'CON', 'CONT', 'Contingent', 'Contingent Esports'] },
 ];
 
 export const UNKNOWN_TEAM_ACCENT = '#A7ADB5';
+export const MATCH_TEAM_FALLBACK_ACCENTS = {
+  a: '#247DFF',
+  b: '#E53245',
+} as const;
 
 const ACCENT_BY_ALIAS = new Map(TEAM_BRANDS.flatMap(({ accent, aliases }) => (
   aliases.map((alias) => [normalizeTeamIdentity(alias), accent] as const)
@@ -50,16 +56,19 @@ const ACCENT_BY_ALIAS = new Map(TEAM_BRANDS.flatMap(({ accent, aliases }) => (
 export function resolveTeamAccent({
   name = '',
   provided,
+  side,
   tag = '',
 }: {
   name?: string;
   provided?: string | null;
+  side?: keyof typeof MATCH_TEAM_FALLBACK_ACCENTS;
   tag?: string;
 }) {
   const explicit = normalizeHexColor(provided);
   if (explicit) return explicit;
   return ACCENT_BY_ALIAS.get(normalizeTeamIdentity(name))
     ?? ACCENT_BY_ALIAS.get(normalizeTeamIdentity(tag))
+    ?? (side ? MATCH_TEAM_FALLBACK_ACCENTS[side] : null)
     ?? UNKNOWN_TEAM_ACCENT;
 }
 

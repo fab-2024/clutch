@@ -126,6 +126,7 @@ function buildTeam(match: HubMatch, side: HubTeamSide): ConfrontationTeam {
     accent: resolveTeamAccent({
       name,
       provided: side === 'a' ? match.couleur_a : match.couleur_b,
+      side,
       tag,
     }),
     logo: side === 'a' ? match.logo_a ?? null : match.logo_b ?? null,

@@ -98,16 +98,23 @@ describe('ProfileScreen private navigation', () => {
     expect(push).toHaveBeenCalledWith('/(tabs)/social/friends');
   });
 
+  it('hides the invitation and activity shortcuts from the profile', async () => {
+    const screen = await render(<ProfileScreen previewData={PREVIEW_PROFILE} />);
+
+    expect(screen.queryByTestId('open-invitations')).toBeNull();
+    expect(screen.queryByText('ACTIVITÉ ET VISIBILITÉ')).toBeNull();
+  });
+
   it('keeps the new profile sections connected to their existing destinations', async () => {
     const screen = await render(<ProfileScreen previewData={PREVIEW_PROFILE} />);
 
     await fireEvent.press(screen.getByTestId('profile-section-progression'));
-    await fireEvent.press(screen.getByLabelText(/Ouvrir mes badges et anneaux/));
+    await fireEvent.press(screen.getByLabelText(/Ouvrir mes anneaux/));
     await fireEvent.press(screen.getByLabelText(/Ouvrir mes trophées/));
     await fireEvent.press(screen.getByLabelText(/Ouvrir mes maillots/));
 
     expect(push).toHaveBeenNthCalledWith(1, '/(tabs)/rank');
-    expect(push).toHaveBeenNthCalledWith(2, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'badges-rings' } });
+    expect(push).toHaveBeenNthCalledWith(2, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'rings' } });
     expect(push).toHaveBeenNthCalledWith(3, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'trophies' } });
     expect(push).toHaveBeenNthCalledWith(4, { pathname: '/shop-preview', params: { scope: 'owned', tab: 'jerseys' } });
   });

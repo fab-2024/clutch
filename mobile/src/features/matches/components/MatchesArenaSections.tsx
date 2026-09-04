@@ -358,8 +358,8 @@ export function MatchSkeleton() {
 function arenaTransitionTarget(match: ArenaMatch) {
   return {
     ...match,
-    couleur_a: resolveTeamAccent({ name: match.equipe_a, tag: match.tag_a }),
-    couleur_b: resolveTeamAccent({ name: match.equipe_b, tag: match.tag_b }),
+    couleur_a: resolveTeamAccent({ name: match.equipe_a, side: 'a', tag: match.tag_a }),
+    couleur_b: resolveTeamAccent({ name: match.equipe_b, side: 'b', tag: match.tag_b }),
   };
 }
 

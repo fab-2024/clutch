@@ -165,7 +165,7 @@ describe('OwnProfileOverview', () => {
     });
 
     await fireEvent.press(screen.getByTestId('profile-section-progression'));
-    await fireEvent.press(screen.getByLabelText(/Ouvrir mes badges et anneaux/));
+    await fireEvent.press(screen.getByLabelText(/Ouvrir mes anneaux/));
     await fireEvent.press(screen.getByLabelText(/Ouvrir mes trophées/));
     await fireEvent.press(screen.getByLabelText(/Ouvrir mes maillots/));
 
@@ -219,13 +219,13 @@ describe('OwnProfileOverview', () => {
     expect(onOpenVisitor).not.toHaveBeenCalled();
   });
 
-  it('merges badges and rings into one profile collection entry', async () => {
+  it('presents evolving accomplishments as the ring collection', async () => {
     const screen = await renderHub();
 
-    expect(screen.getByText('BADGES & ANNEAUX')).toBeTruthy();
+    expect(screen.getByText('ANNEAUX')).toBeTruthy();
     expect(screen.getByText('TROPHÉES')).toBeTruthy();
     expect(screen.getByText('MAILLOTS')).toBeTruthy();
-    expect(screen.getByText('0 BADGES · 2/5 ANNEAUX')).toBeTruthy();
+    expect(screen.getByText('0 / 5 DÉBLOQUÉS')).toBeTruthy();
     expect(screen.getByText('0 / 4')).toBeTruthy();
     expect(screen.getByText('AUCUN ÉQUIPÉ')).toBeTruthy();
     expect(screen.queryByText('TES ESPACES')).toBeNull();
@@ -237,7 +237,7 @@ describe('OwnProfileOverview', () => {
 
     expect(screen.queryByText(/NIVEAU 42/)).toBeNull();
     expect(screen.queryByText('DIAMANT')).toBeNull();
-    expect(screen.queryByText('5 BADGES')).toBeNull();
+    expect(screen.queryByText('5 ANNEAUX')).toBeNull();
     expect(screen.queryByText('4 TROPHÉES')).toBeNull();
     expect(screen.getByRole('progressbar').props.accessibilityLabel).toBe('Chargement du profil');
     expect(screen.getByTestId('profile-overview-loading')).toBeTruthy();

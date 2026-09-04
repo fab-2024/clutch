@@ -250,8 +250,8 @@ export default function ResultRevealScreen({
 
   const won = result.statut === 'gagne';
   const tone = won ? colors.success : colors.danger;
-  const teamAColor = teamColor(result.tag_a, result.equipe_a);
-  const teamBColor = teamColor(result.tag_b, result.equipe_b);
+  const teamAColor = teamColor(result.tag_a, result.equipe_a, 'a');
+  const teamBColor = teamColor(result.tag_b, result.equipe_b, 'b');
   const choiceTag = result.choix === 'a' ? result.tag_a : result.tag_b;
   const choiceName = result.choix === 'a' ? result.equipe_a : result.equipe_b;
   const remaining = Math.max(0, result.restants - 1);
@@ -402,8 +402,8 @@ function ResultTransitionState({
   source: MatchJourneySource;
 }) {
   const { isShortLandscape } = useResponsiveLayout();
-  const teamAColor = teamColor(snapshot.tagA, snapshot.teamA);
-  const teamBColor = teamColor(snapshot.tagB, snapshot.teamB);
+  const teamAColor = teamColor(snapshot.tagA, snapshot.teamA, 'a');
+  const teamBColor = teamColor(snapshot.tagB, snapshot.teamB, 'b');
   const scoreReady = snapshot.scoreA !== null && snapshot.scoreB !== null;
   const context = [
     snapshot.game ? gameLabel(snapshot.game) : null,
@@ -488,7 +488,7 @@ function RevealState({ action, copy, onPress, title }: { action?: string; copy: 
   return <Screen><LinearGradient colors={['#0B1115', '#070A0E']} style={StyleSheet.absoluteFill} /><View style={styles.state}><GriffEmblem size={64} style={styles.stateEmblem} /><Text style={styles.stateTitle}>{title}</Text><Text style={styles.stateCopy}>{copy}</Text>{action && onPress ? <Pressable accessibilityRole="button" onPress={onPress} style={styles.stateButton}><Text style={styles.stateButtonText}>{action}</Text></Pressable> : null}</View></Screen>;
 }
 
-function teamColor(tag: string, name: string) { return resolveTeamAccent({ tag, name }); }
+function teamColor(tag: string, name: string, side: 'a' | 'b') { return resolveTeamAccent({ tag, name, side }); }
 function signed(value: number) { return `${value >= 0 ? '+' : '−'}${formatNumber(Math.abs(value))}`; }
 function formatNumber(value: number) { return NUMBER_FORMATTER.format(Number(value || 0)); }
 function formatResolutionDate(value: string) { return new Date(value).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).replace('.', '').toUpperCase(); }

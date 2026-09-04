@@ -12,6 +12,13 @@ import type {
   HubReward,
 } from './types';
 
+const MATCH_FIELDS = 'id,debut,jeu,equipe_a,tag_a,equipe_b,tag_b,evenement,format,statut,score_a,score_b,team_a:equipes!matchs_equipe_a_id_fkey(logo),team_b:equipes!matchs_equipe_b_id_fkey(logo)';
+
+type HubMatchRow = HubMatch & {
+  team_a?: { logo: string | null } | null;
+  team_b?: { logo: string | null } | null;
+};
+
 type CommunityRow = {
   equipe_id?: string;
   nom?: string;
@@ -25,7 +32,6 @@ type CommunityRow = {
 
 export async function loadHubData(userId: string, followedGames: string[] = []): Promise<HubData> {
   const now = new Date().toISOString();
-  const matchFields = 'id,debut,jeu,equipe_a,tag_a,equipe_b,tag_b,evenement,format,statut,score_a,score_b';
   const games = followedGames.length ? followedGames : ['lol', 'rocket_league', 'valorant'];
   const [
     seasonResult,
@@ -44,29 +50,32 @@ export async function loadHubData(userId: string, followedGames: string[] = []):
       .maybeSingle(),
     supabase
       .from('v_matchs')
-      .select(matchFields)
+      .select(MATCH_FIELDS)
       .eq('statut', 'en_cours')
       .in('jeu', games)
       .order('debut', { ascending: false })
       .limit(1)
-      .maybeSingle(),
+      .maybeSingle()
+      .overrideTypes<HubMatchRow | null, { merge: false }>(),
     supabase
       .from('v_matchs')
-      .select(matchFields)
+      .select(MATCH_FIELDS)
       .eq('statut', 'a_venir')
       .in('jeu', games)
       .lte('debut', now)
       .order('debut', { ascending: false })
       .limit(1)
-      .maybeSingle(),
+      .maybeSingle()
+      .overrideTypes<HubMatchRow | null, { merge: false }>(),
     supabase
       .from('v_matchs')
-      .select(matchFields)
+      .select(MATCH_FIELDS)
       .eq('statut', 'a_venir')
       .in('jeu', games)
       .gt('debut', now)
       .order('debut', { ascending: true })
-      .limit(4),
+      .limit(4)
+      .overrideTypes<HubMatchRow[], { merge: false }>(),
     supabase.rpc('clutch_mes_ligues'),
     supabase.rpc('classement_communautes'),
     supabase.rpc('clutch_hub_complements_v1'),
@@ -79,8 +88,9 @@ export async function loadHubData(userId: string, followedGames: string[] = []):
   if (complementsResult.error) throw complementsResult.error;
 
   const season = seasonResult.data;
-  const upcoming = (upcomingResult.data ?? []) as HubMatch[];
-  const match = (inProgressResult.data ?? startedResult.data ?? upcoming[0] ?? null) as HubMatch | null;
+  const upcoming = (upcomingResult.data ?? []).map(normalizeHubMatch);
+  const featuredMatch = inProgressResult.data ?? startedResult.data ?? null;
+  const match = featuredMatch ? normalizeHubMatch(featuredMatch) : upcoming[0] ?? null;
   const upNext = upcoming.filter((item) => item.id !== match?.id).slice(0, 3);
 
   let frags: FragsState | null = null;
@@ -183,6 +193,14 @@ export async function loadHubData(userId: string, followedGames: string[] = []):
     recentResult: complements.recentResult,
     factionMission: complements.factionMission,
     latestReward: complements.latestReward,
+  };
+}
+
+function normalizeHubMatch({ team_a, team_b, ...match }: HubMatchRow): HubMatch {
+  return {
+    ...match,
+    logo_a: team_a?.logo ?? match.logo_a ?? null,
+    logo_b: team_b?.logo ?? match.logo_b ?? null,
   };
 }
 

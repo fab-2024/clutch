@@ -308,8 +308,8 @@ export function ProjectionMeta({ projection }: { projection: MatchProjection }) 
 
 export function CallContract({ data }: { data: MatchCenterData }) {
   const { callContext, match, prediction } = data;
-  const accentA = resolveTeamAccent({ name: match.equipe_a, tag: match.tag_a });
-  const accentB = resolveTeamAccent({ name: match.equipe_b, tag: match.tag_b });
+  const accentA = resolveTeamAccent({ name: match.equipe_a, side: 'a', tag: match.tag_a });
+  const accentB = resolveTeamAccent({ name: match.equipe_b, side: 'b', tag: match.tag_b });
   const distribution = callContext.distribution;
   const resolved = prediction?.statut === 'gagne' || prediction?.statut === 'perdu';
   const lockedAt = callContext.verrouille_le
@@ -417,8 +417,8 @@ export function RiskCell({ label, value, positive = false }: { label: string; va
 }
 
 export function LoadingCard({ snapshot }: { snapshot?: MatchJourneySnapshot | null }) {
-  const accentA = resolveTeamAccent({ name: snapshot?.teamA, tag: snapshot?.tagA, provided: snapshot?.accentA });
-  const accentB = resolveTeamAccent({ name: snapshot?.teamB, tag: snapshot?.tagB, provided: snapshot?.accentB });
+  const accentA = resolveTeamAccent({ name: snapshot?.teamA, side: 'a', tag: snapshot?.tagA, provided: snapshot?.accentA });
+  const accentB = resolveTeamAccent({ name: snapshot?.teamB, side: 'b', tag: snapshot?.tagB, provided: snapshot?.accentB });
   const accessibleLabel = snapshot
     ? `Chargement du Match Center, ${snapshot.teamA} contre ${snapshot.teamB}`
     : 'Chargement du Match Center';

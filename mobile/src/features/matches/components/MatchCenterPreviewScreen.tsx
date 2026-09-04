@@ -184,8 +184,8 @@ function livePreview(data: MatchCenterData): MatchCenterData {
 
 function previewSnapshot(data: MatchCenterData): MatchJourneySnapshot {
   return {
-    accentA: resolveTeamAccent({ name: data.match.equipe_a, tag: data.match.tag_a }),
-    accentB: resolveTeamAccent({ name: data.match.equipe_b, tag: data.match.tag_b }),
+    accentA: resolveTeamAccent({ name: data.match.equipe_a, side: 'a', tag: data.match.tag_a }),
+    accentB: resolveTeamAccent({ name: data.match.equipe_b, side: 'b', tag: data.match.tag_b }),
     event: data.match.evenement,
     format: data.match.format,
     game: data.match.jeu,

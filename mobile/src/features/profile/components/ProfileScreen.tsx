@@ -25,8 +25,6 @@ import { loadProfileData } from '../api';
 import type { ProfileBadge, ProfileData, ProfileRanking, RecentPrediction } from '../types';
 import OwnProfileOverview from './OwnProfileOverview';
 import ProfileShowcaseCard from './ProfileShowcaseCard';
-import { InvitationEntry } from '@/src/features/social/friends/referrals/components/InvitationEntry';
-import { Button } from '@/src/components/ui/Button';
 import { t } from '@/src/lib/i18n';
 import { showcasePath } from '@/src/lib/publicLinks';
 import ProfileShareCard from './ProfileShareCard';
@@ -167,7 +165,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             onModify={() => router.push('/settings/profile')}
             onOpenAchievements={() => router.push({
               pathname: previewData ? '/shop-preview' : '/shop',
-              params: { scope: 'owned', tab: 'badges-rings' },
+              params: { scope: 'owned', tab: 'rings' },
             } as never)}
             onOpenJerseys={() => router.push({
               pathname: previewData ? '/shop-preview' : '/shop',
@@ -184,11 +182,6 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             rankAccent={rankColor}
             rankLabel={rankLabel}
           />}
-          <View style={styles.stateInset}>
-            <InvitationEntry preview={Boolean(previewData)} />
-            <Button fullWidth label={t('showcase.social.entry')} variant="ghost"
-              onPress={() => router.push((previewData ? '/growth-preview?section=activity' : '/showcase-activity') as never)} />
-          </View>
         </ScrollView>
       </Screen>
     );
@@ -303,7 +296,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
         <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>ARSENAL</Text><Text style={styles.sectionTitle}>CE QUE TU AS DÉCROCHÉ.</Text></View><Text style={styles.sectionCount}>{obtained.length}/{data?.badges.length ?? 0}</Text></View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.arsenalRail}>
           {(data?.arsenalBadges.length ? data.arsenalBadges : obtained.slice(0, 6)).map((badge) => <ArsenalCard key={badge.key} badge={badge} />)}
-          {!loading && !obtained.length ? <View style={styles.arsenalEmpty}><Text style={styles.arsenalEmptyTitle}>ARSENAL VIDE.</Text><Text style={styles.arsenalEmptyText}>Tes premiers badges apparaîtront ici automatiquement.</Text></View> : null}
+          {!loading && !obtained.length ? <View style={styles.arsenalEmpty}><Text style={styles.arsenalEmptyTitle}>ARSENAL VIDE.</Text><Text style={styles.arsenalEmptyText}>Tes premiers anneaux apparaîtront ici automatiquement.</Text></View> : null}
         </ScrollView>
 
         <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>VERDICTS</Text><Text style={styles.sectionTitle}>TA FORME RÉCENTE.</Text></View>{data?.bestGame ? <Text style={styles.sectionCount}>{gameName(data.bestGame.jeu)} · {Math.round(data.bestGame.precision_pct)}%</Text> : null}</View>

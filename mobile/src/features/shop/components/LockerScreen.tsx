@@ -17,12 +17,7 @@ import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { loadProfileData } from '@/src/features/profile/api';
-import AchievementBadgeCollection, {
-  badgeFilterFromParam,
-} from '@/src/features/profile/achievementBadges/components/AchievementBadgeCollection';
 import ShowcaseTrophyCollection from '@/src/features/profile/achievementBadges/components/ShowcaseTrophyCollection';
-import { useAchievementBadgeEquipment } from '@/src/features/profile/achievementBadges/useAchievementBadgeEquipment';
-import { BADGE_IDS, type BadgeId } from '@/src/features/profile/achievementBadges/types';
 import {
   resolveLevelFrameCollection,
   resolveOwnedLevelFrames,
@@ -77,7 +72,7 @@ export type LockerScreenProps = {
   previewState?: LockerPreviewState;
 };
 
-type LockerTab = IdentityCosmeticSlot | 'showcase_jersey' | 'showcase_ring' | 'showcase_trophy' | 'achievement_badge' | 'achievement_collection' | 'level_frame';
+type LockerTab = IdentityCosmeticSlot | 'showcase_jersey' | 'showcase_ring' | 'showcase_trophy' | 'level_frame';
 
 const SLOT_META: Record<IdentityCosmeticSlot, { label: string; short: string; promise: string; glyph: string }> = {
   cadre_profil: { label: 'Cadres', short: 'CADRE', promise: 'Signe ton profil sans toucher à tes performances.', glyph: '▣' },
@@ -91,21 +86,9 @@ const SLOT_ORDER = [...IDENTITY_COSMETIC_SLOTS];
 const RARITIES: CosmeticRarity[] = ['commun', 'rare', 'epique', 'legendaire'];
 const RING_TAB_META = {
   glyph: '◎',
-  label: 'Anneaux',
+  label: 'Anneaux évolutifs',
   promise: 'Expose les accomplissements qui ont réellement marqué ton parcours.',
-  short: 'ANNEAUX',
-} as const;
-const BADGE_TAB_META = {
-  glyph: '✦',
-  label: 'Badges',
-  promise: 'Des accomplissements physiques à gagner et à exposer. Jamais à acheter.',
-  short: 'BADGES',
-} as const;
-const ACHIEVEMENT_TAB_META = {
-  glyph: '✦',
-  label: 'Badges & anneaux',
-  promise: 'Tous tes accomplissements à débloquer, faire évoluer et exposer dans un seul espace.',
-  short: 'BADGES + ANNEAUX',
+  short: 'ANNEAUX ÉVOLUTIFS',
 } as const;
 const TROPHY_TAB_META = {
   glyph: '♜',
@@ -131,16 +114,12 @@ export default function LockerScreen({ previewData, previewProfile, previewState
     acquisitionEvent?: string | string[];
     acquisitionId?: string | string[];
     acquisitionOrigin?: string | string[];
-    badge?: string | string[];
-    badgeFilter?: string | string[];
     scope?: string | string[];
     tab?: string | string[];
   }>();
   const requestedScope = collectionScopeFromParam(params.scope);
   const requestedTab = collectionTabFromParam(params.tab);
   const focusedCollection = requestedTab !== null;
-  const requestedBadgeFilter = badgeFilterFromParam(params.badgeFilter);
-  const requestedBadgeId = badgeIdFromParam(params.badge);
   const previewAcquisitionId = previewState?.acquisitionId;
   const previewAcquisitionOrigin = previewState?.origin;
   const { profile, session } = useAuth();
@@ -175,14 +154,6 @@ export default function LockerScreen({ previewData, previewProfile, previewState
   const ringEquipment = useShowcaseRingEquipment(
     previewData ? `preview-${pseudo}` : pseudo,
     previewData ? 'rank' : null,
-  );
-  const badgeEquipmentFallback = useMemo(
-    () => profileData?.pinnedBadges.map((badge) => badge.id) ?? [],
-    [profileData?.pinnedBadges],
-  );
-  const badgeEquipment = useAchievementBadgeEquipment(
-    previewData ? `preview-${pseudo}` : pseudo,
-    badgeEquipmentFallback,
   );
   const ownedLevelFrames = useMemo(
     () => resolveOwnedLevelFrames({ founder: profileData?.founder, preview: Boolean(previewData) }),
@@ -300,32 +271,26 @@ export default function LockerScreen({ previewData, previewProfile, previewState
     [contract.catalog.allowedSlots],
   );
   const availableTabs = useMemo<LockerTab[]>(
-    () => [...availableSlots, 'level_frame', 'showcase_ring', 'showcase_trophy', 'achievement_badge', 'showcase_jersey'],
+    () => [...availableSlots, 'level_frame', 'showcase_ring', 'showcase_trophy', 'showcase_jersey'],
     [availableSlots],
   );
   const jerseyActive = slot === 'showcase_jersey';
   const ringActive = slot === 'showcase_ring';
   const trophyActive = slot === 'showcase_trophy';
-  const badgeActive = slot === 'achievement_badge';
-  const achievementCollectionActive = slot === 'achievement_collection';
   const levelFrameActive = slot === 'level_frame';
-  const profileCollectionActive = jerseyActive || ringActive || trophyActive || badgeActive || achievementCollectionActive || levelFrameActive;
+  const profileCollectionActive = jerseyActive || ringActive || trophyActive || levelFrameActive;
   const activeSlot = isIdentityTab(slot) && availableSlots.includes(slot)
     ? slot
     : availableSlots[0] ?? 'cadre_profil';
-  const activeMeta = achievementCollectionActive
-    ? ACHIEVEMENT_TAB_META
-    : badgeActive
-    ? BADGE_TAB_META
-    : trophyActive
-      ? TROPHY_TAB_META
-      : ringActive
-        ? RING_TAB_META
-        : jerseyActive
-          ? JERSEY_TAB_META
-          : levelFrameActive
-            ? LEVEL_FRAME_TAB_META
-            : SLOT_META[activeSlot];
+  const activeMeta = trophyActive
+    ? TROPHY_TAB_META
+    : ringActive
+      ? RING_TAB_META
+      : jerseyActive
+        ? JERSEY_TAB_META
+        : levelFrameActive
+          ? LEVEL_FRAME_TAB_META
+          : SLOT_META[activeSlot];
   const ringStats = useMemo(() => adaptShowcaseRingStats(profileData), [profileData]);
   const ringProgressions = useMemo(
     () => resolveAllShowcaseRings(ringStats, ringEquipment.family),
@@ -335,27 +300,21 @@ export default function LockerScreen({ previewData, previewProfile, previewState
   const equippedRingProgress = ringProgressions.find((progress) => progress.availability === 'equipped') ?? null;
   const badgeCollection = profileData?.badges ?? [];
   const unlockedBadgeCount = badgeCollection.filter((badge) => badge.obtained).length;
-  const equippedBadgeCount = badgeEquipment.slots.filter(Boolean).length;
   const levelFrameCollection = useMemo(
     () => resolveLevelFrameCollection(levelFrameEquipment.variant, ownedLevelFrames),
     [levelFrameEquipment.variant, ownedLevelFrames],
   );
-  const focusedCollectionLoading = achievementCollectionActive
-    ? profileLoading || badgeEquipment.loading || ringEquipment.loading
-    : badgeActive
-    ? profileLoading || badgeEquipment.loading
-    : trophyActive
-      ? profileLoading
-      : ringActive
-        ? profileLoading || ringEquipment.loading
-        : jerseyActive
-          ? loading
-          : levelFrameActive
-            ? profileLoading || levelFrameEquipment.loading
-            : false;
+  const focusedCollectionLoading = trophyActive
+    ? profileLoading
+    : ringActive
+      ? profileLoading || ringEquipment.loading
+      : jerseyActive
+        ? loading
+        : levelFrameActive
+          ? profileLoading || levelFrameEquipment.loading
+          : false;
   const collectionCount = (data?.items.filter((item) => item.owned).length ?? 0)
     + unlockedRingCount
-    + unlockedBadgeCount
     + ownedLevelFrames.length;
   const teams = useMemo(() => uniqueTeams(data?.items ?? []), [data?.items]);
   const collections = useMemo(() => uniqueCollections(data?.items ?? []), [data?.items]);
@@ -426,30 +385,6 @@ export default function LockerScreen({ previewData, previewProfile, previewState
       );
     } catch {
       showSnackbar({ message: 'L’anneau n’a pas pu être enregistré sur cet appareil.', tone: 'error' });
-    }
-  }
-
-  async function handleBadgeEquip(slotIndex: number, badgeId: BadgeId | null) {
-    const previousBadgeId = badgeEquipment.slots[slotIndex] ?? null;
-    try {
-      await badgeEquipment.equip(slotIndex, badgeId, badgeCollection);
-      showEquipmentResult(
-        badgeId
-          ? `${badgeCollection.find((badge) => badge.id === badgeId)?.name ?? 'Badge'} exposé sur le socle ${slotIndex + 1}.`
-          : `Socle ${slotIndex + 1} libéré.`,
-        previousBadgeId !== badgeId ? {
-          label: previousBadgeId
-            ? badgeCollection.find((badge) => badge.id === previousBadgeId)?.name ?? 'le badge précédent'
-            : `le socle ${slotIndex + 1} vide`,
-          run: () => badgeEquipment.equip(slotIndex, previousBadgeId, badgeCollection),
-        } : undefined,
-      );
-    } catch (caught) {
-      showSnackbar({
-        message: caught instanceof Error ? caught.message : 'Le badge n’a pas pu être enregistré sur cet appareil.',
-        tone: 'error',
-      });
-      throw caught;
     }
   }
 
@@ -706,16 +641,10 @@ export default function LockerScreen({ previewData, previewProfile, previewState
               const isJersey = itemTab === 'showcase_jersey';
               const isRing = itemTab === 'showcase_ring';
               const isTrophy = itemTab === 'showcase_trophy';
-              const isBadge = itemTab === 'achievement_badge';
-              const isAchievementCollection = itemTab === 'achievement_collection';
               const isLevelFrame = itemTab === 'level_frame';
-              const active = isAchievementCollection ? achievementCollectionActive : isBadge ? badgeActive : isTrophy ? trophyActive : isRing ? ringActive : isJersey ? jerseyActive : isLevelFrame ? levelFrameActive : itemTab === activeSlot && !profileCollectionActive;
-              const meta = isAchievementCollection ? ACHIEVEMENT_TAB_META : isBadge ? BADGE_TAB_META : isTrophy ? TROPHY_TAB_META : isRing ? RING_TAB_META : isJersey ? JERSEY_TAB_META : isLevelFrame ? LEVEL_FRAME_TAB_META : SLOT_META[itemTab];
-              const currentName = isAchievementCollection
-                ? `${unlockedBadgeCount} badges · ${unlockedRingCount} anneaux`
-                : isBadge
-                ? `${equippedBadgeCount}/4 exposés`
-                : isTrophy
+              const active = isTrophy ? trophyActive : isRing ? ringActive : isJersey ? jerseyActive : isLevelFrame ? levelFrameActive : itemTab === activeSlot && !profileCollectionActive;
+              const meta = isTrophy ? TROPHY_TAB_META : isRing ? RING_TAB_META : isJersey ? JERSEY_TAB_META : isLevelFrame ? LEVEL_FRAME_TAB_META : SLOT_META[itemTab];
+              const currentName = isTrophy
                 ? `${Math.min(unlockedBadgeCount, 4)}/4 révélés`
                 : isRing
                 ? equippedRingProgress?.display.name ?? 'À équiper'
@@ -757,29 +686,6 @@ export default function LockerScreen({ previewData, previewProfile, previewState
         {profileError && profileCollectionActive && !jerseyActive ? <View style={styles.error}><Text style={styles.errorText}>Les données d’accomplissement ne sont pas synchronisées. Les objets déjà connus restent visibles.</Text><Pressable accessibilityRole="button" onPress={() => void loadRingProfile()}><Text style={styles.retry}>RÉESSAYER</Text></Pressable></View> : null}
         {profileCollectionActive && focusedCollectionLoading ? (
           <LockerContentSkeleton label={jerseyActive ? 'Chargement de tes maillots' : 'Chargement de tes accomplissements'} />
-        ) : achievementCollectionActive ? (
-          <View style={styles.achievementCollections} testID="locker-achievement-collection">
-            <AchievementBadgeCollection
-              badges={badgeCollection}
-              equipment={badgeEquipment.slots}
-              initialFilter={requestedBadgeFilter}
-              initialSelectedId={requestedBadgeId}
-              onEquip={handleBadgeEquip}
-            />
-            <ShowcaseRingCollection
-              onEquip={handleRingEquip}
-              progressions={ringProgressions}
-              stats={ringStats}
-            />
-          </View>
-        ) : badgeActive ? (
-          <AchievementBadgeCollection
-            badges={badgeCollection}
-            equipment={badgeEquipment.slots}
-            initialFilter={requestedBadgeFilter}
-            initialSelectedId={requestedBadgeId}
-            onEquip={handleBadgeEquip}
-          />
         ) : trophyActive ? (
           <ShowcaseTrophyCollection badges={badgeCollection} />
         ) : ringActive ? (
@@ -928,13 +834,12 @@ function humanize(value: string) { return value.replace(/[-_]/g, ' ').replace(/\
 function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
 function friendlyError(value: string) { if (value.toLowerCase().includes('solde insuffisant')) return 'Ton solde a changé. Recharge le Locker avant de confirmer.'; if (isOfflineError(value)) return 'Connexion indisponible. Tes objets équipés restent visibles sur cet appareil.'; return value; }
 function isOfflineError(value: string) { return /network|fetch|connexion|offline|hors ligne/i.test(value); }
-function collectionTabFromParam(value?: string | string[]): 'showcase_jersey' | 'showcase_ring' | 'showcase_trophy' | 'achievement_badge' | 'achievement_collection' | 'level_frame' | null {
+function collectionTabFromParam(value?: string | string[]): 'showcase_jersey' | 'showcase_ring' | 'showcase_trophy' | 'level_frame' | null {
   const normalized = Array.isArray(value) ? value[0] : value;
   if (normalized === 'jerseys' || normalized === 'maillots') return 'showcase_jersey';
-  if (normalized === 'badges-rings' || normalized === 'badges-anneaux') return 'achievement_collection';
-  if (normalized === 'rings' || normalized === 'anneaux') return 'showcase_ring';
+  if (normalized === 'rings' || normalized === 'anneaux' || normalized === 'badges-rings' || normalized === 'badges-anneaux') return 'showcase_ring';
   if (normalized === 'trophies' || normalized === 'trophees') return 'showcase_trophy';
-  if (normalized === 'badges' || normalized === 'accomplissements') return 'achievement_badge';
+  if (normalized === 'badges' || normalized === 'accomplissements') return 'showcase_ring';
   if (normalized === 'levelFrames' || normalized === 'level-frames' || normalized === 'niveaux') return 'level_frame';
   return null;
 }
@@ -943,11 +848,6 @@ function slotShortLabel(slot: CosmeticItem['slot']) {
   return slot === 'vitrine_maillot'
     ? JERSEY_TAB_META.short
     : SLOT_META[slot as IdentityCosmeticSlot]?.short ?? 'OBJET';
-}
-
-function badgeIdFromParam(value?: string | string[]): BadgeId | null {
-  const normalized = Array.isArray(value) ? value[0] : value;
-  return BADGE_IDS.includes(normalized as BadgeId) ? normalized as BadgeId : null;
 }
 
 function readParam(value?: string | string[]) {
@@ -982,7 +882,6 @@ const styles = StyleSheet.create({
   tabs: { gap: 9, paddingHorizontal: spacing.md }, tab: { width: 143, minHeight: 68, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 9, borderRadius: 19, backgroundColor: '#111A22', borderWidth: 1, borderColor: '#30414E' }, tabActive: { backgroundColor: '#141B0F', borderColor: '#596725' }, tabGlyph: { width: 29, color: '#65717D', fontFamily: fonts.display, fontSize: 22, textAlign: 'center' }, tabGlyphActive: { color: colors.volt }, tabCopy: { flex: 1, minWidth: 0 }, tabLabel: { ...typography.bodyStrong, color: colors.textMuted }, tabLabelActive: { color: colors.text }, tabEquipped: { ...typography.caption, marginTop: 2, color: '#64707B' },
   sectionHead: { minHeight: 86, marginHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: 12 }, sectionMark: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt }, sectionMarkText: { color: '#080A0C', fontFamily: fonts.display, fontSize: 26 }, sectionCopy: { flex: 1, minWidth: 0 }, sectionEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .7 }, sectionTitle: { ...typography.sectionTitle, marginTop: 2, color: colors.text }, sectionPromise: { ...typography.caption, marginTop: 3, color: colors.textMuted }, filterToggle: { minHeight: 39, paddingHorizontal: 9, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: '#111A22', borderWidth: 1, borderColor: '#30414E' }, filterToggleActive: { backgroundColor: '#19210F', borderColor: '#526022' }, filterToggleText: { ...typography.label, color: colors.textMuted, fontSize: 9 }, filterToggleTextActive: { color: colors.volt },
   filters: { marginHorizontal: spacing.md, padding: 14, gap: 13, borderRadius: 22, backgroundColor: '#111A22', borderWidth: 1, borderColor: '#30414E' }, filterRow: { gap: 7 }, filterLabel: { ...typography.eyebrow, color: '#77838E', letterSpacing: .6 }, filterOptions: { gap: 7 }, filterChip: { minHeight: 34, paddingHorizontal: 11, alignItems: 'center', justifyContent: 'center', borderRadius: 17, backgroundColor: '#111A22', borderWidth: 1, borderColor: '#30414E' }, filterChipActive: { backgroundColor: '#1A220F', borderColor: '#566424' }, filterChipText: { ...typography.label, color: colors.textMuted }, filterChipTextActive: { color: colors.volt }, clearFilters: { minHeight: 38, alignItems: 'center', justifyContent: 'center', borderTopWidth: 1, borderTopColor: '#30414E' }, clearFiltersText: { ...typography.action, color: colors.textMuted },
-  achievementCollections: { gap: 28 },
   error: { marginHorizontal: spacing.md, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 17, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' }, errorText: { ...typography.body, flex: 1, color: '#FF9AA2' }, retry: { ...typography.action, color: colors.volt },
   grid: { paddingHorizontal: spacing.md, flexDirection: 'row', flexWrap: 'wrap', gap: 12 }, itemCard: { width: '48%', minHeight: 382, padding: 12, borderRadius: 24, backgroundColor: '#111A22', borderWidth: 1, borderColor: '#30414E' }, itemTopline: { marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }, rarity: { ...typography.eyebrow, letterSpacing: .5 }, itemLevel: { ...typography.label, color: colors.textMuted, fontSize: 9 }, itemName: { ...typography.cardTitle, minHeight: 40, marginTop: 5, color: colors.text }, itemDescription: { ...typography.caption, minHeight: 31, marginTop: 4, color: colors.textMuted }, itemProvenance: { ...typography.eyebrow, minHeight: 15, marginTop: 5, color: '#71808C', fontSize: 8, letterSpacing: .45 }, itemPrice: { minHeight: 29, marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 5 }, includedDot: { color: colors.volt, fontSize: 9 }, itemPriceText: { ...typography.bodyStrong, color: colors.text }, itemAction: { minHeight: 44, marginTop: 'auto', paddingHorizontal: 7, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: colors.volt }, itemActionEquipped: { backgroundColor: '#17200E', borderWidth: 1, borderColor: '#546225' }, itemActionConfirm: { backgroundColor: '#FFCB45' }, itemActionMissing: { backgroundColor: '#111A22', borderWidth: 1, borderColor: '#30414E' }, itemActionText: { ...typography.action, color: '#080A0C', textAlign: 'center' }, itemActionTextRemove: { color: colors.volt }, itemActionTextMuted: { color: colors.textMuted },
   itemSkeleton: { width: '48%', minHeight: 382, padding: 12, gap: 9, borderRadius: 24, backgroundColor: '#111A22', borderWidth: 1, borderColor: '#30414E' },

@@ -42,11 +42,9 @@ type CollectionEntry = {
   label: string;
   meta: string;
   onPress: () => void;
-  secondaryAsset?: ImageSourcePropType;
 };
 
 const COLLECTION_ASSETS = {
-  badge: require('../../../../assets/showcase/collectibles/showcase-badge-v1.png'),
   jersey: require('../../../../assets/showcase/showcase-jersey-base-v1.png'),
   ring: require('../../../../assets/showcase/rings/thumbs/ring-rank-01-thumb.webp'),
   trophy: require('../../../../assets/showcase/showcase-trophy-v1.png'),
@@ -270,12 +268,11 @@ function ProfileCollectionSection({
   const entries: CollectionEntry[] = [
     {
       accent: '#28B7F6',
-      accessibilityLabel: `Ouvrir mes badges et anneaux, ${loading ? 'synchronisation' : `${unlockedBadges} badges débloqués et ${unlockedRings} anneaux sur ${ringProgressions.length}`}`,
-      asset: COLLECTION_ASSETS.badge,
-      label: 'BADGES & ANNEAUX',
-      meta: loading ? 'SYNCHRONISATION' : `${unlockedBadges} BADGE${unlockedBadges === 1 ? '' : 'S'} · ${unlockedRings}/${ringProgressions.length} ANNEAUX`,
+      accessibilityLabel: `Ouvrir mes anneaux, ${loading ? 'synchronisation' : `${unlockedRings} anneaux débloqués sur ${ringProgressions.length}`}`,
+      asset: COLLECTION_ASSETS.ring,
+      label: 'ANNEAUX',
+      meta: loading ? 'SYNCHRONISATION' : `${unlockedRings} / ${ringProgressions.length} DÉBLOQUÉS`,
       onPress: onOpenAchievements,
-      secondaryAsset: COLLECTION_ASSETS.ring,
     },
     {
       accent: '#C98B45',
@@ -326,14 +323,7 @@ function ProfileCollectionLink({ entry }: { entry: CollectionEntry }) {
     >
       <View style={[styles.collectionAccent, { backgroundColor: entry.accent }]} />
       <View style={styles.collectionArtworkStage}>
-        <Image
-          resizeMode="contain"
-          source={entry.asset}
-          style={[styles.collectionArtwork, entry.secondaryAsset ? styles.collectionArtworkPrimary : undefined]}
-        />
-        {entry.secondaryAsset ? (
-          <Image resizeMode="contain" source={entry.secondaryAsset} style={styles.collectionArtworkSecondary} />
-        ) : null}
+        <Image resizeMode="contain" source={entry.asset} style={styles.collectionArtwork} />
       </View>
       <View style={styles.profileLinkCopy}>
         <Text style={[styles.profileLinkLabel, { color: entry.accent }]}>{entry.label}</Text>
@@ -564,20 +554,6 @@ const styles = StyleSheet.create({
   collectionArtwork: {
     width: 76,
     height: 76,
-  },
-  collectionArtworkPrimary: {
-    position: 'absolute',
-    left: 0,
-    bottom: 2,
-    width: 52,
-    height: 52,
-  },
-  collectionArtworkSecondary: {
-    position: 'absolute',
-    top: 2,
-    right: 0,
-    width: 52,
-    height: 52,
   },
   profileLinkCopy: {
     flex: 1,

@@ -478,8 +478,8 @@ export default function MatchCenterScreen({
 
       {match && (previewCallLockChoice || callLockPresentation?.matchId === match.id) ? (
         <CallLockMoment
-          accentA={resolveTeamAccent({ name: match.equipe_a, tag: match.tag_a, provided: journeySnapshot?.matchId === match.id ? journeySnapshot.accentA : null })}
-          accentB={resolveTeamAccent({ name: match.equipe_b, tag: match.tag_b, provided: journeySnapshot?.matchId === match.id ? journeySnapshot.accentB : null })}
+          accentA={resolveTeamAccent({ name: match.equipe_a, side: 'a', tag: match.tag_a, provided: journeySnapshot?.matchId === match.id ? journeySnapshot.accentA : null })}
+          accentB={resolveTeamAccent({ name: match.equipe_b, side: 'b', tag: match.tag_b, provided: journeySnapshot?.matchId === match.id ? journeySnapshot.accentB : null })}
           choice={previewCallLockChoice ?? callLockPresentation?.choice ?? 'a'}
           fixedProgress={previewCallLockProgress}
           onComplete={previewCallLockChoice ? NOOP : finishCallLockMoment}
