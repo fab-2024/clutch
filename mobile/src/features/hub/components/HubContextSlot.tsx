@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import Sparkles from 'lucide-react-native/icons/sparkles';
 import Trophy from 'lucide-react-native/icons/trophy';
-import type { ComponentType } from 'react';
+import { useState, type ComponentType } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
@@ -99,8 +99,10 @@ export function HubContextSlot({ context, now = Date.now() }: HubContextSlotProp
 function HubMissionChallengeCard({ mission }: { mission: HubFactionMission }) {
   const { width } = useWindowDimensions();
   const cards = dailyMissionCards();
+  const [activeCard, setActiveCard] = useState(0);
   const completed = cards.filter((card) => card.current >= card.goal).length;
   const cardWidth = Math.min(328, Math.max(264, width - 68));
+  const snapInterval = cardWidth + 10;
   const openMissions = () => openContext({ kind: 'mission', mission });
 
   return (
@@ -122,9 +124,14 @@ function HubMissionChallengeCard({ mission }: { mission: HubFactionMission }) {
         contentContainerStyle={styles.missionRail}
         decelerationRate="fast"
         horizontal
+        onScroll={({ nativeEvent }) => {
+          const next = Math.max(0, Math.min(cards.length - 1, Math.round(nativeEvent.contentOffset.x / snapInterval)));
+          setActiveCard((current) => current === next ? current : next);
+        }}
+        scrollEventThrottle={16}
         showsHorizontalScrollIndicator={false}
         snapToAlignment="start"
-        snapToInterval={cardWidth + 10}
+        snapToInterval={snapInterval}
         style={styles.missionRailViewport}
         testID="hub-mission-rail"
       >
@@ -137,6 +144,22 @@ function HubMissionChallengeCard({ mission }: { mission: HubFactionMission }) {
           />
         ))}
       </ScrollView>
+
+      <View
+        accessibilityLabel={`Défi ${activeCard + 1} sur ${cards.length}`}
+        accessibilityLiveRegion="polite"
+        accessible
+        style={styles.missionPagination}
+        testID="hub-mission-pagination"
+      >
+        {cards.map((card, index) => (
+          <View
+            key={card.key}
+            style={[styles.missionPageDot, index === activeCard && styles.missionPageDotActive]}
+            testID={`hub-mission-page-${index}`}
+          />
+        ))}
+      </View>
     </View>
   );
 }
@@ -467,6 +490,23 @@ const styles = StyleSheet.create({
   missionRail: {
     gap: 10,
     paddingRight: 18,
+  },
+  missionPagination: {
+    minHeight: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 18,
+  },
+  missionPageDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,.28)',
+  },
+  missionPageDotActive: {
+    width: 38,
+    backgroundColor: '#FFFFFF',
   },
   missionCard: {
     height: 176,

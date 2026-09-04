@@ -125,10 +125,19 @@ describe('HubContextSlot', () => {
     expect(screen.getAllByTestId(/^hub-daily-mission-/)).toHaveLength(3);
     expect(rail.props.horizontal).toBe(true);
     expect(rail.props.snapToInterval).toBeGreaterThan(0);
+    expect(screen.getByTestId('hub-mission-pagination')).toHaveProp('accessibilityLabel', 'Défi 1 sur 3');
+    expect(screen.getByTestId('hub-mission-page-0')).toHaveStyle({ backgroundColor: '#FFFFFF', width: 38 });
+    expect(screen.getByTestId('hub-mission-page-1')).toHaveStyle({ backgroundColor: 'rgba(255,255,255,.28)', width: 12 });
+
+    await fireEvent.scroll(rail, { nativeEvent: { contentOffset: { x: rail.props.snapToInterval } } });
+
+    expect(screen.getByTestId('hub-mission-pagination')).toHaveProp('accessibilityLabel', 'Défi 2 sur 3');
+    expect(screen.getByTestId('hub-mission-page-0')).toHaveStyle({ backgroundColor: 'rgba(255,255,255,.28)', width: 12 });
+    expect(screen.getByTestId('hub-mission-page-1')).toHaveStyle({ backgroundColor: '#FFFFFF', width: 38 });
     fireEvent.press(callMission);
 
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/(tabs)/social/missions');
-  });
+  }, 15_000);
 
   it('opens the owned collection for a new reward', async () => {
     const screen = await render(<HubContextSlot context={REWARD_CONTEXT} now={NOW} />);

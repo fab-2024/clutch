@@ -54,8 +54,6 @@ const GAME_BACKGROUNDS: Record<HubGame, ImageSourcePropType> = {
   valorant: require('../../../../assets/onboarding/valorant-characters.jpg'),
 };
 
-const SEASON_HEADER_DOTS = [0, 1, 2] as const;
-
 const EMPTY_HUB: HubData = {
   seasonId: null,
   seasonName: null,
@@ -571,15 +569,6 @@ function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }
 function SeasonProgressControls() {
   return (
     <View style={styles.seasonControls} testID="hub-season-controls">
-      <View
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        style={styles.seasonDots}
-      >
-        {SEASON_HEADER_DOTS.map((dot) => (
-          <View key={dot} style={[styles.seasonDot, dot === 0 && styles.seasonDotActive]} />
-        ))}
-      </View>
       <Pressable
         accessibilityLabel="Voir mon classement"
         accessibilityRole="button"
@@ -922,25 +911,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 24,
     letterSpacing: -.3,
-  },
-  seasonDots: {
-    flexShrink: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-  },
-  seasonDot: {
-    width: 11,
-    height: 11,
-    borderRadius: 6,
-    backgroundColor: '#FFFFFF',
-  },
-  seasonDotActive: {
-    width: 36,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#FFFFFF',
-    shadowOpacity: .38,
-    shadowRadius: 8,
   },
   seasonControls: {
     position: 'relative',
