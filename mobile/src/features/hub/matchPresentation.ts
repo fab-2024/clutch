@@ -1,4 +1,4 @@
-import { resolveTeamAccent } from '@/src/utils/teamColors';
+import { resolveMatchTeamAccents } from '@/src/utils/teamColors';
 
 import type { HubMatch, HubPrediction } from './types';
 
@@ -44,8 +44,12 @@ export function getMatchConfrontationState(
   now = Date.now(),
 ): MatchConfrontationState {
   const phase = getHubMatchPhase(match, now);
-  const teamA = buildTeam(match, 'a');
-  const teamB = buildTeam(match, 'b');
+  const accents = resolveMatchTeamAccents(
+    { name: match.equipe_a, provided: match.couleur_a, tag: match.tag_a },
+    { name: match.equipe_b, provided: match.couleur_b, tag: match.tag_b },
+  );
+  const teamA = buildTeam(match, 'a', accents.a);
+  const teamB = buildTeam(match, 'b', accents.b);
   const scoreA = safeScore(match.score_a);
   const scoreB = safeScore(match.score_b);
   const predictionTag = prediction?.choice === 'a' ? teamA.tag : prediction?.choice === 'b' ? teamB.tag : null;
@@ -117,18 +121,13 @@ export function formatMatchHeaderSchedule(value: string) {
   return `${weekday} ${time}`;
 }
 
-function buildTeam(match: HubMatch, side: HubTeamSide): ConfrontationTeam {
+function buildTeam(match: HubMatch, side: HubTeamSide, accent: string): ConfrontationTeam {
   const rawName = side === 'a' ? match.equipe_a : match.equipe_b;
   const rawTag = side === 'a' ? match.tag_a : match.tag_b;
   const name = safeName(rawName, side);
   const tag = safeTag(rawTag, name, side);
   return {
-    accent: resolveTeamAccent({
-      name,
-      provided: side === 'a' ? match.couleur_a : match.couleur_b,
-      side,
-      tag,
-    }),
+    accent,
     logo: side === 'a' ? match.logo_a ?? null : match.logo_b ?? null,
     name,
     side,

@@ -96,7 +96,7 @@ describe('hub match confrontation presentation', () => {
     expect(withAlpha(accent, .5)).toBe('#11AA2280');
   });
 
-  it('keeps the FEARX and Dplus colours when their sides are swapped', () => {
+  it('keeps the FEARX colour and gives monochrome Dplus a stable blue fallback', () => {
     const match = { ...BASE_MATCH, equipe_a: 'BNK FEARX', tag_a: 'BFX', equipe_b: 'Dplus KIA', tag_b: 'DK' };
     const original = getMatchConfrontationState(match, null, NOW);
     const swapped = getMatchConfrontationState({
@@ -104,9 +104,17 @@ describe('hub match confrontation presentation', () => {
     }, null, NOW);
 
     expect(original.teamA.accent).toBe('#FFD600');
-    expect(original.teamB.accent).toBe('#E5E7EB');
+    expect(original.teamB.accent).toBe(MATCH_TEAM_FALLBACK_ACCENTS.a);
     expect(swapped.teamA.accent).toBe(original.teamB.accent);
     expect(swapped.teamB.accent).toBe(original.teamA.accent);
+  });
+
+  it('keeps KT red and renders monochrome Dplus blue', () => {
+    const match = { ...BASE_MATCH, equipe_a: 'KT Rolster', tag_a: 'KT', equipe_b: 'Dplus KIA', tag_b: 'DK' };
+    const state = getMatchConfrontationState(match, null, NOW);
+
+    expect(state.teamA.accent).toBe('#E5333A');
+    expect(state.teamB.accent).toBe(MATCH_TEAM_FALLBACK_ACCENTS.a);
   });
 
   it.each([

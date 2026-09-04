@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 
-import { resolveTeamAccent } from '@/src/utils/teamColors';
+import { resolveMatchTeamAccents } from '@/src/utils/teamColors';
 
 import type { MatchCenterData } from '../types';
 import type { MatchJourneySnapshot } from '../matchJourney';
@@ -183,9 +183,13 @@ function livePreview(data: MatchCenterData): MatchCenterData {
 }
 
 function previewSnapshot(data: MatchCenterData): MatchJourneySnapshot {
+  const accents = resolveMatchTeamAccents(
+    { name: data.match.equipe_a, tag: data.match.tag_a },
+    { name: data.match.equipe_b, tag: data.match.tag_b },
+  );
   return {
-    accentA: resolveTeamAccent({ name: data.match.equipe_a, side: 'a', tag: data.match.tag_a }),
-    accentB: resolveTeamAccent({ name: data.match.equipe_b, side: 'b', tag: data.match.tag_b }),
+    accentA: accents.a,
+    accentB: accents.b,
     event: data.match.evenement,
     format: data.match.format,
     game: data.match.jeu,

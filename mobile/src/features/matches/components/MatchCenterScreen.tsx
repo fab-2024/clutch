@@ -20,7 +20,7 @@ import { errorFeedback, selectionFeedback, successFeedback } from '@/src/lib/fee
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors } from '@/src/theme';
-import { resolveTeamAccent } from '@/src/utils/teamColors';
+import { resolveMatchTeamAccents } from '@/src/utils/teamColors';
 
 import { submitRankedPrediction } from '../api';
 import { useMatchCenterData } from '../hooks/useMatchCenterData';
@@ -135,6 +135,10 @@ export default function MatchCenterScreen({
 
   const loadingState = Boolean(previewLoadingSnapshot || loading);
   const match = previewLoadingSnapshot ? null : data?.match ?? null;
+  const matchAccents = match ? resolveMatchTeamAccents(
+    { name: match.equipe_a, tag: match.tag_a, provided: journeySnapshot?.matchId === match.id ? journeySnapshot.accentA : null },
+    { name: match.equipe_b, tag: match.tag_b, provided: journeySnapshot?.matchId === match.id ? journeySnapshot.accentB : null },
+  ) : null;
   const projection = data?.projection ?? null;
   const prediction = data?.prediction ?? null;
   const phase = match ? matchPhase(match) : null;
@@ -476,10 +480,10 @@ export default function MatchCenterScreen({
         />
       ) : null}
 
-      {match && (previewCallLockChoice || callLockPresentation?.matchId === match.id) ? (
+      {match && matchAccents && (previewCallLockChoice || callLockPresentation?.matchId === match.id) ? (
         <CallLockMoment
-          accentA={resolveTeamAccent({ name: match.equipe_a, side: 'a', tag: match.tag_a, provided: journeySnapshot?.matchId === match.id ? journeySnapshot.accentA : null })}
-          accentB={resolveTeamAccent({ name: match.equipe_b, side: 'b', tag: match.tag_b, provided: journeySnapshot?.matchId === match.id ? journeySnapshot.accentB : null })}
+          accentA={matchAccents.a}
+          accentB={matchAccents.b}
           choice={previewCallLockChoice ?? callLockPresentation?.choice ?? 'a'}
           fixedProgress={previewCallLockProgress}
           onComplete={previewCallLockChoice ? NOOP : finishCallLockMoment}

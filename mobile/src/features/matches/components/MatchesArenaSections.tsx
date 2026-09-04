@@ -15,7 +15,7 @@ import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/Featur
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import GameLogo from '@/src/features/onboarding/components/GameLogo';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
-import { resolveTeamAccent } from '@/src/utils/teamColors';
+import { resolveMatchTeamAccents } from '@/src/utils/teamColors';
 import type { GameId } from '@/src/features/onboarding/types';
 import { openMatchCenter, warmMatchCenter, type MatchCenterTarget } from '../matchCenterNavigation';
 import type { ArenaMatch } from '../types';
@@ -356,10 +356,14 @@ export function MatchSkeleton() {
 }
 
 function arenaTransitionTarget(match: ArenaMatch) {
+  const accents = resolveMatchTeamAccents(
+    { name: match.equipe_a, tag: match.tag_a },
+    { name: match.equipe_b, tag: match.tag_b },
+  );
   return {
     ...match,
-    couleur_a: resolveTeamAccent({ name: match.equipe_a, side: 'a', tag: match.tag_a }),
-    couleur_b: resolveTeamAccent({ name: match.equipe_b, side: 'b', tag: match.tag_b }),
+    couleur_a: accents.a,
+    couleur_b: accents.b,
   };
 }
 

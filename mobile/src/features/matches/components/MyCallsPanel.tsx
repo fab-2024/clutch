@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
-import { resolveTeamAccent } from '@/src/utils/teamColors';
+import { resolveMatchTeamAccents } from '@/src/utils/teamColors';
 import type { GameId } from '@/src/features/onboarding/types';
 import { SupporterIdentity } from '@/src/features/shop/components/CosmeticRenderer';
 import { useAuth } from '@/src/providers/AuthProvider';
@@ -118,6 +118,10 @@ export function MyCallsPanel({ dashboard, followedGames, game, onPrepareMatch, q
 
 function CallCard({ call, onPrepareMatch }: { call: MyCallItem; onPrepareMatch?: (match: MatchCenterTarget) => void }) {
   const selectedTag = call.choix === 'a' ? call.tag_a : call.choix === 'b' ? call.tag_b : null;
+  const teamAccents = resolveMatchTeamAccents(
+    { name: call.equipe_a, tag: call.tag_a },
+    { name: call.equipe_b, tag: call.tag_b },
+  );
   const resolved = call.etat === 'reussi' || call.etat === 'manque';
   const won = call.etat === 'reussi';
   const accent = call.etat === 'manque' ? colors.danger : call.etat === 'reussi' ? colors.success : colors.volt;
@@ -173,12 +177,12 @@ function CallCard({ call, onPrepareMatch }: { call: MyCallItem; onPrepareMatch?:
       </View>
 
       <View style={styles.duel}>
-        <CallTeam accent={resolveTeamAccent({ name: call.equipe_a, side: 'a', tag: call.tag_a })} name={call.equipe_a} selected={call.choix === 'a'} side="left" tag={call.tag_a} />
+        <CallTeam accent={teamAccents.a} name={call.equipe_a} selected={call.choix === 'a'} side="left" tag={call.tag_a} />
         <View style={styles.scoreBlock}>
           {resolved ? <Text style={styles.score}>{call.score_a ?? 0}–{call.score_b ?? 0}</Text> : <Text style={styles.vs}>VS</Text>}
           {selectedTag ? <Text style={[styles.selectedTag, { color: accent }]}>CALL · {selectedTag}</Text> : <Text style={styles.noChoice}>CHOIX LIBRE</Text>}
         </View>
-        <CallTeam accent={resolveTeamAccent({ name: call.equipe_b, side: 'b', tag: call.tag_b })} name={call.equipe_b} selected={call.choix === 'b'} side="right" tag={call.tag_b} />
+        <CallTeam accent={teamAccents.b} name={call.equipe_b} selected={call.choix === 'b'} side="right" tag={call.tag_b} />
       </View>
 
       <View style={styles.contract}>
@@ -233,8 +237,10 @@ function ContractLine({ label, value }: { label: string; value: string }) {
 
 function Distribution({ call }: { call: MyCallItem }) {
   const distribution = call.distribution!;
-  const accentA = resolveTeamAccent({ name: call.equipe_a, side: 'a', tag: call.tag_a });
-  const accentB = resolveTeamAccent({ name: call.equipe_b, side: 'b', tag: call.tag_b });
+  const { a: accentA, b: accentB } = resolveMatchTeamAccents(
+    { name: call.equipe_a, tag: call.tag_a },
+    { name: call.equipe_b, tag: call.tag_b },
+  );
   const width = `${Math.max(2, Math.min(98, distribution.a_pct))}%` as `${number}%`;
   return (
     <View style={styles.distribution}>

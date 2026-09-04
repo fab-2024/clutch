@@ -1,4 +1,9 @@
 type TeamBrand = { accent: string; aliases: string[] };
+type TeamAccentInput = {
+  name?: string;
+  provided?: string | null;
+  tag?: string;
+};
 
 // Team identities are shared by the Hub, schedule, calls and Match Center.
 // Light neutrals represent black/white logos on the application's dark surfaces.
@@ -56,20 +61,28 @@ const ACCENT_BY_ALIAS = new Map(TEAM_BRANDS.flatMap(({ accent, aliases }) => (
 export function resolveTeamAccent({
   name = '',
   provided,
-  side,
   tag = '',
-}: {
-  name?: string;
-  provided?: string | null;
-  side?: keyof typeof MATCH_TEAM_FALLBACK_ACCENTS;
-  tag?: string;
-}) {
+}: TeamAccentInput) {
   const explicit = normalizeHexColor(provided);
   if (explicit) return explicit;
   return ACCENT_BY_ALIAS.get(normalizeTeamIdentity(name))
     ?? ACCENT_BY_ALIAS.get(normalizeTeamIdentity(tag))
-    ?? (side ? MATCH_TEAM_FALLBACK_ACCENTS[side] : null)
     ?? UNKNOWN_TEAM_ACCENT;
+}
+
+export function resolveMatchTeamAccents(
+  teamA: TeamAccentInput,
+  teamB: TeamAccentInput,
+) {
+  const accentA = resolveTeamAccent(teamA);
+  const accentB = resolveTeamAccent(teamB);
+  const neutralA = isNeutralMatchAccent(accentA);
+  const neutralB = isNeutralMatchAccent(accentB);
+
+  if (!neutralA && !neutralB) return { a: accentA, b: accentB };
+  if (neutralA && neutralB) return { ...MATCH_TEAM_FALLBACK_ACCENTS };
+  if (neutralA) return { a: contrastingMatchFallback(accentB), b: accentB };
+  return { a: accentA, b: contrastingMatchFallback(accentA) };
 }
 
 function normalizeTeamIdentity(value: string) {
@@ -83,4 +96,34 @@ function normalizeHexColor(value?: string | null) {
     return `#${color.slice(1).split('').map((channel) => channel.repeat(2)).join('')}`.toUpperCase();
   }
   return null;
+}
+
+function isNeutralMatchAccent(value: string) {
+  const channels = hexChannels(value);
+  if (!channels) return true;
+  return Math.max(...channels) - Math.min(...channels) < 24;
+}
+
+function contrastingMatchFallback(opponentAccent: string) {
+  const blue = MATCH_TEAM_FALLBACK_ACCENTS.a;
+  const red = MATCH_TEAM_FALLBACK_ACCENTS.b;
+  return colorDistanceSquared(blue, opponentAccent) >= colorDistanceSquared(red, opponentAccent)
+    ? blue
+    : red;
+}
+
+function colorDistanceSquared(first: string, second: string) {
+  const a = hexChannels(first) ?? [0, 0, 0];
+  const b = hexChannels(second) ?? [0, 0, 0];
+  return a.reduce((total, channel, index) => total + (channel - b[index]) ** 2, 0);
+}
+
+function hexChannels(value: string): [number, number, number] | null {
+  const color = normalizeHexColor(value);
+  if (!color) return null;
+  return [
+    Number.parseInt(color.slice(1, 3), 16),
+    Number.parseInt(color.slice(3, 5), 16),
+    Number.parseInt(color.slice(5, 7), 16),
+  ];
 }
