@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import Share2 from 'lucide-react-native/icons/share-2';
+import Pencil from 'lucide-react-native/icons/pencil';
 import UserRoundPlus from 'lucide-react-native/icons/user-round-plus';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -19,13 +19,13 @@ type OwnProfileOverviewProps = {
   loading: boolean;
   levelFrameVariant: LevelFrameVariant;
   onAddFriend: () => void;
+  onEditAvatar: () => void;
   onModify: () => void;
   onOpenAchievements: () => void;
   onOpenJerseys: () => void;
   onOpenRank: () => void;
   onOpenShowcase: () => void;
   onOpenTrophies: () => void;
-  onOpenVisitor: () => void;
   pseudo: string;
   rankAccent: string;
   rankLabel: string;
@@ -36,13 +36,13 @@ export default function OwnProfileOverview({
   data,
   loading,
   onAddFriend,
+  onEditAvatar,
   onModify,
   onOpenAchievements,
   onOpenJerseys,
   onOpenRank,
   onOpenShowcase,
   onOpenTrophies,
-  onOpenVisitor,
   pseudo,
   rankAccent,
   rankLabel,
@@ -56,8 +56,8 @@ export default function OwnProfileOverview({
         data={data}
         loading={loading}
         onAddFriend={onAddFriend}
+        onEditAvatar={onEditAvatar}
         onModify={onModify}
-        onOpenVisitor={onOpenVisitor}
         pseudo={pseudo}
       />
       <ProfileOverviewSections
@@ -82,16 +82,16 @@ function ProfileIdentityCard({
   data,
   loading,
   onAddFriend,
+  onEditAvatar,
   onModify,
-  onOpenVisitor,
   pseudo,
 }: {
   cosmetics?: EquippedCosmetics | null;
   data: ProfileData | null;
   loading: boolean;
   onAddFriend: () => void;
+  onEditAvatar: () => void;
   onModify: () => void;
-  onOpenVisitor: () => void;
   pseudo: string;
 }) {
   const displayedPseudo = data?.pseudo || pseudo;
@@ -157,14 +157,14 @@ function ProfileIdentityCard({
             </Text>
           </Pressable>
           <Pressable
-            accessibilityLabel="Voir mon profil public"
+            accessibilityLabel="Modifier ma photo de profil"
             accessibilityRole="button"
-            accessibilityState={{ disabled: loading || !data || !publicProfile }}
-            disabled={loading || !data || !publicProfile}
-            onPress={onOpenVisitor}
-            style={({ pressed }) => [styles.shareAction, (loading || !data || !publicProfile) && styles.disabled, pressed && styles.pressed]}
+            accessibilityState={{ disabled: loading || !data }}
+            disabled={loading || !data}
+            onPress={onEditAvatar}
+            style={({ pressed }) => [styles.editAvatarAction, (loading || !data) && styles.disabled, pressed && styles.pressed]}
           >
-            <Share2 color={colors.text} size={21} strokeWidth={2} />
+            <Pencil color={colors.text} size={21} strokeWidth={2} />
           </Pressable>
         </View>
       </View>
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     color: '#070A0E',
     letterSpacing: 0.2,
   },
-  shareAction: {
+  editAvatarAction: {
     width: 50,
     height: 50,
     flexShrink: 0,

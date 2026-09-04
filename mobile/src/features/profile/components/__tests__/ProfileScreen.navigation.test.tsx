@@ -1,10 +1,12 @@
 /// <reference types="jest" />
 
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
 
 import { PREVIEW_PROFILE } from '../ProfilePreviewScreen';
 import ProfileScreen from '../ProfileScreen';
+
+const mockRefreshProfile = jest.fn(async () => null);
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('react-native-reanimated', () => {
@@ -28,12 +30,36 @@ jest.mock('lucide-react-native/icons/expand', () => ({ __esModule: true, default
 jest.mock('lucide-react-native/icons/eye', () => ({ __esModule: true, default: 'Eye' }));
 jest.mock('lucide-react-native/icons/headphones', () => ({ __esModule: true, default: 'Headphones' }));
 jest.mock('lucide-react-native/icons/settings-2', () => ({ __esModule: true, default: 'Settings2' }));
-jest.mock('lucide-react-native/icons/share-2', () => ({ __esModule: true, default: 'Share2' }));
+jest.mock('lucide-react-native/icons/pencil', () => ({ __esModule: true, default: 'Pencil' }));
 jest.mock('lucide-react-native/icons/shield-check', () => ({ __esModule: true, default: 'ShieldCheck' }));
 jest.mock('lucide-react-native/icons/sparkles', () => ({ __esModule: true, default: 'Sparkles' }));
 jest.mock('lucide-react-native/icons/swords', () => ({ __esModule: true, default: 'Swords' }));
 jest.mock('lucide-react-native/icons/user-round-plus', () => ({ __esModule: true, default: 'UserRoundPlus' }));
 jest.mock('lucide-react-native/icons/users-round', () => ({ __esModule: true, default: 'UsersRound' }));
+jest.mock('../ProfileAvatarPickerSheet', () => {
+  const React = jest.requireActual('react');
+  const { Pressable, View } = jest.requireActual('react-native');
+  return function MockProfileAvatarPickerSheet({
+    onSelect,
+    selectedAvatarId,
+    visible,
+  }: {
+    onSelect: (avatarId: string) => void;
+    selectedAvatarId?: string | null;
+    visible: boolean;
+  }) {
+    if (!visible) return null;
+    return React.createElement(
+      View,
+      { accessibilityLabel: `Avatar sélectionné ${selectedAvatarId ?? 'aucun'}`, testID: 'profile-avatar-picker' },
+      React.createElement(Pressable, {
+        accessibilityLabel: 'Choisir l’avatar Oracle neurale',
+        accessibilityRole: 'radio',
+        onPress: () => onSelect('void-dragon'),
+      }),
+    );
+  };
+});
 jest.mock('expo-router', () => ({
   Redirect: () => null,
   router: { back: jest.fn(), push: jest.fn() },
@@ -41,11 +67,12 @@ jest.mock('expo-router', () => ({
 jest.mock('@/src/features/analytics/api', () => ({ trackAnalyticsEvent: jest.fn(async () => undefined) }));
 jest.mock('@/src/features/safety', () => ({ ProfileSafetyActions: () => null }));
 jest.mock('@/src/features/safety/api', () => ({ loadProfileSafetyState: jest.fn() }));
-jest.mock('../../api', () => ({ loadProfileData: jest.fn() }));
+jest.mock('../../api', () => ({ loadProfileData: jest.fn(), saveProfileAvatar: jest.fn() }));
 jest.mock('@/src/providers/AuthProvider', () => ({
   useAuth: () => ({
     profile: { pseudo: 'TesteurGRIFF' },
-    session: { user: { email: 'testeur@example.invalid' } },
+    refreshProfile: mockRefreshProfile,
+    session: { user: { id: 'user-1', email: 'testeur@example.invalid' } },
   }),
 }));
 jest.mock('@/src/providers/CosmeticsProvider', () => ({
@@ -59,9 +86,16 @@ jest.mock('@/src/providers/EconomyProvider', () => {
 });
 
 const push = router.push as jest.Mock;
+const { loadProfileData: mockLoadProfileData, saveProfileAvatar: mockSaveProfileAvatar } = jest.requireMock('../../api') as {
+  loadProfileData: jest.Mock;
+  saveProfileAvatar: jest.Mock;
+};
 
 describe('ProfileScreen private navigation', () => {
   beforeEach(() => {
+    mockLoadProfileData.mockReset().mockResolvedValue(PREVIEW_PROFILE);
+    mockRefreshProfile.mockClear();
+    mockSaveProfileAvatar.mockReset().mockResolvedValue({ avatar_id: 'void-dragon' });
     push.mockClear();
     (router.back as jest.Mock).mockClear();
   });
@@ -96,6 +130,32 @@ describe('ProfileScreen private navigation', () => {
     await fireEvent.press(screen.getByLabelText('Ajouter un ami'));
 
     expect(push).toHaveBeenCalledWith('/(tabs)/social/friends');
+  });
+
+  it('opens the avatar picker from the pencil and applies the selected icon', async () => {
+    const screen = await render(<ProfileScreen previewData={PREVIEW_PROFILE} />);
+
+    expect(screen.queryByLabelText('Voir mon profil public')).toBeNull();
+    await fireEvent.press(screen.getByLabelText('Modifier ma photo de profil'));
+    await waitFor(() => expect(screen.getByTestId('profile-avatar-picker')).toBeTruthy());
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Choisir l’avatar Oracle neurale' }));
+    await waitFor(() => expect(screen.queryByTestId('profile-avatar-picker')).toBeNull());
+
+    await fireEvent.press(screen.getByLabelText('Modifier ma photo de profil'));
+    await waitFor(() => expect(screen.getByTestId('profile-avatar-picker').props.accessibilityLabel)
+      .toBe('Avatar sélectionné void-dragon'));
+  });
+
+  it('persists an avatar selected from the live profile', async () => {
+    const screen = await render(<ProfileScreen />);
+    await waitFor(() => expect(screen.getByLabelText('Modifier ma photo de profil')).toBeTruthy());
+
+    await fireEvent.press(screen.getByLabelText('Modifier ma photo de profil'));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Choisir l’avatar Oracle neurale' }));
+
+    await waitFor(() => expect(mockSaveProfileAvatar).toHaveBeenCalledWith('user-1', 'void-dragon'));
+    expect(mockRefreshProfile).toHaveBeenCalledTimes(1);
   });
 
   it('hides the invitation and activity shortcuts from the profile', async () => {

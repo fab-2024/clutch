@@ -26,7 +26,7 @@ jest.mock('react-native-reanimated', () => {
 jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, default: 'ChevronRight' }));
 jest.mock('lucide-react-native/icons/crosshair', () => ({ __esModule: true, default: 'Crosshair' }));
 jest.mock('lucide-react-native/icons/headphones', () => ({ __esModule: true, default: 'Headphones' }));
-jest.mock('lucide-react-native/icons/share-2', () => ({ __esModule: true, default: 'Share2' }));
+jest.mock('lucide-react-native/icons/pencil', () => ({ __esModule: true, default: 'Pencil' }));
 jest.mock('lucide-react-native/icons/shield-check', () => ({ __esModule: true, default: 'ShieldCheck' }));
 jest.mock('lucide-react-native/icons/sparkles', () => ({ __esModule: true, default: 'Sparkles' }));
 jest.mock('lucide-react-native/icons/swords', () => ({ __esModule: true, default: 'Swords' }));
@@ -95,25 +95,25 @@ async function renderHub({
   data = PROFILE,
   loading = false,
   onAddFriend = jest.fn(),
+  onEditAvatar = jest.fn(),
   onModify = jest.fn(),
   onOpenAchievements = jest.fn(),
   onOpenJerseys = jest.fn(),
   onOpenRank = jest.fn(),
   onOpenShowcase = jest.fn(),
   onOpenTrophies = jest.fn(),
-  onOpenVisitor = jest.fn(),
 }: {
   cosmetics?: EquippedCosmetics;
   data?: ProfileData | null;
   loading?: boolean;
   onAddFriend?: jest.Mock;
+  onEditAvatar?: jest.Mock;
   onModify?: jest.Mock;
   onOpenAchievements?: jest.Mock;
   onOpenJerseys?: jest.Mock;
   onOpenRank?: jest.Mock;
   onOpenShowcase?: jest.Mock;
   onOpenTrophies?: jest.Mock;
-  onOpenVisitor?: jest.Mock;
 } = {}) {
   return await render(
     <OwnProfileOverview
@@ -122,13 +122,13 @@ async function renderHub({
       loading={loading}
       levelFrameVariant="signalAscendant"
       onAddFriend={onAddFriend}
+      onEditAvatar={onEditAvatar}
       onModify={onModify}
       onOpenAchievements={onOpenAchievements}
       onOpenJerseys={onOpenJerseys}
       onOpenRank={onOpenRank}
       onOpenShowcase={onOpenShowcase}
       onOpenTrophies={onOpenTrophies}
-      onOpenVisitor={onOpenVisitor}
       pseudo={data?.pseudo ?? 'TesteurGRIFF'}
       rankAccent="#31D7E2"
       rankLabel={loading ? '—' : 'PLATINE'}
@@ -203,20 +203,30 @@ describe('OwnProfileOverview', () => {
     expect(onAddFriend).toHaveBeenCalledTimes(1);
   });
 
+  it('replaces the public-profile shortcut with the avatar editor', async () => {
+    const onEditAvatar = jest.fn();
+    const screen = await renderHub({ onEditAvatar });
+
+    expect(screen.queryByLabelText('Voir mon profil public')).toBeNull();
+    await fireEvent.press(screen.getByLabelText('Modifier ma photo de profil'));
+
+    expect(onEditAvatar).toHaveBeenCalledTimes(1);
+  });
+
   it('opens visibility settings from a private profile', async () => {
     const onModify = jest.fn();
-    const onOpenVisitor = jest.fn();
+    const onEditAvatar = jest.fn();
     const screen = await renderHub({
       data: { ...PROFILE, publicProfile: false },
+      onEditAvatar,
       onModify,
-      onOpenVisitor,
     });
     const button = screen.getByLabelText('Modifier la visibilité de mon profil');
 
     expect(button.props.accessibilityState).toMatchObject({ disabled: false });
     await fireEvent.press(button);
     expect(onModify).toHaveBeenCalledTimes(1);
-    expect(onOpenVisitor).not.toHaveBeenCalled();
+    expect(onEditAvatar).not.toHaveBeenCalled();
   });
 
   it('presents evolving accomplishments as the ring collection', async () => {

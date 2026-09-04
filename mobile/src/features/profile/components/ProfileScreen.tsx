@@ -21,9 +21,10 @@ import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
 import { teamHue } from '@/src/utils/teams';
 
-import { loadProfileData } from '../api';
+import { loadProfileData, saveProfileAvatar } from '../api';
 import type { ProfileBadge, ProfileData, ProfileRanking, RecentPrediction } from '../types';
 import OwnProfileOverview from './OwnProfileOverview';
+import ProfileAvatarPickerSheet from './ProfileAvatarPickerSheet';
 import ProfileShowcaseCard from './ProfileShowcaseCard';
 import { t } from '@/src/lib/i18n';
 import { showcasePath } from '@/src/lib/publicLinks';
@@ -36,7 +37,7 @@ type ProfileScreenProps = {
 };
 
 export default function ProfileScreen({ previewData, profilePseudo, publicView = false }: ProfileScreenProps) {
-  const { profile, session } = useAuth();
+  const { profile, refreshProfile, session } = useAuth();
   const { equipped } = useCosmetics();
   const { refresh: refreshEconomy } = useEconomy();
   const [data, setData] = useState<ProfileData | null>(previewData ?? null);
@@ -44,6 +45,9 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [publicBlocked, setPublicBlocked] = useState(false);
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
+  const [avatarSavingId, setAvatarSavingId] = useState<string | null>(null);
+  const [avatarPickerError, setAvatarPickerError] = useState<string | null>(null);
 
   const ownPseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'joueur';
   const pseudo = profilePseudo?.trim() || ownPseudo;
@@ -97,6 +101,33 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
       idempotencyKey: `public-profile:view:${day}`,
     }).catch(() => undefined);
   }, [profilePseudo, publicView]);
+
+  const selectAvatar = useCallback(async (avatarId: string) => {
+    if (avatarSavingId) return;
+    if (avatarId === data?.avatarId) {
+      setAvatarPickerOpen(false);
+      return;
+    }
+
+    setAvatarSavingId(avatarId);
+    setAvatarPickerError(null);
+    try {
+      if (!previewData) {
+        const userId = session?.user.id;
+        if (!userId) throw new Error('Ta session ne permet plus de modifier ce profil.');
+        await saveProfileAvatar(userId, avatarId);
+      }
+      setData((current) => current ? { ...current, avatarId } : current);
+      setAvatarPickerOpen(false);
+      if (!previewData) void refreshProfile().catch(() => undefined);
+    } catch (caught) {
+      setAvatarPickerError(caught instanceof Error
+        ? caught.message
+        : 'Impossible d’enregistrer cette photo de profil.');
+    } finally {
+      setAvatarSavingId(null);
+    }
+  }, [avatarSavingId, data?.avatarId, previewData, refreshProfile, session?.user.id]);
 
   const accuracy = useMemo(() => {
     const total = data?.ranking.pronostics_regles ?? 0;
@@ -162,6 +193,10 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             loading={loading}
             levelFrameVariant={levelFrameEquipment.variant}
             onAddFriend={() => router.push('/(tabs)/social/friends')}
+            onEditAvatar={() => {
+              setAvatarPickerError(null);
+              setAvatarPickerOpen(true);
+            }}
             onModify={() => router.push('/settings/profile')}
             onOpenAchievements={() => router.push({
               pathname: previewData ? '/shop-preview' : '/shop',
@@ -177,12 +212,22 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
               pathname: previewData ? '/shop-preview' : '/shop',
               params: { scope: 'owned', tab: 'trophies' },
             } as never)}
-            onOpenVisitor={() => router.push({ pathname: '/u/[pseudo]', params: { pseudo: data?.pseudo || pseudo } })}
             pseudo={data?.pseudo || pseudo}
             rankAccent={rankColor}
             rankLabel={rankLabel}
           />}
         </ScrollView>
+        <ProfileAvatarPickerSheet
+          error={avatarPickerError}
+          onClose={() => {
+            setAvatarPickerError(null);
+            setAvatarPickerOpen(false);
+          }}
+          onSelect={(avatarId) => { void selectAvatar(avatarId); }}
+          savingAvatarId={avatarSavingId}
+          selectedAvatarId={data?.avatarId}
+          visible={avatarPickerOpen}
+        />
       </Screen>
     );
   }
