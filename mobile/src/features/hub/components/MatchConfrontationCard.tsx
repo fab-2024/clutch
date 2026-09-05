@@ -10,9 +10,8 @@ import Svg, {
   Stop,
 } from 'react-native-svg';
 
-import { LiveBadge } from '@/src/components/ui/LiveBadge';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
-import { colors, fonts, layout, typography } from '@/src/theme';
+import { fonts, layout, typography } from '@/src/theme';
 
 import {
   formatMatchHeaderSchedule,
@@ -47,7 +46,7 @@ export function MatchConfrontationCard({
   const format = Number.isInteger(formatValue) && formatValue > 0
     ? 'BO' + formatValue
     : 'FORMAT À CONFIRMER';
-  const scoreCopy = state.phase !== 'live' && state.scoreLabel
+  const scoreCopy = state.scoreLabel
     ? ', score ' + state.scoreLabel
     : '';
 
@@ -99,22 +98,40 @@ export function MatchConfrontationCard({
           </View>
         </View>
 
-        <View style={[styles.matchTop, { height: 32 * sceneScale, paddingHorizontal: 14 * sceneScale }]}>
+        <MatchMetadata
+          event={event}
+          format={format}
+          sceneScale={sceneScale}
+          schedule={formatMatchHeaderSchedule(match.debut)}
+          state={state}
+        />
+
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          pointerEvents="none"
+          style={[
+            styles.matchupTitle,
+            {
+              marginLeft: -112 * sceneScale,
+              top: 38 * sceneScale,
+              width: 224 * sceneScale,
+            },
+          ]}
+        >
           <Text
             adjustsFontSizeToFit
-            minimumFontScale={.72}
+            minimumFontScale={.54}
             numberOfLines={1}
-            style={[styles.scheduleText, { fontSize: 14 * sceneScale, lineHeight: 18 * sceneScale }]}
+            style={[
+              styles.matchupTitleText,
+              {
+                fontSize: 34 * sceneScale,
+                lineHeight: 38 * sceneScale,
+              },
+            ]}
           >
-            {formatMatchHeaderSchedule(match.debut)}
-          </Text>
-          <Text
-            adjustsFontSizeToFit
-            minimumFontScale={.64}
-            numberOfLines={1}
-            style={[styles.eventName, { fontSize: 13 * sceneScale, lineHeight: 17 * sceneScale }]}
-          >
-            {event.toUpperCase()} · {format}
+            {state.teamA.tag} — {state.teamB.tag}
           </Text>
         </View>
 
@@ -138,8 +155,87 @@ export function MatchConfrontationCard({
           />
         </View>
 
-        <ConfrontationMarker sceneScale={sceneScale} state={state} />
+        <ConfrontationScore sceneScale={sceneScale} state={state} />
       </Pressable>
+    </View>
+  );
+}
+
+function MatchMetadata({
+  event,
+  format,
+  sceneScale,
+  schedule,
+  state,
+}: {
+  event: string;
+  format: string;
+  sceneScale: number;
+  schedule: string;
+  state: MatchConfrontationState;
+}) {
+  const lead = state.phase === 'live'
+    ? 'EN DIRECT'
+    : state.phase === 'finished'
+      ? 'TERMINÉ'
+      : state.phase === 'cancelled'
+        ? 'ANNULÉ'
+        : schedule;
+
+  return (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      pointerEvents="none"
+      style={[
+        styles.matchTop,
+        {
+          height: 32 * sceneScale,
+          paddingHorizontal: 13 * sceneScale,
+        },
+      ]}
+    >
+      <View style={styles.matchMetaLead}>
+        {state.phase === 'live' ? <View style={styles.liveDot} /> : null}
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.matchMetaLeadText,
+            state.phase === 'live' && styles.matchMetaLiveText,
+            { fontSize: 11 * sceneScale, lineHeight: 14 * sceneScale },
+          ]}
+        >
+          {lead}
+        </Text>
+      </View>
+      <Text style={[styles.matchMetaSeparator, { fontSize: 11 * sceneScale }]}>·</Text>
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={.58}
+        numberOfLines={1}
+        style={[
+          styles.eventName,
+          {
+            fontSize: 11 * sceneScale,
+            lineHeight: 14 * sceneScale,
+          },
+        ]}
+      >
+        {event.toUpperCase()}
+      </Text>
+      <Text style={[styles.matchMetaSeparator, { fontSize: 11 * sceneScale }]}>·</Text>
+      <Text
+        numberOfLines={1}
+        style={[
+          styles.matchFormat,
+          {
+            fontSize: 11 * sceneScale,
+            lineHeight: 14 * sceneScale,
+          },
+        ]}
+      >
+        {format}
+      </Text>
     </View>
   );
 }
@@ -278,8 +374,8 @@ function TeamFace({
         style={[
           styles.teamTag,
           {
-            fontSize: 48 * sceneScale,
-            lineHeight: 50 * sceneScale,
+            fontSize: 31 * sceneScale,
+            lineHeight: 34 * sceneScale,
           },
           winner && { color: team.accent },
         ]}
@@ -304,63 +400,66 @@ function TeamFace({
   );
 }
 
-function ConfrontationMarker({
+function ConfrontationScore({
   sceneScale,
   state,
 }: {
   sceneScale: number;
   state: MatchConfrontationState;
 }) {
-  if (state.phase === 'live') {
-    return (
-      <View
-        pointerEvents="none"
-        style={[
-          styles.liveMarker,
-          {
-            marginLeft: -48 * sceneScale,
-            top: 132 * sceneScale,
-            width: 96 * sceneScale,
-          },
-        ]}
-      >
-        <View style={styles.liveMarkerLine} />
-        <LiveBadge scale={sceneScale} />
-        <View style={styles.liveMarkerLine} />
-      </View>
-    );
-  }
+  const hasScore = state.phase === 'live' || state.phase === 'finished';
+  const primary = hasScore ? state.scoreLabel ?? '— – —' : 'VS';
+  const secondary = state.phase === 'live'
+    ? 'EN COURS'
+    : state.phase === 'finished'
+      ? 'SCORE FINAL'
+      : state.phase === 'cancelled'
+        ? 'MATCH ANNULÉ'
+        : state.predictionTag
+          ? 'CALL · ' + state.predictionTag
+          : 'PRONOSTIC OUVERT';
 
-  const label = state.phase === 'finished' && state.scoreLabel
-    ? state.scoreLabel
-    : state.status;
   return (
     <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
       pointerEvents="none"
       style={[
-        styles.matchStatus,
+        styles.scoreStage,
         {
-          marginLeft: -54 * sceneScale,
-          minHeight: 31 * sceneScale,
-          top: 131 * sceneScale,
-          width: 108 * sceneScale,
+          marginLeft: -61 * sceneScale,
+          top: 121 * sceneScale,
+          width: 122 * sceneScale,
         },
       ]}
     >
       <Text
         adjustsFontSizeToFit
-        minimumFontScale={.65}
+        minimumFontScale={.58}
         numberOfLines={1}
         style={[
-          styles.matchStatusText,
+          styles.scoreText,
           {
-            color: state.phase === 'upcoming' ? colors.volt : '#F4F6F7',
-            fontSize: 13 * sceneScale,
-            lineHeight: 17 * sceneScale,
+            fontSize: (hasScore ? 45 : 30) * sceneScale,
+            lineHeight: (hasScore ? 48 : 34) * sceneScale,
           },
         ]}
       >
-        {label}
+        {primary}
+      </Text>
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={.6}
+        numberOfLines={1}
+        style={[
+          styles.scoreCaption,
+          {
+            fontSize: 10 * sceneScale,
+            lineHeight: 13 * sceneScale,
+          },
+        ]}
+      >
+        {secondary}
       </Text>
     </View>
   );
@@ -412,28 +511,79 @@ const styles = StyleSheet.create({
     left: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
+    justifyContent: 'center',
+    gap: 5,
   },
-  scheduleText: {
+  matchMetaLead: {
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  liveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#FF3945',
+    boxShadow: '0 0 7px rgba(255,57,69,.42)',
+  },
+  matchMetaLeadText: {
     flexShrink: 0,
     color: '#F5F6F7',
     fontFamily: fonts.bold,
-    letterSpacing: .2,
+    letterSpacing: .28,
+    textShadowColor: 'rgba(0,0,0,.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  matchMetaLiveText: {
+    color: '#FF4A55',
+  },
+  matchMetaSeparator: {
+    flexShrink: 0,
+    color: '#F0F2F3',
+    fontFamily: fonts.bold,
+    lineHeight: 14,
     textShadowColor: 'rgba(0,0,0,.9)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
   eventName: {
-    flex: 1,
+    flexShrink: 1,
     minWidth: 0,
     color: '#F0F2F3',
     fontFamily: fonts.bold,
-    letterSpacing: .15,
-    textAlign: 'right',
+    letterSpacing: .28,
+    textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,.9)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+  },
+  matchFormat: {
+    flexShrink: 0,
+    color: '#F0F2F3',
+    fontFamily: fonts.bold,
+    letterSpacing: .28,
+    textShadowColor: 'rgba(0,0,0,.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  matchupTitle: {
+    position: 'absolute',
+    zIndex: 7,
+    left: '50%',
+    alignItems: 'center',
+  },
+  matchupTitleText: {
+    width: '100%',
+    color: '#F7F8F9',
+    fontFamily: fonts.display,
+    fontStyle: 'italic',
+    letterSpacing: -1,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,.98)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 8,
   },
   teamLayer: {
     position: 'absolute',
@@ -457,7 +607,7 @@ const styles = StyleSheet.create({
     width: '100%',
     color: '#F7F8F9',
     fontFamily: fonts.display,
-    letterSpacing: -1.2,
+    letterSpacing: -.65,
     textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,.96)',
     textShadowOffset: { width: 0, height: 3 },
@@ -474,41 +624,34 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 5,
   },
-  liveMarker: {
+  scoreStage: {
     position: 'absolute',
     zIndex: 8,
     left: '50%',
-    minHeight: 29,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
   },
-  liveMarkerLine: {
-    flex: 1,
-    height: 1,
-    borderRadius: 1,
-    backgroundColor: 'rgba(247,249,250,.9)',
-    boxShadow: '0 0 6px rgba(255,255,255,.3)',
-  },
-  matchStatus: {
-    position: 'absolute',
-    zIndex: 8,
-    left: '50%',
-    paddingHorizontal: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    borderRadius: 16,
-    backgroundColor: 'rgba(4,7,9,.92)',
-    borderWidth: 1,
-    borderColor: '#5B6870',
-    boxShadow: '0 6px 16px rgba(0,0,0,.34)',
-  },
-  matchStatusText: {
-    fontFamily: fonts.bold,
-    letterSpacing: .25,
+  scoreText: {
+    width: '100%',
+    color: '#F7F8F9',
+    fontFamily: fonts.display,
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -1.25,
     textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,.98)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 8,
+  },
+  scoreCaption: {
+    width: '100%',
+    color: '#E5E8EA',
+    fontFamily: fonts.bold,
+    fontStyle: 'italic',
+    letterSpacing: .55,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,.98)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 5,
   },
   pressed: {
     opacity: .84,
