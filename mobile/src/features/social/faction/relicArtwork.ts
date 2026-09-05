@@ -3,13 +3,45 @@ import type { ImageSourcePropType } from 'react-native';
 import type { RelicContainer } from './types';
 
 export type RelicStageArtworkConfig = {
+  anatomy: RelicAnatomyArtworkConfig;
   asset: ImageSourcePropType;
   foregroundPaths?: readonly string[];
   interiorPath: string;
   liquidFloor: number;
   liquidLevel: number;
   liquidSurfaceProfile: readonly RelicLiquidSurfacePoint[];
+  motion: RelicMotionArtworkConfig;
   stage: number;
+};
+
+export type RelicArtworkBounds = {
+  bottom: number;
+  left: number;
+  right: number;
+  top: number;
+};
+
+export type RelicArtworkPoint = {
+  x: number;
+  y: number;
+};
+
+export type RelicAnatomyArtworkConfig = {
+  activeAsset: ImageSourcePropType;
+  dormantAsset: ImageSourcePropType;
+  heartCenter: RelicArtworkPoint;
+  heartRegion: string;
+  rootBands: {
+    lower: string;
+    middle: string;
+    upper: string;
+  };
+  rootRegion: string;
+};
+
+export type RelicMotionArtworkConfig = {
+  glassBounds: RelicArtworkBounds;
+  ruptureBounds: RelicArtworkBounds;
 };
 
 export type RelicLiquidSurfacePoint = {
@@ -47,6 +79,18 @@ export const RELIC_CONTAINER_LABELS: Record<RelicContainer, string> = {
 
 export const RELIC_STAGE_ARTWORK: Record<RelicContainer, RelicStageArtworkConfig> = {
   ampoule: {
+    anatomy: {
+      activeAsset: require('../../../../assets/social/relic-evolution/relic-scene-ampoule-anatomy.png'),
+      dormantAsset: require('../../../../assets/social/relic-evolution/relic-scene-ampoule-anatomy-dormant.png'),
+      heartCenter: { x: 500, y: 638 },
+      heartRegion: 'M465 585 H535 V705 H465 Z',
+      rootBands: {
+        lower: 'M445 555 H555 V625 H445 Z',
+        middle: 'M445 495 H555 V565 H445 Z',
+        upper: 'M445 430 H555 V505 H445 Z',
+      },
+      rootRegion: 'M445 430 H555 V625 H445 Z',
+    },
     asset: require('../../../../assets/social/relic-evolution/relic-scene-ampoule.png'),
     foregroundPaths: [
       'M480 443 C456 470 431 512 419 558 C408 603 416 649 449 692 L464 677 C438 642 432 606 438 566 C445 522 463 484 489 454 Z',
@@ -65,9 +109,25 @@ export const RELIC_STAGE_ARTWORK: Record<RelicContainer, RelicStageArtworkConfig
       { y: 660, left: 433, right: 567 },
       { y: 690, left: 463, right: 537 },
     ],
+    motion: {
+      glassBounds: { bottom: 707, left: 410, right: 590, top: 269 },
+      ruptureBounds: { bottom: 707, left: 410, right: 590, top: 447 },
+    },
     stage: 1,
   },
   fiole: {
+    anatomy: {
+      activeAsset: require('../../../../assets/social/relic-evolution/relic-scene-fiole-anatomy.png'),
+      dormantAsset: require('../../../../assets/social/relic-evolution/relic-scene-fiole-anatomy-dormant.png'),
+      heartCenter: { x: 500, y: 660 },
+      heartRegion: 'M468 615 H532 V700 H468 Z',
+      rootBands: {
+        lower: 'M466 560 H534 V654 H466 Z',
+        middle: 'M466 420 H534 V575 H466 Z',
+        upper: 'M466 286 H534 V435 H466 Z',
+      },
+      rootRegion: 'M466 286 H534 V654 H466 Z',
+    },
     asset: require('../../../../assets/social/relic-evolution/relic-scene-fiole.png'),
     foregroundPaths: [
       'M449 472 C463 465 537 465 551 472 L551 526 C537 533 463 533 449 526 Z',
@@ -82,9 +142,25 @@ export const RELIC_STAGE_ARTWORK: Record<RelicContainer, RelicStageArtworkConfig
       { y: 590, left: 471, right: 529 },
       { y: 686, left: 474, right: 526 },
     ],
+    motion: {
+      glassBounds: { bottom: 695, left: 468, right: 532, top: 282 },
+      ruptureBounds: { bottom: 695, left: 468, right: 532, top: 282 },
+    },
     stage: 2,
   },
   flacon: {
+    anatomy: {
+      activeAsset: require('../../../../assets/social/relic-evolution/relic-scene-flacon-anatomy.png'),
+      dormantAsset: require('../../../../assets/social/relic-evolution/relic-scene-flacon-anatomy-dormant.png'),
+      heartCenter: { x: 500, y: 550 },
+      heartRegion: 'M462 500 H538 V615 H462 Z',
+      rootBands: {
+        lower: 'M438 475 H562 V640 H438 Z',
+        middle: 'M408 445 H592 V655 H408 Z',
+        upper: 'M382 420 H618 V660 H382 Z',
+      },
+      rootRegion: 'M382 420 H618 V660 H382 Z',
+    },
     asset: require('../../../../assets/social/relic-evolution/relic-scene-flacon.png'),
     interiorPath: 'M500 421 C422 421 371 468 359 535 C346 605 392 666 458 684 C480 690 520 690 542 684 C608 666 654 605 641 535 C629 468 578 421 500 421 Z',
     liquidFloor: 676,
@@ -99,9 +175,25 @@ export const RELIC_STAGE_ARTWORK: Record<RelicContainer, RelicStageArtworkConfig
       { y: 660, left: 421, right: 579 },
       { y: 676, left: 458, right: 542 },
     ],
+    motion: {
+      glassBounds: { bottom: 690, left: 359, right: 641, top: 421 },
+      ruptureBounds: { bottom: 690, left: 359, right: 641, top: 421 },
+    },
     stage: 3,
   },
   reacteur: {
+    anatomy: {
+      activeAsset: require('../../../../assets/social/relic-evolution/relic-scene-bonbonne-anatomy.png'),
+      dormantAsset: require('../../../../assets/social/relic-evolution/relic-scene-bonbonne-anatomy-dormant.png'),
+      heartCenter: { x: 500, y: 595 },
+      heartRegion: 'M445 535 H555 V665 H445 Z',
+      rootBands: {
+        lower: 'M425 515 H575 V610 H425 Z',
+        middle: 'M425 390 H575 V530 H425 Z',
+        upper: 'M425 265 H575 V405 H425 Z',
+      },
+      rootRegion: 'M425 265 H575 V610 H425 Z',
+    },
     asset: require('../../../../assets/social/relic-evolution/relic-scene-bonbonne.png'),
     interiorPath: 'M500 269 C446 269 417 307 411 357 L411 610 C411 650 447 674 500 674 C553 674 589 650 589 610 L589 357 C583 307 554 269 500 269 Z',
     liquidFloor: 660,
@@ -116,9 +208,25 @@ export const RELIC_STAGE_ARTWORK: Record<RelicContainer, RelicStageArtworkConfig
       { y: 640, left: 440, right: 560 },
       { y: 660, left: 472, right: 528 },
     ],
+    motion: {
+      glassBounds: { bottom: 674, left: 411, right: 589, top: 269 },
+      ruptureBounds: { bottom: 674, left: 411, right: 589, top: 269 },
+    },
     stage: 4,
   },
   reliquaire: {
+    anatomy: {
+      activeAsset: require('../../../../assets/social/relic-evolution/relic-scene-cuve-anatomy.png'),
+      dormantAsset: require('../../../../assets/social/relic-evolution/relic-scene-cuve-anatomy-dormant.png'),
+      heartCenter: { x: 500, y: 365 },
+      heartRegion: 'M455 305 H545 V445 H455 Z',
+      rootBands: {
+        lower: 'M450 285 H550 V475 H450 Z',
+        middle: 'M430 255 H570 V535 H430 Z',
+        upper: 'M410 235 H590 V610 H410 Z',
+      },
+      rootRegion: 'M410 235 H590 V610 H410 Z',
+    },
     asset: require('../../../../assets/social/relic-evolution/relic-scene-cuve.png'),
     interiorPath: 'M500 238 C449 250 411 297 397 369 C380 457 411 565 456 642 C475 675 488 691 500 705 C512 691 525 675 544 642 C589 565 620 457 603 369 C589 297 551 250 500 238 Z',
     liquidFloor: 680,
@@ -133,9 +241,68 @@ export const RELIC_STAGE_ARTWORK: Record<RelicContainer, RelicStageArtworkConfig
       { y: 650, left: 466, right: 534 },
       { y: 680, left: 486, right: 514 },
     ],
+    motion: {
+      glassBounds: { bottom: 705, left: 390, right: 610, top: 238 },
+      ruptureBounds: { bottom: 705, left: 390, right: 610, top: 238 },
+    },
     stage: 5,
   },
 };
+
+export const RELIC_GLASS_TEMPLATE_BOUNDS: RelicArtworkBounds = {
+  bottom: 707,
+  left: 410,
+  right: 590,
+  top: 269,
+};
+
+export const RELIC_RUPTURE_TEMPLATE_BOUNDS: RelicArtworkBounds = {
+  bottom: 707,
+  left: 410,
+  right: 590,
+  top: 447,
+};
+
+export function relicTransformArtworkPoint(
+  point: RelicArtworkPoint,
+  source: RelicArtworkBounds,
+  target: RelicArtworkBounds,
+): RelicArtworkPoint {
+  const sourceWidth = Math.max(.000_1, source.right - source.left);
+  const sourceHeight = Math.max(.000_1, source.bottom - source.top);
+  return {
+    x: target.left + ((point.x - source.left) / sourceWidth) * (target.right - target.left),
+    y: target.top + ((point.y - source.top) / sourceHeight) * (target.bottom - target.top),
+  };
+}
+
+/**
+ * Maps path templates made only of paired M/L/C coordinates onto a stage's
+ * own glass silhouette. Keeping this conversion deterministic lets every
+ * vessel share the choreography without pretending they share one geometry.
+ */
+export function relicTransformArtworkPath(
+  path: string,
+  source: RelicArtworkBounds,
+  target: RelicArtworkBounds,
+) {
+  let coordinateIndex = 0;
+  return path.replace(/-?\d+(?:\.\d+)?/g, (token) => {
+    const value = Number(token);
+    const sourceSpan = coordinateIndex % 2 === 0
+      ? Math.max(.000_1, source.right - source.left)
+      : Math.max(.000_1, source.bottom - source.top);
+    const sourceOrigin = coordinateIndex % 2 === 0 ? source.left : source.top;
+    const targetSpan = coordinateIndex % 2 === 0
+      ? target.right - target.left
+      : target.bottom - target.top;
+    const targetOrigin = coordinateIndex % 2 === 0 ? target.left : target.top;
+    coordinateIndex += 1;
+    return formatRelicCoordinate(
+      targetOrigin + ((value - sourceOrigin) / sourceSpan) * targetSpan,
+    );
+  });
+}
 
 export function relicLiquidLevelForRatio(
   config: RelicStageArtworkConfig,

@@ -3,6 +3,7 @@
 import {
   RELIC_CONTAINER_LABELS,
   RELIC_CONTAINER_SEQUENCE,
+  RELIC_RUPTURE_TEMPLATE_BOUNDS,
   RELIC_STAGE_ARTWORK,
   relicContainerForLevel,
   relicContainerForPreview,
@@ -12,6 +13,8 @@ import {
   relicLiquidMeniscusPathForLevel,
   relicLiquidSurfaceForLevel,
   relicLiquidVolumePathForLevel,
+  relicTransformArtworkPath,
+  relicTransformArtworkPoint,
 } from '../relicArtwork';
 
 describe('relic artwork progression', () => {
@@ -40,6 +43,55 @@ describe('relic artwork progression', () => {
 
     expect(new Set(sceneAssets).size).toBe(5);
     expect([1, 2, 3, 4, 5].map(relicContainerForLevel)).toEqual(RELIC_CONTAINER_SEQUENCE);
+  });
+
+  it('gives every vessel its own complete anatomy and motion geometry', () => {
+    const activeAssets = new Set<unknown>();
+    const dormantAssets = new Set<unknown>();
+
+    RELIC_CONTAINER_SEQUENCE.forEach((container) => {
+      const { anatomy, motion } = RELIC_STAGE_ARTWORK[container];
+
+      activeAssets.add(anatomy.activeAsset);
+      dormantAssets.add(anatomy.dormantAsset);
+      expect(anatomy.rootRegion).toMatch(/^M/);
+      expect(anatomy.heartRegion).toMatch(/^M/);
+      expect(Object.values(anatomy.rootBands)).toHaveLength(3);
+      Object.values(anatomy.rootBands).forEach((band) => expect(band).toMatch(/^M/));
+      expect(anatomy.heartCenter.x).toBeGreaterThan(motion.ruptureBounds.left);
+      expect(anatomy.heartCenter.x).toBeLessThan(motion.ruptureBounds.right);
+      expect(anatomy.heartCenter.y).toBeGreaterThan(motion.ruptureBounds.top);
+      expect(anatomy.heartCenter.y).toBeLessThan(motion.ruptureBounds.bottom);
+      expect(motion.glassBounds.right).toBeGreaterThan(motion.glassBounds.left);
+      expect(motion.glassBounds.bottom).toBeGreaterThan(motion.glassBounds.top);
+      expect(motion.ruptureBounds.right).toBeGreaterThan(motion.ruptureBounds.left);
+      expect(motion.ruptureBounds.bottom).toBeGreaterThan(motion.ruptureBounds.top);
+    });
+
+    expect(activeAssets.size).toBe(RELIC_CONTAINER_SEQUENCE.length);
+    expect(dormantAssets.size).toBe(RELIC_CONTAINER_SEQUENCE.length);
+  });
+
+  it('maps the shared rupture choreography onto each vessel without moving the Ampoule baseline', () => {
+    const referencePath = 'M410 447 L500 577 L590 707 Z';
+    const ampouleBounds = RELIC_STAGE_ARTWORK.ampoule.motion.ruptureBounds;
+    const fioleBounds = RELIC_STAGE_ARTWORK.fiole.motion.ruptureBounds;
+
+    expect(relicTransformArtworkPath(
+      referencePath,
+      RELIC_RUPTURE_TEMPLATE_BOUNDS,
+      ampouleBounds,
+    )).toBe(referencePath);
+    expect(relicTransformArtworkPath(
+      referencePath,
+      RELIC_RUPTURE_TEMPLATE_BOUNDS,
+      fioleBounds,
+    )).toBe('M468 282 L500 488.5 L532 695 Z');
+    expect(relicTransformArtworkPoint(
+      { x: 500, y: 577 },
+      RELIC_RUPTURE_TEMPLATE_BOUNDS,
+      fioleBounds,
+    )).toEqual({ x: 500, y: 488.5 });
   });
 
   it('defines a valid static elixir cavity for every full scene', () => {
