@@ -6,9 +6,6 @@ import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { resolveMatchTeamAccents } from '@/src/utils/teamColors';
 import type { GameId } from '@/src/features/onboarding/types';
-import { SupporterIdentity } from '@/src/features/shop/components/CosmeticRenderer';
-import { useAuth } from '@/src/providers/AuthProvider';
-import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, fonts, radius, typography } from '@/src/theme';
 
 import { openMatchCenter, openMatchResult, warmMatchCenter, type MatchCenterTarget } from '../matchCenterNavigation';
@@ -16,6 +13,7 @@ import type { MyCallItem, MyCallsDashboard, MyCallState } from '../types';
 import { gameLabel } from '../utils';
 
 type GameFilter = 'followed' | GameId;
+type VisibleCallState = Exclude<MyCallState, 'ouvert'>;
 
 type Props = {
   dashboard: MyCallsDashboard;
@@ -25,40 +23,35 @@ type Props = {
   query: string;
 };
 
-const STATES: { id: MyCallState; label: string; key: keyof Pick<MyCallsDashboard, 'ouverts' | 'verrouilles' | 'reussis' | 'manques'> }[] = [
-  { id: 'ouvert', label: 'OUVERTS', key: 'ouverts' },
+const STATES: { id: VisibleCallState; label: string; key: keyof Pick<MyCallsDashboard, 'verrouilles' | 'reussis' | 'manques'> }[] = [
   { id: 'verrouille', label: 'VERROUILLÉS', key: 'verrouilles' },
   { id: 'reussi', label: 'RÉUSSIS', key: 'reussis' },
   { id: 'manque', label: 'MANQUÉS', key: 'manques' },
 ];
 const CALL_PAGE_SIZE = 8;
-const INITIAL_VISIBLE: Record<MyCallState, number> = {
-  ouvert: CALL_PAGE_SIZE,
+const INITIAL_VISIBLE: Record<VisibleCallState, number> = {
   verrouille: CALL_PAGE_SIZE,
   reussi: CALL_PAGE_SIZE,
   manque: CALL_PAGE_SIZE,
 };
 
 export function MyCallsPanel({ dashboard, followedGames, game, onPrepareMatch, query }: Props) {
-  const { profile, session } = useAuth();
-  const { equipped } = useCosmetics();
   const initialState = dashboard.verrouilles.length
     ? 'verrouille'
-    : dashboard.ouverts.length
-      ? 'ouvert'
-      : dashboard.reussis.length
-        ? 'reussi'
-        : 'manque';
-  const [state, setState] = useState<MyCallState>(initialState);
+    : dashboard.reussis.length
+      ? 'reussi'
+      : dashboard.manques.length
+        ? 'manque'
+        : 'verrouille';
+  const [state, setState] = useState<VisibleCallState>(initialState);
   const [visibleByState, setVisibleByState] = useState(INITIAL_VISIBLE);
   const scoped = useMemo(() => Object.fromEntries(STATES.map((item) => [
     item.id,
     filterCalls(dashboard[item.key], game, followedGames, query),
-  ])) as Record<MyCallState, MyCallItem[]>, [dashboard, followedGames, game, query]);
+  ])) as Record<VisibleCallState, MyCallItem[]>, [dashboard, followedGames, game, query]);
   const calls = scoped[state];
   const visibleCalls = calls.slice(0, visibleByState[state]);
   const hiddenCount = Math.max(0, calls.length - visibleCalls.length);
-  const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
 
   useEffect(() => {
     setVisibleByState(INITIAL_VISIBLE);
@@ -66,8 +59,6 @@ export function MyCallsPanel({ dashboard, followedGames, game, onPrepareMatch, q
 
   return (
     <View style={styles.section}>
-      <SupporterIdentity cosmetics={equipped} meta="SIGNATURE DU CALL" pseudo={pseudo} />
-
       <View accessibilityRole="tablist" style={styles.tabs}>
         {STATES.map((item, index) => {
           const active = state === item.id;

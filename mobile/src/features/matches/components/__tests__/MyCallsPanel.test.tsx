@@ -8,13 +8,6 @@ import { MyCallsPanel } from '../MyCallsPanel';
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('@/src/components/ui/CurrencyIcon', () => ({ CurrencyIcon: 'CurrencyIcon' }));
 jest.mock('@/src/features/onboarding/components/TeamLogo', () => ({ __esModule: true, default: 'TeamLogo' }));
-jest.mock('@/src/features/shop/components/CosmeticRenderer', () => ({ SupporterIdentity: 'SupporterIdentity' }));
-jest.mock('@/src/providers/AuthProvider', () => ({
-  useAuth: () => ({ profile: { pseudo: 'FabTheTap' }, session: null }),
-}));
-jest.mock('@/src/providers/CosmeticsProvider', () => ({
-  useCosmetics: () => ({ equipped: {} }),
-}));
 jest.mock('../../matchCenterNavigation', () => ({
   openMatchCenter: jest.fn(),
   openMatchResult: jest.fn(),
@@ -22,7 +15,7 @@ jest.mock('../../matchCenterNavigation', () => ({
 }));
 
 describe('MyCallsPanel', () => {
-  it('keeps the four recap counters interactive and swaps the visible call', async () => {
+  it('shows only the three call-result filters and swaps the visible call', async () => {
     const locked = callItem('verrouille', 'rl-kc-vit', 'Karmine Corp', 'KC', 'Team Vitality', 'VIT');
     const won = callItem('reussi', 'lol-g2-bds', 'G2 Esports', 'G2', 'Team BDS', 'BDS');
     const dashboard: MyCallsDashboard = {
@@ -38,6 +31,8 @@ describe('MyCallsPanel', () => {
       <MyCallsPanel dashboard={dashboard} followedGames={[]} game="followed" query="" />,
     );
 
+    expect(screen.queryByRole('tab', { name: 'OUVERTS, 0' })).toBeNull();
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
     const lockedTab = screen.getByRole('tab', { name: 'VERROUILLÉS, 1' });
     expect(lockedTab.props.accessibilityState.selected).toBe(true);
     expect(screen.getByRole('button', { name: 'Karmine Corp contre Team Vitality, VERROUILLÉ' })).toBeTruthy();
