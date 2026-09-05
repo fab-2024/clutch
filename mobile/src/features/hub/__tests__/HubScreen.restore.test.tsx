@@ -153,4 +153,22 @@ describe('HubExperience restoration', () => {
     await fireEvent.press(screen.getByTestId('call-streak-card'));
     expect(router.push).toHaveBeenCalledWith('/streak-preview');
   });
+
+  it('removes the redundant headline while the main match is live', async () => {
+    const screen = await render(
+      <HubExperience
+        error={null}
+        headerEconomy={{ frags: 1000, volts: 300 }}
+        hub={{ ...HUB, nextMatch: { ...MAIN_MATCH, statut: 'en_cours' } }}
+        loading={false}
+        onRefresh={jest.fn()}
+        onRetry={jest.fn()}
+        refreshing={false}
+      />,
+    );
+
+    expect(screen.queryByText('LE MATCH EST LANCÉ')).toBeNull();
+    expect(screen.queryByText('SUIS LE MATCH EN DIRECT.')).toBeNull();
+    expect(screen.getByText('PRIMARY MATCH POSTER')).toBeTruthy();
+  });
 });

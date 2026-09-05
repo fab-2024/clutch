@@ -141,20 +141,16 @@ export function HubExperience({
   const finished = phase === 'finished';
   const callLocked = Boolean(hub.nextMatchPrediction);
   const contextualItem = loading ? null : selectHubContext(hub);
-  const headlineKicker = live
-    ? 'LE MATCH EST LANCÉ'
-    : finished
-      ? 'LE VERDICT EST TOMBÉ'
-      : callLocked
-        ? 'TON CALL EST VERROUILLÉ'
-        : 'À TOI DE JOUER';
-  const headline = live
-    ? 'SUIS LE MATCH EN DIRECT.'
-    : finished
-      ? 'CONSULTE LE RÉSULTAT.'
-      : callLocked
-        ? 'TON CALL EST POSÉ.'
-        : 'TON PROCHAIN CALL.';
+  const headlineKicker = finished
+    ? 'LE VERDICT EST TOMBÉ'
+    : callLocked
+      ? 'TON CALL EST VERROUILLÉ'
+      : 'À TOI DE JOUER';
+  const headline = finished
+    ? 'CONSULTE LE RÉSULTAT.'
+    : callLocked
+      ? 'TON CALL EST POSÉ.'
+      : 'TON PROCHAIN CALL.';
 
   return (
     <Screen>
@@ -169,21 +165,23 @@ export function HubExperience({
           variant="wallet"
         />
 
-        <View style={[styles.headline, isShortLandscape && styles.headlineLandscape]}>
-          <Text style={styles.headlineKicker}>{headlineKicker}</Text>
-          <Text
-            adjustsFontSizeToFit={!isCompactWidth && !isShortLandscape}
-            minimumFontScale={.72}
-            numberOfLines={isCompactWidth || isShortLandscape ? 2 : 1}
-            style={[
-              styles.headlineTitle,
-              isCompactWidth && styles.headlineTitleCompact,
-              isShortLandscape && styles.headlineTitleLandscape,
-            ]}
-          >
-            {headline}
-          </Text>
-        </View>
+        {!live ? (
+          <View style={[styles.headline, isShortLandscape && styles.headlineLandscape]}>
+            <Text style={styles.headlineKicker}>{headlineKicker}</Text>
+            <Text
+              adjustsFontSizeToFit={!isCompactWidth && !isShortLandscape}
+              minimumFontScale={.72}
+              numberOfLines={isCompactWidth || isShortLandscape ? 2 : 1}
+              style={[
+                styles.headlineTitle,
+                isCompactWidth && styles.headlineTitleCompact,
+                isShortLandscape && styles.headlineTitleLandscape,
+              ]}
+            >
+              {headline}
+            </Text>
+          </View>
+        ) : null}
 
         {error ? (
           <FeatureStateView
