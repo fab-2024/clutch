@@ -12,6 +12,7 @@ import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-nativ
 import { useReducedMotion } from 'react-native-reanimated';
 
 import { AnalyticsBridge } from '@/src/features/analytics';
+import { AppAtmosphere } from '@/src/components/layout/AppAtmosphere';
 import AppErrorBoundary from '@/src/components/errors/AppErrorBoundary';
 import AuthRecoveryScreen from '@/src/features/auth/components/AuthRecoveryScreen';
 import { clearPendingRoute, readPendingRoute, rememberPendingRoute, safePendingRoute } from '@/src/features/auth/pendingRoute';
@@ -38,7 +39,10 @@ function RootNavigator() {
   const userId = session?.user.id;
   const profileId = profile?.id;
   const needsOnboarding = Boolean(
-    session && profile && (!profile.jeux_suivis.length || !profile.equipe_favorite_id),
+    session
+      && profile
+      && !profile.est_developpeur
+      && (!profile.jeux_suivis.length || !profile.equipe_favorite_id),
   );
   const inOnboarding = segments[0] === 'onboarding';
   const inAuthFlow = segments[0] === 'auth';
@@ -70,6 +74,7 @@ function RootNavigator() {
   if (loading) {
     return (
       <View style={styles.loading}>
+        <AppAtmosphere />
         <ActivityIndicator color={colors.volt} />
         <Text style={styles.loadingText}>{t('app.loading')}</Text>
       </View>
@@ -90,7 +95,7 @@ function RootNavigator() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
+          contentStyle: { backgroundColor: colors.atmosphereBottom },
           orientation: 'portrait',
         }}
       >
@@ -112,6 +117,7 @@ function RootNavigator() {
           <Stack.Screen name="invitations" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="showcase-activity" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="my-profile" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="developer" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="campaign/[key]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="admin/matches" />
           <Stack.Screen name="admin/campaigns/[key]" options={{ animation: 'slide_from_right' }} />
@@ -162,6 +168,7 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) {
     return (
       <View style={styles.loading}>
+        <AppAtmosphere />
         <ActivityIndicator color={colors.volt} />
       </View>
     );
@@ -191,7 +198,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: colors.background,
+    backgroundColor: colors.atmosphereBottom,
   },
   loadingText: { ...typography.body, color: colors.textMuted },
 });

@@ -182,6 +182,7 @@ export default function ShowcaseAtelierDrawer({
         {products.map((candidate) => {
           const runtime = runtimeById.get(candidate.id) ?? null;
           const selected = candidate.id === selectedId;
+          const rankPreview = candidate.category === 'ranks';
           return (
             <Pressable
               accessibilityHint="Applique un aperçu sans acheter"
@@ -198,13 +199,19 @@ export default function ShowcaseAtelierDrawer({
               ]}
               testID={`showcase-atelier-product-${candidate.id}`}
             >
-              <Image
-                accessibilityIgnoresInvertColors
-                resizeMode="cover"
-                source={candidate.overlayImage ?? candidate.image}
-                style={styles.productImage}
-              />
-              <View pointerEvents="none" style={styles.productShade} />
+              <View
+                pointerEvents="none"
+                style={[styles.productVisual, { backgroundColor: `${candidate.accent}18` }]}
+              >
+                <Image
+                  accessibilityIgnoresInvertColors
+                  resizeMode={rankPreview ? 'contain' : 'cover'}
+                  source={candidate.overlayImage ?? candidate.image}
+                  style={[styles.productImage, rankPreview && styles.productImageContained]}
+                  testID={`showcase-atelier-product-image-${candidate.id}`}
+                />
+                <View style={[styles.productAccent, { backgroundColor: `${candidate.accent}10` }]} />
+              </View>
               <View style={styles.productCopy}>
                 <Text numberOfLines={1} style={styles.productName}>{candidate.name.toUpperCase()}</Text>
                 <Text numberOfLines={1} style={[styles.productState, selected && { color: candidate.accent }]}>
@@ -396,14 +403,22 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSubtle,
   },
   productSelected: { borderWidth: 2 },
-  productImage: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-  productShade: {
+  productVisual: {
     position: 'absolute',
     top: 0,
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: 'rgba(2,5,8,.34)',
+    overflow: 'hidden',
+  },
+  productImage: { width: '100%', height: '100%' },
+  productImageContained: { marginHorizontal: 18, width: 96 },
+  productAccent: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
   productCopy: {
     position: 'absolute',

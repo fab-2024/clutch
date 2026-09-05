@@ -3,6 +3,7 @@ const canvasAlternate = '#0B1218';
 const surfaceStandard = '#111A22';
 const surfaceElevated = '#152633';
 const border = '#30414E';
+const borderHighlight = '#486171';
 const textSecondary = '#A5AFB9';
 const focus = '#E8FF3D';
 
@@ -12,6 +13,13 @@ export const colors = {
   surfaceStandard,
   surfaceElevated,
   border,
+  borderHighlight,
+  atmosphereTop: '#102B3A',
+  atmosphereMid: '#0A1D29',
+  atmosphereBottom: '#06101A',
+  atmosphereCyan: '#17627D',
+  surfaceGlass: 'rgba(17,30,40,.88)',
+  surfaceGlassElevated: 'rgba(21,38,51,.92)',
   background: canvas,
   backgroundDeep: canvasAlternate,
   surfaceLow: surfaceStandard,

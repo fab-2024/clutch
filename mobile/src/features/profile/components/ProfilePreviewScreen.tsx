@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 
-import { previewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
+import { usePreviewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
 import { EMPTY_EQUIPPED_COSMETICS } from '@/src/features/shop/types';
 
 import { evaluateBadges, resolveBadgeSelection } from '../badges';
@@ -149,7 +149,8 @@ export const PREVIEW_PROFILE: ProfileData = {
 
 export default function ProfilePreviewScreen() {
   const params = useLocalSearchParams<{ variant?: string | string[] }>();
-  if (!previewRoutesEnabled) return <Redirect href="/" />;
+  const previewEnabled = usePreviewRoutesEnabled();
+  if (!previewEnabled) return <Redirect href="/" />;
   return <ProfileScreen previewData={profileForPreview(normalizePreviewVariant(params.variant))} />;
 }
 

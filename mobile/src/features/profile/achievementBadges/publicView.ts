@@ -14,7 +14,7 @@ export function getPublicBadgeView(
     return {
       id: definition.id,
       key: definition.id,
-      name: 'Badge mystère',
+      name: 'Anneau mystère',
       category: 'secret',
       family: 'Mystère',
       rarity: 'secret',

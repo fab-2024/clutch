@@ -57,19 +57,43 @@ export async function loadClutchProfile(userId: string): Promise<ClutchProfile> 
 }
 
 async function fetchClutchProfile(userId: string): Promise<ClutchProfile | null> {
-  const { data, error } = await supabase
-    .from('profils')
-    .select('id,avatar_id,pseudo,email,est_admin,equipe_favorite_id,jeux_suivis,profil_public')
-    .eq('id', userId)
-    .maybeSingle();
+  const [profileResult, developerResult] = await Promise.all([
+    supabase
+      .from('profils')
+      .select('id,avatar_id,pseudo,email,est_admin,equipe_favorite_id,jeux_suivis,profil_public')
+      .eq('id', userId)
+      .maybeSingle(),
+    supabase.rpc('clutch_mon_acces_developpeur_v1'),
+  ]);
 
-  if (error) throw error;
+  if (profileResult.error) throw profileResult.error;
+  const data = profileResult.data;
   if (!data) return null;
+  // Developer capabilities fail closed without blocking ordinary sign-in.
+  const developerAccess = developerAccessRow(
+    developerResult.error ? null : developerResult.data,
+  );
   return {
     ...(data as Omit<ClutchProfile, 'jeux_suivis'> & { jeux_suivis?: string[] | null }),
     est_admin: Boolean(data.est_admin),
+    est_developpeur: developerAccess.est_developpeur,
+    est_createur: developerAccess.est_createur,
+    volts_illimites: developerAccess.volts_illimites,
+    contenu_debloque: developerAccess.contenu_debloque,
     jeux_suivis: Array.isArray(data.jeux_suivis) ? data.jeux_suivis : [],
     profil_public: data.profil_public !== false,
+  };
+}
+
+function developerAccessRow(value: unknown) {
+  const raw = Array.isArray(value) && value[0] && typeof value[0] === 'object'
+    ? value[0] as Record<string, unknown>
+    : {};
+  return {
+    est_developpeur: raw.est_developpeur === true,
+    est_createur: raw.est_createur === true,
+    volts_illimites: raw.volts_illimites === true,
+    contenu_debloque: raw.contenu_debloque === true,
   };
 }
 

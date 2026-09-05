@@ -14,9 +14,9 @@ export const journeyStyles = StyleSheet.create({
     paddingTop: 17,
     paddingBottom: 14,
     borderRadius: 28,
-    backgroundColor: '#06111A',
+    backgroundColor: 'rgba(6,24,35,.9)',
     borderWidth: 1,
-    borderColor: '#30414E',
+    borderColor: '#486171',
     boxShadow: '0 20px 48px rgba(0,0,0,.42)',
   },
   atmosphere: {
@@ -42,7 +42,7 @@ export const journeyStyles = StyleSheet.create({
     bottom: 0,
     left: 0,
     width: 116,
-    backgroundColor: 'rgba(2,8,16,.42)',
+    backgroundColor: 'rgba(2,8,16,.24)',
   },
   rightVignette: {
     position: 'absolute',
@@ -50,7 +50,7 @@ export const journeyStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     width: 34,
-    backgroundColor: 'rgba(2,8,16,.3)',
+    backgroundColor: 'rgba(2,8,16,.18)',
   },
   header: {
     zIndex: 5,

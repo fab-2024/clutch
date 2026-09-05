@@ -7,6 +7,7 @@ import { GriffHeader } from '../GriffHeader';
 
 let mockCompactWidth = false;
 let mockShortLandscape = false;
+let mockUnlimitedVolts = false;
 
 jest.mock('@/src/components/layout/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({
@@ -17,13 +18,14 @@ jest.mock('@/src/components/layout/useResponsiveLayout', () => ({
 }));
 
 jest.mock('@/src/providers/EconomyProvider', () => ({
-  useEconomy: () => ({ frags: 1842, volts: 680 }),
+  useEconomy: () => ({ frags: 1842, unlimitedVolts: mockUnlimitedVolts, volts: 680 }),
 }));
 
 describe('GriffHeader', () => {
   beforeEach(() => {
     mockCompactWidth = false;
     mockShortLandscape = false;
+    mockUnlimitedVolts = false;
   });
 
   it('restores the heritage lockup beside the wallet as one semantic brand surface', async () => {
@@ -113,5 +115,14 @@ describe('GriffHeader', () => {
     expect(screen.getByTestId('griff-header-default')).toBeTruthy();
     expect(screen.getByLabelText('GRIFF')).toBeTruthy();
     expect(screen.getByRole('summary').props.accessibilityLabel).toBe('12 Frags, 34 Volts');
+  });
+
+  it('presents the server-owned developer wallet as unlimited', async () => {
+    mockUnlimitedVolts = true;
+
+    const screen = await render(<GriffHeader variant="wallet" />);
+
+    expect(screen.getByText('∞')).toBeTruthy();
+    expect(screen.getByRole('summary').props.accessibilityLabel).toMatch(/Volts illimités/);
   });
 });

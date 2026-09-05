@@ -9,15 +9,17 @@ import {
 import { SHOWCASE_PRESENTER_CATALOG } from './showcasePresenterCatalog';
 import { SHOWCASE_RANK_DISPLAY_CATALOG } from './showcaseRankDisplayCatalog';
 
+export type AtelierCategory = 'materials' | 'lighting' | 'supports' | 'ranks' | 'jerseys';
+
 export const ATELIER_CATEGORIES = [
-  'materials',
   'lighting',
   'supports',
   'ranks',
-  'jerseys',
-] as const;
+] as const satisfies readonly AtelierCategory[];
 
-export type AtelierCategory = (typeof ATELIER_CATEGORIES)[number];
+export function isVisibleAtelierCategory(category: AtelierCategory) {
+  return (ATELIER_CATEGORIES as readonly AtelierCategory[]).includes(category);
+}
 export type AtelierDiscoveryKind = 'team_pack' | 'partner_pack';
 
 export type AtelierProduct = {

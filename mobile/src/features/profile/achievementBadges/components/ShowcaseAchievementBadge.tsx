@@ -26,7 +26,7 @@ export default function ShowcaseAchievementBadge({
   if (!onPress) return content;
   return (
     <Pressable
-      accessibilityLabel={`Ouvrir le badge ${badge.name}`}
+      accessibilityLabel={`Ouvrir l’anneau ${badge.name}`}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => pressed && styles.pressed}

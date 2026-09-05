@@ -44,6 +44,7 @@ export default function VisualConsumablesScreen({ previewState }: { previewState
   const { session } = useAuth();
   const ownerId = previewState?.ownerId ?? session?.user.id ?? '';
   const economy = useEconomy();
+  const unlimitedVolts = !previewState && economy.unlimitedVolts;
   const load = useCallback(() => previewState
     ? Promise.resolve({ ...previewState, receivedAt: Date.now() })
     : loadVisualConsumables(ownerId), [ownerId, previewState]);
@@ -134,7 +135,9 @@ export default function VisualConsumablesScreen({ previewState }: { previewState
     {resource.data ? <>
       <View style={styles.wallet}>
         <Text style={styles.walletLabel}>{t('economy.availableBalance')}</Text>
-        <Text style={styles.walletValue}>{t('consumables.balance', { count: formatNumber(resource.data.balanceVolts) })}</Text>
+        <Text accessibilityLabel={unlimitedVolts ? t('economy.unlimitedBalanceLabel') : undefined} style={styles.walletValue}>
+          {t('consumables.balance', { count: unlimitedVolts ? '∞' : formatNumber(resource.data.balanceVolts) })}
+        </Text>
         <View style={styles.integrity}><Text style={styles.integrityText}>{t('economy.noRankingImpact')}</Text><Text style={styles.integrityText}>{t('economy.noFragsConversion')}</Text></View>
       </View>
       {pending ? <View accessibilityRole="alert" style={styles.pending}>

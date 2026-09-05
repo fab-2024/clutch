@@ -100,9 +100,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     borderRadius: radius.lg,
-    backgroundColor: colors.surfaceLow,
+    backgroundColor: colors.surfaceGlassElevated,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.borderHighlight,
+    boxShadow: '0 18px 38px rgba(0,0,0,.28)',
   },
   rootCompact: {
     minHeight: 138,

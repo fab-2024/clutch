@@ -3,9 +3,9 @@ import { StyleSheet } from 'react-native';
 import { colors, fonts, layout, typography } from '@/src/theme';
 
 export const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1, backgroundColor: 'transparent' },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingHorizontal: 18, paddingTop: 6, paddingBottom: layout.tabBarContentInset + 12, gap: 10 },
-  factionHero: { position: 'relative', minHeight: 544, overflow: 'hidden', padding: 12, borderRadius: 22, backgroundColor: '#06111A', borderWidth: 1, borderColor: '#284553' },
+  factionHero: { position: 'relative', minHeight: 544, overflow: 'hidden', padding: 12, borderRadius: 22, backgroundColor: 'rgba(6,24,35,.88)', borderWidth: 1, borderColor: colors.borderHighlight },
   heroTop: { zIndex: 6, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
   heroHeading: { flex: 1, minWidth: 0 },
   heroEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.1 },

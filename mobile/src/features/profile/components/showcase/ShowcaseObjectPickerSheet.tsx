@@ -48,7 +48,7 @@ export default function ShowcaseObjectPickerSheet({
       visible={Boolean(slot)}
     >
       <Text style={styles.intro}>
-        Tous les objets obtenus peuvent être déplacés vers cet emplacement.
+        Tous les objets obtenus dans la Boutique actuelle peuvent être déplacés vers cet emplacement.
       </Text>
       <Pressable
         accessibilityLabel="Laisser cet emplacement vide"

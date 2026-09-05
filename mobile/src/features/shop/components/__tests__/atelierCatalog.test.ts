@@ -1,6 +1,7 @@
 /// <reference types="jest" />
 
 import {
+  ATELIER_CATEGORIES,
   ATELIER_CATALOG,
   atelierProducts,
   createAtelierPreviewItems,
@@ -48,6 +49,7 @@ describe('showcase Atelier catalog', () => {
 
   it('maps each category to one server slot and exactly one included default', () => {
     const items = createAtelierPreviewItems();
+    expect(ATELIER_CATEGORIES).toEqual(['lighting', 'supports', 'ranks']);
     expect(items.every((item) => /^[a-z0-9-]+$/.test(item.styleKey))).toBe(true);
     expect(atelierProducts('materials')).toHaveLength(5);
     expect(atelierProducts('lighting')).toHaveLength(6);

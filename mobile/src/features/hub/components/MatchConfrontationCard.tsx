@@ -112,6 +112,36 @@ export function MatchConfrontationCard({
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           pointerEvents="none"
+          style={[
+            styles.matchupTitle,
+            {
+              marginLeft: -110 * sceneScale,
+              top: 38 * sceneScale,
+              width: 220 * sceneScale,
+            },
+          ]}
+          testID="match-confrontation-title"
+        >
+          <Text
+            adjustsFontSizeToFit
+            minimumFontScale={.58}
+            numberOfLines={1}
+            style={[
+              styles.matchupTitleText,
+              {
+                fontSize: 33 * sceneScale,
+                lineHeight: 37 * sceneScale,
+              },
+            ]}
+          >
+            {state.teamA.tag} — {state.teamB.tag}
+          </Text>
+        </View>
+
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          pointerEvents="none"
           style={styles.teamLayer}
         >
           <TeamFace
@@ -312,7 +342,7 @@ function TeamFace({
   winner: boolean;
 }) {
   const left = team.side === 'a';
-  const logoSize = 124 * sceneScale;
+  const logoSize = 104 * sceneScale;
 
   return (
     <View
@@ -320,14 +350,18 @@ function TeamFace({
       style={[
         styles.ticketTeam,
         {
-          left: (left ? 8 : 220) * sceneScale,
-          top: 38 * sceneScale,
-          width: 172 * sceneScale,
+          left: (left ? 0 : 244) * sceneScale,
+          top: 84 * sceneScale,
+          width: 156 * sceneScale,
         },
         muted && styles.ticketTeamMuted,
       ]}
+      testID={`match-team-${team.side}`}
     >
-      <View style={[styles.logoStage, { height: 132 * sceneScale }]}>
+      <View
+        style={[styles.logoStage, { height: 108 * sceneScale }]}
+        testID={`match-team-logo-${team.side}`}
+      >
         <TeamLogo
           accent={team.accent}
           contentScale={teamLogoContentScale(team.name)}
@@ -372,11 +406,11 @@ function TeamFace({
 }
 
 function teamLogoContentScale(name: string) {
-  if (name === 'Karmine Corp') return .86;
-  if (name === 'Team Vitality') return 1.42;
-  if (name === 'G2 Esports') return 1.24;
-  if (name === 'Fnatic') return 1.12;
-  return 1;
+  if (name === 'Karmine Corp') return .82;
+  if (name === 'Team Vitality') return 1.2;
+  if (name === 'G2 Esports') return 1.12;
+  if (name === 'Fnatic') return 1.04;
+  return .96;
 }
 
 const styles = StyleSheet.create({
@@ -473,6 +507,23 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,.9)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+  },
+  matchupTitle: {
+    position: 'absolute',
+    zIndex: 7,
+    left: '50%',
+    alignItems: 'center',
+  },
+  matchupTitleText: {
+    width: '100%',
+    color: '#F7F8F9',
+    fontFamily: fonts.display,
+    fontStyle: 'italic',
+    letterSpacing: -1,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,.98)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 8,
   },
   teamLayer: {
     position: 'absolute',

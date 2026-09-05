@@ -17,6 +17,12 @@
   resume that product area.
 - The current mobile UI direction is approved. Structural work must preserve
   appearance and interaction unless a redesign is explicitly requested.
+- Before changing relic artwork, interaction or motion, read and follow
+  `docs/relic-animation-workflow.md`. It is the required visual iteration and
+  validation workflow for the relic lab.
+- Before changing the relic elixir specifically, also read and follow
+  `docs/relic-elixir-improvement-prompt.md`. It requires continuous supporter
+  progress and forbids visible graduations on the vessel.
 - Database changes belong in `supabase/migrations/` and must keep RLS, Data API
   grants and RPC privileges explicit.
 - Before handing off mobile changes, run `npm run mobile:architecture` and

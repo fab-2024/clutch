@@ -28,7 +28,7 @@ describe('AchievementBadgeCollection public mystery props', () => {
       />,
     );
 
-    expect(screen.getAllByText('Badge mystère')).toHaveLength(1);
+    expect(screen.getAllByText('Anneau mystère')).toHaveLength(1);
     expect(screen.queryByText('Contre-courant')).toBeNull();
     expect(screen.queryByText(/10 % des participants/)).toBeNull();
 

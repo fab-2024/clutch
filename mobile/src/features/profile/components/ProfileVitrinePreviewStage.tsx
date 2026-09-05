@@ -32,7 +32,7 @@ export default function ProfileVitrinePreviewStage({
   const teamAccent = team ? `hsl(${teamHue(team.tag, team.nom)}, 72%, 58%)` : colors.textMuted;
   const description = loading
     ? 'Aperçu de la Vitrine en cours de chargement'
-    : `Aperçu Vitrine de ${data?.pseudo ?? 'Supporter'}. Badge ${badge?.name ?? 'à débloquer'}, rang ${rankLabel}, équipe ${team?.nom ?? 'à choisir'}.`;
+    : `Aperçu Vitrine de ${data?.pseudo ?? 'Supporter'}. Anneau ${badge?.name ?? 'à débloquer'}, rang ${rankLabel}, équipe ${team?.nom ?? 'à choisir'}.`;
 
   return (
     <View accessible accessibilityLabel={description} style={styles.stage} testID="profile-vitrine-stage">
@@ -47,7 +47,7 @@ export default function ProfileVitrinePreviewStage({
       <View style={styles.horizon} />
 
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.artifacts}>
-        <ArtifactSlot label="BADGE" testID="profile-vitrine-artifact-badge">
+        <ArtifactSlot label="ANNEAU" testID="profile-vitrine-artifact-badge">
           {badge ? (
             <AchievementBadgeArtwork badge={badge} showStand={false} size={60} />
           ) : (

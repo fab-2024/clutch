@@ -11,7 +11,7 @@ jest.mock('expo-router', () => ({
   Redirect: 'Redirect',
   useLocalSearchParams: () => mockParams,
 }));
-jest.mock('@/src/components/dev/PreviewRoute', () => ({ previewRoutesEnabled: true }));
+jest.mock('@/src/components/dev/PreviewRoute', () => ({ usePreviewRoutesEnabled: () => true }));
 jest.mock('../ShopPreviewScreen', () => ({
   PREVIEW_SHOP: {
     balance: 1280,

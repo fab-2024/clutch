@@ -13,73 +13,34 @@ const NOW = '2026-08-26T15:00:00.000Z';
 describe('achievement badge engine', () => {
   it('evaluates simple thresholds without using shop or currency state', () => {
     const result = evaluate({
-      correctOfficialCalls: 25,
-      placementCalls: 5,
+      distinctCompetitionsWithWin: 5,
       placementTarget: 5,
-      totalOfficialCalls: 100,
+      totalOfficialCalls: 1,
     });
 
     expect(badge(result, 'first_signal').obtained).toBe(true);
-    expect(badge(result, 'placement_revealed').obtained).toBe(true);
-    expect(badge(result, 'sharp_eye').obtained).toBe(true);
-    expect(badge(result, 'centurion').obtained).toBe(true);
-  });
-
-  it('requires five correct calls in the same season', () => {
-    const splitAcrossSeasons = [
-      ...events('saison-a', [true, true, true]),
-      ...events('saison-b', [true, true]),
-    ];
-    const splitResult = evaluate({
-      callEvents: splitAcrossSeasons,
-      currentSeasonId: 'saison-b',
-      placementTarget: 5,
-    });
-    expect(badge(splitResult, 'rising_streak').obtained).toBe(false);
-
-    const sameSeasonResult = evaluate({
-      callEvents: events('saison-b', [false, true, true, true, true, true]),
-      currentSeasonId: 'saison-b',
-      placementTarget: 5,
-    });
-    expect(badge(sameSeasonResult, 'rising_streak').obtained).toBe(true);
+    expect(badge(result, 'versatile').obtained).toBe(true);
   });
 
   it('preserves the first attribution date and never unlocks the same badge twice', () => {
     const previous: AchievementBadgeUnlockState[] = [{
-      id: 'sharp_eye',
+      id: 'first_signal',
       seasonId: 'saison-a',
       unlockedAt: '2026-06-02T10:00:00.000Z',
     }];
     const result = evaluateAchievementBadges(
-      { correctOfficialCalls: 0, placementTarget: 5 },
+      { placementTarget: 5, totalOfficialCalls: 0 },
       previous,
       { now: NOW },
     );
 
     expect(result.newlyUnlocked).toEqual([]);
     expect(result.states).toEqual(previous);
-    expect(badge(result, 'sharp_eye')).toMatchObject({
+    expect(badge(result, 'first_signal')).toMatchObject({
       obtained: true,
       seasonId: 'saison-a',
       unlockedAt: '2026-06-02T10:00:00.000Z',
     });
-  });
-
-  it('attributes Elite and Legend only after official season closure', () => {
-    const open = evaluate({
-      closedSeason: { closed: false, id: 'saison-a', percentile: 0.8 },
-      placementTarget: 5,
-    });
-    expect(badge(open, 'season_elite').obtained).toBe(false);
-    expect(badge(open, 'griff_legend').obtained).toBe(false);
-
-    const closed = evaluate({
-      closedSeason: { closed: true, id: 'saison-a', percentile: 0.8 },
-      placementTarget: 5,
-    });
-    expect(badge(closed, 'season_elite').obtained).toBe(true);
-    expect(badge(closed, 'griff_legend').obtained).toBe(true);
   });
 
   it('evaluates all five mystery conditions', () => {

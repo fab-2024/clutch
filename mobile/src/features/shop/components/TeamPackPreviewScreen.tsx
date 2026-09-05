@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 
-import { previewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
+import { usePreviewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
 
 import {
   applyPreviewTeamPackAction,
@@ -18,7 +18,8 @@ export default function TeamPackPreviewScreen() {
     packId?: string | string[];
     state?: string | string[];
   }>();
-  if (!previewRoutesEnabled) return <Redirect href="/" />;
+  const previewEnabled = usePreviewRoutesEnabled();
+  if (!previewEnabled) return <Redirect href="/" />;
 
   const pack = cosmeticPackById(readParam(params.packId)) ?? NEON_PROTOCOL_PACK;
   const state = readParam(params.state);

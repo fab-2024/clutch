@@ -124,6 +124,7 @@ export default function LockerScreen({ previewData, previewProfile, previewState
   const previewAcquisitionOrigin = previewState?.origin;
   const { profile, session } = useAuth();
   const { refresh: refreshEconomy } = useEconomy();
+  const unlimitedVolts = !previewData && profile?.volts_illimites === true;
   const { refresh: refreshCosmetics } = useCosmetics();
   const { showSnackbar } = useSnackbar();
   const pseudo = previewProfile?.pseudo || profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
@@ -618,9 +619,9 @@ export default function LockerScreen({ previewData, previewProfile, previewState
             <Text style={styles.headerEyebrow}>COLLECTION D’IDENTITÉ</Text>
             <Text style={styles.headerTitle}>{focusedCollection ? activeMeta.label.toUpperCase() : 'LOCKER'}</Text>
           </View>
-          <View accessible accessibilityLabel={`${formatNumber(data?.balance ?? 0)} Volts`} style={styles.balancePill}>
+          <View accessible accessibilityLabel={unlimitedVolts ? 'Volts illimités' : `${formatNumber(data?.balance ?? 0)} Volts`} style={styles.balancePill}>
             <CurrencyIcon color="#080A0C" kind="volts" size={15} />
-            <Text style={styles.balanceValue}>{loading ? '—' : formatNumber(data?.balance ?? 0)}</Text>
+            <Text style={styles.balanceValue}>{loading ? '—' : unlimitedVolts ? '∞' : formatNumber(data?.balance ?? 0)}</Text>
           </View>
         </View>
 

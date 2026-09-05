@@ -49,7 +49,7 @@ type VoltLedgerScreenProps = {
 };
 
 export default function VoltLedgerScreen({ previewData }: VoltLedgerScreenProps) {
-  const { refresh: refreshEconomy, volts } = useEconomy();
+  const { refresh: refreshEconomy, unlimitedVolts, volts } = useEconomy();
   const [ledger, setLedger] = useState<VoltLedger | null>(previewData ?? null);
   const [loading, setLoading] = useState(!previewData);
   const [refreshing, setRefreshing] = useState(false);
@@ -146,6 +146,7 @@ export default function VoltLedgerScreen({ previewData }: VoltLedgerScreenProps)
             ledger={ledger}
             loading={loading}
             onRetry={() => void load('refresh')}
+            unlimitedVolts={!previewData && unlimitedVolts}
           />
         )}
         maxToRenderPerBatch={10}
@@ -171,11 +172,13 @@ function LedgerHeader({
   ledger,
   loading,
   onRetry,
+  unlimitedVolts,
 }: {
   error: string | null;
   ledger: VoltLedger | null;
   loading: boolean;
   onRetry: () => void;
+  unlimitedVolts: boolean;
 }) {
   return (
     <View style={styles.headerStack}>
@@ -208,8 +211,8 @@ function LedgerHeader({
           </SkeletonGroup>
         ) : (
           <>
-            <Text accessibilityLabel={t('economy.availableBalanceLabel', { amount: formatNumber(ledger?.balance ?? 0) })} style={styles.balance}>
-              {formatNumber(ledger?.balance ?? 0)}
+            <Text accessibilityLabel={unlimitedVolts ? t('economy.unlimitedBalanceLabel') : t('economy.availableBalanceLabel', { amount: formatNumber(ledger?.balance ?? 0) })} style={styles.balance}>
+              {unlimitedVolts ? '∞' : formatNumber(ledger?.balance ?? 0)}
             </Text>
             <Text style={styles.balanceUnit}>{t('economy.unit')}</Text>
           </>

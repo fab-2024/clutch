@@ -28,13 +28,10 @@ const ORIGINAL_PACK_ITEM_BLUEPRINTS = [
   { slot: 'apparence_core', rarity: 'epique', equipByDefault: true, roomKind: 'core', roomSlot: 'right-extra' },
   { slot: 'carte_profil', rarity: 'rare', equipByDefault: false, roomKind: 'banner', roomSlot: 'left-extra' },
   { slot: 'vitrine_supports', rarity: 'legendaire', equipByDefault: true },
-  { slot: 'apparence_core', rarity: 'rare', equipByDefault: false, roomKind: 'ring', roomSlot: 'ring' },
   { slot: 'apparence_core', rarity: 'epique', equipByDefault: false, roomKind: 'trophy', roomSlot: 'trophy' },
   { slot: 'apparence_core', rarity: 'epique', equipByDefault: false, roomKind: 'badge', roomSlot: 'badge' },
   { slot: 'cadre_profil', rarity: 'epique', equipByDefault: true, roomKind: 'frame', roomSlot: 'left-free' },
   { slot: 'effet_faction', rarity: 'legendaire', equipByDefault: true },
-  { slot: 'carte_profil', rarity: 'epique', equipByDefault: true, roomKind: 'banner', roomSlot: 'right-free' },
-  { slot: 'titre_profil', rarity: 'epique', equipByDefault: true, roomKind: 'title', roomSlot: 'title' },
 ] as const satisfies readonly OriginalPackItemBlueprint[];
 
 function defineOriginalPack(seed: OriginalPackSeed): TeamPackDefinition {
@@ -71,8 +68,8 @@ export const SANG_DES_TITANS_PACK = defineOriginalPack({
   id: 'sang-des-titans',
   name: 'Pack Sang des Titans',
   title: 'SANG DES TITANS',
-  subtitle: 'DERNIER PACTE // PORTE-SERMENT',
-  description: 'Douze cosmétiques originaux forgés pour les gardiens d’un pacte titanesque.',
+  subtitle: 'DERNIER PACTE',
+  description: 'Neuf cosmétiques originaux forgés pour les gardiens d’un pacte titanesque.',
   accent: TITAN_BRONZE,
   price: 1200,
   hero: require('../../../assets/shop/packs/sang-des-titans/sang-des-titans-hero.png'),
@@ -109,12 +106,6 @@ export const SANG_DES_TITANS_PACK = defineOriginalPack({
       image: require('../../../assets/shop/packs/sang-des-titans/items/monolith-pedestal.png'),
     },
     {
-      slug: 'tribute-token',
-      name: 'Jeton du Tribut',
-      description: 'Un disque antique serti de trois pierres grenat, témoin du tribut rendu.',
-      image: require('../../../assets/shop/packs/sang-des-titans/items/tribute-token.png'),
-    },
-    {
       slug: 'three-voices-totem',
       name: 'Totem des Trois Voix',
       description: 'Trois anneaux minéraux gravitent autour d’un axe rituel de bronze.',
@@ -140,18 +131,6 @@ export const SANG_DES_TITANS_PACK = defineOriginalPack({
       accent: '#55D7DF',
       image: require('../../../assets/shop/packs/sang-des-titans/items/titan-wave-effect.png'),
     },
-    {
-      slug: 'last-pact-card',
-      name: 'Carte Dernier Pacte',
-      description: 'Une carte de partage qui révèle le sanctuaire et ses reliques titanesques.',
-      image: require('../../../assets/shop/packs/sang-des-titans/items/last-pact-card.png'),
-    },
-    {
-      slug: 'oath-bearer-title',
-      name: 'Titre Porte-Serment',
-      description: 'Le titre « Porte-Serment » pour celles et ceux qui n’abandonnent jamais le pacte.',
-      image: require('../../../assets/shop/packs/sang-des-titans/items/oath-bearer-title.png'),
-    },
   ],
 });
 
@@ -159,8 +138,8 @@ export const CHUTE_LIBRE_PACK = defineOriginalPack({
   id: 'chute-libre',
   name: 'Pack Chute Libre',
   title: 'CHUTE LIBRE',
-  subtitle: 'BELVÉDÈRE NOMADE // INSAISISSABLE',
-  description: 'Douze cosmétiques originaux pour les éclaireurs qui vivent au bord du vide.',
+  subtitle: 'BELVÉDÈRE NOMADE',
+  description: 'Neuf cosmétiques originaux pour les éclaireurs qui vivent au bord du vide.',
   accent: FREEFALL_CORAL,
   price: 1200,
   hero: require('../../../assets/shop/packs/chute-libre/chute-libre-hero.png'),
@@ -196,12 +175,6 @@ export const CHUTE_LIBRE_PACK = defineOriginalPack({
       image: require('../../../assets/shop/packs/chute-libre/items/drop-pedestal.png'),
     },
     {
-      slug: 'survivor-token',
-      name: 'Jeton Survivant',
-      description: 'Une médaille d’acier gravée pour celles et ceux qui reviennent du dernier cercle.',
-      image: require('../../../assets/shop/packs/chute-libre/items/survivor-token.png'),
-    },
-    {
       slug: 'summit-beacon',
       name: 'Balise Sommet',
       description: 'Une balise de navigation qui marque le point le plus haut de l’expédition.',
@@ -226,18 +199,6 @@ export const CHUTE_LIBRE_PACK = defineOriginalPack({
       accent: '#FFB34D',
       image: require('../../../assets/shop/packs/chute-libre/items/last-circle-effect.png'),
     },
-    {
-      slug: 'share-card',
-      name: 'Carte de Partage',
-      description: 'Une carte paysage qui capture le Belvédère Nomade au-dessus des canyons.',
-      image: require('../../../assets/shop/packs/chute-libre/items/share-card.png'),
-    },
-    {
-      slug: 'untouchable-title',
-      name: 'Titre Insaisissable',
-      description: 'Le titre « Insaisissable » pour les explorateurs toujours hors de portée.',
-      image: require('../../../assets/shop/packs/chute-libre/items/untouchable-title.png'),
-    },
   ],
 });
 
@@ -245,8 +206,8 @@ export const SERMENT_DU_GIVRE_PACK = defineOriginalPack({
   id: 'serment-du-givre',
   name: 'Pack Serment du Givre',
   title: 'SERMENT DU GIVRE',
-  subtitle: 'DRAGON VEYR // GARDE-GIVRE',
-  description: 'Douze cosmétiques originaux gardés par le dragon des cimes éternelles.',
+  subtitle: 'DRAGON VEYR',
+  description: 'Neuf cosmétiques originaux gardés par le dragon des cimes éternelles.',
   accent: FROST_BLUE,
   price: 1200,
   hero: require('../../../assets/shop/packs/serment-du-givre/serment-du-givre-hero.png'),
@@ -282,12 +243,6 @@ export const SERMENT_DU_GIVRE_PACK = defineOriginalPack({
       image: require('../../../assets/shop/packs/serment-du-givre/items/ice-sheet-pedestal.png'),
     },
     {
-      slug: 'cold-breath-token',
-      name: 'Jeton Souffle-Froid',
-      description: 'Un jeton d’argent gravé du profil de Veyr et serti d’un éclat azur.',
-      image: require('../../../assets/shop/packs/serment-du-givre/items/cold-breath-token.png'),
-    },
-    {
       slug: 'summit-egg',
       name: 'Œuf des Cimes',
       description: 'Un cristal ancestral protégé par un berceau de roche gelée.',
@@ -311,18 +266,6 @@ export const SERMENT_DU_GIVRE_PACK = defineOriginalPack({
       description: 'Une fracture glacée se propage sous une pluie d’éclats de neige.',
       image: require('../../../assets/shop/packs/serment-du-givre/items/first-frost-effect.png'),
     },
-    {
-      slug: 'summit-card',
-      name: 'Carte des Cimes',
-      description: 'Une carte de partage qui révèle Veyr au cœur du Bastion gelé.',
-      image: require('../../../assets/shop/packs/serment-du-givre/items/summit-card.png'),
-    },
-    {
-      slug: 'frost-guard-title',
-      name: 'Titre Garde-Givre',
-      description: 'Le titre « Garde-Givre » pour les protecteurs du Serment.',
-      image: require('../../../assets/shop/packs/serment-du-givre/items/frost-guard-title.png'),
-    },
   ],
 });
 
@@ -330,8 +273,8 @@ export const CONCLAVE_ARCANIQUE_PACK = defineOriginalPack({
   id: 'conclave-arcanique',
   name: 'Pack Conclave Arcanique',
   title: 'CONCLAVE ARCANIQUE',
-  subtitle: 'BRUMOUSSE // TISSE-SORTS',
-  description: 'Douze cosmétiques originaux où la pierre claire rencontre la magie florale.',
+  subtitle: 'BRUMOUSSE',
+  description: 'Neuf cosmétiques originaux où la pierre claire rencontre la magie florale.',
   accent: ARCANE_VIOLET,
   price: 1200,
   hero: require('../../../assets/shop/packs/conclave-arcanique/conclave-arcanique-hero.png'),
@@ -368,13 +311,6 @@ export const CONCLAVE_ARCANIQUE_PACK = defineOriginalPack({
       image: require('../../../assets/shop/packs/conclave-arcanique/items/rosette-pedestal.png'),
     },
     {
-      slug: 'omen-token',
-      name: 'Jeton Présage',
-      description: 'Un médaillon vert minéral parcouru de rameaux dorés.',
-      accent: '#98AA72',
-      image: require('../../../assets/shop/packs/conclave-arcanique/items/omen-token.png'),
-    },
-    {
       slug: 'bud-totem',
       name: 'Totem Bourgeon',
       description: 'Une pousse torsadée protège un cristal prêt à éclore.',
@@ -398,18 +334,6 @@ export const CONCLAVE_ARCANIQUE_PACK = defineOriginalPack({
       description: 'Des pétales violets et des filaments d’or dessinent une floraison lumineuse.',
       image: require('../../../assets/shop/packs/conclave-arcanique/items/hatching-effect.png'),
     },
-    {
-      slug: 'conclave-card',
-      name: 'Carte du Conclave',
-      description: 'Une carte de partage où Brumousse veille sur la clairière équipée.',
-      image: require('../../../assets/shop/packs/conclave-arcanique/items/conclave-card.png'),
-    },
-    {
-      slug: 'spell-weaver-title',
-      name: 'Titre Tisse-Sorts',
-      description: 'Le titre « Tisse-Sorts » pour les architectes de la magie vivante.',
-      image: require('../../../assets/shop/packs/conclave-arcanique/items/spell-weaver-title.png'),
-    },
   ],
 });
 
@@ -417,8 +341,8 @@ export const TURBO_ARENA_PACK = defineOriginalPack({
   id: 'turbo-arena',
   name: 'Pack Turbo Arena',
   title: 'TURBO ARENA',
-  subtitle: 'BOLIDE COMÈTE // DERNIÈRE SECONDE',
-  description: 'Douze cosmétiques originaux pour transformer la Vitrine en arène suralimentée.',
+  subtitle: 'BOLIDE COMÈTE',
+  description: 'Neuf cosmétiques originaux pour transformer la Vitrine en arène suralimentée.',
   accent: TURBO_ORANGE,
   price: 1200,
   hero: require('../../../assets/shop/packs/turbo-arena/turbo-arena-hero.png'),
@@ -457,13 +381,6 @@ export const TURBO_ARENA_PACK = defineOriginalPack({
       image: require('../../../assets/shop/packs/turbo-arena/items/kickoff-pedestal.png'),
     },
     {
-      slug: 'vortex-wheel',
-      name: 'Roue Vortex',
-      description: 'Une roue de compétition au moyeu bleu et aux flancs graphite.',
-      accent: '#4DA8FF',
-      image: require('../../../assets/shop/packs/turbo-arena/items/vortex-wheel.png'),
-    },
-    {
       slug: 'aerial-trophy',
       name: 'Trophée Aérien',
       description: 'Un trophée orbital qui célèbre les actions conclues dans les airs.',
@@ -489,18 +406,6 @@ export const TURBO_ARENA_PACK = defineOriginalPack({
       description: 'Deux ballons d’énergie tracent une orbite de feu et de plasma bleu.',
       image: require('../../../assets/shop/packs/turbo-arena/items/surtempo-effect.png'),
     },
-    {
-      slug: 'share-card',
-      name: 'Carte de Partage',
-      description: 'Une carte paysage qui met le Bolide Comète en scène dans le Dôme Turbo.',
-      image: require('../../../assets/shop/packs/turbo-arena/items/share-card.png'),
-    },
-    {
-      slug: 'last-second-title',
-      name: 'Titre Dernière Seconde',
-      description: 'Le titre « Dernière Seconde » pour les spécialistes des retournements tardifs.',
-      image: require('../../../assets/shop/packs/turbo-arena/items/last-second-title.png'),
-    },
   ],
 });
 
@@ -508,8 +413,8 @@ export const DERNIER_ROUND_PACK = defineOriginalPack({
   id: 'dernier-round',
   name: 'Pack Dernier Round',
   title: 'DERNIER ROUND',
-  subtitle: 'CASQUE SENTINELLE // SANG-FROID',
-  description: 'Douze cosmétiques originaux pour une escouade qui joue chaque round jusqu’au bout.',
+  subtitle: 'CASQUE SENTINELLE',
+  description: 'Neuf cosmétiques originaux pour une escouade qui joue chaque round jusqu’au bout.',
   accent: LAST_ROUND_RED,
   price: 1200,
   hero: require('../../../assets/shop/packs/dernier-round/dernier-round-hero.png'),
@@ -545,12 +450,6 @@ export const DERNIER_ROUND_PACK = defineOriginalPack({
       image: require('../../../assets/shop/packs/dernier-round/items/extraction-pedestal.png'),
     },
     {
-      slug: 'match-point-token',
-      name: 'Jeton Match Point',
-      description: 'Un jeton d’acier marqué du point décisif et de sa ligne rouge.',
-      image: require('../../../assets/shop/packs/dernier-round/items/match-point-token.png'),
-    },
-    {
       slug: 'scout-drone',
       name: 'Drone Éclaireur',
       description: 'Un drone quadrupède chargé de lire les angles avant l’escouade.',
@@ -575,18 +474,6 @@ export const DERNIER_ROUND_PACK = defineOriginalPack({
       description: 'Une grille tactique tridimensionnelle révèle un signal triangulaire hostile.',
       accent: '#7FE8DB',
       image: require('../../../assets/shop/packs/dernier-round/items/scan-effect.png'),
-    },
-    {
-      slug: 'share-card',
-      name: 'Carte de Partage',
-      description: 'Une carte paysage qui présente l’escouade et son équipement dans la Base Avancée.',
-      image: require('../../../assets/shop/packs/dernier-round/items/share-card.png'),
-    },
-    {
-      slug: 'cold-blood-title',
-      name: 'Titre Sang-Froid',
-      description: 'Le titre « Sang-Froid » pour les joueurs qui restent lucides au dernier round.',
-      image: require('../../../assets/shop/packs/dernier-round/items/cold-blood-title.png'),
     },
   ],
 });

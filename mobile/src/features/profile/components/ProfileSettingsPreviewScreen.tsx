@@ -1,6 +1,6 @@
 import { Redirect } from 'expo-router';
 
-import { previewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
+import { usePreviewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
 
 import ProfileSettingsScreen, { type ProfileSettingsPreviewState } from './ProfileSettingsScreen';
 
@@ -11,6 +11,10 @@ const PREVIEW_SETTINGS: ProfileSettingsPreviewState = {
     pseudo: 'FabTheTap',
     email: 'preview@clutch.gg',
     est_admin: false,
+    est_developpeur: false,
+    est_createur: false,
+    volts_illimites: false,
+    contenu_debloque: false,
     equipe_favorite_id: 'fnc-lol',
     jeux_suivis: ['lol', 'valorant'],
     profil_public: true,
@@ -77,6 +81,7 @@ const PREVIEW_SETTINGS: ProfileSettingsPreviewState = {
 };
 
 export default function ProfileSettingsPreviewScreen() {
-  if (!previewRoutesEnabled) return <Redirect href="/" />;
+  const previewEnabled = usePreviewRoutesEnabled();
+  if (!previewEnabled) return <Redirect href="/" />;
   return <ProfileSettingsScreen previewState={PREVIEW_SETTINGS} />;
 }

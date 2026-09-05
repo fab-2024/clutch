@@ -129,7 +129,7 @@ describe('AtelierShopScreen interactions', () => {
 
     expect(screen.getByTestId('atelier-shelf-rooms')).toBeTruthy();
     expect(screen.getByTestId('atelier-shelf-level-frames')).toBeTruthy();
-    expect(screen.getByTestId('atelier-shelf-materials')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-shelf-materials')).toBeNull();
     expect(screen.getByTestId('atelier-shelf-lighting')).toBeTruthy();
     expect(screen.getAllByTestId(/atelier-lighting-preview-/)).toHaveLength(6);
     expect(screen.getByText('Compétition rouge / cyan')).toBeTruthy();
@@ -145,7 +145,7 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.getByText('Écrin Mécanique Carbone')).toBeTruthy();
     expect(screen.getByText('Noyau Orbital')).toBeTruthy();
     expect(screen.getByText('Révélation Clutch')).toBeTruthy();
-    expect(screen.getByTestId('atelier-shelf-jerseys')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-shelf-jerseys')).toBeNull();
     expect(screen.queryByTestId('atelier-category-control')).toBeNull();
     expect(screen.queryByTestId('atelier-scene')).toBeNull();
     expect(screen.queryByText('APERÇU EN DIRECT')).toBeNull();
@@ -229,13 +229,13 @@ describe('AtelierShopScreen interactions', () => {
   it('reviews a rare purchase before debiting then opens its dedicated reveal', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 
-    fireEvent.press(screen.getByTestId('atelier-product-material_steel'));
+    fireEvent.press(screen.getByTestId('atelier-product-lighting_emerald'));
     await waitFor(() => expect(screen.getByTestId('atelier-action-primary')).toBeTruthy());
     fireEvent.press(screen.getByTestId('atelier-action-primary'));
 
     await waitFor(() => expect(screen.getByTestId('atelier-purchase-sheet')).toBeTruthy());
     expect(screen.getByLabelText(
-      'Achat de Acier brossé pour 120 Volts. Ton solde passera de 1 280 à 1 160 Volts.',
+      'Achat de Émeraude vert / or pour 120 Volts. Ton solde passera de 1 280 à 1 160 Volts.',
     )).toBeTruthy();
     expect(screen.getByLabelText('1 280 Volts disponibles')).toBeTruthy();
 
@@ -245,7 +245,7 @@ describe('AtelierShopScreen interactions', () => {
 
     await waitFor(() => {
       expect(screen.getByLabelText('1 160 Volts disponibles')).toBeTruthy();
-      expect(screen.getByLabelText('Acier brossé, configuration active')).toBeTruthy();
+      expect(screen.getByLabelText('Émeraude vert / or, configuration active')).toBeTruthy();
       expect(screen.getByTestId('rare-acquisition-reveal')).toBeTruthy();
       expect(screen.getByText('SIGNAL RARE')).toBeTruthy();
     });
@@ -263,7 +263,7 @@ describe('AtelierShopScreen interactions', () => {
     const screen = await render(
       <AtelierShopScreen
         previewData={makeData(1280)}
-        previewState={{ acquisitionProductId: 'material_carbon' }}
+        previewState={{ acquisitionProductId: 'rank_orbital_core' }}
       />,
     );
 
@@ -279,30 +279,30 @@ describe('AtelierShopScreen interactions', () => {
   it('applies owned equipment immediately to the selected collection', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280, true)} />);
 
-    fireEvent.press(screen.getByTestId('atelier-product-material_steel'));
+    fireEvent.press(screen.getByTestId('atelier-product-lighting_emerald'));
     await waitFor(() => expect(screen.getByTestId('atelier-action-primary')).toHaveTextContent('ÉQUIPER'));
     fireEvent.press(screen.getByTestId('atelier-action-primary'));
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Acier brossé, équipé')).toBeTruthy();
+      expect(screen.getByLabelText('Émeraude vert / or, équipé')).toBeTruthy();
     });
 
     const success = mockShowSnackbar.mock.calls.at(-1)?.[0];
     expect(success).toMatchObject({
       action: {
-        accessibilityLabel: 'Rétablir Graphite mat',
+        accessibilityLabel: 'Rétablir Sobre cyan',
         label: 'ANNULER',
       },
-      message: 'Acier brossé équipe ta Vitrine.',
+      message: 'Émeraude vert / or équipe ta Vitrine.',
       tone: 'success',
     });
 
     await act(async () => success.action.onPress());
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Graphite mat, équipé')).toBeTruthy();
+      expect(screen.getByLabelText('Sobre cyan, équipé')).toBeTruthy();
       expect(mockShowSnackbar).toHaveBeenLastCalledWith({
-        message: 'Graphite mat restauré sur ta Vitrine.',
+        message: 'Sobre cyan restauré sur ta Vitrine.',
         tone: 'success',
       });
     });
@@ -311,7 +311,7 @@ describe('AtelierShopScreen interactions', () => {
   it('makes an insufficient balance explicit without keeping a hidden preview action', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(60)} />);
 
-    fireEvent.press(screen.getByTestId('atelier-product-material_steel'));
+    fireEvent.press(screen.getByTestId('atelier-product-lighting_emerald'));
 
     await waitFor(() => {
       expect(screen.getByTestId('atelier-action-primary').props.accessibilityState).toEqual({
@@ -321,13 +321,13 @@ describe('AtelierShopScreen interactions', () => {
     });
     expect(screen.getByRole('alert')).toBeTruthy();
     expect(screen.getByText('Il manque 60 Volts pour cette finition.')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Essayer Acier brossé' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Essayer Émeraude vert / or' })).toBeNull();
   });
 });
 
-function makeData(balance: number, steelOwned = false): CosmeticShopData {
-  const items = createAtelierPreviewItems().map((item) => item.id === 'material_steel'
-    ? { ...item, owned: steelOwned }
+function makeData(balance: number, emeraldOwned = false): CosmeticShopData {
+  const items = createAtelierPreviewItems().map((item) => item.id === 'lighting_emerald'
+    ? { ...item, owned: emeraldOwned }
     : item);
 
   return {

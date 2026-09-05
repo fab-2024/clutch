@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import { AppAtmosphere } from '@/src/components/layout/AppAtmosphere';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, typography } from '@/src/theme';
 
@@ -27,13 +28,14 @@ export default function DuelLinkScreen() {
 
   return (
     <View style={styles.root}>
+      <AppAtmosphere />
       {error || !destination ? <Text style={styles.error}>{error ?? 'Cette invitation est invalide.'}</Text> : <><ActivityIndicator color={colors.volt} /><Text style={styles.text}>OUVERTURE DU DUEL…</Text></>}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 13, padding: 24, backgroundColor: colors.background },
+  root: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 13, padding: 24, backgroundColor: colors.atmosphereBottom },
   text: { ...typography.label, color: colors.textMuted },
   error: { ...typography.body, color: '#FF9AA2', textAlign: 'center' },
 });

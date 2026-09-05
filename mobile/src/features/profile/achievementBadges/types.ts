@@ -1,8 +1,6 @@
 export const BADGE_IDS = [
-  'first_signal', 'placement_revealed', 'rising_streak', 'clutch_moment', 'sharp_eye',
-  'centurion', 'strategist', 'versatile', 'regular', 'social_bond', 'rally',
-  'standard_bearer', 'faction_loyal', 'season_elite', 'griff_legend', 'perfect_eclipse',
-  'countercurrent', 'resurgence', 'synchrony', 'zero_chronicle',
+  'first_signal', 'versatile', 'perfect_eclipse', 'countercurrent', 'resurgence',
+  'synchrony', 'zero_chronicle',
 ] as const;
 
 export type BadgeId = (typeof BADGE_IDS)[number];
@@ -66,7 +64,7 @@ export type AchievementBadge = {
 export type LockedSecretBadgeView = {
   id: BadgeId;
   key: BadgeId;
-  name: 'Badge mystère';
+  name: 'Anneau mystère';
   category: 'secret';
   family: 'Mystère';
   rarity: 'secret';

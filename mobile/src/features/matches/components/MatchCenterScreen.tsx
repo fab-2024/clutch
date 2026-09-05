@@ -270,7 +270,7 @@ export default function MatchCenterScreen({
   }
 
   return (
-    <Screen>
+    <Screen atmosphere="none">
       <ScrollView
         contentContainerStyle={[styles.content, isShortLandscape && styles.contentLandscape]}
         refreshControl={

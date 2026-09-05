@@ -109,7 +109,7 @@ export default function RankScreen({ previewData, previewReduceMotion }: RankScr
 
   if (!loading && dashboard && section === 'leaderboards') {
     return (
-      <Screen>
+      <Screen atmosphere="rank">
         <LeaderboardList
           dashboard={dashboard}
           header={header}
@@ -123,7 +123,7 @@ export default function RankScreen({ previewData, previewReduceMotion }: RankScr
   }
 
   return (
-    <Screen>
+    <Screen atmosphere="rank">
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
@@ -705,9 +705,10 @@ const styles = StyleSheet.create({
     padding: 4,
     flexDirection: 'row',
     borderRadius: 18,
-    backgroundColor: '#111A22',
+    backgroundColor: colors.surfaceGlass,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderHighlight,
+    boxShadow: '0 14px 30px rgba(0,0,0,.2)',
   },
   tab: {
     flex: 1,

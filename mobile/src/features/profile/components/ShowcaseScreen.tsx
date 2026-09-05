@@ -48,7 +48,10 @@ import {
   showcaseRankDisplayById,
 } from '@/src/features/shop/showcaseRankDisplayCatalog';
 import { showcaseRoomById } from '@/src/features/shop/showcaseRoomCatalog';
-import { cosmeticPackItemById } from '@/src/features/shop/teamPackCatalog';
+import {
+  cosmeticPackItemById,
+  currentCosmeticPackItemById,
+} from '@/src/features/shop/teamPackCatalog';
 import type { CosmeticItem, CosmeticShopData, EquippedCosmetics } from '@/src/features/shop/types';
 import { resolveEquippedAchievementBadges } from '@/src/features/profile/achievementBadges/equipment';
 import { useAchievementBadgeEquipment } from '@/src/features/profile/achievementBadges/useAchievementBadgeEquipment';
@@ -134,7 +137,7 @@ export default function ShowcaseScreen({
   const [section, setSection] = useState<ShowcaseSection>(requestedSection);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [atelierVisible, setAtelierVisible] = useState(false);
-  const [atelierCategory, setAtelierCategory] = useState<AtelierCategory>('materials');
+  const [atelierCategory, setAtelierCategory] = useState<AtelierCategory>('lighting');
   const [atelierTrial, setAtelierTrial] = useState<AtelierTrySelection>({});
   const [atelierPendingId, setAtelierPendingId] = useState<string | null>(null);
   const [atelierPurchaseId, setAtelierPurchaseId] = useState<string | null>(null);
@@ -605,7 +608,7 @@ export default function ShowcaseScreen({
   }
 
   return (
-    <Screen>
+    <Screen atmosphere="none">
       <View style={styles.screen}>
         <View style={styles.sceneWrap}>
           {section === 'showcase' ? (
@@ -807,7 +810,9 @@ export function resolveRoomPlaceableItems({
   const items: ShowcasePlaceableItem[] = [];
 
   ownedItems.forEach((item) => {
-    const packDefinition = cosmeticPackItemById(item.id);
+    const knownPackDefinition = cosmeticPackItemById(item.id);
+    const packDefinition = currentCosmeticPackItemById(item.id);
+    if (knownPackDefinition && !packDefinition) return;
     const kind = packDefinition?.roomKind ?? roomKindForCosmetic(item);
     if (!kind) return;
     items.push({

@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AppAtmosphere } from '@/src/components/layout/AppAtmosphere';
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import SocialSectionNav from '@/src/features/social/components/SocialSectionNav';
@@ -93,6 +94,7 @@ export default function CirclePreviewScreen() {
 
   return (
     <View style={styles.root}>
+      <AppAtmosphere />
       <View style={[styles.top, { paddingTop: Math.max(insets.top, 6) }]}>
         <GriffHeader leading={<ProfileHeaderButton preview />} variant="wallet" />
       </View>
@@ -153,12 +155,12 @@ function weeklyRow(
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.atmosphereBottom,
   },
   top: {
-    backgroundColor: '#091117',
+    backgroundColor: 'rgba(9,24,34,.76)',
     borderBottomWidth: 1,
-    borderBottomColor: '#30414E',
+    borderBottomColor: colors.borderHighlight,
   },
   content: {
     flex: 1,

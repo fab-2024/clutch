@@ -6,6 +6,10 @@ export type ClutchProfile = {
   pseudo: string;
   email: string | null;
   est_admin: boolean;
+  est_developpeur: boolean;
+  est_createur: boolean;
+  volts_illimites: boolean;
+  contenu_debloque: boolean;
   equipe_favorite_id: string | null;
   jeux_suivis: string[];
   profil_public: boolean;

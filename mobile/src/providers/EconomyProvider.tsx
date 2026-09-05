@@ -18,6 +18,7 @@ import { useAuth } from './AuthProvider';
 type EconomyContextValue = PlayerEconomy & {
   error: string | null;
   loading: boolean;
+  unlimitedVolts: boolean;
   refresh: () => Promise<void>;
   setConfirmedVolts: (ownerId: string, balance: number) => void;
 };
@@ -31,8 +32,11 @@ const EMPTY_ECONOMY: PlayerEconomy = {
 const EconomyContext = createContext<EconomyContextValue | null>(null);
 
 export function EconomyProvider({ children }: PropsWithChildren) {
-  const { session } = useAuth();
+  const { profile, session } = useAuth();
   const userId = session?.user.id;
+  const unlimitedVolts = Boolean(
+    profile && userId && profile.id === userId && profile.volts_illimites,
+  );
   const [economy, setEconomy] = useState<PlayerEconomy>(EMPTY_ECONOMY);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,8 +88,8 @@ export function EconomyProvider({ children }: PropsWithChildren) {
   }, [invalidateRequests, refresh, userId]);
 
   const value = useMemo<EconomyContextValue>(
-    () => ({ ...economy, error, loading, refresh, setConfirmedVolts }),
-    [economy, error, loading, refresh, setConfirmedVolts],
+    () => ({ ...economy, error, loading, refresh, setConfirmedVolts, unlimitedVolts }),
+    [economy, error, loading, refresh, setConfirmedVolts, unlimitedVolts],
   );
 
   return <EconomyContext.Provider value={value}>{children}</EconomyContext.Provider>;

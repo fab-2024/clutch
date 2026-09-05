@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 
-import { previewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
+import { usePreviewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
 import { PREVIEW_STREAK } from '@/src/features/retention/preview';
 
 import type { HubData, HubMatch } from '../types';
@@ -102,7 +102,8 @@ export default function HubPreviewScreen() {
     state?: string | string[];
     teams?: string | string[];
   }>();
-  if (!previewRoutesEnabled) return <Redirect href="/" />;
+  const previewEnabled = usePreviewRoutesEnabled();
+  if (!previewEnabled) return <Redirect href="/" />;
   const previewState = normalizePreviewState(params.state);
   const previewTeams = normalizePreviewTeams(params.teams);
   const previewScore = normalizePreviewScore(params.score);

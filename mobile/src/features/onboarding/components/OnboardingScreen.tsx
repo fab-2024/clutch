@@ -14,6 +14,7 @@ import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated'
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GriffLockup } from '@/src/components/brand/GriffLogo';
+import { AppAtmosphere } from '@/src/components/layout/AppAtmosphere';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { errorFeedback, impactFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
@@ -122,16 +123,7 @@ export default function OnboardingScreen() {
 
   return (
     <SafeAreaView style={styles.root}>
-      <LinearGradient
-        colors={[colors.backgroundDeep, '#0B110E', colors.backgroundDeep]}
-        end={{ x: 1, y: 1 }}
-        start={{ x: 0, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.ambientLayer}>
-        <View style={styles.ambientVolt} />
-        <View style={styles.ambientBlue} />
-      </View>
+      <AppAtmosphere />
       <View style={styles.shell}>
         <OnboardingTop step={step} />
 
@@ -336,10 +328,7 @@ function TeamsStep({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, overflow: 'hidden', backgroundColor: colors.backgroundDeep },
-  ambientLayer: { position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' },
-  ambientVolt: { position: 'absolute', top: -100, right: -140, width: 330, height: 330, borderRadius: 165, backgroundColor: '#BBD21F', opacity: 0.11 },
-  ambientBlue: { position: 'absolute', bottom: -170, left: -150, width: 350, height: 350, borderRadius: 175, backgroundColor: '#16496F', opacity: 0.1 },
+  root: { flex: 1, overflow: 'hidden', backgroundColor: colors.atmosphereBottom },
   shell: { flex: 1, width: '100%', maxWidth: 430, alignSelf: 'center', paddingHorizontal: spacing.md },
   stepFrame: { flex: 1 },
   top: { minHeight: 70, flexDirection: 'row', alignItems: 'center', gap: 12 },

@@ -211,3 +211,7 @@ export function useAuth() {
   if (!context) throw new Error('useAuth doit être utilisé dans AuthProvider.');
   return context;
 }
+
+export function useOptionalAuth() {
+  return useContext(AuthContext);
+}

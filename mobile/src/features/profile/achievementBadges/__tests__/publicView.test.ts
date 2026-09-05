@@ -19,7 +19,7 @@ describe('public achievement badge projection', () => {
     expect(view).toMatchObject({
       id: 'countercurrent',
       locked: true,
-      name: 'Badge mystère',
+      name: 'Anneau mystère',
       obtained: false,
       visualFamily: 'sealed-countercurrent',
       clue: 'La foule regardait ailleurs.',

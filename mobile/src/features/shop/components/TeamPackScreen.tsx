@@ -453,7 +453,7 @@ function readParam(value?: string | string[]) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#091117' },
+  root: { flex: 1, backgroundColor: 'transparent' },
   scrollContent: {
     width: '100%',
     maxWidth: layout.contentMaxWidth,

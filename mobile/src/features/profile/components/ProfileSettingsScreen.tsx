@@ -562,6 +562,9 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
         <View style={styles.section}>
           <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>{t('settings.account.eyebrow')}</Text><Text style={styles.sectionTitle}>{t('settings.account.title')}</Text></View></View>
           <View style={styles.accountLinks}>
+            {activeProfile?.est_developpeur && !previewState ? (
+              <AccountLink label={t('settings.developer.open')} onPress={() => router.push('/developer')} />
+            ) : null}
             <AccountLink label={t('settings.account.safety')} onPress={() => router.push('/settings/safety')} />
             <AccountLink label={t('settings.account.data')} onPress={() => router.push('/settings/account')} />
             <AccountLink label={t('settings.account.privacy')} onPress={() => router.push('/legal/privacy')} />
@@ -752,7 +755,7 @@ function AccountLink({ label, onPress }: { label: string; onPress: () => void })
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1, backgroundColor: 'transparent' },
   content: { width: '100%', maxWidth: 430, alignSelf: 'center', paddingHorizontal: spacing.md, paddingBottom: 72, gap: 25 },
   contentLandscape: { maxWidth: layout.wideContentMaxWidth, paddingBottom: 40, gap: 16 },
   header: { minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#30414E' },

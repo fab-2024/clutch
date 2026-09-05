@@ -38,6 +38,7 @@ import {
   ATELIER_CATEGORY_META,
   atelierProductById,
   atelierProducts,
+  isVisibleAtelierCategory,
   type AtelierCategory,
   type AtelierProduct,
 } from '../atelierCatalog';
@@ -104,15 +105,18 @@ export default function AtelierShopScreen({
 }: AtelierShopScreenProps) {
   const { height, width } = useWindowDimensions();
   const { profile, session } = useAuth();
-  const { refresh: refreshEconomy, volts } = useEconomy();
+  const { refresh: refreshEconomy, unlimitedVolts, volts } = useEconomy();
   const { refresh: refreshCosmetics } = useCosmetics();
   const { showSnackbar } = useSnackbar();
-  const previewProduct = atelierProductById(previewState?.productId);
-  const initialProduct = previewProduct ?? atelierProductById('material_graphite');
+  const requestedPreviewProduct = atelierProductById(previewState?.productId);
+  const previewProduct = requestedPreviewProduct && isVisibleAtelierCategory(requestedPreviewProduct.category)
+    ? requestedPreviewProduct
+    : null;
+  const initialProduct = previewProduct ?? atelierProductById('lighting_cyan');
   const [data, setData] = useState<CosmeticShopData | null>(previewData ?? null);
   const [profileData, setProfileData] = useState<ProfileData | null>(previewProfile ?? null);
-  const [category, setCategory] = useState<AtelierCategory>(initialProduct?.category ?? 'materials');
-  const [selectedId, setSelectedId] = useState(initialProduct?.id ?? 'material_graphite');
+  const [category, setCategory] = useState<AtelierCategory>(initialProduct?.category ?? 'lighting');
+  const [selectedId, setSelectedId] = useState(initialProduct?.id ?? 'lighting_cyan');
   const [loading, setLoading] = useState(previewState?.loading ?? !previewData);
   const [refreshing, setRefreshing] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -432,7 +436,7 @@ export default function AtelierShopScreen({
           showsVerticalScrollIndicator={false}
         >
           <View style={[styles.content, compactHeight && styles.contentCompact]}>
-            <AtelierHeader balance={balance} compact={compactHeight} loading={loading} />
+            <AtelierHeader balance={balance} compact={compactHeight} loading={loading} unlimitedVolts={!previewData && unlimitedVolts} />
 
             {loadError ? (
               <View accessible accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.errorBanner}>
@@ -540,7 +544,17 @@ export default function AtelierShopScreen({
   );
 }
 
-function AtelierHeader({ balance, compact, loading }: { balance: number; compact: boolean; loading: boolean }) {
+function AtelierHeader({
+  balance,
+  compact,
+  loading,
+  unlimitedVolts,
+}: {
+  balance: number;
+  compact: boolean;
+  loading: boolean;
+  unlimitedVolts: boolean;
+}) {
   return (
     <View style={[styles.header, compact && styles.headerCompact]}>
       <Pressable
@@ -555,11 +569,11 @@ function AtelierHeader({ balance, compact, loading }: { balance: number; compact
         <Text style={styles.headerEyebrow}>BOUTIQUE // VITRINE</Text>
         <Text style={styles.headerTitle}>ATELIER</Text>
       </View>
-      <View accessible accessibilityLabel={`${formatNumber(balance)} Volts disponibles`} style={styles.balance} testID="atelier-balance">
+      <View accessible accessibilityLabel={unlimitedVolts ? 'Volts illimités' : `${formatNumber(balance)} Volts disponibles`} style={styles.balance} testID="atelier-balance">
         <CurrencyIcon kind="volts" size={17} />
         <View>
           <Text style={styles.balanceLabel}>SOLDE</Text>
-          <Text style={styles.balanceValue}>{loading ? '—' : formatNumber(balance)}</Text>
+          <Text style={styles.balanceValue}>{loading ? '—' : unlimitedVolts ? '∞' : formatNumber(balance)}</Text>
         </View>
       </View>
     </View>
@@ -1191,7 +1205,7 @@ const noticeToneStyle = StyleSheet.create({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
   },
   scrollContent: {
     alignItems: 'center',

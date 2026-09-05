@@ -11,6 +11,7 @@ import {
   COSMETIC_PACK_CATALOG,
   cosmeticPackById,
   createTeamPackPreviewItems,
+  currentCosmeticPackItemById,
   DERNIER_ROUND_PACK,
   FNATIC_TEAM_PACK,
   GAME_COLLECTION_PACK_CATALOG,
@@ -196,6 +197,10 @@ describe('original pack catalogue', () => {
       VALORANT_COLLECTION_PACK,
       ROCKET_LEAGUE_COLLECTION_PACK,
     ]);
+    expect(currentCosmeticPackItemById(SANG_DES_TITANS_PACK.items[5].id)).toBe(
+      SANG_DES_TITANS_PACK.items[5],
+    );
+    expect(currentCosmeticPackItemById('fnatic-totem')).toBeNull();
   });
 
   it.each(NEW_ORIGINAL_PACKS)(
@@ -207,13 +212,16 @@ describe('original pack catalogue', () => {
         licenseHolder: 'Clutch',
         price: 1200,
       });
-      expect(pack.items).toHaveLength(12);
-      expect(new Set(pack.items.map((item) => item.id))).toHaveProperty('size', 12);
+      expect(pack.items).toHaveLength(9);
+      expect(new Set(pack.items.map((item) => item.id))).toHaveProperty('size', 9);
       expect(pack.items.every((item) => COSMETIC_SLOTS.includes(item.slot))).toBe(true);
+      expect(pack.items.some((item) => item.roomKind === 'ring')).toBe(false);
+      expect(pack.items.some((item) => item.roomSlot === 'right-free')).toBe(false);
+      expect(pack.items.some((item) => item.slot === 'titre_profil')).toBe(false);
 
       const defaults = pack.items.filter((item) => item.equipByDefault);
-      expect(defaults).toHaveLength(8);
-      expect(new Set(defaults.map((item) => item.slot))).toHaveProperty('size', 8);
+      expect(defaults).toHaveLength(6);
+      expect(new Set(defaults.map((item) => item.slot))).toHaveProperty('size', 6);
       expect(cosmeticPackById(pack.id)).toBe(pack);
 
       const next = applyPreviewTeamPackAction(makeData(1280, pack), pack);

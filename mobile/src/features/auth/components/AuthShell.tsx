@@ -1,5 +1,4 @@
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import type { PropsWithChildren, ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
@@ -13,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GriffLockup } from '@/src/components/brand/GriffLogo';
+import { AppAtmosphere } from '@/src/components/layout/AppAtmosphere';
 import { colors, spacing, typography } from '@/src/theme';
 
 type AuthShellProps = PropsWithChildren<{
@@ -37,16 +37,7 @@ export default function AuthShell({
 }: AuthShellProps) {
   return (
     <SafeAreaView style={styles.root}>
-      <LinearGradient
-        colors={[colors.background, colors.backgroundDeep, colors.background]}
-        end={{ x: 1, y: 1 }}
-        start={{ x: 0, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.ambientLayer}>
-        <View style={styles.ambientVolt} />
-        <View style={styles.ambientBlue} />
-      </View>
+      <AppAtmosphere />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.root}
@@ -93,10 +84,7 @@ export default function AuthShell({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, overflow: 'hidden', backgroundColor: colors.background },
-  ambientLayer: { position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' },
-  ambientVolt: { position: 'absolute', top: 90, right: -120, width: 300, height: 300, borderRadius: 150, backgroundColor: '#BBD21F', opacity: 0.12 },
-  ambientBlue: { position: 'absolute', bottom: -120, left: -140, width: 320, height: 320, borderRadius: 160, backgroundColor: '#174A70', opacity: 0.12 },
+  root: { flex: 1, overflow: 'hidden', backgroundColor: colors.atmosphereBottom },
   scrollContent: { flexGrow: 1 },
   shell: { flexGrow: 1, width: '100%', maxWidth: 430, minHeight: 720, alignSelf: 'center', justifyContent: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.lg, gap: 20 },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
@@ -108,7 +96,7 @@ const styles = StyleSheet.create({
   eyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.3 },
   title: { ...typography.displayLarge, maxWidth: 370, color: colors.text },
   subtitle: { ...typography.body, maxWidth: 390, color: '#98A2AC' },
-  panel: { overflow: 'hidden', padding: 14, borderRadius: 26, backgroundColor: 'rgba(17,26,34,.82)', borderWidth: 1, borderColor: colors.border },
+  panel: { overflow: 'hidden', padding: 14, borderRadius: 26, backgroundColor: colors.surfaceGlass, borderWidth: 1, borderColor: colors.borderHighlight },
   footer: { alignItems: 'center' },
   pressed: { opacity: 0.75 },
 });

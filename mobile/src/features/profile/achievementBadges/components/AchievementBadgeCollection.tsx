@@ -22,9 +22,6 @@ type AchievementBadgeCollectionProps = {
 const FILTERS: readonly { id: BadgeCollectionFilter; label: string }[] = [
   { id: 'all', label: 'TOUS' },
   { id: 'calls', label: 'CALLS' },
-  { id: 'social', label: 'SOCIAL' },
-  { id: 'faction', label: 'FACTION' },
-  { id: 'season', label: 'SAISON' },
   { id: 'secret', label: 'MYSTÈRE' },
 ];
 
@@ -52,8 +49,8 @@ export default function AchievementBadgeCollection({
     <View style={styles.root}>
       <View style={styles.summary}>
         <View>
-          <Text style={styles.summaryEyebrow}>ACCOMPLISSEMENTS</Text>
-          <Text style={styles.summaryTitle}>{obtainedCount} / {badges.length} OBTENUS</Text>
+          <Text style={styles.summaryEyebrow}>ANNEAUX D’ACCOMPLISSEMENT</Text>
+          <Text style={styles.summaryTitle}>{obtainedCount} / {badges.length} DÉBLOQUÉS</Text>
         </View>
         <Text style={styles.summaryPromise}>JAMAIS ACHETABLES</Text>
       </View>
@@ -117,7 +114,7 @@ function BadgeCard({
 
   return (
     <Pressable
-      accessibilityLabel={`${badge.name}, ${badge.obtained ? 'obtenu' : 'verrouillé'}. ${detail}`}
+      accessibilityLabel={`Anneau ${badge.name}, ${badge.obtained ? 'débloqué' : 'verrouillé'}. ${detail}`}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [styles.card, badge.obtained && { borderColor: `${badge.accent}60` }, pressed && styles.pressed]}
@@ -130,7 +127,7 @@ function BadgeCard({
       </View>
       <View style={styles.cardTopline}>
         <Text style={[styles.rarity, { color: rarityColor(badge.rarity) }]}>{rarityLabel(badge.rarity)}</Text>
-        <Text style={styles.state}>{badge.obtained ? 'OBTENU' : secretLocked ? 'SCELLÉ' : 'À DÉBLOQUER'}</Text>
+        <Text style={styles.state}>{badge.obtained ? 'DÉBLOQUÉ' : secretLocked ? 'SCELLÉ' : 'À DÉBLOQUER'}</Text>
       </View>
       <Text numberOfLines={2} style={styles.name}>{badge.name}</Text>
       <Text numberOfLines={3} style={styles.detail}>{detail}</Text>
@@ -140,7 +137,7 @@ function BadgeCard({
           <Text style={styles.progressText}>{formatProgress(badge.progress.current)} / {formatProgress(badge.progress.target)}</Text>
         </View>
       ) : null}
-      {badge.obtained && badge.unlockedAt ? <Text style={styles.date}>OBTENU LE {formatDate(badge.unlockedAt)}</Text> : null}
+      {badge.obtained && badge.unlockedAt ? <Text style={styles.date}>DÉBLOQUÉ LE {formatDate(badge.unlockedAt)}</Text> : null}
     </Pressable>
   );
 }

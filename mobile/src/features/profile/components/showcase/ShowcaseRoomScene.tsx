@@ -180,7 +180,7 @@ export default function ShowcaseRoomScene({
   const rightOpacity = sectionOpacity(focus, 'right');
   const description = loading
     ? 'Showroom en cours d’installation'
-    : `Showroom de ${data?.pseudo ?? 'Supporter'}, rang ${rankLabel}, écrin ${resolvedRankDisplay.name}, ${visibleBadges.length} badges visibles et ${trophies.length} trophées${equippedRing ? `, anneau ${equippedRing.familyName} ${equippedRing.name}` : ''}`;
+    : `Showroom de ${data?.pseudo ?? 'Supporter'}, rang ${rankLabel}, écrin ${resolvedRankDisplay.name}, ${visibleBadges.length} anneaux visibles et ${trophies.length} trophées${equippedRing ? `, anneau évolutif ${equippedRing.familyName} ${equippedRing.name}` : ''}`;
 
   return (
     <View

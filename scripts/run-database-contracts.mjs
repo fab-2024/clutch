@@ -11,6 +11,7 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 const contractFiles = [
   'supabase/tests/p0_mobile_contracts.sql',
   'supabase/tests/security_hardening_contracts.sql',
+  'supabase/tests/creator_developer_access.sql',
   'supabase/tests/cosmetic_shop.sql',
   'supabase/tests/monetization_contract.sql',
   'supabase/tests/catalog_inventory_equipment_v2.sql',

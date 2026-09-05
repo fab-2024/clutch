@@ -37,7 +37,7 @@ export default function AchievementBadgeArtwork({
 
   return (
     <View
-      accessibilityLabel={`${badge.obtained ? 'Badge obtenu' : 'Badge verrouillé'}, ${badge.name}`}
+      accessibilityLabel={`${badge.obtained ? 'Anneau débloqué' : 'Anneau verrouillé'}, ${badge.name}`}
       accessible
       style={{ height, width: size }}
       testID={testID ?? `achievement-badge-artwork-${badge.id}`}
@@ -363,7 +363,7 @@ function gradientIds(id: string) {
 }
 
 export function badgeArtworkDescription(badge: PublicAchievementBadge) {
-  return `${badge.name}, ${badge.obtained ? 'obtenu' : 'verrouillé'}`;
+  return `${badge.name}, ${badge.obtained ? 'débloqué' : 'verrouillé'}`;
 }
 
 export type BadgeArtworkNode = ReactNode;

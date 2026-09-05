@@ -2,7 +2,7 @@ import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { previewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
+import { usePreviewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
@@ -151,7 +151,8 @@ export default function SocialHomePreviewScreen({
     setMutation(null);
   }, [requestedForm.level, requestedInstability, requestedMutationFrom, requestedMutationTo]);
 
-  if (!previewRoutesEnabled) return <Redirect href="/" />;
+  const previewEnabled = usePreviewRoutesEnabled();
+  if (!previewEnabled) return <Redirect href="/" />;
 
   const playMutation = (fromLevel: number, toLevel: number) => {
     const target = communityFormForLevel(toLevel);

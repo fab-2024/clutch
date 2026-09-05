@@ -6,6 +6,11 @@ import type { ReactNode } from 'react';
 
 import { rankEmblemSource } from '@/src/features/ranking/components/RankEmblem';
 import { createAtelierPreviewItems } from '@/src/features/shop/atelierCatalog';
+import {
+  createTeamPackPreviewItems,
+  FNATIC_TEAM_PACK,
+  SANG_DES_TITANS_PACK,
+} from '@/src/features/shop/teamPackCatalog';
 import { DEFAULT_MONETIZATION_CONTRACT, EMPTY_EQUIPPED_COSMETICS, type CosmeticShopData } from '@/src/features/shop/types';
 import { PREVIEW_PROFILE } from '../ProfilePreviewScreen';
 import ShowcaseScreen, { resolveRoomPlaceableItems } from '../ShowcaseScreen';
@@ -21,6 +26,7 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
 }));
 jest.mock('lucide-react-native/icons/arrow-left', () => 'ArrowLeft');
+jest.mock('lucide-react-native/icons/lock', () => 'Lock');
 jest.mock('lucide-react-native/icons/settings-2', () => 'Settings2');
 jest.mock('../ProfileScreen', () => 'ProfileScreen');
 jest.mock('../showcase/ShowcaseRoomScene', () => 'ShowcaseRoomScene');
@@ -142,20 +148,22 @@ describe('ShowcaseScreen immersive editor', () => {
 
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     expect(screen.getByTestId('showcase-atelier-drawer')).toBeTruthy();
-    expect(screen.getAllByRole('tab')).toHaveLength(5);
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
+    expect(screen.queryByTestId('showcase-atelier-category-materials')).toBeNull();
+    expect(screen.queryByTestId('showcase-atelier-category-jerseys')).toBeNull();
     expect(screen.getByText(/Les objets posés sur les socles/)).toBeTruthy();
 
-    await fireEvent.press(screen.getByTestId('showcase-atelier-product-material_steel'));
-    expect(screen.getByTestId('showcase-room-theme-steel')).toBeTruthy();
-    expect(screen.getByText('ACHETER · 120 VOLTS')).toBeTruthy();
-
-    await fireEvent.press(screen.getByTestId('showcase-atelier-category-lighting'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-product-lighting_amber'));
     expect(screen.getByTestId('showcase-room-lighting-amber')).toBeTruthy();
+    expect(screen.getByText('ACHETER · 100 VOLTS')).toBeTruthy();
+    expect(screen.getByTestId('showcase-atelier-product-image-lighting_amber').props.resizeMode).toBe('cover');
 
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-supports'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-product-supports_forge'));
     expect(screen.getByTestId('showcase-room-background-supports_forge')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('showcase-atelier-category-ranks'));
+    expect(screen.getByTestId('showcase-atelier-product-image-rank_carbon_cradle').props.resizeMode).toBe('contain');
 
     await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
     expect(screen.getByTestId('showcase-room-theme-graphite')).toBeTruthy();
@@ -163,8 +171,8 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.getByTestId('showcase-room-background-supports_gallery')).toBeTruthy();
 
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
-    await fireEvent.press(screen.getByTestId('showcase-atelier-category-materials'));
-    await fireEvent.press(screen.getByTestId('showcase-atelier-product-material_steel'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-category-lighting'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-product-lighting_amber'));
 
     await fireEvent.press(screen.getByTestId('showcase-atelier-primary'));
     expect(screen.getByTestId('atelier-purchase-sheet')).toBeTruthy();
@@ -173,10 +181,11 @@ describe('ShowcaseScreen immersive editor', () => {
     await waitFor(() => {
       expect(screen.getAllByText('ÉQUIPÉ').length).toBeGreaterThan(0);
     });
-    expect(screen.getByText('380')).toBeTruthy();
+    expect(screen.getByText('400')).toBeTruthy();
 
     await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
-    expect(screen.getByTestId('showcase-room-theme-steel')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-theme-graphite')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-lighting-amber')).toBeTruthy();
   });
 
   it('shows only + Ajouter in an empty slot and restores it after removing an object', async () => {
@@ -217,5 +226,29 @@ describe('ShowcaseScreen immersive editor', () => {
       expect(item.badge?.obtained).toBe(true);
       expect(item.image).toBeUndefined();
     }
+  });
+
+  it('uses the current Boutique catalogue in the object picker and hides archived pack objects', () => {
+    const archivedTotem = createTeamPackPreviewItems(FNATIC_TEAM_PACK)
+      .find((item) => item.id === 'fnatic-totem')!;
+    const currentTotem = createTeamPackPreviewItems(SANG_DES_TITANS_PACK)
+      .find((item) => item.id === 'sang-des-titans-three-voices-totem')!;
+
+    const items = resolveRoomPlaceableItems({
+      ownedItems: [
+        { ...archivedTotem, owned: true },
+        { ...currentTotem, owned: true },
+      ],
+      profileData: PREVIEW_PROFILE,
+      rankAccent: '#C57943',
+      rankLabel: 'BRONZE',
+      ringProgressions: [],
+    });
+
+    expect(items.some((item) => item.id === 'cosmetic:fnatic-totem')).toBe(false);
+    expect(items.find((item) => item.id === `cosmetic:${currentTotem.id}`)).toMatchObject({
+      kind: 'trophy',
+      name: 'Totem des Trois Voix',
+    });
   });
 });

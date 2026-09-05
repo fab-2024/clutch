@@ -15,6 +15,7 @@ import { GrowthError, growthError } from '@/src/lib/growthErrors';
 import { milestonePath } from '@/src/lib/publicLinks';
 import { sharePublicLink } from '@/src/lib/share';
 import { formatDateTime, formatNumber, t, type TranslationKey } from '@/src/lib/i18n';
+import { useEconomy } from '@/src/providers/EconomyProvider';
 import { useSnackbar } from '@/src/providers/SnackbarProvider';
 import { colors, layout, radius, spacing, typography } from '@/src/theme';
 
@@ -26,6 +27,7 @@ import { useStreakCountdown } from './CallStreakCard';
 
 export default function CallStreakScreen({ previewState }: { previewState?: CallStreakState } = {}) {
   const streak = useCallStreak();
+  const { unlimitedVolts } = useEconomy();
   const refreshStreak = streak.refresh;
   const { showSnackbar } = useSnackbar();
   const [preview, setPreview] = useState(previewState);
@@ -181,7 +183,7 @@ export default function CallStreakScreen({ previewState }: { previewState?: Call
               <Button fullWidth disabled={!canPurchase} ref={purchaseButton} testID="streak-buy-protector"
                 label={t(pendingOperation ? 'streak.protector.verify' : state.protectors >= 2 ? 'streak.protector.full' : 'streak.protector.buy', { price: state.protectorPrice })}
                 onPress={() => { setMutationError(null); setSheetVisible(true); }} />
-              <Text style={styles.meta}>{t('economy.availableBalanceLabel', { amount: formatNumber(state.volts) })}</Text>
+              <Text style={styles.meta}>{!preview && unlimitedVolts ? t('economy.unlimitedBalanceLabel') : t('economy.availableBalanceLabel', { amount: formatNumber(state.volts) })}</Text>
             </View>
             <View style={styles.panel}>
               <Text style={styles.sectionTitle}>{t('streak.milestones')}</Text>
@@ -217,7 +219,7 @@ export default function CallStreakScreen({ previewState }: { previewState?: Call
           label={t(pendingOperation ? 'streak.protector.verify' : 'streak.protector.confirm', { price: state?.protectorPrice ?? 90 })} testID="streak-confirm-protector" />
           <Button fullWidth variant="ghost" disabled={busy} onPress={() => setSheetVisible(false)} label={t('common.cancel')} /></View>}>
         <View style={styles.actions}><Text style={styles.body}>{t(pendingOperation ? 'streak.protector.pending' : 'streak.protector.rules')}</Text>
-          {state && !pendingOperation ? <Text style={styles.status}>{t('streak.protector.balance', { before: formatNumber(state.volts), after: formatNumber(Math.max(0, state.volts - state.protectorPrice)) })}</Text> : null}
+          {state && !pendingOperation ? <Text style={styles.status}>{!preview && unlimitedVolts ? t('economy.unlimitedBalanceLabel') : t('streak.protector.balance', { before: formatNumber(state.volts), after: formatNumber(Math.max(0, state.volts - state.protectorPrice)) })}</Text> : null}
           {mutationError ? <Text accessibilityRole="alert" style={styles.body}>{mutationError}</Text> : null}</View>
       </BaseSheet>
     </Screen>

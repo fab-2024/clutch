@@ -65,7 +65,7 @@ export function assignBadgeToShowcaseSlot(
   }
   if (badgeId) {
     const badge = collection.find((candidate) => candidate.id === badgeId);
-    if (!badge?.obtained) throw new Error('Un badge non obtenu ne peut pas être exposé.');
+    if (!badge?.obtained) throw new Error('Un anneau non débloqué ne peut pas être exposé.');
   }
 
   const next = current.map((candidate) => candidate === badgeId ? null : candidate) as AchievementBadgeSlots;

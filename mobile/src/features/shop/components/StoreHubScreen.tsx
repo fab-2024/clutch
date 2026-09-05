@@ -166,8 +166,8 @@ function StoreDestinationCard({
       />
       <LinearGradient
         colors={variant === 'showcase'
-          ? ['rgba(4,7,10,.02)', 'rgba(4,7,10,.34)', 'rgba(4,7,10,.98)']
-          : ['rgba(5,8,11,.18)', 'rgba(5,8,11,.62)', 'rgba(5,8,11,.98)']}
+          ? ['rgba(5,17,24,.01)', 'rgba(6,27,38,.24)', 'rgba(7,25,35,.92)']
+          : ['rgba(9,11,12,.08)', 'rgba(13,16,18,.46)', 'rgba(14,18,20,.94)']}
         end={{ x: 0.5, y: 1 }}
         locations={[0, 0.48, 1]}
         start={{ x: 0.5, y: 0 }}
@@ -213,9 +213,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     padding: 14,
     borderRadius: radius.lg,
-    backgroundColor: colors.backgroundDeep,
+    backgroundColor: colors.surfaceGlass,
     borderWidth: 1,
-    borderColor: colors.borderStrong,
+    borderColor: colors.borderHighlight,
+    boxShadow: '0 16px 34px rgba(0,0,0,.22)',
   },
   eyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.2 },
   title: { ...typography.displayMedium, marginTop: 6, color: colors.text },
@@ -226,9 +227,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 14,
-    backgroundColor: colors.surfaceLow,
+    backgroundColor: colors.surfaceGlassElevated,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.borderHighlight,
   },
   destinations: { paddingHorizontal: spacing.md, gap: 14 },
   card: {
@@ -237,9 +238,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'flex-end',
     borderRadius: radius.lg,
-    backgroundColor: colors.surfaceLow,
+    backgroundColor: colors.surfaceGlass,
     borderWidth: 1,
-    borderColor: colors.borderStrong,
+    borderColor: colors.borderHighlight,
+    boxShadow: '0 20px 42px rgba(0,0,0,.28)',
   },
   cardPressed: { opacity: 0.84, transform: [{ scale: 0.992 }] },
   cardImage: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, width: '100%', height: '100%' },
@@ -260,7 +262,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 14,
-    backgroundColor: 'rgba(5,8,11,.78)',
+    backgroundColor: 'rgba(8,20,28,.86)',
     borderWidth: 1,
   },
   cardCopy: { minWidth: 0, flex: 1 },

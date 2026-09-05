@@ -1456,6 +1456,10 @@ const COSMETIC_PACK_ITEM_BY_ID = new Map(
   ALL_COSMETIC_PACK_CATALOG.flatMap((pack) => pack.items.map((item) => [item.id, item] as const)),
 );
 
+const CURRENT_COSMETIC_PACK_ITEM_BY_ID = new Map(
+  COSMETIC_PACK_CATALOG.flatMap((pack) => pack.items.map((item) => [item.id, item] as const)),
+);
+
 export function teamPackById(id: string | null | undefined) {
   return ALL_COSMETIC_PACK_CATALOG.find((pack) => pack.kind === 'team' && pack.id === id) ?? null;
 }
@@ -1470,6 +1474,10 @@ export function teamPackItemById(id: string | null | undefined) {
 
 export function cosmeticPackItemById(id: string | null | undefined) {
   return id ? COSMETIC_PACK_ITEM_BY_ID.get(id) ?? null : null;
+}
+
+export function currentCosmeticPackItemById(id: string | null | undefined) {
+  return id ? CURRENT_COSMETIC_PACK_ITEM_BY_ID.get(id) ?? null : null;
 }
 
 export function teamPackRuntimeItems(pack: TeamPackDefinition, data: CosmeticShopData | null | undefined) {

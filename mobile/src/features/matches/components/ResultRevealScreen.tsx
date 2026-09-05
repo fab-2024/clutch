@@ -267,7 +267,7 @@ export default function ResultRevealScreen({
         : FadeIn.duration(420);
 
   return (
-    <Screen>
+    <Screen atmosphere="none">
       <LinearGradient colors={['#080D11', '#06090D', '#080A0D']} style={StyleSheet.absoluteFill} />
       <View pointerEvents="none" style={styles.pageAuraClip}>
         <Animated.View style={[styles.pageAura, auraStyle, { backgroundColor: tone }]} />
@@ -417,7 +417,7 @@ function ResultTransitionState({
   const origin = source === 'system' ? 'RÉSULTAT OFFICIEL' : `DEPUIS ${matchJourneySourceLabel(source)}`;
 
   return (
-    <Screen>
+    <Screen atmosphere="none">
       <LinearGradient colors={['#080D11', '#06090D', '#080A0D']} style={StyleSheet.absoluteFill} />
       <ScrollView contentContainerStyle={[styles.content, isShortLandscape && styles.contentLandscape]} showsVerticalScrollIndicator={false}>
         <View style={[styles.topBar, isShortLandscape && styles.topBarLandscape]}>
@@ -489,7 +489,7 @@ function RankMetric({ accent, grade, label, rank }: { accent?: string; grade: st
 }
 
 function RevealState({ action, copy, onPress, title }: { action?: string; copy: string; onPress?: () => void; title: string }) {
-  return <Screen><LinearGradient colors={['#0B1115', '#070A0E']} style={StyleSheet.absoluteFill} /><View style={styles.state}><GriffEmblem size={64} style={styles.stateEmblem} /><Text style={styles.stateTitle}>{title}</Text><Text style={styles.stateCopy}>{copy}</Text>{action && onPress ? <Pressable accessibilityRole="button" onPress={onPress} style={styles.stateButton}><Text style={styles.stateButtonText}>{action}</Text></Pressable> : null}</View></Screen>;
+  return <Screen atmosphere="none"><LinearGradient colors={['#0B1115', '#070A0E']} style={StyleSheet.absoluteFill} /><View style={styles.state}><GriffEmblem size={64} style={styles.stateEmblem} /><Text style={styles.stateTitle}>{title}</Text><Text style={styles.stateCopy}>{copy}</Text>{action && onPress ? <Pressable accessibilityRole="button" onPress={onPress} style={styles.stateButton}><Text style={styles.stateButtonText}>{action}</Text></Pressable> : null}</View></Screen>;
 }
 
 function signed(value: number) { return `${value >= 0 ? '+' : '−'}${formatNumber(Math.abs(value))}`; }

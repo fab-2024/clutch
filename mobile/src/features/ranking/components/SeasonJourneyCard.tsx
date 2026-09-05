@@ -72,7 +72,7 @@ export function SeasonJourneyCard({
         style={styles.atmosphere}
       />
       <LinearGradient
-        colors={['rgba(2,8,16,.26)', 'rgba(2,8,16,.08)', 'rgba(2,8,16,.7)']}
+        colors={['rgba(6,28,40,.08)', 'rgba(8,39,53,.02)', 'rgba(2,12,20,.48)']}
         end={{ x: 0.5, y: 1 }}
         pointerEvents="none"
         start={{ x: 0.5, y: 0 }}

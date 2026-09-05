@@ -517,7 +517,7 @@ function extractToken(value: string) { const cleaned = value.trim().split(/[?#]/
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
   },
   content: {
     width: '100%',

@@ -18,9 +18,10 @@ type Props = {
 
 export function GriffHeader({ accessory, compact = false, economy, leading, variant = 'default' }: Props = {}) {
   const { isCompactWidth, isShortLandscape } = useResponsiveLayout();
-  const { frags, volts } = useEconomy();
+  const { frags, unlimitedVolts, volts } = useEconomy();
   const displayedFrags = economy?.frags ?? frags;
   const displayedVolts = economy?.volts ?? volts;
+  const displayedUnlimitedVolts = economy == null && unlimitedVolts;
   const walletPresentation = variant === 'wallet';
   const narrowWallet = walletPresentation && isCompactWidth;
   const compactPresentation = compact || isShortLandscape;
@@ -33,7 +34,7 @@ export function GriffHeader({ accessory, compact = false, economy, leading, vari
   const economySummary = (
     <View
       accessible
-      accessibilityLabel={`${formatBalance(displayedFrags)} Frags, ${formatBalance(displayedVolts)} Volts`}
+      accessibilityLabel={`${formatBalance(displayedFrags)} Frags, ${displayedUnlimitedVolts ? 'Volts illimités' : `${formatBalance(displayedVolts)} Volts`}`}
       accessibilityRole="summary"
       style={[
         styles.economy,
@@ -46,7 +47,7 @@ export function GriffHeader({ accessory, compact = false, economy, leading, vari
     >
       <Balance compact={walletPresentation} kind="frags" label="FRAGS" value={displayedFrags} />
       {walletPresentation ? <View style={styles.economyDivider} /> : null}
-      <Balance compact={walletPresentation} kind="volts" label="VOLTS" value={displayedVolts} />
+      <Balance compact={walletPresentation} kind="volts" label="VOLTS" unlimited={displayedUnlimitedVolts} value={displayedVolts} />
     </View>
   );
 
@@ -87,11 +88,13 @@ function Balance({
   compact,
   kind,
   label,
+  unlimited = false,
   value,
 }: {
   compact: boolean;
   kind: CurrencyKind;
   label: string;
+  unlimited?: boolean;
   value: number | null;
 }) {
   return (
@@ -109,7 +112,7 @@ function Balance({
       </View>
       <View style={styles.balanceCopy}>
         <Text style={[styles.balanceLabel, compact && styles.balanceLabelCompact]}>{label}</Text>
-        <Text numberOfLines={1} style={[styles.balanceValue, compact && styles.balanceValueCompact]}>{formatBalance(value)}</Text>
+        <Text numberOfLines={1} style={[styles.balanceValue, compact && styles.balanceValueCompact]}>{unlimited ? '∞' : formatBalance(value)}</Text>
       </View>
     </View>
   );
@@ -192,9 +195,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     gap: 0,
     borderRadius: 18,
-    backgroundColor: colors.surfaceLow,
+    backgroundColor: colors.surfaceGlass,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: colors.borderHighlight,
   },
   economyWalletCompact: { width: 170, borderRadius: 17 },
   economyWalletNarrow: { flexShrink: 0 },
@@ -221,8 +224,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
   },
-  fragsBalance: { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
-  voltsBalance: { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+  fragsBalance: { backgroundColor: colors.surfaceGlassElevated, borderColor: colors.borderHighlight },
+  voltsBalance: { backgroundColor: colors.surfaceGlassElevated, borderColor: colors.borderHighlight },
   balanceCompact: {
     minWidth: 0,
     minHeight: layout.headerControlHeight - 2,

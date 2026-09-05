@@ -173,7 +173,7 @@ export function MatchesExperience({
   }, []);
 
   return (
-    <Screen>
+    <Screen atmosphere="none">
       <View
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"

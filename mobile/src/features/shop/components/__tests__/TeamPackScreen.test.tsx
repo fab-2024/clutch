@@ -114,7 +114,7 @@ describe('TeamPackScreen', () => {
     expect(screen.getAllByText('Armure Vega').length).toBeGreaterThan(0);
   });
 
-  it('renders a new original pack and keeps all twelve objects inspectable', async () => {
+  it('renders a new original pack with its nine retained objects', async () => {
     const screen = await render(
       <TeamPackScreen
         packId={SANG_DES_TITANS_PACK.id}
@@ -123,8 +123,11 @@ describe('TeamPackScreen', () => {
     );
 
     expect(screen.getByText('COLLECTION // ORIGINALE')).toBeTruthy();
-    expect(screen.getAllByText('DERNIER PACTE // PORTE-SERMENT')).toHaveLength(2);
-    expect(screen.getAllByTestId(/^team-pack-item-sang-des-titans-/)).toHaveLength(12);
+    expect(screen.getAllByText('DERNIER PACTE')).toHaveLength(2);
+    expect(screen.getAllByTestId(/^team-pack-item-sang-des-titans-/)).toHaveLength(9);
+    expect(screen.queryByText('Jeton du Tribut')).toBeNull();
+    expect(screen.queryByText('Carte Dernier Pacte')).toBeNull();
+    expect(screen.queryByText('Titre Porte-Serment')).toBeNull();
 
     await act(async () => {
       fireEvent.press(screen.getByTestId('team-pack-item-sang-des-titans-oath-armor'));

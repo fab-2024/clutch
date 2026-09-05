@@ -64,10 +64,10 @@ begin
     into v_pack;
 
     if (v_pack ->> 'prix_volts')::integer <> 1200
-       or (v_pack ->> 'nombre_objets')::integer <> 12
+       or (v_pack ->> 'nombre_objets')::integer <> 9
        or v_pack ->> 'accent' is distinct from v_accent
        or v_pack ->> 'marque_key' is distinct from 'clutch-originals'
-       or jsonb_array_length(v_pack -> 'objets') <> 12
+       or jsonb_array_length(v_pack -> 'objets') <> 9
        or (v_pack ->> 'possede')::boolean
        or not (v_pack ->> 'achetable')::boolean
     then
@@ -79,9 +79,9 @@ begin
 
     if not (v_purchase ->> 'achete')::boolean
        or (v_purchase ->> 'prix')::integer <> 1200
-       or (v_purchase ->> 'objets_attribues')::integer <> 12
-       or (v_purchase ->> 'equipables_par_defaut')::integer <> 8
-       or (v_purchase ->> 'nombre_equipes')::integer <> 8
+       or (v_purchase ->> 'objets_attribues')::integer <> 9
+       or (v_purchase ->> 'equipables_par_defaut')::integer <> 6
+       or (v_purchase ->> 'nombre_equipes')::integer <> 6
        or not (v_purchase ->> 'equipe')::boolean
     then
       raise exception 'Original pack % purchase is not atomic: %', v_pack_id, v_purchase;
@@ -102,7 +102,7 @@ begin
         'turbo-arena',
         'dernier-round'
       )
-  ) <> 72
+  ) <> 54
      or (
     select count(*)
     from public.inventaire_packs_cosmetiques i
@@ -154,9 +154,36 @@ begin
       'turbo-arena',
       'dernier-round'
     )
-  ) <> 72
+  ) <> 54
   then
     raise exception 'Active shop does not expose all six wave-two packs';
+  end if;
+
+  if exists (
+    select 1
+    from jsonb_array_elements(v_shop -> 'objets') item(value)
+    where item.value ->> 'id' in (
+      'sang-des-titans-tribute-token',
+      'sang-des-titans-last-pact-card',
+      'sang-des-titans-oath-bearer-title',
+      'chute-libre-survivor-token',
+      'chute-libre-share-card',
+      'chute-libre-untouchable-title',
+      'serment-du-givre-cold-breath-token',
+      'serment-du-givre-summit-card',
+      'serment-du-givre-frost-guard-title',
+      'conclave-arcanique-omen-token',
+      'conclave-arcanique-conclave-card',
+      'conclave-arcanique-spell-weaver-title',
+      'turbo-arena-vortex-wheel',
+      'turbo-arena-share-card',
+      'turbo-arena-last-second-title',
+      'dernier-round-match-point-token',
+      'dernier-round-share-card',
+      'dernier-round-cold-blood-title'
+    )
+  ) then
+    raise exception 'A retired card, title or token remains visible in the shop';
   end if;
 end;
 $$;

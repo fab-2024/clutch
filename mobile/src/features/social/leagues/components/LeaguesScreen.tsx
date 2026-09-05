@@ -137,7 +137,7 @@ function Skeleton() {
   );
 }
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1, backgroundColor: 'transparent' },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', padding: spacing.md, paddingBottom: layout.tabBarContentInset, gap: 16 },
   privateHero: { position: 'relative', overflow: 'hidden', minHeight: 250, padding: 20, borderRadius: 29, justifyContent: 'center', backgroundColor: '#0E1510', borderWidth: 1, borderColor: '#3D491D' },
   privateEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.1 },

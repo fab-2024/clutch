@@ -53,14 +53,14 @@ export default function AchievementBadgeDetailSheet({
   return (
     <Modal animationType="fade" onRequestClose={onClose} transparent visible={Boolean(badge)}>
       <View style={styles.root}>
-        <Pressable accessibilityLabel="Fermer le détail du badge" accessibilityRole="button" onPress={onClose} style={StyleSheet.absoluteFill} />
+        <Pressable accessibilityLabel="Fermer le détail de l’anneau" accessibilityRole="button" onPress={onClose} style={StyleSheet.absoluteFill} />
         {badge ? (
           <View style={styles.sheet}>
             <View style={styles.handle} />
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
               <View style={styles.topline}>
                 <View style={styles.titleCopy}>
-                  <Text style={styles.eyebrow}>{badge.isSecret ? 'ARCHIVE SCELLÉE' : 'ACCOMPLISSEMENT'}{' // '}{categoryLabel(badge.category)}</Text>
+                  <Text style={styles.eyebrow}>{badge.isSecret ? 'ANNEAU SCELLÉ' : 'ANNEAU'}{' // '}{categoryLabel(badge.category)}</Text>
                   <Text style={styles.title}>{badge.name.toUpperCase()}</Text>
                 </View>
                 <Pressable accessibilityLabel="Fermer" accessibilityRole="button" onPress={onClose} style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
@@ -75,7 +75,7 @@ export default function AchievementBadgeDetailSheet({
 
               <View style={styles.tags}>
                 <Tag color={rarityColor(badge.rarity)} label={rarityLabel(badge.rarity)} />
-                <Tag color={badge.obtained ? colors.success : '#77838D'} label={badge.obtained ? 'OBTENU' : 'VERROUILLÉ'} />
+                <Tag color={badge.obtained ? colors.success : '#77838D'} label={badge.obtained ? 'DÉBLOQUÉ' : 'VERROUILLÉ'} />
                 {badge.seasonId ? <Tag color="#8FA2B1" label={badge.seasonId.toUpperCase()} /> : null}
               </View>
 
@@ -94,7 +94,7 @@ export default function AchievementBadgeDetailSheet({
                   </View>
                   {badge.unlockedAt ? (
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>OBTENU LE</Text>
+                      <Text style={styles.detailLabel}>DÉBLOQUÉ LE</Text>
                       <Text style={styles.detailValue}>{formatDate(badge.unlockedAt)}</Text>
                     </View>
                   ) : null}

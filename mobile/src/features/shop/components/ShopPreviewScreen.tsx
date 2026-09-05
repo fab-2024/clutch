@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 
-import { previewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
+import { usePreviewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
 import { PREVIEW_PROFILE } from '@/src/features/profile/components/ProfilePreviewScreen';
 
 import { atelierProductById, createAtelierPreviewItems } from '../atelierCatalog';
@@ -98,7 +98,8 @@ export default function ShopPreviewScreen() {
     product?: string | string[];
     state?: string | string[];
   }>();
-  if (!previewRoutesEnabled) return <Redirect href="/" />;
+  const previewEnabled = usePreviewRoutesEnabled();
+  if (!previewEnabled) return <Redirect href="/" />;
   const state = previewState(readParam(params.state));
   const requestedProduct = atelierProductById(readParam(params.product));
   const defaultProduct = defaultProductForState(state);

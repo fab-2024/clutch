@@ -299,13 +299,13 @@ describe('Showcase room composition', () => {
     expect(screen.getAllByTestId('showcase-object-title-titre-profil-1')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-core-apparence-core-1')).toHaveLength(2);
     expect(screen.getAllByTestId('showcase-object-banner-carte-profil-1')).toHaveLength(2);
-    expect(screen.getAllByLabelText(/3 badges visibles/)).toHaveLength(2);
+    expect(screen.getAllByLabelText(/3 anneaux visibles/)).toHaveLength(2);
     expect(screen.getAllByTestId('locked-display-top-0', { includeHiddenElements: true })).toHaveLength(2);
     expect(screen.getAllByTestId('locked-display-middle-3', { includeHiddenElements: true })).toHaveLength(2);
     expect(screen.getAllByTestId('locked-display-bottom-0', { includeHiddenElements: true })).toHaveLength(2);
     expect(screen.queryByTestId('locked-trophy-0', { includeHiddenElements: true })).toBeNull();
     expect(screen.queryByText('▣')).toBeNull();
-    expect(screen.queryByLabelText('Trophée Badge mystère')).toBeNull();
+    expect(screen.queryByLabelText('Trophée Anneau mystère')).toBeNull();
     expect(screen.queryByLabelText(/emplacement verrouillé/i)).toBeNull();
 
     await fireEvent.press(screen.getByLabelText('Afficher collection'));

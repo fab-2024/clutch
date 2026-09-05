@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 7,
     paddingBottom: 8,
-    backgroundColor: colors.background,
+    backgroundColor: 'rgba(7,20,29,.76)',
   },
   outerLandscape: {
     maxWidth: layout.wideContentMaxWidth,
