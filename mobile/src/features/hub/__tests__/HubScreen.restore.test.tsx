@@ -54,7 +54,7 @@ jest.mock('../components/HubContextSlot', () => {
   const { Text } = jest.requireActual('react-native');
   return {
     HubContextSkeleton: 'HubContextSkeleton',
-    HubContextSlot: () => React.createElement(Text, null, 'RESTORED CONTEXT'),
+    HubDailyChallenges: () => React.createElement(Text, null, 'DÉFIS DU JOUR'),
   };
 });
 jest.mock('../components/MatchConfrontationCard', () => {
@@ -133,8 +133,9 @@ describe('HubExperience restoration', () => {
     expect(screen.getByTestId('hub-season-ranking')).toBeTruthy();
     expect(screen.getByText('Ton classement')).toBeTruthy();
     expect(screen.getByText('FRAGS')).toBeTruthy();
-    expect(screen.getByText('RESTORED CONTEXT')).toBeTruthy();
-    expect(screen.getByTestId('hub-season-controls')).toBeTruthy();
+    expect(screen.getByText('DÉFIS DU JOUR')).toBeTruthy();
+    expect(screen.queryByText('NOUVELLE RÉCOMPENSE')).toBeNull();
+    expect(screen.queryByTestId('hub-season-controls')).toBeNull();
     expect(screen.getByText('À SUIVRE')).toBeTruthy();
     expect(screen.getByText('G2')).toBeTruthy();
     expect(screen.getByText('VS')).toBeTruthy();
@@ -143,9 +144,42 @@ describe('HubExperience restoration', () => {
 
     const upNextStyle = StyleSheet.flatten(screen.getByTestId('hub-up-next-match-next-g2-fnc').props.style);
     const logoStyle = StyleSheet.flatten(screen.getByTestId('hub-up-next-logo-a-next-g2-fnc').props.style);
+    expect(upNextStyle.height).toBe(Math.round(upNextStyle.width / 2.18));
     expect(upNextStyle.height).toBeLessThan(upNextStyle.width / 2);
     expect(logoStyle.width).toBeLessThan(upNextStyle.width * .2);
     expect(logoStyle.height).toBe(logoStyle.width);
+  });
+
+  it('keeps daily challenges visible when a reward was acquired recently', async () => {
+    const screen = await render(
+      <HubExperience
+        error={null}
+        headerEconomy={{ frags: 1000, volts: 300 }}
+        hub={{
+          ...HUB,
+          factionMission: null,
+          latestReward: {
+            id: 'reward-tour-beige',
+            name: 'Tour Beige',
+            family: 'boitier',
+            slot: 'boitier',
+            rarity: 'commun',
+            styleKey: 'tour-beige',
+            accent: '#9AA5AE',
+            source: 'gratuit',
+            acquiredAt: new Date().toISOString(),
+          },
+        }}
+        loading={false}
+        onRefresh={jest.fn()}
+        onRetry={jest.fn()}
+        refreshing={false}
+      />,
+    );
+
+    expect(screen.getByText('DÉFIS DU JOUR')).toBeTruthy();
+    expect(screen.queryByText('NOUVELLE RÉCOMPENSE')).toBeNull();
+    expect(screen.queryByText('Tour Beige')).toBeNull();
   });
 
   it('connects the preview streak card to its detail screen without changing the main match', async () => {

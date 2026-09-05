@@ -112,35 +112,6 @@ export function MatchConfrontationCard({
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           pointerEvents="none"
-          style={[
-            styles.matchupTitle,
-            {
-              marginLeft: -112 * sceneScale,
-              top: 38 * sceneScale,
-              width: 224 * sceneScale,
-            },
-          ]}
-        >
-          <Text
-            adjustsFontSizeToFit
-            minimumFontScale={.54}
-            numberOfLines={1}
-            style={[
-              styles.matchupTitleText,
-              {
-                fontSize: 34 * sceneScale,
-                lineHeight: 38 * sceneScale,
-              },
-            ]}
-          >
-            {state.teamA.tag} — {state.teamB.tag}
-          </Text>
-        </View>
-
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          pointerEvents="none"
           style={styles.teamLayer}
         >
           <TeamFace
@@ -156,8 +127,6 @@ export function MatchConfrontationCard({
             winner={state.winner === 'b'}
           />
         </View>
-
-        <ConfrontationScore sceneScale={sceneScale} state={state} />
       </Pressable>
     </View>
   );
@@ -402,71 +371,6 @@ function TeamFace({
   );
 }
 
-function ConfrontationScore({
-  sceneScale,
-  state,
-}: {
-  sceneScale: number;
-  state: MatchConfrontationState;
-}) {
-  const hasScore = state.phase === 'live' || state.phase === 'finished';
-  const primary = hasScore ? state.scoreLabel ?? '— – —' : 'VS';
-  const secondary = state.phase === 'live'
-    ? 'EN COURS'
-    : state.phase === 'finished'
-      ? 'SCORE FINAL'
-      : state.phase === 'cancelled'
-        ? 'MATCH ANNULÉ'
-        : state.predictionTag
-          ? 'CALL · ' + state.predictionTag
-          : 'PRONOSTIC OUVERT';
-
-  return (
-    <View
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      pointerEvents="none"
-      style={[
-        styles.scoreStage,
-        {
-          marginLeft: -61 * sceneScale,
-          top: 121 * sceneScale,
-          width: 122 * sceneScale,
-        },
-      ]}
-    >
-      <Text
-        adjustsFontSizeToFit
-        minimumFontScale={.58}
-        numberOfLines={1}
-        style={[
-          styles.scoreText,
-          {
-            fontSize: (hasScore ? 45 : 30) * sceneScale,
-            lineHeight: (hasScore ? 48 : 34) * sceneScale,
-          },
-        ]}
-      >
-        {primary}
-      </Text>
-      <Text
-        adjustsFontSizeToFit
-        minimumFontScale={.6}
-        numberOfLines={1}
-        style={[
-          styles.scoreCaption,
-          {
-            fontSize: 10 * sceneScale,
-            lineHeight: 13 * sceneScale,
-          },
-        ]}
-      >
-        {secondary}
-      </Text>
-    </View>
-  );
-}
-
 function teamLogoContentScale(name: string) {
   if (name === 'Karmine Corp') return .86;
   if (name === 'Team Vitality') return 1.42;
@@ -570,23 +474,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
-  matchupTitle: {
-    position: 'absolute',
-    zIndex: 7,
-    left: '50%',
-    alignItems: 'center',
-  },
-  matchupTitleText: {
-    width: '100%',
-    color: '#F7F8F9',
-    fontFamily: fonts.display,
-    fontStyle: 'italic',
-    letterSpacing: -1,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,.98)',
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 8,
-  },
   teamLayer: {
     position: 'absolute',
     zIndex: 4,
@@ -623,35 +510,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,.94)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 5,
-  },
-  scoreStage: {
-    position: 'absolute',
-    zIndex: 8,
-    left: '50%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scoreText: {
-    width: '100%',
-    color: '#F7F8F9',
-    fontFamily: fonts.display,
-    fontVariant: ['tabular-nums'],
-    letterSpacing: -1.25,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,.98)',
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 8,
-  },
-  scoreCaption: {
-    width: '100%',
-    color: '#E5E8EA',
-    fontFamily: fonts.bold,
-    fontStyle: 'italic',
-    letterSpacing: .55,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,.98)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 5,
   },

@@ -37,7 +37,6 @@ import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, fonts, layout, spacing, typography } from '@/src/theme';
 
 import { loadHubData } from '../api';
-import { selectHubContext } from '../hubContext';
 import {
   formatMatchSchedule,
   getHubMatchPhase,
@@ -45,7 +44,7 @@ import {
   withAlpha,
 } from '../matchPresentation';
 import type { HubData, HubMatch, HubPrediction } from '../types';
-import { HubContextSkeleton, HubContextSlot } from './HubContextSlot';
+import { HubContextSkeleton, HubDailyChallenges } from './HubContextSlot';
 import { MatchConfrontationCard } from './MatchConfrontationCard';
 
 type HubGame = 'lol' | 'rocket_league' | 'valorant';
@@ -146,7 +145,6 @@ export function HubExperience({
   const live = phase === 'live';
   const finished = phase === 'finished';
   const callLocked = Boolean(hub.nextMatchPrediction);
-  const contextualItem = loading ? null : selectHubContext(hub);
   const headlineKicker = finished
     ? 'LE VERDICT EST TOMBÉ'
     : callLocked
@@ -236,13 +234,9 @@ export function HubExperience({
 
         {!headerEconomy || callStreakPreview ? <CallStreakCard previewState={callStreakPreview} /> : null}
 
-        {loading || contextualItem ? (
-          <View style={styles.contextSlot}>
-            {loading ? <HubContextSkeleton /> : contextualItem ? <HubContextSlot context={contextualItem} /> : null}
-          </View>
-        ) : null}
-
-        <SeasonProgressControls />
+        <View style={styles.contextSlot}>
+          {loading ? <HubContextSkeleton /> : <HubDailyChallenges />}
+        </View>
 
         {!loading && hub.upNext.length ? (
           <View>
@@ -425,7 +419,7 @@ function UpNextMatchCard({
     logo_a: confrontation.teamA.logo,
     logo_b: confrontation.teamB.logo,
   };
-  const cardHeight = Math.round(cardWidth / 2.42);
+  const cardHeight = Math.round(cardWidth / 2.18);
   const logoSize = Math.round(cardWidth * .18);
   const formatValue = Number(match.format);
   const format = Number.isInteger(formatValue) && formatValue > 0
@@ -623,22 +617,6 @@ function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }
   );
 }
 
-function SeasonProgressControls() {
-  return (
-    <View style={styles.seasonControls} testID="hub-season-controls">
-      <Pressable
-        accessibilityLabel="Voir mon classement"
-        accessibilityRole="button"
-        onPress={openRankScreen}
-        style={({ pressed }) => [styles.seasonHeaderAction, pressed && styles.pressed]}
-      >
-        <Text style={styles.seasonHeaderActionText}>Voir</Text>
-        <ChevronRight color={colors.text} size={18} strokeWidth={2.2} />
-      </Pressable>
-    </View>
-  );
-}
-
 function EmptyHero() {
   return (
     <View style={styles.emptyState}>
@@ -736,7 +714,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingBottom: layout.tabBarContentInset,
     gap: 16,
-    backgroundColor: '#091117',
+    backgroundColor: 'transparent',
   },
   contentLandscape: {
     maxWidth: layout.wideContentMaxWidth,
@@ -986,35 +964,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 24,
     letterSpacing: -.3,
-  },
-  seasonControls: {
-    position: 'relative',
-    minHeight: 44,
-    marginHorizontal: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  seasonHeaderAction: {
-    position: 'absolute',
-    right: 0,
-    minWidth: 74,
-    minHeight: 44,
-    paddingHorizontal: 12,
-    flexShrink: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 1,
-    borderRadius: 22,
-    backgroundColor: '#111A22',
-    borderWidth: 1,
-    borderColor: '#30414E',
-  },
-  seasonHeaderActionText: {
-    color: colors.text,
-    fontFamily: fonts.semibold,
-    fontSize: 14,
-    lineHeight: 18,
   },
   seasonCard: {
     minHeight: 120,

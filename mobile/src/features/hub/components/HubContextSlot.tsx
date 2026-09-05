@@ -13,7 +13,7 @@ import { openMatchResult } from '@/src/features/matches/matchCenterNavigation';
 
 import type { HubContextItem } from '../hubContext';
 import { withAlpha } from '../matchPresentation';
-import type { HubFactionMission, HubRecentResult, HubReward } from '../types';
+import type { HubRecentResult, HubReward } from '../types';
 import DailyMissionArtwork, { type DailyMissionArtworkVariant } from './DailyMissionArtwork';
 
 type ContextPresentation = {
@@ -48,7 +48,7 @@ type DailyMissionCard = {
 
 export function HubContextSlot({ context, now = Date.now() }: HubContextSlotProps) {
   if (context.kind === 'mission') {
-    return <HubMissionChallengeCard mission={context.mission} />;
+    return <HubDailyChallenges />;
   }
 
   const presentation = contextPresentation(context, now);
@@ -97,14 +97,14 @@ export function HubContextSlot({ context, now = Date.now() }: HubContextSlotProp
   );
 }
 
-function HubMissionChallengeCard({ mission }: { mission: HubFactionMission }) {
+export function HubDailyChallenges() {
   const { width } = useWindowDimensions();
   const cards = dailyMissionCards();
   const [activeCard, setActiveCard] = useState(0);
   const completed = cards.filter((card) => card.current >= card.goal).length;
   const cardWidth = Math.min(328, Math.max(264, width - 68));
   const snapInterval = cardWidth + 10;
-  const openMissions = () => openContext({ kind: 'mission', mission });
+  const openMissions = () => router.push('/(tabs)/social/missions');
 
   return (
     <View style={styles.missionSection}>
