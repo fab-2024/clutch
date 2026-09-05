@@ -20,8 +20,23 @@ import { StreakShowcaseBadge } from '@/src/features/retention/components/CallStr
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import { rankEmblemSource } from '@/src/features/ranking/components/RankEmblem';
-import { equipCosmetic, loadCosmeticShop } from '@/src/features/shop/api';
-import { applyPreviewAtelierAction, resolveAtelierSceneConfig } from '@/src/features/shop/atelierState';
+import { equipCosmetic, loadCosmeticShop, purchaseCosmetic } from '@/src/features/shop/api';
+import {
+  atelierProductById,
+  atelierProducts,
+  type AtelierCategory,
+  type AtelierProduct,
+} from '@/src/features/shop/atelierCatalog';
+import {
+  applyAtelierTry,
+  applyPreviewAtelierAction,
+  atelierPrimaryAction,
+  equippedAtelierIds,
+  resolveAtelierSceneConfig,
+  type AtelierSceneConfig,
+  type AtelierTrySelection,
+} from '@/src/features/shop/atelierState';
+import { AtelierPurchaseSheet } from '@/src/features/shop/components/AtelierPurchaseSheet';
 import { createPresenterRoomAssignments } from '@/src/features/shop/showcasePresenterAssignments';
 import {
   DEFAULT_SHOWCASE_PRESENTER_ID,
@@ -47,10 +62,14 @@ import type { ShowcaseRingFamily, ShowcaseRingProgress } from '@/src/features/pr
 import { useShowcaseRingEquipment } from '@/src/features/profile/showcaseRings/useShowcaseRingEquipment';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
+import { useEconomy } from '@/src/providers/EconomyProvider';
 import { colors, typography } from '@/src/theme';
 
 import { loadProfileData } from '../api';
 import type { ProfileData } from '../types';
+import ShowcaseAtelierDrawer, {
+  type ShowcaseAtelierNotice,
+} from './showcase/ShowcaseAtelierDrawer';
 import ShowcaseCustomizationBar from './showcase/ShowcaseCustomizationBar';
 import ShowcaseObjectPickerSheet from './showcase/ShowcaseObjectPickerSheet';
 import { SHOWCASE_COLLECTIBLE_ASSETS } from './showcase/ShowcasePhysicalObject';
@@ -85,6 +104,10 @@ type ShowcaseScreenProps = {
   reduceMotionOverride?: boolean;
 };
 
+type ShowcaseSceneSnapshot = AtelierSceneConfig & {
+  ignoreSelectedRoom: boolean;
+};
+
 export default function ShowcaseScreen({
   atmosphereQualityOverride,
   onAtmospherePerformanceReport,
@@ -100,6 +123,7 @@ export default function ShowcaseScreen({
   const selectedRoom = showcaseRoomById(readParam(params.room));
   const { profile, session } = useAuth();
   const { refresh: refreshCosmetics } = useCosmetics();
+  const { refresh: refreshEconomy } = useEconomy();
   const systemReduceMotion = useReducedMotion();
   const reduceMotion = reduceMotionOverride ?? systemReduceMotion;
   const [profileData, setProfileData] = useState<ProfileData | null>(previewProfile ?? null);
@@ -109,6 +133,13 @@ export default function ShowcaseScreen({
   const [error, setError] = useState<string | null>(null);
   const [section, setSection] = useState<ShowcaseSection>(requestedSection);
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [atelierVisible, setAtelierVisible] = useState(false);
+  const [atelierCategory, setAtelierCategory] = useState<AtelierCategory>('materials');
+  const [atelierTrial, setAtelierTrial] = useState<AtelierTrySelection>({});
+  const [atelierPendingId, setAtelierPendingId] = useState<string | null>(null);
+  const [atelierPurchaseId, setAtelierPurchaseId] = useState<string | null>(null);
+  const [atelierPurchaseError, setAtelierPurchaseError] = useState<string | null>(null);
+  const [atelierNotice, setAtelierNotice] = useState<ShowcaseAtelierNotice | null>(null);
   const [pedestal, setPedestal] = useState<ShowcasePedestalSkin>('obsidian');
   const [theme, setTheme] = useState<ShowcaseRoomTheme>('graphite');
   const [lighting, setLighting] = useState<ShowcaseLighting>('cyan');
@@ -119,9 +150,13 @@ export default function ShowcaseScreen({
   const [selectedRingFamily, setSelectedRingFamily] = useState<ShowcaseRingFamily | null>(null);
   const [activeRoomSlot, setActiveRoomSlot] = useState<ShowcaseRoomSlotId | null>(null);
   const [roomAssignments, setRoomAssignments] = useState(createEmptyShowcaseRoomAssignments);
+  const [ignoreSelectedRoom, setIgnoreSelectedRoom] = useState(false);
   const [routeFocused, setRouteFocused] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
   const requestRef = useRef(0);
+  const atelierSyncRef = useRef(0);
+  const atelierPurchaseTriggerRef = useRef<View>(null);
+  const atelierSceneSnapshotRef = useRef<ShowcaseSceneSnapshot | null>(null);
   const trackedRef = useRef(false);
   const savedAtelierAppliedRef = useRef(false);
   const initializedRoomRef = useRef<string | null>(null);
@@ -188,9 +223,25 @@ export default function ShowcaseScreen({
     }
   }, [previewProfile, previewShop, pseudo]);
 
+  const syncAtelierAfterMutation = useCallback((fallback: CosmeticShopData) => {
+    if (previewShop) return;
+    const syncId = ++atelierSyncRef.current;
+    void Promise.allSettled([
+      loadCosmeticShop(),
+      refreshCosmetics(),
+      refreshEconomy(),
+    ]).then(([shopResult]) => {
+      if (syncId !== atelierSyncRef.current) return;
+      setShopData(shopResult.status === 'fulfilled' ? shopResult.value : fallback);
+    });
+  }, [previewShop, refreshCosmetics, refreshEconomy]);
+
   useEffect(() => {
     void load();
-    return () => { requestRef.current += 1; };
+    return () => {
+      requestRef.current += 1;
+      atelierSyncRef.current += 1;
+    };
   }, [load]);
 
   useEffect(() => {
@@ -214,12 +265,15 @@ export default function ShowcaseScreen({
       setRankDisplayId(saved.rankDisplayId);
       setJerseyPresentation(saved.jerseyPresentation);
     }
-    if (selectedRoom) {
-      setTheme(selectedRoom.theme);
-      setLighting(selectedRoom.lighting);
-      setPedestal(selectedRoom.pedestal);
-    }
-  }, [selectedRoom, shopData]);
+  }, [shopData]);
+
+  useEffect(() => {
+    if (!selectedRoom) return;
+    setIgnoreSelectedRoom(false);
+    setTheme(selectedRoom.theme);
+    setLighting(selectedRoom.lighting);
+    setPedestal(selectedRoom.pedestal);
+  }, [selectedRoom]);
 
   const ownedItems = useMemo(
     () => shopData?.items.filter((item) => item.owned) ?? [],
@@ -231,6 +285,35 @@ export default function ShowcaseScreen({
       .map((item) => item.id),
     [ownedItems],
   );
+  const atelierRuntimeById = useMemo(
+    () => new Map((shopData?.items ?? []).map((item) => [item.id, item])),
+    [shopData?.items],
+  );
+  const atelierEquippedIds = useMemo(
+    () => equippedAtelierIds(shopData?.equipped ?? profileData?.cosmetics),
+    [profileData?.cosmetics, shopData?.equipped],
+  );
+  const atelierCategoryProducts = useMemo(
+    () => atelierProducts(atelierCategory),
+    [atelierCategory],
+  );
+  const atelierSelectedId = atelierTrial[atelierCategory]
+    ?? atelierEquippedIds[atelierCategory]
+    ?? atelierCategoryProducts[0]?.id
+    ?? null;
+  const atelierSelectedProduct = atelierCategoryProducts.find((product) => product.id === atelierSelectedId)
+    ?? atelierCategoryProducts[0]
+    ?? null;
+  const atelierSelectedItem = atelierSelectedProduct
+    ? atelierRuntimeById.get(atelierSelectedProduct.id) ?? null
+    : null;
+  const atelierAction = atelierSelectedItem
+    ? atelierPrimaryAction(atelierSelectedItem, shopData?.balance ?? 0)
+    : 'unavailable';
+  const atelierPurchaseProduct = atelierProductById(atelierPurchaseId);
+  const atelierPurchaseItem = atelierPurchaseProduct
+    ? atelierRuntimeById.get(atelierPurchaseProduct.id) ?? null
+    : null;
   const rankDisplayOptions = useMemo(() => {
     if (previewProfile && previewShop) return SHOWCASE_RANK_DISPLAY_CATALOG;
     const ownedIds = new Set(
@@ -248,14 +331,14 @@ export default function ShowcaseScreen({
     ?? showcasePresenterById(DEFAULT_SHOWCASE_PRESENTER_ID)!;
   const rankDisplay = showcaseRankDisplayById(rankDisplayId)
     ?? showcaseRankDisplayById(DEFAULT_SHOWCASE_RANK_DISPLAY_ID)!;
-  const activeSlots = selectedRoom && presenter.id === DEFAULT_SHOWCASE_PRESENTER_ID
+  const activeSlots = selectedRoom && !ignoreSelectedRoom && presenter.id === DEFAULT_SHOWCASE_PRESENTER_ID
     ? SHOWCASE_ROOM_SLOTS
     : presenter.slots;
-  const editableScene = selectedRoom ?? {
+  const editableScene = selectedRoom && !ignoreSelectedRoom ? selectedRoom : {
     ...presenter,
     image: presenter.editorImage ?? presenter.image,
   };
-  const assignmentLayoutKey = `${selectedRoom?.id ?? 'equipped'}:${presenter.id}`;
+  const assignmentLayoutKey = `${selectedRoom && !ignoreSelectedRoom ? selectedRoom.id : 'equipped'}:${presenter.id}`;
   const ringStats = useMemo(() => adaptShowcaseRingStats(profileData), [profileData]);
   const ringProgressions = useMemo(
     () => resolveAllShowcaseRings(ringStats, ringEquipment.family),
@@ -299,9 +382,171 @@ export default function ShowcaseScreen({
     ));
   }, [assignmentLayoutKey, placeableItems, presenter.id]);
 
+  function currentSceneSnapshot(): ShowcaseSceneSnapshot {
+    return {
+      ignoreSelectedRoom,
+      jerseyPresentation,
+      lighting,
+      pedestal,
+      presenterId: presenter.id,
+      rankDisplayId: rankDisplay.id,
+      theme,
+    };
+  }
+
+  function applySceneSnapshot(snapshot: ShowcaseSceneSnapshot) {
+    setIgnoreSelectedRoom(snapshot.ignoreSelectedRoom);
+    setJerseyPresentation(snapshot.jerseyPresentation);
+    setLighting(snapshot.lighting);
+    setPedestal(snapshot.pedestal);
+    setPresenterId(snapshot.presenterId);
+    setRankDisplayId(snapshot.rankDisplayId);
+    setTheme(snapshot.theme);
+  }
+
+  function applyAtelierCategoryPreview(category: AtelierCategory, config: AtelierSceneConfig) {
+    if (category === 'materials') setTheme(config.theme);
+    if (category === 'lighting') setLighting(config.lighting);
+    if (category === 'supports') {
+      setIgnoreSelectedRoom(true);
+      setPedestal(config.pedestal);
+      setPresenterId(config.presenterId);
+    }
+    if (category === 'ranks') setRankDisplayId(config.rankDisplayId);
+    if (category === 'jerseys') setJerseyPresentation(config.jerseyPresentation);
+  }
+
+  function openAtelier() {
+    atelierSceneSnapshotRef.current = currentSceneSnapshot();
+    setAtelierTrial({});
+    setAtelierNotice(null);
+    setAtelierPurchaseError(null);
+    setAtelierVisible(true);
+  }
+
+  function closeAtelier() {
+    if (atelierPendingId) return;
+    if (atelierSceneSnapshotRef.current) applySceneSnapshot(atelierSceneSnapshotRef.current);
+    atelierSceneSnapshotRef.current = null;
+    setAtelierTrial({});
+    setAtelierNotice(null);
+    setAtelierVisible(false);
+  }
+
+  function changeAtelierCategory(nextCategory: AtelierCategory) {
+    setAtelierCategory(nextCategory);
+    setAtelierNotice(null);
+  }
+
+  function previewAtelierProduct(product: AtelierProduct) {
+    const nextTrial = applyAtelierTry(atelierTrial, product.category, product.id);
+    const nextScene = resolveAtelierSceneConfig(
+      shopData?.equipped ?? profileData?.cosmetics,
+      nextTrial,
+    );
+    setAtelierCategory(product.category);
+    setAtelierTrial(nextTrial);
+    setAtelierNotice(null);
+    applyAtelierCategoryPreview(product.category, nextScene);
+  }
+
+  function updateAtelierSnapshot(data: CosmeticShopData, category: AtelierCategory) {
+    const nextConfig = resolveAtelierSceneConfig(data.equipped);
+    const current = atelierSceneSnapshotRef.current ?? currentSceneSnapshot();
+    const next = { ...current };
+
+    if (category === 'materials') next.theme = nextConfig.theme;
+    if (category === 'lighting') next.lighting = nextConfig.lighting;
+    if (category === 'supports') {
+      next.ignoreSelectedRoom = true;
+      next.pedestal = nextConfig.pedestal;
+      next.presenterId = nextConfig.presenterId;
+    }
+    if (category === 'ranks') next.rankDisplayId = nextConfig.rankDisplayId;
+    if (category === 'jerseys') next.jerseyPresentation = nextConfig.jerseyPresentation;
+
+    atelierSceneSnapshotRef.current = next;
+  }
+
+  function handleAtelierPrimaryAction() {
+    if (!atelierSelectedItem || !atelierSelectedProduct || atelierPendingId) return;
+    const nextAction = atelierPrimaryAction(atelierSelectedItem, shopData?.balance ?? 0);
+    if (nextAction === 'buy') {
+      setAtelierPurchaseError(null);
+      setAtelierPurchaseId(atelierSelectedItem.id);
+      return;
+    }
+    if (nextAction === 'equip') {
+      void equipAtelierProduct(atelierSelectedItem, atelierSelectedProduct);
+    }
+  }
+
+  async function equipAtelierProduct(item: CosmeticItem, product: AtelierProduct) {
+    if (!shopData || atelierPendingId) return;
+    const previousData = shopData;
+    const previousSnapshot = atelierSceneSnapshotRef.current;
+    const optimistic = applyPreviewAtelierAction(shopData, item.id);
+    setAtelierPendingId(item.id);
+    setAtelierNotice({ text: `${product.name} est appliqué…`, tone: 'info' });
+    setShopData(optimistic);
+    updateAtelierSnapshot(optimistic, product.category);
+
+    try {
+      if (!previewShop) await equipCosmetic(item.id);
+      setAtelierNotice({ text: `${product.name} équipe maintenant ta Vitrine.`, tone: 'success' });
+      syncAtelierAfterMutation(optimistic);
+    } catch (caught) {
+      atelierSceneSnapshotRef.current = previousSnapshot;
+      setShopData(previousData);
+      setAtelierNotice({
+        text: friendlyAtelierError(caught, 'Cette finition n’a pas pu être équipée.'),
+        tone: 'error',
+      });
+    } finally {
+      setAtelierPendingId(null);
+    }
+  }
+
+  async function confirmAtelierPurchase() {
+    if (!shopData || !atelierPurchaseItem || !atelierPurchaseProduct || atelierPendingId) return;
+    if (atelierPrimaryAction(atelierPurchaseItem, shopData.balance) !== 'buy') {
+      setAtelierPurchaseError('Le prix ou ton solde a changé. Ferme ce panneau puis réessaie.');
+      return;
+    }
+
+    setAtelierPendingId(atelierPurchaseItem.id);
+    setAtelierPurchaseError(null);
+    try {
+      if (!previewShop) await purchaseCosmetic(atelierPurchaseItem.id);
+      const purchased = applyPreviewAtelierAction(shopData, atelierPurchaseItem.id);
+      setShopData(purchased);
+      updateAtelierSnapshot(purchased, atelierPurchaseProduct.category);
+      setAtelierPurchaseId(null);
+      setAtelierNotice({
+        text: `${atelierPurchaseProduct.name} est acheté et déjà équipé.`,
+        tone: 'success',
+      });
+      syncAtelierAfterMutation(purchased);
+    } catch (caught) {
+      setAtelierPurchaseError(friendlyAtelierError(
+        caught,
+        'Cette acquisition n’a pas pu être finalisée.',
+      ));
+    } finally {
+      setAtelierPendingId(null);
+    }
+  }
+
+  function closeAtelierPurchase() {
+    if (atelierPendingId === atelierPurchaseId) return;
+    setAtelierPurchaseId(null);
+    setAtelierPurchaseError(null);
+  }
+
   function changePresenter(nextId: string) {
     const next = showcasePresenterById(nextId);
     if (!next) return;
+    setIgnoreSelectedRoom(true);
     setPresenterId(next.id);
     setPedestal(next.pedestal);
   }
@@ -366,19 +611,24 @@ export default function ShowcaseScreen({
           {section === 'showcase' ? (
             <ShowcaseRoomEditorScene
               assignments={roomAssignments}
-              atmosphereActive={atmosphereActive && !loading && !settingsVisible && !activeRoomSlot}
+              atmosphereActive={atmosphereActive && !loading && !settingsVisible && !atelierVisible && !activeRoomSlot}
               atmosphereQuality={atmosphereQualityOverride}
               cosmetics={cosmetics}
               favoriteTeam={profileData?.favoriteTeam}
               lighting={lighting}
               onAtmospherePerformanceReport={onAtmospherePerformanceReport}
-              onSlotPress={setActiveRoomSlot}
+              onSlotPress={(slotId) => {
+                if (atelierPendingId) return;
+                if (atelierVisible) closeAtelier();
+                setActiveRoomSlot(slotId);
+              }}
               rankAccent={rankAccent}
               rankDisplay={presenter.showRankDisplay === false ? null : rankDisplay}
               rankOrder={profileData?.ranking.grade.ordre}
               reduceMotion={reduceMotion}
               room={editableScene}
               slots={activeSlots}
+              theme={theme}
             />
           ) : (
             <ShowcaseRoomScene
@@ -424,7 +674,11 @@ export default function ShowcaseScreen({
               accessibilityLabel="Ouvrir les réglages de la vitrine"
               accessibilityRole="button"
               accessibilityState={{ expanded: settingsVisible }}
-              onPress={() => setSettingsVisible(true)}
+              onPress={() => {
+                if (atelierPendingId) return;
+                if (atelierVisible) closeAtelier();
+                setSettingsVisible(true);
+              }}
               style={({ pressed }) => [styles.floatingButton, pressed && styles.pressed]}
             >
               <Settings2 color={colors.text} size={20} />
@@ -455,6 +709,39 @@ export default function ShowcaseScreen({
             </View>
           ) : null}
         </View>
+
+        <ShowcaseAtelierDrawer
+          action={atelierAction}
+          balance={shopData?.balance ?? 0}
+          category={atelierCategory}
+          item={atelierSelectedItem}
+          loading={loading || !shopData}
+          notice={atelierNotice}
+          onCategoryChange={changeAtelierCategory}
+          onClose={closeAtelier}
+          onOpen={openAtelier}
+          onPrimary={handleAtelierPrimaryAction}
+          onSelect={previewAtelierProduct}
+          open={atelierVisible}
+          pending={atelierPendingId === atelierSelectedProduct?.id}
+          primaryRef={atelierPurchaseTriggerRef}
+          product={atelierSelectedProduct}
+          products={atelierCategoryProducts}
+          runtimeById={atelierRuntimeById}
+          selectedId={atelierSelectedProduct?.id ?? null}
+        />
+
+        <AtelierPurchaseSheet
+          balance={shopData?.balance ?? 0}
+          error={atelierPurchaseError}
+          onClose={closeAtelierPurchase}
+          onConfirm={() => { void confirmAtelierPurchase(); }}
+          pending={Boolean(atelierPurchaseId && atelierPendingId === atelierPurchaseId)}
+          price={atelierPurchaseItem?.price ?? atelierPurchaseProduct?.price ?? 0}
+          product={atelierPurchaseProduct}
+          returnFocusRef={atelierPurchaseTriggerRef}
+          visible={Boolean(atelierPurchaseProduct && atelierPurchaseItem)}
+        />
 
         <ShowcaseSettingsSheet
           loading={loading}
@@ -599,14 +886,25 @@ function readParam(value?: string | string[]) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function friendlyAtelierError(caught: unknown, fallback: string) {
+  const value = caught instanceof Error ? caught.message : fallback;
+  if (/solde insuffisant/i.test(value)) {
+    return 'Ton solde a changé. Recharge la Vitrine avant de confirmer.';
+  }
+  if (/network|fetch|hors connexion|offline/i.test(value)) {
+    return 'Connexion indisponible. Ton aperçu reste visible, réessaie dans un instant.';
+  }
+  return value || fallback;
+}
+
 const styles = StyleSheet.create({
-  screen: { flex: 1, minWidth: 0, backgroundColor: SHOWCASE_PALETTE.graphiteDeep },
+  screen: { position: 'relative', flex: 1, minWidth: 0, backgroundColor: SHOWCASE_PALETTE.graphiteDeep },
   sceneWrap: { position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden' },
   floatingControls: { position: 'absolute', top: 12, right: 12, left: 12, flexDirection: 'row', justifyContent: 'space-between' },
   floatingButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: 'rgba(3,7,10,.64)', borderWidth: 1, borderColor: 'rgba(164,188,204,.2)' },
   loading: { position: 'absolute', top: 12, left: '50%', minHeight: 30, marginLeft: -96, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(5,8,11,.86)', borderWidth: 1, borderColor: '#30414E' },
   loadingText: { ...typography.label, color: colors.textMuted, letterSpacing: 0.45 },
-  error: { position: 'absolute', right: 14, bottom: 12, left: 14, minHeight: 54, padding: 9, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(27,12,15,.94)', borderWidth: 1, borderColor: '#71323C' },
+  error: { position: 'absolute', right: 14, bottom: 78, left: 14, minHeight: 54, padding: 9, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(27,12,15,.94)', borderWidth: 1, borderColor: '#71323C' },
   errorCopy: { flex: 1, minWidth: 0 },
   errorEyebrow: { ...typography.eyebrow, color: '#FF8691' },
   errorText: { ...typography.caption, marginTop: 2, color: '#E7A6AC' },

@@ -1,10 +1,11 @@
 /// <reference types="jest" />
 
-import { fireEvent, render, within } from '@testing-library/react-native';
+import { fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 
 import { rankEmblemSource } from '@/src/features/ranking/components/RankEmblem';
+import { createAtelierPreviewItems } from '@/src/features/shop/atelierCatalog';
 import { DEFAULT_MONETIZATION_CONTRACT, EMPTY_EQUIPPED_COSMETICS, type CosmeticShopData } from '@/src/features/shop/types';
 import { PREVIEW_PROFILE } from '../ProfilePreviewScreen';
 import ShowcaseScreen, { resolveRoomPlaceableItems } from '../ShowcaseScreen';
@@ -16,15 +17,57 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('react-native-reanimated', () => ({ useReducedMotion: () => true }));
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
+}));
 jest.mock('lucide-react-native/icons/arrow-left', () => 'ArrowLeft');
 jest.mock('lucide-react-native/icons/settings-2', () => 'Settings2');
 jest.mock('../ProfileScreen', () => 'ProfileScreen');
 jest.mock('../showcase/ShowcaseRoomScene', () => 'ShowcaseRoomScene');
 jest.mock('@/src/features/analytics/api', () => ({ trackAnalyticsEvent: jest.fn() }));
-jest.mock('@/src/features/shop/api', () => ({ equipCosmetic: jest.fn(), loadCosmeticShop: jest.fn() }));
+jest.mock('@/src/features/shop/api', () => ({
+  equipCosmetic: jest.fn(),
+  loadCosmeticShop: jest.fn(),
+  purchaseCosmetic: jest.fn(),
+}));
 jest.mock('../../api', () => ({ loadProfileData: jest.fn() }));
 jest.mock('@/src/providers/AuthProvider', () => ({ useAuth: () => ({ profile: { pseudo: 'TestVitrine' } }) }));
 jest.mock('@/src/providers/CosmeticsProvider', () => ({ useCosmetics: () => ({ refresh: jest.fn() }) }));
+jest.mock('@/src/providers/EconomyProvider', () => ({ useEconomy: () => ({ refresh: jest.fn() }) }));
+jest.mock('@/src/components/ui/Button', () => {
+  const React = jest.requireActual('react');
+  const { Pressable, Text } = jest.requireActual('react-native');
+  return {
+    Button: React.forwardRef(function MockButton({ disabled, label, loading, onPress, testID }: {
+      disabled?: boolean;
+      label: string;
+      loading?: boolean;
+      onPress: () => void;
+      testID?: string;
+    }, _ref: unknown) {
+      return (
+        <Pressable disabled={disabled || loading} onPress={onPress} testID={testID}>
+          <Text>{label}</Text>
+        </Pressable>
+      );
+    }),
+  };
+});
+jest.mock('@/src/features/shop/components/AtelierPurchaseSheet', () => {
+  const { Pressable, Text, View } = jest.requireActual('react-native');
+  return {
+    AtelierPurchaseSheet: ({ onConfirm, product, visible }: {
+      onConfirm: () => void;
+      product: { name: string } | null;
+      visible: boolean;
+    }) => visible ? (
+      <View testID="atelier-purchase-sheet">
+        <Text>{product?.name}</Text>
+        <Pressable onPress={onConfirm} testID="atelier-purchase-confirm" />
+      </View>
+    ) : null,
+  };
+});
 jest.mock('../../showcaseRings/useShowcaseRingEquipment', () => ({
   useShowcaseRingEquipment: () => ({ family: null, loading: false, equip: jest.fn() }),
 }));
@@ -60,6 +103,13 @@ const EMPTY_SHOP: CosmeticShopData = {
   items: [],
 };
 
+const ATELIER_SHOP: CosmeticShopData = {
+  balance: 500,
+  contract: DEFAULT_MONETIZATION_CONTRACT,
+  equipped: EMPTY_EQUIPPED_COSMETICS,
+  items: createAtelierPreviewItems(),
+};
+
 describe('ShowcaseScreen immersive editor', () => {
   it('removes the permanent bars and keeps settings available on demand', async () => {
     const screen = await render(<ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={EMPTY_SHOP} />);
@@ -71,6 +121,7 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.getByTestId('showcase-room-background-supports_gallery').props.source).toBe(
       require('../../../../../assets/shop/atelier/supports/scenes/presenter-circle-obsidian-empty-v2.png'),
     );
+    expect(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine')).toBeTruthy();
 
     await fireEvent.press(screen.getByLabelText('Ouvrir les réglages de la vitrine'));
     expect(screen.getByTestId('showcase-settings-sheet')).toBeTruthy();
@@ -82,6 +133,50 @@ describe('ShowcaseScreen immersive editor', () => {
 
     await fireEvent.press(screen.getByLabelText('Revenir au Magasin'));
     expect(router.back).toHaveBeenCalled();
+  });
+
+  it('previews and buys room finishes without selling displayed objects', async () => {
+    const screen = await render(
+      <ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={ATELIER_SHOP} />,
+    );
+
+    await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
+    expect(screen.getByTestId('showcase-atelier-drawer')).toBeTruthy();
+    expect(screen.getAllByRole('tab')).toHaveLength(5);
+    expect(screen.getByText(/Les objets posés sur les socles/)).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('showcase-atelier-product-material_steel'));
+    expect(screen.getByTestId('showcase-room-theme-steel')).toBeTruthy();
+    expect(screen.getByText('ACHETER · 120 VOLTS')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('showcase-atelier-category-lighting'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-product-lighting_amber'));
+    expect(screen.getByTestId('showcase-room-lighting-amber')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('showcase-atelier-category-supports'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-product-supports_forge'));
+    expect(screen.getByTestId('showcase-room-background-supports_forge')).toBeTruthy();
+
+    await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
+    expect(screen.getByTestId('showcase-room-theme-graphite')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-lighting-cyan')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-background-supports_gallery')).toBeTruthy();
+
+    await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-category-materials'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-product-material_steel'));
+
+    await fireEvent.press(screen.getByTestId('showcase-atelier-primary'));
+    expect(screen.getByTestId('atelier-purchase-sheet')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('atelier-purchase-confirm'));
+
+    await waitFor(() => {
+      expect(screen.getAllByText('ÉQUIPÉ').length).toBeGreaterThan(0);
+    });
+    expect(screen.getByText('380')).toBeTruthy();
+
+    await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
+    expect(screen.getByTestId('showcase-room-theme-steel')).toBeTruthy();
   });
 
   it('shows only + Ajouter in an empty slot and restores it after removing an object', async () => {

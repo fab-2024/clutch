@@ -32,7 +32,7 @@ import {
 import { SHOWCASE_LIGHTING_VISUALS } from './showcaseLighting';
 import { SHOWCASE_PALETTE } from './showcasePalette';
 import { showcaseSceneLayout, type ShowcaseSceneFrame } from './showcaseSceneLayout';
-import type { ShowcaseLighting } from './types';
+import type { ShowcaseLighting, ShowcaseRoomTheme } from './types';
 
 type ShowcaseRoomEditorSceneProps = {
   assignments: ShowcaseRoomAssignments;
@@ -51,6 +51,15 @@ type ShowcaseRoomEditorSceneProps = {
     sceneFrame?: ShowcaseSceneFrame;
   };
   slots?: readonly ShowcaseRoomSlotDefinition[];
+  theme?: ShowcaseRoomTheme;
+};
+
+const THEME_WASH: Record<ShowcaseRoomTheme, readonly [string, string, string]> = {
+  graphite: ['rgba(5,9,13,.04)', 'rgba(4,8,12,.01)', 'rgba(2,5,8,.12)'],
+  steel: ['rgba(138,151,162,.10)', 'rgba(24,29,33,.02)', 'rgba(102,116,127,.10)'],
+  museum: ['rgba(55,34,21,.09)', 'rgba(10,10,11,.01)', 'rgba(38,23,14,.11)'],
+  carbon: ['rgba(5,7,9,.10)', 'rgba(18,22,25,.01)', 'rgba(1,3,5,.16)'],
+  azure: ['rgba(5,27,42,.10)', 'rgba(5,12,18,.01)', 'rgba(3,30,48,.13)'],
 };
 
 export default function ShowcaseRoomEditorScene({
@@ -68,6 +77,7 @@ export default function ShowcaseRoomEditorScene({
   reduceMotion = false,
   room,
   slots = SHOWCASE_ROOM_SLOTS,
+  theme = 'graphite',
 }: ShowcaseRoomEditorSceneProps) {
   const [viewport, setViewport] = useState({ height: 390, width: 844 });
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
@@ -105,11 +115,20 @@ export default function ShowcaseRoomEditorScene({
           style={StyleSheet.absoluteFill}
         />
         <LinearGradient
+          colors={THEME_WASH[theme]}
+          end={{ x: 1, y: 1 }}
+          pointerEvents="none"
+          start={{ x: 0, y: 0 }}
+          style={StyleSheet.absoluteFill}
+          testID={`showcase-room-theme-${theme}`}
+        />
+        <LinearGradient
           colors={lightingVisual.wash}
           end={{ x: 0.5, y: 1 }}
           pointerEvents="none"
           start={{ x: 0.5, y: 0 }}
           style={StyleSheet.absoluteFill}
+          testID={`showcase-room-lighting-${lighting}`}
         />
         {lightingVisual.horizontalWash ? (
           <LinearGradient
