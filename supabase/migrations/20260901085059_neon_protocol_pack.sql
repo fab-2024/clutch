@@ -331,7 +331,8 @@ begin
       and o.actif
       and o.statut_publication = 'publie'
       and o.licence ->> 'type' = 'originale'
-      and o.licence ->> 'titulaire' = 'Clutch'
+      -- The visible-brand trigger normalises catalogue licences to GRIFF.
+      and o.licence ->> 'titulaire' = 'GRIFF'
   ) <> 12 then
     raise exception 'catalogue Protocole Néon incomplet';
   end if;

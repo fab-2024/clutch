@@ -3,6 +3,12 @@
 
 begin;
 
+-- Reassert RLS before writing pack rows. The pack publication validator is a
+-- deferred constraint trigger, so ALTER TABLE must run before it queues events.
+alter table public.packs_cosmetiques enable row level security;
+alter table public.pack_cosmetique_membres enable row level security;
+alter table public.inventaire_packs_cosmetiques enable row level security;
+
 insert into public.objets_catalogue (
   id,
   emplacement,
@@ -145,10 +151,6 @@ set emplacement = excluded.emplacement,
     equip_by_default = excluded.equip_by_default;
 
 -- Preserve the established least-privilege Data API and RPC contract.
-alter table public.packs_cosmetiques enable row level security;
-alter table public.pack_cosmetique_membres enable row level security;
-alter table public.inventaire_packs_cosmetiques enable row level security;
-
 revoke all privileges on table public.packs_cosmetiques
 from public, anon, authenticated, service_role;
 revoke all privileges on table public.pack_cosmetique_membres
@@ -214,7 +216,8 @@ begin
       and o.actif
       and o.statut_publication = 'publie'
       and o.licence ->> 'type' = 'originale'
-      and o.licence ->> 'titulaire' = 'Clutch'
+      -- The visible-brand trigger normalises catalogue licences to GRIFF.
+      and o.licence ->> 'titulaire' = 'GRIFF'
   ) <> 6 then
     raise exception 'catalogue Clutch Originals incomplet';
   end if;

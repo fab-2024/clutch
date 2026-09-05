@@ -87,9 +87,6 @@ set ordre = m.ordre - 21
 where m.pack_id in (select p.id from clutch_trimmed_original_packs p)
   and m.ordre between 27 and 30;
 
-alter table public.pack_cosmetique_membres
-  enable trigger pack_cosmetique_membres_immutabilite_v1;
-
 update public.objets_catalogue o
 set actif = false,
     statut_publication = 'retire',
@@ -103,6 +100,13 @@ set description = trimmed.description,
     maj_le = pg_catalog.now()
 from clutch_trimmed_original_packs trimmed
 where p.id = trimmed.id;
+
+-- Flush the deferred publication validators against the final nine-item
+-- state before changing the trigger configuration on the members table.
+set constraints all immediate;
+
+alter table public.pack_cosmetique_membres
+  enable trigger pack_cosmetique_membres_immutabilite_v1;
 
 -- Keep catalogue reads authenticated and all mutations behind audited RPCs.
 revoke all privileges on table public.objets_catalogue
