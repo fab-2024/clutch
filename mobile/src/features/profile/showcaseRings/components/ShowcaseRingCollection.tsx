@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import Lock from 'lucide-react-native/icons/lock';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, typography } from '@/src/theme';
 
@@ -30,7 +31,7 @@ export default function ShowcaseRingCollection({
     <>
       <View style={styles.intro}>
         <Text style={styles.introEyebrow}>OBJETS GRATUITS // ACCOMPLISSEMENTS</Text>
-        <Text style={styles.introTitle}>CINQ TRACES. UNE VITRINE.</Text>
+        <Text style={styles.introTitle}>TREIZE SIGNATURES. UNE VITRINE.</Text>
         <Text style={styles.introText}>
           Chaque anneau évolue automatiquement vers le plus haut palier débloqué. Aucun achat, aucun avantage compétitif.
         </Text>
@@ -71,7 +72,32 @@ function RingFamilyCard({
 }) {
   const { definition, display } = progress;
   const locked = progress.availability === 'locked';
-  const sourceMissing = metricSource === 'missing' && progress.family !== 'rank';
+  const sourceMissing = metricSource === 'missing';
+  const previousUnlockedStages = useRef(progress.unlockedStages);
+  const [unlockPulse] = useState(() => new Animated.Value(0));
+
+  useEffect(() => {
+    const previous = previousUnlockedStages.current;
+    previousUnlockedStages.current = progress.unlockedStages;
+    if (progress.unlockedStages <= previous) return undefined;
+
+    const animation = Animated.sequence([
+      Animated.timing(unlockPulse, {
+        duration: 180,
+        easing: Easing.out(Easing.quad),
+        toValue: 1,
+        useNativeDriver: true,
+      }),
+      Animated.timing(unlockPulse, {
+        duration: 420,
+        easing: Easing.inOut(Easing.quad),
+        toValue: 0,
+        useNativeDriver: true,
+      }),
+    ]);
+    animation.start();
+    return () => animation.stop();
+  }, [progress.unlockedStages, unlockPulse]);
 
   return (
     <Pressable
@@ -103,7 +129,23 @@ function RingFamilyCard({
             style={[styles.heroImage, locked && styles.lockedImage]}
             tintColor={locked ? '#77838D' : undefined}
           />
-          {locked ? <Text style={styles.heroLock}>◇</Text> : null}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.corePulse,
+              {
+                borderColor: definition.accent,
+                opacity: unlockPulse,
+                transform: [{ scale: unlockPulse.interpolate({ inputRange: [0, 1], outputRange: [.72, 1.7] }) }],
+              },
+            ]}
+            testID={`showcase-ring-unlock-pulse-${progress.family}`}
+          />
+          {locked ? (
+            <View style={styles.heroLock} testID={`showcase-ring-core-lock-${progress.family}`}>
+              <Lock color="#AAB3BB" size={13} strokeWidth={2} />
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.cardCopy}>
@@ -124,7 +166,9 @@ function RingFamilyCard({
           <View style={styles.metricRow}>
             <View>
               <Text style={styles.metricLabel}>PROGRESSION</Text>
-              <Text style={styles.metricValue}>{showcaseRingMetricLabel(progress.family, progress.value)}</Text>
+              <Text style={styles.metricValue}>
+                {sourceMissing ? '—' : showcaseRingMetricLabel(progress.family, progress.value)}
+              </Text>
             </View>
             <Text style={[styles.stageCount, { color: definition.accent }]}>{progress.unlockedStages}/5</Text>
           </View>
@@ -135,19 +179,31 @@ function RingFamilyCard({
         {definition.stages.map((stage) => {
           const unlocked = stage.stage <= progress.unlockedStages;
           const current = stage.stage === progress.current?.stage;
+          const next = !unlocked && stage.stage === progress.next?.stage;
           return (
-            <View key={stage.stage} style={styles.evolutionStep} testID={`showcase-ring-${progress.family}-stage-${stage.stage}`}>
+            <View
+              key={stage.stage}
+              style={styles.evolutionStep}
+              testID={next
+                ? `showcase-ring-${progress.family}-next-stage`
+                : `showcase-ring-${progress.family}-stage-${stage.stage}`}
+            >
               <View style={[
                 styles.thumb,
                 current && { borderColor: definition.accent, backgroundColor: `${definition.accent}11` },
+                next && styles.nextThumb,
               ]}>
                 <Image
                   resizeMode="contain"
                   source={stage.assets.thumbnail}
-                  style={[styles.thumbImage, !unlocked && styles.futureImage]}
+                  style={[styles.thumbImage, !unlocked && (next ? styles.nextImage : styles.futureImage)]}
                   tintColor={!unlocked ? '#69747E' : undefined}
                 />
-                {!unlocked ? <View style={styles.futureVeil}><Text style={styles.futureGlyph}>?</Text></View> : null}
+                {next ? (
+                  <View style={styles.nextLock}>
+                    <Lock color="#B5BEC5" size={9} strokeWidth={2} />
+                  </View>
+                ) : null}
               </View>
               <View style={[styles.stepLine, unlocked && { backgroundColor: definition.accent }]} />
               <Text numberOfLines={1} style={[styles.stepLabel, current && { color: definition.accent }]}>{stage.stage}</Text>
@@ -183,8 +239,9 @@ const styles = StyleSheet.create({
   heroVisual: { position: 'relative', overflow: 'hidden', width: 132, minHeight: 145, alignItems: 'center', justifyContent: 'center', borderRadius: 18, backgroundColor: '#0B1218', borderWidth: 1 },
   heroGlow: { position: 'absolute', width: 104, height: 104, borderRadius: 52 },
   heroImage: { width: 128, height: 128 },
-  lockedImage: { opacity: .18 },
-  heroLock: { position: 'absolute', color: '#9AA5AE', fontFamily: fonts.display, fontSize: 28 },
+  lockedImage: { opacity: .5 },
+  corePulse: { position: 'absolute', width: 28, height: 28, borderRadius: 14, borderWidth: 2 },
+  heroLock: { position: 'absolute', width: 25, height: 25, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: 'rgba(8,12,16,.86)', borderWidth: 1, borderColor: '#68747E' },
   cardCopy: { flex: 1, minWidth: 0, paddingVertical: 2 },
   cardHeading: { alignItems: 'flex-start' },
   cardHeadingCopy: { width: '100%', minWidth: 0 },
@@ -202,9 +259,10 @@ const styles = StyleSheet.create({
   evolutionStep: { position: 'relative', flex: 1, minWidth: 0, alignItems: 'center' },
   thumb: { position: 'relative', width: '100%', aspectRatio: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#0B1218', borderWidth: 1, borderColor: '#30414E' },
   thumbImage: { width: '100%', height: '100%' },
-  futureImage: { opacity: .09 },
-  futureVeil: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  futureGlyph: { color: '#69747E', fontFamily: fonts.display, fontSize: 16 },
+  nextThumb: { borderColor: '#7A8791', backgroundColor: '#10171D' },
+  nextImage: { opacity: .52 },
+  futureImage: { opacity: .18 },
+  nextLock: { position: 'absolute', width: 17, height: 17, alignItems: 'center', justifyContent: 'center', borderRadius: 9, backgroundColor: 'rgba(8,12,16,.88)', borderWidth: 1, borderColor: '#69747E' },
   stepLine: { position: 'absolute', right: '-8%', bottom: 8, left: '58%', height: 1, backgroundColor: '#152633' },
   stepLabel: { ...typography.label, marginTop: 3, color: colors.textMuted },
   nextRow: { minHeight: 56, paddingTop: 11, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderTopColor: '#30414E' },

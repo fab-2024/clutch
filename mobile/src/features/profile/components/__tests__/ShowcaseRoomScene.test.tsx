@@ -475,7 +475,7 @@ describe('Showcase room composition', () => {
     );
 
     expect(screen.getAllByTestId('showcase-ring-artifact-faction')).toHaveLength(2);
-    expect(screen.getAllByLabelText(/Anneau Faction, Recrue, palier 1/)).toHaveLength(2);
+    expect(screen.getAllByLabelText(/Anneau Cercle, Éveil, palier 2/)).toHaveLength(2);
     await fireEvent.press(screen.getAllByTestId('showcase-ring-artifact-faction')[1]);
     expect(onRingPress).toHaveBeenCalledTimes(1);
   });

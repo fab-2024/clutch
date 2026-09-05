@@ -9,35 +9,78 @@ import {
   type ShowcaseRingStats,
 } from './types';
 
-const RANK_MILESTONE: Record<string, number> = {
-  bronze: 1,
-  argent: 1.25,
-  or: 1.6,
-  platine: 2,
-  diamant: 3,
-  mythique: 4,
-  eternel: 4,
-};
-
-const FACTION_KEYS = [
-  'contribution_faction',
-  'contributions_faction',
-  'faction_contribution',
-  'faction_contributions',
+const CORRECT_STREAK_KEYS = [
+  'serie_correcte_saison_max',
+  'plus_longue_serie_saison',
+  'plus_longue_serie',
 ] as const;
 
-const MAJOR_KEYS = [
-  'accomplissements_majeurs',
-  'majeurs_valides',
-  'major_achievements',
-  'major_points',
+const INVITED_FRIEND_KEYS = [
+  'amis_invites',
+  'invitations_amis_acceptees',
+  'friends_invited',
+  'accepted_friend_invites',
 ] as const;
 
-const SENIORITY_KEYS = [
-  'saisons_terminees',
-  'periodes_terminees',
-  'completed_seasons',
-  'completed_periods',
+const CORRECT_CALL_KEYS = [
+  'gagnes',
+  'calls_corrects',
+  'correct_official_calls',
+] as const;
+
+const SENIORITY_YEAR_KEYS = [
+  'annees_anciennete',
+  'completed_years',
+] as const;
+
+const RITUAL_KEYS = [
+  'plus_longue_serie_semaines',
+  'semaines_actives_consecutives',
+  'max_consecutive_active_weeks',
+] as const;
+
+const COUNTERCURRENT_KEYS = [
+  'calls_contre_courant_reussis',
+  'outsiders_250_gagnes',
+  'countercurrent_wins',
+  'contrarian_correct_calls',
+] as const;
+
+const CLEAN_SWEEP_KEYS = [
+  'placements_gagnes',
+  'placements_corrects',
+  'placement_correct_calls',
+] as const;
+
+const ASCENSION_KEYS = [
+  'competitions_gagnees_distinctes',
+  'competitions_calls_corrects',
+  'distinct_competitions_with_win',
+] as const;
+
+const DUELIST_KEYS = [
+  'duels_gagnes',
+  'duels_remportes',
+  'duel_wins',
+  'defis_gagnes',
+] as const;
+
+const PACT_KEYS = [
+  'serie_calls_synchrones_ami',
+  'calls_synchronises_reussis',
+  'friend_synchronized_streak',
+] as const;
+
+const ECHO_KEYS = [
+  'paris',
+  'calls_officiels',
+  'total_official_calls',
+] as const;
+
+const METAMORPHOSIS_KEYS = [
+  'resurgences',
+  'retours_reussis',
+  'resurgence_count',
 ] as const;
 
 export function adaptShowcaseRingStats(
@@ -46,23 +89,49 @@ export function adaptShowcaseRingStats(
 ): ShowcaseRingStats {
   if (!data) return emptyStats();
 
-  const faction = firstMetric(data.recap, FACTION_KEYS);
-  const major = firstMetric(data.recap, MAJOR_KEYS);
-  const seniority = firstMetric(data.recap, SENIORITY_KEYS);
-  const derivedMajor = data.badges.filter((badge) => badge.obtained && /majeur|major/i.test(badge.family)).length;
-  const derivedPeriods = completedPeriods(data.createdAt, now);
+  const rank = closedSeasonPerformance(data.recap);
+  const streak = firstMetric(data.recap, CORRECT_STREAK_KEYS);
+  const invitedFriends = firstMetric(data.recap, INVITED_FRIEND_KEYS);
+  const correctCalls = firstMetric(data.recap, CORRECT_CALL_KEYS);
+  const seniority = firstMetric(data.recap, SENIORITY_YEAR_KEYS);
+  const ritual = firstMetric(data.recap, RITUAL_KEYS)
+    ?? achievementProgress(data, 'zero_chronicle', 1);
+  const countercurrent = firstMetric(data.recap, COUNTERCURRENT_KEYS)
+    ?? achievementProgress(data, 'countercurrent', 1, false);
+  const cleanSweep = firstMetric(data.recap, CLEAN_SWEEP_KEYS)
+    ?? achievementProgress(data, 'perfect_eclipse', 5);
+  const ascension = firstMetric(data.recap, ASCENSION_KEYS)
+    ?? achievementProgress(data, 'versatile', 5);
+  const duelist = firstMetric(data.recap, DUELIST_KEYS);
+  const pact = firstMetric(data.recap, PACT_KEYS)
+    ?? achievementProgress(data, 'synchrony', 3);
+  const rankedOfficialCalls = Number(data.ranking.pronostics_regles);
+  const echo = firstMetric(data.recap, ECHO_KEYS)
+    ?? (Number.isFinite(rankedOfficialCalls)
+      ? { source: 'profile' as const, value: Math.max(0, rankedOfficialCalls) }
+      : null);
+  const metamorphosis = firstMetric(data.recap, METAMORPHOSIS_KEYS)
+    ?? booleanMetric(data.recap.resurgence_obtenue ?? data.recap.resurgence_achieved)
+    ?? achievementProgress(data, 'resurgence', 1, false);
+  const derivedYears = completedYears(data.createdAt, now);
 
   return {
-    rank: { source: 'profile', value: rankMetric(data) },
-    streak: { source: 'profile', value: Math.max(0, Math.trunc(data.currentStreak)) },
-    faction: faction ?? { source: 'missing', value: 0 },
-    major: major ?? (derivedMajor > 0
-      ? { source: 'derived', value: derivedMajor }
-      : { source: 'missing', value: 0 }),
+    rank: rank ?? { source: 'missing', value: 0 },
+    streak: streak ?? { source: 'missing', value: 0 },
+    faction: invitedFriends ?? { source: 'missing', value: 0 },
+    major: correctCalls ?? { source: 'missing', value: 0 },
     seniority: seniority ?? {
-      source: derivedPeriods > 0 ? 'derived' : 'missing',
-      value: derivedPeriods,
+      source: derivedYears > 0 ? 'derived' : 'missing',
+      value: derivedYears,
     },
+    ritual: ritual ?? { source: 'missing', value: 0 },
+    countercurrent: countercurrent ?? { source: 'missing', value: 0 },
+    clean_sweep: cleanSweep ?? { source: 'missing', value: 0 },
+    ascension: ascension ?? { source: 'missing', value: 0 },
+    duelist: duelist ?? { source: 'missing', value: 0 },
+    pact: pact ?? { source: 'missing', value: 0 },
+    echo: echo ?? { source: 'missing', value: 0 },
+    metamorphosis: metamorphosis ?? { source: 'missing', value: 0 },
   };
 }
 
@@ -119,11 +188,19 @@ export function resolveEquippedShowcaseRing(
 
 export function showcaseRingMetricLabel(family: ShowcaseRingFamily, value: number) {
   const amount = Math.max(0, Math.floor(value));
-  if (family === 'rank') return `NIVEAU ${Math.min(5, Math.max(1, Math.floor(value)))}`;
-  if (family === 'streak') return `${amount} J${amount > 1 ? 'OURS' : 'OUR'}`;
-  if (family === 'faction') return `${formatNumber(amount)} CONTRIBUTION${amount > 1 ? 'S' : ''}`;
-  if (family === 'major') return `${amount} ACCOMPLISSEMENT${amount > 1 ? 'S' : ''}`;
-  return `${amount} PÉRIODE${amount > 1 ? 'S' : ''}`;
+  if (family === 'rank') return `TOP ${formatPercent(Math.max(0, 100 - value))} %`;
+  if (family === 'streak') return `${formatNumber(amount)} CALL${amount > 1 ? 'S' : ''} CONSÉCUTIF${amount > 1 ? 'S' : ''}`;
+  if (family === 'faction') return `${formatNumber(amount)} AMI${amount > 1 ? 'S' : ''} INVITÉ${amount > 1 ? 'S' : ''}`;
+  if (family === 'major') return `${formatNumber(amount)} CALL${amount > 1 ? 'S' : ''} JUSTE${amount > 1 ? 'S' : ''}`;
+  if (family === 'seniority') return `${amount} AN${amount > 1 ? 'S' : ''}`;
+  if (family === 'ritual') return `${amount} SEMAINE${amount > 1 ? 'S' : ''} ACTIVE${amount > 1 ? 'S' : ''}`;
+  if (family === 'countercurrent') return `${amount} CONTRE-COURANT${amount > 1 ? 'S' : ''}`;
+  if (family === 'clean_sweep') return `${amount}/5 CALLS DE PLACEMENT`;
+  if (family === 'ascension') return `${amount} COMPÉTITION${amount > 1 ? 'S' : ''}`;
+  if (family === 'duelist') return `${amount} DUEL${amount > 1 ? 'S' : ''} GAGNÉ${amount > 1 ? 'S' : ''}`;
+  if (family === 'pact') return `${amount} CALL${amount > 1 ? 'S' : ''} SYNCHRONISÉ${amount > 1 ? 'S' : ''}`;
+  if (family === 'echo') return `${formatNumber(amount)} CALL${amount > 1 ? 'S' : ''} OFFICIEL${amount > 1 ? 'S' : ''}`;
+  return `${amount} RETOUR${amount > 1 ? 'S' : ''} RÉUSSI${amount > 1 ? 'S' : ''}`;
 }
 
 function emptyStats(): ShowcaseRingStats {
@@ -134,6 +211,14 @@ function emptyStats(): ShowcaseRingStats {
     faction: empty,
     major: empty,
     seniority: empty,
+    ritual: empty,
+    countercurrent: empty,
+    clean_sweep: empty,
+    ascension: empty,
+    duelist: empty,
+    pact: empty,
+    echo: empty,
+    metamorphosis: empty,
   };
 }
 
@@ -142,7 +227,9 @@ function firstMetric(
   keys: readonly string[],
 ): ShowcaseRingMetric | null {
   for (const key of keys) {
-    const numeric = Number(recap[key]);
+    const value = recap[key];
+    if (value == null || value === '') continue;
+    const numeric = Number(value);
     if (Number.isFinite(numeric) && numeric >= 0) {
       return { source: 'profile', value: numeric };
     }
@@ -150,18 +237,56 @@ function firstMetric(
   return null;
 }
 
-function rankMetric(data: ProfileData) {
-  const grade = data.ranking.grade;
-  if ((data.ranking.percentile ?? 101) <= 1) return 5;
-  const base = RANK_MILESTONE[grade.cle ?? ''] ?? 1;
-  return Math.min(4.99, base + clamp(grade.progression, 0, 0.99) * 0.96);
+function achievementProgress(
+  data: ProfileData,
+  id: ProfileData['badges'][number]['id'],
+  obtainedValue: number,
+  useProgress = true,
+): ShowcaseRingMetric | null {
+  const badge = data.badges.find((candidate) => candidate.id === id);
+  if (!badge) return null;
+  if (useProgress && badge.progress && Number.isFinite(badge.progress.current)) {
+    return { source: 'derived', value: Math.max(0, badge.progress.current) };
+  }
+  return badge.obtained ? { source: 'derived', value: obtainedValue } : null;
 }
 
-function completedPeriods(createdAt: string, now: Date) {
+function booleanMetric(value: unknown): ShowcaseRingMetric | null {
+  if (value === true || value === 'true' || value === 1 || value === '1') {
+    return { source: 'profile', value: 1 };
+  }
+  if (value === false || value === 'false' || value === 0 || value === '0') {
+    return { source: 'profile', value: 0 };
+  }
+  return null;
+}
+
+function closedSeasonPerformance(recap: Record<string, unknown>): ShowcaseRingMetric | null {
+  const nested = recap.derniere_saison_cloturee ?? recap.achievement_closed_season;
+  if (nested && typeof nested === 'object') {
+    const season = nested as Record<string, unknown>;
+    const closed = season.closed ?? season.cloturee;
+    const percentile = Number(season.percentile);
+    if ((closed === true || closed === 'true' || closed === 1) && Number.isFinite(percentile)) {
+      return { source: 'profile', value: clamp(100 - percentile, 0, 100) };
+    }
+  }
+
+  const closed = recap.saison_cloturee ?? recap.closed_season;
+  const percentile = Number(recap.saison_percentile_final ?? recap.closed_season_percentile);
+  return (closed === true || closed === 'true' || closed === 1) && Number.isFinite(percentile)
+    ? { source: 'profile', value: clamp(100 - percentile, 0, 100) }
+    : null;
+}
+
+function completedYears(createdAt: string, now: Date) {
   const created = new Date(createdAt);
   if (Number.isNaN(created.getTime())) return 0;
-  const elapsedDays = Math.max(0, (now.getTime() - created.getTime()) / 86_400_000);
-  return Math.floor(elapsedDays / 90);
+  let years = now.getUTCFullYear() - created.getUTCFullYear();
+  const anniversaryPending = now.getUTCMonth() < created.getUTCMonth()
+    || (now.getUTCMonth() === created.getUTCMonth() && now.getUTCDate() < created.getUTCDate());
+  if (anniversaryPending) years -= 1;
+  return Math.max(0, years);
 }
 
 function progressBetween(value: number, start: number, end?: number) {
@@ -176,4 +301,8 @@ function clamp(value: number, minimum: number, maximum: number) {
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat('fr-FR').format(value);
+}
+
+function formatPercent(value: number) {
+  return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(value);
 }

@@ -235,7 +235,7 @@ describe('OwnProfileOverview', () => {
     expect(screen.getByText('ANNEAUX')).toBeTruthy();
     expect(screen.getByText('TROPHÉES')).toBeTruthy();
     expect(screen.getByText('MAILLOTS')).toBeTruthy();
-    expect(screen.getByText('0 / 5 DÉBLOQUÉS')).toBeTruthy();
+    expect(screen.getByText('1 / 13 DÉBLOQUÉS')).toBeTruthy();
     expect(screen.getByText('0 / 4')).toBeTruthy();
     expect(screen.getByText('AUCUN ÉQUIPÉ')).toBeTruthy();
     expect(screen.queryByText('TES ESPACES')).toBeNull();

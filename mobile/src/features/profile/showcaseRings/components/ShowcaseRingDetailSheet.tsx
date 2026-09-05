@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import Lock from 'lucide-react-native/icons/lock';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, layout, typography } from '@/src/theme';
@@ -52,14 +53,41 @@ export default function ShowcaseRingDetailSheet({
               style={[styles.image, locked && styles.imageLocked]}
               tintColor={locked ? '#78838C' : undefined}
             />
-            {locked ? <View style={styles.lock}><Text style={styles.lockGlyph}>◇</Text><Text style={styles.lockText}>À DÉBLOQUER</Text></View> : null}
+            {locked ? (
+              <View style={styles.lock} testID="showcase-ring-detail-core-lock">
+                <Lock color="#B5BEC5" size={16} strokeWidth={2} />
+              </View>
+            ) : null}
           </View>
 
           <Text style={styles.description}>{definition.description}</Text>
           <View style={styles.stageRow}>
             {definition.stages.map((stage) => {
               const unlocked = stage.stage <= progress.unlockedStages;
-              return <View key={stage.stage} style={[styles.stageDot, unlocked && { backgroundColor: definition.accent, borderColor: definition.accent }]} />;
+              const current = stage.stage === progress.current?.stage;
+              const next = !unlocked && stage.stage === progress.next?.stage;
+              return (
+                <View key={stage.stage} style={styles.stagePreviewWrap}>
+                  <View style={[
+                    styles.stagePreview,
+                    current && { borderColor: definition.accent, backgroundColor: `${definition.accent}12` },
+                    next && styles.stagePreviewNext,
+                  ]}>
+                    <Image
+                      resizeMode="contain"
+                      source={stage.assets.thumbnail}
+                      style={[styles.stagePreviewImage, !unlocked && (next ? styles.stagePreviewImageNext : styles.stagePreviewImageFuture)]}
+                      tintColor={!unlocked ? '#69747E' : undefined}
+                    />
+                    {next ? (
+                      <View style={styles.stagePreviewLock}>
+                        <Lock color="#B5BEC5" size={8} strokeWidth={2} />
+                      </View>
+                    ) : null}
+                  </View>
+                  <Text style={[styles.stageNumber, current && { color: definition.accent }]}>{stage.stage}</Text>
+                </View>
+              );
             })}
           </View>
 
@@ -113,13 +141,18 @@ const styles = StyleSheet.create({
   visual: { position: 'relative', height: 260, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: '#0B1218', borderWidth: 1, borderColor: '#30414E' },
   visualGlow: { position: 'absolute', width: 180, height: 180, borderRadius: 90 },
   image: { width: 250, height: 250 },
-  imageLocked: { opacity: .17 },
-  lock: { position: 'absolute', alignItems: 'center', gap: 6 },
-  lockGlyph: { color: colors.textMuted, fontFamily: fonts.display, fontSize: 30 },
-  lockText: { ...typography.action, color: colors.textMuted },
+  imageLocked: { opacity: .5 },
+  lock: { position: 'absolute', width: 34, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: 17, backgroundColor: 'rgba(8,12,16,.88)', borderWidth: 1, borderColor: '#78838C' },
   description: { ...typography.body, color: colors.textMuted },
-  stageRow: { flexDirection: 'row', gap: 7 },
-  stageDot: { flex: 1, height: 6, borderRadius: 3, backgroundColor: '#172029', borderWidth: 1, borderColor: '#30414E' },
+  stageRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  stagePreviewWrap: { flex: 1, minWidth: 0, alignItems: 'center' },
+  stagePreview: { position: 'relative', width: '100%', aspectRatio: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: '#0B1218', borderWidth: 1, borderColor: '#30414E' },
+  stagePreviewNext: { borderColor: '#7A8791', backgroundColor: '#10171D' },
+  stagePreviewImage: { width: '100%', height: '100%' },
+  stagePreviewImageNext: { opacity: .52 },
+  stagePreviewImageFuture: { opacity: .18 },
+  stagePreviewLock: { position: 'absolute', width: 16, height: 16, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: 'rgba(8,12,16,.88)', borderWidth: 1, borderColor: '#69747E' },
+  stageNumber: { ...typography.label, marginTop: 3, color: colors.textMuted },
   metrics: { minHeight: 39, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   metricLabel: { ...typography.label, color: '#71808C' },
   metricValue: { ...typography.bodyStrong, marginTop: 2, color: colors.text },

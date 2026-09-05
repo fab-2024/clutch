@@ -6,6 +6,14 @@ export const SHOWCASE_RING_FAMILIES = [
   'faction',
   'major',
   'seniority',
+  'ritual',
+  'countercurrent',
+  'clean_sweep',
+  'ascension',
+  'duelist',
+  'pact',
+  'echo',
+  'metamorphosis',
 ] as const;
 
 export type ShowcaseRingFamily = (typeof SHOWCASE_RING_FAMILIES)[number];

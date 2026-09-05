@@ -268,7 +268,7 @@ function ProfileCollectionSection({
   const entries: CollectionEntry[] = [
     {
       accent: '#28B7F6',
-      accessibilityLabel: `Ouvrir mes anneaux, ${loading ? 'synchronisation' : `${unlockedRings} anneaux débloqués sur ${ringProgressions.length}`}`,
+      accessibilityLabel: `Ouvrir mes anneaux, ${loading ? 'synchronisation' : `${unlockedRings} anneau${unlockedRings > 1 ? 'x' : ''} débloqué${unlockedRings > 1 ? 's' : ''} sur ${ringProgressions.length}`}`,
       asset: COLLECTION_ASSETS.ring,
       label: 'ANNEAUX',
       meta: loading ? 'SYNCHRONISATION' : `${unlockedRings} / ${ringProgressions.length} DÉBLOQUÉS`,

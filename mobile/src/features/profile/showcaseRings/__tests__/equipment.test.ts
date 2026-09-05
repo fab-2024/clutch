@@ -25,6 +25,7 @@ describe('showcase ring equipment', () => {
 
   it('rejects stale or unknown stored values', () => {
     expect(isShowcaseRingFamily('rank')).toBe(true);
+    expect(isShowcaseRingFamily('metamorphosis')).toBe(true);
     expect(isShowcaseRingFamily('legendary')).toBe(false);
     expect(isShowcaseRingFamily(null)).toBe(false);
   });
