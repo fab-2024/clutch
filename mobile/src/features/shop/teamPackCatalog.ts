@@ -6,6 +6,14 @@ import type {
 } from '@/src/features/profile/components/showcase/roomEditor';
 
 import {
+  CHUTE_LIBRE_PACK,
+  CONCLAVE_ARCANIQUE_PACK,
+  DERNIER_ROUND_PACK,
+  SANG_DES_TITANS_PACK,
+  SERMENT_DU_GIVRE_PACK,
+  TURBO_ARENA_PACK,
+} from './originalPackCatalog';
+import {
   COSMETIC_FAMILY_BY_SLOT,
   type CosmeticItem,
   type CosmeticRarity,
@@ -14,6 +22,15 @@ import {
   type EquippedCosmetic,
   type EquippedCosmetics,
 } from './types';
+
+export {
+  CHUTE_LIBRE_PACK,
+  CONCLAVE_ARCANIQUE_PACK,
+  DERNIER_ROUND_PACK,
+  SANG_DES_TITANS_PACK,
+  SERMENT_DU_GIVRE_PACK,
+  TURBO_ARENA_PACK,
+} from './originalPackCatalog';
 
 export type TeamPackItemDefinition = {
   accent: string;
@@ -1391,6 +1408,12 @@ export const ROCKET_LEAGUE_COLLECTION_PACK: TeamPackDefinition = {
 };
 
 export const ORIGINAL_PACK_CATALOG: readonly TeamPackDefinition[] = [
+  SANG_DES_TITANS_PACK,
+  CHUTE_LIBRE_PACK,
+  SERMENT_DU_GIVRE_PACK,
+  CONCLAVE_ARCANIQUE_PACK,
+  TURBO_ARENA_PACK,
+  DERNIER_ROUND_PACK,
   CIRCUIT_ZERO_PACK,
   MYTHS_FORGE_PACK,
   NEON_PROTOCOL_PACK,

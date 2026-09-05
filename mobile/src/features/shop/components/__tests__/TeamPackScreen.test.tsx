@@ -14,6 +14,7 @@ import {
   MYTHS_FORGE_PACK,
   NEON_PROTOCOL_PACK,
   ROCKET_LEAGUE_COLLECTION_PACK,
+  SANG_DES_TITANS_PACK,
   VALORANT_COLLECTION_PACK,
   type TeamPackDefinition,
 } from '../../teamPackCatalog';
@@ -111,6 +112,26 @@ describe('TeamPackScreen', () => {
 
     await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
     expect(screen.getAllByText('Armure Vega').length).toBeGreaterThan(0);
+  });
+
+  it('renders a new original pack and keeps all twelve objects inspectable', async () => {
+    const screen = await render(
+      <TeamPackScreen
+        packId={SANG_DES_TITANS_PACK.id}
+        previewData={makeData(1280, SANG_DES_TITANS_PACK)}
+      />,
+    );
+
+    expect(screen.getByText('COLLECTION // ORIGINALE')).toBeTruthy();
+    expect(screen.getAllByText('DERNIER PACTE // PORTE-SERMENT')).toHaveLength(2);
+    expect(screen.getAllByTestId(/^team-pack-item-sang-des-titans-/)).toHaveLength(12);
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('team-pack-item-sang-des-titans-oath-armor'));
+    });
+
+    await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
+    expect(screen.getAllByText('Cuirasse des Serments').length).toBeGreaterThan(0);
   });
 
   it('renders Mythes de la Forge and its twelve inspectable original objects', async () => {

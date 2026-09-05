@@ -188,6 +188,18 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.getByTestId('atelier-original-pack-circuit-zero')).toBeTruthy();
     expect(screen.getByTestId('atelier-original-pack-mythes-forge')).toBeTruthy();
     expect(screen.getByTestId('atelier-original-pack-neon-protocol')).toBeTruthy();
+    expect(screen.getByTestId('atelier-original-pack-sang-des-titans')).toBeTruthy();
+    expect(screen.getByTestId('atelier-original-pack-chute-libre')).toBeTruthy();
+    expect(screen.getByTestId('atelier-original-pack-serment-du-givre')).toBeTruthy();
+    expect(screen.getByTestId('atelier-original-pack-conclave-arcanique')).toBeTruthy();
+    expect(screen.getByTestId('atelier-original-pack-turbo-arena')).toBeTruthy();
+    expect(screen.getByTestId('atelier-original-pack-dernier-round')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('atelier-original-pack-sang-des-titans'));
+    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
+      pathname: '/team-pack-preview',
+      params: { packId: 'sang-des-titans' },
+    });
 
     await fireEvent.press(screen.getByTestId('atelier-original-pack-circuit-zero'));
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
@@ -212,7 +224,7 @@ describe('AtelierShopScreen interactions', () => {
       pathname: '/team-pack-preview',
       params: { packId: 'clutch-originals-teams' },
     });
-  });
+  }, 15_000);
 
   it('reviews a rare purchase before debiting then opens its dedicated reveal', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);

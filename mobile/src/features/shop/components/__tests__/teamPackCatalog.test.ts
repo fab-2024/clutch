@@ -4,11 +4,14 @@ import {
   applyPreviewTeamPackAction,
   ARCHIVED_GAME_COLLECTION_PACK_CATALOG,
   ARCHIVED_TEAM_PACK_CATALOG,
+  CHUTE_LIBRE_PACK,
   CIRCUIT_ZERO_PACK,
   CLUTCH_ORIGINALS_TEAM_PACK,
+  CONCLAVE_ARCANIQUE_PACK,
   COSMETIC_PACK_CATALOG,
   cosmeticPackById,
   createTeamPackPreviewItems,
+  DERNIER_ROUND_PACK,
   FNATIC_TEAM_PACK,
   GAME_COLLECTION_PACK_CATALOG,
   KC_TEAM_PACK,
@@ -18,9 +21,12 @@ import {
   NEON_PROTOCOL_PACK,
   ORIGINAL_PACK_CATALOG,
   ROCKET_LEAGUE_COLLECTION_PACK,
+  SANG_DES_TITANS_PACK,
+  SERMENT_DU_GIVRE_PACK,
   TEAM_PACK_CATALOG,
   teamPackById,
   teamPackPrimaryAction,
+  TURBO_ARENA_PACK,
   VALORANT_COLLECTION_PACK,
   type TeamPackDefinition,
 } from '../../teamPackCatalog';
@@ -154,14 +160,25 @@ const CLUTCH_ORIGINALS_EXPECTED_IDS = [
   'clutch-originals-ghost-circuit-badge',
 ];
 
+const NEW_ORIGINAL_PACKS = [
+  SANG_DES_TITANS_PACK,
+  CHUTE_LIBRE_PACK,
+  SERMENT_DU_GIVRE_PACK,
+  CONCLAVE_ARCANIQUE_PACK,
+  TURBO_ARENA_PACK,
+  DERNIER_ROUND_PACK,
+] as const;
+
 describe('original pack catalogue', () => {
   it('publishes the original collections and keeps licensed definitions archived', () => {
     expect(ORIGINAL_PACK_CATALOG).toEqual([
+      ...NEW_ORIGINAL_PACKS,
       CIRCUIT_ZERO_PACK,
       MYTHS_FORGE_PACK,
       NEON_PROTOCOL_PACK,
     ]);
     expect(COSMETIC_PACK_CATALOG).toEqual([
+      ...NEW_ORIGINAL_PACKS,
       CIRCUIT_ZERO_PACK,
       MYTHS_FORGE_PACK,
       NEON_PROTOCOL_PACK,
@@ -180,6 +197,34 @@ describe('original pack catalogue', () => {
       ROCKET_LEAGUE_COLLECTION_PACK,
     ]);
   });
+
+  it.each(NEW_ORIGINAL_PACKS)(
+    'publishes, buys and equips every object from $name atomically',
+    (pack) => {
+      expect(pack).toMatchObject({
+        brandKey: 'clutch-originals',
+        kind: 'original',
+        licenseHolder: 'Clutch',
+        price: 1200,
+      });
+      expect(pack.items).toHaveLength(12);
+      expect(new Set(pack.items.map((item) => item.id))).toHaveProperty('size', 12);
+      expect(pack.items.every((item) => COSMETIC_SLOTS.includes(item.slot))).toBe(true);
+
+      const defaults = pack.items.filter((item) => item.equipByDefault);
+      expect(defaults).toHaveLength(8);
+      expect(new Set(defaults.map((item) => item.slot))).toHaveProperty('size', 8);
+      expect(cosmeticPackById(pack.id)).toBe(pack);
+
+      const next = applyPreviewTeamPackAction(makeData(1280, pack), pack);
+      expect(next.balance).toBe(80);
+      expect(next.items.every((item) => item.owned)).toBe(true);
+      expect(next.items.filter((item) => item.equipped).map((item) => item.id)).toEqual(
+        defaults.map((item) => item.id),
+      );
+      expect(teamPackPrimaryAction(pack, next)).toBe('equipped');
+    },
+  );
 
   it('keeps all six fictional team identities inside the active Boutique pack', () => {
     expect(CLUTCH_ORIGINALS_TEAM_PACK).toMatchObject({

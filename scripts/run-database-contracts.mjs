@@ -22,6 +22,7 @@ const contractFiles = [
   'supabase/tests/neon_protocol_pack.sql',
   'supabase/tests/myths_forge_pack.sql',
   'supabase/tests/circuit_zero_pack.sql',
+  'supabase/tests/original_packs_wave_two.sql',
   'supabase/tests/clutch_originals_team_pack.sql',
   'supabase/tests/privacy_analytics_partner_campaign.sql',
   'supabase/tests/founder_pack_iap.sql',
