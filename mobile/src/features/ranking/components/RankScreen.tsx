@@ -35,6 +35,7 @@ import type {
   RankRules,
   RankScope,
 } from '../types';
+import { NextHorizonCard } from './NextHorizonCard';
 import { RankEmblem } from './RankEmblem';
 import { RankSnapshot } from './RankSnapshot';
 import { SeasonJourneyCard } from './SeasonJourneyCard';
@@ -220,6 +221,7 @@ function SeasonSection({
   dashboard: RankDashboard;
   reduceMotionOverride?: boolean;
 }) {
+  const [showJourney, setShowJourney] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const state = dashboard.state;
 
@@ -228,20 +230,32 @@ function SeasonSection({
   }
 
   const accent = isZeroRank(state.frags) ? ZERO_RANK_ACCENT : gradeAccent(state.grade);
+  const toggleJourney = () => {
+    if (showJourney) setShowRules(false);
+    setShowJourney((visible) => !visible);
+  };
 
   return (
     <View style={styles.sectionStack}>
-      <SeasonJourneyCard
-        onChooseMatch={() => router.push('/(tabs)/matches')}
-        onToggleRules={() => setShowRules((visible) => !visible)}
-        reduceMotionOverride={reduceMotionOverride}
-        rules={dashboard.rules}
-        rulesVisible={showRules}
-        season={dashboard.season}
+      <NextHorizonCard
+        expanded={showJourney}
+        onToggleJourney={toggleJourney}
         state={state}
       />
 
-      {showRules ? <RulesCard rules={dashboard.rules} /> : null}
+      {showJourney ? (
+        <SeasonJourneyCard
+          onChooseMatch={() => router.push('/(tabs)/matches')}
+          onToggleRules={() => setShowRules((visible) => !visible)}
+          reduceMotionOverride={reduceMotionOverride}
+          rules={dashboard.rules}
+          rulesVisible={showRules}
+          season={dashboard.season}
+          state={state}
+        />
+      ) : null}
+
+      {showJourney && showRules ? <RulesCard rules={dashboard.rules} /> : null}
 
       <RecentMovements movements={dashboard.recentMovements} />
 
@@ -608,26 +622,16 @@ function RankSkeleton() {
         <Skeleton height={12} radius="pill" width={96} />
         <Skeleton height={10} radius="pill" tone="subtle" width={104} />
       </View>
-      <View style={styles.skeletonJourney}>
-        {[0, 1, 2].map((item) => (
-          <View key={item} style={styles.skeletonTier}>
-            <View style={styles.skeletonTierCopy}>
-              <Skeleton height={10} radius="pill" width={62 + item * 8} />
-              <Skeleton height={7} radius="pill" tone="subtle" width={88} />
+      <View style={styles.skeletonHorizon}>
+        {[0, 1].map((item) => (
+          <View key={item} style={styles.skeletonHorizonGrade}>
+            <Skeleton height={72} radius="pill" tone={item ? 'subtle' : 'base'} width={72} />
+            <View style={styles.skeletonHorizonCopy}>
+              <Skeleton height={11} radius="pill" tone={item ? 'subtle' : 'base'} width="82%" />
+              {item ? <Skeleton height={8} radius="pill" tone="subtle" width="64%" /> : null}
             </View>
-            <Skeleton height={82} radius="lg" width={82} />
           </View>
         ))}
-      </View>
-      <View style={styles.skeletonMetrics}>
-        <View style={styles.skeletonMetricColumn}>
-          <Skeleton height={9} radius="pill" tone="subtle" width={76} />
-          <Skeleton height={35} radius="sm" width={92} />
-        </View>
-        <View style={styles.skeletonMetricColumn}>
-          <Skeleton height={9} radius="pill" tone="subtle" width={104} />
-          <Skeleton height={7} radius="pill" width="100%" />
-        </View>
       </View>
     </SkeletonGroup>
   );
@@ -1181,24 +1185,17 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   skeleton: {
-    minHeight: 520,
+    minHeight: 152,
     marginHorizontal: spacing.md,
-    padding: 18,
-    gap: 14,
-    borderRadius: 30,
-    backgroundColor: '#0B1218',
-    borderWidth: 1,
-    borderColor: colors.border,
+    gap: 6,
   },
   snapshotSkeleton: { minHeight: 128, marginHorizontal: spacing.md, paddingVertical: spacing.md, paddingHorizontal: spacing.sm, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radius.lg, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderSubtle },
   snapshotSkeletonCopy: { flex: 1, minWidth: 0, gap: 8 },
   snapshotSkeletonRank: { width: 66, alignItems: 'flex-end', gap: 7 },
-  skeletonJourneyHeader: { minHeight: 32, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
-  skeletonJourney: { flex: 1, justifyContent: 'space-around' },
-  skeletonTier: { minHeight: 98, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 18, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
-  skeletonTierCopy: { flex: 1, gap: 8 },
-  skeletonMetrics: { minHeight: 94, paddingTop: 14, flexDirection: 'row', gap: 24, borderTopWidth: 1, borderTopColor: colors.borderSubtle },
-  skeletonMetricColumn: { flex: 1, justifyContent: 'center', gap: 12 },
+  skeletonJourneyHeader: { minHeight: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  skeletonHorizon: { minHeight: 112, paddingHorizontal: 8, flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: radius.lg, backgroundColor: '#0B1218', borderWidth: 1, borderColor: colors.border },
+  skeletonHorizonGrade: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  skeletonHorizonCopy: { flex: 1, minWidth: 0, gap: 8 },
   pressed: {
     opacity: 0.72,
   },

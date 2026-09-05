@@ -26,6 +26,7 @@ jest.mock('react-native-safe-area-context', () => {
   return { SafeAreaView: ReactNative.View };
 });
 jest.mock('@/src/components/layout/GriffHeader', () => ({ GriffHeader: () => null }));
+jest.mock('@/src/features/profile/components/ProfileHeaderButton', () => ({ __esModule: true, default: () => null }));
 jest.mock('../RankEmblem', () => ({ RankEmblem: () => null }));
 jest.mock('../SeasonJourneyCard', () => ({ SeasonJourneyCard: () => null }));
 jest.mock('../../api', () => ({ loadRankDashboard: jest.fn() }));
