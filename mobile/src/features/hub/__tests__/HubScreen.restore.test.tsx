@@ -2,6 +2,7 @@
 
 import { fireEvent, render } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { StyleSheet } from 'react-native';
 
 import { PREVIEW_STREAK } from '@/src/features/retention/preview';
 
@@ -121,6 +122,16 @@ describe('HubExperience restoration', () => {
     expect(screen.getByText('RESTORED CONTEXT')).toBeTruthy();
     expect(screen.getByTestId('hub-season-controls')).toBeTruthy();
     expect(screen.getByText('À SUIVRE')).toBeTruthy();
+    expect(screen.getByText('G2')).toBeTruthy();
+    expect(screen.getByText('VS')).toBeTruthy();
+    expect(screen.getByText('FNC')).toBeTruthy();
+    expect(screen.getByText('LFL SUMMER SPLIT · BO3')).toBeTruthy();
+
+    const upNextStyle = StyleSheet.flatten(screen.getByTestId('hub-up-next-match-next-g2-fnc').props.style);
+    const logoStyle = StyleSheet.flatten(screen.getByTestId('hub-up-next-logo-a-next-g2-fnc').props.style);
+    expect(upNextStyle.height).toBeLessThan(upNextStyle.width / 2);
+    expect(logoStyle.width).toBeLessThan(upNextStyle.width * .2);
+    expect(logoStyle.height).toBe(logoStyle.width);
   });
 
   it('connects the preview streak card to its detail screen without changing the main match', async () => {

@@ -382,8 +382,8 @@ function UpNextMatchCard({
     logo_a: confrontation.teamA.logo,
     logo_b: confrontation.teamB.logo,
   };
-  const cardHeight = Math.round(cardWidth / 1.78);
-  const logoSize = Math.round(cardWidth * .28);
+  const cardHeight = Math.round(cardWidth / 2.42);
+  const logoSize = Math.round(cardWidth * .18);
   const formatValue = Number(match.format);
   const format = Number.isInteger(formatValue) && formatValue > 0
     ? 'BO' + formatValue
@@ -400,6 +400,7 @@ function UpNextMatchCard({
         { height: cardHeight, width: cardWidth },
         pressed && styles.pressed,
       ]}
+      testID={`hub-up-next-match-${match.id}`}
     >
       <Image
         resizeMode="cover"
@@ -423,11 +424,14 @@ function UpNextMatchCard({
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={styles.upNextSchedulePill}>
-        <Text style={styles.upNextWhen}>{formatMatchSchedule(match.debut)}</Text>
-      </View>
-
-      <View style={[styles.upNextLogo, styles.upNextLogoLeft]}>
+      <View
+        style={[
+          styles.upNextLogo,
+          styles.upNextLogoLeft,
+          { height: logoSize, marginTop: -logoSize / 2, width: logoSize },
+        ]}
+        testID={`hub-up-next-logo-a-${match.id}`}
+      >
         <TeamLogo
           accent={confrontation.teamA.accent}
           contentScale={upNextLogoContentScale(confrontation.teamA.name)}
@@ -438,16 +442,14 @@ function UpNextMatchCard({
           uri={confrontation.teamA.logo}
         />
       </View>
-      <View style={styles.upNextConfrontation}>
-        <Text adjustsFontSizeToFit minimumFontScale={.72} numberOfLines={1} style={styles.upNextTag}>
-          {confrontation.teamA.tag}
-        </Text>
-        <Text style={styles.upNextVs}>VS</Text>
-        <Text adjustsFontSizeToFit minimumFontScale={.72} numberOfLines={1} style={styles.upNextTag}>
-          {confrontation.teamB.tag}
-        </Text>
-      </View>
-      <View style={[styles.upNextLogo, styles.upNextLogoRight]}>
+      <View
+        style={[
+          styles.upNextLogo,
+          styles.upNextLogoRight,
+          { height: logoSize, marginTop: -logoSize / 2, width: logoSize },
+        ]}
+        testID={`hub-up-next-logo-b-${match.id}`}
+      >
         <TeamLogo
           accent={confrontation.teamB.accent}
           contentScale={upNextLogoContentScale(confrontation.teamB.name)}
@@ -459,7 +461,17 @@ function UpNextMatchCard({
         />
       </View>
 
-      <View style={styles.upNextFooter}>
+      <View style={[styles.upNextConfrontation, { left: logoSize + 18, right: logoSize + 18 }]}>
+        <Text numberOfLines={1} style={styles.upNextWhen}>{formatMatchSchedule(match.debut)}</Text>
+        <View style={styles.upNextDuel}>
+          <Text adjustsFontSizeToFit minimumFontScale={.58} numberOfLines={1} style={styles.upNextTag}>
+            {confrontation.teamA.tag}
+          </Text>
+          <Text style={styles.upNextVs}>VS</Text>
+          <Text adjustsFontSizeToFit minimumFontScale={.58} numberOfLines={1} style={styles.upNextTag}>
+            {confrontation.teamB.tag}
+          </Text>
+        </View>
         <Text adjustsFontSizeToFit minimumFontScale={.72} numberOfLines={1} style={styles.upNextEvent}>
           {match.evenement.toUpperCase()} · {format}
         </Text>
@@ -811,20 +823,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  upNextSchedulePill: {
-    position: 'absolute',
-    zIndex: 4,
-    top: 11,
-    left: '50%',
-    minWidth: 84,
-    marginLeft: -42,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   upNextWhen: {
     ...typography.label,
     color: colors.volt,
-    letterSpacing: .25,
+    fontSize: 11,
+    lineHeight: 13,
+    letterSpacing: .35,
+    textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,.95)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
@@ -832,63 +837,64 @@ const styles = StyleSheet.create({
   upNextLogo: {
     position: 'absolute',
     zIndex: 2,
-    top: 48,
+    top: '50%',
     alignItems: 'center',
     justifyContent: 'center',
   },
   upNextLogoLeft: {
-    left: 10,
+    left: 12,
   },
   upNextLogoRight: {
-    right: 10,
+    right: 12,
   },
   upNextConfrontation: {
     position: 'absolute',
-    zIndex: 3,
-    top: 40,
-    left: '50%',
-    width: 72,
-    marginLeft: -36,
+    zIndex: 4,
+    top: 14,
+    bottom: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  upNextTag: {
+  upNextDuel: {
     width: '100%',
+    marginTop: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+  },
+  upNextTag: {
+    flex: 1,
+    minWidth: 0,
     color: '#F7F8F9',
     fontFamily: fonts.display,
-    fontSize: 31,
-    lineHeight: 32,
+    fontSize: 29,
+    lineHeight: 31,
     textAlign: 'center',
-    letterSpacing: -.5,
+    letterSpacing: -.65,
     textShadowColor: 'rgba(0,0,0,.94)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 7,
   },
   upNextVs: {
+    flexShrink: 0,
     color: colors.volt,
-    fontFamily: fonts.bold,
-    fontSize: 13,
-    lineHeight: 14,
-    letterSpacing: .35,
+    fontFamily: fonts.display,
+    fontSize: 16,
+    lineHeight: 19,
+    letterSpacing: .1,
     textShadowColor: 'rgba(0,0,0,.9)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 5,
   },
-  upNextFooter: {
-    position: 'absolute',
-    zIndex: 4,
-    left: 14,
-    right: 14,
-    bottom: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   upNextEvent: {
+    width: '100%',
+    marginTop: 3,
     color: '#AEB8C0',
     fontFamily: fonts.bold,
-    fontSize: 11,
-    lineHeight: 14,
-    letterSpacing: .35,
+    fontSize: 9,
+    lineHeight: 12,
+    letterSpacing: .25,
     textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,.95)',
     textShadowOffset: { width: 0, height: 1 },

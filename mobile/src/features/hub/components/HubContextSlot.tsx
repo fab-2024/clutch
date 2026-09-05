@@ -12,6 +12,7 @@ import { colors, spacing, typography } from '@/src/theme';
 import { openMatchResult } from '@/src/features/matches/matchCenterNavigation';
 
 import type { HubContextItem } from '../hubContext';
+import { withAlpha } from '../matchPresentation';
 import type { HubFactionMission, HubRecentResult, HubReward } from '../types';
 import DailyMissionArtwork, { type DailyMissionArtworkVariant } from './DailyMissionArtwork';
 
@@ -35,13 +36,13 @@ type HubContextSlotProps = {
 };
 
 type DailyMissionCard = {
-  borderColor: string;
+  accent: string;
   colors: [string, string, string];
   current: number;
   eyebrow: string;
   goal: number;
   key: DailyMissionArtworkVariant;
-  reward: number;
+  rewardVolts: number;
   title: string;
 };
 
@@ -178,12 +179,12 @@ function DailyMissionCardView({
   return (
     <Pressable
       accessibilityHint="Ouvre le détail des missions dans Défis"
-      accessibilityLabel={`${card.eyebrow}. ${spokenTitle}. Progression ${card.current} sur ${card.goal}. Récompense ${card.reward} Frags.`}
+      accessibilityLabel={`${card.eyebrow}. ${spokenTitle}. Progression ${card.current} sur ${card.goal}. Récompense ${card.rewardVolts} Volts.`}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [
         styles.missionPressable,
-        { borderColor: card.borderColor, width: cardWidth },
+        { borderColor: withAlpha(card.accent, .42), width: cardWidth },
         pressed && styles.pressed,
       ]}
       testID={`hub-daily-mission-${card.key}`}
@@ -233,8 +234,18 @@ function DailyMissionCardView({
           <View style={styles.missionProgressPill}>
             <Text style={styles.missionProgress}>{card.current}/{card.goal}</Text>
           </View>
-          <View style={styles.missionRewardPill}>
-            <Text style={styles.missionReward}>+{card.reward} FRAGS</Text>
+          <View
+            style={[
+              styles.missionRewardPill,
+              {
+                backgroundColor: withAlpha(card.accent, .14),
+                borderColor: withAlpha(card.accent, .9),
+                shadowColor: card.accent,
+              },
+            ]}
+            testID={`hub-mission-reward-${card.key}`}
+          >
+            <Text style={[styles.missionReward, { color: card.accent }]}>+{card.rewardVolts} VOLTS</Text>
           </View>
         </View>
       </LinearGradient>
@@ -248,33 +259,33 @@ function dailyMissionCards(): DailyMissionCard[] {
   // not duplicated in this daily rail.
   return [
     {
-      borderColor: 'rgba(76,242,184,.42)',
+      accent: '#4CF2B8',
       colors: ['#08A96B', '#007A55', '#003D36'],
       current: 0,
       eyebrow: 'MISSION CALL',
       goal: 1,
       key: 'call',
-      reward: 30,
+      rewardVolts: 30,
       title: 'VALIDE 1 CALL',
     },
     {
-      borderColor: 'rgba(198,112,255,.44)',
+      accent: '#C670FF',
       colors: ['#7417D0', '#4B06A3', '#25005E'],
       current: 0,
       eyebrow: 'MISSION LIVE',
       goal: 2,
       key: 'live',
-      reward: 20,
+      rewardVolts: 20,
       title: 'SUIS 2 MATCHS',
     },
     {
-      borderColor: 'rgba(77,195,245,.44)',
+      accent: '#4DC3F5',
       colors: ['#087FD1', '#005CAC', '#00316E'],
       current: 0,
       eyebrow: 'MISSION SOCIAL',
       goal: 1,
       key: 'social',
-      reward: 25,
+      rewardVolts: 25,
       title: 'INVITE\n1 SUPPORTER',
     },
   ];
@@ -633,7 +644,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 8,
-    backgroundColor: colors.volt,
+    backgroundColor: 'rgba(3,10,14,.84)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,.5)',
     shadowColor: '#000000',
@@ -644,7 +655,7 @@ const styles = StyleSheet.create({
   },
   missionReward: {
     ...typography.metricSmall,
-    color: '#080B0D',
+    color: '#FFFFFF',
     fontSize: 15,
     lineHeight: 17,
     fontStyle: 'italic',
