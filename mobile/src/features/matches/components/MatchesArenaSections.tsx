@@ -282,21 +282,30 @@ function MatchTeam({ accent, compact = false, name, tag, uri }: { accent: string
   );
 }
 
-export function MatchRow({ match, onPrepareMatch, rivalId, rivalPseudo }: { match: ArenaMatch; onPrepareMatch?: (match: MatchCenterTarget) => void; rivalId?: string; rivalPseudo?: string }) {
+export function MatchRow({ match, onOpenPrediction, onPrepareMatch, rivalId, rivalPseudo }: { match: ArenaMatch; onOpenPrediction?: (match: ArenaMatch) => void; onPrepareMatch?: (match: MatchCenterTarget) => void; rivalId?: string; rivalPseudo?: string }) {
   const phase = matchPhase(match);
   const finished = phase === 'finished';
   const callTag = predictionTag(match);
   const verdict = predictionVerdict(match);
   const open = predictionIsOpen(match);
+  const opensInline = Boolean(open && !match.prediction && onOpenPrediction);
   const state = verdict || (callTag ? `CALL · ${callTag}` : finished ? 'FINAL' : open ? 'OUVERT' : 'CLOS');
   const target = arenaTransitionTarget(match);
   const prepare = () => onPrepareMatch ? onPrepareMatch(target) : warmMatchCenter(target);
+  const openMatch = () => {
+    prepare();
+    if (opensInline && predictionIsOpen(match)) {
+      onOpenPrediction?.(match);
+      return;
+    }
+    openMatchCenter(target, { rivalId, rivalPseudo, source: 'matches' });
+  };
   return (
-    <Pressable accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}${callTag ? `, ton call ${callTag}` : ''}`} accessibilityRole="button" onPress={() => { prepare(); openMatchCenter(target, { rivalId, rivalPseudo, source: 'matches' }); }} onPressIn={prepare} style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}>
+    <Pressable accessibilityHint={opensInline ? 'Déplie le pronostic dans la liste' : 'Ouvre le Match Center'} accessibilityLabel={`${match.equipe_a} contre ${match.equipe_b}${callTag ? `, ton call ${callTag}` : ''}`} accessibilityRole="button" onPress={openMatch} onPressIn={prepare} style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}>
       <View style={styles.rowHeader}>
         <View style={styles.rowWhen}><Text style={styles.rowTime}>{finished ? 'FINAL' : formatTime(match.debut)}</Text><Text style={styles.rowGame}>{gameLabel(match.jeu)}</Text></View>
         <Text numberOfLines={2} style={styles.rowEvent}>{match.evenement} · BO{match.format}</Text>
-        <View style={styles.rowTrailing}><Text style={[styles.rowState, (callTag || open) && styles.rowStateAccent, verdict && Number(match.prediction?.delta_frags ?? 0) < 0 && styles.rowStateLoss]}>{state}</Text><Text style={styles.rowArrow}>›</Text></View>
+        <View style={styles.rowTrailing}><Text style={[styles.rowState, (callTag || open) && styles.rowStateAccent, verdict && Number(match.prediction?.delta_frags ?? 0) < 0 && styles.rowStateLoss]}>{state}</Text><Text style={styles.rowArrow}>{opensInline ? '⌄' : '›'}</Text></View>
       </View>
       <View style={styles.rowDuel}>
         <MatchTeam accent={target.couleur_a} compact name={match.equipe_a} tag={match.tag_a} uri={match.logo_a} />

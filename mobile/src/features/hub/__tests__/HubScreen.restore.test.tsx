@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
 import { PREVIEW_STREAK } from '@/src/features/retention/preview';
+import { openMatchCenter } from '@/src/features/matches/matchCenterNavigation';
 
 import type { HubData, HubMatch } from '../types';
 import { HubExperience } from '../components/HubScreen';
@@ -29,11 +30,18 @@ jest.mock('@/src/components/ui/Skeleton', () => ({
   Skeleton: 'Skeleton',
   SkeletonGroup: 'SkeletonGroup',
 }));
-jest.mock('@/src/features/matches/matchCenterCache', () => ({ prefetchMatchCenterData: jest.fn() }));
+jest.mock('@/src/features/matches/matchCenterCache', () => ({ prefetchMatchCenterData: jest.fn(async () => undefined) }));
 jest.mock('@/src/features/matches/matchCenterNavigation', () => ({
   openMatchCenter: jest.fn(),
   warmMatchCenter: jest.fn(),
 }));
+jest.mock('@/src/features/matches/components/InlinePredictionPanel', () => {
+  const React = jest.requireActual('react');
+  const { Text, View } = jest.requireActual('react-native');
+  return {
+    InlinePredictionPanel: () => React.createElement(View, { testID: 'hub-inline-prediction' }, React.createElement(Text, null, 'INLINE PREDICTION')),
+  };
+});
 jest.mock('@/src/features/onboarding/components/TeamLogo', () => ({ __esModule: true, default: 'TeamLogo' }));
 jest.mock('@/src/features/profile/components/ProfileHeaderButton', () => ({ __esModule: true, default: 'ProfileHeaderButton' }));
 jest.mock('@/src/features/ranking/components/RankEmblem', () => ({ RankEmblem: 'RankEmblem' }));
@@ -51,9 +59,13 @@ jest.mock('../components/HubContextSlot', () => {
 });
 jest.mock('../components/MatchConfrontationCard', () => {
   const React = jest.requireActual('react');
-  const { Text } = jest.requireActual('react-native');
+  const { Pressable, Text } = jest.requireActual('react-native');
   return {
-    MatchConfrontationCard: () => React.createElement(Text, null, 'PRIMARY MATCH POSTER'),
+    MatchConfrontationCard: ({ onPress }: { onPress: () => void }) => React.createElement(
+      Pressable,
+      { onPress, testID: 'primary-match-poster' },
+      React.createElement(Text, null, 'PRIMARY MATCH POSTER'),
+    ),
   };
 });
 
@@ -100,6 +112,8 @@ const HUB: HubData = {
 };
 
 describe('HubExperience restoration', () => {
+  beforeEach(() => jest.clearAllMocks());
+
   it('keeps the redesigned main poster without removing the rest of the Hub', async () => {
     const screen = await render(
       <HubExperience
@@ -154,6 +168,46 @@ describe('HubExperience restoration', () => {
     expect(router.push).toHaveBeenCalledWith('/streak-preview');
   });
 
+  it('opens an upcoming call inside the Hub instead of navigating away', async () => {
+    const screen = await render(
+      <HubExperience
+        error={null}
+        headerEconomy={{ frags: 1000, volts: 300 }}
+        hub={HUB}
+        loading={false}
+        onRefresh={jest.fn()}
+        onRetry={jest.fn()}
+        refreshing={false}
+        userId="user-1"
+      />,
+    );
+
+    await fireEvent.press(screen.getByTestId('primary-match-poster'));
+
+    expect(screen.getByTestId('hub-inline-prediction')).toBeTruthy();
+    expect(openMatchCenter).not.toHaveBeenCalled();
+  });
+
+  it('opens an À suivre card in the same inline panel', async () => {
+    const screen = await render(
+      <HubExperience
+        error={null}
+        headerEconomy={{ frags: 1000, volts: 300 }}
+        hub={HUB}
+        loading={false}
+        onRefresh={jest.fn()}
+        onRetry={jest.fn()}
+        refreshing={false}
+        userId="user-1"
+      />,
+    );
+
+    await fireEvent.press(screen.getByTestId('hub-up-next-match-next-g2-fnc'));
+
+    expect(screen.getByTestId('hub-inline-prediction')).toBeTruthy();
+    expect(openMatchCenter).not.toHaveBeenCalled();
+  });
+
   it('removes the redundant headline while the main match is live', async () => {
     const screen = await render(
       <HubExperience
@@ -170,5 +224,8 @@ describe('HubExperience restoration', () => {
     expect(screen.queryByText('LE MATCH EST LANCÉ')).toBeNull();
     expect(screen.queryByText('SUIS LE MATCH EN DIRECT.')).toBeNull();
     expect(screen.getByText('PRIMARY MATCH POSTER')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('primary-match-poster'));
+    expect(openMatchCenter).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('hub-inline-prediction')).toBeNull();
   });
 });

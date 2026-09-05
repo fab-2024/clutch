@@ -23,6 +23,7 @@ import type { HubMatch } from '../types';
 import { buildMatchTerritoryPalette } from './matchConfrontationPalette';
 
 type MatchConfrontationCardProps = {
+  accessibilityHint?: string;
   match: HubMatch;
   onPress: () => void;
   onPressIn?: () => void;
@@ -32,6 +33,7 @@ type MatchConfrontationCardProps = {
 const CARD_ASPECT_RATIO = 1.405;
 
 export function MatchConfrontationCard({
+  accessibilityHint = 'Ouvre le Match Center',
   match,
   onPress,
   onPressIn,
@@ -53,7 +55,7 @@ export function MatchConfrontationCard({
   return (
     <View style={[styles.ticketShell, { height: cardHeight, width: cardWidth }]}>
       <Pressable
-        accessibilityHint="Ouvre le Match Center"
+        accessibilityHint={accessibilityHint}
         accessibilityLabel={state.teamA.name + ' contre ' + state.teamB.name + ', ' + state.status + scoreCopy}
         accessibilityRole="button"
         onPress={onPress}

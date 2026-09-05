@@ -25,6 +25,8 @@ import {
   warmMatchCenter,
   type MatchCenterTarget,
 } from '@/src/features/matches/matchCenterNavigation';
+import { InlinePredictionPanel } from '@/src/features/matches/components/InlinePredictionPanel';
+import type { ArenaMatch } from '@/src/features/matches/types';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import CallStreakCard from '@/src/features/retention/components/CallStreakCard';
@@ -136,6 +138,10 @@ export function HubExperience({
   userId,
 }: HubExperienceProps) {
   const { isCompactWidth, isShortLandscape } = useResponsiveLayout();
+  const [inlinePredictionMatchId, setInlinePredictionMatchId] = useState<string | null>(null);
+  const inlinePredictionMatch = hub.nextMatch?.id === inlinePredictionMatchId
+    ? hub.nextMatch
+    : hub.upNext.find((match) => match.id === inlinePredictionMatchId) ?? null;
   const phase = hub.nextMatch ? getHubMatchPhase(hub.nextMatch) : null;
   const live = phase === 'live';
   const finished = phase === 'finished';
@@ -151,6 +157,8 @@ export function HubExperience({
     : callLocked
       ? 'TON CALL EST POSÉ.'
       : 'TON PROCHAIN CALL.';
+  const closeInlinePrediction = useCallback(() => setInlinePredictionMatchId(null), []);
+  const openInlinePrediction = useCallback((match: HubMatch) => setInlinePredictionMatchId(match.id), []);
 
   return (
     <Screen>
@@ -199,11 +207,24 @@ export function HubExperience({
           {loading ? (
             <HeroSkeleton />
           ) : hub.nextMatch ? (
-            <MatchHero
-              match={hub.nextMatch}
-              prediction={hub.nextMatchPrediction}
-              userId={userId}
-            />
+            inlinePredictionMatch?.id === hub.nextMatch.id && getHubMatchPhase(hub.nextMatch) === 'upcoming' ? (
+              <View style={styles.inlinePredictionPrimary}>
+                <InlinePredictionPanel
+                  key={inlinePredictionMatch.id}
+                  match={hubMatchToArenaMatch(inlinePredictionMatch)}
+                  onClose={closeInlinePrediction}
+                  onPredictionLocked={onRefresh}
+                  userId={userId}
+                />
+              </View>
+            ) : (
+              <MatchHero
+                match={hub.nextMatch}
+                onOpenPrediction={openInlinePrediction}
+                prediction={hub.nextMatchPrediction}
+                userId={userId}
+              />
+            )
           ) : (
             <EmptyHero />
           )}
@@ -225,7 +246,19 @@ export function HubExperience({
 
         {!loading && hub.upNext.length ? (
           <View>
-            <UpNext matches={hub.upNext} userId={userId} />
+            <UpNext matches={hub.upNext} onOpenPrediction={openInlinePrediction} userId={userId} />
+          </View>
+        ) : null}
+
+        {!loading && inlinePredictionMatch && inlinePredictionMatch.id !== hub.nextMatch?.id && getHubMatchPhase(inlinePredictionMatch) === 'upcoming' ? (
+          <View style={styles.inlinePredictionUpcoming}>
+            <InlinePredictionPanel
+              key={inlinePredictionMatch.id}
+              match={hubMatchToArenaMatch(inlinePredictionMatch)}
+              onClose={closeInlinePrediction}
+              onPredictionLocked={onRefresh}
+              userId={userId}
+            />
           </View>
         ) : null}
       </ScrollView>
@@ -235,10 +268,12 @@ export function HubExperience({
 
 function MatchHero({
   match,
+  onOpenPrediction,
   prediction,
   userId,
 }: {
   match: HubMatch;
+  onOpenPrediction: (match: HubMatch) => void;
   prediction: HubPrediction | null;
   userId?: string;
 }) {
@@ -260,9 +295,16 @@ function MatchHero({
     () => prepareMatchCenter(transitionTarget, userId),
     [transitionTarget, userId],
   );
+  const opensInline = confrontation.phase === 'upcoming' && !prediction;
   const open = useCallback(
-    () => openMatchCenter(transitionTarget, { source: 'hub' }),
-    [transitionTarget],
+    () => {
+      if (!prediction && getHubMatchPhase(match) === 'upcoming') {
+        onOpenPrediction(match);
+        return;
+      }
+      openMatchCenter(transitionTarget, { source: 'hub' });
+    },
+    [match, onOpenPrediction, prediction, transitionTarget],
   );
 
   useEffect(() => {
@@ -272,6 +314,7 @@ function MatchHero({
   return (
     <View style={styles.matchFeature}>
       <MatchConfrontationCard
+        accessibilityHint={opensInline ? 'Déplie le pronostic dans le Hub' : 'Ouvre le Match Center'}
         match={match}
         onPress={open}
         onPressIn={prepare}
@@ -338,7 +381,7 @@ function MatchCallAction({
   );
 }
 
-function UpNext({ matches, userId }: { matches: HubMatch[]; userId?: string }) {
+function UpNext({ matches, onOpenPrediction, userId }: { matches: HubMatch[]; onOpenPrediction: (match: HubMatch) => void; userId?: string }) {
   const { width } = useWindowDimensions();
   const cardWidth = Math.min(310, Math.max(276, width - spacing.md * 2));
 
@@ -356,7 +399,7 @@ function UpNext({ matches, userId }: { matches: HubMatch[]; userId?: string }) {
         showsHorizontalScrollIndicator={false}
       >
         {matches.map((match) => (
-          <UpNextMatchCard cardWidth={cardWidth} key={match.id} match={match} userId={userId} />
+          <UpNextMatchCard cardWidth={cardWidth} key={match.id} match={match} onOpenPrediction={onOpenPrediction} userId={userId} />
         ))}
       </ScrollView>
     </View>
@@ -366,10 +409,12 @@ function UpNext({ matches, userId }: { matches: HubMatch[]; userId?: string }) {
 function UpNextMatchCard({
   cardWidth,
   match,
+  onOpenPrediction,
   userId,
 }: {
   cardWidth: number;
   match: HubMatch;
+  onOpenPrediction: (match: HubMatch) => void;
   userId?: string;
 }) {
   const confrontation = getMatchConfrontationState(match, null);
@@ -386,12 +431,14 @@ function UpNextMatchCard({
   const format = Number.isInteger(formatValue) && formatValue > 0
     ? 'BO' + formatValue
     : 'FORMAT À CONFIRMER';
+  const opensInline = getHubMatchPhase(match) === 'upcoming';
 
   return (
     <Pressable
       accessibilityLabel={match.equipe_a + ' contre ' + match.equipe_b + ', ' + formatMatchSchedule(match.debut)}
+      accessibilityHint={opensInline ? 'Déplie le pronostic dans le Hub' : 'Ouvre le Match Center'}
       accessibilityRole="button"
-      onPress={() => openMatchCenter(transitionTarget, { source: 'hub' })}
+      onPress={() => getHubMatchPhase(match) === 'upcoming' ? onOpenPrediction(match) : openMatchCenter(transitionTarget, { source: 'hub' })}
       onPressIn={() => prepareMatchCenter(transitionTarget, userId)}
       style={({ pressed }) => [
         styles.upNextCard,
@@ -640,6 +687,24 @@ function prepareMatchCenter(match: MatchCenterTarget, userId?: string) {
   }
 }
 
+function hubMatchToArenaMatch(match: HubMatch): ArenaMatch {
+  const phase = getHubMatchPhase(match);
+  return {
+    ...match,
+    saison_id: 'hub',
+    statut: phase === 'live'
+      ? 'en_cours'
+      : phase === 'finished'
+        ? 'termine'
+        : phase === 'cancelled'
+          ? 'annule'
+          : 'a_venir',
+    score_a: match.score_a ?? null,
+    score_b: match.score_b ?? null,
+    prediction: null,
+  };
+}
+
 function openRankScreen() {
   router.push('/(tabs)/rank');
 }
@@ -714,6 +779,12 @@ const styles = StyleSheet.create({
   matchFeature: {
     width: '100%',
     gap: 10,
+  },
+  inlinePredictionPrimary: {
+    marginHorizontal: 4,
+  },
+  inlinePredictionUpcoming: {
+    marginHorizontal: spacing.md,
   },
   contextSlot: {
     marginHorizontal: spacing.md,

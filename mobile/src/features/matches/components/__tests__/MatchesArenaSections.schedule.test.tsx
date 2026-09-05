@@ -5,7 +5,9 @@ import { StyleSheet } from 'react-native';
 
 import { layout } from '@/src/theme';
 
-import { ScheduleHero, dateKey } from '../MatchesArenaSections';
+import { openMatchCenter } from '../../matchCenterNavigation';
+import type { ArenaMatch } from '../../types';
+import { LiveMatchCard, MatchRow, ScheduleHero, dateKey } from '../MatchesArenaSections';
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('react-native-reanimated', () => {
@@ -18,6 +20,11 @@ jest.mock('react-native-reanimated', () => {
 });
 jest.mock('@/src/components/layout/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isShortLandscape: false }),
+}));
+jest.mock('@/src/features/onboarding/components/TeamLogo', () => ({ __esModule: true, default: 'TeamLogo' }));
+jest.mock('../../matchCenterNavigation', () => ({
+  openMatchCenter: jest.fn(),
+  warmMatchCenter: jest.fn(),
 }));
 
 describe('ScheduleHero', () => {
@@ -66,3 +73,46 @@ describe('ScheduleHero', () => {
     expect(onSelectDay).toHaveBeenCalledWith(dateKey(calendarDays[1]));
   });
 });
+
+describe('match card navigation', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('expands an open upcoming prediction instead of opening a route', async () => {
+    const onOpenPrediction = jest.fn();
+    const match = matchFixture('a_venir');
+    const screen = await render(<MatchRow match={match} onOpenPrediction={onOpenPrediction} />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Alpha Team contre Beta Esports' }));
+
+    expect(onOpenPrediction).toHaveBeenCalledWith(match);
+    expect(openMatchCenter).not.toHaveBeenCalled();
+  });
+
+  it('keeps the classic Match Center navigation for a live match', async () => {
+    const match = matchFixture('en_cours');
+    const screen = await render(<LiveMatchCard match={match} />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Alpha Team contre Beta Esports, en direct' }));
+
+    expect(openMatchCenter).toHaveBeenCalledTimes(1);
+  });
+});
+
+function matchFixture(statut: ArenaMatch['statut']): ArenaMatch {
+  return {
+    id: `match-${statut}`,
+    saison_id: 'season-1',
+    debut: statut === 'a_venir' ? '2099-09-05T16:00:00.000Z' : '2026-09-05T12:00:00.000Z',
+    jeu: 'lol',
+    equipe_a: 'Alpha Team',
+    tag_a: 'ALP',
+    equipe_b: 'Beta Esports',
+    tag_b: 'BET',
+    evenement: 'Hitpoint Masters',
+    format: 3,
+    statut,
+    score_a: statut === 'en_cours' ? 0 : null,
+    score_b: statut === 'en_cours' ? 0 : null,
+    prediction: null,
+  };
+}

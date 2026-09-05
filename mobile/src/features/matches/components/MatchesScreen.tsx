@@ -38,6 +38,7 @@ import {
   type StatusFilter,
 } from './MatchesArenaSections';
 import { styles } from './MatchesScreen.styles';
+import { InlinePredictionPanel } from './InlinePredictionPanel';
 import { MyCallsPanel } from './MyCallsPanel';
 
 const GAME_GLOBAL_BACKGROUNDS = {
@@ -111,6 +112,7 @@ export function MatchesExperience({
   const [game, setGame] = useState<GameFilter>('followed');
   const [callsOnly, setCallsOnly] = useState(requestedView === 'calls');
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
+  const [expandedPredictionId, setExpandedPredictionId] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -153,12 +155,22 @@ export function MatchesExperience({
   function changeStatus(nextStatus: StatusFilter) {
     setStatus(nextStatus);
     setSelectedDayKey(null);
+    setExpandedPredictionId(null);
   }
 
   function changeGame(nextGame: GameFilter) {
     setGame(nextGame);
     setSelectedDayKey(null);
+    setExpandedPredictionId(null);
   }
+
+  const openInlinePrediction = useCallback((match: ArenaMatch) => {
+    setExpandedPredictionId(match.id);
+  }, []);
+
+  const closeInlinePrediction = useCallback(() => {
+    setExpandedPredictionId(null);
+  }, []);
 
   return (
     <Screen>
@@ -210,7 +222,10 @@ export function MatchesExperience({
             status={status}
             game={game}
             onQueryChange={setQuery}
-            onSelectDay={setSelectedDayKey}
+            onSelectDay={(dayKey) => {
+              setSelectedDayKey(dayKey);
+              setExpandedPredictionId(null);
+            }}
             onToggleHistory={() => changeStatus(status === 'upcoming' ? 'finished' : 'upcoming')}
             onToggleSearch={() => {
               setSearchOpen((current) => !current);
@@ -226,7 +241,10 @@ export function MatchesExperience({
             game={game}
             isAdmin={isAdmin}
             status={status}
-            onCallsOnlyChange={setCallsOnly}
+            onCallsOnlyChange={(nextCallsOnly) => {
+              setCallsOnly(nextCallsOnly);
+              setExpandedPredictionId(null);
+            }}
             onGameChange={changeGame}
             onStatusChange={changeStatus}
           />
@@ -260,7 +278,26 @@ export function MatchesExperience({
             ) : null}
             {standardMatches.length ? (
               <View style={styles.matchList}>
-                {standardMatches.map((match) => <MatchRow key={match.id} match={match} onPrepareMatch={prepareMatch} rivalId={duelRivalId} rivalPseudo={duelRivalPseudo} />)}
+                {standardMatches.map((match) => expandedPredictionId === match.id ? (
+                  <InlinePredictionPanel
+                    key={match.id}
+                    match={match}
+                    onClose={closeInlinePrediction}
+                    onPredictionLocked={onRefresh}
+                    rivalId={duelRivalId}
+                    rivalPseudo={duelRivalPseudo}
+                    userId={userId}
+                  />
+                ) : (
+                  <MatchRow
+                    key={match.id}
+                    match={match}
+                    onOpenPrediction={openInlinePrediction}
+                    onPrepareMatch={prepareMatch}
+                    rivalId={duelRivalId}
+                    rivalPseudo={duelRivalPseudo}
+                  />
+                ))}
               </View>
             ) : null}
           </View>
