@@ -1,11 +1,14 @@
 import type { ImageSourcePropType } from 'react-native';
 
-export const SHOWCASE_RING_FAMILIES = [
+export const SHOWCASE_BASE_RING_FAMILIES = [
   'rank',
   'streak',
   'faction',
   'major',
   'seniority',
+] as const;
+
+export const SHOWCASE_ACHIEVEMENT_RING_FAMILIES = [
   'ritual',
   'countercurrent',
   'clean_sweep',
@@ -14,6 +17,11 @@ export const SHOWCASE_RING_FAMILIES = [
   'pact',
   'echo',
   'metamorphosis',
+] as const;
+
+export const SHOWCASE_RING_FAMILIES = [
+  ...SHOWCASE_BASE_RING_FAMILIES,
+  ...SHOWCASE_ACHIEVEMENT_RING_FAMILIES,
 ] as const;
 
 export type ShowcaseRingFamily = (typeof SHOWCASE_RING_FAMILIES)[number];

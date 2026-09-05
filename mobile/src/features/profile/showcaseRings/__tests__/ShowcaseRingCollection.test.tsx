@@ -10,17 +10,17 @@ jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('lucide-react-native/icons/lock', () => ({ __esModule: true, default: 'Lock' }));
 
 const STATS: ShowcaseRingStats = {
-  ascension: { source: 'profile', value: 3 },
-  clean_sweep: { source: 'profile', value: 3 },
-  countercurrent: { source: 'profile', value: 5 },
-  duelist: { source: 'profile', value: 10 },
+  ascension: { source: 'profile', value: 4 },
+  clean_sweep: { source: 'profile', value: 10 },
+  countercurrent: { source: 'profile', value: 15 },
+  duelist: { source: 'profile', value: 50 },
   echo: { source: 'profile', value: 100 },
   faction: { source: 'profile', value: 20 },
   major: { source: 'profile', value: 100 },
-  metamorphosis: { source: 'profile', value: 3 },
-  pact: { source: 'profile', value: 3 },
+  metamorphosis: { source: 'profile', value: 7 },
+  pact: { source: 'profile', value: 15 },
   rank: { source: 'profile', value: 99 },
-  ritual: { source: 'profile', value: 8 },
+  ritual: { source: 'profile', value: 100 },
   seniority: { source: 'profile', value: 4 },
   streak: { source: 'profile', value: 0 },
 };

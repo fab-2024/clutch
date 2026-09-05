@@ -34,28 +34,27 @@ const SENIORITY_YEAR_KEYS = [
 ] as const;
 
 const RITUAL_KEYS = [
-  'plus_longue_serie_semaines',
-  'semaines_actives_consecutives',
-  'max_consecutive_active_weeks',
+  'jours_calls_distincts',
+  'jours_actifs',
+  'distinct_call_days',
 ] as const;
 
 const COUNTERCURRENT_KEYS = [
   'calls_contre_courant_reussis',
-  'outsiders_250_gagnes',
-  'countercurrent_wins',
-  'contrarian_correct_calls',
+  'calls_justes_moins_30_pct',
+  'community_underdog_correct_calls',
 ] as const;
 
 const CLEAN_SWEEP_KEYS = [
-  'placements_gagnes',
-  'placements_corrects',
-  'placement_correct_calls',
+  'journees_carton_plein',
+  'journees_parfaites_min_3',
+  'perfect_call_days',
 ] as const;
 
 const ASCENSION_KEYS = [
-  'competitions_gagnees_distinctes',
-  'competitions_calls_corrects',
-  'distinct_competitions_with_win',
+  'promotions_ligue',
+  'promotions_ligues',
+  'league_promotions',
 ] as const;
 
 const DUELIST_KEYS = [
@@ -66,21 +65,21 @@ const DUELIST_KEYS = [
 ] as const;
 
 const PACT_KEYS = [
-  'serie_calls_synchrones_ami',
-  'calls_synchronises_reussis',
-  'friend_synchronized_streak',
+  'amis_interactions_distincts',
+  'amis_actifs_distincts',
+  'distinct_interacted_friends',
 ] as const;
 
 const ECHO_KEYS = [
-  'paris',
-  'calls_officiels',
-  'total_official_calls',
+  'likes_vitrine_uniques',
+  'vitrine_likes_uniques',
+  'unique_showcase_likes',
 ] as const;
 
 const METAMORPHOSIS_KEYS = [
-  'resurgences',
-  'retours_reussis',
-  'resurgence_count',
+  'reliques_evolution_max',
+  'reliques_maximisees',
+  'max_evolved_relics',
 ] as const;
 
 export function adaptShowcaseRingStats(
@@ -94,25 +93,14 @@ export function adaptShowcaseRingStats(
   const invitedFriends = firstMetric(data.recap, INVITED_FRIEND_KEYS);
   const correctCalls = firstMetric(data.recap, CORRECT_CALL_KEYS);
   const seniority = firstMetric(data.recap, SENIORITY_YEAR_KEYS);
-  const ritual = firstMetric(data.recap, RITUAL_KEYS)
-    ?? achievementProgress(data, 'zero_chronicle', 1);
-  const countercurrent = firstMetric(data.recap, COUNTERCURRENT_KEYS)
-    ?? achievementProgress(data, 'countercurrent', 1, false);
-  const cleanSweep = firstMetric(data.recap, CLEAN_SWEEP_KEYS)
-    ?? achievementProgress(data, 'perfect_eclipse', 5);
-  const ascension = firstMetric(data.recap, ASCENSION_KEYS)
-    ?? achievementProgress(data, 'versatile', 5);
+  const ritual = firstMetric(data.recap, RITUAL_KEYS);
+  const countercurrent = firstMetric(data.recap, COUNTERCURRENT_KEYS);
+  const cleanSweep = firstMetric(data.recap, CLEAN_SWEEP_KEYS);
+  const ascension = firstMetric(data.recap, ASCENSION_KEYS);
   const duelist = firstMetric(data.recap, DUELIST_KEYS);
-  const pact = firstMetric(data.recap, PACT_KEYS)
-    ?? achievementProgress(data, 'synchrony', 3);
-  const rankedOfficialCalls = Number(data.ranking.pronostics_regles);
-  const echo = firstMetric(data.recap, ECHO_KEYS)
-    ?? (Number.isFinite(rankedOfficialCalls)
-      ? { source: 'profile' as const, value: Math.max(0, rankedOfficialCalls) }
-      : null);
-  const metamorphosis = firstMetric(data.recap, METAMORPHOSIS_KEYS)
-    ?? booleanMetric(data.recap.resurgence_obtenue ?? data.recap.resurgence_achieved)
-    ?? achievementProgress(data, 'resurgence', 1, false);
+  const pact = firstMetric(data.recap, PACT_KEYS);
+  const echo = firstMetric(data.recap, ECHO_KEYS);
+  const metamorphosis = firstMetric(data.recap, METAMORPHOSIS_KEYS);
   const derivedYears = completedYears(data.createdAt, now);
 
   return {
@@ -193,14 +181,14 @@ export function showcaseRingMetricLabel(family: ShowcaseRingFamily, value: numbe
   if (family === 'faction') return `${formatNumber(amount)} AMI${amount > 1 ? 'S' : ''} INVITÉ${amount > 1 ? 'S' : ''}`;
   if (family === 'major') return `${formatNumber(amount)} CALL${amount > 1 ? 'S' : ''} JUSTE${amount > 1 ? 'S' : ''}`;
   if (family === 'seniority') return `${amount} AN${amount > 1 ? 'S' : ''}`;
-  if (family === 'ritual') return `${amount} SEMAINE${amount > 1 ? 'S' : ''} ACTIVE${amount > 1 ? 'S' : ''}`;
-  if (family === 'countercurrent') return `${amount} CONTRE-COURANT${amount > 1 ? 'S' : ''}`;
-  if (family === 'clean_sweep') return `${amount}/5 CALLS DE PLACEMENT`;
-  if (family === 'ascension') return `${amount} COMPÉTITION${amount > 1 ? 'S' : ''}`;
+  if (family === 'ritual') return `${amount} JOUR${amount > 1 ? 'S' : ''} DE CALL`;
+  if (family === 'countercurrent') return `${amount} CALL${amount > 1 ? 'S' : ''} MINORITAIRE${amount > 1 ? 'S' : ''} JUSTE${amount > 1 ? 'S' : ''}`;
+  if (family === 'clean_sweep') return `${amount} JOURNÉE${amount > 1 ? 'S' : ''} PARFAITE${amount > 1 ? 'S' : ''}`;
+  if (family === 'ascension') return `${amount} PROMOTION${amount > 1 ? 'S' : ''}`;
   if (family === 'duelist') return `${amount} DUEL${amount > 1 ? 'S' : ''} GAGNÉ${amount > 1 ? 'S' : ''}`;
-  if (family === 'pact') return `${amount} CALL${amount > 1 ? 'S' : ''} SYNCHRONISÉ${amount > 1 ? 'S' : ''}`;
-  if (family === 'echo') return `${formatNumber(amount)} CALL${amount > 1 ? 'S' : ''} OFFICIEL${amount > 1 ? 'S' : ''}`;
-  return `${amount} RETOUR${amount > 1 ? 'S' : ''} RÉUSSI${amount > 1 ? 'S' : ''}`;
+  if (family === 'pact') return `${amount} AMI${amount > 1 ? 'S' : ''} ACTIF${amount > 1 ? 'S' : ''}`;
+  if (family === 'echo') return `${formatNumber(amount)} LIKE${amount > 1 ? 'S' : ''} UNIQUE${amount > 1 ? 'S' : ''}`;
+  return `${amount} RELIQUE${amount > 1 ? 'S' : ''} À L’APOGÉE`;
 }
 
 function emptyStats(): ShowcaseRingStats {
@@ -233,30 +221,6 @@ function firstMetric(
     if (Number.isFinite(numeric) && numeric >= 0) {
       return { source: 'profile', value: numeric };
     }
-  }
-  return null;
-}
-
-function achievementProgress(
-  data: ProfileData,
-  id: ProfileData['badges'][number]['id'],
-  obtainedValue: number,
-  useProgress = true,
-): ShowcaseRingMetric | null {
-  const badge = data.badges.find((candidate) => candidate.id === id);
-  if (!badge) return null;
-  if (useProgress && badge.progress && Number.isFinite(badge.progress.current)) {
-    return { source: 'derived', value: Math.max(0, badge.progress.current) };
-  }
-  return badge.obtained ? { source: 'derived', value: obtainedValue } : null;
-}
-
-function booleanMetric(value: unknown): ShowcaseRingMetric | null {
-  if (value === true || value === 'true' || value === 1 || value === '1') {
-    return { source: 'profile', value: 1 };
-  }
-  if (value === false || value === 'false' || value === 0 || value === '0') {
-    return { source: 'profile', value: 0 };
   }
   return null;
 }
