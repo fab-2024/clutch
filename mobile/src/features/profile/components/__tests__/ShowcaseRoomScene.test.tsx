@@ -519,7 +519,10 @@ describe('Showcase room composition', () => {
 
     expect(screen.getByTestId('showcase-room-pedestal-rank-ice').props.source).toBe(101);
     expect(screen.getByTestId('showcase-room-pedestal-trophy-stone').props.source).toBe(102);
+    expect(screen.getByTestId('showcase-room-pedestal-shadow-rank')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-pedestal-shadow-trophy')).toBeTruthy();
     expect(screen.queryByTestId('showcase-room-pedestal-badge-ice')).toBeNull();
+    expect(screen.queryByTestId('showcase-room-pedestal-shadow-badge')).toBeNull();
   });
 
   it('makes all ten mechanical presenter placements actionable', async () => {

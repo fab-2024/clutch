@@ -57,6 +57,7 @@ export type ShowcaseRoomSlotDefinition = {
   id: ShowcaseRoomSlotId;
   label: string;
   left: `${number}%`;
+  pedestalGroundOffset?: number;
   preferredKind: ShowcasePlaceableKind;
   top: `${number}%`;
   width: `${number}%`;

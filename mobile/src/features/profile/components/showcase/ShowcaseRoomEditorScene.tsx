@@ -24,6 +24,7 @@ import type {
 import {
   SHOWCASE_ROOM_SLOTS,
   showcasePlaceableKindLabel,
+  type ShowcasePlaceableKind,
   type ShowcaseRoomAssignments,
   type ShowcaseRoomPedestalPlacements,
   type ShowcaseRoomSlotDefinition,
@@ -31,6 +32,10 @@ import {
 } from './roomEditor';
 import { SHOWCASE_LIGHTING_VISUALS } from './showcaseLighting';
 import { SHOWCASE_PALETTE } from './showcasePalette';
+import {
+  resolveShowcaseSlotPerspective,
+  showcasePedestalAssetGeometry,
+} from './showcaseRoomPerspective';
 import { showcaseSceneLayout, type ShowcaseSceneFrame } from './showcaseSceneLayout';
 import type { ShowcaseLighting, ShowcaseRoomTheme } from './types';
 
@@ -63,6 +68,94 @@ const THEME_WASH: Record<ShowcaseRoomTheme, readonly [string, string, string]> =
   azure: ['rgba(5,27,42,.10)', 'rgba(5,12,18,.01)', 'rgba(3,30,48,.13)'],
 };
 
+const PEDESTAL_SOURCE_ASPECT_RATIO = 1.5;
+
+const ARTWORK_BOTTOM_INSET: Partial<Record<ShowcasePlaceableKind, number>> = {
+  banner: 0.02,
+  core: 0.02,
+  jersey: 0.025,
+  rank: 0.096,
+  ring: 0.03,
+  trophy: 0.025,
+};
+
+type ShowcaseRoomSlotComposition = {
+  artworkLean: number;
+  artworkSize: number;
+  artworkTranslateY: number;
+  artworkYaw: number;
+  groundOffset: number;
+  pedestalBottomInset: number;
+  pedestalHeight: number;
+  pedestalWidth: number;
+  pedestalYaw: number;
+  shadowHeight: number;
+  shadowWidth: number;
+};
+
+export function resolveShowcaseRoomSlotComposition({
+  canvasHeight,
+  canvasWidth,
+  itemKind,
+  pedestalId,
+  roomId,
+  slot,
+}: {
+  canvasHeight: number;
+  canvasWidth: number;
+  itemKind?: ShowcasePlaceableKind;
+  pedestalId?: string;
+  roomId: string;
+  slot: ShowcaseRoomSlotDefinition;
+}): ShowcaseRoomSlotComposition {
+  const slotWidth = canvasWidth * Number.parseFloat(slot.width) / 100;
+  const slotHeight = canvasHeight * Number.parseFloat(slot.height) / 100;
+  const artworkSize = Math.max(16, Math.min(slotWidth, slotHeight - 20) * 0.88);
+  const artworkLift = canvasHeight * (slot.artworkLift ?? 0) / 100;
+  const perspective = resolveShowcaseSlotPerspective(roomId, slot);
+
+  if (!pedestalId) {
+    return {
+      artworkLean: 0,
+      artworkSize,
+      artworkTranslateY: -artworkLift,
+      artworkYaw: 0,
+      groundOffset: 0,
+      pedestalBottomInset: 0,
+      pedestalHeight: 0,
+      pedestalWidth: 0,
+      pedestalYaw: 0,
+      shadowHeight: 0,
+      shadowWidth: 0,
+    };
+  }
+
+  const geometry = showcasePedestalAssetGeometry(pedestalId);
+  const opaquePedestalWidth = canvasWidth * perspective.pedestalWidth / 100;
+  const pedestalWidth = opaquePedestalWidth / geometry.opaqueWidthRatio;
+  const pedestalHeight = pedestalWidth
+    / PEDESTAL_SOURCE_ASPECT_RATIO
+    * perspective.pedestalInclination;
+  const pedestalBottomInset = pedestalHeight * geometry.bottomInset;
+  const groundOffset = canvasHeight * perspective.groundOffset / 100;
+  const seatLift = pedestalHeight * (1 - geometry.bottomInset - geometry.seatY);
+  const artworkBottomInset = artworkSize * (ARTWORK_BOTTOM_INSET[itemKind ?? 'badge'] ?? 0);
+
+  return {
+    artworkLean: perspective.artworkLean,
+    artworkSize,
+    artworkTranslateY: groundOffset - seatLift + artworkBottomInset,
+    artworkYaw: perspective.artworkYaw,
+    groundOffset,
+    pedestalBottomInset,
+    pedestalHeight,
+    pedestalWidth,
+    pedestalYaw: perspective.pedestalYaw,
+    shadowHeight: Math.max(2, pedestalHeight * 0.055),
+    shadowWidth: opaquePedestalWidth * 0.84,
+  };
+}
+
 export default function ShowcaseRoomEditorScene({
   assignments,
   atmosphereActive = true,
@@ -94,7 +187,14 @@ export default function ShowcaseRoomEditorScene({
   const layout = showcaseSceneLayout(viewport, room.sceneFrame);
   const lightingVisual = SHOWCASE_LIGHTING_VISUALS[lighting];
   const rankSlot = slots.find((slot) => slot.id === 'rank');
-  const rankArtworkLift = layout.canvas.height * (rankSlot?.artworkLift ?? 0) / 100;
+  const rankComposition = rankSlot ? resolveShowcaseRoomSlotComposition({
+    canvasHeight: layout.canvas.height,
+    canvasWidth: layout.canvas.width,
+    itemKind: assignments.rank?.kind,
+    pedestalId: pedestalPlacements.rank?.id,
+    roomId: room.id,
+    slot: rankSlot,
+  }) : null;
 
   return (
     <View
@@ -155,7 +255,7 @@ export default function ShowcaseRoomEditorScene({
           reduceMotion={reduceMotion}
           width={layout.canvas.width}
         />
-        {rankDisplay && rankSlot && assignments.rank?.kind === 'rank' ? (
+        {rankDisplay && rankSlot && rankComposition && assignments.rank?.kind === 'rank' ? (
           <>
             <View
               pointerEvents="none"
@@ -163,7 +263,12 @@ export default function ShowcaseRoomEditorScene({
                 height: rankSlot.height,
                 left: rankSlot.left,
                 top: rankSlot.top,
-                transform: [{ translateY: -rankArtworkLift }],
+                transform: [
+                  { perspective: Math.max(600, layout.canvas.width * 1.8) },
+                  { translateY: rankComposition.artworkTranslateY },
+                  { rotateY: `${rankComposition.artworkYaw}deg` },
+                  { rotateZ: `${rankComposition.artworkLean}deg` },
+                ],
                 width: rankSlot.width,
               }]}
               testID={`showcase-rank-display-${rankDisplay.id}`}
@@ -181,8 +286,14 @@ export default function ShowcaseRoomEditorScene({
         {slots.map((slot) => {
           const item = assignments[slot.id];
           const pedestalPlacement = pedestalPlacements[slot.id];
-          const artworkLift = layout.canvas.height * (slot.artworkLift ?? 0) / 100;
-          const pedestalLift = pedestalPlacement ? layout.canvas.height * 0.012 : 0;
+          const composition = resolveShowcaseRoomSlotComposition({
+            canvasHeight: layout.canvas.height,
+            canvasWidth: layout.canvas.width,
+            itemKind: item?.kind,
+            pedestalId: pedestalPlacement?.id,
+            roomId: room.id,
+            slot,
+          });
           return (
             <Pressable
               accessibilityHint={item ? 'Changer ou retirer cet objet' : 'Ajouter un objet de ta collection'}
@@ -205,33 +316,66 @@ export default function ShowcaseRoomEditorScene({
             >
               <View style={styles.slotSelection}>
                 {pedestalPlacement ? (
-                  <Image
-                    accessibilityIgnoresInvertColors
-                    accessible={false}
-                    resizeMode="contain"
-                    source={pedestalPlacement.image}
+                  <View
+                    pointerEvents="none"
                     style={[
-                      styles.pedestalArtwork,
-                      slot.id === 'rank' && styles.pedestalArtworkRank,
+                      styles.pedestalLayer,
+                      { transform: [{ translateY: composition.groundOffset }] },
                     ]}
-                    testID={`showcase-room-pedestal-${slot.id}-${pedestalPlacement.id}`}
-                  />
+                  >
+                    <View
+                      style={[styles.pedestalContactShadow, {
+                        bottom: -composition.shadowHeight / 2,
+                        height: composition.shadowHeight,
+                        left: (layout.canvas.width * Number.parseFloat(slot.width) / 100
+                          - composition.shadowWidth) / 2,
+                        width: composition.shadowWidth,
+                      }]}
+                      testID={`showcase-room-pedestal-shadow-${slot.id}`}
+                    />
+                    <Image
+                      accessibilityIgnoresInvertColors
+                      accessible={false}
+                      resizeMode="stretch"
+                      source={pedestalPlacement.image}
+                      style={[styles.pedestalArtwork, {
+                        bottom: -composition.pedestalBottomInset,
+                        height: composition.pedestalHeight,
+                        left: (layout.canvas.width * Number.parseFloat(slot.width) / 100
+                          - composition.pedestalWidth) / 2,
+                        transform: [
+                          { perspective: Math.max(600, layout.canvas.width * 1.8) },
+                          { rotateY: `${composition.pedestalYaw}deg` },
+                        ],
+                        width: composition.pedestalWidth,
+                      }]}
+                      testID={`showcase-room-pedestal-${slot.id}-${pedestalPlacement.id}`}
+                    />
+                  </View>
                 ) : null}
                 {item ? (
                   <View style={[
                     styles.slotArtifact,
-                    { transform: [{ translateY: -(artworkLift + pedestalLift) }] },
+                    { transform: [
+                      { perspective: Math.max(600, layout.canvas.width * 1.8) },
+                      { translateY: composition.artworkTranslateY },
+                      { rotateY: `${composition.artworkYaw}deg` },
+                      { rotateZ: `${composition.artworkLean}deg` },
+                    ] },
                   ]}>
                     <ShowcasePlaceableArtwork
                       item={item}
-                      size={Math.max(16, Math.min(
-                        layout.canvas.width * Number.parseFloat(slot.width) / 100,
-                        layout.canvas.height * Number.parseFloat(slot.height) / 100 - 20,
-                      ) * 0.88)}
+                      size={composition.artworkSize}
                     />
                   </View>
                 ) : (
-                  <View style={styles.emptySlot} testID={`showcase-room-empty-${slot.id}`}>
+                  <View
+                    style={[
+                      styles.emptySlot,
+                      { transform: [{ translateY: composition.artworkTranslateY }] },
+                    ]}
+                    testID={`showcase-room-empty-${slot.id}`}
+                  >
                     <Text style={styles.emptySlotPlus}>+</Text>
                     <Text numberOfLines={1} style={styles.emptySlotText}>AJOUTER</Text>
                   </View>
@@ -285,19 +429,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
+  pedestalLayer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 1,
+  },
+  pedestalContactShadow: {
+    position: 'absolute',
+    zIndex: 0,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0, 2, 4, .36)',
+    opacity: 0.68,
+  },
   pedestalArtwork: {
     position: 'absolute',
     zIndex: 1,
-    right: '-10%',
-    bottom: '-19%',
-    width: '120%',
-    height: '66%',
-  },
-  pedestalArtworkRank: {
-    right: '-6%',
-    bottom: '-20%',
-    width: '112%',
-    height: '62%',
   },
   slotArtifact: {
     position: 'absolute',
