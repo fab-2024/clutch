@@ -19,6 +19,9 @@ import { DEFAULT_MONETIZATION_CONTRACT, EMPTY_EQUIPPED_COSMETICS, type CosmeticS
 import { PREVIEW_PROFILE } from '../ProfilePreviewScreen';
 import ShowcaseScreen, { resolveRoomPlaceableItems } from '../ShowcaseScreen';
 
+const mockEquipPedestals = jest.fn(async () => undefined);
+const mockPedestalAssignments = {};
+
 jest.mock('expo-router', () => ({
   router: { back: jest.fn() },
   useFocusEffect: () => undefined,
@@ -81,6 +84,13 @@ jest.mock('@/src/features/shop/components/AtelierPurchaseSheet', () => {
 jest.mock('../../showcaseRings/useShowcaseRingEquipment', () => ({
   useShowcaseRingEquipment: () => ({ family: null, loading: false, equip: jest.fn() }),
 }));
+jest.mock('../../showcasePedestals/useShowcasePedestalEquipment', () => ({
+  useShowcasePedestalEquipment: () => ({
+    assignments: mockPedestalAssignments,
+    equip: mockEquipPedestals,
+    loading: false,
+  }),
+}));
 jest.mock('../../achievementBadges/useAchievementBadgeEquipment', () => ({
   useAchievementBadgeEquipment: () => ({ slots: [], loading: false, equip: jest.fn() }),
 }));
@@ -129,8 +139,11 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.queryByText('TOUCHE UN EMPLACEMENT POUR L’ÉQUIPER')).toBeNull();
     expect(screen.queryByTestId('showcase-settings-sheet')).toBeNull();
     expect(screen.getByTestId('showcase-room-background-obsidian-gallery').props.source).toBe(
-      require('../../../../../assets/shop/rooms/room-obsidian-gallery.png'),
+      require('../../../../../assets/shop/rooms/room-obsidian-gallery-floor.jpg'),
     );
+    expect(screen.getByTestId(
+      'showcase-room-pedestal-rank-neon-protocol-vector-pedestals',
+    )).toBeTruthy();
     expect(screen.queryByTestId('showcase-rank-display-rank_carbon_cradle')).toBeNull();
     expect(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine')).toBeTruthy();
 
@@ -221,6 +234,52 @@ describe('ShowcaseScreen immersive editor', () => {
     const roomProduct = screen.getByTestId('showcase-atelier-product-serment-du-givre-ice-sheet-pedestal');
     expect(roomProduct).toBeTruthy();
     expect(within(roomProduct).getByText('BASTION DES CIMES')).toBeTruthy();
+  }, 15_000);
+
+  it('changes pedestals on one or several slots without replacing the room', async () => {
+    const frostShop = applyPreviewTeamPackAction({
+      ...ATELIER_SHOP,
+      balance: 1280,
+      items: [
+        ...ATELIER_SHOP.items,
+        ...createTeamPackPreviewItems(SERMENT_DU_GIVRE_PACK),
+      ],
+    }, SERMENT_DU_GIVRE_PACK);
+    const monolith = createTeamPackPreviewItems(SANG_DES_TITANS_PACK)
+      .find((item) => item.id === 'sang-des-titans-monolith-pedestal')!;
+    const screen = await render(
+      <ShowcaseScreen
+        previewProfile={PREVIEW_PROFILE}
+        previewShop={{ ...frostShop, items: [...frostShop.items, { ...monolith, owned: true }] }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('showcase-room-background-serment-du-givre-ice-sheet-pedestal')).toBeTruthy();
+    });
+    await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-category-pedestals'));
+
+    expect(screen.getByTestId('showcase-pedestal-target-all').props.accessibilityState.checked).toBe(true);
+    await fireEvent.press(screen.getByTestId('showcase-pedestal-target-rank'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-product-sang-des-titans-monolith-pedestal'));
+
+    expect(screen.getByTestId('showcase-room-pedestal-rank-sang-des-titans-monolith-pedestal')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-pedestal-trophy-serment-du-givre-ice-sheet-pedestal')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-background-serment-du-givre-ice-sheet-pedestal')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('showcase-pedestal-target-badge'));
+    expect(screen.getByTestId('showcase-room-pedestal-badge-sang-des-titans-monolith-pedestal')).toBeTruthy();
+    expect(screen.getByText('APPLIQUER · 2')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('showcase-atelier-primary'));
+
+    await waitFor(() => {
+      expect(mockEquipPedestals).toHaveBeenCalledWith({
+        badge: 'sang-des-titans-monolith-pedestal',
+        rank: 'sang-des-titans-monolith-pedestal',
+      });
+    });
+    expect(screen.getByTestId('showcase-room-background-serment-du-givre-ice-sheet-pedestal')).toBeTruthy();
   }, 15_000);
 
   it('shows only + Ajouter in an empty slot and restores it after removing an object', async () => {

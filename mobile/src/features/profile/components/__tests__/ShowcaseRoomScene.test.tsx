@@ -503,6 +503,25 @@ describe('Showcase room composition', () => {
     expect(onSlotPress.mock.calls.map(([slot]) => slot)).toEqual(['jersey', 'right-free']);
   });
 
+  it('renders different pedestal designs beneath independently selected slots', async () => {
+    const screen = await render(
+      <ShowcaseRoomEditorScene
+        assignments={createDefaultShowcaseRoomAssignments([])}
+        lighting="cyan"
+        onSlotPress={jest.fn()}
+        pedestalPlacements={{
+          rank: { accent: '#8ED8FF', id: 'ice', image: 101, name: 'Banquise' },
+          trophy: { accent: '#C58B55', id: 'stone', image: 102, name: 'Monolithe' },
+        }}
+        room={SHOWCASE_ROOM_CATALOG[0]}
+      />,
+    );
+
+    expect(screen.getByTestId('showcase-room-pedestal-rank-ice').props.source).toBe(101);
+    expect(screen.getByTestId('showcase-room-pedestal-trophy-stone').props.source).toBe(102);
+    expect(screen.queryByTestId('showcase-room-pedestal-badge-ice')).toBeNull();
+  });
+
   it('makes all ten mechanical presenter placements actionable', async () => {
     const presenter = SHOWCASE_PRESENTER_CATALOG[2];
     const onSlotPress = jest.fn();

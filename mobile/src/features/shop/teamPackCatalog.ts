@@ -196,7 +196,7 @@ export const NEON_PROTOCOL_PACK: TeamPackDefinition = {
       rarity: 'legendaire',
       accent: NEON_CYAN,
       equipByDefault: true,
-      image: require('../../../assets/shop/packs/neon-protocol/neon-protocol-room-empty.png'),
+      image: require('../../../assets/shop/packs/neon-protocol/neon-protocol-room-floor.jpg'),
     },
     {
       id: 'neon-protocol-armor-vega',
@@ -362,7 +362,7 @@ export const MYTHS_FORGE_PACK: TeamPackDefinition = {
       rarity: 'legendaire',
       accent: FORGE_ORANGE,
       equipByDefault: true,
-      image: require('../../../assets/shop/packs/mythes-forge/mythes-forge-room-empty.png'),
+      image: require('../../../assets/shop/packs/mythes-forge/mythes-forge-room-floor.jpg'),
     },
     {
       id: 'mythes-forge-armor-orea',
@@ -526,7 +526,7 @@ export const CIRCUIT_ZERO_PACK: TeamPackDefinition = {
       rarity: 'legendaire',
       accent: CIRCUIT_LIME,
       equipByDefault: true,
-      image: require('../../../assets/shop/packs/circuit-zero/circuit-zero-room-empty.png'),
+      image: require('../../../assets/shop/packs/circuit-zero/circuit-zero-room-floor.jpg'),
     },
     {
       id: 'circuit-zero-kairos-6',

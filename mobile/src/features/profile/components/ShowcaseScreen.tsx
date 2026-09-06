@@ -67,6 +67,7 @@ import {
 } from '@/src/features/profile/showcaseRings/progression';
 import type { ShowcaseRingFamily, ShowcaseRingProgress } from '@/src/features/profile/showcaseRings/types';
 import { useShowcaseRingEquipment } from '@/src/features/profile/showcaseRings/useShowcaseRingEquipment';
+import { useShowcasePedestalEquipment } from '@/src/features/profile/showcasePedestals/useShowcasePedestalEquipment';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
@@ -84,10 +85,14 @@ import ShowcaseRoomEditorScene from './showcase/ShowcaseRoomEditorScene';
 import ShowcaseRoomScene from './showcase/ShowcaseRoomScene';
 import ShowcaseSettingsSheet from './showcase/ShowcaseSettingsSheet';
 import {
+  applyShowcasePedestalToSlots,
   createDefaultShowcaseRoomAssignments,
   createEmptyShowcaseRoomAssignments,
+  pedestalAssignmentForSlots,
+  type ShowcasePedestalAssignmentIds,
   type ShowcasePlaceableItem,
   type ShowcasePlaceableKind,
+  type ShowcaseRoomPedestalPlacements,
   type ShowcaseRoomSlotId,
 } from './showcase/roomEditor';
 import type {
@@ -111,7 +116,9 @@ type ShowcaseScreenProps = {
   reduceMotionOverride?: boolean;
 };
 
-type ShowcaseSceneSnapshot = AtelierSceneConfig;
+type ShowcaseSceneSnapshot = AtelierSceneConfig & {
+  pedestalAssignments: ShowcasePedestalAssignmentIds;
+};
 
 export default function ShowcaseScreen({
   atmosphereQualityOverride,
@@ -156,6 +163,8 @@ export default function ShowcaseScreen({
   const [selectedRingFamily, setSelectedRingFamily] = useState<ShowcaseRingFamily | null>(null);
   const [activeRoomSlot, setActiveRoomSlot] = useState<ShowcaseRoomSlotId | null>(null);
   const [roomAssignments, setRoomAssignments] = useState(createEmptyShowcaseRoomAssignments);
+  const [pedestalAssignments, setPedestalAssignments] = useState<ShowcasePedestalAssignmentIds>({});
+  const [pedestalTargetSlots, setPedestalTargetSlots] = useState<ShowcaseRoomSlotId[]>([]);
   const [routeFocused, setRouteFocused] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
   const requestRef = useRef(0);
@@ -170,6 +179,9 @@ export default function ShowcaseScreen({
   const ringEquipment = useShowcaseRingEquipment(
     previewProfile ? `preview-${previewProfile.pseudo}` : pseudo,
     previewProfile ? 'rank' : null,
+  );
+  const pedestalEquipment = useShowcasePedestalEquipment(
+    previewProfile ? `preview-${previewProfile.pseudo}` : pseudo,
   );
   const fallbackBadgeIds = useMemo(
     () => profileData?.pinnedBadges.map((badge) => badge.id) ?? [],
@@ -190,6 +202,11 @@ export default function ShowcaseScreen({
     const subscription = AppState.addEventListener('change', setAppState);
     return () => subscription.remove();
   }, []);
+
+  useEffect(() => {
+    if (pedestalEquipment.loading || atelierVisible) return;
+    setPedestalAssignments(pedestalEquipment.assignments);
+  }, [atelierVisible, pedestalEquipment.assignments, pedestalEquipment.loading]);
 
   useEffect(() => {
     setSection(requestedSection);
@@ -278,7 +295,6 @@ export default function ShowcaseScreen({
     setRoomId(selectedRoom.id);
     setTheme(selectedRoom.theme);
     setLighting(selectedRoom.lighting);
-    setPedestal(selectedRoom.pedestal);
   }, [selectedRoom]);
 
   const ownedItems = useMemo(
@@ -312,23 +328,6 @@ export default function ShowcaseScreen({
     },
     [atelierCategory, atelierRuntimeById],
   );
-  const atelierSelectedId = atelierTrial[atelierCategory]
-    ?? atelierEquippedIds[atelierCategory]
-    ?? atelierCategoryProducts[0]?.id
-    ?? null;
-  const atelierSelectedProduct = atelierCategoryProducts.find((product) => product.id === atelierSelectedId)
-    ?? atelierCategoryProducts[0]
-    ?? null;
-  const atelierSelectedItem = atelierSelectedProduct
-    ? atelierRuntimeById.get(atelierSelectedProduct.id) ?? null
-    : null;
-  const atelierAction = atelierSelectedItem
-    ? atelierPrimaryAction(atelierSelectedItem, shopData?.balance ?? 0)
-    : 'unavailable';
-  const atelierPurchaseProduct = atelierProductById(atelierPurchaseId);
-  const atelierPurchaseItem = atelierPurchaseProduct
-    ? atelierRuntimeById.get(atelierPurchaseProduct.id) ?? null
-    : null;
   const rankDisplayOptions = useMemo(() => {
     if (previewProfile && previewShop) return SHOWCASE_RANK_DISPLAY_CATALOG;
     const ownedIds = new Set(
@@ -356,6 +355,56 @@ export default function ShowcaseScreen({
     image: presenter.editorImage ?? presenter.image,
   };
   const assignmentLayoutKey = activeRoom ? `room:${activeRoom.id}` : `presenter:${presenter.id}`;
+  const activeSlotIds = useMemo(() => activeSlots.map((slot) => slot.id), [activeSlots]);
+  const scenePedestalProductId = pedestalProductIdForScene(activeRoom?.productId ?? presenter.id);
+  const sceneDefaultPedestalProductId = scenePedestalProductId
+    ?? defaultPedestalProductIdForSkin(activeRoom?.pedestal ?? presenter.pedestal);
+  const pedestalTargetIds = pedestalTargetSlots.length > 0
+    ? pedestalTargetSlots
+    : activeSlotIds;
+  const savedPedestalIdForTargets = pedestalAssignmentForSlots(
+    pedestalEquipment.assignments,
+    pedestalTargetIds,
+    scenePedestalProductId,
+  );
+  const previewPedestalIdForTargets = pedestalAssignmentForSlots(
+    pedestalAssignments,
+    pedestalTargetIds,
+    scenePedestalProductId,
+  );
+  const atelierSelectedId = atelierTrial[atelierCategory]
+    ?? (atelierCategory === 'pedestals' ? previewPedestalIdForTargets : null)
+    ?? atelierEquippedIds[atelierCategory]
+    ?? atelierCategoryProducts[0]?.id
+    ?? null;
+  const atelierSelectedProduct = atelierCategoryProducts.find((product) => product.id === atelierSelectedId)
+    ?? atelierCategoryProducts[0]
+    ?? null;
+  const atelierDisplayRuntimeById = useMemo(() => {
+    if (atelierCategory !== 'pedestals') return atelierRuntimeById;
+    return new Map(Array.from(atelierRuntimeById.entries()).map(([id, item]) => [
+      id,
+      { ...item, equipped: id === savedPedestalIdForTargets },
+    ]));
+  }, [atelierCategory, atelierRuntimeById, savedPedestalIdForTargets]);
+  const atelierSelectedItem = atelierSelectedProduct
+    ? atelierDisplayRuntimeById.get(atelierSelectedProduct.id) ?? null
+    : null;
+  const atelierAction = atelierSelectedItem
+    ? atelierPrimaryAction(atelierSelectedItem, shopData?.balance ?? 0)
+    : 'unavailable';
+  const atelierPurchaseProduct = atelierProductById(atelierPurchaseId);
+  const atelierPurchaseItem = atelierPurchaseProduct
+    ? atelierRuntimeById.get(atelierPurchaseProduct.id) ?? null
+    : null;
+  const pedestalPlacements = useMemo(
+    () => resolvePedestalPlacements(
+      pedestalAssignments,
+      activeSlotIds,
+      sceneDefaultPedestalProductId,
+    ),
+    [activeSlotIds, pedestalAssignments, sceneDefaultPedestalProductId],
+  );
   const ringStats = useMemo(() => adaptShowcaseRingStats(profileData), [profileData]);
   const ringProgressions = useMemo(
     () => resolveAllShowcaseRings(ringStats, ringEquipment.family),
@@ -390,6 +439,10 @@ export default function ShowcaseScreen({
   const activeRoomSlotDefinition = activeSlots.find((slot) => slot.id === activeRoomSlot) ?? null;
 
   useEffect(() => {
+    setPedestalTargetSlots(activeSlotIds);
+  }, [activeSlotIds, assignmentLayoutKey]);
+
+  useEffect(() => {
     if (!placeableItems.length || initializedRoomRef.current === assignmentLayoutKey) return;
     initializedRoomRef.current = assignmentLayoutKey;
     setActiveRoomSlot(null);
@@ -403,6 +456,7 @@ export default function ShowcaseScreen({
       jerseyPresentation,
       lighting,
       pedestal,
+      pedestalAssignments: { ...pedestalAssignments },
       presenterId: presenter.id,
       rankDisplayId: rankDisplay.id,
       roomId: activeRoom?.id ?? null,
@@ -414,6 +468,7 @@ export default function ShowcaseScreen({
     setJerseyPresentation(snapshot.jerseyPresentation);
     setLighting(snapshot.lighting);
     setPedestal(snapshot.pedestal);
+    setPedestalAssignments(snapshot.pedestalAssignments);
     setPresenterId(snapshot.presenterId);
     setRankDisplayId(snapshot.rankDisplayId);
     setRoomId(snapshot.roomId);
@@ -423,11 +478,11 @@ export default function ShowcaseScreen({
   function applyAtelierCategoryPreview(category: AtelierCategory, config: AtelierSceneConfig) {
     if (category === 'materials') setTheme(config.theme);
     if (category === 'lighting') setLighting(config.lighting);
-    if (category === 'supports' || category === 'pedestals') {
-      setPedestal(config.pedestal);
+    if (category === 'supports') {
       setRoomId(config.roomId);
       if (showcasePresenterById(config.presenterId)) setPresenterId(config.presenterId);
     }
+    if (category === 'pedestals') setPedestal(config.pedestal);
     if (category === 'ranks') setRankDisplayId(config.rankDisplayId);
     if (category === 'jerseys') setJerseyPresentation(config.jerseyPresentation);
   }
@@ -454,6 +509,35 @@ export default function ShowcaseScreen({
     setAtelierNotice(null);
   }
 
+  function changePedestalTargets(nextTargets: ShowcaseRoomSlotId[]) {
+    const normalized = nextTargets.length > 0 ? nextTargets : activeSlotIds;
+    setPedestalTargetSlots(normalized);
+    const previewId = atelierTrial.pedestals;
+    if (!previewId) return;
+    const baseline = atelierSceneSnapshotRef.current?.pedestalAssignments
+      ?? pedestalEquipment.assignments;
+    setPedestalAssignments(applyShowcasePedestalToSlots(baseline, normalized, previewId));
+    setAtelierNotice(null);
+  }
+
+  function selectAllPedestalTargets() {
+    changePedestalTargets(activeSlotIds);
+  }
+
+  function togglePedestalTarget(slotId: ShowcaseRoomSlotId) {
+    const allSelected = pedestalTargetIds.length === activeSlotIds.length;
+    if (allSelected) {
+      changePedestalTargets([slotId]);
+      return;
+    }
+    if (pedestalTargetIds.includes(slotId)) {
+      if (pedestalTargetIds.length === 1) return;
+      changePedestalTargets(pedestalTargetIds.filter((candidate) => candidate !== slotId));
+      return;
+    }
+    changePedestalTargets([...pedestalTargetIds, slotId]);
+  }
+
   function previewAtelierProduct(product: AtelierProduct) {
     const nextTrial = applyAtelierTry(atelierTrial, product.category, product.id);
     const nextScene = resolveAtelierSceneConfig(
@@ -463,6 +547,15 @@ export default function ShowcaseScreen({
     setAtelierCategory(product.category);
     setAtelierTrial(nextTrial);
     setAtelierNotice(null);
+    if (product.category === 'pedestals') {
+      const baseline = atelierSceneSnapshotRef.current?.pedestalAssignments
+        ?? pedestalEquipment.assignments;
+      setPedestalAssignments(applyShowcasePedestalToSlots(
+        baseline,
+        pedestalTargetIds,
+        product.id,
+      ));
+    }
     applyAtelierCategoryPreview(product.category, nextScene);
   }
 
@@ -473,11 +566,11 @@ export default function ShowcaseScreen({
 
     if (category === 'materials') next.theme = nextConfig.theme;
     if (category === 'lighting') next.lighting = nextConfig.lighting;
-    if (category === 'supports' || category === 'pedestals') {
-      next.pedestal = nextConfig.pedestal;
+    if (category === 'supports') {
       next.roomId = nextConfig.roomId;
       if (showcasePresenterById(nextConfig.presenterId)) next.presenterId = nextConfig.presenterId;
     }
+    if (category === 'pedestals') next.pedestal = nextConfig.pedestal;
     if (category === 'ranks') next.rankDisplayId = nextConfig.rankDisplayId;
     if (category === 'jerseys') next.jerseyPresentation = nextConfig.jerseyPresentation;
 
@@ -493,7 +586,51 @@ export default function ShowcaseScreen({
       return;
     }
     if (nextAction === 'equip') {
+      if (atelierSelectedProduct.category === 'pedestals') {
+        void equipPedestalProduct(atelierSelectedItem, atelierSelectedProduct);
+        return;
+      }
       void equipAtelierProduct(atelierSelectedItem, atelierSelectedProduct);
+    }
+  }
+
+  async function equipPedestalProduct(item: CosmeticItem, product: AtelierProduct) {
+    if (atelierPendingId || !item.owned) return;
+    const previousAssignments = atelierSceneSnapshotRef.current?.pedestalAssignments
+      ?? pedestalEquipment.assignments;
+    const nextAssignments = applyShowcasePedestalToSlots(
+      previousAssignments,
+      pedestalTargetIds,
+      product.id,
+    );
+    const targetCount = pedestalTargetIds.length;
+    setAtelierPendingId(item.id);
+    setPedestalAssignments(nextAssignments);
+    setAtelierNotice({
+      text: `${product.name} est appliqué sur ${targetCount > 1 ? `${targetCount} emplacements` : 'cet emplacement'}…`,
+      tone: 'info',
+    });
+
+    try {
+      await pedestalEquipment.equip(nextAssignments);
+      const current = atelierSceneSnapshotRef.current ?? currentSceneSnapshot();
+      atelierSceneSnapshotRef.current = {
+        ...current,
+        pedestal,
+        pedestalAssignments: nextAssignments,
+      };
+      setAtelierNotice({
+        text: `${product.name} reste indépendant de la salle.`,
+        tone: 'success',
+      });
+    } catch (caught) {
+      setPedestalAssignments(previousAssignments);
+      setAtelierNotice({
+        text: friendlyAtelierError(caught, 'Ces socles n’ont pas pu être enregistrés.'),
+        tone: 'error',
+      });
+    } finally {
+      setAtelierPendingId(null);
     }
   }
 
@@ -564,14 +701,12 @@ export default function ShowcaseScreen({
     if (nextRoom) {
       setRoomId(nextRoom.id);
       setPresenterId(DEFAULT_SHOWCASE_PRESENTER_ID);
-      setPedestal(nextRoom.pedestal);
       return;
     }
     const next = showcasePresenterById(nextId);
     if (!next) return;
     setRoomId(null);
     setPresenterId(next.id);
-    setPedestal(next.pedestal);
   }
 
   async function changeRankDisplay(nextId: string) {
@@ -645,6 +780,7 @@ export default function ShowcaseScreen({
                 if (atelierVisible) closeAtelier();
                 setActiveRoomSlot(slotId);
               }}
+              pedestalPlacements={pedestalPlacements}
               rankAccent={rankAccent}
               rankDisplay={!activeRoom && presenter.showRankDisplay === false ? null : visibleRankDisplay}
               rankOrder={profileData?.ranking.grade.ordre}
@@ -743,14 +879,18 @@ export default function ShowcaseScreen({
           onCategoryChange={changeAtelierCategory}
           onClose={closeAtelier}
           onOpen={openAtelier}
+          onPedestalTargetAll={selectAllPedestalTargets}
+          onPedestalTargetToggle={togglePedestalTarget}
           onPrimary={handleAtelierPrimaryAction}
           onSelect={previewAtelierProduct}
           open={atelierVisible}
           pending={atelierPendingId === atelierSelectedProduct?.id}
+          pedestalSlots={activeSlots}
+          pedestalTargetIds={pedestalTargetIds}
           primaryRef={atelierPurchaseTriggerRef}
           product={atelierSelectedProduct}
           products={atelierCategoryProducts}
-          runtimeById={atelierRuntimeById}
+          runtimeById={atelierDisplayRuntimeById}
           selectedId={atelierSelectedProduct?.id ?? null}
         />
 
@@ -811,6 +951,38 @@ export default function ShowcaseScreen({
       </View>
     </Screen>
   );
+}
+
+export function resolvePedestalPlacements(
+  assignments: ShowcasePedestalAssignmentIds,
+  slotIds: readonly ShowcaseRoomSlotId[],
+  fallbackId: string | null,
+): ShowcaseRoomPedestalPlacements {
+  const placements: ShowcaseRoomPedestalPlacements = {};
+  slotIds.forEach((slotId) => {
+    const productId = assignments[slotId] ?? fallbackId;
+    if (!productId) return;
+    const product = atelierProductById(productId);
+    if (!product || product.category !== 'pedestals') return;
+    placements[slotId] = {
+      accent: product.accent,
+      id: product.id,
+      image: product.image,
+      name: product.name,
+    };
+  });
+  return placements;
+}
+
+function pedestalProductIdForScene(sceneProductId: string) {
+  const product = atelierProductById(sceneProductId);
+  return product?.category === 'pedestals' ? product.id : null;
+}
+
+export function defaultPedestalProductIdForSkin(skin: ShowcasePedestalSkin) {
+  if (skin === 'steel') return 'serment-du-givre-ice-sheet-pedestal';
+  if (skin === 'bronze') return 'sang-des-titans-monolith-pedestal';
+  return 'neon-protocol-vector-pedestals';
 }
 
 export function resolveRoomPlaceableItems({

@@ -74,11 +74,7 @@ export function applyAtelierTry(
   category: AtelierCategory,
   itemId: string,
 ): AtelierTrySelection {
-  const next = { ...selection };
-  if (category === 'supports') delete next.pedestals;
-  if (category === 'pedestals') delete next.supports;
-  next[category] = itemId;
-  return next;
+  return { ...selection, [category]: itemId };
 }
 
 export function equippedAtelierIds(equipped: EquippedCosmetics | null | undefined): Record<AtelierCategory, string> {
@@ -99,7 +95,8 @@ export function resolveAtelierSceneConfig(
   const persisted = equippedAtelierIds(equipped);
   const materialId = trial.materials ?? persisted.materials;
   const lightingId = trial.lighting ?? persisted.lighting;
-  const supportsId = trial.pedestals ?? trial.supports ?? persisted.supports;
+  const supportsId = trial.supports ?? persisted.supports;
+  const pedestalId = trial.pedestals ?? persisted.pedestals;
   const rankDisplayId = trial.ranks ?? persisted.ranks;
   const jerseyId = trial.jerseys ?? persisted.jerseys;
   const room = showcaseRoomByProductId(supportsId);
@@ -107,7 +104,7 @@ export function resolveAtelierSceneConfig(
   return {
     theme: materialTheme(materialId),
     lighting: lightingTone(lightingId),
-    pedestal: room?.pedestal ?? supportsPedestal(supportsId),
+    pedestal: supportsPedestal(pedestalId),
     presenterId: room ? DEFAULT_SHOWCASE_PRESENTER_ID : supportsId,
     rankDisplayId,
     roomId: room?.id ?? null,

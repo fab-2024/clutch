@@ -2,8 +2,10 @@
 
 import {
   SHOWCASE_ROOM_SLOTS,
+  applyShowcasePedestalToSlots,
   createDefaultShowcaseRoomAssignments,
   createEmptyShowcaseRoomAssignments,
+  pedestalAssignmentForSlots,
   type ShowcasePlaceableItem,
 } from '../showcase/roomEditor';
 
@@ -36,5 +38,19 @@ describe('showcase room editor assignments', () => {
     expect(assignments.title?.kind).toBe('title');
     expect(assignments.ring?.kind).toBe('ring');
     expect(assignments['right-free']?.kind).toBe('core');
+  });
+
+  it('applies one pedestal to one or several selected placements', () => {
+    const first = applyShowcasePedestalToSlots({}, ['rank'], 'ice-pedestal');
+    const mixed = applyShowcasePedestalToSlots(first, ['trophy', 'badge'], 'stone-pedestal');
+
+    expect(mixed).toEqual({
+      badge: 'stone-pedestal',
+      rank: 'ice-pedestal',
+      trophy: 'stone-pedestal',
+    });
+    expect(pedestalAssignmentForSlots(mixed, ['trophy', 'badge'])).toBe('stone-pedestal');
+    expect(pedestalAssignmentForSlots(mixed, ['rank', 'badge'])).toBeNull();
+    expect(pedestalAssignmentForSlots({}, ['rank', 'badge'], 'room-pedestal')).toBe('room-pedestal');
   });
 });

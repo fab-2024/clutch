@@ -50,23 +50,34 @@ describe('showcase Atelier state', () => {
     expect(findItem(second, 'material_bronze')).toMatchObject({ owned: true, equipped: true });
   });
 
-  it('keeps try-on temporary and derives all five scene layers', () => {
+  it('keeps room and pedestal try-ons independent', () => {
     const data = makeData(500);
-    const trial = applyAtelierTry({}, 'lighting', 'lighting_violet');
+    const trial = applyAtelierTry(
+      applyAtelierTry(
+        applyAtelierTry({}, 'lighting', 'lighting_violet'),
+        'supports',
+        'supports_halo',
+      ),
+      'pedestals',
+      'sang-des-titans-monolith-pedestal',
+    );
     const scene = resolveAtelierSceneConfig(data.equipped, {
       ...trial,
       materials: 'material_carbon',
-      supports: 'supports_halo',
       ranks: 'rank_orbital_core',
       jerseys: 'jersey_podium',
     });
 
     expect(data.equipped.showcase.lighting?.id).toBe('lighting_cyan');
-    expect(trial).toEqual({ lighting: 'lighting_violet' });
+    expect(trial).toEqual({
+      lighting: 'lighting_violet',
+      pedestals: 'sang-des-titans-monolith-pedestal',
+      supports: 'supports_halo',
+    });
     expect(scene).toEqual({
       theme: 'carbon',
       lighting: 'violet',
-      pedestal: 'steel',
+      pedestal: 'bronze',
       presenterId: 'supports_gallery',
       rankDisplayId: 'rank_orbital_core',
       roomId: 'azure-horizon',

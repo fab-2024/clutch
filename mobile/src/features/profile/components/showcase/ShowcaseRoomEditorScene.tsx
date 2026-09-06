@@ -25,6 +25,7 @@ import {
   SHOWCASE_ROOM_SLOTS,
   showcasePlaceableKindLabel,
   type ShowcaseRoomAssignments,
+  type ShowcaseRoomPedestalPlacements,
   type ShowcaseRoomSlotDefinition,
   type ShowcaseRoomSlotId,
 } from './roomEditor';
@@ -42,6 +43,7 @@ type ShowcaseRoomEditorSceneProps = {
   lighting: ShowcaseLighting;
   onAtmospherePerformanceReport?: (report: ShowcaseAtmospherePerformanceReport) => void;
   onSlotPress: (slotId: ShowcaseRoomSlotId) => void;
+  pedestalPlacements?: ShowcaseRoomPedestalPlacements;
   rankAccent?: string;
   rankDisplay?: Pick<ShowcaseRankDisplayDefinition, 'id' | 'name' | 'overlayImage'> | null;
   rankOrder?: number | null;
@@ -70,6 +72,7 @@ export default function ShowcaseRoomEditorScene({
   lighting,
   onAtmospherePerformanceReport,
   onSlotPress,
+  pedestalPlacements = {},
   rankAccent = '#B87845',
   rankDisplay,
   rankOrder,
@@ -177,7 +180,9 @@ export default function ShowcaseRoomEditorScene({
         ) : null}
         {slots.map((slot) => {
           const item = assignments[slot.id];
+          const pedestalPlacement = pedestalPlacements[slot.id];
           const artworkLift = layout.canvas.height * (slot.artworkLift ?? 0) / 100;
+          const pedestalLift = pedestalPlacement ? layout.canvas.height * 0.012 : 0;
           return (
             <Pressable
               accessibilityHint={item ? 'Changer ou retirer cet objet' : 'Ajouter un objet de ta collection'}
@@ -198,9 +203,25 @@ export default function ShowcaseRoomEditorScene({
               ]}
               testID={`showcase-room-slot-${slot.id}`}
             >
-              {item ? (
-                <View style={styles.slotSelection}>
-                  <View style={[styles.slotArtifact, { transform: [{ translateY: -artworkLift }] }]}>
+              <View style={styles.slotSelection}>
+                {pedestalPlacement ? (
+                  <Image
+                    accessibilityIgnoresInvertColors
+                    accessible={false}
+                    resizeMode="contain"
+                    source={pedestalPlacement.image}
+                    style={[
+                      styles.pedestalArtwork,
+                      slot.id === 'rank' && styles.pedestalArtworkRank,
+                    ]}
+                    testID={`showcase-room-pedestal-${slot.id}-${pedestalPlacement.id}`}
+                  />
+                ) : null}
+                {item ? (
+                  <View style={[
+                    styles.slotArtifact,
+                    { transform: [{ translateY: -(artworkLift + pedestalLift) }] },
+                  ]}>
                     <ShowcasePlaceableArtwork
                       item={item}
                       size={Math.max(16, Math.min(
@@ -209,13 +230,13 @@ export default function ShowcaseRoomEditorScene({
                       ) * 0.88)}
                     />
                   </View>
-                </View>
-              ) : (
-                <View style={styles.emptySlot} testID={`showcase-room-empty-${slot.id}`}>
-                  <Text style={styles.emptySlotPlus}>+</Text>
-                  <Text numberOfLines={1} style={styles.emptySlotText}>AJOUTER</Text>
-                </View>
-              )}
+                ) : (
+                  <View style={styles.emptySlot} testID={`showcase-room-empty-${slot.id}`}>
+                    <Text style={styles.emptySlotPlus}>+</Text>
+                    <Text numberOfLines={1} style={styles.emptySlotText}>AJOUTER</Text>
+                  </View>
+                )}
+              </View>
             </Pressable>
           );
         })}
@@ -258,13 +279,29 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   slotSelection: {
+    position: 'relative',
     width: '100%',
     height: '100%',
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
+  pedestalArtwork: {
+    position: 'absolute',
+    zIndex: 1,
+    right: '-10%',
+    bottom: '-19%',
+    width: '120%',
+    height: '66%',
+  },
+  pedestalArtworkRank: {
+    right: '-6%',
+    bottom: '-20%',
+    width: '112%',
+    height: '62%',
+  },
   slotArtifact: {
     position: 'absolute',
+    zIndex: 2,
     top: 0,
     right: 0,
     bottom: 0,
@@ -274,6 +311,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   emptySlot: {
+    zIndex: 3,
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 44,

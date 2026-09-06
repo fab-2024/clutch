@@ -21,6 +21,11 @@ import type { AtelierPrimaryAction } from '@/src/features/shop/atelierState';
 import type { CosmeticItem } from '@/src/features/shop/types';
 import { colors, radius, spacing, typography } from '@/src/theme';
 
+import type {
+  ShowcaseRoomSlotDefinition,
+  ShowcaseRoomSlotId,
+} from './roomEditor';
+
 export type ShowcaseAtelierNotice = {
   text: string;
   tone: 'error' | 'info' | 'success';
@@ -36,10 +41,14 @@ type ShowcaseAtelierDrawerProps = {
   onCategoryChange: (category: AtelierCategory) => void;
   onClose: () => void;
   onOpen: () => void;
+  onPedestalTargetAll: () => void;
+  onPedestalTargetToggle: (slotId: ShowcaseRoomSlotId) => void;
   onPrimary: () => void;
   onSelect: (product: AtelierProduct) => void;
   open: boolean;
   pending: boolean;
+  pedestalSlots: readonly ShowcaseRoomSlotDefinition[];
+  pedestalTargetIds: readonly ShowcaseRoomSlotId[];
   primaryRef?: RefObject<View | null>;
   product: AtelierProduct | null;
   products: readonly AtelierProduct[];
@@ -68,10 +77,14 @@ export default function ShowcaseAtelierDrawer({
   onCategoryChange,
   onClose,
   onOpen,
+  onPedestalTargetAll,
+  onPedestalTargetToggle,
   onPrimary,
   onSelect,
   open,
   pending,
+  pedestalSlots,
+  pedestalTargetIds,
   primaryRef,
   product,
   products,
@@ -173,6 +186,34 @@ export default function ShowcaseAtelierDrawer({
         })}
       </ScrollView>
 
+      {category === 'pedestals' ? (
+        <View style={styles.pedestalTargets} testID="showcase-pedestal-targets">
+          <Text style={styles.pedestalTargetsLabel}>APPLIQUER À</Text>
+          <ScrollView
+            accessibilityLabel="Emplacements des socles"
+            contentContainerStyle={styles.pedestalTargetOptions}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
+            <PedestalTargetChip
+              active={pedestalTargetIds.length === pedestalSlots.length}
+              label="TOUS"
+              onPress={onPedestalTargetAll}
+              testID="showcase-pedestal-target-all"
+            />
+            {pedestalSlots.map((slot) => (
+              <PedestalTargetChip
+                active={pedestalTargetIds.includes(slot.id)}
+                key={slot.id}
+                label={pedestalSlotLabel(slot.id)}
+                onPress={() => onPedestalTargetToggle(slot.id)}
+                testID={`showcase-pedestal-target-${slot.id}`}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
+
       <ScrollView
         accessibilityLabel={`Options ${CATEGORY_LABELS[category].toLocaleLowerCase('fr-FR')}`}
         contentContainerStyle={styles.products}
@@ -238,13 +279,15 @@ export default function ShowcaseAtelierDrawer({
               notice?.tone === 'success' && styles.noticeSuccess,
             ]}
           >
-            {notice?.text ?? 'Touchez une option pour la voir immédiatement dans la pièce.'}
+            {notice?.text ?? (category === 'pedestals'
+              ? pedestalTargetHint(pedestalTargetIds.length, pedestalSlots.length)
+              : 'Touchez une option pour la voir immédiatement dans la pièce.')}
           </Text>
         </View>
         <Button
           accessibilityHint={primaryAccessibilityHint(action, product)}
           disabled={action === 'equipped' || action === 'insufficient' || action === 'unavailable'}
-          label={primaryLabel(action, item, product)}
+          label={primaryLabel(action, item, product, pedestalTargetIds.length)}
           loading={pending}
           onPress={onPrimary}
           ref={primaryRef}
@@ -261,17 +304,72 @@ export default function ShowcaseAtelierDrawer({
   );
 }
 
+function PedestalTargetChip({
+  active,
+  label,
+  onPress,
+  testID,
+}: {
+  active: boolean;
+  label: string;
+  onPress: () => void;
+  testID: string;
+}) {
+  return (
+    <Pressable
+      accessibilityLabel={`Socles, emplacement ${label.toLocaleLowerCase('fr-FR')}`}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: active }}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.pedestalTarget,
+        active && styles.pedestalTargetActive,
+        pressed && styles.pressed,
+      ]}
+      testID={testID}
+    >
+      <View style={[styles.pedestalTargetMark, active && styles.pedestalTargetMarkActive]} />
+      <Text style={[styles.pedestalTargetText, active && styles.pedestalTargetTextActive]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 function primaryLabel(
   action: AtelierPrimaryAction,
   item: CosmeticItem | null,
   product: AtelierProduct | null,
+  pedestalTargetCount: number,
 ) {
   const price = item?.price ?? product?.price ?? 0;
   if (action === 'buy') return `ACHETER · ${formatNumber(price)} VOLTS`;
+  if (action === 'equip' && product?.category === 'pedestals') {
+    return pedestalTargetCount > 1 ? `APPLIQUER · ${pedestalTargetCount}` : 'APPLIQUER';
+  }
   if (action === 'equip') return 'ÉQUIPER';
   if (action === 'equipped') return 'ÉQUIPÉ';
   if (action === 'insufficient') return 'VOLTS INSUFFISANTS';
   return 'INDISPONIBLE';
+}
+
+function pedestalSlotLabel(slotId: ShowcaseRoomSlotId) {
+  if (slotId === 'left-free') return 'GAUCHE';
+  if (slotId === 'left-extra') return 'G. INT.';
+  if (slotId === 'jersey') return 'MAILLOT';
+  if (slotId === 'trophy') return 'TROPHÉE';
+  if (slotId === 'rank') return 'CENTRE';
+  if (slotId === 'badge') return 'BADGE';
+  if (slotId === 'title') return 'TITRE';
+  if (slotId === 'ring') return 'ANNEAU';
+  if (slotId === 'right-extra') return 'D. INT.';
+  return 'DROITE';
+}
+
+function pedestalTargetHint(selected: number, total: number) {
+  if (selected === total) return `Aperçu sur les ${total} emplacements de la salle.`;
+  if (selected === 1) return 'Aperçu sur un seul emplacement.';
+  return `Aperçu sur ${selected} emplacements.`;
 }
 
 function primaryAccessibilityHint(action: AtelierPrimaryAction, product: AtelierProduct | null) {
@@ -392,6 +490,40 @@ const styles = StyleSheet.create({
   categoryActive: { borderColor: colors.volt, backgroundColor: 'rgba(232,255,61,.08)' },
   categoryText: { ...typography.label, color: colors.textMuted },
   categoryTextActive: { color: colors.volt },
+  pedestalTargets: {
+    minHeight: 34,
+    paddingLeft: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  pedestalTargetsLabel: { ...typography.eyebrow, color: colors.textSecondary, fontSize: 8 },
+  pedestalTargetOptions: { paddingRight: spacing.md, gap: spacing.xs },
+  pedestalTarget: {
+    minHeight: 28,
+    paddingHorizontal: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    backgroundColor: colors.surface,
+  },
+  pedestalTargetActive: {
+    borderColor: colors.volt,
+    backgroundColor: 'rgba(232,255,61,.08)',
+  },
+  pedestalTargetMark: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: colors.textMuted,
+  },
+  pedestalTargetMarkActive: { borderColor: colors.volt, backgroundColor: colors.volt },
+  pedestalTargetText: { ...typography.label, color: colors.textMuted, fontSize: 8 },
+  pedestalTargetTextActive: { color: colors.volt },
   products: { paddingHorizontal: spacing.md, paddingVertical: spacing.xs, gap: spacing.sm },
   product: {
     position: 'relative',

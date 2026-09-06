@@ -38,6 +38,19 @@ export type ShowcasePlaceableItem = {
 
 export type ShowcaseRoomAssignments = Record<ShowcaseRoomSlotId, ShowcasePlaceableItem | null>;
 
+export type ShowcasePedestalAssignmentIds = Partial<Record<ShowcaseRoomSlotId, string>>;
+
+export type ShowcasePedestalPlacement = {
+  accent: string;
+  id: string;
+  image: ImageSourcePropType;
+  name: string;
+};
+
+export type ShowcaseRoomPedestalPlacements = Partial<
+  Record<ShowcaseRoomSlotId, ShowcasePedestalPlacement>
+>;
+
 export type ShowcaseRoomSlotDefinition = {
   artworkLift?: number;
   height: `${number}%`;
@@ -64,6 +77,31 @@ export function createEmptyShowcaseRoomAssignments(): ShowcaseRoomAssignments {
   return Object.fromEntries(
     SHOWCASE_ROOM_SLOT_IDS.map((slotId) => [slotId, null]),
   ) as ShowcaseRoomAssignments;
+}
+
+export function applyShowcasePedestalToSlots(
+  assignments: ShowcasePedestalAssignmentIds,
+  slotIds: readonly ShowcaseRoomSlotId[],
+  pedestalId: string,
+): ShowcasePedestalAssignmentIds {
+  const next = { ...assignments };
+  slotIds.forEach((slotId) => {
+    next[slotId] = pedestalId;
+  });
+  return next;
+}
+
+export function pedestalAssignmentForSlots(
+  assignments: ShowcasePedestalAssignmentIds,
+  slotIds: readonly ShowcaseRoomSlotId[],
+  fallbackId: string | null = null,
+) {
+  if (slotIds.length === 0) return null;
+  const first = assignments[slotIds[0]] ?? fallbackId;
+  if (!first) return null;
+  return slotIds.every((slotId) => (assignments[slotId] ?? fallbackId) === first)
+    ? first
+    : null;
 }
 
 export function createDefaultShowcaseRoomAssignments(
