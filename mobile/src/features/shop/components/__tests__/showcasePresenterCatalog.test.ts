@@ -7,11 +7,17 @@ import {
 } from '../../showcasePresenterCatalog';
 import { createPresenterRoomAssignments } from '../../showcasePresenterAssignments';
 import {
+  CHUTE_LIBRE_PACK,
   CIRCUIT_ZERO_PACK,
+  CONCLAVE_ARCANIQUE_PACK,
+  DERNIER_ROUND_PACK,
   LEAGUE_OF_LEGENDS_COLLECTION_PACK,
   MYTHS_FORGE_PACK,
   NEON_PROTOCOL_PACK,
   ROCKET_LEAGUE_COLLECTION_PACK,
+  SANG_DES_TITANS_PACK,
+  SERMENT_DU_GIVRE_PACK,
+  TURBO_ARENA_PACK,
   VALORANT_COLLECTION_PACK,
 } from '../../teamPackCatalog';
 
@@ -27,6 +33,12 @@ describe('showcase presenter catalog', () => {
       'neon-protocol-vector-pedestals',
       'mythes-forge-magma-pedestals',
       'circuit-zero-aero-pedestals',
+      'sang-des-titans-monolith-pedestal',
+      'chute-libre-drop-pedestal',
+      'serment-du-givre-ice-sheet-pedestal',
+      'conclave-arcanique-rosette-pedestal',
+      'turbo-arena-kickoff-pedestal',
+      'dernier-round-extraction-pedestal',
       'fnatic-pedestals',
       'kc-pedestals',
       'm8-pedestals',
@@ -44,6 +56,12 @@ describe('showcase presenter catalog', () => {
       9,
       8,
       7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
       10,
       10,
       10,
@@ -51,6 +69,25 @@ describe('showcase presenter catalog', () => {
       5,
       5,
     ]);
+  });
+
+  it.each([
+    { pack: SANG_DES_TITANS_PACK, presenterId: 'sang-des-titans-monolith-pedestal', roomName: 'Salle du Dernier Pacte' },
+    { pack: CHUTE_LIBRE_PACK, presenterId: 'chute-libre-drop-pedestal', roomName: 'Belvédère Nomade' },
+    { pack: SERMENT_DU_GIVRE_PACK, presenterId: 'serment-du-givre-ice-sheet-pedestal', roomName: 'Bastion des Cimes' },
+    { pack: CONCLAVE_ARCANIQUE_PACK, presenterId: 'conclave-arcanique-rosette-pedestal', roomName: 'Clairière du Conclave' },
+    { pack: TURBO_ARENA_PACK, presenterId: 'turbo-arena-kickoff-pedestal', roomName: 'Dôme Turbo' },
+    { pack: DERNIER_ROUND_PACK, presenterId: 'dernier-round-extraction-pedestal', roomName: 'Base Avancée' },
+  ])('links $roomName to the complete room included in $pack.name', ({ pack, presenterId, roomName }) => {
+    const presenter = showcasePresenterById(presenterId);
+    expect(presenter).toMatchObject({
+      image: expect.anything(),
+      name: roomName,
+      packId: pack.id,
+      packOnly: true,
+      showRankDisplay: false,
+    });
+    expect(presenter?.slots).toHaveLength(7);
   });
 
   it('places the nine Protocole Néon objects on the Synapse stations', () => {

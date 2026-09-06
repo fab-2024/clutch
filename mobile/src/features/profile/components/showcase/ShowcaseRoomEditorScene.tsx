@@ -12,7 +12,7 @@ import {
 import type { ShowcaseRoomDefinition } from '@/src/features/shop/showcaseRoomCatalog';
 import type { ShowcaseRankDisplayDefinition } from '@/src/features/shop/showcaseRankDisplayCatalog';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
-import { colors, fonts, typography } from '@/src/theme';
+import { colors, typography } from '@/src/theme';
 
 import type { ProfileTeam } from '../../types';
 import ShowcaseAtmosphereLayer from './ShowcaseAtmosphereLayer';
@@ -23,7 +23,6 @@ import type {
 } from './showcaseAtmosphere';
 import {
   SHOWCASE_ROOM_SLOTS,
-  showcasePlaceableGlyph,
   showcasePlaceableKindLabel,
   type ShowcaseRoomAssignments,
   type ShowcaseRoomSlotDefinition,
@@ -92,6 +91,7 @@ export default function ShowcaseRoomEditorScene({
   const layout = showcaseSceneLayout(viewport, room.sceneFrame);
   const lightingVisual = SHOWCASE_LIGHTING_VISUALS[lighting];
   const rankSlot = slots.find((slot) => slot.id === 'rank');
+  const rankArtworkLift = layout.canvas.height * (rankSlot?.artworkLift ?? 0) / 100;
 
   return (
     <View
@@ -160,6 +160,7 @@ export default function ShowcaseRoomEditorScene({
                 height: rankSlot.height,
                 left: rankSlot.left,
                 top: rankSlot.top,
+                transform: [{ translateY: -rankArtworkLift }],
                 width: rankSlot.width,
               }]}
               testID={`showcase-rank-display-${rankDisplay.id}`}
@@ -176,6 +177,7 @@ export default function ShowcaseRoomEditorScene({
         ) : null}
         {slots.map((slot) => {
           const item = assignments[slot.id];
+          const artworkLift = layout.canvas.height * (slot.artworkLift ?? 0) / 100;
           return (
             <Pressable
               accessibilityHint={item ? 'Changer ou retirer cet objet' : 'Ajouter un objet de ta collection'}
@@ -198,7 +200,7 @@ export default function ShowcaseRoomEditorScene({
             >
               {item ? (
                 <View style={styles.slotSelection}>
-                  <View style={styles.slotArtifact}>
+                  <View style={[styles.slotArtifact, { transform: [{ translateY: -artworkLift }] }]}>
                     <ShowcasePlaceableArtwork
                       item={item}
                       size={Math.max(16, Math.min(
@@ -206,10 +208,6 @@ export default function ShowcaseRoomEditorScene({
                         layout.canvas.height * Number.parseFloat(slot.height) / 100 - 20,
                       ) * 0.88)}
                     />
-                  </View>
-                  <View style={styles.slotCaption}>
-                    <Text style={[styles.slotGlyph, { color: item.accent }]}>{showcasePlaceableGlyph(item.kind)}</Text>
-                    <Text numberOfLines={1} style={styles.slotItemName}>{item.name.toUpperCase()}</Text>
                   </View>
                 </View>
               ) : (
@@ -274,33 +272,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     overflow: 'hidden',
-  },
-  slotCaption: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    left: 0,
-    minHeight: 20,
-    paddingHorizontal: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(3,7,10,.66)',
-    borderRadius: 4,
-    zIndex: 1,
-  },
-  slotGlyph: {
-    fontFamily: fonts.display,
-    fontSize: 13,
-    lineHeight: 15,
-  },
-  slotItemName: {
-    ...typography.eyebrow,
-    flex: 1,
-    color: colors.text,
-    fontSize: 8,
-    lineHeight: 10,
   },
   emptySlot: {
     alignItems: 'center',

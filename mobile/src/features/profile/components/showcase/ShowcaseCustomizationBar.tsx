@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, typography } from '@/src/theme';
 import { SHOWCASE_PRESENTER_CATALOG } from '@/src/features/shop/showcasePresenterCatalog';
 import type { ShowcaseRankDisplayDefinition } from '@/src/features/shop/showcaseRankDisplayCatalog';
+import { showcaseRoomByProductId } from '@/src/features/shop/showcaseRoomCatalog';
 
 import {
   SHOWCASE_CUSTOMIZABLE_LIGHTINGS,
@@ -28,12 +29,15 @@ type ShowcaseCustomizationBarProps = {
 
 type ShowcaseControlVariant = 'pedestal' | 'presenter' | 'rank' | 'theme' | 'lighting';
 
-const PRESENTERS = SHOWCASE_PRESENTER_CATALOG.map((presenter) => ({
-  color: presenter.accent,
-  label: presenter.name.toUpperCase(),
-  packOnly: presenter.packOnly ?? false,
-  value: presenter.id,
-}));
+const PRESENTERS = SHOWCASE_PRESENTER_CATALOG.map((presenter) => {
+  const room = showcaseRoomByProductId(presenter.id);
+  return {
+    color: room?.accent ?? presenter.accent,
+    label: (room?.name ?? presenter.name).toUpperCase(),
+    packOnly: presenter.packOnly ?? false,
+    value: presenter.id,
+  };
+});
 
 const THEMES: { color: string; label: string; value: ShowcaseRoomTheme }[] = [
   { color: '#161C22', label: 'GRAPHITE', value: 'graphite' },
@@ -81,7 +85,7 @@ export default function ShowcaseCustomizationBar({
   const wrap = layout === 'sheet';
   const groups = (
     <>
-      <ShowcaseControlGroup label="PRÉSENTOIR" onChange={onPresenterChange} options={presenterOptions} selected={presenterId} variant="presenter" wrap={wrap} />
+      <ShowcaseControlGroup label="SALLE" onChange={onPresenterChange} options={presenterOptions} selected={presenterId} variant="presenter" wrap={wrap} />
       <ShowcaseControlGroup disabled={rankDisplayDisabled} label="ÉCRIN DU RANG" onChange={onRankDisplayChange} options={rankDisplayOptions} selected={rankDisplayId} variant="rank" wrap={wrap} />
       <ShowcaseControlGroup label="THÈME DE VITRINE" onChange={onThemeChange} options={THEMES} selected={theme} variant="theme" wrap={wrap} />
       <ShowcaseControlGroup label="COULEUR D’ÉCLAIRAGE" onChange={onLightingChange} options={LIGHTS} selected={lighting} variant="lighting" wrap={wrap} />
@@ -192,7 +196,7 @@ function ControlMiniature({ active, color, variant }: { active: boolean; color: 
 }
 
 function controlVariantForLabel(label: string): ShowcaseControlVariant {
-  if (label.includes('PRÉSENTOIR')) return 'presenter';
+  if (label.includes('PRÉSENTOIR') || label.includes('SALLE')) return 'presenter';
   if (label.includes('RANG')) return 'rank';
   if (label.includes('SOCLE')) return 'pedestal';
   if (label.includes('THÈME')) return 'theme';

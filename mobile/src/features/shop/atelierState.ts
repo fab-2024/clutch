@@ -6,8 +6,12 @@ import type {
 } from '@/src/features/profile/components/showcase/types';
 
 import { ATELIER_CATEGORY_META, type AtelierCategory } from './atelierCatalog';
-import { showcasePresenterById } from './showcasePresenterCatalog';
+import {
+  DEFAULT_SHOWCASE_PRESENTER_ID,
+  showcasePresenterById,
+} from './showcasePresenterCatalog';
 import { DEFAULT_SHOWCASE_RANK_DISPLAY_ID } from './showcaseRankDisplayCatalog';
+import { showcaseRoomByProductId } from './showcaseRoomCatalog';
 import type { CosmeticItem, CosmeticShopData, EquippedCosmetics } from './types';
 
 export type AtelierPrimaryAction = 'buy' | 'equip' | 'equipped' | 'insufficient' | 'unavailable';
@@ -19,6 +23,7 @@ export type AtelierSceneConfig = {
   pedestal: ShowcasePedestalSkin;
   presenterId: string;
   rankDisplayId: string;
+  roomId: string | null;
   theme: ShowcaseRoomTheme;
 };
 
@@ -97,13 +102,15 @@ export function resolveAtelierSceneConfig(
   const supportsId = trial.pedestals ?? trial.supports ?? persisted.supports;
   const rankDisplayId = trial.ranks ?? persisted.ranks;
   const jerseyId = trial.jerseys ?? persisted.jerseys;
+  const room = showcaseRoomByProductId(supportsId);
 
   return {
     theme: materialTheme(materialId),
     lighting: lightingTone(lightingId),
-    pedestal: supportsPedestal(supportsId),
-    presenterId: supportsId,
+    pedestal: room?.pedestal ?? supportsPedestal(supportsId),
+    presenterId: room ? DEFAULT_SHOWCASE_PRESENTER_ID : supportsId,
     rankDisplayId,
+    roomId: room?.id ?? null,
     jerseyPresentation: jerseyPresentation(jerseyId),
   };
 }

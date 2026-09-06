@@ -159,7 +159,7 @@ export default function ShowcaseRoomScene({
   const pedestalAccent = PEDESTAL_ACCENT[pedestal];
   const equippedRankDisplay = showcaseRankDisplayById(cosmetics?.showcase.rankDisplay?.id)
     ?? showcaseRankDisplayById(DEFAULT_SHOWCASE_RANK_DISPLAY_ID)!;
-  const resolvedRankDisplay = rankDisplay ?? equippedRankDisplay;
+  const resolvedRankDisplay = rankDisplay === undefined ? equippedRankDisplay : rankDisplay;
   const tokens = cosmeticTokens(cosmetics);
   const topTokens = tokens.slice(0, 3);
   const bottomTokens = tokens.slice(3, 5);
@@ -180,7 +180,7 @@ export default function ShowcaseRoomScene({
   const rightOpacity = sectionOpacity(focus, 'right');
   const description = loading
     ? 'Showroom en cours d’installation'
-    : `Showroom de ${data?.pseudo ?? 'Supporter'}, rang ${rankLabel}, écrin ${resolvedRankDisplay.name}, ${visibleBadges.length} anneaux visibles et ${trophies.length} trophées${equippedRing ? `, anneau évolutif ${equippedRing.familyName} ${equippedRing.name}` : ''}`;
+    : `Showroom de ${data?.pseudo ?? 'Supporter'}, rang ${rankLabel}${resolvedRankDisplay ? `, écrin ${resolvedRankDisplay.name}` : ''}, ${visibleBadges.length} anneaux visibles et ${trophies.length} trophées${equippedRing ? `, anneau évolutif ${equippedRing.familyName} ${equippedRing.name}` : ''}`;
 
   return (
     <View
@@ -279,14 +279,16 @@ export default function ShowcaseRoomScene({
             { opacity: centerOpacity },
           ]}
         >
-          <Image
-            accessibilityLabel={`Écrin de rang ${resolvedRankDisplay.name}`}
-            accessible
-            resizeMode="contain"
-            source={resolvedRankDisplay.overlayImage}
-            style={[styles.rankDisplayOverlay, compact && styles.rankDisplayOverlayPreview]}
-            testID={`showcase-rank-display-${resolvedRankDisplay.id}`}
-          />
+          {resolvedRankDisplay ? (
+            <Image
+              accessibilityLabel={`Écrin de rang ${resolvedRankDisplay.name}`}
+              accessible
+              resizeMode="contain"
+              source={resolvedRankDisplay.overlayImage}
+              style={[styles.rankDisplayOverlay, compact && styles.rankDisplayOverlayPreview]}
+              testID={`showcase-rank-display-${resolvedRankDisplay.id}`}
+            />
+          ) : null}
           <View style={[styles.rankBeam, { backgroundColor: light.glow }]} />
           {!loading ? <View style={[styles.rankHalo, { borderColor: rankAccent }]} /> : null}
           {loading ? (

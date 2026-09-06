@@ -54,6 +54,9 @@ export default function ProfileShowcaseCard({
   const relicAccent = cosmetics?.factionEffect?.accent ?? rankAccent;
   const rankDisplay = showcaseRankDisplayById(cosmetics?.showcase.rankDisplay?.id)
     ?? showcaseRankDisplayById(DEFAULT_SHOWCASE_RANK_DISPLAY_ID)!;
+  const visibleRankDisplay = rankDisplay.id === DEFAULT_SHOWCASE_RANK_DISPLAY_ID
+    ? null
+    : rankDisplay;
 
   return (
     <View style={[styles.card, { borderColor: alpha(bannerAccent, '72') }]}>
@@ -65,14 +68,16 @@ export default function ProfileShowcaseCard({
       />
       <View style={[styles.bannerGlow, { backgroundColor: bannerAccent }]} />
       <View style={[styles.relicGlow, { backgroundColor: relicAccent }]} />
-      <Image
-        accessibilityLabel={`Écrin de rang ${rankDisplay.name}`}
-        accessible
-        resizeMode="contain"
-        source={rankDisplay.overlayImage}
-        style={styles.rankDisplayBackdrop}
-        testID={`profile-rank-display-${rankDisplay.id}`}
-      />
+      {visibleRankDisplay ? (
+        <Image
+          accessibilityLabel={`Écrin de rang ${visibleRankDisplay.name}`}
+          accessible
+          resizeMode="contain"
+          source={visibleRankDisplay.overlayImage}
+          style={styles.rankDisplayBackdrop}
+          testID={`profile-rank-display-${visibleRankDisplay.id}`}
+        />
+      ) : null}
       <Text style={[styles.watermark, { color: bannerAccent }]}>{teamTag}</Text>
 
       <View style={styles.topline}>

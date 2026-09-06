@@ -70,7 +70,7 @@ type AtelierNotice = { text: string; tone: 'error' | 'info' | 'success' };
 const ATELIER_SHELF_TITLES: Record<AtelierCategory, string> = {
   materials: 'MATIÈRES',
   lighting: 'LUMIÈRES',
-  supports: 'PRÉSENTOIRS',
+  supports: 'SALLES',
   pedestals: 'SOCLES',
   ranks: 'ÉCRINS DE RANG',
   jerseys: 'MAILLOTS',
@@ -703,9 +703,6 @@ function ShowcaseRoomShelf({
   rooms: readonly ShowcaseRoomDefinition[];
   width: number;
 }) {
-  const imageHeight = 140 / ((676 - 87) / 853);
-  const imageWidth = imageHeight * (1844 / 853);
-
   return (
     <View style={styles.catalogShelf} testID="atelier-shelf-rooms">
       <ShelfHeading count={rooms.length} eyebrow="VITRINE // ESPACE" title="SALLES" />
@@ -737,15 +734,9 @@ function ShowcaseRoomShelf({
           >
             <View style={styles.roomVisual}>
               <Image
-                resizeMode="stretch"
+                resizeMode="cover"
                 source={room.image}
-                style={{
-                  height: imageHeight,
-                  left: (width - imageWidth) / 2,
-                  position: 'absolute',
-                  top: -imageHeight * (87 / 853),
-                  width: imageWidth,
-                }}
+                style={StyleSheet.absoluteFill}
               />
               <View pointerEvents="none" style={styles.roomImageShade} />
               <View style={styles.roomSlotCount}>
@@ -906,7 +897,8 @@ function ProductCard({
   const sceneImageWidth = sceneImageHeight * (
     ATELIER_SCENE_REFERENCE.width / ATELIER_SCENE_REFERENCE.height
   );
-  const usesScenePreview = product.category === 'lighting' || product.category === 'supports';
+  const usesRoomPreview = Boolean(product.roomId);
+  const usesScenePreview = product.category === 'lighting';
   const usesRankPreview = product.category === 'ranks';
 
   return (
@@ -929,7 +921,14 @@ function ProductCard({
         style={[styles.productVisual, { backgroundColor: `${product.accent}0D` }]}
         testID={usesRankPreview ? `atelier-ranks-preview-${product.id}` : undefined}
       >
-        {usesScenePreview ? (
+        {usesRoomPreview ? (
+          <Image
+            resizeMode="cover"
+            source={product.image}
+            style={StyleSheet.absoluteFill}
+            testID={`atelier-${product.category}-preview-${product.id}`}
+          />
+        ) : usesScenePreview ? (
           <Image
             resizeMode="stretch"
             source={product.image}

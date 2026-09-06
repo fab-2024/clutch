@@ -39,6 +39,7 @@ export type ShowcasePlaceableItem = {
 export type ShowcaseRoomAssignments = Record<ShowcaseRoomSlotId, ShowcasePlaceableItem | null>;
 
 export type ShowcaseRoomSlotDefinition = {
+  artworkLift?: number;
   height: `${number}%`;
   id: ShowcaseRoomSlotId;
   label: string;

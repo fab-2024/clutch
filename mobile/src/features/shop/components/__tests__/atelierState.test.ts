@@ -2,10 +2,12 @@
 
 import { createAtelierPreviewItems } from '../../atelierCatalog';
 import {
+  applyPreviewTeamPackAction,
   createTeamPackPreviewItems,
   FNATIC_TEAM_PACK,
   KC_TEAM_PACK,
   M8_TEAM_PACK,
+  SERMENT_DU_GIVRE_PACK,
 } from '../../teamPackCatalog';
 import {
   applyAtelierTry,
@@ -65,8 +67,9 @@ describe('showcase Atelier state', () => {
       theme: 'carbon',
       lighting: 'violet',
       pedestal: 'steel',
-      presenterId: 'supports_halo',
+      presenterId: 'supports_gallery',
       rankDisplayId: 'rank_orbital_core',
+      roomId: 'azure-horizon',
       jerseyPresentation: 'podium',
     });
     expect(resolveAtelierSceneConfig(data.equipped, { lighting: 'lighting_white' }).lighting).toBe('competition');
@@ -128,6 +131,22 @@ describe('showcase Atelier state', () => {
     })).toMatchObject({
       lighting: 'silver',
       presenterId: 'm8-pedestals',
+    });
+  });
+
+  it('equips the complete room included with a Clutch original pack', () => {
+    const initial = makeData(1280);
+    initial.items = [
+      ...initial.items,
+      ...createTeamPackPreviewItems(SERMENT_DU_GIVRE_PACK),
+    ];
+
+    const purchased = applyPreviewTeamPackAction(initial, SERMENT_DU_GIVRE_PACK);
+
+    expect(purchased.equipped.showcase.supports?.id).toBe('serment-du-givre-ice-sheet-pedestal');
+    expect(resolveAtelierSceneConfig(purchased.equipped)).toMatchObject({
+      presenterId: 'serment-du-givre-ice-sheet-pedestal',
+      roomId: null,
     });
   });
 });

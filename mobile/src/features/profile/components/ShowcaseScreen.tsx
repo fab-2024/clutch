@@ -22,6 +22,7 @@ import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/rankin
 import { rankEmblemSource } from '@/src/features/ranking/components/RankEmblem';
 import { equipCosmetic, loadCosmeticShop, purchaseCosmetic } from '@/src/features/shop/api';
 import {
+  PACK_ROOM_ATELIER_PRODUCTS,
   atelierProductById,
   atelierProducts,
   type AtelierCategory,
@@ -47,7 +48,10 @@ import {
   SHOWCASE_RANK_DISPLAY_CATALOG,
   showcaseRankDisplayById,
 } from '@/src/features/shop/showcaseRankDisplayCatalog';
-import { showcaseRoomById } from '@/src/features/shop/showcaseRoomCatalog';
+import {
+  showcaseRoomById,
+  showcaseRoomByProductId,
+} from '@/src/features/shop/showcaseRoomCatalog';
 import {
   cosmeticPackItemById,
   currentCosmeticPackItemById,
@@ -80,8 +84,8 @@ import ShowcaseRoomEditorScene from './showcase/ShowcaseRoomEditorScene';
 import ShowcaseRoomScene from './showcase/ShowcaseRoomScene';
 import ShowcaseSettingsSheet from './showcase/ShowcaseSettingsSheet';
 import {
+  createDefaultShowcaseRoomAssignments,
   createEmptyShowcaseRoomAssignments,
-  SHOWCASE_ROOM_SLOTS,
   type ShowcasePlaceableItem,
   type ShowcasePlaceableKind,
   type ShowcaseRoomSlotId,
@@ -107,9 +111,7 @@ type ShowcaseScreenProps = {
   reduceMotionOverride?: boolean;
 };
 
-type ShowcaseSceneSnapshot = AtelierSceneConfig & {
-  ignoreSelectedRoom: boolean;
-};
+type ShowcaseSceneSnapshot = AtelierSceneConfig;
 
 export default function ShowcaseScreen({
   atmosphereQualityOverride,
@@ -147,13 +149,13 @@ export default function ShowcaseScreen({
   const [theme, setTheme] = useState<ShowcaseRoomTheme>('graphite');
   const [lighting, setLighting] = useState<ShowcaseLighting>('cyan');
   const [presenterId, setPresenterId] = useState<string>(DEFAULT_SHOWCASE_PRESENTER_ID);
+  const [roomId, setRoomId] = useState<string | null>(selectedRoom?.id ?? null);
   const [rankDisplayId, setRankDisplayId] = useState<string>(DEFAULT_SHOWCASE_RANK_DISPLAY_ID);
   const [rankDisplayPendingId, setRankDisplayPendingId] = useState<string | null>(null);
   const [jerseyPresentation, setJerseyPresentation] = useState<ShowcaseJerseyPresentation>('locker');
   const [selectedRingFamily, setSelectedRingFamily] = useState<ShowcaseRingFamily | null>(null);
   const [activeRoomSlot, setActiveRoomSlot] = useState<ShowcaseRoomSlotId | null>(null);
   const [roomAssignments, setRoomAssignments] = useState(createEmptyShowcaseRoomAssignments);
-  const [ignoreSelectedRoom, setIgnoreSelectedRoom] = useState(false);
   const [routeFocused, setRouteFocused] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
   const requestRef = useRef(0);
@@ -265,14 +267,15 @@ export default function ShowcaseScreen({
       setLighting(saved.lighting);
       setPedestal(saved.pedestal);
       setPresenterId(saved.presenterId);
+      setRoomId(selectedRoom?.id ?? saved.roomId);
       setRankDisplayId(saved.rankDisplayId);
       setJerseyPresentation(saved.jerseyPresentation);
     }
-  }, [shopData]);
+  }, [selectedRoom, shopData]);
 
   useEffect(() => {
     if (!selectedRoom) return;
-    setIgnoreSelectedRoom(false);
+    setRoomId(selectedRoom.id);
     setTheme(selectedRoom.theme);
     setLighting(selectedRoom.lighting);
     setPedestal(selectedRoom.pedestal);
@@ -297,8 +300,17 @@ export default function ShowcaseScreen({
     [profileData?.cosmetics, shopData?.equipped],
   );
   const atelierCategoryProducts = useMemo(
-    () => atelierProducts(atelierCategory),
-    [atelierCategory],
+    () => {
+      const products = atelierProducts(atelierCategory);
+      if (atelierCategory !== 'supports') return products;
+      return [
+        ...products,
+        ...PACK_ROOM_ATELIER_PRODUCTS.filter((product) => (
+          atelierRuntimeById.get(product.id)?.owned === true
+        )),
+      ];
+    },
+    [atelierCategory, atelierRuntimeById],
   );
   const atelierSelectedId = atelierTrial[atelierCategory]
     ?? atelierEquippedIds[atelierCategory]
@@ -332,16 +344,18 @@ export default function ShowcaseScreen({
   const cosmetics = resolveEquipped(shopData, profileData?.cosmetics);
   const presenter = showcasePresenterById(presenterId)
     ?? showcasePresenterById(DEFAULT_SHOWCASE_PRESENTER_ID)!;
+  const activeRoom = showcaseRoomById(roomId);
   const rankDisplay = showcaseRankDisplayById(rankDisplayId)
     ?? showcaseRankDisplayById(DEFAULT_SHOWCASE_RANK_DISPLAY_ID)!;
-  const activeSlots = selectedRoom && !ignoreSelectedRoom && presenter.id === DEFAULT_SHOWCASE_PRESENTER_ID
-    ? SHOWCASE_ROOM_SLOTS
-    : presenter.slots;
-  const editableScene = selectedRoom && !ignoreSelectedRoom ? selectedRoom : {
+  const visibleRankDisplay = rankDisplay.id === DEFAULT_SHOWCASE_RANK_DISPLAY_ID
+    ? null
+    : rankDisplay;
+  const activeSlots = activeRoom?.slots ?? presenter.slots;
+  const editableScene = activeRoom ?? {
     ...presenter,
     image: presenter.editorImage ?? presenter.image,
   };
-  const assignmentLayoutKey = `${selectedRoom && !ignoreSelectedRoom ? selectedRoom.id : 'equipped'}:${presenter.id}`;
+  const assignmentLayoutKey = activeRoom ? `room:${activeRoom.id}` : `presenter:${presenter.id}`;
   const ringStats = useMemo(() => adaptShowcaseRingStats(profileData), [profileData]);
   const ringProgressions = useMemo(
     () => resolveAllShowcaseRings(ringStats, ringEquipment.family),
@@ -379,31 +393,30 @@ export default function ShowcaseScreen({
     if (!placeableItems.length || initializedRoomRef.current === assignmentLayoutKey) return;
     initializedRoomRef.current = assignmentLayoutKey;
     setActiveRoomSlot(null);
-    setRoomAssignments(createPresenterRoomAssignments(
-      placeableItems,
-      presenter.id,
-    ));
-  }, [assignmentLayoutKey, placeableItems, presenter.id]);
+    setRoomAssignments(activeRoom
+      ? createDefaultShowcaseRoomAssignments(placeableItems, activeSlots)
+      : createPresenterRoomAssignments(placeableItems, presenter.id));
+  }, [activeRoom, activeSlots, assignmentLayoutKey, placeableItems, presenter.id]);
 
   function currentSceneSnapshot(): ShowcaseSceneSnapshot {
     return {
-      ignoreSelectedRoom,
       jerseyPresentation,
       lighting,
       pedestal,
       presenterId: presenter.id,
       rankDisplayId: rankDisplay.id,
+      roomId: activeRoom?.id ?? null,
       theme,
     };
   }
 
   function applySceneSnapshot(snapshot: ShowcaseSceneSnapshot) {
-    setIgnoreSelectedRoom(snapshot.ignoreSelectedRoom);
     setJerseyPresentation(snapshot.jerseyPresentation);
     setLighting(snapshot.lighting);
     setPedestal(snapshot.pedestal);
     setPresenterId(snapshot.presenterId);
     setRankDisplayId(snapshot.rankDisplayId);
+    setRoomId(snapshot.roomId);
     setTheme(snapshot.theme);
   }
 
@@ -411,8 +424,8 @@ export default function ShowcaseScreen({
     if (category === 'materials') setTheme(config.theme);
     if (category === 'lighting') setLighting(config.lighting);
     if (category === 'supports' || category === 'pedestals') {
-      setIgnoreSelectedRoom(true);
       setPedestal(config.pedestal);
+      setRoomId(config.roomId);
       if (showcasePresenterById(config.presenterId)) setPresenterId(config.presenterId);
     }
     if (category === 'ranks') setRankDisplayId(config.rankDisplayId);
@@ -461,8 +474,8 @@ export default function ShowcaseScreen({
     if (category === 'materials') next.theme = nextConfig.theme;
     if (category === 'lighting') next.lighting = nextConfig.lighting;
     if (category === 'supports' || category === 'pedestals') {
-      next.ignoreSelectedRoom = true;
       next.pedestal = nextConfig.pedestal;
+      next.roomId = nextConfig.roomId;
       if (showcasePresenterById(nextConfig.presenterId)) next.presenterId = nextConfig.presenterId;
     }
     if (category === 'ranks') next.rankDisplayId = nextConfig.rankDisplayId;
@@ -547,9 +560,16 @@ export default function ShowcaseScreen({
   }
 
   function changePresenter(nextId: string) {
+    const nextRoom = showcaseRoomByProductId(nextId);
+    if (nextRoom) {
+      setRoomId(nextRoom.id);
+      setPresenterId(DEFAULT_SHOWCASE_PRESENTER_ID);
+      setPedestal(nextRoom.pedestal);
+      return;
+    }
     const next = showcasePresenterById(nextId);
     if (!next) return;
-    setIgnoreSelectedRoom(true);
+    setRoomId(null);
     setPresenterId(next.id);
     setPedestal(next.pedestal);
   }
@@ -626,7 +646,7 @@ export default function ShowcaseScreen({
                 setActiveRoomSlot(slotId);
               }}
               rankAccent={rankAccent}
-              rankDisplay={presenter.showRankDisplay === false ? null : rankDisplay}
+              rankDisplay={!activeRoom && presenter.showRankDisplay === false ? null : visibleRankDisplay}
               rankOrder={profileData?.ranking.grade.ordre}
               reduceMotion={reduceMotion}
               room={editableScene}
@@ -650,7 +670,7 @@ export default function ShowcaseScreen({
               onRingPress={equippedRing ? () => setSelectedRingFamily(equippedRing.family) : undefined}
               pedestal={pedestal}
               rankAccent={rankAccent}
-              rankDisplay={rankDisplay}
+              rankDisplay={visibleRankDisplay}
               rankLabel={rankLabel}
               reduceMotion={reduceMotion}
               roomImage={editableScene.image}
@@ -765,7 +785,7 @@ export default function ShowcaseScreen({
             onPresenterChange={changePresenter}
             onRankDisplayChange={(nextId) => { void changeRankDisplay(nextId); }}
             onThemeChange={setTheme}
-            presenterId={presenter.id}
+            presenterId={activeRoom?.productId ?? presenter.id}
             rankDisplayDisabled={Boolean(rankDisplayPendingId) || refreshing || loading}
             rankDisplayId={rankDisplay.id}
             rankDisplays={rankDisplayOptions}

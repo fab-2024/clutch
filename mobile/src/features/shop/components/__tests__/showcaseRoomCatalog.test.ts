@@ -16,7 +16,16 @@ describe('showcase room catalogue', () => {
       expect(room.theme).toBeTruthy();
       expect(room.lighting).toBeTruthy();
       expect(room.pedestal).toBeTruthy();
+      expect(room.productId).toBeTruthy();
+      expect(room.sceneFrame).toEqual({ width: 1844, height: 853, top: 0, bottom: 853 });
+      expect(room.slots).toHaveLength(8);
+      expect(new Set(room.slots.map((slot) => slot.id)).size).toBe(8);
+      room.slots.forEach((slot) => {
+        expect(slot.artworkLift).toBeGreaterThan(0);
+        expect(Number.parseFloat(slot.top) + Number.parseFloat(slot.height)).toBeLessThanOrEqual(70);
+      });
     });
+    expect(new Set(SHOWCASE_ROOM_CATALOG.map((room) => room.productId)).size).toBe(6);
   });
 
   it('resolves known rooms without inventing a fallback', () => {

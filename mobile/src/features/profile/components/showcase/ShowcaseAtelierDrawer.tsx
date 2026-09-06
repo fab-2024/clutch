@@ -50,7 +50,7 @@ type ShowcaseAtelierDrawerProps = {
 const CATEGORY_LABELS: Record<AtelierCategory, string> = {
   materials: 'COULEUR',
   lighting: 'ÉCLAIRAGE',
-  supports: 'FOND',
+  supports: 'SALLES',
   pedestals: 'SOCLES',
   ranks: 'RANG',
   jerseys: 'MAILLOT',

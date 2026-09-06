@@ -113,7 +113,7 @@ describe('ProfileScreen private navigation', () => {
       <ProfileScreen previewData={PREVIEW_PROFILE} profilePseudo="FabTheTap" publicView />,
     );
 
-    expect(screen.getByTestId('profile-rank-display-rank_carbon_cradle')).toBeTruthy();
+    expect(screen.queryByTestId('profile-rank-display-rank_carbon_cradle')).toBeNull();
   });
 
   it('opens the production Vitrine route from Moi', async () => {

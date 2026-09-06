@@ -6,8 +6,8 @@ import {
   type CosmeticRarity,
   type ShowcaseAtelierSlot,
 } from './types';
-import { SHOWCASE_PRESENTER_CATALOG } from './showcasePresenterCatalog';
 import { SHOWCASE_RANK_DISPLAY_CATALOG } from './showcaseRankDisplayCatalog';
+import { SHOWCASE_ROOM_CATALOG } from './showcaseRoomCatalog';
 import { ORIGINAL_PACK_CATALOG } from './teamPackCatalog';
 
 export type AtelierCategory = 'materials' | 'lighting' | 'supports' | 'pedestals' | 'ranks' | 'jerseys';
@@ -36,6 +36,7 @@ export type AtelierProduct = {
   packOnly?: boolean;
   price: number;
   rarity: CosmeticRarity;
+  roomId?: string;
   slot: ShowcaseAtelierSlot;
 };
 
@@ -47,7 +48,7 @@ export const ATELIER_CATEGORY_META: Record<AtelierCategory, {
 }> = {
   materials: { glyph: '▤', label: 'MATÉRIAUX', shortLabel: 'MATIÈRE', slot: 'vitrine_materiau' },
   lighting: { glyph: '✦', label: 'ÉCLAIRAGE', shortLabel: 'LUMIÈRE', slot: 'vitrine_eclairage' },
-  supports: { glyph: '◫', label: 'PRÉSENTOIRS', shortLabel: 'PRÉSENTOIR', slot: 'vitrine_supports' },
+  supports: { glyph: '◫', label: 'SALLES', shortLabel: 'SALLE', slot: 'vitrine_supports' },
   pedestals: { glyph: '▱', label: 'SOCLES', shortLabel: 'SOCLE', slot: 'vitrine_supports' },
   ranks: { glyph: '◆', label: 'ÉCRINS DE RANG', shortLabel: 'RANG', slot: 'vitrine_rang' },
   jerseys: { glyph: '⌁', label: 'MAILLOTS', shortLabel: 'MAILLOT', slot: 'vitrine_maillot' },
@@ -175,16 +176,17 @@ export const ATELIER_CATALOG: readonly AtelierProduct[] = [
     accent: '#E8FF3D',
     image: require('../../../assets/shop/atelier/lighting/scenes/lighting-victory-scene.png'),
   },
-  ...SHOWCASE_PRESENTER_CATALOG.filter((presenter) => !presenter.packOnly).map((presenter) => ({
-    id: presenter.id,
+  ...SHOWCASE_ROOM_CATALOG.map((room) => ({
+    id: room.productId,
     category: 'supports' as const,
     slot: 'vitrine_supports' as const,
-    name: presenter.name,
-    description: presenter.description,
-    price: presenter.price,
-    rarity: presenter.rarity,
-    accent: presenter.accent,
-    image: presenter.image,
+    name: room.name,
+    description: room.description,
+    price: room.price,
+    rarity: room.rarity,
+    accent: room.accent,
+    image: room.image,
+    roomId: room.id,
   })),
   ...ORIGINAL_PACK_CATALOG.flatMap((pack) => pack.items
     .filter((item) => item.slot === 'vitrine_supports')
@@ -247,6 +249,26 @@ export const ATELIER_CATALOG: readonly AtelierProduct[] = [
     image: require('../../../assets/shop/atelier/jerseys/jersey_podium.png'),
   },
 ] as const;
+
+export const PACK_ROOM_ATELIER_PRODUCTS: readonly AtelierProduct[] = ORIGINAL_PACK_CATALOG.map((pack) => {
+  const room = pack.items.find((item) => item.slot === 'vitrine_eclairage');
+  const presenter = pack.items.find((item) => item.slot === 'vitrine_supports');
+  if (!room || !presenter) throw new Error(`${pack.id} doit fournir une salle et ses présentoirs.`);
+
+  return {
+    id: presenter.id,
+    category: 'supports',
+    slot: 'vitrine_supports',
+    name: room.name,
+    description: room.description,
+    price: pack.price,
+    rarity: room.rarity,
+    accent: room.accent,
+    image: room.image,
+    packId: pack.id,
+    packOnly: true,
+  };
+});
 
 export const ATELIER_DISCOVERY_ENTRIES: readonly {
   description: string;

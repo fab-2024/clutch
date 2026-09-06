@@ -137,9 +137,9 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.getByText('Victoire Clutch')).toBeTruthy();
     expect(screen.getByTestId('atelier-shelf-supports')).toBeTruthy();
     expect(screen.getAllByTestId(/atelier-supports-preview-/)).toHaveLength(6);
-    expect(screen.getByText('Cercle Obsidienne')).toBeTruthy();
-    expect(screen.getByText('Coffre-fort Acier')).toBeTruthy();
-    expect(screen.getByText('Podium Champagne')).toBeTruthy();
+    expect(screen.getAllByText('Galerie Obsidienne').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Hangar Nocturne').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Forge Volcanique').length).toBeGreaterThan(0);
     expect(screen.getByTestId('atelier-shelf-ranks')).toBeTruthy();
     expect(screen.getAllByTestId(/atelier-ranks-preview-/)).toHaveLength(6);
     expect(screen.getByText('Écrin Mécanique Carbone')).toBeTruthy();
