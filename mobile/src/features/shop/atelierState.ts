@@ -26,6 +26,7 @@ const DEFAULT_IDS: Record<AtelierCategory, string> = {
   materials: 'material_graphite',
   lighting: 'lighting_cyan',
   supports: 'supports_gallery',
+  pedestals: 'sang-des-titans-monolith-pedestal',
   ranks: DEFAULT_SHOWCASE_RANK_DISPLAY_ID,
   jerseys: 'jersey_locker',
 };
@@ -68,7 +69,11 @@ export function applyAtelierTry(
   category: AtelierCategory,
   itemId: string,
 ): AtelierTrySelection {
-  return { ...selection, [category]: itemId };
+  const next = { ...selection };
+  if (category === 'supports') delete next.pedestals;
+  if (category === 'pedestals') delete next.supports;
+  next[category] = itemId;
+  return next;
 }
 
 export function equippedAtelierIds(equipped: EquippedCosmetics | null | undefined): Record<AtelierCategory, string> {
@@ -76,6 +81,7 @@ export function equippedAtelierIds(equipped: EquippedCosmetics | null | undefine
     materials: equipped?.showcase.material?.id ?? DEFAULT_IDS.materials,
     lighting: equipped?.showcase.lighting?.id ?? DEFAULT_IDS.lighting,
     supports: equipped?.showcase.supports?.id ?? DEFAULT_IDS.supports,
+    pedestals: equipped?.showcase.supports?.id ?? DEFAULT_IDS.pedestals,
     ranks: equipped?.showcase.rankDisplay?.id ?? DEFAULT_IDS.ranks,
     jerseys: equipped?.showcase.jersey?.id ?? DEFAULT_IDS.jerseys,
   };
@@ -88,7 +94,7 @@ export function resolveAtelierSceneConfig(
   const persisted = equippedAtelierIds(equipped);
   const materialId = trial.materials ?? persisted.materials;
   const lightingId = trial.lighting ?? persisted.lighting;
-  const supportsId = trial.supports ?? persisted.supports;
+  const supportsId = trial.pedestals ?? trial.supports ?? persisted.supports;
   const rankDisplayId = trial.ranks ?? persisted.ranks;
   const jerseyId = trial.jerseys ?? persisted.jerseys;
 

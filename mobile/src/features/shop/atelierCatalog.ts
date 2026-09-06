@@ -8,12 +8,14 @@ import {
 } from './types';
 import { SHOWCASE_PRESENTER_CATALOG } from './showcasePresenterCatalog';
 import { SHOWCASE_RANK_DISPLAY_CATALOG } from './showcaseRankDisplayCatalog';
+import { ORIGINAL_PACK_CATALOG } from './teamPackCatalog';
 
-export type AtelierCategory = 'materials' | 'lighting' | 'supports' | 'ranks' | 'jerseys';
+export type AtelierCategory = 'materials' | 'lighting' | 'supports' | 'pedestals' | 'ranks' | 'jerseys';
 
 export const ATELIER_CATEGORIES = [
   'lighting',
   'supports',
+  'pedestals',
   'ranks',
 ] as const satisfies readonly AtelierCategory[];
 
@@ -30,6 +32,8 @@ export type AtelierProduct = {
   image: ImageSourcePropType;
   name: string;
   overlayImage?: ImageSourcePropType;
+  packId?: string;
+  packOnly?: boolean;
   price: number;
   rarity: CosmeticRarity;
   slot: ShowcaseAtelierSlot;
@@ -44,6 +48,7 @@ export const ATELIER_CATEGORY_META: Record<AtelierCategory, {
   materials: { glyph: '▤', label: 'MATÉRIAUX', shortLabel: 'MATIÈRE', slot: 'vitrine_materiau' },
   lighting: { glyph: '✦', label: 'ÉCLAIRAGE', shortLabel: 'LUMIÈRE', slot: 'vitrine_eclairage' },
   supports: { glyph: '◫', label: 'PRÉSENTOIRS', shortLabel: 'PRÉSENTOIR', slot: 'vitrine_supports' },
+  pedestals: { glyph: '▱', label: 'SOCLES', shortLabel: 'SOCLE', slot: 'vitrine_supports' },
   ranks: { glyph: '◆', label: 'ÉCRINS DE RANG', shortLabel: 'RANG', slot: 'vitrine_rang' },
   jerseys: { glyph: '⌁', label: 'MAILLOTS', shortLabel: 'MAILLOT', slot: 'vitrine_maillot' },
 };
@@ -181,6 +186,21 @@ export const ATELIER_CATALOG: readonly AtelierProduct[] = [
     accent: presenter.accent,
     image: presenter.image,
   })),
+  ...ORIGINAL_PACK_CATALOG.flatMap((pack) => pack.items
+    .filter((item) => item.slot === 'vitrine_supports')
+    .map((item) => ({
+      id: item.id,
+      category: 'pedestals' as const,
+      slot: 'vitrine_supports' as const,
+      name: item.name,
+      description: item.description,
+      price: pack.price,
+      rarity: item.rarity,
+      accent: item.accent,
+      image: item.image,
+      packId: pack.id,
+      packOnly: true,
+    }))),
   ...SHOWCASE_RANK_DISPLAY_CATALOG.map((display) => ({
     id: display.id,
     category: 'ranks' as const,
@@ -254,7 +274,7 @@ export function atelierProductById(id: string | null | undefined) {
 }
 
 export function createAtelierPreviewItems(): CosmeticItem[] {
-  return ATELIER_CATALOG.map((product) => {
+  return ATELIER_CATALOG.filter((product) => !product.packOnly).map((product) => {
     const included = product.price === 0;
     return {
       id: product.id,

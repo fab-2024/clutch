@@ -71,6 +71,7 @@ const ATELIER_SHELF_TITLES: Record<AtelierCategory, string> = {
   materials: 'MATIÈRES',
   lighting: 'LUMIÈRES',
   supports: 'PRÉSENTOIRS',
+  pedestals: 'SOCLES',
   ranks: 'ÉCRINS DE RANG',
   jerseys: 'MAILLOTS',
 };

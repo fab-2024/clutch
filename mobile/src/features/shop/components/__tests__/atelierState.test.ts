@@ -3,6 +3,7 @@
 import { createAtelierPreviewItems } from '../../atelierCatalog';
 import {
   createTeamPackPreviewItems,
+  FNATIC_TEAM_PACK,
   KC_TEAM_PACK,
   M8_TEAM_PACK,
 } from '../../teamPackCatalog';
@@ -74,7 +75,7 @@ describe('showcase Atelier state', () => {
   });
 
   it('activates the pack-only Fnatic room and orange lighting', () => {
-    const items = createTeamPackPreviewItems();
+    const items = createTeamPackPreviewItems(FNATIC_TEAM_PACK);
     const fnaticLighting = items.find((item) => item.id === 'fnatic-room-lighting');
     const fnaticPedestals = items.find((item) => item.id === 'fnatic-pedestals');
     if (!fnaticLighting || !fnaticPedestals) throw new Error('Missing Fnatic preview fixtures');

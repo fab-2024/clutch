@@ -51,6 +51,7 @@ const CATEGORY_LABELS: Record<AtelierCategory, string> = {
   materials: 'COULEUR',
   lighting: 'ÉCLAIRAGE',
   supports: 'FOND',
+  pedestals: 'SOCLES',
   ranks: 'RANG',
   jerseys: 'MAILLOT',
 };
@@ -182,7 +183,7 @@ export default function ShowcaseAtelierDrawer({
         {products.map((candidate) => {
           const runtime = runtimeById.get(candidate.id) ?? null;
           const selected = candidate.id === selectedId;
-          const rankPreview = candidate.category === 'ranks';
+          const containedPreview = candidate.category === 'ranks' || candidate.category === 'pedestals';
           return (
             <Pressable
               accessibilityHint="Applique un aperçu sans acheter"
@@ -205,9 +206,9 @@ export default function ShowcaseAtelierDrawer({
               >
                 <Image
                   accessibilityIgnoresInvertColors
-                  resizeMode={rankPreview ? 'contain' : 'cover'}
+                  resizeMode={containedPreview ? 'contain' : 'cover'}
                   source={candidate.overlayImage ?? candidate.image}
-                  style={[styles.productImage, rankPreview && styles.productImageContained]}
+                  style={[styles.productImage, containedPreview && styles.productImageContained]}
                   testID={`showcase-atelier-product-image-${candidate.id}`}
                 />
                 <View style={[styles.productAccent, { backgroundColor: `${candidate.accent}10` }]} />

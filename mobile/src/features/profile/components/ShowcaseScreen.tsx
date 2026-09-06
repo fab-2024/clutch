@@ -410,10 +410,10 @@ export default function ShowcaseScreen({
   function applyAtelierCategoryPreview(category: AtelierCategory, config: AtelierSceneConfig) {
     if (category === 'materials') setTheme(config.theme);
     if (category === 'lighting') setLighting(config.lighting);
-    if (category === 'supports') {
+    if (category === 'supports' || category === 'pedestals') {
       setIgnoreSelectedRoom(true);
       setPedestal(config.pedestal);
-      setPresenterId(config.presenterId);
+      if (showcasePresenterById(config.presenterId)) setPresenterId(config.presenterId);
     }
     if (category === 'ranks') setRankDisplayId(config.rankDisplayId);
     if (category === 'jerseys') setJerseyPresentation(config.jerseyPresentation);
@@ -460,10 +460,10 @@ export default function ShowcaseScreen({
 
     if (category === 'materials') next.theme = nextConfig.theme;
     if (category === 'lighting') next.lighting = nextConfig.lighting;
-    if (category === 'supports') {
+    if (category === 'supports' || category === 'pedestals') {
       next.ignoreSelectedRoom = true;
       next.pedestal = nextConfig.pedestal;
-      next.presenterId = nextConfig.presenterId;
+      if (showcasePresenterById(nextConfig.presenterId)) next.presenterId = nextConfig.presenterId;
     }
     if (category === 'ranks') next.rankDisplayId = nextConfig.rankDisplayId;
     if (category === 'jerseys') next.jerseyPresentation = nextConfig.jerseyPresentation;
@@ -813,8 +813,10 @@ export function resolveRoomPlaceableItems({
     const knownPackDefinition = cosmeticPackItemById(item.id);
     const packDefinition = currentCosmeticPackItemById(item.id);
     if (knownPackDefinition && !packDefinition) return;
+    if (item.slot === 'titre_profil') return;
     const kind = packDefinition?.roomKind ?? roomKindForCosmetic(item);
     if (!kind) return;
+    if (!packDefinition && (kind === 'core' || kind === 'banner')) return;
     items.push({
       accent: item.accent,
       id: `cosmetic:${item.id}`,

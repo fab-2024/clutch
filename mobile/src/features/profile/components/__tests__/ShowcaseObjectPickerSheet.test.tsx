@@ -30,6 +30,7 @@ const ITEMS: ShowcasePlaceableItem[] = [
   { accent: '#F5792A', id: 'jersey:fnc', kind: 'jersey', name: 'Fnatic' },
   { accent: '#63B8FF', id: 'badge:first', kind: 'badge', name: 'Premier Signal' },
   { accent: '#FFB84D', id: 'trophy:first', kind: 'trophy', name: 'Premier Signal' },
+  { accent: '#AAB4BE', id: 'title:legacy', kind: 'title', name: 'Rookie du Call' },
 ];
 
 describe('ShowcaseObjectPickerSheet', () => {
@@ -49,6 +50,8 @@ describe('ShowcaseObjectPickerSheet', () => {
     expect(screen.getAllByText('TROPHÉE')).toHaveLength(2);
     expect(screen.getAllByText('BADGE')).toHaveLength(2);
     expect(screen.getByText('MAILLOT')).toBeTruthy();
+    expect(screen.queryByText('TITRE')).toBeNull();
+    expect(screen.queryByTestId('showcase-placeable-title:legacy')).toBeNull();
 
     await fireEvent.press(screen.getByTestId('showcase-placeable-badge:first'));
     await fireEvent.press(screen.getByTestId('showcase-object-empty'));

@@ -8,7 +8,9 @@ import { rankEmblemSource } from '@/src/features/ranking/components/RankEmblem';
 import { createAtelierPreviewItems } from '@/src/features/shop/atelierCatalog';
 import {
   createTeamPackPreviewItems,
+  CONCLAVE_ARCANIQUE_PACK,
   FNATIC_TEAM_PACK,
+  MYTHS_FORGE_PACK,
   SANG_DES_TITANS_PACK,
 } from '@/src/features/shop/teamPackCatalog';
 import { DEFAULT_MONETIZATION_CONTRACT, EMPTY_EQUIPPED_COSMETICS, type CosmeticShopData } from '@/src/features/shop/types';
@@ -148,7 +150,7 @@ describe('ShowcaseScreen immersive editor', () => {
 
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     expect(screen.getByTestId('showcase-atelier-drawer')).toBeTruthy();
-    expect(screen.getAllByRole('tab')).toHaveLength(3);
+    expect(screen.getAllByRole('tab')).toHaveLength(4);
     expect(screen.queryByTestId('showcase-atelier-category-materials')).toBeNull();
     expect(screen.queryByTestId('showcase-atelier-category-jerseys')).toBeNull();
     expect(screen.getByText(/Les objets posés sur les socles/)).toBeTruthy();
@@ -161,6 +163,10 @@ describe('ShowcaseScreen immersive editor', () => {
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-supports'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-product-supports_forge'));
     expect(screen.getByTestId('showcase-room-background-supports_forge')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('showcase-atelier-category-pedestals'));
+    expect(screen.getByTestId('showcase-atelier-product-sang-des-titans-monolith-pedestal')).toBeTruthy();
+    expect(screen.getByTestId('showcase-atelier-product-image-sang-des-titans-monolith-pedestal').props.resizeMode).toBe('contain');
 
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-ranks'));
     expect(screen.getByTestId('showcase-atelier-product-image-rank_carbon_cradle').props.resizeMode).toBe('contain');
@@ -250,5 +256,40 @@ describe('ShowcaseScreen immersive editor', () => {
       kind: 'trophy',
       name: 'Totem des Trois Voix',
     });
+  });
+
+  it('hides legacy cores, banners and every title while preserving current pack objects', () => {
+    const currentCore = createTeamPackPreviewItems(CONCLAVE_ARCANIQUE_PACK)
+      .find((item) => item.id === 'conclave-arcanique-conclave-seal')!;
+    const currentBanner = createTeamPackPreviewItems(CONCLAVE_ARCANIQUE_PACK)
+      .find((item) => item.id === 'conclave-arcanique-bloom-banner')!;
+    const currentTitle = createTeamPackPreviewItems(MYTHS_FORGE_PACK)
+      .find((item) => item.id === 'mythes-forge-master-smith-title')!;
+    const legacyItems = [
+      { ...currentCore, id: 'legacy-core', name: 'Core Origine' },
+      { ...currentBanner, id: 'legacy-banner', name: 'Carte Noire' },
+      { ...currentTitle, id: 'legacy-title', name: 'Rookie du Call' },
+    ];
+
+    const items = resolveRoomPlaceableItems({
+      ownedItems: [
+        ...legacyItems.map((item) => ({ ...item, owned: true })),
+        { ...currentCore, owned: true },
+        { ...currentBanner, owned: true },
+        { ...currentTitle, owned: true },
+      ],
+      profileData: PREVIEW_PROFILE,
+      rankAccent: '#C57943',
+      rankLabel: 'BRONZE',
+      ringProgressions: [],
+    });
+
+    expect(items.some((item) => item.kind === 'title')).toBe(false);
+    expect(items.filter((item) => item.kind === 'core')).toEqual([
+      expect.objectContaining({ id: `cosmetic:${currentCore.id}` }),
+    ]);
+    expect(items.filter((item) => item.kind === 'banner')).toEqual([
+      expect.objectContaining({ id: `cosmetic:${currentBanner.id}` }),
+    ]);
   });
 });

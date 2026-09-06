@@ -26,7 +26,6 @@ const KIND_ORDER: readonly ShowcasePlaceableKind[] = [
   'ring',
   'rank',
   'frame',
-  'title',
   'core',
   'banner',
 ] as const;
