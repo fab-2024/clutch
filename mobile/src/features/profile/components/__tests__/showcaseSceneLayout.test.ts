@@ -11,25 +11,21 @@ describe('showcaseSceneLayout', () => {
     { width: 932, height: 430 },
     { width: 844, height: 320 },
     { width: 390, height: 844 },
-  ])('keeps all pedestals on screen at $width × $height', (viewport) => {
+  ])('fills the available viewport at $width × $height', (viewport) => {
     const layout = showcaseSceneLayout(viewport, EMPTY_ROOM);
 
-    expect(layout.canvas.left).toBeGreaterThanOrEqual(0);
-    expect(layout.canvas.top).toBeGreaterThanOrEqual(0);
-    expect(layout.canvas.left + layout.canvas.width).toBeLessThanOrEqual(viewport.width);
-    expect(layout.canvas.top + layout.canvas.height).toBeLessThanOrEqual(viewport.height);
-    expect(layout.canvas.width / layout.canvas.height).toBeCloseTo(1844 / 853);
-    expect(layout.image.width).toBe(layout.canvas.width);
-    expect(layout.image.height).toBe(layout.canvas.height);
+    expect(layout.canvas).toEqual({ left: 0, top: 0, width: viewport.width, height: viewport.height });
+    expect(layout.image.width).toBe(viewport.width);
+    expect(layout.image.height).toBe(viewport.height);
     expect(layout.image.top).toBe(0);
   });
 
-  it('crops the existing catalog UI without shifting its relative slot coordinates', () => {
+  it('maps the cropped catalog frame onto the full viewport without exposing its legacy UI', () => {
     const layout = showcaseSceneLayout({ width: 844, height: 390 });
 
     expect(layout.canvas.width).toBe(844);
-    expect(layout.canvas.height).toBeCloseTo(844 * 589 / 1844);
-    expect(layout.image.top).toBeCloseTo(-844 * 87 / 1844);
-    expect(layout.image.height).toBeCloseTo(844 * 853 / 1844);
+    expect(layout.canvas.height).toBe(390);
+    expect(layout.image.top).toBeCloseTo(-390 * 87 / 589);
+    expect(layout.image.height).toBeCloseTo(390 * 853 / 589);
   });
 });

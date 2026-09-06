@@ -12,30 +12,25 @@ export const LEGACY_SHOWCASE_SCENE_FRAME: ShowcaseSceneFrame = {
   bottom: 676,
 };
 
-/** The backdrop and its hit targets must always use the same, uncropped canvas. */
+/** The visible scene frame and its hit targets always fill the available viewport together. */
 export function showcaseSceneLayout(
   viewport: { width: number; height: number },
   frame: ShowcaseSceneFrame = LEGACY_SHOWCASE_SCENE_FRAME,
 ) {
   const contentHeight = frame.bottom - frame.top;
-  const aspectRatio = frame.width / contentHeight;
-  const heightForWidth = viewport.width / aspectRatio;
-  const fitsWidth = heightForWidth <= viewport.height;
-  const width = fitsWidth ? viewport.width : viewport.height * aspectRatio;
-  const height = fitsWidth ? heightForWidth : viewport.height;
 
   return {
     canvas: {
-      width,
-      height,
-      left: (viewport.width - width) / 2,
-      top: (viewport.height - height) / 2,
+      width: viewport.width,
+      height: viewport.height,
+      left: 0,
+      top: 0,
     },
     image: {
-      width,
-      height: height * (frame.height / contentHeight),
+      width: viewport.width,
+      height: viewport.height * (frame.height / contentHeight),
       left: 0,
-      top: frame.top === 0 ? 0 : -height * (frame.top / contentHeight),
+      top: frame.top === 0 ? 0 : -viewport.height * (frame.top / contentHeight),
     },
   };
 }

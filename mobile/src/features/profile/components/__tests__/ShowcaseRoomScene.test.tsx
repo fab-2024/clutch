@@ -363,7 +363,7 @@ describe('Showcase room composition', () => {
   });
 
   it('renders equipped Fnatic collectibles with their dedicated pack art', async () => {
-    const items = createTeamPackPreviewItems();
+    const items = createTeamPackPreviewItems(FNATIC_TEAM_PACK);
     const find = (id: string) => {
       const item = items.find((candidate) => candidate.id === id);
       if (!item) throw new Error(`Missing Fnatic fixture ${id}`);
@@ -372,11 +372,11 @@ describe('Showcase room composition', () => {
     };
     const cosmetics = {
       ...PREVIEW_PROFILE.cosmetics,
-      frame: find('fnatic-profile-frame'),
-      title: find('fnatic-title'),
-      core: find('fnatic-logo-3d'),
+      frame: null,
+      title: null,
+      core: null,
       factionEffect: find('fnatic-embers'),
-      profileCard: find('fnatic-share-card'),
+      profileCard: null,
       showcase: {
         ...PREVIEW_PROFILE.cosmetics.showcase,
         jersey: find('fnatic-jersey'),
@@ -389,9 +389,7 @@ describe('Showcase room composition', () => {
     expect(screen.getByTestId('showcase-jersey-fnatic-jersey').props.source).toBe(
       FNATIC_TEAM_PACK.items.find((item) => item.id === 'fnatic-jersey')?.image,
     );
-    expect(screen.getByTestId('showcase-object-image-frame').props.source).toBe(
-      FNATIC_TEAM_PACK.items.find((item) => item.id === 'fnatic-profile-frame')?.image,
-    );
+    expect(screen.queryByTestId('showcase-object-image-frame')).toBeNull();
   });
 
   it('renders equipped KC collectibles with their dedicated Blue Wall art', async () => {
@@ -404,11 +402,11 @@ describe('Showcase room composition', () => {
     };
     const cosmetics = {
       ...PREVIEW_PROFILE.cosmetics,
-      frame: find('kc-profile-frame'),
-      title: find('kc-title'),
-      core: find('kc-logo-3d'),
+      frame: null,
+      title: null,
+      core: null,
       factionEffect: find('kc-blue-wall-effect'),
-      profileCard: find('kc-share-card'),
+      profileCard: null,
       showcase: {
         ...PREVIEW_PROFILE.cosmetics.showcase,
         jersey: find('kc-jersey'),
@@ -421,9 +419,7 @@ describe('Showcase room composition', () => {
     expect(screen.getByTestId('showcase-jersey-kc-jersey').props.source).toBe(
       KC_TEAM_PACK.items.find((item) => item.id === 'kc-jersey')?.image,
     );
-    expect(screen.getByTestId('showcase-object-image-frame').props.source).toBe(
-      KC_TEAM_PACK.items.find((item) => item.id === 'kc-profile-frame')?.image,
-    );
+    expect(screen.queryByTestId('showcase-object-image-frame')).toBeNull();
   });
 
   it('uses Bronze at season start and the earned grade after progression', async () => {

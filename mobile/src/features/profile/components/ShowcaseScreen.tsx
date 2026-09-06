@@ -813,7 +813,7 @@ export function resolveRoomPlaceableItems({
     const knownPackDefinition = cosmeticPackItemById(item.id);
     const packDefinition = currentCosmeticPackItemById(item.id);
     if (knownPackDefinition && !packDefinition) return;
-    if (item.slot === 'titre_profil') return;
+    if (item.slot === 'titre_profil' || item.slot === 'cadre_profil') return;
     const kind = packDefinition?.roomKind ?? roomKindForCosmetic(item);
     if (!kind) return;
     if (!packDefinition && (kind === 'core' || kind === 'banner')) return;

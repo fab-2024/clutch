@@ -258,13 +258,15 @@ describe('ShowcaseScreen immersive editor', () => {
     });
   });
 
-  it('hides legacy cores, banners and every title while preserving current pack objects', () => {
+  it('hides legacy cores, banners, every title and every frame while preserving current pack objects', () => {
     const currentCore = createTeamPackPreviewItems(CONCLAVE_ARCANIQUE_PACK)
       .find((item) => item.id === 'conclave-arcanique-conclave-seal')!;
     const currentBanner = createTeamPackPreviewItems(CONCLAVE_ARCANIQUE_PACK)
       .find((item) => item.id === 'conclave-arcanique-bloom-banner')!;
     const currentTitle = createTeamPackPreviewItems(MYTHS_FORGE_PACK)
       .find((item) => item.id === 'mythes-forge-master-smith-title')!;
+    const currentFrame = createTeamPackPreviewItems(CONCLAVE_ARCANIQUE_PACK)
+      .find((item) => item.id === 'conclave-arcanique-trellis-frame')!;
     const legacyItems = [
       { ...currentCore, id: 'legacy-core', name: 'Core Origine' },
       { ...currentBanner, id: 'legacy-banner', name: 'Carte Noire' },
@@ -277,6 +279,7 @@ describe('ShowcaseScreen immersive editor', () => {
         { ...currentCore, owned: true },
         { ...currentBanner, owned: true },
         { ...currentTitle, owned: true },
+        { ...currentFrame, owned: true },
       ],
       profileData: PREVIEW_PROFILE,
       rankAccent: '#C57943',
@@ -285,6 +288,7 @@ describe('ShowcaseScreen immersive editor', () => {
     });
 
     expect(items.some((item) => item.kind === 'title')).toBe(false);
+    expect(items.some((item) => item.kind === 'frame')).toBe(false);
     expect(items.filter((item) => item.kind === 'core')).toEqual([
       expect.objectContaining({ id: `cosmetic:${currentCore.id}` }),
     ]);
