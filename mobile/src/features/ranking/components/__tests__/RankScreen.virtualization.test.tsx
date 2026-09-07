@@ -5,6 +5,7 @@ import type { RankDashboard, RankLeaderboardRow } from '../../types';
 import RankScreen from '../RankScreen';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+jest.mock('lucide-react-native', () => ({ ChevronDown: () => null, ChevronUp: () => null, ChevronRight: () => null }));
 jest.mock('@/src/features/analytics/api', () => ({ trackAnalyticsEvent: jest.fn() }));
 jest.mock('react-native-reanimated', () => {
   const ReactNative = jest.requireActual('react-native');
@@ -27,7 +28,7 @@ jest.mock('react-native-safe-area-context', () => {
 });
 jest.mock('@/src/components/layout/GriffHeader', () => ({ GriffHeader: () => null }));
 jest.mock('@/src/features/profile/components/ProfileHeaderButton', () => ({ __esModule: true, default: () => null }));
-jest.mock('../RankEmblem', () => ({ RankEmblem: () => null }));
+jest.mock('../RankEmblem', () => ({ RankEmblem: () => null, rankEmblemSource: () => 1 }));
 jest.mock('../SeasonJourneyCard', () => ({ SeasonJourneyCard: () => null }));
 jest.mock('../../api', () => ({ loadRankDashboard: jest.fn() }));
 

@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { memo, useCallback, useEffect, useState, type ReactNode } from 'react';
 import {
   FlatList,
@@ -35,8 +36,8 @@ import type {
   RankRules,
   RankScope,
 } from '../types';
-import { NextHorizonCard } from './NextHorizonCard';
 import { RankEmblem } from './RankEmblem';
+import { RankSeasonHero } from './RankSeasonHero';
 import { RankSnapshot } from './RankSnapshot';
 import { SeasonJourneyCard } from './SeasonJourneyCard';
 
@@ -133,7 +134,7 @@ export default function RankScreen({ previewData, previewReduceMotion }: RankScr
 
         {loading ? <RankSkeleton /> : null}
         {!loading && dashboard && section === 'season' ? (
-          <SeasonSection dashboard={dashboard} reduceMotionOverride={previewReduceMotion} />
+          <SeasonSection dashboard={dashboard} preview={Boolean(previewData)} reduceMotionOverride={previewReduceMotion} />
         ) : null}
         {!loading && dashboard && section === 'rewards' ? <RewardsSection dashboard={dashboard} /> : null}
       </ScrollView>
@@ -159,20 +160,16 @@ function RankHeader({
   section: Section;
 }) {
   const compact = useWindowDimensions().width <= 340;
+  const [seasonTitle, ...seasonDetails] = (dashboard?.season?.name ?? 'SAISON').split(' · ');
 
   return (
     <View style={styles.headerStack}>
       <GriffHeader leading={<ProfileHeaderButton preview={preview} />} variant="wallet" />
 
       <View style={styles.intro}>
-        <Text style={styles.eyebrow}>RANK // SAISON</Text>
-        <Text style={styles.title}>SUIS TA SAISON.</Text>
-        <Text style={styles.subtitle}>Ton rating Frags mesure ta saison. Les Volts restent un solde cosmétique séparé.</Text>
+        <Text style={styles.eyebrow}>RANK // {seasonTitle.toUpperCase()}</Text>
+        {seasonDetails.length ? <Text style={styles.seasonDetail}>{seasonDetails.join(' · ').toUpperCase()}</Text> : null}
       </View>
-
-      {loading ? <RankSnapshotSkeleton /> : dashboard?.state ? (
-        <RankSnapshot seasonName={dashboard.season?.name} state={dashboard.state} />
-      ) : null}
 
       <View accessibilityRole="tablist" style={styles.tabs}>
         {SECTIONS.map((item) => (
@@ -183,6 +180,7 @@ function RankHeader({
             onPress={() => onSection(item.key)}
             style={[styles.tab, section === item.key && styles.tabActive]}
           >
+            {item.key !== 'season' ? <View pointerEvents="none" style={styles.tabDivider} /> : null}
             <Text
               adjustsFontSizeToFit
               minimumFontScale={0.68}
@@ -198,6 +196,10 @@ function RankHeader({
           </Pressable>
         ))}
       </View>
+
+      {section !== 'season' ? loading ? <RankSnapshotSkeleton /> : dashboard?.state ? (
+        <RankSnapshot seasonName={dashboard.season?.name} state={dashboard.state} />
+      ) : null : null}
 
       {error ? (
         <FeatureStateView
@@ -216,9 +218,11 @@ function RankHeader({
 
 function SeasonSection({
   dashboard,
+  preview,
   reduceMotionOverride,
 }: {
   dashboard: RankDashboard;
+  preview: boolean;
   reduceMotionOverride?: boolean;
 }) {
   const [showJourney, setShowJourney] = useState(false);
@@ -230,6 +234,7 @@ function SeasonSection({
   }
 
   const accent = isZeroRank(state.frags) ? ZERO_RANK_ACCENT : gradeAccent(state.grade);
+  const chooseMatch = () => router.push(preview ? '/matches-preview' : '/(tabs)/matches');
   const toggleJourney = () => {
     if (showJourney) setShowRules(false);
     setShowJourney((visible) => !visible);
@@ -237,15 +242,22 @@ function SeasonSection({
 
   return (
     <View style={styles.sectionStack}>
-      <NextHorizonCard
-        expanded={showJourney}
-        onToggleJourney={toggleJourney}
-        state={state}
-      />
+      <RankSeasonHero onChooseMatch={chooseMatch} state={state} />
+
+      <Pressable
+        accessibilityLabel={showJourney ? 'Réduire le parcours de saison' : 'Voir le parcours complet de la saison'}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: showJourney }}
+        onPress={toggleJourney}
+        style={({ pressed }) => [styles.journeyAction, pressed && styles.pressed]}
+      >
+        <Text style={styles.journeyActionText}>{showJourney ? 'RÉDUIRE LE PARCOURS' : 'VOIR LE PARCOURS DE SAISON'}</Text>
+        {showJourney ? <ChevronUp color={colors.textSecondary} size={18} /> : <ChevronDown color={colors.textSecondary} size={18} />}
+      </Pressable>
 
       {showJourney ? (
         <SeasonJourneyCard
-          onChooseMatch={() => router.push('/(tabs)/matches')}
+          onChooseMatch={chooseMatch}
           onToggleRules={() => setShowRules((visible) => !visible)}
           reduceMotionOverride={reduceMotionOverride}
           rules={dashboard.rules}
@@ -618,21 +630,17 @@ function EmptyState({ title, copy }: { title: string; copy: string }) {
 function RankSkeleton() {
   return (
     <SkeletonGroup label={FEATURE_STATE_COPY.rank.loading.title} style={styles.skeleton} testID="rank-season-loading">
-      <View style={styles.skeletonJourneyHeader}>
-        <Skeleton height={12} radius="pill" width={96} />
-        <Skeleton height={10} radius="pill" tone="subtle" width={104} />
-      </View>
       <View style={styles.skeletonHorizon}>
-        {[0, 1].map((item) => (
-          <View key={item} style={styles.skeletonHorizonGrade}>
-            <Skeleton height={72} radius="pill" tone={item ? 'subtle' : 'base'} width={72} />
-            <View style={styles.skeletonHorizonCopy}>
-              <Skeleton height={11} radius="pill" tone={item ? 'subtle' : 'base'} width="82%" />
-              {item ? <Skeleton height={8} radius="pill" tone="subtle" width="64%" /> : null}
-            </View>
-          </View>
-        ))}
+        <Skeleton height={200} radius="lg" width="48%" />
+        <View style={styles.skeletonHorizonCopy}>
+          <Skeleton height={10} radius="pill" tone="subtle" width="64%" />
+          <Skeleton height={62} radius="sm" width="100%" />
+          <Skeleton height={18} radius="pill" tone="subtle" width="72%" />
+          <Skeleton height={6} radius="pill" width="100%" />
+          <Skeleton height={12} radius="pill" tone="subtle" width="84%" />
+        </View>
       </View>
+      <Skeleton height={48} radius="md" width="100%" />
     </SkeletonGroup>
   );
 }
@@ -672,7 +680,7 @@ const styles = StyleSheet.create({
     maxWidth: layout.contentMaxWidth,
     alignSelf: 'center',
     paddingBottom: layout.tabBarContentInset,
-    gap: 17,
+    gap: 8,
   },
   listContent: {
     width: '100%',
@@ -680,31 +688,36 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   headerStack: {
-    gap: 17,
+    gap: 12,
   },
   intro: {
     marginHorizontal: spacing.md,
-    gap: 7,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   eyebrow: {
-    ...typography.eyebrow,
+    flexShrink: 1,
+    fontFamily: fonts.displayBold,
+    fontSize: 15,
+    lineHeight: 19,
     color: colors.volt,
     letterSpacing: 1,
   },
-  title: {
-    ...typography.displayLarge,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.body,
-    maxWidth: 390,
-    color: colors.textMuted,
+  seasonDetail: {
+    flexShrink: 1,
+    fontFamily: fonts.displayBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: '#58C0DB',
+    textAlign: 'right',
+    letterSpacing: 0.6,
   },
   tabs: {
     marginHorizontal: spacing.md,
-    padding: 4,
     flexDirection: 'row',
-    borderRadius: 18,
+    borderRadius: radius.md,
     backgroundColor: colors.surfaceGlass,
     borderWidth: 1,
     borderColor: colors.borderHighlight,
@@ -712,30 +725,55 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    minHeight: 43,
+    minHeight: 46,
     paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 14,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
   tabActive: {
-    backgroundColor: colors.volt,
+    borderBottomColor: colors.volt,
+  },
+  tabDivider: {
+    position: 'absolute',
+    left: 0,
+    top: 11,
+    bottom: 11,
+    width: 1,
+    backgroundColor: colors.borderHighlight,
   },
   tabText: {
-    ...typography.label,
+    fontFamily: fonts.displayBold,
     color: colors.textMuted,
-    fontSize: 11,
+    fontSize: 16,
+    lineHeight: 20,
   },
   tabTextCompact: {
-    fontSize: 9,
+    fontSize: 14,
   },
   tabTextActive: {
-    color: '#080A0C',
+    color: colors.text,
   },
   stateInset: { marginHorizontal: spacing.md },
   sectionStack: {
     gap: 13,
     marginHorizontal: spacing.md,
+  },
+  journeyAction: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
+    gap: spacing.sm,
+  },
+  journeyActionText: {
+    fontFamily: fonts.displayBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors.textSecondary,
+    letterSpacing: 0.4,
   },
   metric: {
     flex: 1,
@@ -1193,9 +1231,7 @@ const styles = StyleSheet.create({
   snapshotSkeleton: { minHeight: 128, marginHorizontal: spacing.md, paddingVertical: spacing.md, paddingHorizontal: spacing.sm, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radius.lg, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderSubtle },
   snapshotSkeletonCopy: { flex: 1, minWidth: 0, gap: 8 },
   snapshotSkeletonRank: { width: 66, alignItems: 'flex-end', gap: 7 },
-  skeletonJourneyHeader: { minHeight: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  skeletonHorizon: { minHeight: 112, paddingHorizontal: 8, flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: radius.lg, backgroundColor: '#0B1218', borderWidth: 1, borderColor: colors.border },
-  skeletonHorizonGrade: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  skeletonHorizon: { minHeight: 280, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 16, borderRadius: radius.lg, backgroundColor: '#0B1218', borderWidth: 1, borderColor: colors.border },
   skeletonHorizonCopy: { flex: 1, minWidth: 0, gap: 8 },
   pressed: {
     opacity: 0.72,
