@@ -136,25 +136,11 @@ export function HubExperience({
   onRetry,
   userId,
 }: HubExperienceProps) {
-  const { isCompactWidth, isShortLandscape } = useResponsiveLayout();
+  const { isShortLandscape } = useResponsiveLayout();
   const [inlinePredictionMatchId, setInlinePredictionMatchId] = useState<string | null>(null);
   const inlinePredictionMatch = hub.nextMatch?.id === inlinePredictionMatchId
     ? hub.nextMatch
     : hub.upNext.find((match) => match.id === inlinePredictionMatchId) ?? null;
-  const phase = hub.nextMatch ? getHubMatchPhase(hub.nextMatch) : null;
-  const live = phase === 'live';
-  const finished = phase === 'finished';
-  const callLocked = Boolean(hub.nextMatchPrediction);
-  const headlineKicker = finished
-    ? 'LE VERDICT EST TOMBÉ'
-    : callLocked
-      ? 'TON CALL EST VERROUILLÉ'
-      : 'À TOI DE JOUER';
-  const headline = finished
-    ? 'CONSULTE LE RÉSULTAT.'
-    : callLocked
-      ? 'TON CALL EST POSÉ.'
-      : 'TON PROCHAIN CALL.';
   const closeInlinePrediction = useCallback(() => setInlinePredictionMatchId(null), []);
   const openInlinePrediction = useCallback((match: HubMatch) => setInlinePredictionMatchId(match.id), []);
 
@@ -170,24 +156,6 @@ export function HubExperience({
           leading={<ProfileHeaderButton preview={Boolean(headerEconomy)} />}
           variant="wallet"
         />
-
-        {!live ? (
-          <View style={[styles.headline, isShortLandscape && styles.headlineLandscape]}>
-            <Text style={styles.headlineKicker}>{headlineKicker}</Text>
-            <Text
-              adjustsFontSizeToFit={!isCompactWidth && !isShortLandscape}
-              minimumFontScale={.72}
-              numberOfLines={isCompactWidth || isShortLandscape ? 2 : 1}
-              style={[
-                styles.headlineTitle,
-                isCompactWidth && styles.headlineTitleCompact,
-                isShortLandscape && styles.headlineTitleLandscape,
-              ]}
-            >
-              {headline}
-            </Text>
-          </View>
-        ) : null}
 
         {error ? (
           <FeatureStateView
@@ -315,7 +283,6 @@ function MatchHero({
         state={confrontation}
       />
       <MatchCallAction
-        live={confrontation.phase === 'live'}
         label={confrontation.action}
         onPress={open}
         onPressIn={prepare}
@@ -325,12 +292,10 @@ function MatchHero({
 }
 
 function MatchCallAction({
-  live,
   label,
   onPress,
   onPressIn,
 }: {
-  live: boolean;
   label: string;
   onPress: () => void;
   onPressIn: () => void;
@@ -343,34 +308,27 @@ function MatchCallAction({
       onPressIn={onPressIn}
       style={({ pressed }) => [
         styles.callAction,
-        live && styles.callActionLive,
         pressed && styles.pressed,
       ]}
       testID="hub-primary-action"
     >
-      {live ? (
-        <LinearGradient
-          colors={['#F0D51A', '#DDF10E', '#C5FA1D']}
-          end={{ x: 1, y: .5 }}
-          start={{ x: 0, y: .5 }}
-          style={StyleSheet.absoluteFill}
-        />
-      ) : null}
+      <LinearGradient
+        colors={['#F0D51A', '#DDF10E', '#C5FA1D']}
+        end={{ x: 1, y: .5 }}
+        start={{ x: 0, y: .5 }}
+        style={StyleSheet.absoluteFill}
+      />
       <Text
         adjustsFontSizeToFit
         minimumFontScale={.72}
         numberOfLines={1}
-        style={[styles.callActionText, live && styles.callActionTextLive]}
+        style={styles.callActionText}
       >
         {label}
       </Text>
-      {live ? (
-        <View style={styles.callActionLiveArrow} testID="hub-primary-action-live-arrow">
-          <ChevronRight color="#FFFFFF" size={17} strokeWidth={3.2} />
-        </View>
-      ) : (
-        <Text style={styles.callActionArrow}>›</Text>
-      )}
+      <View style={styles.callActionArrow} testID="hub-primary-action-arrow">
+        <ChevronRight color="#FFFFFF" size={17} strokeWidth={3.2} />
+      </View>
     </Pressable>
   );
 }
@@ -720,37 +678,6 @@ const styles = StyleSheet.create({
     maxWidth: layout.wideContentMaxWidth,
     gap: 12,
   },
-  headline: {
-    marginHorizontal: spacing.md,
-    paddingTop: 3,
-  },
-  headlineLandscape: {
-    paddingTop: 0,
-  },
-  headlineKicker: {
-    color: colors.volt,
-    fontFamily: fonts.bold,
-    fontSize: 12,
-    lineHeight: 15,
-    letterSpacing: 1.05,
-  },
-  headlineTitle: {
-    marginTop: 5,
-    color: colors.text,
-    fontFamily: fonts.display,
-    fontSize: 40,
-    lineHeight: 43,
-    letterSpacing: -.7,
-  },
-  headlineTitleCompact: {
-    fontSize: 35,
-    lineHeight: 37,
-  },
-  headlineTitleLandscape: {
-    marginTop: 3,
-    fontSize: 34,
-    lineHeight: 36,
-  },
   stateInset: {
     marginHorizontal: spacing.md,
   },
@@ -768,57 +695,33 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
   },
   callAction: {
-    minHeight: 58,
-    marginHorizontal: 4,
-    paddingHorizontal: 24,
+    width: 192,
+    minHeight: 42,
+    alignSelf: 'center',
+    paddingLeft: 28,
+    paddingRight: 10,
+    gap: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    borderRadius: 17,
-    backgroundColor: colors.volt,
     borderWidth: 1,
-    borderColor: '#D8EE31',
-    boxShadow: '0 0 22px rgba(232,255,61,.18)',
-  },
-  callActionLive: {
-    width: 192,
-    minHeight: 42,
-    alignSelf: 'center',
-    marginHorizontal: 0,
-    paddingLeft: 28,
-    paddingRight: 10,
-    gap: 12,
     borderRadius: 22,
     borderColor: '#E8F22B',
     backgroundColor: '#DDF10E',
     boxShadow: '0 8px 22px rgba(215,240,20,.2)',
   },
   callActionText: {
-    maxWidth: '82%',
-    color: '#050708',
-    fontFamily: fonts.display,
-    fontSize: 24,
-    lineHeight: 27,
-    letterSpacing: .45,
-    textAlign: 'center',
-  },
-  callActionTextLive: {
     maxWidth: 110,
     flexShrink: 1,
+    color: '#050708',
+    fontFamily: fonts.display,
     fontSize: 18,
     lineHeight: 21,
     letterSpacing: .25,
+    textAlign: 'center',
   },
   callActionArrow: {
-    position: 'absolute',
-    right: 20,
-    color: '#050708',
-    fontSize: 39,
-    lineHeight: 41,
-    fontWeight: '300',
-  },
-  callActionLiveArrow: {
     width: 24,
     height: 24,
     flexShrink: 0,

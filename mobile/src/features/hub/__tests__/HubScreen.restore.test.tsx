@@ -128,7 +128,12 @@ describe('HubExperience restoration', () => {
     );
 
     expect(screen.getByText('RESTORED HEADER')).toBeTruthy();
-    expect(screen.getByText('TON PROCHAIN CALL.')).toBeTruthy();
+    expect(screen.queryByText('TON PROCHAIN CALL.')).toBeNull();
+    expect(screen.queryByText('À TOI DE JOUER')).toBeNull();
+    const actionStyle = StyleSheet.flatten(screen.getByTestId('hub-primary-action').props.style);
+    expect(actionStyle.width).toBe(192);
+    expect(actionStyle.borderRadius).toBe(22);
+    expect(screen.getByTestId('hub-primary-action-arrow')).toBeTruthy();
     expect(screen.getByText('PRIMARY MATCH POSTER')).toBeTruthy();
     expect(screen.getByTestId('hub-season-ranking')).toBeTruthy();
     expect(screen.getByText('Ton classement')).toBeTruthy();
@@ -197,7 +202,8 @@ describe('HubExperience restoration', () => {
     );
 
     expect(screen.getByText('PRIMARY MATCH POSTER')).toBeTruthy();
-    expect(screen.getByText('6 JOURS')).toBeTruthy();
+    expect(screen.getByText(String(PREVIEW_STREAK.current))).toBeTruthy();
+    expect(screen.getByText('JOURS')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('call-streak-card'));
     expect(router.push).toHaveBeenCalledWith('/streak-preview');
   });
@@ -247,7 +253,7 @@ describe('HubExperience restoration', () => {
       <HubExperience
         error={null}
         headerEconomy={{ frags: 1000, volts: 300 }}
-        hub={{ ...HUB, nextMatch: { ...MAIN_MATCH, statut: 'en_cours' } }}
+        hub={{ ...HUB, nextMatch: { ...MAIN_MATCH, statut: 'en_cours', debut: new Date(Date.now() - 60000).toISOString() } }}
         loading={false}
         onRefresh={jest.fn()}
         onRetry={jest.fn()}
@@ -255,6 +261,9 @@ describe('HubExperience restoration', () => {
       />,
     );
 
+    expect(screen.queryByText('TON PROCHAIN CALL.')).toBeNull();
+    expect(StyleSheet.flatten(screen.getByTestId('hub-primary-action').props.style).width).toBe(192);
+    expect(screen.getByTestId('hub-primary-action-arrow')).toBeTruthy();
     expect(screen.queryByText('LE MATCH EST LANCÉ')).toBeNull();
     expect(screen.queryByText('SUIS LE MATCH EN DIRECT.')).toBeNull();
     expect(screen.getByText('PRIMARY MATCH POSTER')).toBeTruthy();
