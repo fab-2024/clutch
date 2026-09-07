@@ -25,8 +25,9 @@ describe('shared streak entry points', () => {
 
   it('shows current and best streaks and opens the real detail screen', async () => {
     const screen = await render(<CallStreakCard />);
-    expect(screen.getByText(`${state.current} JOURS`)).toBeTruthy();
-    expect(screen.getByText(`MEILLEURE SÉRIE · ${state.best}`)).toBeTruthy();
+    expect(screen.getByText(`${state.current}`)).toBeTruthy();
+    expect(screen.getByText('JOURS')).toBeTruthy();
+    expect(screen.getByText(`Meilleure série · ${state.best} jours`)).toBeTruthy();
     expect(screen.getByText(`${state.protectors}/${state.maxProtectors}`)).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Voir ma série et mes protecteurs' }));
     expect(router.push).toHaveBeenCalledWith('/streak');

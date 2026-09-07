@@ -1,4 +1,5 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
+import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 
 import { OPERATION, OTHER_OPERATION, receipt, state } from '../__fixtures__/streak';
@@ -28,6 +29,7 @@ jest.mock('@/src/components/overlays/BaseSheet', () => ({ BaseSheet: ({ visible,
   return visible ? React.createElement(jest.requireActual('react-native').View, { testID: 'confirmation-sheet' }, children, footer) : null;
 } }));
 jest.mock('@/src/providers/SnackbarProvider', () => ({ useSnackbar: () => ({ showSnackbar: mockShow }) }));
+jest.mock('@/src/providers/EconomyProvider', () => ({ useEconomy: () => ({ unlimitedVolts: false }) }));
 jest.mock('@/src/features/profile/showcaseSocial/api', () => ({ prepareMilestoneShare: (...args: unknown[]) => mockPrepareShare(...args) }));
 jest.mock('@/src/lib/share', () => ({ sharePublicLink: (...args: unknown[]) => mockShareLink(...args) }));
 jest.mock('@/src/config/release', () => ({ publicAppUrl: (path: string) => `https://clutch.example${path}` }));
@@ -70,6 +72,22 @@ describe('protector purchase interaction', () => {
     expect(mockForget).toHaveBeenCalledWith(state.userId, OPERATION);
     expect(screen.queryByTestId('confirmation-sheet')).toBeNull();
     expect(mockShow).toHaveBeenCalledWith({ message: 'Protecteur ajouté à ton stock.', tone: 'success' });
+  });
+
+  it('opens an eligible call, returns to matches after validation and keeps previews local', async () => {
+    const screen = await render(<CallStreakScreen />);
+    await fireEvent.press(screen.getByTestId('streak-call'));
+    expect(router.push).toHaveBeenLastCalledWith(`/match/${state.eligibleMatchId}`);
+
+    mockState = { ...state, todayValidated: true };
+    await screen.rerender(<CallStreakScreen />);
+    await fireEvent.press(screen.getByTestId('streak-call'));
+    expect(router.push).toHaveBeenLastCalledWith('/(tabs)/matches');
+
+    await screen.unmount();
+    const preview = await render(<CallStreakScreen previewState={state} />);
+    await fireEvent.press(preview.getByTestId('streak-call'));
+    expect(router.push).toHaveBeenLastCalledWith('/matches-preview');
   });
 
   it('never debits on cancel, full stock or insufficient balance', async () => {

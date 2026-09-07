@@ -6,11 +6,12 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { formatNumber, t } from '@/src/lib/i18n';
-import { colors, layout, radius, spacing, typography } from '@/src/theme';
+import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
 import { monotonicNow, useCallStreak } from '../context';
 import { remainingStreakLabel, remainingStreakMs, streakDayMessage } from '../model';
 import type { CallStreakState } from '../types';
+import { CallStreakFlame } from './CallStreakFlame';
 
 export function useStreakCountdown(state: CallStreakState | null, receivedAt: number) {
   const [now, setNow] = useState(monotonicNow);
@@ -25,25 +26,34 @@ export function useStreakCountdown(state: CallStreakState | null, receivedAt: nu
 export default function CallStreakCard({ previewState }: { previewState?: CallStreakState }) {
   const streak = useCallStreak();
   const state = previewState ?? streak.state;
-  const remaining = useStreakCountdown(state, previewState ? monotonicNow() : streak.receivedAt);
+  const [previewReceivedAt] = useState(monotonicNow);
+  const remaining = useStreakCountdown(state, previewState ? previewReceivedAt : streak.receivedAt);
   if (!state) return null;
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={t('streak.open')}
       onPress={() => router.push(previewState ? '/streak-preview' : '/streak')}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]} testID="call-streak-card">
-      <View style={styles.top}>
-        <Flame color={colors.volt} size={26} />
-        <View style={styles.copy}>
-          <Text style={styles.eyebrow}>{t('streak.title')}</Text>
-          <Text style={styles.days}>{t('streak.days', { count: state.current })}</Text>
-        </View>
+      style={({ pressed }) => [styles.streakCard, pressed && styles.pressed]} testID="call-streak-card">
+      <View style={styles.streakHeader}>
+        <Text style={[styles.eyebrow, styles.copy]}>{t('streak.title')}</Text>
         <View style={styles.stock}><ShieldCheck color={colors.volt} size={17} /><Text style={styles.meta}>{state.protectors}/{state.maxProtectors}</Text></View>
-        <ChevronRight color={colors.textSecondary} size={20} />
+        <ChevronRight color={colors.textSecondary} size={18} />
       </View>
-      <Text style={[styles.status, state.todayValidated && styles.accent]}>{streak.error && !previewState ? t('economy.syncInterrupted') : streakDayMessage(state)}</Text>
+      <View style={styles.streakBody}>
+        <CallStreakFlame height={82} />
+        <Text style={[styles.streakCount, state.current >= 100 && styles.streakCountLong]}>{formatNumber(state.current)}</Text>
+        <View style={styles.streakDetails}>
+          <Text style={styles.streakUnit}>{t('streak.dayUnit', { count: state.current })}</Text>
+          <Text style={[styles.streakStatus, state.todayValidated && styles.accent]}>
+            {streak.error && !previewState ? t('economy.syncInterrupted') : streakDayMessage(state)}
+          </Text>
+          <Text style={styles.meta}>{t('streak.record', { count: state.best })}</Text>
+        </View>
+      </View>
       {!state.todayValidated ? <Text style={styles.meta}>{t('streak.day.end', { time: remaining })}</Text> : null}
-      <Text style={styles.meta}>{t('streak.best')} · {formatNumber(state.best)}</Text>
-      {state.selectedMilestone ? <Text style={styles.accent}>{t('streak.milestone.selected', { count: state.selectedMilestone })}</Text> : null}
+      <View style={styles.streakFooter}>
+        <Text style={styles.streakLink}>{t('streak.view')}</Text>
+        <ChevronRight color={colors.textSecondary} size={17} />
+      </View>
     </Pressable>
   );
 }
@@ -82,15 +92,26 @@ export function ProtectorShopCard({ preview = false }: { preview?: boolean }) {
 }
 
 const styles = StyleSheet.create({
+  streakCard: { marginHorizontal: spacing.md, marginTop: spacing.sm, marginBottom: spacing.md,
+    paddingHorizontal: spacing.md, paddingTop: spacing.md, gap: 12, borderRadius: radius.lg,
+    borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(10,21,29,.88)' },
+  streakHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  streakBody: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  streakCount: { color: colors.text, fontFamily: fonts.display, fontSize: 86, lineHeight: 92, letterSpacing: -2 },
+  streakCountLong: { fontSize: 56, lineHeight: 72, letterSpacing: -1 },
+  streakDetails: { flex: 1, minWidth: 0, gap: 5 },
+  streakUnit: { ...typography.displaySmall, fontFamily: fonts.displayBold, fontSize: 23, lineHeight: 26, color: colors.text },
+  streakStatus: { ...typography.control, color: colors.textSecondary, textTransform: 'uppercase' },
+  streakFooter: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: layout.minTouchTarget,
+    borderTopWidth: 1, borderColor: colors.border, paddingVertical: 10 },
+  streakLink: { ...typography.metadata, color: colors.textSecondary, letterSpacing: 1 },
   card: { margin: spacing.md, marginTop: spacing.sm, padding: spacing.md, gap: spacing.sm, borderRadius: radius.lg,
     borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceLow },
   top: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   copy: { flex: 1, minWidth: 0 },
   eyebrow: { ...typography.eyebrow, color: colors.textSecondary },
-  days: { ...typography.displaySmall, color: colors.text },
   title: { ...typography.sectionTitle, color: colors.text },
   meta: { ...typography.caption, color: colors.textSecondary },
-  status: { ...typography.bodyStrong, color: colors.text },
   accent: { ...typography.control, color: colors.volt },
   stock: { flexDirection: 'row', gap: spacing.xs, alignItems: 'center' },
   pressed: { opacity: 0.75 },
