@@ -4,6 +4,7 @@ import InvitationsScreen from '@/src/features/social/friends/referrals/component
 import InvitationLinkScreen from '@/src/features/social/friends/referrals/components/InvitationLinkScreen';
 
 import PublicShowcaseScreen from '../components/PublicShowcaseScreen';
+import ShowcaseOwnerProfile from '../components/ShowcaseOwnerProfile';
 import ShowcaseActivityScreen from '../components/ShowcaseActivityScreen';
 import MilestoneLinkScreen from '../components/MilestoneLinkScreen';
 import { PREVIEW_INVITATIONS, PREVIEW_SHOWCASE, PREVIEW_SHOWCASE_OWNER } from '../preview';
@@ -109,6 +110,29 @@ describe('verified milestone links', () => {
     const screen = await render(<MilestoneLinkScreen />);
     expect(mockMilestone).not.toHaveBeenCalled();
     expect(screen.queryByText('999 JOURS DE CALLS')).toBeNull();
+  });
+});
+
+describe('showcase owner profile overlay', () => {
+  it('loads owner counters without registering a visit and keeps own likes read-only', async () => {
+    mockLoad.mockResolvedValue(PREVIEW_SHOWCASE_OWNER);
+    const screen = await render(<ShowcaseOwnerProfile profile={null} pseudo="Nova" ownerId="viewer" preview={false} />);
+    expect(screen.getByText('Nova')).toBeTruthy();
+    expect(screen.getByText('86 VUES')).toBeTruthy();
+    expect(screen.getByText('12 LIKES')).toBeTruthy();
+    expect(mockLoad).toHaveBeenCalledWith('Nova', 'viewer', false);
+    expect(screen.queryByTestId('showcase-like')).toBeNull();
+    await fireEvent.press(screen.getByLabelText('Voir le profil de Nova'));
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/profile');
+  });
+  it('does not substitute zero counters for a failed read and lets the owner retry', async () => {
+    mockLoad.mockRejectedValueOnce(new Error('network'));
+    const screen = await render(<ShowcaseOwnerProfile profile={null} pseudo="Nova" ownerId="viewer" preview={false} />);
+    expect(screen.getByText('— VUES')).toBeTruthy();
+    expect(screen.getByText('— LIKES')).toBeTruthy();
+    mockLoad.mockResolvedValue(PREVIEW_SHOWCASE_OWNER);
+    await fireEvent.press(screen.getByLabelText('Actualiser les vues et les likes'));
+    expect(screen.getByText('86 VUES')).toBeTruthy();
   });
 });
 

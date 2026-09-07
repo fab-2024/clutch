@@ -13,7 +13,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/src/components/ui/Button';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import {
-  ATELIER_CATEGORIES,
   type AtelierCategory,
   type AtelierProduct,
 } from '@/src/features/shop/atelierCatalog';
@@ -35,6 +34,7 @@ type ShowcaseAtelierDrawerProps = {
   action: AtelierPrimaryAction;
   balance: number;
   category: AtelierCategory;
+  canRemoveRankDisplay: boolean;
   item: CosmeticItem | null;
   loading: boolean;
   notice: ShowcaseAtelierNotice | null;
@@ -66,12 +66,13 @@ const CATEGORY_LABELS: Record<AtelierCategory, string> = {
   jerseys: 'MAILLOT',
 };
 
-export const SHOWCASE_ATELIER_CATEGORIES = ATELIER_CATEGORIES;
+export const SHOWCASE_ATELIER_CATEGORIES = ['supports', 'lighting', 'ranks'] as const;
 
 export default function ShowcaseAtelierDrawer({
   action,
   balance,
   category,
+  canRemoveRankDisplay,
   item,
   loading,
   notice,
@@ -228,10 +229,13 @@ export default function ShowcaseAtelierDrawer({
           const containedPreview = candidate.category === 'ranks' || candidate.category === 'pedestals';
           return (
             <Pressable
-              accessibilityHint="Applique un aperçu sans acheter"
+              accessibilityHint={selected && canRemoveRankDisplay
+                ? "Retire l’écrin équipé"
+                : "Applique un aperçu sans acheter"}
               accessibilityLabel={`${candidate.name}, ${productStateLabel(runtime, candidate)}`}
               accessibilityRole="button"
-              accessibilityState={{ selected }}
+              accessibilityState={{ selected, disabled: pending }}
+              disabled={pending}
               key={candidate.id}
               onPress={() => onSelect(candidate)}
               style={({ pressed }) => [
@@ -286,9 +290,9 @@ export default function ShowcaseAtelierDrawer({
           </Text>
         </View>
         <Button
-          accessibilityHint={primaryAccessibilityHint(action, product)}
-          disabled={action === 'equipped' || action === 'insufficient' || action === 'unavailable'}
-          label={primaryLabel(action, item, product, pedestalTargetIds.length)}
+          accessibilityHint={canRemoveRankDisplay ? "Retire l’écrin équipé" : primaryAccessibilityHint(action, product)}
+          disabled={!canRemoveRankDisplay && (action === 'equipped' || action === 'insufficient' || action === 'unavailable')}
+          label={canRemoveRankDisplay ? 'DÉSÉQUIPER' : primaryLabel(action, item, product, pedestalTargetIds.length)}
           loading={pending}
           onPress={onPrimary}
           ref={primaryRef}

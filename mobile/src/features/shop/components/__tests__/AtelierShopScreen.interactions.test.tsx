@@ -161,13 +161,10 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.getByRole('button', { name: 'Débloquer Station Orbitale pour 300 Volts' })).toBeTruthy();
   });
 
-  it('keeps the Founder Pack inside the Boutique', async () => {
+  it('does not offer the Founder Pack in the Boutique', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 
-    expect(screen.getByTestId('founder-pack-banner')).toBeTruthy();
-    await fireEvent.press(screen.getByTestId('founder-pack-banner'));
-
-    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/founder-pack-preview');
+    expect(screen.queryByTestId('founder-pack-banner')).toBeNull();
   });
 
   it('shows the original packs and keeps fictional teams inside the Boutique', async () => {

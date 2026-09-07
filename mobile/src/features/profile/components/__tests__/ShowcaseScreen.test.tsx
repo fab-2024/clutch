@@ -5,13 +5,15 @@ import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 
 import { rankEmblemSource } from '@/src/features/ranking/components/RankEmblem';
+import { equipCosmetic, loadCosmeticShop } from '@/src/features/shop/api';
+import { applyPreviewAtelierAction } from '@/src/features/shop/atelierState';
+import { loadProfileData } from '../../api';
 import { createAtelierPreviewItems } from '@/src/features/shop/atelierCatalog';
 import {
   applyPreviewTeamPackAction,
   createTeamPackPreviewItems,
   CONCLAVE_ARCANIQUE_PACK,
   FNATIC_TEAM_PACK,
-  MYTHS_FORGE_PACK,
   SANG_DES_TITANS_PACK,
   SERMENT_DU_GIVRE_PACK,
 } from '@/src/features/shop/teamPackCatalog';
@@ -37,13 +39,14 @@ jest.mock('lucide-react-native/icons/lock', () => 'Lock');
 jest.mock('lucide-react-native/icons/settings-2', () => 'Settings2');
 jest.mock('../ProfileScreen', () => 'ProfileScreen');
 jest.mock('../showcase/ShowcaseRoomScene', () => 'ShowcaseRoomScene');
-jest.mock('@/src/features/analytics/api', () => ({ trackAnalyticsEvent: jest.fn() }));
+jest.mock('@/src/features/analytics/api', () => ({ trackAnalyticsEvent: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('@/src/features/shop/api', () => ({
   equipCosmetic: jest.fn(),
   loadCosmeticShop: jest.fn(),
   purchaseCosmetic: jest.fn(),
 }));
 jest.mock('../../api', () => ({ loadProfileData: jest.fn() }));
+jest.mock('../../showcaseSocial/api', () => ({ loadPublicShowcase: jest.fn().mockResolvedValue(null) }));
 jest.mock('@/src/providers/AuthProvider', () => ({ useAuth: () => ({ profile: { pseudo: 'TestVitrine' } }) }));
 jest.mock('@/src/providers/CosmeticsProvider', () => ({ useCosmetics: () => ({ refresh: jest.fn() }) }));
 jest.mock('@/src/providers/EconomyProvider', () => ({ useEconomy: () => ({ refresh: jest.fn() }) }));
@@ -134,6 +137,9 @@ describe('ShowcaseScreen immersive editor', () => {
   it('removes the permanent bars and keeps settings available on demand', async () => {
     const screen = await render(<ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={EMPTY_SHOP} />);
 
+    expect(screen.getByLabelText(`Voir le profil de ${PREVIEW_PROFILE.pseudo}`)).toBeTruthy();
+    expect(screen.getByText('0 VUES')).toBeTruthy();
+    expect(screen.getByText('0 LIKE')).toBeTruthy();
     expect(screen.queryByRole('tablist')).toBeNull();
     expect(screen.queryByText('PERSONNALISER')).toBeNull();
     expect(screen.queryByText('TOUCHE UN EMPLACEMENT POUR L’ÉQUIPER')).toBeNull();
@@ -166,7 +172,11 @@ describe('ShowcaseScreen immersive editor', () => {
 
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     expect(screen.getByTestId('showcase-atelier-drawer')).toBeTruthy();
-    expect(screen.getAllByRole('tab')).toHaveLength(3);
+    expect(screen.getAllByRole('tab').map((tab) => tab.props.testID)).toEqual([
+      'showcase-atelier-category-supports',
+      'showcase-atelier-category-lighting',
+      'showcase-atelier-category-ranks',
+    ]);
     expect(screen.queryByTestId('showcase-atelier-category-materials')).toBeNull();
     expect(screen.queryByTestId('showcase-atelier-category-jerseys')).toBeNull();
     expect(screen.queryByTestId('showcase-atelier-category-pedestals')).toBeNull();
@@ -208,6 +218,65 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.getByTestId('showcase-room-lighting-amber')).toBeTruthy();
   });
 
+  it('removes an equipped rank display on a second tap and can equip it again', async () => {
+    const equippedShop = applyPreviewAtelierAction(ATELIER_SHOP, 'rank_clutch_revelation');
+    const screen = await render(
+      <ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={equippedShop} />,
+    );
+    await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-category-ranks'));
+    expect(screen.getByTestId('showcase-rank-display-rank_clutch_revelation')).toBeTruthy();
+    expect(screen.getByText('DÉSÉQUIPER')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('showcase-atelier-product-rank_clutch_revelation'));
+    expect(screen.queryAllByTestId(/^showcase-rank-display-/)).toHaveLength(0);
+    expect(screen.getByText('Écrin déséquipé.')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
+    expect(screen.queryAllByTestId(/^showcase-rank-display-/)).toHaveLength(0);
+    await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-product-rank_clutch_revelation'));
+    expect(screen.getByText('ÉQUIPER')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('showcase-atelier-primary'));
+    expect(screen.getByText('DÉSÉQUIPER')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('showcase-atelier-primary'));
+    expect(screen.queryAllByTestId(/^showcase-rank-display-/)).toHaveLength(0);
+    expect(screen.getByText(String(equippedShop.balance))).toBeTruthy();
+  });
+
+  it('persists removal and restores the equipped display if saving fails', async () => {
+    const equippedShop = applyPreviewAtelierAction(ATELIER_SHOP, 'rank_clutch_revelation');
+    jest.mocked(loadProfileData).mockResolvedValue(PREVIEW_PROFILE);
+    jest.mocked(loadCosmeticShop).mockResolvedValue(equippedShop);
+    jest.mocked(equipCosmetic).mockRejectedValueOnce(new Error('Connexion interrompue'));
+    const screen = await render(<ShowcaseScreen />);
+    await waitFor(() => expect(screen.getByTestId('showcase-rank-display-rank_clutch_revelation')).toBeTruthy());
+    await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-category-ranks'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-product-rank_clutch_revelation'));
+    await waitFor(() => expect(screen.getByText('Connexion interrompue')).toBeTruthy());
+    expect(equipCosmetic).toHaveBeenCalledWith('rank_carbon_cradle');
+    expect(screen.getByTestId('showcase-rank-display-rank_clutch_revelation')).toBeTruthy();
+    expect(screen.getByText('DÉSÉQUIPER')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
+    expect(screen.getByTestId('showcase-rank-display-rank_clutch_revelation')).toBeTruthy();
+
+    const removedShop = applyPreviewAtelierAction(equippedShop, 'rank_carbon_cradle');
+    jest.mocked(loadCosmeticShop).mockResolvedValue(removedShop);
+    jest.mocked(equipCosmetic).mockResolvedValueOnce({
+      itemId: 'rank_carbon_cradle', slot: 'vitrine_rang',
+      balance: removedShop.balance, purchased: false, equipped: true,
+    });
+    await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-product-rank_clutch_revelation'));
+    await waitFor(() => expect(screen.getByText('Écrin déséquipé.')).toBeTruthy());
+    expect(screen.queryAllByTestId(/^showcase-rank-display-/)).toHaveLength(0);
+    await screen.unmount();
+    const reopened = await render(<ShowcaseScreen />);
+    await fireEvent.press(reopened.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
+    await fireEvent.press(reopened.getByTestId('showcase-atelier-category-ranks'));
+    expect(within(reopened.getByTestId('showcase-atelier-product-rank_clutch_revelation')).getByText('POSSÉDÉ')).toBeTruthy();
+    expect(reopened.queryAllByTestId(/^showcase-rank-display-/)).toHaveLength(0);
+  });
+
   it('exposes an owned pack room in Salles and renders it as the equipped scene', async () => {
     const packShop = applyPreviewTeamPackAction({
       ...ATELIER_SHOP,
@@ -228,7 +297,7 @@ describe('ShowcaseScreen immersive editor', () => {
 
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-supports'));
-    const roomProduct = screen.getByTestId('showcase-atelier-product-serment-du-givre-ice-sheet-pedestal');
+    const roomProduct = screen.getByTestId('showcase-atelier-product-serment-du-givre-room');
     expect(roomProduct).toBeTruthy();
     expect(within(roomProduct).getByText('BASTION DES CIMES')).toBeTruthy();
   }, 15_000);
@@ -242,12 +311,10 @@ describe('ShowcaseScreen immersive editor', () => {
         ...createTeamPackPreviewItems(SERMENT_DU_GIVRE_PACK),
       ],
     }, SERMENT_DU_GIVRE_PACK);
-    const monolith = createTeamPackPreviewItems(SANG_DES_TITANS_PACK)
-      .find((item) => item.id === 'sang-des-titans-monolith-pedestal')!;
     const screen = await render(
       <ShowcaseScreen
         previewProfile={PREVIEW_PROFILE}
-        previewShop={{ ...frostShop, items: [...frostShop.items, { ...monolith, owned: true }] }}
+        previewShop={frostShop}
       />,
     );
 
@@ -335,8 +402,8 @@ describe('ShowcaseScreen immersive editor', () => {
       .find((item) => item.id === 'conclave-arcanique-conclave-seal')!;
     const currentBanner = createTeamPackPreviewItems(CONCLAVE_ARCANIQUE_PACK)
       .find((item) => item.id === 'conclave-arcanique-bloom-banner')!;
-    const currentTitle = createTeamPackPreviewItems(MYTHS_FORGE_PACK)
-      .find((item) => item.id === 'mythes-forge-master-smith-title')!;
+    const currentTitle = createTeamPackPreviewItems(FNATIC_TEAM_PACK)
+      .find((item) => item.slot === 'titre_profil')!;
     const currentFrame = createTeamPackPreviewItems(CONCLAVE_ARCANIQUE_PACK)
       .find((item) => item.id === 'conclave-arcanique-trellis-frame')!;
     const legacyItems = [

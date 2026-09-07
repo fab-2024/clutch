@@ -15,7 +15,6 @@ import { Screen } from '@/src/components/layout/Screen';
 import { Button } from '@/src/components/ui/Button';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
-import { FounderPackBanner } from '@/src/features/purchases/components/FounderPackBanner';
 import { loadProfileData } from '@/src/features/profile/api';
 import {
   resolveLevelFrameCollection,
@@ -500,7 +499,6 @@ export default function AtelierShopScreen({
                   <Text style={styles.discoveryValue}>NOUVELLES COLLECTIONS · COLLABS</Text>
                 </View>
 
-                <FounderPackBanner preview={Boolean(previewData)} />
               </View>
             )}
           </View>

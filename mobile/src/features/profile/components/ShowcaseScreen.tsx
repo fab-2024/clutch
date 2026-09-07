@@ -16,7 +16,7 @@ import { useReducedMotion } from 'react-native-reanimated';
 
 import { Screen } from '@/src/components/layout/Screen';
 import { t } from '@/src/lib/i18n';
-import { StreakShowcaseBadge } from '@/src/features/retention/components/CallStreakCard';
+import ShowcaseOwnerProfile from '../showcaseSocial/components/ShowcaseOwnerProfile';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import { rankEmblemSource } from '@/src/features/ranking/components/RankEmblem';
@@ -397,6 +397,10 @@ export default function ShowcaseScreen({
   const atelierAction = atelierSelectedItem
     ? atelierPrimaryAction(atelierSelectedItem, shopData?.balance ?? 0)
     : 'unavailable';
+  const canRemoveRankDisplay = atelierSelectedProduct?.category === 'ranks'
+    && atelierSelectedProduct.id !== DEFAULT_SHOWCASE_RANK_DISPLAY_ID
+    && atelierSelectedProduct.id === rankDisplayId
+    && Boolean(atelierSelectedItem?.equipped);
   const atelierPurchaseProduct = atelierProductById(atelierPurchaseId);
   const atelierPurchaseItem = atelierPurchaseProduct
     ? atelierRuntimeById.get(atelierPurchaseProduct.id) ?? null
@@ -545,6 +549,14 @@ export default function ShowcaseScreen({
   }
 
   function previewAtelierProduct(product: AtelierProduct) {
+    if (atelierPendingId) return;
+    if (product.category === 'ranks'
+      && product.id !== DEFAULT_SHOWCASE_RANK_DISPLAY_ID
+      && product.id === rankDisplayId
+      && atelierRuntimeById.get(product.id)?.equipped) {
+      void removeRankDisplay();
+      return;
+    }
     const nextTrial = applyAtelierTry(atelierTrial, product.category, product.id);
     const nextScene = resolveAtelierSceneConfig(
       shopData?.equipped ?? profileData?.cosmetics,
@@ -585,6 +597,10 @@ export default function ShowcaseScreen({
 
   function handleAtelierPrimaryAction() {
     if (!atelierSelectedItem || !atelierSelectedProduct || atelierPendingId) return;
+    if (canRemoveRankDisplay) {
+      void removeRankDisplay();
+      return;
+    }
     const nextAction = atelierPrimaryAction(atelierSelectedItem, shopData?.balance ?? 0);
     if (nextAction === 'buy') {
       setAtelierPurchaseError(null);
@@ -633,6 +649,42 @@ export default function ShowcaseScreen({
       setPedestalAssignments(previousAssignments);
       setAtelierNotice({
         text: friendlyAtelierError(caught, 'Ces socles n’ont pas pu être enregistrés.'),
+        tone: 'error',
+      });
+    } finally {
+      setAtelierPendingId(null);
+    }
+  }
+
+  async function removeRankDisplay() {
+    if (!shopData || atelierPendingId) return;
+    const bareDisplay = shopData.items.find((item) => item.id === DEFAULT_SHOWCASE_RANK_DISPLAY_ID);
+    if (!bareDisplay?.owned) return;
+    const previousData = shopData;
+    const previousSnapshot = atelierSceneSnapshotRef.current;
+    const previousTrial = atelierTrial;
+    const previousId = rankDisplayId;
+    // The default display is the persisted, unframed rank presentation.
+    const optimistic = applyPreviewAtelierAction(shopData, bareDisplay.id);
+    atelierSyncRef.current += 1;
+    setAtelierPendingId(previousId);
+    setShopData(optimistic);
+    setRankDisplayId(bareDisplay.id);
+    setAtelierTrial(applyAtelierTry(atelierTrial, 'ranks', bareDisplay.id));
+    updateAtelierSnapshot(optimistic, 'ranks');
+    setAtelierNotice({ text: 'Retrait de l’écrin…', tone: 'info' });
+
+    try {
+      if (!previewShop) await equipCosmetic(bareDisplay.id);
+      setAtelierNotice({ text: 'Écrin déséquipé.', tone: 'success' });
+      syncAtelierAfterMutation(optimistic);
+    } catch (caught) {
+      atelierSceneSnapshotRef.current = previousSnapshot;
+      setShopData(previousData);
+      setRankDisplayId(previousId);
+      setAtelierTrial(previousTrial);
+      setAtelierNotice({
+        text: friendlyAtelierError(caught, 'Cet écrin n’a pas pu être déséquipé.'),
         tone: 'error',
       });
     } finally {
@@ -822,7 +874,9 @@ export default function ShowcaseScreen({
           )}
 
           <View pointerEvents="box-none" style={styles.floatingControls}>
-            {!previewProfile && !previewShop ? <StreakShowcaseBadge /> : null}
+            <ShowcaseOwnerProfile key={`${session?.user.id ?? 'preview'}:${profileData?.pseudo ?? pseudo}`}
+              profile={profileData} pseudo={profileData?.pseudo ?? pseudo} ownerId={session?.user.id}
+              preview={Boolean(previewProfile || previewShop)} />
             <Pressable
               accessibilityLabel="Revenir au Magasin"
               accessibilityRole="button"
@@ -880,6 +934,7 @@ export default function ShowcaseScreen({
           action={atelierAction}
           balance={shopData?.balance ?? 0}
           category={atelierCategory}
+          canRemoveRankDisplay={canRemoveRankDisplay}
           item={atelierSelectedItem}
           loading={loading || !shopData}
           notice={atelierNotice}
@@ -891,7 +946,7 @@ export default function ShowcaseScreen({
           onPrimary={handleAtelierPrimaryAction}
           onSelect={previewAtelierProduct}
           open={atelierVisible}
-          pending={atelierPendingId === atelierSelectedProduct?.id}
+          pending={Boolean(atelierPendingId)}
           pedestalSlots={activeSlots}
           pedestalTargetIds={pedestalTargetIds}
           primaryRef={atelierPurchaseTriggerRef}
@@ -1106,7 +1161,7 @@ function friendlyAtelierError(caught: unknown, fallback: string) {
 const styles = StyleSheet.create({
   screen: { position: 'relative', flex: 1, minWidth: 0, backgroundColor: SHOWCASE_PALETTE.graphiteDeep },
   sceneWrap: { position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden' },
-  floatingControls: { position: 'absolute', top: 12, right: 12, left: 12, flexDirection: 'row', justifyContent: 'space-between' },
+  floatingControls: { position: 'absolute', top: 12, right: 12, left: 12, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
   floatingButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: 'rgba(3,7,10,.64)', borderWidth: 1, borderColor: 'rgba(164,188,204,.2)' },
   loading: { position: 'absolute', top: 12, left: '50%', minHeight: 30, marginLeft: -96, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(5,8,11,.86)', borderWidth: 1, borderColor: '#30414E' },
   loadingText: { ...typography.label, color: colors.textMuted, letterSpacing: 0.45 },

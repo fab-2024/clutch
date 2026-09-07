@@ -2,10 +2,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import Activity from 'lucide-react-native/icons/activity';
 import Flame from 'lucide-react-native/icons/flame';
-import Heart from 'lucide-react-native/icons/heart';
 import Sparkles from 'lucide-react-native/icons/sparkles';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -20,7 +19,6 @@ import { DetailScreen, detailStyles as styles } from '@/src/components/layout/De
 import { Button } from '@/src/components/ui/Button';
 import { publicAppUrl } from '@/src/config/release';
 import { rememberPendingRoute } from '@/src/features/auth/pendingRoute';
-import PlayerAvatar from '@/src/features/profile/avatars/PlayerAvatar';
 import ProfileSafetyActions from '@/src/features/safety/components/ProfileSafetyActions';
 import { atelierProductById } from '@/src/features/shop/atelierCatalog';
 import { cosmeticPackItemById } from '@/src/features/shop/teamPackCatalog';
@@ -37,6 +35,7 @@ import { colors, radius, spacing } from '@/src/theme';
 import { loadPublicShowcase, setShowcaseLike } from '../api';
 import { optimisticLike } from '../model';
 import type { PublicShowcase } from '../types';
+import ShowcaseProfileCard from './ShowcaseProfileCard';
 
 export default function PublicShowcaseScreen({ previewData }: { previewData?: PublicShowcase } = {}) {
   const params = useLocalSearchParams<{ pseudo?: string }>();
@@ -97,17 +96,8 @@ function ShowcaseContent({ pseudo, viewerId, confirmed, previewData }: { pseudo:
     {!data && !loading && !error ? <View style={styles.panel}><Text style={styles.body}>{t('showcase.social.unavailable')}</Text></View> : null}
     {data ? <>
       <TemporaryEffects data={data} />
-      <ShowcaseIdentity data={data} />
-      <View style={[styles.panel, styles.row]}>
-        <View style={styles.fill}><Text accessibilityLiveRegion="polite" style={styles.heading}>{t('showcase.social.likes', { count: data.likes })}</Text></View>
-        {data.canLike ? <Pressable accessibilityRole="checkbox" accessibilityLabel={t(data.liked ? 'showcase.social.unlike' : 'showcase.social.like')}
-          aria-checked={data.liked} aria-busy={busy}
-          accessibilityState={{ checked: data.liked, disabled: busy, busy }} disabled={busy} onPress={() => { void like(); }} testID="showcase-like"
-          style={[artStyles.like, data.liked && artStyles.liked]}>
-          <Heart size={20} color={colors.volt} fill={data.liked ? colors.volt : 'transparent'} />
-          <Text style={styles.accent}>{t(data.liked ? 'showcase.social.unlike' : 'showcase.social.like')}</Text>
-        </Pressable> : !viewerId && !previewData ? <Button label={t('growth.login')} variant="secondary" onPress={() => { void login(); }} /> : null}
-      </View>
+      <ShowcaseIdentity data={data} busy={busy} onLike={data.canLike ? () => { void like(); } : undefined} />
+      {!data.canLike && !viewerId && !previewData ? <Button label={t('growth.login')} variant="secondary" onPress={() => { void login(); }} /> : null}
       {data.owner ? <Button fullWidth variant="secondary" label={t('showcase.social.entry')}
         onPress={() => router.push((previewData ? '/growth-preview?section=activity' : '/showcase-activity') as never)} /> : null}
       {data.publicProfile && data.preferences.visibility === 'publique' ? <Button fullWidth disabled={busy} label={t('growth.share')} variant="secondary" onPress={() => { void share(); }} /> : null}
@@ -117,7 +107,7 @@ function ShowcaseContent({ pseudo, viewerId, confirmed, previewData }: { pseudo:
   </DetailScreen>;
 }
 
-export function ShowcaseIdentity({ data }: { data: PublicShowcase }) {
+export function ShowcaseIdentity({ data, busy, onLike }: { data: PublicShowcase; busy?: boolean; onLike?: () => void }) {
   const profilePulse = data.effects.some((effect) => effect.type === 'profile_pulse' && Date.parse(effect.activeUntil) > Date.now());
   const spotlight = data.effects.some((effect) => effect.type === 'showcase_spotlight' && Date.parse(effect.activeUntil) > Date.now());
   const reduceMotion = useReducedMotion();
@@ -145,13 +135,9 @@ export function ShowcaseIdentity({ data }: { data: PublicShowcase }) {
     <LinearGradient colors={profilePulse ? ['rgba(232,121,249,.22)', colors.backgroundDeep]
       : spotlight ? ['rgba(223,255,31,.16)', colors.backgroundDeep] : [colors.surfaceRaised, colors.backgroundDeep]}
       style={[styles.panel, { borderColor: accent }]}>
-    <View style={styles.row}>
-      <PlayerAvatar avatarId={data.avatarId} cosmetics={data.cosmetics} label={data.pseudo} size={96} />
-      <View style={styles.fill}><Text style={styles.title}>{data.pseudo}</Text>
-        {data.title || data.cosmetics.title ? <Text style={styles.accent}>{data.cosmetics.title?.name ?? data.title}</Text> : null}
-        {data.team ? <Text style={styles.meta}>{data.team}</Text> : null}
-      </View>
-    </View>
+    <ShowcaseProfileCard pseudo={data.pseudo} avatarId={data.avatarId} cosmetics={data.cosmetics}
+      subtitle={data.cosmetics.title?.name ?? data.title ?? data.team} views={data.views} showViews={data.owner}
+      likes={data.likes} liked={data.liked} busy={busy} onLike={onLike} />
     {data.ranking ? <View style={styles.row}><Text style={styles.number}>{formatNumber(data.ranking.frags)}</Text>
       <View style={styles.fill}><Text style={styles.eyebrow}>{t('showcase.social.frags')}</Text>
         {data.ranking.label ? <Text style={styles.heading}>{data.ranking.label}</Text> : null}
@@ -202,8 +188,6 @@ function ShowcaseEquipment({ data }: { data: PublicShowcase }) {
 const artStyles = StyleSheet.create({
   effects: { gap: spacing.sm },
   effect: { minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm, borderRadius: radius.md, backgroundColor: colors.surfaceLow, borderWidth: 1 },
-  like: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.sm },
-  liked: { borderColor: colors.volt, backgroundColor: colors.surfaceRaised },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   item: { flexBasis: '47%', flexGrow: 1, minWidth: 135, borderWidth: 1, borderRadius: radius.md, backgroundColor: colors.surfaceLow, padding: spacing.sm, gap: spacing.sm },
   itemImage: { width: '100%', aspectRatio: 1 },
