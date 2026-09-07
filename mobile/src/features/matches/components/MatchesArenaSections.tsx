@@ -1,5 +1,4 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
 import {
   Pressable,
   ScrollView,
@@ -13,7 +12,6 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
-import GameLogo from '@/src/features/onboarding/components/GameLogo';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { resolveMatchTeamAccents } from '@/src/utils/teamColors';
 import type { GameId } from '@/src/features/onboarding/types';
@@ -22,15 +20,8 @@ import type { ArenaMatch } from '../types';
 import { gameKey, gameLabel, matchPhase, predictionIsOpen } from '../utils';
 import { styles } from './MatchesScreen.styles';
 
-export type StatusFilter = 'upcoming' | 'finished';
+export type StatusFilter = 'upcoming' | 'live' | 'finished';
 export type GameFilter = 'followed' | GameId;
-
-const GAME_FILTERS: { id: GameFilter; label: string }[] = [
-  { id: 'followed', label: 'POUR TOI' },
-  { id: 'lol', label: 'LOL' },
-  { id: 'valorant', label: 'VAL' },
-  { id: 'rocket_league', label: 'RL' },
-];
 
 const GAME_ACCENTS: Record<GameId, string> = {
   lol: '#72C7F4',
@@ -76,7 +67,7 @@ export function ScheduleHero({
 
   return (
     <View
-      style={[styles.scheduleHero, isShortLandscape && styles.scheduleHeroLandscape]}
+      style={[styles.scheduleHero, isShortLandscape && styles.scheduleHeroLandscape, status === 'live' && styles.scheduleHeroLive]}
       testID="matches-schedule-hero"
     >
       <LinearGradient
@@ -102,7 +93,7 @@ export function ScheduleHero({
         ) : (
           <View style={styles.scheduleHeading}>
             <Text numberOfLines={1} style={styles.scheduleTitle}>
-              {status === 'upcoming' ? 'PROCHAINS MATCHS' : 'SCORES & RÉSULTATS'}
+              {status === 'live' ? 'MATCHS EN COURS' : status === 'upcoming' ? 'PROCHAINS MATCHS' : 'SCORES & RÉSULTATS'}
             </Text>
             <Text numberOfLines={1} style={styles.scheduleMonth}>{monthLabel}</Text>
           </View>
@@ -127,7 +118,7 @@ export function ScheduleHero({
         </View>
       </View>
 
-      <ScrollView
+      {status !== 'live' ? <ScrollView
         contentContainerStyle={styles.daysRow}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -152,81 +143,7 @@ export function ScheduleHero({
             </Pressable>
           );
         })}
-      </ScrollView>
-    </View>
-  );
-}
-
-type ArenaFiltersProps = {
-  callCount: number;
-  callsOnly: boolean;
-  game: GameFilter;
-  isAdmin: boolean;
-  onCallsOnlyChange: (value: boolean) => void;
-  onGameChange: (value: GameFilter) => void;
-  onStatusChange: (value: StatusFilter) => void;
-  status: StatusFilter;
-};
-
-export function ArenaFilters({ callCount, callsOnly, game, isAdmin, onCallsOnlyChange, onGameChange, onStatusChange, status }: ArenaFiltersProps) {
-  return (
-    <View style={styles.filterPanel}>
-      <View style={styles.gameRow}>
-        {GAME_FILTERS.map((filter) => {
-          const active = game === filter.id;
-          return (
-            <Pressable
-              accessibilityLabel={`Filtrer sur ${filter.label}`}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              key={filter.id}
-              onPress={() => onGameChange(filter.id)}
-              style={({ pressed }) => [styles.gameFilter, active && styles.gameFilterActive, pressed && styles.pressed]}
-            >
-              <View style={[styles.gameIcon, active && styles.gameIconActive]}>
-                {filter.id === 'followed' ? (
-                  <Text style={[styles.allGamesGlyph, active && styles.allGamesGlyphActive]}>C</Text>
-                ) : (
-                  <GameLogo color={active ? '#070A0E' : '#8B96A2'} game={filter.id} size={17} />
-                )}
-              </View>
-              <Text style={[styles.gameFilterText, active && styles.gameFilterTextActive]}>{filter.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <View style={styles.modeRow}>
-        {callsOnly ? (
-          <View style={styles.callsModeInfo}>
-            <Text style={styles.callsModeInfoText}>MES CALLS</Text>
-            <Text style={styles.callsModeInfoMeta}>OUVERTS, VERROUILLÉS ET RÉGLÉS</Text>
-          </View>
-        ) : (
-          <View style={styles.statusSwitch}>
-            <Pressable accessibilityRole="button" accessibilityState={{ selected: status === 'upcoming' }} onPress={() => onStatusChange('upcoming')} style={[styles.statusButton, status === 'upcoming' && styles.statusButtonActive]}>
-              <Text style={[styles.statusText, status === 'upcoming' && styles.statusTextActive]}>À VENIR</Text>
-            </Pressable>
-            <Pressable accessibilityRole="button" accessibilityState={{ selected: status === 'finished' }} onPress={() => onStatusChange('finished')} style={[styles.statusButton, status === 'finished' && styles.statusButtonActive]}>
-              <Text style={[styles.statusText, status === 'finished' && styles.statusTextActive]}>RÉSULTATS</Text>
-            </Pressable>
-          </View>
-        )}
-        <Pressable accessibilityRole="button" accessibilityState={{ selected: callsOnly }} onPress={() => onCallsOnlyChange(!callsOnly)} style={[styles.callsButton, callsOnly && styles.callsButtonActive]}>
-          <View style={[styles.callsDot, callsOnly && styles.callsDotActive]} />
-          <View style={styles.callsButtonCopy}>
-            <Text style={[styles.callsText, callsOnly && styles.callsTextActive]}>MES CALLS</Text>
-            <Text style={[styles.callsCount, callsOnly && styles.callsCountActive]}>{callsOnly ? 'OUVERT' : `${callCount} VERROUILLÉ${callCount > 1 ? 'S' : ''}`}</Text>
-          </View>
-        </Pressable>
-      </View>
-
-      {isAdmin ? (
-        <Pressable accessibilityRole="button" onPress={() => router.push('/admin/matches' as never)} style={styles.adminLink}>
-          <Text style={styles.adminLinkText}>ADMINISTRER LE CALENDRIER</Text>
-          <Text style={styles.adminLinkArrow}>→</Text>
-        </Pressable>
-      ) : null}
+      </ScrollView> : null}
     </View>
   );
 }
@@ -235,8 +152,8 @@ export function SectionHead({ callsOnly, count, date, status }: { callsOnly: boo
   return (
     <View style={styles.sectionHead}>
       <View>
-        <Text style={styles.sectionEyebrow}>{callsOnly ? status === 'upcoming' ? 'TES CALLS À VENIR' : 'TES VERDICTS' : status === 'upcoming' ? 'PROGRAMME DU JOUR' : 'VERDICTS DU JOUR'}</Text>
-        <Text style={styles.sectionTitle}>{formatSectionDate(date)}</Text>
+        <Text style={styles.sectionEyebrow}>{status === 'live' ? 'EN DIRECT' : callsOnly ? status === 'upcoming' ? 'TES CALLS À VENIR' : 'TES VERDICTS' : status === 'upcoming' ? 'PROGRAMME DU JOUR' : 'VERDICTS DU JOUR'}</Text>
+        <Text style={styles.sectionTitle}>{status === 'live' ? 'MATCHS EN COURS' : formatSectionDate(date)}</Text>
       </View>
       <View style={styles.countPill}><Text style={styles.countText}>{count} MATCH{count > 1 ? 'S' : ''}</Text></View>
     </View>
@@ -321,11 +238,11 @@ export function EmptyArena({ callsOnly, query, status }: { callsOnly: boolean; q
   return (
     <FeatureStateView
       compact
-      description={filtered ? 'Change de jeu, de date ou désactive Mes Calls.' : 'Choisis une autre date dans le calendrier.'}
+      description={filtered ? 'Change de jeu, de date ou désactive Mes Calls.' : status === 'live' ? 'Retrouve les prochains matchs dans À venir.' : 'Choisis une autre date dans le calendrier.'}
       domain="matches"
       style={styles.stateInset}
       testID="matches-empty-state"
-      title={filtered ? 'Aucun match ne correspond' : status === 'upcoming' ? 'Aucun match ce jour-là' : 'Aucun verdict ce jour-là'}
+      title={filtered ? 'Aucun match ne correspond' : status === 'live' ? 'Aucun match en cours' : status === 'upcoming' ? 'Aucun match ce jour-là' : 'Aucun verdict ce jour-là'}
       variant="empty"
     />
   );
@@ -417,6 +334,10 @@ export function toGameId(game?: string | null): GameId | null {
 export function buildCalendarDays(status: StatusFilter, matches: ArenaMatch[]) {
   const today = startOfDay(new Date());
   const validDates = matches.map((match) => startOfDay(new Date(match.debut))).filter((date) => !Number.isNaN(date.getTime()));
+  if (status === 'live') {
+    const earliest = validDates.reduce<Date>((current, date) => date < current ? date : current, today);
+    return Array.from({ length: 7 }, (_, index) => addDays(earliest, index));
+  }
   if (status === 'upcoming') {
     const earliest = validDates.reduce<Date | null>((current, date) => !current || date < current ? date : current, null);
     const start = earliest && earliest > addDays(today, 6) ? earliest : today;
@@ -429,7 +350,7 @@ export function buildCalendarDays(status: StatusFilter, matches: ArenaMatch[]) {
 
 export function findDefaultDayKey(days: Date[], matches: ArenaMatch[], status: StatusFilter) {
   const dayKeys = new Set(matches.map((match) => dateKey(new Date(match.debut))));
-  if (status === 'upcoming') {
+  if (status !== 'finished') {
     const live = matches.find((match) => matchPhase(match) === 'live');
     const liveKey = live ? dateKey(new Date(live.debut)) : null;
     if (liveKey && days.some((day) => dateKey(day) === liveKey)) return liveKey;

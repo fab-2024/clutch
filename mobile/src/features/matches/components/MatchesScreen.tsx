@@ -22,7 +22,6 @@ import type { ArenaMatch, MyCallsDashboard } from '../types';
 import { useMatchesDashboard } from '../hooks/useMatchesDashboard';
 import { matchPhase } from '../utils';
 import {
-  ArenaFilters,
   EmptyArena,
   LiveMatchCard,
   MatchRow,
@@ -40,6 +39,7 @@ import {
 import { styles } from './MatchesScreen.styles';
 import { InlinePredictionPanel } from './InlinePredictionPanel';
 import { MyCallsPanel } from './MyCallsPanel';
+import { ArenaFilters } from './MatchesFilters';
 
 const GAME_GLOBAL_BACKGROUNDS = {
   followed: require('../../../../assets/matches/matches-followed-global-background.jpg'),
@@ -120,7 +120,14 @@ export function MatchesExperience({
     if (requestedView === 'calls') setCallsOnly(true);
   }, [requestedView]);
 
-  const source = status === 'upcoming' ? upcoming : finished;
+  const source = useMemo(
+    () => status === 'finished' ? finished : upcoming.filter((match) => matchPhase(match) === status),
+    [finished, status, upcoming],
+  );
+  const liveCount = useMemo(
+    () => filterMatches(upcoming, game, followedGames, false, query).filter((match) => matchPhase(match) === 'live').length,
+    [followedGames, game, query, upcoming],
+  );
   const scopedMatches = useMemo(
     () => filterMatches(source, game, followedGames, false, query),
     [followedGames, game, query, source],
@@ -139,8 +146,8 @@ export function MatchesExperience({
     ? selectedDayKey
     : defaultDayKey;
   const visibleMatches = useMemo(
-    () => filtered.filter((match) => dateKey(new Date(match.debut)) === activeDayKey),
-    [activeDayKey, filtered],
+    () => status === 'live' ? filtered : filtered.filter((match) => dateKey(new Date(match.debut)) === activeDayKey),
+    [activeDayKey, filtered, status],
   );
   const liveMatches = visibleMatches.filter((match) => matchPhase(match) === 'live');
   const standardMatches = visibleMatches.filter((match) => matchPhase(match) !== 'live');
@@ -154,6 +161,7 @@ export function MatchesExperience({
 
   function changeStatus(nextStatus: StatusFilter) {
     setStatus(nextStatus);
+    setCallsOnly(false);
     setSelectedDayKey(null);
     setExpandedPredictionId(null);
   }
@@ -212,6 +220,23 @@ export function MatchesExperience({
         ) : null}
 
         <View>
+          <ArenaFilters
+            callCount={callCount}
+            callsOnly={callsOnly}
+            game={game}
+            isAdmin={isAdmin}
+            liveCount={liveCount}
+            status={status}
+            onCallsOnlyChange={(nextCallsOnly) => {
+              setCallsOnly(nextCallsOnly);
+              setExpandedPredictionId(null);
+            }}
+            onGameChange={changeGame}
+            onStatusChange={changeStatus}
+          />
+        </View>
+
+        <View>
           <ScheduleHero
             activeDayKey={activeDayKey}
             calendarDays={calendarDays}
@@ -231,22 +256,6 @@ export function MatchesExperience({
               setSearchOpen((current) => !current);
               if (searchOpen) setQuery('');
             }}
-          />
-        </View>
-
-        <View>
-          <ArenaFilters
-            callCount={callCount}
-            callsOnly={callsOnly}
-            game={game}
-            isAdmin={isAdmin}
-            status={status}
-            onCallsOnlyChange={(nextCallsOnly) => {
-              setCallsOnly(nextCallsOnly);
-              setExpandedPredictionId(null);
-            }}
-            onGameChange={changeGame}
-            onStatusChange={changeStatus}
           />
         </View>
 
