@@ -59,7 +59,9 @@ export const PREVIEW_MATCH_CENTER: MatchCenterData = {
 export default function MatchCenterPreviewScreen() {
   const params = useLocalSearchParams<{ state?: string | string[] }>();
   const state = Array.isArray(params.state) ? params.state[0] : params.state;
-  const previewData = state === 'live'
+  const previewData = state?.startsWith('finished')
+    ? finishedPreview(PREVIEW_MATCH_CENTER, state)
+    : state === 'live'
     ? livePreview(PREVIEW_MATCH_CENTER)
     : state === 'handoff-locked'
       ? lockedPreview(PREVIEW_MATCH_CENTER)
@@ -83,7 +85,7 @@ export default function MatchCenterPreviewScreen() {
       previewCallLockProgress={callLockProgress}
       previewData={previewData}
       previewJourneySnapshot={arenaMotion || callLockChoice || state === 'live' ? snapshot : undefined}
-      previewJourneySource={arenaMotion || state === 'live' ? 'hub' : undefined}
+      previewJourneySource={state?.startsWith('finished') ? 'matches' : arenaMotion || state === 'live' ? 'hub' : undefined}
       previewLoadingSnapshot={state === 'transition' ? snapshot : undefined}
       previewReduceMotion={reduceMotion}
     />
@@ -206,3 +208,21 @@ function previewSnapshot(data: MatchCenterData): MatchJourneySnapshot {
 }
 
 const CALL_LOCK_MILESTONE_PROGRESS = CALL_LOCK_MILESTONE_MS / CALL_LOCK_DURATION_MS;
+
+function finishedPreview(data: MatchCenterData, state: string): MatchCenterData {
+  const base = state === 'finished' ? data : lockedPreview(data);
+  const status = state === 'finished-won' ? 'gagne' : state === 'finished-lost' ? 'perdu' : 'verrouille';
+  const prediction = base.prediction ? {
+    ...base.prediction,
+    statut: status,
+    choix: state === 'finished-lost' ? 'b' as const : 'a' as const,
+    delta_frags: status === 'gagne' ? 17 : status === 'perdu' ? -23 : null,
+  } : null;
+  const startedAt = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  return {
+    ...base,
+    match: { ...base.match, statut: 'termine', debut: startedAt, score_a: 3, score_b: 0, prediction },
+    prediction,
+    callContext: { ...base.callContext, ferme_le: startedAt, prediction },
+  };
+}

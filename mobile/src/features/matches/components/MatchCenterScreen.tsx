@@ -38,6 +38,7 @@ import type { MatchCenterData } from '../types';
 import { matchPhase, predictionIsOpen } from '../utils';
 import { CallLockMoment } from './CallLockMoment';
 import { LiveMatchCenter } from './LiveMatchCenter';
+import { FinishedMatchCenter } from './FinishedMatchCenter';
 import {
   CallContract,
   LoadingCard,
@@ -282,8 +283,8 @@ export default function MatchCenterScreen({
           <View style={[styles.topBar, isShortLandscape && styles.topBarLandscape]}>
             <Pressable accessibilityLabel={`Revenir à ${returnLabel}`} accessibilityRole="button" onPress={returnToArena} style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
               <Text style={[styles.backArrow, predictionPickerOpen && styles.pickerBackArrow]}>←</Text>
-              <Text style={[styles.backText, predictionPickerOpen && styles.pickerBackText]}>
-                {predictionPickerOpen && match ? `${match.tag_a} VS ${match.tag_b}` : returnLabel}
+              <Text style={[styles.backText, predictionPickerOpen && styles.pickerBackText, phase === 'finished' && styles.finishedBackText]}>
+                {predictionPickerOpen && match ? `${match.tag_a} VS ${match.tag_b}` : phase === 'finished' && returnLabel === 'MATCHS' ? 'Matchs' : returnLabel}
               </Text>
             </Pressable>
             {predictionPickerOpen ? null : <GriffLockup width={92} />}
@@ -312,7 +313,9 @@ export default function MatchCenterScreen({
           />
         ) : null}
 
-        {match ? phase === 'live' ? (
+        {match ? phase === 'finished' ? (
+          <FinishedMatchCenter data={data!} key={match.id} />
+        ) : phase === 'live' ? (
           <LiveMatchCenter
             compact={isShortLandscape}
             data={data!}

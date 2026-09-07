@@ -65,13 +65,6 @@ export default function LeaguesScreen() {
     >
       <CircleViewSwitch value="league" />
 
-      <View style={styles.privateHero}>
-        <Text style={styles.privateEyebrow}>CERCLE // LIGUE PRIVÉE</Text>
-        <Text style={styles.privateTitle}>VOTRE CLASSEMENT. VOS RÈGLES.</Text>
-        <Text style={styles.privateCopy}>Une ligue n’est visible que par les amis qui possèdent son code. Aucun classement public ne vient parasiter votre cercle.</Text>
-        <View style={styles.privateBadge}><Text style={styles.privateBadgeText}>◎ ENTRE AMIS UNIQUEMENT</Text></View>
-      </View>
-
       {error ? <View style={styles.error}><Text style={styles.errorText}>{error}</Text></View> : null}
       {message ? <View style={styles.success}><Text style={styles.successText}>{message}</Text></View> : null}
 
@@ -139,12 +132,6 @@ function Skeleton() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', padding: spacing.md, paddingBottom: layout.tabBarContentInset, gap: 16 },
-  privateHero: { position: 'relative', overflow: 'hidden', minHeight: 250, padding: 20, borderRadius: 29, justifyContent: 'center', backgroundColor: '#0E1510', borderWidth: 1, borderColor: '#3D491D' },
-  privateEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: 1.1 },
-  privateTitle: { ...typography.displayMedium, maxWidth: 330, marginTop: 10, color: colors.text },
-  privateCopy: { ...typography.body, maxWidth: 340, marginTop: 11, color: colors.textMuted },
-  privateBadge: { alignSelf: 'flex-start', minHeight: 34, marginTop: 16, paddingHorizontal: 11, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171F10', borderWidth: 1, borderColor: '#46531F' },
-  privateBadgeText: { ...typography.label, color: colors.volt, letterSpacing: .35 },
   error: { padding: 12, borderRadius: radius.md, backgroundColor: '#1A1012', borderWidth: 1, borderColor: '#4A2027' },
   errorText: { ...typography.body, color: '#FF9AA2' },
   success: { padding: 12, borderRadius: radius.md, backgroundColor: '#0D1A13', borderWidth: 1, borderColor: '#214C32' },

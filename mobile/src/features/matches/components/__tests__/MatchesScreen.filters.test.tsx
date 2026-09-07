@@ -44,11 +44,12 @@ describe('Matches filters', () => {
       refreshing={false}
       upcoming={[
         match('future', 'a_venir', 'lol', '2099-09-07T10:00:00.000Z'),
-        match('live-lol', 'en_cours', 'lol', '2026-09-06T10:00:00.000Z'),
-        match('live-val', 'en_cours', 'valorant', '2026-09-07T10:00:00.000Z'),
+        match('live-lol', 'en_cours', 'lol', new Date(Date.now() - 60 * 60 * 1000).toISOString()),
+        match('live-val', 'en_cours', 'valorant', new Date(Date.now() - 30 * 60 * 1000).toISOString()),
       ]}
     />);
 
+    expect(screen.getAllByRole('tab').slice(4).map((tab) => tab.props.accessibilityLabel)).toEqual(['En cours, 2 matchs', 'À venir', 'Résultats']);
     expect(screen.getByRole('button', { name: 'future A contre future B' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'live-lol A contre live-lol B, en direct' })).toBeNull();
 
@@ -61,14 +62,24 @@ describe('Matches filters', () => {
     expect(screen.getByRole('tab', { name: 'En cours, 1 match' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'live-val A contre live-val B, en direct' })).toBeNull();
 
-    await fireEvent.press(screen.getByRole('tab', { name: 'RÉSULTATS' }));
+    await fireEvent.press(screen.getByRole('tab', { name: 'Résultats' }));
     expect(screen.getByRole('button', { name: 'result A contre result B' })).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Mes calls, 2 verrouillés' }));
     expect(screen.getByRole('button', { name: 'Fermer Mes calls' }).props.accessibilityState.expanded).toBe(true);
-    await fireEvent.press(screen.getByRole('tab', { name: 'À VENIR' }));
+    await fireEvent.press(screen.getByRole('tab', { name: 'À venir' }));
     expect(screen.getByRole('button', { name: 'future A contre future B' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Fermer Mes calls' })).toBeNull();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Rechercher un match' }));
+    await fireEvent.changeText(screen.getByLabelText('Rechercher une équipe ou une compétition'), 'unknown');
+    expect(screen.queryByRole('button', { name: 'future A contre future B' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Fermer la recherche' }));
+    expect(screen.getByRole('button', { name: 'future A contre future B' })).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Options des matchs' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Mes calls' }));
+    expect(screen.getByRole('button', { name: 'Fermer Mes calls' }).props.accessibilityState.expanded).toBe(true);
   });
 });
 

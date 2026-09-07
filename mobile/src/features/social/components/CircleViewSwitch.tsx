@@ -32,6 +32,7 @@ export default function CircleViewSwitch({ pendingCount = 0, value }: CircleView
       onChange={openSection}
       testID="circle-view-switch"
       value={value}
+      variant="pills"
     />
   );
 }

@@ -13,6 +13,10 @@ import {
 
 const mockLoad = jest.fn(async () => undefined);
 
+jest.mock('lucide-react-native/icons/chevron-down', () => ({ __esModule: true, default: 'chevron-down' }));
+jest.mock('lucide-react-native/icons/chevron-up', () => ({ __esModule: true, default: 'chevron-up' }));
+jest.mock('lucide-react-native/icons/ticket', () => ({ __esModule: true, default: 'ticket' }));
+jest.mock('lucide-react-native/icons/trophy', () => ({ __esModule: true, default: 'trophy' }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('lucide-react-native/icons/arrow-left', () => ({ __esModule: true, default: 'ArrowLeft' }));
 jest.mock('lucide-react-native/icons/calendar-days', () => ({ __esModule: true, default: 'CalendarDays' }));
@@ -315,10 +319,17 @@ describe('MatchCenterScreen prediction confirmation', () => {
   });
 
   it('does not substitute the model for absent community votes', async () => {
-    const screen = await render(<MatchCenterScreen previewData={{ ...PREVIEW_MATCH_CENTER, match: { ...PREVIEW_MATCH_CENTER.match, statut: 'en_cours' }, callContext: { ...PREVIEW_MATCH_CENTER.callContext, distribution: { total: 0, a: 0, b: 0, a_pct: 50, b_pct: 50 } } }} />);
+    const screen = await render(<MatchCenterScreen previewData={{ ...PREVIEW_MATCH_CENTER, match: { ...PREVIEW_MATCH_CENTER.match, statut: 'en_cours', debut: new Date(Date.now() - 30 * 60 * 1000).toISOString() }, callContext: { ...PREVIEW_MATCH_CENTER.callContext, distribution: { total: 0, a: 0, b: 0, a_pct: 50, b_pct: 50 } } }} />);
     expect(screen.getByText('AUCUN CALL POUR LE MOMENT')).toBeTruthy();
     expect(screen.getByText('57%')).toBeTruthy();
     expect(screen.queryByText(/50%/)).toBeNull();
+  });
+
+  it('opens the dedicated finished screen without the prediction picker', async () => {
+    const screen = await render(<MatchCenterScreen previewData={{ ...PREVIEW_MATCH_CENTER, match: { ...PREVIEW_MATCH_CENTER.match, statut: 'termine', score_a: 3, score_b: 0 } }} />);
+    expect(screen.getByTestId('finished-match-center')).toBeTruthy();
+    expect(screen.getByText('Tu n’as pas participé')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Choisir G2 Esports' })).toBeNull();
   });
 
   it('uses the dedicated match center when the match is live', async () => {
@@ -329,6 +340,7 @@ describe('MatchCenterScreen prediction confirmation', () => {
         score_a: 0,
         score_b: 0,
         statut: 'en_cours' as const,
+        debut: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
       },
       callContext: {
         ...PREVIEW_MATCH_CENTER.callContext,

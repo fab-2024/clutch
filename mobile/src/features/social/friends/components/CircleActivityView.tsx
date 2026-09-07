@@ -97,7 +97,7 @@ function FriendRequestsSection({
   return (
     <View style={styles.section} testID="circle-requests-section">
       <SectionHeading
-        eyebrow="DEMANDES"
+
         meta={pendingCount ? `${pendingCount} EN ATTENTE` : 'À JOUR'}
         title="QUI ENTRE DANS TON CERCLE ?"
       />
@@ -253,7 +253,7 @@ function WeeklyRanking({
   return (
     <View style={styles.section} testID="circle-weekly-ranking">
       <SectionHeading
-        eyebrow="ACTIVITÉ"
+
         meta={`${ranking.length} JOUEURS`}
         title="CLASSEMENT DE LA SEMAINE"
       />
@@ -313,11 +313,10 @@ function WeeklyRanking({
   );
 }
 
-function SectionHeading({ eyebrow, meta, title }: { eyebrow: string; meta: string; title: string }) {
+function SectionHeading({ meta, title }: { meta: string; title: string }) {
   return (
     <View style={styles.sectionHeading}>
       <View style={styles.sectionHeadingCopy}>
-        <Text style={styles.sectionEyebrow}>{eyebrow}</Text>
         <Text style={styles.sectionTitle}>{title}</Text>
       </View>
       <Text style={styles.sectionMeta}>{meta}</Text>
@@ -366,10 +365,6 @@ const styles = StyleSheet.create({
   sectionHeadingCopy: {
     flex: 1,
     minWidth: 0,
-  },
-  sectionEyebrow: {
-    ...typography.control,
-    color: colors.volt,
   },
   sectionTitle: {
     ...typography.cardTitle,

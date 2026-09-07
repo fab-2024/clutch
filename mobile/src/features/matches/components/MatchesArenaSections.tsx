@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -23,30 +22,14 @@ import { styles } from './MatchesScreen.styles';
 export type StatusFilter = 'upcoming' | 'live' | 'finished';
 export type GameFilter = 'followed' | GameId;
 
-const GAME_ACCENTS: Record<GameId, string> = {
-  lol: '#72C7F4',
-  valorant: '#FF6170',
-  rocket_league: '#35B8FF',
-};
-
-const SCHEDULE_ACCENTS: Record<GameFilter, string> = {
-  followed: '#9A5CFF',
-  ...GAME_ACCENTS,
-};
-
 type ScheduleHeroProps = {
   activeDayKey: string;
   calendarDays: Date[];
   matches: ArenaMatch[];
   monthLabel: string;
-  onQueryChange: (value: string) => void;
   onSelectDay: (value: string) => void;
   onToggleHistory: () => void;
-  onToggleSearch: () => void;
-  query: string;
-  searchOpen: boolean;
   status: StatusFilter;
-  game: GameFilter;
 };
 
 export function ScheduleHero({
@@ -54,14 +37,9 @@ export function ScheduleHero({
   calendarDays,
   matches,
   monthLabel,
-  onQueryChange,
   onSelectDay,
   onToggleHistory,
-  onToggleSearch,
-  query,
-  searchOpen,
   status,
-  game,
 }: ScheduleHeroProps) {
   const { isShortLandscape } = useResponsiveLayout();
 
@@ -70,43 +48,9 @@ export function ScheduleHero({
       style={[styles.scheduleHero, isShortLandscape && styles.scheduleHeroLandscape, status === 'live' && styles.scheduleHeroLive]}
       testID="matches-schedule-hero"
     >
-      <LinearGradient
-        colors={['rgba(5,11,16,.78)', 'rgba(5,10,14,.62)', `${SCHEDULE_ACCENTS[game]}12`]}
-        end={{ x: 1, y: .5 }}
-        start={{ x: 0, y: .5 }}
-        style={StyleSheet.absoluteFill}
-      />
-
       <View style={styles.scheduleTop}>
-        {searchOpen ? (
-          <View style={styles.searchField}>
-            <SearchIcon color="#F5F7F8" size={17} />
-            <TextInput
-              autoFocus
-              onChangeText={onQueryChange}
-              placeholder="Équipe ou compétition"
-              placeholderTextColor="rgba(255,255,255,.58)"
-              style={styles.searchInput}
-              value={query}
-            />
-          </View>
-        ) : (
-          <View style={styles.scheduleHeading}>
-            <Text numberOfLines={1} style={styles.scheduleTitle}>
-              {status === 'live' ? 'MATCHS EN COURS' : status === 'upcoming' ? 'PROCHAINS MATCHS' : 'SCORES & RÉSULTATS'}
-            </Text>
-            <Text numberOfLines={1} style={styles.scheduleMonth}>{monthLabel}</Text>
-          </View>
-        )}
+        <Text numberOfLines={1} style={styles.scheduleMonth}>{monthLabel}</Text>
         <View style={styles.scheduleActions}>
-          <Pressable
-            accessibilityLabel={searchOpen ? 'Fermer la recherche' : 'Rechercher un match'}
-            accessibilityRole="button"
-            onPress={onToggleSearch}
-            style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-          >
-            {searchOpen ? <CloseIcon color="#F5F7F8" size={17} /> : <SearchIcon color="#F5F7F8" size={18} />}
-          </Pressable>
           <Pressable
             accessibilityLabel={status === 'upcoming' ? 'Afficher les résultats' : 'Afficher les prochains matchs'}
             accessibilityRole="button"
@@ -293,15 +237,15 @@ function arenaTransitionTarget(match: ArenaMatch) {
   };
 }
 
-function SearchIcon({ color, size }: { color: string; size: number }) {
+export function SearchIcon({ color, size }: { color: string; size: number }) {
   return <Svg height={size} viewBox="0 0 24 24" width={size}><Circle cx="10.8" cy="10.8" fill="none" r="6.8" stroke={color} strokeWidth="2" /><Path d="m16 16 4.4 4.4" fill="none" stroke={color} strokeLinecap="round" strokeWidth="2" /></Svg>;
 }
 
-function CalendarIcon({ color, size }: { color: string; size: number }) {
+export function CalendarIcon({ color, size }: { color: string; size: number }) {
   return <Svg height={size} viewBox="0 0 24 24" width={size}><Path d="M6.5 3v3M17.5 3v3M4 9h16M5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5Z" fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" /></Svg>;
 }
 
-function CloseIcon({ color, size }: { color: string; size: number }) {
+export function CloseIcon({ color, size }: { color: string; size: number }) {
   return <Svg height={size} viewBox="0 0 24 24" width={size}><Path d="m6 6 12 12M18 6 6 18" fill="none" stroke={color} strokeLinecap="round" strokeWidth="2" /></Svg>;
 }
 
@@ -384,7 +328,8 @@ function formatWeekday(date: Date) {
 }
 
 export function formatMonth(date: Date) {
-  return date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }).replace('.', '').toUpperCase();
+  const label = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 function formatFullDate(date: Date) {

@@ -348,7 +348,7 @@ export function CallContract({ data }: { data: MatchCenterData }) {
           <View style={[styles.contractDistributionTrack, { backgroundColor: accentB }]}><View style={[styles.contractDistributionFill, { width, backgroundColor: accentA }]} /></View>
         </View>
       ) : (
-        <View style={styles.contractHidden}><Text style={styles.contractHiddenGlyph}>◌</Text><Text style={styles.contractHiddenText}>La répartition restera masquée jusqu’à ce que tu valides ton choix.</Text></View>
+        <View style={styles.contractHidden}><Text style={styles.contractHiddenGlyph}>◌</Text><Text style={styles.contractHiddenText}>{match.statut === 'termine' ? 'La répartition des calls n’est pas disponible.' : 'La répartition restera masquée jusqu’à ce que tu valides ton choix.'}</Text></View>
       )}
 
       {resolved ? (

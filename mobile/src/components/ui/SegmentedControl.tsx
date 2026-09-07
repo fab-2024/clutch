@@ -15,6 +15,7 @@ type SegmentedControlProps<Value extends string> = {
   onChange: (value: Value) => void;
   testID?: string;
   value: Value;
+  variant?: 'segmented' | 'pills';
 };
 
 export function SegmentedControl<Value extends string>({
@@ -23,12 +24,13 @@ export function SegmentedControl<Value extends string>({
   onChange,
   testID,
   value,
+  variant = 'segmented',
 }: SegmentedControlProps<Value>) {
   return (
     <View
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="tablist"
-      style={styles.root}
+      style={[styles.root, variant === 'pills' && styles.pillsRoot]}
       testID={testID}
     >
       {items.map((item) => {
@@ -46,10 +48,12 @@ export function SegmentedControl<Value extends string>({
             style={({ pressed }) => [
               styles.item,
               selected && styles.itemSelected,
+              variant === 'pills' && styles.pill,
+              variant === 'pills' && selected && styles.pillSelected,
               pressed && styles.itemPressed,
             ]}
           >
-            <Text numberOfLines={2} style={[styles.label, selected && styles.labelSelected]}>
+            <Text numberOfLines={2} style={[styles.label, selected && styles.labelSelected, variant === 'pills' && styles.pillLabel, variant === 'pills' && selected && styles.pillLabelSelected]}>
               {item.label}
             </Text>
             {item.badge ? (
@@ -67,6 +71,11 @@ export function SegmentedControl<Value extends string>({
 }
 
 const styles = StyleSheet.create({
+  pillsRoot: { padding: 0, gap: 10, borderWidth: 0, backgroundColor: 'transparent' },
+  pill: { borderRadius: 22, borderWidth: 1, borderColor: 'rgba(143,156,176,.24)', backgroundColor: 'transparent' },
+  pillSelected: { backgroundColor: 'rgba(143,156,176,.08)', borderColor: 'rgba(235,241,247,.6)' },
+  pillLabel: { color: colors.textMuted },
+  pillLabelSelected: { color: colors.text },
   root: {
     minHeight: layout.controlHeight,
     padding: 3,

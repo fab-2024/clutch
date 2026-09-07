@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-import { colors, layout, spacing, typography } from '@/src/theme';
+import { colors, fonts, layout, spacing, typography } from '@/src/theme';
 
 export const styles = StyleSheet.create({
   gameBackground: { position: 'absolute', inset: 0, overflow: 'hidden', backgroundColor: '#020609' },
@@ -8,25 +8,21 @@ export const styles = StyleSheet.create({
   gameBackgroundScrim: { position: 'absolute', inset: 0 },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 14 },
   targetedDuelBanner: { minHeight: 84, marginHorizontal: spacing.md, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 20, backgroundColor: 'rgba(18,25,11,.76)', borderWidth: 1, borderColor: '#4A5720' }, targetedDuelCopy: { flex: 1, minWidth: 0 }, targetedDuelEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .75 }, targetedDuelTitle: { ...typography.bodyStrong, marginTop: 5, color: colors.text }, targetedDuelClose: { width: layout.minTouchTarget, height: layout.minTouchTarget, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: 'rgba(8,13,7,.74)', borderWidth: 1, borderColor: '#35401B' }, targetedDuelCloseText: { color: colors.textMuted, fontSize: 23, lineHeight: 24 },
-  scheduleHero: { position: 'relative', minHeight: 158, marginHorizontal: spacing.md, overflow: 'hidden', borderRadius: 23, backgroundColor: 'rgba(7,14,20,.68)', borderWidth: 1, borderColor: 'rgba(121,150,171,.38)', padding: 12, paddingBottom: 20 },
-  scheduleHeroLandscape: { minHeight: 138, padding: 10, paddingBottom: 16, borderRadius: 20 },
-  scheduleHeroLive: { minHeight: 82, paddingBottom: 12 },
+  scheduleHero: { minHeight: 142, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(105,130,145,.3)', gap: 14 },
+  scheduleHeroLandscape: { minHeight: 126 },
+  scheduleHeroLive: { minHeight: 50, paddingBottom: 6 },
   scheduleTop: { zIndex: 2, minHeight: layout.minTouchTarget, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  scheduleHeading: { flex: 1, minWidth: 0, gap: 1 },
-  searchField: { flex: 1, height: layout.minTouchTarget, paddingHorizontal: 11, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(5,9,12,.74)', borderWidth: 1, borderColor: 'rgba(255,255,255,.26)' },
-  searchInput: { ...typography.bodyStrong, flex: 1, color: '#FFFFFF' },
   scheduleActions: { flexDirection: 'row', gap: 6 },
-  iconButton: { width: layout.minTouchTarget, height: layout.minTouchTarget, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,9,12,.52)', borderWidth: 1, borderColor: 'rgba(255,255,255,.17)' },
-  scheduleTitle: { ...typography.cardTitle, color: '#F8FAFA' },
-  scheduleMonth: { ...typography.caption, color: 'rgba(255,255,255,.76)', letterSpacing: .65 },
-  daysScroll: { zIndex: 2, flexGrow: 0, flexShrink: 0, marginTop: 'auto' },
-  daysRow: { minWidth: '100%', flexGrow: 1, flexDirection: 'row', justifyContent: 'space-between', gap: 5 },
-  dayButton: { width: layout.minTouchTarget, minWidth: layout.minTouchTarget, height: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(234,244,216,.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,.09)' },
+  iconButton: { width: layout.minTouchTarget, height: layout.minTouchTarget, alignItems: 'center', justifyContent: 'center' },
+  scheduleMonth: { fontFamily: fonts.medium, fontSize: 16, lineHeight: 22, color: colors.text, flex: 1 },
+  daysScroll: { flexGrow: 0, flexShrink: 0 },
+  daysRow: { minWidth: '100%', flexGrow: 1, flexDirection: 'row', justifyContent: 'space-between', gap: 3 },
+  dayButton: { flex: 1, width: layout.minTouchTarget, minWidth: layout.minTouchTarget, height: 58, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   dayButtonLandscape: { height: layout.minTouchTarget, borderRadius: 15 },
   dayButtonActive: { backgroundColor: '#F5F6F0', borderColor: '#FFFFFF' },
   dayButtonPressed: { transform: [{ scale: .96 }] },
-  dayName: { ...typography.label, color: 'rgba(255,255,255,.72)' },
-  dayNumber: { ...typography.bodyStrong, marginTop: 1, color: '#FFFFFF' },
+  dayName: { fontFamily: fonts.medium, fontSize: 10, lineHeight: 14, color: colors.textMuted },
+  dayNumber: { fontFamily: fonts.bold, fontSize: 19, lineHeight: 25, marginTop: 3, color: colors.text },
   dayTextActive: { color: '#0A0E11' },
   dayMatchDot: { width: 4, height: 4, marginTop: 1, borderRadius: 2, backgroundColor: 'transparent' },
   dayMatchDotVisible: { backgroundColor: colors.volt },

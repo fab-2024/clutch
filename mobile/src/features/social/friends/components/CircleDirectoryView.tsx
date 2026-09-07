@@ -94,7 +94,6 @@ export default function CircleDirectoryView({
           />
           <View style={styles.sectionHeading}>
             <View>
-              <Text style={styles.sectionEyebrow}>RÉPERTOIRE</Text>
               <Text style={styles.sectionTitle}>TOUS TES AMIS</Text>
             </View>
             <Text style={styles.sectionMeta}>{loading ? '—' : `${data.amis.length} JOUEUR${data.amis.length === 1 ? '' : 'S'}`}</Text>
@@ -139,7 +138,6 @@ function SearchPanel({
   const hasQuery = search.trim().length >= 2;
   return (
     <Surface border="subtle" padding="md" radius="lg" tone="low" testID="circle-search-panel">
-      <Text style={styles.searchEyebrow}>AGRANDIR TON CERCLE</Text>
       <Text style={styles.searchTitle}>Trouve un joueur.</Text>
       <View style={styles.searchInputShell}>
         <Search color={colors.textSecondary} size={19} strokeWidth={2} />
@@ -343,10 +341,6 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     paddingBottom: spacing.sm,
   },
-  searchEyebrow: {
-    ...typography.control,
-    color: colors.volt,
-  },
   searchTitle: {
     ...typography.sectionTitle,
     marginTop: 2,
@@ -412,10 +406,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     gap: spacing.sm,
-  },
-  sectionEyebrow: {
-    ...typography.control,
-    color: colors.volt,
   },
   sectionTitle: {
     ...typography.cardTitle,

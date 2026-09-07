@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { memo, useCallback, useEffect, useState, type ReactNode } from 'react';
@@ -161,56 +160,42 @@ function RankHeader({
   section: Section;
 }) {
   const compact = useWindowDimensions().width <= 340;
-  const [seasonTitle, ...seasonDetails] = (dashboard?.season?.name ?? 'SAISON').split(' · ');
+  const [, ...seasonDetails] = (dashboard?.season?.name ?? 'SAISON').split(' · ');
 
   return (
     <View style={styles.headerStack}>
       <GriffHeader leading={<ProfileHeaderButton preview={preview} />} variant="wallet" />
 
-      <View style={styles.intro}>
-        <Text style={styles.eyebrow}>RANK // {seasonTitle.toUpperCase()}</Text>
-        {seasonDetails.length ? <Text style={styles.seasonDetail}>{seasonDetails.join(' · ').toUpperCase()}</Text> : null}
-      </View>
+      {seasonDetails.length ? (
+        <View style={styles.intro}>
+          <Text style={styles.seasonDetail}>{seasonDetails.join(' · ').toUpperCase()}</Text>
+        </View>
+      ) : null}
 
       <View accessibilityRole="tablist" style={styles.tabs}>
-        <LinearGradient
-          colors={['rgba(172,209,232,.16)', 'rgba(9,25,37,0)', 'rgba(68,128,166,.12)']}
-          locations={[0, 0.45, 1]}
-          pointerEvents="none"
-          style={styles.tabsReflection}
-        />
-        <View pointerEvents="none" style={styles.tabsInnerRim} />
         {SECTIONS.map((item) => (
           <Pressable
             key={item.key}
             accessibilityRole="tab"
             accessibilityState={{ selected: section === item.key }}
             onPress={() => onSection(item.key)}
-            style={({ pressed }) => [styles.tab, section === item.key && styles.tabActive, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.tab, pressed && styles.pressed]}
           >
-            {section === item.key ? (
-              <>
-                <LinearGradient
-                  colors={['rgba(98,178,255,.32)', 'rgba(7,25,44,0)', 'rgba(54,125,225,.2)']}
-                  locations={[0, 0.46, 1]}
-                  pointerEvents="none"
-                  style={styles.tabReflection}
-                />
-                <View pointerEvents="none" style={styles.tabHighlight} />
-              </>
-            ) : null}
-            <Text
-              adjustsFontSizeToFit
-              minimumFontScale={0.68}
-              numberOfLines={1}
-              style={[
-                styles.tabText,
-                compact && styles.tabTextCompact,
-                section === item.key && styles.tabTextActive,
-              ]}
-            >
-              {item.label}
-            </Text>
+            <View style={styles.tabLabelWrap}>
+              <Text
+                adjustsFontSizeToFit
+                minimumFontScale={0.68}
+                numberOfLines={1}
+                style={[
+                  styles.tabText,
+                  compact && styles.tabTextCompact,
+                  section === item.key && styles.tabTextActive,
+                ]}
+              >
+                {item.label}
+              </Text>
+              {section === item.key ? <View pointerEvents="none" style={styles.tabUnderline} /> : null}
+            </View>
           </Pressable>
         ))}
       </View>
@@ -292,7 +277,6 @@ function SeasonSection({
       <View style={styles.recordCard}>
         <View style={styles.cardHeading}>
           <View>
-            <Text style={styles.cardEyebrow}>TRACE DE SAISON</Text>
             <Text style={styles.cardTitle}>Ton meilleur passage reste inscrit.</Text>
           </View>
           <Text style={[styles.recordAccent, { color: accent }]}>◆</Text>
@@ -312,7 +296,6 @@ function RulesCard({ rules }: { rules: RankRules }) {
     <View style={styles.rulesCard}>
       <View style={styles.cardHeading}>
         <View>
-          <Text style={styles.cardEyebrow}>RÈGLES DU RATING</Text>
           <Text style={styles.cardTitle}>Simple à lire, impossible à acheter.</Text>
         </View>
         <Text style={styles.rulesVersion}>V1</Text>
@@ -340,7 +323,6 @@ function RecentMovements({ movements }: { movements: RankMovement[] }) {
     <View style={styles.movementCard}>
       <View style={styles.cardHeading}>
         <View>
-          <Text style={styles.cardEyebrow}>DERNIERS MOUVEMENTS</Text>
           <Text style={styles.cardTitle}>Chaque verdict laisse une trace.</Text>
         </View>
         <Text style={styles.movementCount}>{movements.length}</Text>
@@ -430,7 +412,6 @@ function LeaderboardList({
 
             <View style={styles.boardHeading}>
               <View>
-                <Text style={styles.cardEyebrow}>LADDER · {scopeLabel.toUpperCase()}</Text>
                 <Text style={styles.cardTitle}>LE CLASSEMENT.</Text>
               </View>
               <Text style={styles.boardCount}>{rows.length}</Text>
@@ -545,7 +526,6 @@ function RewardsSection({ dashboard }: { dashboard: RankDashboard }) {
           <RankEmblem grade={state?.bestGrade ?? state?.grade} size={compact ? 88 : 104} />
         </View>
         <View style={styles.rewardIntroCopy}>
-          <Text style={styles.cardEyebrow}>MEILLEUR GRADE ATTEINT</Text>
           <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={styles.rewardTitle}>
             {state?.bestGrade?.libelle?.toUpperCase() || state?.grade.libelle?.toUpperCase() || 'BRONZE'}
           </Text>
@@ -565,7 +545,6 @@ function RewardsSection({ dashboard }: { dashboard: RankDashboard }) {
       </View>
 
       <View style={styles.conservationCard}>
-        <Text style={styles.cardEyebrow}>FIN DE SAISON</Text>
         <Text style={styles.cardTitle}>Ton rating repart. Ta marque reste.</Text>
         <Text style={styles.cardCopy}>La récompense dépend du meilleur grade atteint. XP, objets, badges historiques et records restent sur ton profil.</Text>
       </View>
@@ -712,16 +691,8 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     flexDirection: 'row',
     alignItems: 'baseline',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     gap: spacing.sm,
-  },
-  eyebrow: {
-    flexShrink: 1,
-    fontFamily: fonts.displayBold,
-    fontSize: 15,
-    lineHeight: 19,
-    color: colors.volt,
-    letterSpacing: 1,
   },
   seasonDetail: {
     flexShrink: 1,
@@ -732,73 +703,13 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     letterSpacing: 0.6,
   },
-  tabs: {
-    marginHorizontal: spacing.md,
-    padding: 5,
-    flexDirection: 'row',
-    borderRadius: radius.pill,
-    backgroundColor: '#071721',
-    borderWidth: 1,
-    borderColor: '#456478',
-    boxShadow: 'inset 0 1px 2px rgba(191,223,244,.16), 0 8px 18px rgba(0,0,0,.22)',
-  },
-  tabsReflection: {
-    ...StyleSheet.absoluteFill,
-    borderRadius: radius.pill,
-  },
-  tabsInnerRim: {
-    position: 'absolute',
-    top: 4,
-    bottom: 4,
-    left: 5,
-    right: 5,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: 'rgba(87,140,181,.2)',
-    boxShadow: 'inset 0 2px 5px rgba(137,190,226,.16), inset 0 -2px 5px rgba(73,143,214,.2)',
-  },
-  tab: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 44,
-    paddingHorizontal: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  tabActive: {
-    backgroundColor: '#071A2C',
-    borderColor: '#87C1FF',
-    boxShadow: 'inset 0 2px 7px rgba(119,190,255,.65), inset 0 -2px 7px rgba(45,119,232,.62), 0 0 8px rgba(66,144,252,.34)',
-  },
-  tabReflection: {
-    ...StyleSheet.absoluteFill,
-    borderRadius: radius.pill,
-  },
-  tabHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 17,
-    right: 17,
-    height: 1,
-    backgroundColor: 'rgba(217,237,255,.65)',
-  },
-  tabText: {
-    fontFamily: fonts.medium,
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-  tabTextCompact: {
-    fontSize: 11,
-  },
-  tabTextActive: {
-    fontFamily: fonts.bold,
-    color: '#AED4FF',
-  },
+  tabs: { marginHorizontal: spacing.md, flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: 'rgba(143,156,176,.22)' },
+  tab: { flex: 1, minWidth: 0, minHeight: 50, paddingHorizontal: 4, paddingVertical: 8, alignItems: 'center', justifyContent: 'center' },
+  tabLabelWrap: { maxWidth: '100%', paddingBottom: 8 },
+  tabUnderline: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, borderRadius: 2, backgroundColor: colors.text },
+  tabText: { fontFamily: fonts.medium, color: colors.textMuted, fontSize: 15, lineHeight: 22, textAlign: 'center' },
+  tabTextCompact: { fontSize: 13 },
+  tabTextActive: { fontFamily: fonts.bold, color: colors.text },
   stateInset: { marginHorizontal: spacing.md },
   sectionStack: {
     gap: 13,
@@ -843,13 +754,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
   },
-  cardEyebrow: {
-    ...typography.eyebrow,
-    color: colors.volt,
-  },
   cardTitle: {
     ...typography.cardTitle,
-    marginTop: 4,
     color: colors.text,
   },
   cardCopy: {
@@ -984,31 +890,11 @@ const styles = StyleSheet.create({
     minHeight: 70,
     flexDirection: 'row',
   },
-  scopeTabs: {
-    padding: 4,
-    flexDirection: 'row',
-    borderRadius: 17,
-    backgroundColor: '#111A22',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  scopeTab: {
-    flex: 1,
-    minHeight: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 13,
-  },
-  scopeTabActive: {
-    backgroundColor: '#1B2412',
-  },
-  scopeText: {
-    ...typography.label,
-    color: colors.textMuted,
-  },
-  scopeTextActive: {
-    color: colors.volt,
-  },
+  scopeTabs: { flexDirection: 'row', gap: 10 },
+  scopeTab: { flex: 1, minHeight: 44, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 22, borderWidth: 1, borderColor: 'rgba(143,156,176,.24)' },
+  scopeTabActive: { backgroundColor: 'rgba(143,156,176,.08)', borderColor: 'rgba(235,241,247,.6)' },
+  scopeText: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 20, color: colors.textMuted },
+  scopeTextActive: { color: colors.text },
   leaderboardHeader: {
     marginHorizontal: spacing.md,
     paddingTop: 17,

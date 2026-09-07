@@ -77,115 +77,118 @@ export default function FactionRelicHeroV2({
   }
 
   return (
-    <View style={styles.hero}>
-      <LinearGradient
-        colors={['#03090E', '#02070B', '#010407', '#020508']}
-        end={{ x: .8, y: 1 }}
-        start={{ x: .1, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={[styles.heroAura, { backgroundColor: signature.aura, boxShadow: signature.glow }]} />
-      <View style={styles.coldAura} />
-
-      <CollectiveRelic
-        compact
-        faction={faction}
-        instabilityPreviewOverride={instabilityPreviewOverride}
-        mutation={mutation}
-        onDiagnosticsChange={onRelicDiagnosticsChange}
-        onMutationPresented={onMutationPresented}
-        onSupporterContributionPresented={onSupporterContributionPresented}
-        progress={progress}
-        supporterContribution={supporterContribution}
-      />
-
-      <View style={styles.identity}>
-        <View style={styles.factionSeal}>
+    <>
+      <View style={styles.identityHeader}>
+        <View style={styles.identity}>
+          <View style={styles.factionSeal}>
+            {faction ? (
+              <TeamLogo accent={colors.volt} contentScale={1} frameless name={faction.nom} size={60} tag={faction.tag} uri={faction.logo} />
+            ) : (
+              <Text style={styles.relicQuestion}>?</Text>
+            )}
+          </View>
+          <View style={styles.identityCopy}>
+            <Text adjustsFontSizeToFit minimumFontScale={.8} numberOfLines={1} style={styles.factionName}>{faction?.nom.toUpperCase() ?? 'AUCUNE FACTION'}</Text>
+            <Text numberOfLines={2} style={styles.factionMeta}>
+              {faction
+                ? `${gameLabel(faction.jeu)} · ${formatNumber(progress.charge)} MEMBRE${progress.charge > 1 ? 'S' : ''}`
+                : 'UNE RELIQUE ATTEND TES COULEURS'}
+            </Text>
+          </View>
           {faction ? (
-            <TeamLogo accent={colors.volt} name={faction.nom} size={34} tag={faction.tag} uri={faction.logo} />
-          ) : (
-            <Text style={styles.relicQuestion}>?</Text>
-          )}
+            <View style={styles.growthBlock}>
+              <Text style={styles.growthLabel}>ÉVOLUTION · 7 J</Text>
+              <Text style={styles.growthValue}>{signed(faction.croissance_7j)}</Text>
+            </View>
+          ) : null}
         </View>
-        <View style={styles.identityCopy}>
-          <Text numberOfLines={1} style={styles.factionName}>{faction?.nom.toUpperCase() ?? 'AUCUNE FACTION'}</Text>
-          <Text numberOfLines={2} style={styles.factionMeta}>
-            {faction
-              ? `${gameLabel(faction.jeu)} · ${formatNumber(progress.charge)} MEMBRE${progress.charge > 1 ? 'S' : ''}`
-              : 'UNE RELIQUE ATTEND TES COULEURS'}
-          </Text>
-        </View>
+      </View>
+      <View style={styles.hero}>
+        <LinearGradient
+          colors={['#03090E', '#02070B', '#010407', '#020508']}
+          end={{ x: .8, y: 1 }}
+          start={{ x: .1, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={[styles.heroAura, { backgroundColor: signature.aura, boxShadow: signature.glow }]} />
+        <View style={styles.coldAura} />
+
+        <CollectiveRelic
+          compact
+          faction={faction}
+          instabilityPreviewOverride={instabilityPreviewOverride}
+          mutation={mutation}
+          onDiagnosticsChange={onRelicDiagnosticsChange}
+          onMutationPresented={onMutationPresented}
+          onSupporterContributionPresented={onSupporterContributionPresented}
+          progress={progress}
+          supporterContribution={supporterContribution}
+        />
+
         {faction ? (
-          <View style={styles.growthBlock}>
-            <Text style={styles.growthLabel}>ÉVOLUTION · 7 J</Text>
-            <Text style={styles.growthValue}>{signed(faction.croissance_7j)}</Text>
+          <View style={styles.progressBlock}>
+            <Text style={styles.relicForm}>RELIQUE · {progress.current.name.toUpperCase()}</Text>
+            <View
+              accessibilityLabel={`${formatNumber(progress.charge)} supporters sur ${formatNumber(progress.objective)}`}
+              accessibilityRole="progressbar"
+              accessibilityValue={{
+                max: progress.objective,
+                min: progress.tierStart,
+                now: Math.min(progress.charge, progress.objective),
+                text: progress.max
+                  ? 'Forme terminale'
+                  : `${formatNumber(progress.remaining)} avant ${progress.next?.name ?? 'la prochaine forme'}`,
+              }}
+              style={styles.progressMeter}
+            >
+              <RelicProgressArcs />
+              <View style={styles.progressContent}>
+                <Text
+                  adjustsFontSizeToFit
+                  minimumFontScale={.68}
+                  numberOfLines={1}
+                  style={styles.progressCount}
+                >
+                  <Text style={styles.progressCharge}>{progress.max ? '10 000+' : formatNumber(progress.charge)}</Text>
+                  {!progress.max ? <Text style={styles.progressObjective}> / {formatNumber(progress.objective)}</Text> : null}
+                </Text>
+                <Text
+                  adjustsFontSizeToFit
+                  minimumFontScale={.72}
+                  numberOfLines={1}
+                  style={styles.thresholdText}
+                >
+                  <Text style={styles.thresholdValue}>{progress.max ? 'MAX' : formatNumber(progress.remaining)}</Text>
+                  <Text style={styles.thresholdLabel}>
+                    {progress.max ? '  FORME TERMINALE' : `  AVANT ${progress.next?.name.toUpperCase()}`}
+                  </Text>
+                </Text>
+              </View>
+            </View>
+
+            <Pressable
+              accessibilityHint={`Partage une invitation à rejoindre ${faction.nom}`}
+              accessibilityLabel="Inviter des supporters"
+              accessibilityRole="button"
+              onPress={() => void inviteSupporters()}
+              style={({ pressed }) => [styles.inviteButton, pressed && styles.pressed]}
+            >
+              <LinearGradient
+                colors={['#EEF933', '#D8E91D', '#B8CC12']}
+                end={{ x: 1, y: 1 }}
+                start={{ x: 0, y: 0 }}
+                style={styles.inviteSurface}
+              >
+                <SupporterInviteIcon />
+                <Text numberOfLines={2} style={styles.inviteText}>INVITER DES SUPPORTERS</Text>
+              </LinearGradient>
+            </Pressable>
+
+            <FactionEvolutionRail comfortable progress={progress} />
           </View>
         ) : null}
       </View>
-
-      {faction ? (
-        <View style={styles.progressBlock}>
-          <Text style={styles.relicForm}>RELIQUE · {progress.current.name.toUpperCase()}</Text>
-          <View
-            accessibilityLabel={`${formatNumber(progress.charge)} supporters sur ${formatNumber(progress.objective)}`}
-            accessibilityRole="progressbar"
-            accessibilityValue={{
-              max: progress.objective,
-              min: progress.tierStart,
-              now: Math.min(progress.charge, progress.objective),
-              text: progress.max
-                ? 'Forme terminale'
-                : `${formatNumber(progress.remaining)} avant ${progress.next?.name ?? 'la prochaine forme'}`,
-            }}
-            style={styles.progressMeter}
-          >
-            <RelicProgressArcs />
-            <View style={styles.progressContent}>
-              <Text
-                adjustsFontSizeToFit
-                minimumFontScale={.68}
-                numberOfLines={1}
-                style={styles.progressCount}
-              >
-                <Text style={styles.progressCharge}>{progress.max ? '10 000+' : formatNumber(progress.charge)}</Text>
-                {!progress.max ? <Text style={styles.progressObjective}> / {formatNumber(progress.objective)}</Text> : null}
-              </Text>
-              <Text
-                adjustsFontSizeToFit
-                minimumFontScale={.72}
-                numberOfLines={1}
-                style={styles.thresholdText}
-              >
-                <Text style={styles.thresholdValue}>{progress.max ? 'MAX' : formatNumber(progress.remaining)}</Text>
-                <Text style={styles.thresholdLabel}>
-                  {progress.max ? '  FORME TERMINALE' : `  AVANT ${progress.next?.name.toUpperCase()}`}
-                </Text>
-              </Text>
-            </View>
-          </View>
-
-          <Pressable
-            accessibilityHint={`Partage une invitation à rejoindre ${faction.nom}`}
-            accessibilityLabel="Inviter des supporters"
-            accessibilityRole="button"
-            onPress={() => void inviteSupporters()}
-            style={({ pressed }) => [styles.inviteButton, pressed && styles.pressed]}
-          >
-            <LinearGradient
-              colors={['#EEF933', '#D8E91D', '#B8CC12']}
-              end={{ x: 1, y: 1 }}
-              start={{ x: 0, y: 0 }}
-              style={styles.inviteSurface}
-            >
-              <SupporterInviteIcon />
-              <Text numberOfLines={2} style={styles.inviteText}>INVITER DES SUPPORTERS</Text>
-            </LinearGradient>
-          </Pressable>
-
-          <FactionEvolutionRail comfortable progress={progress} />
-        </View>
-      ) : null}
-    </View>
+    </>
   );
 }
 
@@ -286,36 +289,33 @@ const styles = StyleSheet.create({
     boxShadow: '0 0 84px rgba(32,140,162,.055)',
   },
   relicQuestion: { ...typography.metricSmall, color: colors.text },
+  identityHeader: { marginHorizontal: -18, paddingVertical: 12 },
   identity: {
     zIndex: 4,
-    minHeight: 62,
-    marginHorizontal: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    minHeight: 96,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    borderRadius: 11,
+    gap: 12,
+    borderRadius: 14,
     backgroundColor: 'rgba(4,9,13,.96)',
     borderWidth: 1,
     borderColor: '#2B3A43',
   },
   factionSeal: {
-    width: 45,
-    height: 45,
-    borderRadius: 10,
+    width: 60,
+    height: 60,
+    flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0B1218',
-    borderWidth: 1,
-    borderColor: colors.volt,
   },
   identityCopy: { flex: 1, minWidth: 0 },
-  factionName: { ...typography.bodyStrong, color: '#F8F9F7', letterSpacing: .1 },
-  factionMeta: { ...typography.caption, marginTop: 2, color: '#8D99A2' },
+  factionName: { ...typography.bodyStrong, fontSize: 18, lineHeight: 24, color: '#F8F9F7', letterSpacing: .1 },
+  factionMeta: { ...typography.caption, fontSize: 11, lineHeight: 16, marginTop: 3, color: '#8D99A2' },
   growthBlock: { flexShrink: 0, alignItems: 'flex-end' },
-  growthLabel: { ...typography.label, color: colors.textMuted, letterSpacing: .15 },
-  growthValue: { ...typography.metricSmall, marginTop: 1, color: colors.text },
+  growthLabel: { ...typography.label, fontSize: 11, lineHeight: 16, color: colors.textMuted, letterSpacing: .15 },
+  growthValue: { ...typography.metricSmall, fontSize: 26, lineHeight: 30, marginTop: 2, color: colors.text },
   progressBlock: { zIndex: 4, marginTop: 8 },
   relicForm: {
     marginHorizontal: 18,

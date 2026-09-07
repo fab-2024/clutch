@@ -40,6 +40,7 @@ import { styles } from './MatchesScreen.styles';
 import { InlinePredictionPanel } from './InlinePredictionPanel';
 import { MyCallsPanel } from './MyCallsPanel';
 import { ArenaFilters } from './MatchesFilters';
+import { MatchesHeader } from './MatchesHeader';
 
 const GAME_GLOBAL_BACKGROUNDS = {
   followed: require('../../../../assets/matches/matches-followed-global-background.jpg'),
@@ -209,6 +210,18 @@ export function MatchesExperience({
           variant="wallet"
         />
 
+        <MatchesHeader
+          query={query}
+          searchOpen={searchOpen}
+          onQueryChange={setQuery}
+          onRefresh={onRefresh}
+          onShowCalls={() => { setCallsOnly(true); setExpandedPredictionId(null); }}
+          onToggleSearch={() => {
+            setSearchOpen((current) => !current);
+            if (searchOpen) setQuery('');
+          }}
+        />
+
         {duelRivalId ? (
           <View style={styles.targetedDuelBanner}>
             <View style={styles.targetedDuelCopy}>
@@ -233,30 +246,20 @@ export function MatchesExperience({
             }}
             onGameChange={changeGame}
             onStatusChange={changeStatus}
-          />
-        </View>
-
-        <View>
-          <ScheduleHero
-            activeDayKey={activeDayKey}
-            calendarDays={calendarDays}
-            matches={filtered}
-            monthLabel={formatMonth(activeDate)}
-            query={query}
-            searchOpen={searchOpen}
-            status={status}
-            game={game}
-            onQueryChange={setQuery}
-            onSelectDay={(dayKey) => {
-              setSelectedDayKey(dayKey);
-              setExpandedPredictionId(null);
-            }}
-            onToggleHistory={() => changeStatus(status === 'upcoming' ? 'finished' : 'upcoming')}
-            onToggleSearch={() => {
-              setSearchOpen((current) => !current);
-              if (searchOpen) setQuery('');
-            }}
-          />
+          >
+            <ScheduleHero
+              activeDayKey={activeDayKey}
+              calendarDays={calendarDays}
+              matches={filtered}
+              monthLabel={formatMonth(activeDate)}
+              status={status}
+              onSelectDay={(dayKey) => {
+                setSelectedDayKey(dayKey);
+                setExpandedPredictionId(null);
+              }}
+              onToggleHistory={() => changeStatus(status === 'upcoming' ? 'finished' : 'upcoming')}
+            />
+          </ArenaFilters>
         </View>
 
         {error ? (

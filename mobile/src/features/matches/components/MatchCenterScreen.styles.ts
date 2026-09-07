@@ -10,6 +10,7 @@ export const styles = StyleSheet.create({
   backButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 10 },
   backArrow: { color: colors.text, fontSize: 19, fontWeight: '800' },
   backText: { ...typography.control, color: colors.textMuted, letterSpacing: .5 },
+  finishedBackText: { ...typography.body, fontSize: 16, lineHeight: 22, color: colors.text },
   pickerBackArrow: { color: colors.volt },
   pickerBackText: { color: colors.text, fontSize: 13, letterSpacing: .25 },
   brand: { ...typography.bodyStrong, color: colors.volt, fontSize: 14, letterSpacing: 1 },

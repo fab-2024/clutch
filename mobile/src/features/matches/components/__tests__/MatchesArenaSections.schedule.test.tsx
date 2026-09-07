@@ -40,22 +40,17 @@ describe('ScheduleHero', () => {
         calendarDays={calendarDays}
         matches={[]}
         monthLabel="AOÛT 2026"
-        onQueryChange={jest.fn()}
         onSelectDay={onSelectDay}
         onToggleHistory={jest.fn()}
-        onToggleSearch={jest.fn()}
-        query=""
-        searchOpen={false}
         status="upcoming"
-        game="followed"
       />,
     );
 
     const heroStyle = StyleSheet.flatten(screen.getByTestId('matches-schedule-hero').props.style);
     expect(heroStyle.minHeight).toBeGreaterThanOrEqual(120);
     expect(heroStyle.minHeight).toBeLessThanOrEqual(160);
-    expect(heroStyle.paddingBottom).toBe(20);
-    expect(screen.getByText('PROCHAINS MATCHS')).toBeTruthy();
+    expect(heroStyle.paddingBottom).toBe(14);
+    expect(screen.queryByText('PROCHAINS MATCHS')).toBeNull();
     expect(screen.getByText('AOÛT 2026')).toBeTruthy();
 
     const dayButtons = screen.getAllByRole('button').filter(
