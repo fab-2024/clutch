@@ -198,6 +198,7 @@ export function MatchArenaHero({
 
       {!picker && showProjection && choiceA && choiceB ? (
         <Animated.View style={detailStyle}>
+          <Text style={styles.probabilityText}>ESTIMATION CLUTCH</Text>
           <ProbabilityBar a={choiceA} b={choiceB} tagA={match.tag_a} tagB={match.tag_b} />
         </Animated.View>
       ) : null}

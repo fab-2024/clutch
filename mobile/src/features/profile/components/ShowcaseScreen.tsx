@@ -32,6 +32,7 @@ import {
   applyAtelierTry,
   applyPreviewAtelierAction,
   atelierPrimaryAction,
+  atelierRuntimeItems,
   equippedAtelierIds,
   resolveAtelierSceneConfig,
   type AtelierSceneConfig,
@@ -312,8 +313,8 @@ export default function ShowcaseScreen({
     [ownedItems],
   );
   const atelierRuntimeById = useMemo(
-    () => new Map((shopData?.items ?? []).map((item) => [item.id, item])),
-    [shopData?.items],
+    () => new Map(atelierRuntimeItems(shopData).map((item) => [item.id, item])),
+    [shopData],
   );
   const atelierEquippedIds = useMemo(
     () => equippedAtelierIds(shopData?.equipped ?? profileData?.cosmetics),

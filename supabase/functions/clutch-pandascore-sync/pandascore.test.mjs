@@ -4,6 +4,8 @@ import test from 'node:test';
 import {
   buildPandaScoreRequests,
   fetchPandaScoreFeed,
+  fetchPandaScoreHistory,
+  gamesNeedingHistory,
   normalizePandaScoreFeed,
   normalizePandaScoreMatch,
 } from './pandascore.js';
@@ -77,6 +79,7 @@ test('normalizes a BO7 Rocket League result in opponent order', () => {
     game: 'rocket_league',
     status: 'finished',
     begin_at: '2026-08-30T14:00:00.000Z',
+    forfeit: false,
     format: 7,
     event_external_id: 'tournament:61',
     event_name: 'RLCS · World Championship',
@@ -155,4 +158,47 @@ test('derives a stable tag and rejects non-HTTPS logos', () => {
   assert.equal(result.ok, true);
   assert.equal(result.value.team_a_tag, 'GMA');
   assert.equal(result.value.team_a_logo, null);
+});
+
+
+test('history paginates until the 90-day boundary and never feeds settlement fixtures', async () => {
+  const calls = [];
+  const history = await fetchPandaScoreHistory('test-token', {
+    games: ['lol'], now: new Date('2026-09-07T12:00:00Z'),
+    fetchImpl: async (url) => {
+      calls.push(new URL(url));
+      const page = Number(new URL(url).searchParams.get('page[number]'));
+      return new Response(JSON.stringify(Array.from({ length: 100 }, (_, i) => ({
+        ...finishedRocketLeagueMatch, id: page * 100 + i,
+        begin_at: page === 1 ? '2026-08-30T14:00:00Z' : '2026-01-01T14:00:00Z',
+      }))));
+    },
+  });
+  assert.equal(history.requests, 2);
+  assert.equal(history.responses[0].matches.length, 100);
+  assert.equal(history.coverage.lol, '2026-06-09T12:00:00.000Z');
+  assert.equal(calls[1].searchParams.get('page[number]'), '2');
+  assert.equal(calls[0].pathname, '/lol/matches/past');
+});
+
+test('a truncated or failed history cannot mark the model ready', async () => {
+  const truncated = await fetchPandaScoreHistory('test', {
+    games: ['lol'], maxPages: 1, now: new Date('2026-09-07'),
+    fetchImpl: async () => new Response(JSON.stringify(Array(100).fill(finishedRocketLeagueMatch))),
+  });
+  assert.deepEqual(truncated.coverage, {});
+  assert.deepEqual(truncated.responses, []);
+  assert.equal(truncated.errors[0].error, 'history_page_limit');
+  const failed = await fetchPandaScoreHistory('test', { games: ['lol'], fetchImpl: async () => new Response('', { status: 429 }) });
+  assert.deepEqual(failed.coverage, {});
+  assert.equal(failed.errors[0].error, 'history_http_429');
+});
+
+test('recent history is reused and an aging model refreshes before expiry', () => {
+  const now = new Date('2026-09-07T12:00:00Z');
+  assert.deepEqual(gamesNeedingHistory({ lol: { synced_at: '2026-09-07T10:00:00Z' }, valorant: { synced_at: '2026-09-06T12:00:00Z' } }, ['lol','valorant','rocket_league'], now), ['valorant','rocket_league']);
+});
+
+test('forfeits remain identifiable and are excluded by the history importer', () => {
+  assert.equal(normalizePandaScoreMatch({ ...finishedRocketLeagueMatch, forfeit: true }, 'rocket_league').value.forfeit, true);
 });

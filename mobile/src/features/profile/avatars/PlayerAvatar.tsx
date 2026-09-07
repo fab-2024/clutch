@@ -1,6 +1,7 @@
 import { Image, StyleSheet, View } from 'react-native';
 
 import { CosmeticAvatar } from '@/src/features/shop/components/CosmeticRenderer';
+import { profileAvatarArtworkSize } from '@/src/features/shop/profileFrameArtwork';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 
 import { playerAvatarById, type PlayerAvatar as PlayerAvatarItem } from './catalog';
@@ -19,7 +20,7 @@ export default function PlayerAvatar({
   size = 48,
 }: PlayerAvatarProps) {
   const avatar = playerAvatarById(avatarId);
-  const artworkSize = Math.max(18, size - 6);
+  const artworkSize = profileAvatarArtworkSize(cosmetics, size);
 
   return (
     <CosmeticAvatar

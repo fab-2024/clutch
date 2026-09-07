@@ -80,3 +80,51 @@ npm run db:advisors
 Le test JavaScript couvre les trois flux gratuits, la normalisation et le BO7.
 Le contrat SQL vérifie création, démarrage, règlement idempotent, correction,
 provenance et journal d'audit.
+
+## Elo historique et ouverture des calls (V2)
+
+Le classement des joueurs conserve sa formule : `40 × (résultat − probabilité)`,
+avec une probabilité de scoring bornée à 15–85 %. L'Elo des équipes est un modèle
+séparé, alimenté par les résultats de série, sans attribuer de Frags ni créer de
+matchs jouables lors du rattrapage historique.
+
+- Historique glissant de 90 jours, indépendant des saisons Clutch ; pagination
+  par jeu jusqu'au début de la fenêtre, au maximum 30 pages de 100 matchs.
+- Une fenêtre tronquée ou en erreur n'active pas le modèle. La réponse de
+  synchronisation expose `history_errors` pour diagnostiquer ce cas.
+- Rattrapage au premier cycle, puis rafraîchissement après 23 heures. Les
+  résultats récents et leurs corrections sont réintégrés à chaque cycle.
+- Relecture chronologique déterministe par jeu, initialisation à 1500, K équipe
+  de 24 et échelle de 400 ; le résultat observé est la proportion de maps
+  gagnées. La distribution BO1/3/5/7 produit la probabilité de gagner la série.
+- Au moins cinq séries par équipe et une fenêtre synchronisée depuis moins de
+  24 heures sont nécessaires avant d'ouvrir un nouveau call PandaScore.
+- Le premier affichage du barème (ou le premier appel direct de placement)
+  constitue l'ouverture : verrouillage de la ligne match et enregistrement
+  d'une seule estimation commune. Ce barème est ensuite immuable, même si le
+  modèle évolue. Les estimations non publiables renvoient `status: preparing`
+  et aucun choix jouable. Un match déjà commencé n'obtient pas d'estimation
+  rétroactive.
+- La migration conserve les snapshots des matchs commencés et de tous les
+  matchs ayant un call, y compris annulé. Elle retire seulement les anciens
+  snapshots Elo V1 des matchs PandaScore futurs sans call.
+- Les Elo historiques résident dans le schéma privé et ne modifient pas
+  `equipes.elo`, utilisé par les contrats historiques. Les RPC d'import et de
+  diagnostic sont réservées à `service_role`, sans accès client aux tables.
+
+Les diagnostics `clutch_elo_status_v2()` donnent le nombre de matchs et le score
+Brier prédit avant chaque résultat, comparé au modèle constant 50/50. Ces
+mesures servent à évaluer la calibration par jeu ; cinq matchs constituent un
+seuil de disponibilité, pas une preuve de qualité prédictive. Aucun bonus
+arbitraire n'est appliqué selon la popularité du match ou les votes.
+
+L'interface distingue **Estimation Clutch** (utilisée pour les Frags) et
+**Votes communauté**. Sans votes, elle affiche l'absence de calls.
+
+Validation : `npm run pandascore:test` et
+`supabase/tests/historical_elo_call_opening.sql` (transaction annulée).
+La migration et l'Edge Function doivent être activées ensemble. Appliquer
+uniquement la migration V2 validée, puis déployer `clutch-pandascore-sync` en
+conservant la vérification JWT. Déclencher le cycle existant
+`private.clutch_cycle_pandascore_v1()` sans extraire ses secrets et contrôler
+les diagnostics avant de publier les premiers barèmes.

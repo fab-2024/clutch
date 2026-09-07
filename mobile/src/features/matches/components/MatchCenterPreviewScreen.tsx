@@ -27,8 +27,8 @@ export const PREVIEW_MATCH_CENTER: MatchCenterData = {
   projection: {
     match_id: 'preview-open-g2-fnc',
     choix: [
-      { cle: 'a', proba: 0.57, gain: 19, perte: 23 },
-      { cle: 'b', proba: 0.43, gain: 23, perte: 19 },
+      { cle: 'a', proba: 0.57, gain: 17, perte: -23 },
+      { cle: 'b', proba: 0.43, gain: 23, perte: -17 },
     ],
     k: 40,
     source: 'modèle_clutch',
@@ -155,11 +155,11 @@ function livePreview(data: MatchCenterData): MatchCenterData {
     projection: {
       match_id: 'preview-live-kc-vit',
       choix: [
-        { cle: 'a', proba: .71, gain: 17, perte: 25 },
-        { cle: 'b', proba: .29, gain: 25, perte: 17 },
+        { cle: 'a', proba: .65, gain: 14, perte: -26 },
+        { cle: 'b', proba: .35, gain: 26, perte: -14 },
       ],
-      k: 60,
-      source: 'elo_v1',
+      k: 40,
+      source: 'elo_history_v2',
       figee_le: startedAt,
     },
     prediction: null,

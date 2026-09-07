@@ -199,7 +199,7 @@ export function InlinePredictionPanel({
   if (!open || !projectionA || !projectionB) {
     return (
       <InlinePredictionState
-        copy={open ? 'Le barème de ce match sera bientôt disponible.' : 'Les calls sont fermés pour cette affiche.'}
+        copy={open ? (data?.projection?.status === 'preparing' ? 'Historique insuffisant ou en cours de mise à jour. Les calls ouvriront dès que l’estimation sera prête.' : 'Le barème de ce match sera bientôt disponible.') : 'Les calls sont fermés pour cette affiche.'}
         match={activeMatch}
         onClose={onClose}
         title={open ? 'BARÈME EN PRÉPARATION' : 'PRONOSTICS FERMÉS'}

@@ -70,6 +70,8 @@ export const INDIVIDUAL_COLLECTION_PRODUCTS: readonly AtelierProduct[] = INDIVID
   })),
 );
 
+export const INDIVIDUAL_PROFILE_FRAMES = INDIVIDUAL_COLLECTION_PRODUCTS.filter((product) => product.slot === 'cadre_profil');
+
 export const ATELIER_CATALOG: readonly AtelierProduct[] = [
   ...INDIVIDUAL_COLLECTION_PRODUCTS,
   {

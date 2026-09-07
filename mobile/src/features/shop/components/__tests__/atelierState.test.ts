@@ -13,6 +13,8 @@ import {
   applyAtelierTry,
   applyPreviewAtelierAction,
   atelierPrimaryAction,
+  atelierRuntimeItems,
+  equippedAtelierIds,
   resolveAtelierSceneConfig,
 } from '../../atelierState';
 import {
@@ -167,6 +169,20 @@ describe('showcase Atelier state', () => {
       presenterId: 'circuit-zero-aero-pedestals', roomId: null,
     });
     expect(resolveAtelierSceneConfig(purchased.equipped, { supports: 'supports_halo' }).roomId).toBe('azure-horizon');
+  });
+
+  it('replaces a collection room persistently, including an already-owned standard room', () => {
+    const standard = applyPreviewAtelierAction(makeData(2000), 'supports_halo');
+    const collection = applyPreviewAtelierAction(standard, 'circuit-zero-room');
+    expect(equippedAtelierIds(collection.equipped).supports).toBe('circuit-zero-room');
+    expect(atelierRuntimeItems(collection).find((item) => item.id === 'supports_halo')?.equipped).toBe(false);
+    const restored = applyPreviewAtelierAction(collection, 'supports_halo');
+    expect(restored.balance).toBe(collection.balance);
+    expect(restored.equipped.showcase.lighting?.id).toBe('lighting_cyan');
+    expect(resolveAtelierSceneConfig(restored.equipped).roomId).toBe('azure-horizon');
+    expect(atelierRuntimeItems(restored).filter((item) => item.id === 'circuit-zero-room' && item.equipped)).toHaveLength(0);
+    const collectionAgain = applyPreviewAtelierAction(restored, 'circuit-zero-room');
+    expect(resolveAtelierSceneConfig(collectionAgain.equipped).presenterId).toBe('circuit-zero-aero-pedestals');
   });
 
   it('equips the complete room included with a Clutch original pack', () => {

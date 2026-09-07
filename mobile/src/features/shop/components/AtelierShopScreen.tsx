@@ -16,13 +16,6 @@ import { Button } from '@/src/components/ui/Button';
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { loadProfileData } from '@/src/features/profile/api';
-import {
-  resolveLevelFrameCollection,
-  resolveOwnedLevelFrames,
-} from '@/src/features/profile/levelFrames/catalog';
-import LevelFrame from '@/src/features/profile/levelFrames/components/LevelFrame';
-import type { LevelFrameCollectionEntry } from '@/src/features/profile/levelFrames/types';
-import { useLevelFrameEquipment } from '@/src/features/profile/levelFrames/useLevelFrameEquipment';
 import type { ProfileData } from '@/src/features/profile/types';
 import { errorFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
 import { useAuth } from '@/src/providers/AuthProvider';
@@ -34,6 +27,7 @@ import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme'
 import { equipCosmetic, loadCosmeticShop, purchaseCosmetic } from '../api';
 import {
   ATELIER_CATEGORIES,
+  INDIVIDUAL_PROFILE_FRAMES,
   ATELIER_CATEGORY_META,
   atelierProductById,
   atelierProducts,
@@ -44,6 +38,7 @@ import {
 import {
   applyPreviewAtelierAction,
   atelierPrimaryAction,
+  atelierRuntimeItems,
   equippedAtelierIds,
   type AtelierPrimaryAction,
 } from '../atelierState';
@@ -54,7 +49,6 @@ import {
 import {
   ORIGINAL_PACK_CATALOG,
   INDIVIDUAL_COLLECTION_CATALOG,
-  TEAM_PACK_CATALOG,
   type TeamPackDefinition,
 } from '../teamPackCatalog';
 import type { CosmeticItem, CosmeticShopData } from '../types';
@@ -211,8 +205,8 @@ export default function AtelierShopScreen({
   }, [previewProduct, previewState?.purchaseOpen]);
 
   const runtimeById = useMemo(
-    () => new Map((data?.items ?? []).map((item) => [item.id, item])),
-    [data?.items],
+    () => new Map(atelierRuntimeItems(data).map((item) => [item.id, item])),
+    [data],
   );
   const products = useMemo(() => atelierProducts(category), [category]);
   const equippedIds = useMemo(
@@ -228,19 +222,6 @@ export default function AtelierShopScreen({
   const action = selectedItem ? atelierPrimaryAction(selectedItem, balance) : 'unavailable';
   const purchaseProduct = atelierProductById(purchaseId);
   const purchaseItem = purchaseProduct ? runtimeById.get(purchaseProduct.id) ?? null : null;
-  const ownedLevelFrames = useMemo(
-    () => resolveOwnedLevelFrames({ founder: profileData?.founder, preview: Boolean(previewData) }),
-    [previewData, profileData?.founder],
-  );
-  const levelFrameEquipment = useLevelFrameEquipment(
-    previewData ? `preview-${pseudo}` : pseudo,
-    ownedLevelFrames,
-  );
-  const levelFrameCollection = useMemo(
-    () => resolveLevelFrameCollection(levelFrameEquipment.variant, ownedLevelFrames),
-    [levelFrameEquipment.variant, ownedLevelFrames],
-  );
-
   useEffect(() => {
     const product = atelierProductById(previewState?.acquisitionProductId);
     const item = product ? runtimeById.get(product.id) ?? null : null;
@@ -285,7 +266,9 @@ export default function AtelierShopScreen({
   async function equipSelected(item: CosmeticItem, product: AtelierProduct) {
     if (!data || pendingId) return;
     const previousData = data;
-    const previousItem = data.items.find((candidate) => candidate.slot === item.slot && candidate.equipped) ?? null;
+    const previousItem = product.category === 'supports'
+      ? data.items.find((candidate) => candidate.id === equippedAtelierIds(data.equipped).supports) ?? null
+      : data.items.find((candidate) => candidate.slot === item.slot && candidate.equipped) ?? null;
     const optimistic = applyPreviewAtelierAction(data, item.id);
     setPendingId(item.id);
     setLoadError(null);
@@ -407,6 +390,12 @@ export default function AtelierShopScreen({
   }
 
   function viewAcquisitionInShowcase() {
+    if (acquisition?.item.slot === 'cadre_profil') {
+      const frameId = acquisition.item.id;
+      setAcquisition(null);
+      router.push((previewData ? `/profile-preview?frameId=${encodeURIComponent(frameId)}` : '/my-profile') as never);
+      return;
+    }
     setAcquisition(null);
     router.push((previewData ? '/showcase-preview' : '/showcase') as never);
   }
@@ -450,9 +439,15 @@ export default function AtelierShopScreen({
                   </Text>
                 </View>
 
-                <LevelFrameShelf
-                  entries={levelFrameCollection}
-                  level={profileData?.level.level ?? 42}
+                <AtelierProductShelf
+                  category="originals"
+                  collectionTitle="CADRES"
+                  eyebrow="IDENTITÉ // PROFIL"
+                  shelfId="profile-frames"
+                  onSelect={handleProductSelection}
+                  products={INDIVIDUAL_PROFILE_FRAMES}
+                  runtimeById={runtimeById}
+                  selectedId={selectedProduct?.id ?? null}
                   width={shelfCardWidth}
                 />
 
@@ -474,7 +469,7 @@ export default function AtelierShopScreen({
                     collectionTitle={collection.title}
                     key={collection.id}
                     onSelect={handleProductSelection}
-                    products={atelierProducts('originals').filter((product) => product.packId === collection.id)}
+                    products={atelierProducts('originals').filter((product) => product.packId === collection.id && product.slot !== 'cadre_profil')}
                     runtimeById={runtimeById}
                     selectedId={selectedProduct?.id ?? null}
                     shelfId={collection.id}
@@ -486,12 +481,6 @@ export default function AtelierShopScreen({
                   kind="original"
                   onOpen={openTeamPack}
                   packs={ORIGINAL_PACK_CATALOG}
-                />
-
-                <TeamPackShelf
-                  kind="team"
-                  onOpen={openTeamPack}
-                  packs={TEAM_PACK_CATALOG}
                 />
 
                 <View style={styles.discoveryLine}>
@@ -531,6 +520,7 @@ export default function AtelierShopScreen({
         />
 
         <RareAcquisitionReveal
+          destination={acquisition?.item.slot === 'cadre_profil' ? 'profile' : 'showcase'}
           event={acquisition}
           forceReduceMotion={previewState?.forceReduceMotion}
           onContinueAtelier={continueAfterAcquisition}
@@ -690,75 +680,9 @@ function TeamPackShelf({
   );
 }
 
-function LevelFrameShelf({
-  entries,
-  level,
-  width,
-}: {
-  entries: readonly LevelFrameCollectionEntry[];
-  level: number;
-  width: number;
-}) {
-  return (
-    <View style={styles.catalogShelf} testID="atelier-shelf-level-frames">
-      <ShelfHeading count={entries.length} eyebrow="IDENTITÉ // CADRES DE NIVEAU" title="CADRES" />
-      <ScrollView
-        accessibilityLabel="Parcourir les cadres"
-        contentContainerStyle={styles.shelfTrack}
-        decelerationRate="fast"
-        horizontal
-        nestedScrollEnabled
-        showsHorizontalScrollIndicator={false}
-        snapToAlignment="start"
-        snapToInterval={width + spacing.sm}
-      >
-        {entries.map((entry, index) => (
-          <View
-            accessible
-            accessibilityLabel={`${entry.name}, ${levelFrameStateLabel(entry)}`}
-            key={entry.variant}
-            style={[
-              styles.frameCard,
-              { width },
-              entry.equipped && { borderColor: `${entry.accent}99` },
-              index < entries.length - 1 && styles.shelfItem,
-            ]}
-            testID={`atelier-level-frame-${entry.variant}`}
-          >
-            <View style={styles.frameVisual}>
-              <View style={[styles.frameGlow, { backgroundColor: entry.accent }]} />
-              <LevelFrame
-                disabled={!entry.owned}
-                level={level}
-                selected={entry.equipped}
-                size={108}
-                variant={entry.variant}
-              />
-              {entry.equipped ? (
-                <View style={styles.frameEquippedPill}>
-                  <Text style={styles.frameEquippedText}>ÉQUIPÉ</Text>
-                </View>
-              ) : null}
-            </View>
-            <View style={styles.frameTopline}>
-              <Text style={[styles.rarity, { color: entry.accent }]}>{levelFrameRarityLabel(entry)}</Text>
-              <Text style={styles.frameState}>{levelFrameSourceLabel(entry)}</Text>
-            </View>
-            <Text numberOfLines={1} style={styles.productName}>{entry.name}</Text>
-            <Text numberOfLines={2} style={styles.productDescription}>{entry.description}</Text>
-            <View style={styles.framePriceRow}>
-              {entry.source === 'volts' && entry.price ? <CurrencyIcon kind="volts" size={13} /> : null}
-              <Text style={styles.framePrice}>{levelFramePriceLabel(entry)}</Text>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
-    </View>
-  );
-}
-
 function AtelierProductShelf({
   category,
+  eyebrow,
   collectionTitle,
   shelfId = category,
   onSelect,
@@ -769,6 +693,7 @@ function AtelierProductShelf({
 }: {
   category: AtelierCategory;
   collectionTitle?: string;
+  eyebrow?: string;
   shelfId?: string;
   onSelect: (product: AtelierProduct) => void;
   products: readonly AtelierProduct[];
@@ -782,7 +707,7 @@ function AtelierProductShelf({
     <View style={styles.catalogShelf} testID={`atelier-shelf-${shelfId}`}>
       <ShelfHeading
         count={products.length}
-        eyebrow={collectionTitle ? 'COLLECTION // À L’UNITÉ' : `FINITION // ${ATELIER_CATEGORY_META[category].shortLabel}`}
+        eyebrow={eyebrow ?? (collectionTitle ? 'COLLECTION // À L’UNITÉ' : `FINITION // ${ATELIER_CATEGORY_META[category].shortLabel}`)}
         title={title}
       />
       <ScrollView
@@ -958,7 +883,7 @@ function AtelierActionDock({
         {action === 'equipped' && !pending ? (
           <View accessible accessibilityLabel={`${product.name}, configuration active`} style={styles.activeConfiguration}>
             <View style={styles.activeCopy}>
-              <Text style={styles.actionEyebrow}>{ATELIER_CATEGORY_META[product.category].label}</Text>
+              <Text style={styles.actionEyebrow}>{product.slot === 'cadre_profil' ? 'CADRE DE PROFIL' : ATELIER_CATEGORY_META[product.category].label}</Text>
               <Text numberOfLines={1} style={styles.actionName}>{product.name}</Text>
             </View>
             <View style={styles.activeState}>
@@ -970,7 +895,7 @@ function AtelierActionDock({
           <>
             <View style={styles.actionHeading}>
               <View style={styles.actionCopy}>
-                <Text style={styles.actionEyebrow}>{ATELIER_CATEGORY_META[product.category].label}</Text>
+                <Text style={styles.actionEyebrow}>{product.slot === 'cadre_profil' ? 'CADRE DE PROFIL' : ATELIER_CATEGORY_META[product.category].label}</Text>
                 <Text numberOfLines={1} style={styles.actionName}>{product.name}</Text>
               </View>
               <Text style={styles.actionState}>
@@ -1075,33 +1000,6 @@ function productStateLabel(item: CosmeticItem | null, product: AtelierProduct) {
   if (item?.owned) return 'possédé';
   if (!item) return 'en synchronisation';
   return `${formatNumber(item.price || product.price)} Volts`;
-}
-
-function levelFrameRarityLabel(entry: LevelFrameCollectionEntry) {
-  if (entry.rarity === 'legendary') return 'LÉGENDAIRE';
-  if (entry.rarity === 'epic') return 'ÉPIQUE';
-  if (entry.rarity === 'rare') return 'RARE';
-  return 'INCLUS';
-}
-
-function levelFrameSourceLabel(entry: LevelFrameCollectionEntry) {
-  if (entry.equipped) return '● ÉQUIPÉ';
-  if (entry.owned) return 'POSSÉDÉ';
-  if (entry.source === 'founder_pack') return 'FOUNDER PACK';
-  if (entry.source === 'included') return 'INCLUS';
-  return 'VOLTS';
-}
-
-function levelFramePriceLabel(entry: LevelFrameCollectionEntry) {
-  if (entry.source === 'included') return 'INCLUS · ÉVOLUTIF';
-  if (entry.source === 'founder_pack') return 'FOUNDER PACK';
-  return entry.price ? `${formatNumber(entry.price)} VOLTS` : 'INDISPONIBLE';
-}
-
-function levelFrameStateLabel(entry: LevelFrameCollectionEntry) {
-  if (entry.equipped) return 'équipé';
-  if (entry.owned) return 'possédé';
-  return levelFramePriceLabel(entry).toLocaleLowerCase('fr-FR');
 }
 
 function rarityLabel(rarity: AtelierProduct['rarity']) {
@@ -1293,71 +1191,6 @@ const styles = StyleSheet.create({
   },
   shelfItem: {
     marginRight: spacing.sm,
-  },
-  frameCard: {
-    position: 'relative',
-    minHeight: 286,
-    padding: spacing.sm,
-    overflow: 'hidden',
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    backgroundColor: colors.surfaceLow,
-  },
-  frameVisual: {
-    position: 'relative',
-    height: 132,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.sm,
-    backgroundColor: colors.background,
-  },
-  frameGlow: {
-    position: 'absolute',
-    width: 112,
-    height: 112,
-    borderRadius: radius.pill,
-    opacity: 0.09,
-  },
-  frameEquippedPill: {
-    position: 'absolute',
-    top: spacing.xs,
-    right: spacing.xs,
-    minHeight: 28,
-    paddingHorizontal: spacing.xs,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.sm,
-    backgroundColor: colors.volt,
-  },
-  frameEquippedText: {
-    ...typography.metadata,
-    color: colors.background,
-  },
-  frameTopline: {
-    minHeight: 20,
-    marginTop: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.xs,
-  },
-  frameState: {
-    ...typography.metadata,
-    color: colors.textMuted,
-  },
-  framePriceRow: {
-    minHeight: 20,
-    marginTop: 'auto',
-    paddingTop: spacing.xs,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  framePrice: {
-    ...typography.metadata,
-    color: colors.textSecondary,
   },
   catalogSkeleton: {
     gap: spacing.sm,

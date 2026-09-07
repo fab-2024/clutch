@@ -123,7 +123,7 @@ describe('showcase owner profile overlay', () => {
     expect(mockLoad).toHaveBeenCalledWith('Nova', 'viewer', false);
     expect(screen.queryByTestId('showcase-like')).toBeNull();
     await fireEvent.press(screen.getByLabelText('Voir le profil de Nova'));
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/profile');
+    expect(mockPush).toHaveBeenCalledWith('/my-profile');
   });
   it('does not substitute zero counters for a failed read and lets the owner retry', async () => {
     mockLoad.mockRejectedValueOnce(new Error('network'));

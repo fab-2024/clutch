@@ -46,6 +46,8 @@ export function LiveMatchCenter({
   const logoA = (snapshotMatches ? snapshot?.logoA : null) ?? match.logo_a ?? null;
   const logoB = (snapshotMatches ? snapshot?.logoB : null) ?? match.logo_b ?? null;
   const percentages = communityPercentages(data);
+  const modelA = data.projection?.choix.find((choice) => choice.cle === 'a');
+  const modelPercent = modelA ? clampPercent(modelA.proba * 100) : null;
 
   function shareMatch() {
     void Share.share({
@@ -132,13 +134,24 @@ export function LiveMatchCenter({
 
           <View style={styles.community}>
             <View style={styles.communityDivider} />
-            <Text style={styles.communityTitle}>PRONOSTIC COMMUNAUTÉ</Text>
-            <View style={styles.communityValues}>
-              <Text style={styles.communityTag}>{match.tag_a} <Text style={{ color: accentA }}>{percentages.a}%</Text></Text>
-              <Text style={styles.communityTag}><Text style={{ color: accentB }}>{percentages.b}%</Text> {match.tag_b}</Text>
-            </View>
-            <CommunityBar accentA={accentA} accentB={accentB} percentA={percentages.a} />
-            <Text style={styles.projectionMeta}>{projectionMeta(data)}</Text>
+            <Text style={styles.communityTitle}>ESTIMATION CLUTCH</Text>
+            {modelPercent !== null ? (
+              <>
+                <View style={styles.communityValues}>
+                  <Text style={styles.communityTag}>{match.tag_a} <Text style={{ color: accentA }}>{modelPercent}%</Text></Text>
+                  <Text style={styles.communityTag}><Text style={{ color: accentB }}>{100 - modelPercent}%</Text> {match.tag_b}</Text>
+                </View>
+                <CommunityBar accentA={accentA} accentB={accentB} percentA={modelPercent} />
+                <Text style={styles.projectionMeta}>{projectionMeta(data)}</Text>
+              </>
+            ) : <Text style={styles.projectionMeta}>ESTIMATION NON DISPONIBLE</Text>}
+            <Text style={styles.communityTitle}>VOTES COMMUNAUTÉ</Text>
+            <Text style={styles.projectionMeta}>
+              {percentages
+                ? `${match.tag_a} ${percentages.a}% · ${percentages.b}% ${match.tag_b} · ${data.callContext.distribution?.total} calls`
+                : 'AUCUN CALL POUR LE MOMENT'}
+            </Text>
+            <Text style={styles.projectionMeta}>Les votes ne modifient pas les Frags.</Text>
           </View>
         </View>
       </LinearGradient>
@@ -349,19 +362,17 @@ function LiveContract({ data }: { data: MatchCenterData }) {
 
 function communityPercentages(data: MatchCenterData) {
   const distribution = data.callContext.distribution;
-  if (distribution && Number.isFinite(distribution.a_pct) && Number.isFinite(distribution.b_pct)) {
+  if (distribution && distribution.total > 0 && Number.isFinite(distribution.a_pct) && Number.isFinite(distribution.b_pct)) {
     const a = clampPercent(distribution.a_pct);
     return { a, b: 100 - a };
   }
-  const choiceA = data.projection?.choix.find((choice) => choice.cle === 'a');
-  const a = clampPercent((choiceA?.proba ?? .5) * 100);
-  return { a, b: 100 - a };
+  return null;
 }
 
 function projectionMeta(data: MatchCenterData) {
   const projection = data.projection;
   if (!projection) return 'MODÈLE CLUTCH · PROBABILITÉS FIGÉES';
-  const source = String(projection.source || 'MODÈLE CLUTCH').replaceAll('_', ' ').toUpperCase();
+  const source = (projection.source === 'elo_history_v2' ? 'ELO HISTORIQUE' : String(projection.source || 'MODÈLE CLUTCH').replaceAll('_', ' ').toUpperCase());
   const frozen = formatFrozenDate(projection.figee_le);
   const k = Number.isFinite(projection.k) ? ` · K=${projection.k}` : '';
   return `${source}${frozen}${k}`;

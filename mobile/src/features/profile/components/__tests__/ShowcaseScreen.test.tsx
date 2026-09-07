@@ -302,6 +302,30 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(within(roomProduct).getByText('BASTION DES CIMES')).toBeTruthy();
   }, 15_000);
 
+  it.each([true, false])('keeps the selected standard room after closing over a pack room (owned: %s)', async (owned) => {
+    const initial = { ...ATELIER_SHOP, balance: 3000 };
+    const standardShop = owned ? applyPreviewAtelierAction(initial, 'supports_halo') : initial;
+    const packShop = applyPreviewTeamPackAction({
+      ...standardShop,
+      items: [...standardShop.items, ...createTeamPackPreviewItems(SERMENT_DU_GIVRE_PACK)],
+    }, SERMENT_DU_GIVRE_PACK);
+    const screen = await render(<ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={packShop} />);
+    await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-category-supports'));
+    expect(within(screen.getByTestId('showcase-atelier-product-supports_halo')).queryByText('ÉQUIPÉ')).toBeNull();
+    await fireEvent.press(screen.getByTestId('showcase-atelier-product-supports_halo'));
+    expect(screen.getByTestId('showcase-room-background-azure-horizon')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('showcase-atelier-primary'));
+    if (!owned) await fireEvent.press(screen.getByTestId('atelier-purchase-confirm'));
+    await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
+    expect(screen.getByTestId('showcase-room-background-azure-horizon')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
+    expect(within(screen.getByTestId('showcase-atelier-product-supports_halo')).getByText('ÉQUIPÉ')).toBeTruthy();
+    expect(within(screen.getByTestId('showcase-atelier-product-serment-du-givre-room')).queryByText('ÉQUIPÉ')).toBeNull();
+    await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
+    expect(screen.getByTestId('showcase-room-background-azure-horizon')).toBeTruthy();
+  }, 30_000);
+
   it('keeps pack pedestals integrated in the room and hides pedestal swapping', async () => {
     const frostShop = applyPreviewTeamPackAction({
       ...ATELIER_SHOP,

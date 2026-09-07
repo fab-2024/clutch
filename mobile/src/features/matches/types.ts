@@ -42,6 +42,7 @@ export type ProjectionChoice = {
 };
 
 export type MatchProjection = {
+  status?: 'preparing';
   match_id?: string;
   choix: ProjectionChoice[];
   k?: number;

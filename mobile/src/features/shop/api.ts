@@ -1,6 +1,9 @@
 import { supabase } from '@/src/lib/supabase';
 import { visibleBrandLabel } from '@/src/config/brand';
 
+import { showcaseRoomByProductId } from './showcaseRoomCatalog';
+import { conflictingCollectionRoom, DEFAULT_SHOWCASE_LIGHTING_ID } from './showcaseRoomSelection';
+
 import {
   COSMETIC_FAMILIES,
   COSMETIC_FAMILY_BY_SLOT,
@@ -55,19 +58,35 @@ export async function loadProfileCosmetics(pseudo: string): Promise<EquippedCosm
 }
 
 export async function purchaseCosmetic(itemId: string): Promise<CosmeticMutation> {
-  const { data, error } = await supabase.rpc('clutch_acheter_cosmetique_v1', {
-    p_objet_id: itemId,
-  });
+  return mutateCosmetic('clutch_acheter_cosmetique_v1', itemId);
+}
+
+export async function equipCosmetic(itemId: string): Promise<CosmeticMutation> {
+  return mutateCosmetic('clutch_equiper_cosmetique_v1', itemId);
+}
+
+async function callCosmeticMutation(name: string, itemId: string): Promise<CosmeticMutation> {
+  const { data, error } = await supabase.rpc(name, { p_objet_id: itemId });
   if (error) throw error;
   return normalizeMutation(data, itemId);
 }
 
-export async function equipCosmetic(itemId: string): Promise<CosmeticMutation> {
-  const { data, error } = await supabase.rpc('clutch_equiper_cosmetique_v1', {
-    p_objet_id: itemId,
-  });
-  if (error) throw error;
-  return normalizeMutation(data, itemId);
+async function mutateCosmetic(name: string, itemId: string): Promise<CosmeticMutation> {
+  const equipped = showcaseRoomByProductId(itemId) ? await loadMyCosmetics() : null;
+  const previousRoom = conflictingCollectionRoom(equipped, itemId);
+  if (previousRoom) await callCosmeticMutation('clutch_equiper_cosmetique_v1', DEFAULT_SHOWCASE_LIGHTING_ID);
+  try {
+    return await callCosmeticMutation(name, itemId);
+  } catch (error) {
+    if (previousRoom) {
+      try {
+        await callCosmeticMutation('clutch_equiper_cosmetique_v1', previousRoom);
+      } catch {
+        throw new Error('La salle n’a pas pu être enregistrée ni restaurée. Actualise ta vitrine avant de réessayer.');
+      }
+    }
+    throw error;
+  }
 }
 
 export async function purchaseCosmeticPack(packId: string): Promise<CosmeticPackMutation> {

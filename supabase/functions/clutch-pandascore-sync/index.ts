@@ -1,9 +1,11 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-import { createClient } from "npm:@supabase/supabase-js@2.112.3";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.112.3";
 
 import {
   fetchPandaScoreFeed,
+  fetchPandaScoreHistory,
+  gamesNeedingHistory,
   normalizePandaScoreFeed,
   SUPPORTED_GAMES,
 } from "./pandascore.js";
@@ -62,11 +64,19 @@ Deno.serve(async (request: Request) => {
       }, { status: 502 });
     }
 
+    const { data: eloStatus, error: eloStatusError } = await supabase.rpc("clutch_elo_status_v2");
+    if (eloStatusError) throw eloStatusError;
+    const history = await fetchPandaScoreHistory(pandaScoreToken, {
+      games: gamesNeedingHistory(eloStatus, games),
+    });
+    const normalizedHistory = normalizePandaScoreFeed(history) as NormalizedFeed;
     const normalized = normalizePandaScoreFeed(feed) as NormalizedFeed;
     const basePayload = {
       games,
       dry_run: dryRun,
-      panda_requests: feed.requests,
+      panda_requests: feed.requests + history.requests,
+      history_errors: history.errors,
+      history_matches: normalizedHistory.matches.length,
       panda_request_errors: feed.errors,
       rate_limit_remaining: feed.rateLimitRemaining,
       fetched: feed.responses.reduce(
@@ -79,12 +89,18 @@ Deno.serve(async (request: Request) => {
 
     if (dryRun) {
       return Response.json({
-        ok: feed.errors.length === 0,
+        ok: feed.errors.length === 0 && history.errors.length === 0,
         ...basePayload,
         sample: normalized.matches.slice(0, 12).map(compactMatch),
       });
     }
 
+    // Replay history first, without sending old fixtures to the settlement RPC.
+    const { data: eloModel, error: eloError } = await supabase.rpc("clutch_import_elo_history_v2", {
+      p_matches: [...normalizedHistory.matches, ...normalized.matches.filter((m) => m.status === "finished" || m.status === "canceled")],
+      p_coverage: history.coverage,
+    });
+    if (eloError) throw eloError;
     const imported = emptyImportSummary();
     for (let index = 0; index < normalized.matches.length; index += IMPORT_CHUNK_SIZE) {
       const chunk = normalized.matches.slice(index, index + IMPORT_CHUNK_SIZE);
@@ -96,9 +112,10 @@ Deno.serve(async (request: Request) => {
     }
 
     const payload = {
-      ok: feed.errors.length === 0 && imported.erreurs === 0,
+      ok: feed.errors.length === 0 && history.errors.length === 0 && imported.erreurs === 0,
       ...basePayload,
       imported,
+      elo_model: eloModel,
     };
     console.info("clutch-pandascore-sync", JSON.stringify(payload));
     return Response.json(payload);
@@ -112,7 +129,7 @@ Deno.serve(async (request: Request) => {
 
 async function isAuthorized(
   request: Request,
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   serviceRoleKey: string,
 ): Promise<boolean> {
   const authorization = request.headers.get("Authorization");

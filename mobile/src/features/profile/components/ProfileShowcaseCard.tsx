@@ -104,7 +104,7 @@ export default function ProfileShowcaseCard({
               <LevelFrame level={level} size={38} variant={levelFrameVariant} />
             </View>
           </View>
-          <Text numberOfLines={1} style={styles.frameName}>{LEVEL_FRAME_CATALOG[levelFrameVariant].name.toUpperCase()}</Text>
+          <Text numberOfLines={1} style={styles.frameName}>{(cosmetics?.frame?.name ?? LEVEL_FRAME_CATALOG[levelFrameVariant].name).toUpperCase()}</Text>
           <Text numberOfLines={1} style={[styles.title, { color: cosmetics?.title?.accent ?? frameAccent }]}>{profileTitle.toUpperCase()}</Text>
         </View>
 

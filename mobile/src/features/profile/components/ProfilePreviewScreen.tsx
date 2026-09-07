@@ -1,6 +1,7 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 
 import { usePreviewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
+import { INDIVIDUAL_PROFILE_FRAMES } from '@/src/features/shop/atelierCatalog';
 import { EMPTY_EQUIPPED_COSMETICS } from '@/src/features/shop/types';
 
 import { evaluateBadges, resolveBadgeSelection } from '../badges';
@@ -148,10 +149,14 @@ export const PREVIEW_PROFILE: ProfileData = {
 };
 
 export default function ProfilePreviewScreen() {
-  const params = useLocalSearchParams<{ variant?: string | string[] }>();
+  const params = useLocalSearchParams<{ variant?: string | string[]; frameId?: string }>();
   const previewEnabled = usePreviewRoutesEnabled();
   if (!previewEnabled) return <Redirect href="/" />;
-  return <ProfileScreen previewData={profileForPreview(normalizePreviewVariant(params.variant))} />;
+  const data = profileForPreview(normalizePreviewVariant(params.variant));
+  const frame = INDIVIDUAL_PROFILE_FRAMES.find((item) => item.id === params.frameId);
+  return <ProfileScreen previewData={frame ? {
+    ...data, cosmetics: { ...data.cosmetics, frame: { ...frame, level: 1, styleKey: frame.id } },
+  } : data} />;
 }
 
 type ProfilePreviewVariant = 'default' | 'long' | 'minimal' | 'private';

@@ -5,6 +5,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, typography } from '@/src/theme';
 
 import { atelierProductById } from '../atelierCatalog';
+import { profileAvatarArtworkSize, profileFrameArtwork } from '../profileFrameArtwork';
 import type {
   CosmeticItem,
   EquippedCosmetic,
@@ -36,10 +37,11 @@ export function CosmeticAvatar({
   size = 48,
 }: CosmeticAvatarProps) {
   const frame = cosmetics?.frame;
+  const frameArtwork = profileFrameArtwork(frame);
   const accent = frame?.accent ?? '#46515C';
   const mark = fallback?.trim() || initials(label);
   const outerRadius = Math.round(size * 0.31);
-  const innerSize = artwork ? Math.max(18, size - 6) : Math.round(size * 0.7);
+  const innerSize = artwork ? profileAvatarArtworkSize(cosmetics, size) : Math.round(size * 0.7);
 
   return (
     <View
@@ -54,6 +56,7 @@ export function CosmeticAvatar({
           borderColor: accent,
           boxShadow: frame ? `0 0 ${Math.round(size * 0.25)}px ${alpha(accent, '40')}` : 'none',
         },
+        Boolean(frameArtwork) && styles.artworkFrameShell,
       ]}
     >
       <View
@@ -77,7 +80,11 @@ export function CosmeticAvatar({
           </Text>
         )}
       </View>
-      {frame ? (
+      {frameArtwork ? (
+        <Image accessible={false} accessibilityIgnoresInvertColors
+          source={frameArtwork} resizeMode="contain" style={[StyleSheet.absoluteFill, { width: size, height: size }]}
+          testID={`profile-frame-artwork-${frame?.id}`} />
+      ) : frame ? (
         <>
           <View style={[styles.frameCornerTop, { borderColor: accent }]} />
           <View style={[styles.frameCornerBottom, { borderColor: accent }]} />
@@ -191,6 +198,7 @@ function alpha(color: string, opacity: string) {
 
 const styles = StyleSheet.create({
   avatarShell: { position: 'relative', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', backgroundColor: '#111A22', borderWidth: 1.5 },
+  artworkFrameShell: { borderWidth: 0, borderRadius: 0, overflow: 'visible', backgroundColor: 'transparent', boxShadow: 'none' },
   avatarCore: { overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: '#171E0E' },
   avatarText: { fontFamily: fonts.display, letterSpacing: -.5 },
   frameCornerTop: { position: 'absolute', top: -1, right: -1, width: '42%', height: '32%', borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 13 },

@@ -25,7 +25,7 @@ export default function ShowcaseOwnerProfile({ profile, pseudo, ownerId, preview
     <ShowcaseProfileCard pseudo={profile?.pseudo ?? pseudo} avatarId={profile?.avatarId}
       cosmetics={profile?.cosmetics} subtitle={profile ? `NIV. ${profile.level.level}` : null}
       views={preview ? 0 : data?.views ?? null} likes={preview ? 0 : data?.likes ?? null}
-      onProfile={() => router.push(preview ? '/profile-preview' : '/(tabs)/profile')} />
+      onProfile={() => router.push(preview ? '/profile-preview' : '/my-profile')} />
     {error ? <Pressable accessibilityRole="button" accessibilityLabel="Actualiser les vues et les likes"
       disabled={loading} onPress={() => { void refresh(); }} style={styles.retry}>
       <Text style={styles.retryText}>COMPTEURS INDISPONIBLES · RÉESSAYER</Text>

@@ -314,6 +314,13 @@ describe('MatchCenterScreen prediction confirmation', () => {
     });
   });
 
+  it('does not substitute the model for absent community votes', async () => {
+    const screen = await render(<MatchCenterScreen previewData={{ ...PREVIEW_MATCH_CENTER, match: { ...PREVIEW_MATCH_CENTER.match, statut: 'en_cours' }, callContext: { ...PREVIEW_MATCH_CENTER.callContext, distribution: { total: 0, a: 0, b: 0, a_pct: 50, b_pct: 50 } } }} />);
+    expect(screen.getByText('AUCUN CALL POUR LE MOMENT')).toBeTruthy();
+    expect(screen.getByText('57%')).toBeTruthy();
+    expect(screen.queryByText(/50%/)).toBeNull();
+  });
+
   it('uses the dedicated match center when the match is live', async () => {
     const liveData = {
       ...PREVIEW_MATCH_CENTER,
@@ -338,7 +345,10 @@ describe('MatchCenterScreen prediction confirmation', () => {
 
     expect(screen.getByTestId('live-match-center')).toBeTruthy();
     expect(screen.getByText('MATCH CENTER')).toBeTruthy();
-    expect(screen.getByText('PRONOSTIC COMMUNAUTÉ')).toBeTruthy();
+    expect(screen.getByText('ESTIMATION CLUTCH')).toBeTruthy();
+    expect(screen.getByText('VOTES COMMUNAUTÉ')).toBeTruthy();
+    expect(screen.getByText(/71% · 29%/)).toBeTruthy();
+    expect(screen.getByText('57%')).toBeTruthy();
     expect(screen.queryByText('COMMENT ÇA MARCHE')).toBeNull();
 
     await act(async () => {

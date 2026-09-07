@@ -43,7 +43,7 @@ export function PredictionZone({
     return <ClosedState eyebrow="PRONOSTICS FERMÉS" title="Le match a commencé." copy="Après le coup d’envoi, aucun nouveau pronostic classé n’est accepté." />;
   }
   if (!projection?.choix?.length) {
-    return <ClosedState eyebrow="MODÈLE" title="Le risque arrive bientôt." copy="Le snapshot de probabilité n’est pas encore disponible pour cette affiche." />;
+    return <ClosedState eyebrow="MODÈLE" title="Le risque arrive bientôt." copy="L’historique des équipes est en préparation. Les calls ouvriront dès que l’estimation sera prête." />;
   }
 
   const a = projection.choix.find((choice) => choice.cle === 'a');
@@ -293,7 +293,7 @@ export function ProbabilityBar({ a, b, tagA, tagB }: { a: ProjectionChoice; b: P
 }
 
 export function ProjectionMeta({ projection }: { projection: MatchProjection }) {
-  const source = String(projection.source || 'modèle').replace(/_/g, ' ').toUpperCase();
+  const source = projection.source === 'elo_history_v2' ? 'ELO HISTORIQUE' : String(projection.source || 'modèle').replace(/_/g, ' ').toUpperCase();
   const frozenAt = projection.figee_le
     ? new Date(projection.figee_le).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }).replace('.', '').toUpperCase()
     : null;

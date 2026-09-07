@@ -40,6 +40,7 @@ import { CosmeticItemPreview } from './CosmeticRenderer';
 
 type RareAcquisitionRevealProps = {
   event: RareAcquisitionEvent | null;
+  destination?: 'profile' | 'showcase';
   forceReduceMotion?: boolean;
   onContinueAtelier: () => void;
   onViewShowcase: () => void;
@@ -51,6 +52,7 @@ const WEB_FOCUS_RESET = Platform.OS === 'web'
 
 export function RareAcquisitionReveal({
   event,
+  destination = 'showcase',
   forceReduceMotion,
   onContinueAtelier,
   onViewShowcase,
@@ -149,7 +151,7 @@ export function RareAcquisitionReveal({
     `${event.item.name}. ${rarity.toLowerCase()}. ${event.category}.`,
     `Provenance ${event.provenance}.`,
     event.item.equipped
-      ? 'Ajouté à ta collection et équipé dans ta Vitrine.'
+      ? destination === 'profile' ? 'Ajouté à ta collection et équipé sur ton profil.' : 'Ajouté à ta collection et équipé dans ta Vitrine.'
       : 'Ajouté à ta collection.',
   ].join(' ');
 
@@ -257,10 +259,10 @@ export function RareAcquisitionReveal({
                 style={[styles.actions, actionMotion]}
               >
                 <Button
-                  accessibilityHint="Ouvre ta Vitrine avec le nouvel objet équipé"
+                  accessibilityHint={destination === 'profile' ? "Ouvre ton profil avec le nouveau cadre équipé" : "Ouvre ta Vitrine avec le nouvel objet équipé"}
                   disabled={!ready}
                   fullWidth
-                  label="VOIR DANS MA VITRINE"
+                  label={destination === 'profile' ? 'VOIR MON PROFIL' : 'VOIR DANS MA VITRINE'}
                   onPress={onViewShowcase}
                   testID="rare-acquisition-showcase"
                 />

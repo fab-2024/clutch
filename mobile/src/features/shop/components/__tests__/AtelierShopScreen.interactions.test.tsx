@@ -1,9 +1,9 @@
 /// <reference types="jest" />
 
-import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
-import { createAtelierPreviewItems } from '../../atelierCatalog';
+import { createAtelierPreviewItems, INDIVIDUAL_PROFILE_FRAMES } from '../../atelierCatalog';
 import {
   DEFAULT_MONETIZATION_CONTRACT,
   EMPTY_EQUIPPED_COSMETICS,
@@ -129,7 +129,15 @@ describe('AtelierShopScreen interactions', () => {
 
     expect(screen.queryByTestId('atelier-shelf-rooms')).toBeNull();
     expect(screen.getAllByText('SALLES')).toHaveLength(1);
-    expect(screen.getByTestId('atelier-shelf-level-frames')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-shelf-level-frames')).toBeNull();
+    expect(screen.queryByText('Signal Ascendant')).toBeNull();
+    expect(screen.queryByText('Faille Volt')).toBeNull();
+    const frameShelf = within(screen.getByTestId('atelier-shelf-profile-frames'));
+    expect(frameShelf.getAllByRole('button')).toHaveLength(3);
+    for (const frame of INDIVIDUAL_PROFILE_FRAMES) {
+      expect(screen.getAllByTestId(`atelier-product-${frame.id}`)).toHaveLength(1);
+      expect(frameShelf.getByText(frame.name)).toBeTruthy();
+    }
     expect(screen.queryByTestId('atelier-shelf-materials')).toBeNull();
     expect(screen.getByTestId('atelier-shelf-lighting')).toBeTruthy();
     expect(screen.getAllByTestId(/atelier-lighting-preview-/)).toHaveLength(6);
@@ -167,16 +175,17 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.queryByTestId('founder-pack-banner')).toBeNull();
   });
 
-  it('shows the original packs and keeps fictional teams inside the Boutique', async () => {
+  it('shows original packs without the original teams section', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 
     expect(screen.getByTestId('atelier-shelf-original-packs')).toBeTruthy();
-    expect(screen.getByTestId('atelier-shelf-team-packs')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-shelf-team-packs')).toBeNull();
+    expect(screen.queryByText('ÉQUIPES ORIGINALES')).toBeNull();
     expect(screen.queryByTestId('atelier-shelf-game-collections')).toBeNull();
     expect(screen.queryByTestId('atelier-team-pack-fnatic-black-orange')).toBeNull();
     expect(screen.queryByTestId('atelier-team-pack-kc-blue-wall')).toBeNull();
     expect(screen.queryByTestId('atelier-team-pack-m8-gentle-mates')).toBeNull();
-    expect(screen.getByTestId('atelier-team-pack-clutch-originals-teams')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-team-pack-clutch-originals-teams')).toBeNull();
     expect(screen.queryByTestId('atelier-game-collection-league-of-legends-collection')).toBeNull();
     expect(screen.queryByTestId('atelier-game-collection-valorant-collection')).toBeNull();
     expect(screen.queryByTestId('atelier-game-collection-rocket-league-collection')).toBeNull();
@@ -199,19 +208,19 @@ describe('AtelierShopScreen interactions', () => {
       pathname: '/team-pack-preview',
       params: { packId: 'sang-des-titans' },
     });
-
-
-
-
-
-
-
-    await fireEvent.press(screen.getByTestId('atelier-team-pack-clutch-originals-teams'));
-    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
-      pathname: '/team-pack-preview',
-      params: { packId: 'clutch-originals-teams' },
-    });
   }, 15_000);
+
+  it('buys an individual profile frame and opens the equipped profile', async () => {
+    const screen = await render(<AtelierShopScreen previewData={makeData(1280)} previewState={{ forceReduceMotion: true }} />);
+    await fireEvent.press(screen.getByTestId('atelier-product-circuit-zero-wake-frame'));
+    await fireEvent.press(screen.getByTestId('atelier-action-primary'));
+    expect(screen.getByLabelText('Achat de Cadre Sillage pour 200 Volts. Ton solde passera de 1 280 à 1 080 Volts.')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('atelier-purchase-confirm'));
+    await waitFor(() => expect(screen.getByLabelText('Cadre Sillage, configuration active')).toBeTruthy());
+    expect(screen.getByLabelText('1 080 Volts disponibles')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'VOIR MON PROFIL' }));
+    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/profile-preview?frameId=circuit-zero-wake-frame');
+  }, 30_000);
 
   it('buys a single collection object without acquiring its former pack', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);

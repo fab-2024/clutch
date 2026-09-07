@@ -230,7 +230,9 @@ describe('OwnProfileOverview', () => {
   });
 
   it('presents evolving accomplishments as the ring collection', async () => {
-    const screen = await renderHub();
+    const screen = await renderHub({
+      data: { ...PROFILE, recap: { likes_vitrine_uniques: 5, annees_anciennete: 0 } },
+    });
 
     expect(screen.getByText('ANNEAUX')).toBeTruthy();
     expect(screen.getByText('TROPHÉES')).toBeTruthy();

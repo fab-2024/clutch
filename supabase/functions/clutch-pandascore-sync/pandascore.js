@@ -173,6 +173,7 @@ export function normalizePandaScoreMatch(rawMatch, game, options = {}) {
       game,
       status,
       begin_at: beginAt,
+      forfeit: rawMatch.forfeit === true,
       format,
       event_external_id: eventExternalId,
       event_name: eventName,
@@ -298,4 +299,56 @@ function httpsUrl(value) {
 
 function isObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+// Historical results are fetched independently of Clutch seasons. Only a full
+// bounded window marks a game ready; truncated/error responses never do.
+export async function fetchPandaScoreHistory(token, options = {}) {
+  if (!token) throw new Error('missing_pandascore_token');
+  const now = options.now ?? new Date();
+  const since = new Date(now.getTime() - 90 * 86400000).toISOString();
+  const maxPages = Math.max(1, Math.min(Number(options.maxPages) || 30, 30));
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const games = options.games ?? SUPPORTED_GAMES;
+  const results = await Promise.all(games.map(async (game) => {
+    if (!GAME_PATHS[game]) throw new Error(`unsupported_game:${game}`);
+    const matches = [];
+    let requests = 0;
+    try {
+      for (let page = 1; page <= maxPages; page += 1) {
+        const url = new URL(`${API_ORIGIN}/${GAME_PATHS[game]}/matches/past`);
+        url.searchParams.set('page[size]', '100');
+        url.searchParams.set('page[number]', String(page));
+        url.searchParams.set('sort', '-begin_at,id');
+        requests += 1;
+        const response = await fetchImpl(url.toString(), {
+          headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+          signal: AbortSignal.timeout(12000),
+        });
+        if (!response.ok) throw new Error(`history_http_${response.status}`);
+        const payload = await response.json();
+        if (!Array.isArray(payload)) throw new Error('history_invalid_payload');
+        matches.push(...payload.filter((m) => Date.parse(m.begin_at) >= Date.parse(since)));
+        const reachedStart = payload.some((m) => Date.parse(m.begin_at) < Date.parse(since));
+        if (payload.length < 100 || reachedStart) return { game, matches, complete: true, requests };
+      }
+      return { game, matches, complete: false, requests, error: 'history_page_limit' };
+    } catch (error) {
+      return { game, matches: [], complete: false, requests, error: error instanceof Error ? error.message : 'history_fetch_failed' };
+    }
+  }));
+  return {
+    requests: results.reduce((n, r) => n + r.requests, 0),
+    responses: results.filter((r) => r.complete),
+    coverage: Object.fromEntries(results.filter((r) => r.complete).map((r) => [r.game, since])),
+    errors: results.filter((r) => !r.complete).map(({ game, error }) => ({ game, error })),
+  };
+}
+
+export function gamesNeedingHistory(status, games, now = new Date()) {
+  return games.filter((game) => {
+    const last = Date.parse(status?.[game]?.synced_at ?? '');
+    // Refresh before the server's 24-hour freshness limit.
+    return !Number.isFinite(last) || now.getTime() - last >= 23 * 3600000;
+  });
 }
