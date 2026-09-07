@@ -113,20 +113,20 @@ describe('HubContextSlot', () => {
 
     expect(callMission.props.accessibilityLabel).toContain('Progression 0 sur 1');
     expect(screen.getByText('DÉFIS DU JOUR')).toBeTruthy();
-    expect(screen.getByText('0 / 3')).toBeTruthy();
+    expect(screen.queryByText('0 / 3')).toBeNull();
     expect(screen.queryByTestId('hub-daily-mission-faction')).toBeNull();
     expect(screen.queryByText('12 CALLS EN FACTION')).toBeNull();
     expect(screen.getByText('VALIDE 1 CALL')).toBeTruthy();
     expect(screen.getByText('SUIS 2 MATCHS')).toBeTruthy();
     expect(screen.getByText('INVITE\n1 SUPPORTER')).toBeTruthy();
     expect(callMission.props.accessibilityLabel).toContain('Récompense 30 Volts');
-    expect(screen.getByText('+30 VOLTS')).toHaveStyle({ color: '#4CF2B8' });
-    expect(screen.getByText('+20 VOLTS')).toHaveStyle({ color: '#C670FF' });
-    expect(screen.getByText('+25 VOLTS')).toHaveStyle({ color: '#4DC3F5' });
+    expect(screen.getByText('+30 Volts')).toHaveStyle({ color: '#4CF2B8' });
+    expect(screen.getByText('+20 Volts')).toHaveStyle({ color: '#C670FF' });
+    expect(screen.getByText('+25 Volts')).toHaveStyle({ color: '#4DC3F5' });
     expect(screen.queryByText('+30 FRAGS')).toBeNull();
     expect(screen.getByTestId('hub-mission-reward-call')).toHaveStyle({
-      backgroundColor: '#4CF2B824',
-      borderColor: '#4CF2B8e6',
+      backgroundColor: 'rgba(2,12,16,.92)',
+      borderColor: '#4CF2B880',
     });
     expect(screen.getByTestId('daily-mission-artwork-call', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.getByTestId('daily-mission-artwork-live', { includeHiddenElements: true })).toBeTruthy();

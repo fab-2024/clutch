@@ -136,8 +136,8 @@ describe('HubExperience restoration', () => {
     expect(screen.getByTestId('hub-primary-action-arrow')).toBeTruthy();
     expect(screen.getByText('PRIMARY MATCH POSTER')).toBeTruthy();
     expect(screen.getByTestId('hub-season-ranking')).toBeTruthy();
-    expect(screen.getByText('Ton classement')).toBeTruthy();
-    expect(screen.getByText('FRAGS')).toBeTruthy();
+    expect(screen.getByText('Ta progression')).toBeTruthy();
+    expect(screen.getByText('Frags')).toBeTruthy();
     expect(screen.getByText('DÉFIS DU JOUR')).toBeTruthy();
     expect(screen.queryByText('NOUVELLE RÉCOMPENSE')).toBeNull();
     expect(screen.queryByTestId('hub-season-controls')).toBeNull();
@@ -202,8 +202,7 @@ describe('HubExperience restoration', () => {
     );
 
     expect(screen.getByText('PRIMARY MATCH POSTER')).toBeTruthy();
-    expect(screen.getByText(String(PREVIEW_STREAK.current))).toBeTruthy();
-    expect(screen.getByText('JOURS')).toBeTruthy();
+    expect(screen.getByText(`${PREVIEW_STREAK.current} jours de série`)).toBeTruthy();
     await fireEvent.press(screen.getByTestId('call-streak-card'));
     expect(router.push).toHaveBeenCalledWith('/streak-preview');
   });

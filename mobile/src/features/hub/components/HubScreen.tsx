@@ -29,7 +29,7 @@ import { InlinePredictionPanel } from '@/src/features/matches/components/InlineP
 import type { ArenaMatch } from '@/src/features/matches/types';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
-import CallStreakCard from '@/src/features/retention/components/CallStreakCard';
+import CompactCallStreakCard from '@/src/features/retention/components/CompactCallStreakCard';
 import type { CallStreakState } from '@/src/features/retention/types';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
 import { gradeAccent } from '@/src/features/ranking/grades';
@@ -196,11 +196,11 @@ export function HubExperience({
           )}
         </View>
 
-        <View>
+        <View style={styles.seasonSection}>
+          <Text style={styles.seasonHeaderTitle}>Ta progression</Text>
           <SeasonProgressCard hub={hub} loading={loading} />
+          {!headerEconomy || callStreakPreview ? <CompactCallStreakCard previewState={callStreakPreview} /> : null}
         </View>
-
-        {!headerEconomy || callStreakPreview ? <CallStreakCard previewState={callStreakPreview} /> : null}
 
         <View style={styles.contextSlot}>
           {loading ? <HubContextSkeleton /> : <HubDailyChallenges />}
@@ -480,98 +480,44 @@ function UpNextMatchCard({
 function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }) {
   const { isCompactWidth } = useResponsiveLayout();
   const grade = hub.frags?.grade;
-  const gradeLabel = loading
-    ? '—'
-    : grade?.libelle?.toUpperCase() || 'NON CLASSÉ';
-  const fragScore = loading || !hub.frags ? null : hub.frags.frags;
+  const gradeLabel = loading ? '—' : grade?.libelle || 'Non classé';
   const frags = loading || !hub.frags ? '—' : formatNumber(hub.frags.frags);
-  const accent = loading ? '#7C8790' : gradeAccent(grade);
-  const seasonContext = hub.seasonName?.toUpperCase() ?? 'SAISON EN COURS';
-  const emblemSize = isCompactWidth ? 78 : 96;
+  const accent = loading ? colors.textSecondary : gradeAccent(grade);
+  const emblemSize = isCompactWidth ? 54 : 64;
+  const progress = Math.max(0, Math.min(1, grade?.progression ?? 0));
+  const nextRank = loading || !grade ? 'Progression à confirmer'
+    : grade.prochain_libelle ? `Prochain rang : ${grade.prochain_libelle}` : 'Rang maximal atteint';
 
   return (
-    <View style={styles.seasonSection} testID="hub-season-ranking">
-      <View style={styles.seasonHeader}>
-        <Text numberOfLines={1} style={styles.seasonHeaderTitle}>Ton classement</Text>
+    <Pressable
+      accessibilityLabel={`Ouvrir ma saison, rang ${gradeLabel}, ${frags} Frags. ${nextRank}`}
+      accessibilityRole="button"
+      onPress={openRankScreen}
+      style={({ pressed }) => [styles.seasonCard, pressed && styles.pressed]}
+      testID="hub-season-ranking"
+    >
+      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.seasonEmblem}>
+        <RankEmblem grade={grade} size={emblemSize} />
       </View>
-
-      <Pressable
-        accessibilityLabel={'Ouvrir ma saison, rang ' + gradeLabel + ', ' + frags + ' Frags'}
-        accessibilityRole="button"
-        onPress={openRankScreen}
-        style={({ pressed }) => [
-          styles.seasonCard,
-          { borderColor: withAlpha(accent, .72) },
-          pressed && styles.pressed,
-        ]}
-      >
-        <LinearGradient
-          colors={[withAlpha(accent, .68), withAlpha(accent, .34), '#160D08']}
-          end={{ x: 1, y: .6 }}
-          start={{ x: 0, y: .4 }}
-          style={StyleSheet.absoluteFill}
-        />
-        <LinearGradient
-          colors={['rgba(255,255,255,.13)', 'rgba(255,255,255,0)', 'rgba(0,0,0,.28)']}
-          end={{ x: 1, y: 1 }}
-          start={{ x: 0, y: 0 }}
-          style={StyleSheet.absoluteFill}
-        />
-
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={[
-            styles.seasonEmblem,
-            { height: emblemSize, width: emblemSize },
-            loading && styles.seasonEmblemLoading,
-          ]}
-        >
-          <RankEmblem grade={grade} size={emblemSize} />
-        </View>
-        <View style={styles.seasonIdentity}>
-          <Text numberOfLines={1} style={styles.seasonContext}>{seasonContext}</Text>
-          <Text
-            adjustsFontSizeToFit
-            minimumFontScale={.68}
-            numberOfLines={1}
-            style={[styles.seasonGrade, isCompactWidth && styles.seasonGradeCompact, { color: accent }]}
-          >
-            {gradeLabel}
-          </Text>
-        </View>
-        <View style={[styles.seasonMetric, isCompactWidth && styles.seasonMetricCompact]}>
-          <LinearGradient
-            colors={['rgba(13,29,40,.98)', 'rgba(4,10,15,.98)', 'rgba(2,5,8,.98)']}
-            end={{ x: 1, y: 1 }}
-            start={{ x: 0, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.seasonMetricInnerBorder} />
-          <Text numberOfLines={1} style={styles.seasonMetricLabel}>FRAGS</Text>
-          <View style={styles.seasonMetricCopy}>
-            <Text
-              adjustsFontSizeToFit
-              minimumFontScale={.72}
-              numberOfLines={1}
-              style={[
-                styles.seasonMetricValue,
-                fragScore != null && Math.abs(fragScore) >= 100 && styles.seasonMetricValueMedium,
-                fragScore != null && Math.abs(fragScore) >= 1000 && styles.seasonMetricValueLong,
-                { color: accent },
-              ]}
-            >
-              {frags}
-            </Text>
-            <ChevronRight
-              color="#B8BDC2"
-              size={isCompactWidth ? 23 : 27}
-              strokeWidth={2.5}
-            />
+      <View style={styles.seasonIdentity}>
+        <View style={styles.seasonSummary}>
+          <View style={styles.seasonIdentity}>
+            <Text numberOfLines={1} style={[styles.seasonGrade, { color: accent }]}>{gradeLabel}</Text>
+            <Text numberOfLines={1} style={styles.seasonContext}>{hub.seasonName ?? 'Saison en cours'}</Text>
           </View>
+          <View style={styles.seasonMetric}>
+            <Text adjustsFontSizeToFit numberOfLines={1} style={[styles.seasonMetricValue, { color: accent }]}>{frags}</Text>
+            <Text style={styles.seasonContext}>Frags</Text>
+          </View>
+          <ChevronRight color={colors.textSecondary} size={21} strokeWidth={2.5} />
         </View>
-      </Pressable>
-    </View>
+        <View style={styles.seasonTrack} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(progress * 100) }} accessibilityLabel="Progression vers le prochain rang">
+          <View style={[styles.seasonFill, { width: `${progress * 100}%`, backgroundColor: accent }]} />
+          <View style={[styles.seasonDot, { left: `${progress * 100}%`, backgroundColor: accent }]} />
+        </View>
+        <Text numberOfLines={1} style={styles.seasonNextRank}>{nextRank}</Text>
+      </View>
+    </Pressable>
   );
 }
 
@@ -850,147 +796,23 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
-  seasonSection: {
-    marginHorizontal: spacing.md,
-    gap: 8,
-  },
-  seasonHeader: {
-    minHeight: 28,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  seasonHeaderTitle: {
-    flex: 1,
-    minWidth: 0,
-    color: colors.text,
-    fontFamily: fonts.bold,
-    fontSize: 20,
-    lineHeight: 24,
-    letterSpacing: -.3,
-  },
+  seasonSection: { marginHorizontal: spacing.md, gap: 8 },
+  seasonHeaderTitle: { color: colors.text, fontFamily: fonts.bold, fontSize: 18, lineHeight: 23, marginBottom: 2 },
   seasonCard: {
-    minHeight: 120,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    overflow: 'hidden',
-    borderRadius: 20,
-    backgroundColor: '#3B1A08',
-    borderWidth: 1,
-    borderColor: 'rgba(255,190,92,.72)',
+    minHeight: 96, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderRadius: 14, backgroundColor: 'rgba(10,21,29,.88)', borderWidth: 1, borderColor: colors.border,
   },
-  seasonEmblem: {
-    flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  seasonEmblemLoading: {
-    opacity: .35,
-  },
-  seasonIdentity: {
-    flex: 1,
-    minWidth: 0,
-    justifyContent: 'center',
-  },
-  seasonGrade: {
-    marginTop: 5,
-    fontFamily: fonts.display,
-    fontSize: 42,
-    lineHeight: 40,
-    letterSpacing: -.75,
-    textShadowColor: 'rgba(0,0,0,.8)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 5,
-  },
-  seasonGradeCompact: {
-    fontSize: 34,
-    lineHeight: 34,
-  },
-  seasonContext: {
-    color: '#D6C8BC',
-    fontFamily: fonts.bold,
-    fontSize: 12,
-    lineHeight: 15,
-    letterSpacing: .35,
-    textShadowColor: 'rgba(0,0,0,.7)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  seasonMetric: {
-    width: 112,
-    minHeight: 96,
-    paddingTop: 12,
-    paddingBottom: 8,
-    paddingHorizontal: 11,
-    flexShrink: 0,
-    alignItems: 'stretch',
-    justifyContent: 'flex-start',
-    gap: 2,
-    overflow: 'hidden',
-    borderRadius: 18,
-    backgroundColor: '#050A0E',
-    borderWidth: 1,
-    borderColor: 'rgba(104,139,163,.78)',
-    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.72), 0 3px 10px rgba(0,0,0,.28)',
-  },
-  seasonMetricCompact: {
-    width: 94,
-    minHeight: 90,
-    paddingTop: 10,
-    paddingBottom: 7,
-    paddingHorizontal: 8,
-  },
-  seasonMetricInnerBorder: {
-    position: 'absolute',
-    top: 3,
-    right: 3,
-    bottom: 3,
-    left: 3,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,.08)',
-  },
-  seasonMetricCopy: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 4,
-  },
-  seasonMetricLabel: {
-    color: '#F1F2F3',
-    fontFamily: fonts.display,
-    fontSize: 15,
-    lineHeight: 18,
-    letterSpacing: .4,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  seasonMetricValue: {
-    maxWidth: '70%',
-    flexShrink: 1,
-    fontFamily: fonts.display,
-    fontSize: 46,
-    lineHeight: 47,
-    letterSpacing: -.7,
-    textShadowColor: 'rgba(0,0,0,.78)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  seasonMetricValueMedium: {
-    fontSize: 39,
-    lineHeight: 41,
-  },
-  seasonMetricValueLong: {
-    fontSize: 32,
-    lineHeight: 35,
-    letterSpacing: -.45,
-  },
+  seasonEmblem: { flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
+  seasonIdentity: { flex: 1, minWidth: 0 },
+  seasonSummary: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  seasonGrade: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 20 },
+  seasonContext: { color: colors.textSecondary, fontFamily: fonts.medium, fontSize: 11, lineHeight: 15 },
+  seasonMetric: { maxWidth: 70, minWidth: 35, alignItems: 'center' },
+  seasonMetricValue: { fontFamily: fonts.bold, fontSize: 18, lineHeight: 21 },
+  seasonTrack: { marginTop: 10, height: 5, borderRadius: 3, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.border },
+  seasonFill: { height: '100%', borderRadius: 3 },
+  seasonDot: { position: 'absolute', top: -2, marginLeft: -3, width: 7, height: 7, borderRadius: 4 },
+  seasonNextRank: { marginTop: 5, color: colors.textSecondary, fontFamily: fonts.medium, fontSize: 10, lineHeight: 14 },
   emptyState: {
     marginHorizontal: 8,
     marginTop: 8,

@@ -11,7 +11,7 @@ import Svg, {
 } from 'react-native-svg';
 
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
-import { fonts, layout, typography } from '@/src/theme';
+import { fonts, layout, spacing, typography } from '@/src/theme';
 
 import {
   formatMatchHeaderSchedule,
@@ -30,7 +30,7 @@ type MatchConfrontationCardProps = {
   state: MatchConfrontationState;
 };
 
-const CARD_ASPECT_RATIO = 1.405;
+const CARD_ASPECT_RATIO = 1.55;
 
 export function MatchConfrontationCard({
   accessibilityHint = 'Ouvre le Match Center',
@@ -40,7 +40,7 @@ export function MatchConfrontationCard({
   state,
 }: MatchConfrontationCardProps) {
   const { width } = useWindowDimensions();
-  const cardWidth = Math.min(width, layout.contentMaxWidth);
+  const cardWidth = Math.min(width, layout.contentMaxWidth) - spacing.md * 2;
   const cardHeight = Math.round(cardWidth / CARD_ASPECT_RATIO);
   const sceneScale = cardWidth / 400;
   const event = String(match.evenement || '').trim() || 'COMPÉTITION';
@@ -107,36 +107,6 @@ export function MatchConfrontationCard({
           schedule={formatMatchHeaderSchedule(match.debut)}
           state={state}
         />
-
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          pointerEvents="none"
-          style={[
-            styles.matchupTitle,
-            {
-              marginLeft: -110 * sceneScale,
-              top: 38 * sceneScale,
-              width: 220 * sceneScale,
-            },
-          ]}
-          testID="match-confrontation-title"
-        >
-          <Text
-            adjustsFontSizeToFit
-            minimumFontScale={.58}
-            numberOfLines={1}
-            style={[
-              styles.matchupTitleText,
-              {
-                fontSize: 33 * sceneScale,
-                lineHeight: 37 * sceneScale,
-              },
-            ]}
-          >
-            {state.teamA.tag} — {state.teamB.tag}
-          </Text>
-        </View>
 
         <View
           accessibilityElementsHidden
@@ -352,8 +322,8 @@ function TeamFace({
       style={[
         styles.ticketTeam,
         {
-          left: (left ? 0 : 244) * sceneScale,
-          top: 84 * sceneScale,
+          left: (left ? 22 : 222) * sceneScale,
+          top: 62 * sceneScale,
           width: 156 * sceneScale,
         },
         muted && styles.ticketTeamMuted,
@@ -509,23 +479,6 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,.9)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
-  },
-  matchupTitle: {
-    position: 'absolute',
-    zIndex: 7,
-    left: '50%',
-    alignItems: 'center',
-  },
-  matchupTitleText: {
-    width: '100%',
-    color: '#F7F8F9',
-    fontFamily: fonts.display,
-    fontStyle: 'italic',
-    letterSpacing: -1,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,.98)',
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 8,
   },
   teamLayer: {
     position: 'absolute',

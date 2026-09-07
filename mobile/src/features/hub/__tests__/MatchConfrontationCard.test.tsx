@@ -40,7 +40,7 @@ const MATCH: HubMatch = {
 };
 
 describe('MatchConfrontationCard typography', () => {
-  it('shows the confrontation above separated team blocks without restoring the score overlay', async () => {
+  it('keeps separated team blocks without the redundant matchup heading or score overlay', async () => {
     const state = getMatchConfrontationState(MATCH, null, NOW);
     const screen = await render(
       <MatchConfrontationCard
@@ -53,22 +53,20 @@ describe('MatchConfrontationCard typography', () => {
     expect(screen.getByText('EN DIRECT', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.getByText('LPL · PLAYOFFS', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.getByText('BO5', { includeHiddenElements: true })).toBeTruthy();
-    expect(screen.getByText('BLG — WE', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.queryByText('BLG — WE', { includeHiddenElements: true })).toBeNull();
     expect(screen.queryByText('1 – 0', { includeHiddenElements: true })).toBeNull();
     expect(screen.queryByText('EN COURS', { includeHiddenElements: true })).toBeNull();
     expect(screen.getByText('Bilibili Gaming', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.getByText('Team WE', { includeHiddenElements: true })).toBeTruthy();
 
-    const titleStyle = StyleSheet.flatten(screen.getByTestId('match-confrontation-title', { includeHiddenElements: true }).props.style);
     const leftTeamStyle = StyleSheet.flatten(screen.getByTestId('match-team-a', { includeHiddenElements: true }).props.style);
     const rightTeamStyle = StyleSheet.flatten(screen.getByTestId('match-team-b', { includeHiddenElements: true }).props.style);
 
-    expect(leftTeamStyle.top).toBeGreaterThan(titleStyle.top);
     expect(rightTeamStyle.top).toBe(leftTeamStyle.top);
     expect(leftTeamStyle.left + leftTeamStyle.width).toBeLessThan(rightTeamStyle.left);
   });
 
-  it('keeps the confrontation title before kickoff without inventing a score', async () => {
+  it('omits the redundant matchup heading before kickoff without inventing a score', async () => {
     const upcoming = { ...MATCH, debut: '2026-09-05T18:00:00.000Z', statut: 'a_venir', score_a: null, score_b: null };
     const state = getMatchConfrontationState(upcoming, null, NOW);
     const screen = await render(
@@ -79,7 +77,7 @@ describe('MatchConfrontationCard typography', () => {
       />,
     );
 
-    expect(screen.getByText('BLG — WE', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.queryByText('BLG — WE', { includeHiddenElements: true })).toBeNull();
     expect(screen.queryByText('VS', { includeHiddenElements: true })).toBeNull();
     expect(screen.queryByText('PRONOSTIC OUVERT', { includeHiddenElements: true })).toBeNull();
     expect(screen.queryByText('0 – 0', { includeHiddenElements: true })).toBeNull();

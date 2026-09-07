@@ -8,7 +8,7 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { Surface } from '@/src/components/ui/Surface';
-import { colors, spacing, typography } from '@/src/theme';
+import { colors, fonts, spacing, typography } from '@/src/theme';
 import { openMatchResult } from '@/src/features/matches/matchCenterNavigation';
 
 import type { HubContextItem } from '../hubContext';
@@ -101,7 +101,6 @@ export function HubDailyChallenges() {
   const { width } = useWindowDimensions();
   const cards = dailyMissionCards();
   const [activeCard, setActiveCard] = useState(0);
-  const completed = cards.filter((card) => card.current >= card.goal).length;
   const cardWidth = Math.min(328, Math.max(264, width - 68));
   const snapInterval = cardWidth + 10;
   const openMissions = () => router.push('/(tabs)/social/missions');
@@ -110,15 +109,6 @@ export function HubDailyChallenges() {
     <View style={styles.missionSection}>
       <View style={styles.missionSectionHeader}>
         <Text style={styles.missionSectionTitle}>DÉFIS DU JOUR</Text>
-        <Pressable
-          accessibilityLabel={`Voir les ${cards.length} défis du jour, ${completed} terminé${completed === 1 ? '' : 's'}`}
-          accessibilityRole="button"
-          onPress={openMissions}
-          style={({ pressed }) => [styles.missionCountPill, pressed && styles.pressed]}
-        >
-          <Text style={styles.missionCount}>{completed} / {cards.length}</Text>
-          <ChevronRight color={colors.text} size={18} strokeWidth={2.4} />
-        </Pressable>
       </View>
 
       <ScrollView
@@ -231,21 +221,19 @@ function DailyMissionCardView({
         </View>
 
         <View style={styles.missionBottomRow}>
-          <View style={styles.missionProgressPill}>
+          <View style={[styles.missionProgressPill, { borderColor: withAlpha(card.accent, .4) }]}>
             <Text style={styles.missionProgress}>{card.current}/{card.goal}</Text>
           </View>
           <View
             style={[
               styles.missionRewardPill,
               {
-                backgroundColor: withAlpha(card.accent, .14),
-                borderColor: withAlpha(card.accent, .9),
-                shadowColor: card.accent,
+                borderColor: withAlpha(card.accent, .5),
               },
             ]}
             testID={`hub-mission-reward-${card.key}`}
           >
-            <Text style={[styles.missionReward, { color: card.accent }]}>+{card.rewardVolts} VOLTS</Text>
+            <Text style={[styles.missionReward, { color: card.accent }]}>+{card.rewardVolts} Volts</Text>
           </View>
         </View>
       </LinearGradient>
@@ -471,22 +459,6 @@ const styles = StyleSheet.create({
     ...typography.sectionTitle,
     color: colors.text,
   },
-  missionCountPill: {
-    minHeight: 40,
-    paddingHorizontal: 13,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    borderRadius: 20,
-    backgroundColor: '#152633',
-    borderWidth: 1,
-    borderColor: '#30414E',
-  },
-  missionCount: {
-    ...typography.control,
-    color: colors.text,
-    letterSpacing: 0.35,
-  },
   missionPressable: {
     overflow: 'hidden',
     borderRadius: 18,
@@ -620,46 +592,35 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   missionProgressPill: {
-    minWidth: 64,
-    minHeight: 33,
-    paddingHorizontal: 9,
+    minWidth: 66,
+    minHeight: 36,
+    paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 7,
-    backgroundColor: 'rgba(3,10,14,.9)',
+    borderRadius: 9,
+    backgroundColor: 'rgba(2,12,16,.92)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,.16)',
   },
   missionProgress: {
-    ...typography.metricSmall,
-    color: '#FFFFFF',
-    fontSize: 17,
-    lineHeight: 19,
-    letterSpacing: 0.1,
+    color: colors.text,
+    fontFamily: fonts.bold,
+    fontSize: 15,
+    lineHeight: 20,
   },
   missionRewardPill: {
-    minWidth: 108,
-    minHeight: 34,
-    paddingHorizontal: 10,
+    minWidth: 114,
+    minHeight: 36,
+    paddingHorizontal: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
-    backgroundColor: 'rgba(3,10,14,.84)',
+    borderRadius: 9,
+    backgroundColor: 'rgba(2,12,16,.92)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,.5)',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.28,
-    shadowRadius: 4,
-    elevation: 3,
   },
   missionReward: {
-    ...typography.metricSmall,
-    color: '#FFFFFF',
+    fontFamily: fonts.bold,
     fontSize: 15,
-    lineHeight: 17,
-    fontStyle: 'italic',
-    letterSpacing: -0.2,
+    lineHeight: 20,
   },
   accent: {
     position: 'absolute',

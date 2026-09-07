@@ -133,7 +133,7 @@ export default function HubPreviewScreen() {
 
 type PreviewMatchState = 'open' | 'upcoming' | 'live' | 'finished' | 'cancelled' | 'fallback';
 type PreviewScoreMode = 'score' | 'none';
-type PreviewTeams = 'g2-fnatic' | 'kc-vitality' | 'light-pair' | 'fearx-dplus' | 'blg-we';
+type PreviewTeams = 'nrg-conviction' | 'g2-fnatic' | 'kc-vitality' | 'light-pair' | 'fearx-dplus' | 'blg-we';
 type PreviewContext = 'auto' | 'mission' | 'none' | 'result' | 'reward';
 
 function normalizePreviewContext(value?: string | string[]): PreviewContext {
@@ -162,7 +162,7 @@ function normalizePreviewState(value?: string | string[]): PreviewMatchState {
 
 function normalizePreviewTeams(value?: string | string[]): PreviewTeams {
   const teams = Array.isArray(value) ? value[0] : value;
-  return teams === 'kc-vitality' || teams === 'light-pair' || teams === 'fearx-dplus' || teams === 'blg-we' ? teams : 'g2-fnatic';
+  return teams === 'nrg-conviction' || teams === 'kc-vitality' || teams === 'light-pair' || teams === 'fearx-dplus' || teams === 'blg-we' ? teams : 'g2-fnatic';
 }
 
 function normalizePreviewScore(value?: string | string[]): PreviewScoreMode {
@@ -171,7 +171,16 @@ function normalizePreviewScore(value?: string | string[]): PreviewScoreMode {
 }
 
 function matchForPreviewState(state: PreviewMatchState, teams: PreviewTeams, scoreMode: PreviewScoreMode): HubMatch {
-  const matchup = teams === 'fearx-dplus'
+  const matchup = teams === 'nrg-conviction'
+    ? {
+        event: 'North American Challengers League · Playoffs',
+        id: 'nrg-conviction',
+        teamA: 'NRG Esports',
+        teamB: 'Conviction',
+        tagA: 'NRG',
+        tagB: 'CNV',
+      }
+    : teams === 'fearx-dplus'
     ? {
         event: 'LCK · Playoffs',
         id: 'fearx-dplus',
@@ -217,8 +226,13 @@ function matchForPreviewState(state: PreviewMatchState, teams: PreviewTeams, sco
       };
   const accentOverrides = teams === 'light-pair'
     ? { couleur_a: '#86F6DD', couleur_b: '#FFE27A' }
-    : {};
-  const format = teams === 'blg-we' ? 5 : 3;
+    : teams === 'nrg-conviction'
+      ? {
+          logo_a: 'https://cdn-api.pandascore.co/images/team/image/111/nr_glogo_square.png',
+          logo_b: 'https://cdn-api.pandascore.co/images/team/image/136708/convictionlogo_square.png',
+        }
+      : {};
+  const format = teams === 'blg-we' || teams === 'nrg-conviction' ? 5 : 3;
   if (state === 'live') {
     return previewMatch(`${matchup.id}-live`, -1, 'lol', matchup.teamA, matchup.tagA, matchup.teamB, matchup.tagB, matchup.event, format, {
       ...accentOverrides,
