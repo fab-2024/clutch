@@ -4,13 +4,13 @@ import {
   COSMETIC_FAMILY_BY_SLOT,
   type CosmeticItem,
   type CosmeticRarity,
-  type ShowcaseAtelierSlot,
+  type CosmeticSlot,
 } from './types';
 import { SHOWCASE_RANK_DISPLAY_CATALOG } from './showcaseRankDisplayCatalog';
 import { SHOWCASE_ROOM_CATALOG } from './showcaseRoomCatalog';
-import { ORIGINAL_PACK_CATALOG } from './teamPackCatalog';
+import { INDIVIDUAL_COLLECTION_CATALOG, ORIGINAL_PACK_CATALOG, createTeamPackPreviewItems, individualItemPrice, isIndividualCollection } from './teamPackCatalog';
 
-export type AtelierCategory = 'materials' | 'lighting' | 'supports' | 'pedestals' | 'ranks' | 'jerseys';
+export type AtelierCategory = 'materials' | 'lighting' | 'supports' | 'pedestals' | 'ranks' | 'jerseys' | 'originals';
 
 export const ATELIER_CATEGORIES = [
   'lighting',
@@ -19,7 +19,7 @@ export const ATELIER_CATEGORIES = [
 ] as const satisfies readonly AtelierCategory[];
 
 export function isVisibleAtelierCategory(category: AtelierCategory) {
-  return (ATELIER_CATEGORIES as readonly AtelierCategory[]).includes(category);
+  return category === 'originals' || (ATELIER_CATEGORIES as readonly AtelierCategory[]).includes(category);
 }
 export type AtelierDiscoveryKind = 'team_pack' | 'partner_pack';
 
@@ -36,15 +36,16 @@ export type AtelierProduct = {
   price: number;
   rarity: CosmeticRarity;
   roomId?: string;
-  slot: ShowcaseAtelierSlot;
+  slot: CosmeticSlot;
 };
 
 export const ATELIER_CATEGORY_META: Record<AtelierCategory, {
   glyph: string;
   label: string;
   shortLabel: string;
-  slot: ShowcaseAtelierSlot;
+  slot: CosmeticSlot;
 }> = {
+  originals: { glyph: '⬡', label: 'OBJETS DE COLLECTION', shortLabel: 'COLLECTION', slot: 'apparence_core' },
   materials: { glyph: '▤', label: 'MATÉRIAUX', shortLabel: 'MATIÈRE', slot: 'vitrine_materiau' },
   lighting: { glyph: '✦', label: 'ÉCLAIRAGE', shortLabel: 'LUMIÈRE', slot: 'vitrine_eclairage' },
   supports: { glyph: '◫', label: 'SALLES', shortLabel: 'SALLE', slot: 'vitrine_supports' },
@@ -53,7 +54,24 @@ export const ATELIER_CATEGORY_META: Record<AtelierCategory, {
   jerseys: { glyph: '⌁', label: 'MAILLOTS', shortLabel: 'MAILLOT', slot: 'vitrine_maillot' },
 };
 
+export const INDIVIDUAL_COLLECTION_PRODUCTS: readonly AtelierProduct[] = INDIVIDUAL_COLLECTION_CATALOG.flatMap((collection) =>
+  collection.items.map((item) => ({
+    id: item.id,
+    category: 'originals' as const,
+    slot: item.slot,
+    name: item.name,
+    description: item.description,
+    image: item.image,
+    accent: item.accent,
+    rarity: item.rarity,
+    price: individualItemPrice(item.rarity),
+    packId: collection.id,
+    roomId: item.slot === 'vitrine_eclairage' ? collection.id : undefined,
+  })),
+);
+
 export const ATELIER_CATALOG: readonly AtelierProduct[] = [
+  ...INDIVIDUAL_COLLECTION_PRODUCTS,
   {
     id: 'material_graphite',
     category: 'materials',
@@ -187,21 +205,6 @@ export const ATELIER_CATALOG: readonly AtelierProduct[] = [
     image: room.image,
     roomId: room.id,
   })),
-  ...ORIGINAL_PACK_CATALOG.flatMap((pack) => pack.items
-    .filter((item) => item.slot === 'vitrine_supports')
-    .map((item) => ({
-      id: item.id,
-      category: 'pedestals' as const,
-      slot: 'vitrine_supports' as const,
-      name: item.name,
-      description: item.description,
-      price: pack.price,
-      rarity: item.rarity,
-      accent: item.accent,
-      image: item.image,
-      packId: pack.id,
-      packOnly: true,
-    }))),
   ...SHOWCASE_RANK_DISPLAY_CATALOG.map((display) => ({
     id: display.id,
     category: 'ranks' as const,
@@ -249,23 +252,22 @@ export const ATELIER_CATALOG: readonly AtelierProduct[] = [
   },
 ] as const;
 
-export const PACK_ROOM_ATELIER_PRODUCTS: readonly AtelierProduct[] = ORIGINAL_PACK_CATALOG.map((pack) => {
+export const PACK_ROOM_ATELIER_PRODUCTS: readonly AtelierProduct[] = [...ORIGINAL_PACK_CATALOG, ...INDIVIDUAL_COLLECTION_CATALOG].map((pack) => {
   const room = pack.items.find((item) => item.slot === 'vitrine_eclairage');
-  const presenter = pack.items.find((item) => item.slot === 'vitrine_supports');
-  if (!room || !presenter) throw new Error(`${pack.id} doit fournir une salle et ses présentoirs.`);
+  if (!room) throw new Error(`${pack.id} doit fournir une salle.`);
 
   return {
-    id: presenter.id,
+    id: room.id,
     category: 'supports',
-    slot: 'vitrine_supports',
+    slot: 'vitrine_eclairage',
     name: room.name,
     description: room.description,
-    price: pack.price,
+    price: isIndividualCollection(pack.id) ? individualItemPrice(room.rarity) : pack.price,
     rarity: room.rarity,
     accent: room.accent,
     image: room.image,
     packId: pack.id,
-    packOnly: true,
+    packOnly: !isIndividualCollection(pack.id),
   };
 });
 
@@ -295,7 +297,8 @@ export function atelierProductById(id: string | null | undefined) {
 }
 
 export function createAtelierPreviewItems(): CosmeticItem[] {
-  return ATELIER_CATALOG.filter((product) => !product.packOnly).map((product) => {
+  const individualItems = INDIVIDUAL_COLLECTION_CATALOG.flatMap((collection) => createTeamPackPreviewItems(collection));
+  return [...individualItems, ...ATELIER_CATALOG.filter((product) => !product.packOnly && product.category !== 'originals').map((product): CosmeticItem => {
     const included = product.price === 0;
     return {
       id: product.id,
@@ -324,7 +327,7 @@ export function createAtelierPreviewItems(): CosmeticItem[] {
       owned: included,
       equipped: included,
     };
-  });
+  })];
 }
 
 export function isAtelierItem(item: CosmeticItem) {

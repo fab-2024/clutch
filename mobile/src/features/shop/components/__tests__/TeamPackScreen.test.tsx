@@ -29,6 +29,10 @@ const mockShowSnackbar = jest.fn();
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('expo-router', () => ({
+  Redirect: ({ href }: { href: string }) => {
+    const { Text } = jest.requireActual('react-native');
+    return <Text>{href}</Text>;
+  },
   router: { back: jest.fn(), push: jest.fn() },
   useLocalSearchParams: () => ({ key: 'fnatic-black-orange' }),
 }));
@@ -93,28 +97,14 @@ jest.mock('@/src/providers/SnackbarProvider', () => ({
 describe('TeamPackScreen', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('renders the original Protocole Néon pack and its twelve inspectable objects', async () => {
-    const screen = await render(
-      <TeamPackScreen
-        packId={NEON_PROTOCOL_PACK.id}
-        previewData={makeData(1280, NEON_PROTOCOL_PACK)}
-      />,
-    );
 
-    expect(screen.getByText('COLLECTION // ORIGINALE')).toBeTruthy();
-    expect(screen.getByText('CRÉATION ORIGINALE')).toBeTruthy();
-    expect(screen.getByText('CRÉATION ORIGINALE CLUTCH')).toBeTruthy();
-    expect(screen.getAllByTestId(/^team-pack-item-neon-protocol-/)).toHaveLength(12);
-
-    await act(async () => {
-      fireEvent.press(screen.getByTestId('team-pack-item-neon-protocol-armor-vega'));
-    });
-
-    await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
-    expect(screen.getAllByText('Armure Vega').length).toBeGreaterThan(0);
+  it.each([NEON_PROTOCOL_PACK, MYTHS_FORGE_PACK, CIRCUIT_ZERO_PACK])('redirects former bundle $id to individual sales', async (collection) => {
+    const screen = await render(<TeamPackScreen packId={collection.id} previewData={makeData(1280, collection)} />);
+    expect(screen.getByText('/shop-preview')).toBeTruthy();
+    expect(screen.queryByTestId('team-pack-primary')).toBeNull();
   });
 
-  it('renders a new original pack with its nine retained objects', async () => {
+  it('renders a new original pack with its eight retained objects', async () => {
     const screen = await render(
       <TeamPackScreen
         packId={SANG_DES_TITANS_PACK.id}
@@ -124,7 +114,7 @@ describe('TeamPackScreen', () => {
 
     expect(screen.getByText('COLLECTION // ORIGINALE')).toBeTruthy();
     expect(screen.getAllByText('DERNIER PACTE')).toHaveLength(2);
-    expect(screen.getAllByTestId(/^team-pack-item-sang-des-titans-/)).toHaveLength(9);
+    expect(screen.getAllByTestId(/^team-pack-item-sang-des-titans-/)).toHaveLength(8);
     expect(screen.queryByText('Jeton du Tribut')).toBeNull();
     expect(screen.queryByText('Carte Dernier Pacte')).toBeNull();
     expect(screen.queryByText('Titre Porte-Serment')).toBeNull();
@@ -137,45 +127,7 @@ describe('TeamPackScreen', () => {
     expect(screen.getAllByText('Cuirasse des Serments').length).toBeGreaterThan(0);
   });
 
-  it('renders Mythes de la Forge and its twelve inspectable original objects', async () => {
-    const screen = await render(
-      <TeamPackScreen
-        packId={MYTHS_FORGE_PACK.id}
-        previewData={makeData(1280, MYTHS_FORGE_PACK)}
-      />,
-    );
 
-    expect(screen.getByText('COLLECTION // ORIGINALE')).toBeTruthy();
-    expect(screen.getAllByText('ORÉA // MAÎTRE-FORGE')).toHaveLength(2);
-    expect(screen.getAllByTestId(/^team-pack-item-mythes-forge-/)).toHaveLength(12);
-
-    await act(async () => {
-      fireEvent.press(screen.getByTestId('team-pack-item-mythes-forge-armor-orea'));
-    });
-
-    await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
-    expect(screen.getAllByText('Armure Oréa').length).toBeGreaterThan(0);
-  });
-
-  it('renders Circuit Zéro and its twelve inspectable original objects', async () => {
-    const screen = await render(
-      <TeamPackScreen
-        packId={CIRCUIT_ZERO_PACK.id}
-        previewData={makeData(1280, CIRCUIT_ZERO_PACK)}
-      />,
-    );
-
-    expect(screen.getByText('COLLECTION // ORIGINALE')).toBeTruthy();
-    expect(screen.getAllByText('KAIROS-6 // CHRONONAUTE')).toHaveLength(2);
-    expect(screen.getAllByTestId(/^team-pack-item-circuit-zero-/)).toHaveLength(12);
-
-    await act(async () => {
-      fireEvent.press(screen.getByTestId('team-pack-item-circuit-zero-kairos-6'));
-    });
-
-    await waitFor(() => expect(screen.getByTestId('team-pack-item-sheet')).toBeTruthy());
-    expect(screen.getAllByText('Kairos-6').length).toBeGreaterThan(0);
-  });
 
   it('renders the six fictional teams only as an original Boutique collection', async () => {
     const screen = await render(

@@ -57,6 +57,7 @@ type ShowcaseAtelierDrawerProps = {
 };
 
 const CATEGORY_LABELS: Record<AtelierCategory, string> = {
+  originals: 'COLLECTION',
   materials: 'COULEUR',
   lighting: 'ÉCLAIRAGE',
   supports: 'SALLES',

@@ -2,9 +2,11 @@ import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
+import { applyPreviewAtelierAction } from '@/src/features/shop/atelierState';
 import { PREVIEW_SHOP } from '@/src/features/shop/components/ShopPreviewScreen';
 import {
   applyPreviewTeamPackAction,
+  isIndividualCollection,
   CIRCUIT_ZERO_PACK,
   cosmeticPackById,
   createTeamPackPreviewItems,
@@ -135,11 +137,19 @@ export function showcasePreviewForMood(mood: ShowcasePreviewMood, packId?: strin
                   ? ROCKET_LEAGUE_COLLECTION_PACK
                   : null);
   if (pack) {
-    const packShop = applyPreviewTeamPackAction({
+    const individual = isIndividualCollection(pack.id);
+    const collectionItems = createTeamPackPreviewItems(pack).map((item) => ({ ...item, owned: individual }));
+    const collectionIds = new Set(collectionItems.map((item) => item.id));
+    const initial: CosmeticShopData = {
       ...SHOWCASE_SHOP,
       balance: 1_280,
-      items: [...SHOWCASE_SHOP.items, ...createTeamPackPreviewItems(pack)],
-    }, pack);
+      items: [...SHOWCASE_SHOP.items.filter((item) => !collectionIds.has(item.id)), ...collectionItems],
+    };
+    const packShop = individual
+      ? pack.items.filter((item) => item.equipByDefault).reduce(
+        (shop, item) => applyPreviewAtelierAction(shop, item.id), initial,
+      )
+      : applyPreviewTeamPackAction(initial, pack);
     return {
       profile: previewProfileForPack(pack),
       shop: packShop,

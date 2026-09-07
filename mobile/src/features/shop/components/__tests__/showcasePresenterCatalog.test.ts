@@ -114,10 +114,10 @@ describe('showcase presenter catalog', () => {
     expect(assignments['left-extra']?.name).toBe('Bannière Phase');
     expect(assignments['right-extra']?.name).toBe('Glyphe Nœud');
     expect(assignments.badge?.name).toBe('Badge Pionnier');
-    expect(assignments.ring?.name).toBe('Jeton Syn');
-    expect(assignments.title?.name).toBe('Titre Architecte');
+    expect(assignments.ring?.name).toBeUndefined();
+    expect(assignments.title?.name).toBeUndefined();
     expect(assignments['left-free']?.name).toBe('Cadre Phase');
-    expect(assignments['right-free']?.name).toBe('Carte de partage');
+    expect(assignments['right-free']?.name).toBeUndefined();
   });
 
   it('places the eight physical Mythes de la Forge objects on the Magma stations', () => {
@@ -141,12 +141,12 @@ describe('showcase presenter catalog', () => {
 
     expect(assignments['left-free']?.name).toBe('Cadre Fissure');
     expect(assignments['left-extra']?.name).toBe('Bannière Strate');
-    expect(assignments.ring?.name).toBe('Jeton Tellurique');
+    expect(assignments.ring?.name).toBeUndefined();
     expect(assignments.jersey?.name).toBe('Armure Oréa');
     expect(assignments['right-extra']?.name).toBe('Sigil de Braise');
     expect(assignments.trophy?.name).toBe('Totem Basalte');
     expect(assignments.badge?.name).toBe('Badge Artisan');
-    expect(assignments['right-free']?.name).toBe('Carte de partage');
+    expect(assignments['right-free']?.name).toBeUndefined();
   });
 
   it('places the seven physical Circuit Zéro objects on the aerodynamic stations', () => {
@@ -170,7 +170,7 @@ describe('showcase presenter catalog', () => {
 
     expect(assignments['left-free']?.name).toBe('Cadre Sillage');
     expect(assignments['left-extra']?.name).toBe('Bannière Secteur');
-    expect(assignments.ring?.name).toBe('Jeton Chrono');
+    expect(assignments.ring?.name).toBeUndefined();
     expect(assignments.jersey?.name).toBe('Kairos-6');
     expect(assignments['right-extra']?.name).toBe('Glyphe Zéro');
     expect(assignments.trophy?.name).toBe('Totem Delta');

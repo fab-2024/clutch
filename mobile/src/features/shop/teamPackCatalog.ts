@@ -181,7 +181,7 @@ export const NEON_PROTOCOL_PACK: TeamPackDefinition = {
   name: 'Pack Protocole Néon',
   title: 'PROTOCOLE NÉON',
   subtitle: 'SYNAPSE // ARCHITECTE',
-  description: 'Douze cosmétiques originaux pour transformer ta Vitrine en chambre Synapse.',
+  description: 'Huit cosmétiques originaux pour transformer ta Vitrine en chambre Synapse.',
   accent: NEON_CYAN,
   price: 1200,
   licenseHolder: 'Clutch',
@@ -238,32 +238,8 @@ export const NEON_PROTOCOL_PACK: TeamPackDefinition = {
       image: require('../../../assets/shop/packs/neon-protocol/items/banner-phase.png'),
     },
     {
-      id: 'neon-protocol-vector-pedestals',
-      number: 5,
-      name: 'Socle Vectoriel',
-      description: 'Un réseau de socles en sustentation porté par des anneaux holographiques cyan.',
-      slot: 'vitrine_supports',
-      rarity: 'legendaire',
-      accent: NEON_CYAN,
-      equipByDefault: true,
-      image: require('../../../assets/shop/packs/neon-protocol/items/vector-pedestal.png'),
-    },
-    {
-      id: 'neon-protocol-syn-token',
-      number: 6,
-      name: 'Jeton Syn',
-      description: 'Un jeton de circuit radial dont les pistes convergent vers un cristal magenta.',
-      slot: 'apparence_core',
-      rarity: 'rare',
-      accent: NEON_CYAN,
-      equipByDefault: false,
-      roomKind: 'ring',
-      roomSlot: 'ring',
-      image: require('../../../assets/shop/packs/neon-protocol/items/syn-token.png'),
-    },
-    {
       id: 'neon-protocol-null-totem',
-      number: 7,
+      number: 5,
       name: 'Totem Null',
       description: 'Une colonne de modules graphite maintenus en équilibre par un flux cyan.',
       slot: 'apparence_core',
@@ -276,7 +252,7 @@ export const NEON_PROTOCOL_PACK: TeamPackDefinition = {
     },
     {
       id: 'neon-protocol-pioneer-badge',
-      number: 8,
+      number: 6,
       name: 'Badge Pionnier',
       description: 'Un badge octogonal cerclé d’une orbite métallique et signé du glyphe Nœud.',
       slot: 'apparence_core',
@@ -289,7 +265,7 @@ export const NEON_PROTOCOL_PACK: TeamPackDefinition = {
     },
     {
       id: 'neon-protocol-phase-frame',
-      number: 9,
+      number: 7,
       name: 'Cadre Phase',
       description: 'Un cadre graphite angulaire aux inserts cyan et à l’éclat magenta.',
       slot: 'cadre_profil',
@@ -302,7 +278,7 @@ export const NEON_PROTOCOL_PACK: TeamPackDefinition = {
     },
     {
       id: 'neon-protocol-impulse-effect',
-      number: 10,
+      number: 8,
       name: 'Effet Impulsion',
       description: 'Une impulsion cyan et magenta traverse la Vitrine avant de se stabiliser en halo.',
       slot: 'effet_faction',
@@ -310,32 +286,6 @@ export const NEON_PROTOCOL_PACK: TeamPackDefinition = {
       accent: '#54CFFF',
       equipByDefault: true,
       image: require('../../../assets/shop/packs/neon-protocol/items/impulse-effect.png'),
-    },
-    {
-      id: 'neon-protocol-share-card',
-      number: 11,
-      name: 'Carte de partage',
-      description: 'Une carte paysage qui met en scène la chambre Synapse et sa collection équipée.',
-      slot: 'carte_profil',
-      rarity: 'epique',
-      accent: '#E27AFF',
-      equipByDefault: true,
-      roomKind: 'banner',
-      roomSlot: 'right-free',
-      image: require('../../../assets/shop/packs/neon-protocol/items/share-card.png'),
-    },
-    {
-      id: 'neon-protocol-architect-title',
-      number: 12,
-      name: 'Titre Architecte',
-      description: 'Le titre « Architecte » pour signer les Vitrines conçues sous Protocole Néon.',
-      slot: 'titre_profil',
-      rarity: 'epique',
-      accent: NEON_CYAN,
-      equipByDefault: true,
-      roomKind: 'title',
-      roomSlot: 'title',
-      image: require('../../../assets/shop/packs/neon-protocol/items/architect-title.png'),
     },
   ],
 };
@@ -347,7 +297,7 @@ export const MYTHS_FORGE_PACK: TeamPackDefinition = {
   name: 'Pack Mythes de la Forge',
   title: 'MYTHES DE LA FORGE',
   subtitle: 'ORÉA // MAÎTRE-FORGE',
-  description: 'Douze cosmétiques originaux façonnés dans le basalte, le cuivre et la braise.',
+  description: 'Huit cosmétiques originaux façonnés dans le basalte, le cuivre et la braise.',
   accent: FORGE_ORANGE,
   price: 1200,
   licenseHolder: 'Clutch',
@@ -404,32 +354,8 @@ export const MYTHS_FORGE_PACK: TeamPackDefinition = {
       image: require('../../../assets/shop/packs/mythes-forge/items/strata-banner.png'),
     },
     {
-      id: 'mythes-forge-magma-pedestals',
-      number: 5,
-      name: 'Socle Magmatique',
-      description: 'Huit stations de basalte cerclées de métal forgé et éclairées par la roche en fusion.',
-      slot: 'vitrine_supports',
-      rarity: 'legendaire',
-      accent: FORGE_ORANGE,
-      equipByDefault: true,
-      image: require('../../../assets/shop/packs/mythes-forge/items/magma-pedestal.png'),
-    },
-    {
-      id: 'mythes-forge-telluric-token',
-      number: 6,
-      name: 'Jeton Tellurique',
-      description: 'Un disque de roche striée dont la faille centrale diffuse une lueur tellurique.',
-      slot: 'apparence_core',
-      rarity: 'rare',
-      accent: '#C9784B',
-      equipByDefault: false,
-      roomKind: 'ring',
-      roomSlot: 'ring',
-      image: require('../../../assets/shop/packs/mythes-forge/items/telluric-token.png'),
-    },
-    {
       id: 'mythes-forge-basalt-totem',
-      number: 7,
+      number: 5,
       name: 'Totem Basalte',
       description: 'Une colonne de roche noire maintenue par des bagues d’ivoire et de cuivre.',
       slot: 'apparence_core',
@@ -442,7 +368,7 @@ export const MYTHS_FORGE_PACK: TeamPackDefinition = {
     },
     {
       id: 'mythes-forge-artisan-badge',
-      number: 8,
+      number: 6,
       name: 'Badge Artisan',
       description: 'Un badge hexagonal taillé dans la pierre, traversé d’un sigil de cuivre incandescent.',
       slot: 'apparence_core',
@@ -455,7 +381,7 @@ export const MYTHS_FORGE_PACK: TeamPackDefinition = {
     },
     {
       id: 'mythes-forge-rift-frame',
-      number: 9,
+      number: 7,
       name: 'Cadre Fissure',
       description: 'Un cadre de basalte éclaté, consolidé par des angles de cuivre et d’ivoire.',
       slot: 'cadre_profil',
@@ -468,7 +394,7 @@ export const MYTHS_FORGE_PACK: TeamPackDefinition = {
     },
     {
       id: 'mythes-forge-resonance-effect',
-      number: 10,
+      number: 8,
       name: 'Effet Résonance',
       description: 'Des cercles telluriques orange et turquoise propagent une onde dans toute la Vitrine.',
       slot: 'effet_faction',
@@ -476,30 +402,6 @@ export const MYTHS_FORGE_PACK: TeamPackDefinition = {
       accent: FORGE_ORANGE,
       equipByDefault: true,
       image: require('../../../assets/shop/packs/mythes-forge/items/resonance-effect.png'),
-    },
-    {
-      id: 'mythes-forge-share-card',
-      number: 11,
-      name: 'Carte de partage',
-      description: 'Une carte paysage encadrée de basalte qui révèle la Forge et sa lueur tellurique.',
-      slot: 'carte_profil',
-      rarity: 'epique',
-      accent: '#43BFC1',
-      equipByDefault: true,
-      roomKind: 'banner',
-      roomSlot: 'right-free',
-      image: require('../../../assets/shop/packs/mythes-forge/items/share-card.png'),
-    },
-    {
-      id: 'mythes-forge-master-smith-title',
-      number: 12,
-      name: 'Titre Maître-Forge',
-      description: 'Le titre « Maître-Forge » pour signer une collection façonnée dans les Failles.',
-      slot: 'titre_profil',
-      rarity: 'epique',
-      accent: FORGE_ORANGE,
-      equipByDefault: true,
-      image: require('../../../assets/shop/packs/mythes-forge/items/master-smith-title.png'),
     },
   ],
 };
@@ -511,7 +413,7 @@ export const CIRCUIT_ZERO_PACK: TeamPackDefinition = {
   name: 'Pack Circuit Zéro',
   title: 'CIRCUIT ZÉRO',
   subtitle: 'KAIROS-6 // CHRONONAUTE',
-  description: 'Douze cosmétiques originaux issus d’un programme aérodynamique aux lignes ivoire, graphite et vert acide.',
+  description: 'Huit cosmétiques originaux issus d’un programme aérodynamique aux lignes ivoire, graphite et vert acide.',
   accent: CIRCUIT_LIME,
   price: 1200,
   licenseHolder: 'Clutch',
@@ -568,32 +470,8 @@ export const CIRCUIT_ZERO_PACK: TeamPackDefinition = {
       image: require('../../../assets/shop/packs/circuit-zero/items/sector-banner.png'),
     },
     {
-      id: 'circuit-zero-aero-pedestals',
-      number: 5,
-      name: 'Socle Aéro',
-      description: 'Sept stations techniques réparties dans le tunnel selon une grille aérodynamique.',
-      slot: 'vitrine_supports',
-      rarity: 'legendaire',
-      accent: CIRCUIT_LIME,
-      equipByDefault: true,
-      image: require('../../../assets/shop/packs/circuit-zero/items/aero-pedestal.png'),
-    },
-    {
-      id: 'circuit-zero-chrono-token',
-      number: 6,
-      name: 'Jeton Chrono',
-      description: 'Un instrument circulaire qui conserve le meilleur temps d’un secteur parfait.',
-      slot: 'apparence_core',
-      rarity: 'rare',
-      accent: '#EA4FC9',
-      equipByDefault: false,
-      roomKind: 'ring',
-      roomSlot: 'ring',
-      image: require('../../../assets/shop/packs/circuit-zero/items/chrono-token.png'),
-    },
-    {
       id: 'circuit-zero-delta-totem',
-      number: 7,
+      number: 5,
       name: 'Totem Delta',
       description: 'Des profils d’aile superposés autour d’un axe de mesure magenta.',
       slot: 'apparence_core',
@@ -606,7 +484,7 @@ export const CIRCUIT_ZERO_PACK: TeamPackDefinition = {
     },
     {
       id: 'circuit-zero-pilot-badge',
-      number: 8,
+      number: 6,
       name: 'Badge Pilote',
       description: 'Un insigne de pilote à boucle ouverte, usiné dans l’ivoire et le graphite.',
       slot: 'apparence_core',
@@ -619,7 +497,7 @@ export const CIRCUIT_ZERO_PACK: TeamPackDefinition = {
     },
     {
       id: 'circuit-zero-wake-frame',
-      number: 9,
+      number: 7,
       name: 'Cadre Sillage',
       description: 'Un cadre graphite dont les angles capturent une traînée lime et magenta.',
       slot: 'cadre_profil',
@@ -632,7 +510,7 @@ export const CIRCUIT_ZERO_PACK: TeamPackDefinition = {
     },
     {
       id: 'circuit-zero-afterimage-effect',
-      number: 10,
+      number: 8,
       name: 'Effet Postimage',
       description: 'Trois silhouettes du Kairos-6 traversent la Vitrine avant de fusionner sur la ligne de mesure.',
       slot: 'effet_faction',
@@ -640,28 +518,6 @@ export const CIRCUIT_ZERO_PACK: TeamPackDefinition = {
       accent: CIRCUIT_LIME,
       equipByDefault: true,
       image: require('../../../assets/shop/packs/circuit-zero/items/afterimage-effect.png'),
-    },
-    {
-      id: 'circuit-zero-share-card',
-      number: 11,
-      name: 'Carte de partage',
-      description: 'Une carte paysage qui capture le Kairos-6 lancé dans le Hangar Vectoriel.',
-      slot: 'carte_profil',
-      rarity: 'epique',
-      accent: '#EA4FC9',
-      equipByDefault: true,
-      image: require('../../../assets/shop/packs/circuit-zero/items/share-card.png'),
-    },
-    {
-      id: 'circuit-zero-chrononaut-title',
-      number: 12,
-      name: 'Titre Chrononaute',
-      description: 'Le titre « Chrononaute » pour celles et ceux qui vivent une fraction de seconde en avance.',
-      slot: 'titre_profil',
-      rarity: 'epique',
-      accent: CIRCUIT_LIME,
-      equipByDefault: true,
-      image: require('../../../assets/shop/packs/circuit-zero/items/chrononaut-title.png'),
     },
   ],
 };
@@ -1414,10 +1270,21 @@ export const ORIGINAL_PACK_CATALOG: readonly TeamPackDefinition[] = [
   CONCLAVE_ARCANIQUE_PACK,
   TURBO_ARENA_PACK,
   DERNIER_ROUND_PACK,
+];
+
+export const INDIVIDUAL_COLLECTION_CATALOG: readonly TeamPackDefinition[] = [
   CIRCUIT_ZERO_PACK,
   MYTHS_FORGE_PACK,
   NEON_PROTOCOL_PACK,
 ];
+
+export function isIndividualCollection(id: string) {
+  return INDIVIDUAL_COLLECTION_CATALOG.some((collection) => collection.id === id);
+}
+
+export function individualItemPrice(rarity: CosmeticRarity) {
+  return rarity === 'legendaire' ? 300 : rarity === 'epique' ? 200 : 100;
+}
 
 export const TEAM_PACK_CATALOG: readonly TeamPackDefinition[] = [
   CLUTCH_ORIGINALS_TEAM_PACK,
@@ -1449,6 +1316,7 @@ export const ARCHIVED_COSMETIC_PACK_CATALOG: readonly TeamPackDefinition[] = [
 
 export const ALL_COSMETIC_PACK_CATALOG: readonly TeamPackDefinition[] = [
   ...COSMETIC_PACK_CATALOG,
+  ...INDIVIDUAL_COLLECTION_CATALOG,
   ...ARCHIVED_COSMETIC_PACK_CATALOG,
 ];
 
@@ -1457,7 +1325,7 @@ const COSMETIC_PACK_ITEM_BY_ID = new Map(
 );
 
 const CURRENT_COSMETIC_PACK_ITEM_BY_ID = new Map(
-  COSMETIC_PACK_CATALOG.flatMap((pack) => pack.items.map((item) => [item.id, item] as const)),
+  [...COSMETIC_PACK_CATALOG, ...INDIVIDUAL_COLLECTION_CATALOG].flatMap((pack) => pack.items.map((item) => [item.id, item] as const)),
 );
 
 export function teamPackById(id: string | null | undefined) {
@@ -1489,7 +1357,7 @@ export function teamPackPrimaryAction(
   pack: TeamPackDefinition,
   data: CosmeticShopData | null | undefined,
 ): TeamPackPrimaryAction {
-  if (!data) return 'unavailable';
+  if (!data || isIndividualCollection(pack.id)) return 'unavailable';
   const byId = new Map(teamPackRuntimeItems(pack, data).map((item) => [item.id, item]));
   if (byId.size !== pack.items.length) return 'unavailable';
 
@@ -1514,9 +1382,9 @@ export function createTeamPackPreviewItems(pack: TeamPackDefinition = NEON_PROTO
     rarity: definition.rarity,
     styleKey: definition.id,
     accent: definition.accent,
-    price: 0,
+    price: isIndividualCollection(pack.id) ? individualItemPrice(definition.rarity) : 0,
     collectionKey: pack.id,
-    source: 'team_pack',
+    source: isIndividualCollection(pack.id) ? 'achat' : 'team_pack',
     team: null,
     brandKey: pack.brandKey,
     campaignKey: null,
@@ -1527,7 +1395,7 @@ export function createTeamPackPreviewItems(pack: TeamPackDefinition = NEON_PROTO
     license: { type: isClutchOriginal(pack) ? 'originale' : 'partenaire', holder: pack.licenseHolder },
     included: false,
     available: true,
-    acquirable: false,
+    acquirable: isIndividualCollection(pack.id),
     owned: false,
     equipped: false,
   }));

@@ -9,10 +9,11 @@ import { ATELIER_CATEGORY_META, type AtelierCategory } from './atelierCatalog';
 import {
   DEFAULT_SHOWCASE_PRESENTER_ID,
   showcasePresenterById,
+  showcasePresenterByRoomId,
 } from './showcasePresenterCatalog';
 import { DEFAULT_SHOWCASE_RANK_DISPLAY_ID } from './showcaseRankDisplayCatalog';
 import { showcaseRoomByProductId } from './showcaseRoomCatalog';
-import type { CosmeticItem, CosmeticShopData, EquippedCosmetics } from './types';
+import type { CosmeticItem, CosmeticShopData, EquippedCosmetics, CosmeticSlot } from './types';
 
 export type AtelierPrimaryAction = 'buy' | 'equip' | 'equipped' | 'insufficient' | 'unavailable';
 export type AtelierTrySelection = Partial<Record<AtelierCategory, string>>;
@@ -28,6 +29,7 @@ export type AtelierSceneConfig = {
 };
 
 const DEFAULT_IDS: Record<AtelierCategory, string> = {
+  originals: 'circuit-zero-kairos-6',
   materials: 'material_graphite',
   lighting: 'lighting_cyan',
   supports: 'supports_gallery',
@@ -63,8 +65,7 @@ export function applyPreviewAtelierAction(data: CosmeticShopData, itemId: string
     balance: Math.max(0, nextBalance),
     items: nextItems,
     equipped: {
-      ...data.equipped,
-      showcase: equipmentFromItems(nextItems, data.equipped),
+      ...equipmentFromItems(nextItems, data.equipped),
     },
   };
 }
@@ -79,6 +80,7 @@ export function applyAtelierTry(
 
 export function equippedAtelierIds(equipped: EquippedCosmetics | null | undefined): Record<AtelierCategory, string> {
   return {
+    originals: equipped?.core?.id ?? DEFAULT_IDS.originals,
     materials: equipped?.showcase.material?.id ?? DEFAULT_IDS.materials,
     lighting: equipped?.showcase.lighting?.id ?? DEFAULT_IDS.lighting,
     supports: equipped?.showcase.supports?.id ?? DEFAULT_IDS.supports,
@@ -99,13 +101,14 @@ export function resolveAtelierSceneConfig(
   const pedestalId = trial.pedestals ?? persisted.pedestals;
   const rankDisplayId = trial.ranks ?? persisted.ranks;
   const jerseyId = trial.jerseys ?? persisted.jerseys;
-  const room = showcaseRoomByProductId(supportsId);
+  const collectionRoom = showcasePresenterByRoomId(trial.supports ?? lightingId);
+  const room = collectionRoom ? null : showcaseRoomByProductId(supportsId);
 
   return {
     theme: materialTheme(materialId),
     lighting: lightingTone(lightingId),
     pedestal: supportsPedestal(pedestalId),
-    presenterId: room ? DEFAULT_SHOWCASE_PRESENTER_ID : supportsId,
+    presenterId: collectionRoom?.id ?? (room ? DEFAULT_SHOWCASE_PRESENTER_ID : supportsId),
     rankDisplayId,
     roomId: room?.id ?? null,
     jerseyPresentation: jerseyPresentation(jerseyId),
@@ -121,8 +124,7 @@ export function equippedItemForCategory(
 }
 
 function equipmentFromItems(items: CosmeticItem[], fallback: EquippedCosmetics) {
-  const find = (category: AtelierCategory) => {
-    const slot = ATELIER_CATEGORY_META[category].slot;
+  const find = (slot: CosmeticSlot) => {
     const item = items.find((candidate) => candidate.slot === slot && candidate.equipped);
     if (!item) return null;
     const { id, level, name, description, rarity, styleKey, accent } = item;
@@ -130,11 +132,18 @@ function equipmentFromItems(items: CosmeticItem[], fallback: EquippedCosmetics) 
   };
 
   return {
-    material: find('materials') ?? fallback.showcase.material,
-    lighting: find('lighting') ?? fallback.showcase.lighting,
-    supports: find('supports') ?? fallback.showcase.supports,
-    rankDisplay: find('ranks') ?? fallback.showcase.rankDisplay,
-    jersey: find('jerseys') ?? fallback.showcase.jersey,
+    frame: find('cadre_profil') ?? fallback.frame,
+    title: find('titre_profil') ?? fallback.title,
+    core: find('apparence_core') ?? fallback.core,
+    factionEffect: find('effet_faction') ?? fallback.factionEffect,
+    profileCard: find('carte_profil') ?? fallback.profileCard,
+    showcase: {
+      material: find('vitrine_materiau') ?? fallback.showcase.material,
+      lighting: find('vitrine_eclairage') ?? fallback.showcase.lighting,
+      supports: find('vitrine_supports') ?? fallback.showcase.supports,
+      rankDisplay: find('vitrine_rang') ?? fallback.showcase.rankDisplay,
+      jersey: find('vitrine_maillot') ?? fallback.showcase.jersey,
+    },
   };
 }
 

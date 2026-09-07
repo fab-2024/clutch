@@ -64,10 +64,10 @@ begin
     into v_pack;
 
     if (v_pack ->> 'prix_volts')::integer <> 1200
-       or (v_pack ->> 'nombre_objets')::integer <> 9
+       or (v_pack ->> 'nombre_objets')::integer <> 8
        or v_pack ->> 'accent' is distinct from v_accent
        or v_pack ->> 'marque_key' is distinct from 'clutch-originals'
-       or jsonb_array_length(v_pack -> 'objets') <> 9
+       or jsonb_array_length(v_pack -> 'objets') <> 8
        or (v_pack ->> 'possede')::boolean
        or not (v_pack ->> 'achetable')::boolean
     then
@@ -79,9 +79,9 @@ begin
 
     if not (v_purchase ->> 'achete')::boolean
        or (v_purchase ->> 'prix')::integer <> 1200
-       or (v_purchase ->> 'objets_attribues')::integer <> 9
-       or (v_purchase ->> 'equipables_par_defaut')::integer <> 6
-       or (v_purchase ->> 'nombre_equipes')::integer <> 6
+       or (v_purchase ->> 'objets_attribues')::integer <> 8
+       or (v_purchase ->> 'equipables_par_defaut')::integer <> 5
+       or (v_purchase ->> 'nombre_equipes')::integer <> 5
        or not (v_purchase ->> 'equipe')::boolean
     then
       raise exception 'Original pack % purchase is not atomic: %', v_pack_id, v_purchase;
@@ -102,7 +102,7 @@ begin
         'turbo-arena',
         'dernier-round'
       )
-  ) <> 54
+  ) <> 48
      or (
     select count(*)
     from public.inventaire_packs_cosmetiques i
@@ -154,7 +154,7 @@ begin
       'turbo-arena',
       'dernier-round'
     )
-  ) <> 54
+  ) <> 48
   then
     raise exception 'Active shop does not expose all six wave-two packs';
   end if;

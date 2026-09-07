@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -31,7 +31,8 @@ import {
   applyPreviewTeamPackAction,
   cosmeticPackById,
   isClutchOriginal,
-  NEON_PROTOCOL_PACK,
+  isIndividualCollection,
+  SANG_DES_TITANS_PACK,
   teamPackPrimaryAction,
   type TeamPackDefinition,
   type TeamPackItemDefinition,
@@ -46,7 +47,7 @@ export type TeamPackScreenProps = {
 
 export default function TeamPackScreen({ packId, previewData }: TeamPackScreenProps) {
   const params = useLocalSearchParams<{ key?: string | string[] }>();
-  const routeId = packId ?? readParam(params.key) ?? NEON_PROTOCOL_PACK.id;
+  const routeId = packId ?? readParam(params.key) ?? SANG_DES_TITANS_PACK.id;
   const pack = cosmeticPackById(routeId);
   const { refresh: refreshCosmetics } = useCosmetics();
   const { refresh: refreshEconomy } = useEconomy();
@@ -148,6 +149,10 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
         </View>
       </Screen>
     );
+  }
+
+  if (pack && isIndividualCollection(pack.id)) {
+    return <Redirect href={previewData ? '/shop-preview' : '/shop'} />;
   }
 
   return (

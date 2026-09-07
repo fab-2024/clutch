@@ -112,14 +112,10 @@ const NEON_PROTOCOL_EXPECTED_IDS = [
   'neon-protocol-armor-vega',
   'neon-protocol-glyph-node',
   'neon-protocol-banner-phase',
-  'neon-protocol-vector-pedestals',
-  'neon-protocol-syn-token',
   'neon-protocol-null-totem',
   'neon-protocol-pioneer-badge',
   'neon-protocol-phase-frame',
   'neon-protocol-impulse-effect',
-  'neon-protocol-share-card',
-  'neon-protocol-architect-title',
 ];
 
 const MYTHS_FORGE_EXPECTED_IDS = [
@@ -127,14 +123,10 @@ const MYTHS_FORGE_EXPECTED_IDS = [
   'mythes-forge-armor-orea',
   'mythes-forge-ember-sigil',
   'mythes-forge-strata-banner',
-  'mythes-forge-magma-pedestals',
-  'mythes-forge-telluric-token',
   'mythes-forge-basalt-totem',
   'mythes-forge-artisan-badge',
   'mythes-forge-rift-frame',
   'mythes-forge-resonance-effect',
-  'mythes-forge-share-card',
-  'mythes-forge-master-smith-title',
 ];
 
 const CIRCUIT_ZERO_EXPECTED_IDS = [
@@ -142,14 +134,10 @@ const CIRCUIT_ZERO_EXPECTED_IDS = [
   'circuit-zero-kairos-6',
   'circuit-zero-zero-glyph',
   'circuit-zero-sector-banner',
-  'circuit-zero-aero-pedestals',
-  'circuit-zero-chrono-token',
   'circuit-zero-delta-totem',
   'circuit-zero-pilot-badge',
   'circuit-zero-wake-frame',
   'circuit-zero-afterimage-effect',
-  'circuit-zero-share-card',
-  'circuit-zero-chrononaut-title',
 ];
 
 const CLUTCH_ORIGINALS_EXPECTED_IDS = [
@@ -174,15 +162,9 @@ describe('original pack catalogue', () => {
   it('publishes the original collections and keeps licensed definitions archived', () => {
     expect(ORIGINAL_PACK_CATALOG).toEqual([
       ...NEW_ORIGINAL_PACKS,
-      CIRCUIT_ZERO_PACK,
-      MYTHS_FORGE_PACK,
-      NEON_PROTOCOL_PACK,
     ]);
     expect(COSMETIC_PACK_CATALOG).toEqual([
       ...NEW_ORIGINAL_PACKS,
-      CIRCUIT_ZERO_PACK,
-      MYTHS_FORGE_PACK,
-      NEON_PROTOCOL_PACK,
       CLUTCH_ORIGINALS_TEAM_PACK,
     ]);
     expect(TEAM_PACK_CATALOG).toEqual([CLUTCH_ORIGINALS_TEAM_PACK]);
@@ -212,16 +194,17 @@ describe('original pack catalogue', () => {
         licenseHolder: 'Clutch',
         price: 1200,
       });
-      expect(pack.items).toHaveLength(9);
-      expect(new Set(pack.items.map((item) => item.id))).toHaveProperty('size', 9);
+      expect(pack.items).toHaveLength(8);
+      expect(new Set(pack.items.map((item) => item.id))).toHaveProperty('size', 8);
       expect(pack.items.every((item) => COSMETIC_SLOTS.includes(item.slot))).toBe(true);
       expect(pack.items.some((item) => item.roomKind === 'ring')).toBe(false);
       expect(pack.items.some((item) => item.roomSlot === 'right-free')).toBe(false);
       expect(pack.items.some((item) => item.slot === 'titre_profil')).toBe(false);
+      expect(pack.items.some((item) => item.slot === 'vitrine_supports')).toBe(false);
 
       const defaults = pack.items.filter((item) => item.equipByDefault);
-      expect(defaults).toHaveLength(6);
-      expect(new Set(defaults.map((item) => item.slot))).toHaveProperty('size', 6);
+      expect(defaults).toHaveLength(5);
+      expect(new Set(defaults.map((item) => item.slot))).toHaveProperty('size', 5);
       expect(cosmeticPackById(pack.id)).toBe(pack);
 
       const next = applyPreviewTeamPackAction(makeData(1280, pack), pack);
@@ -263,101 +246,20 @@ describe('original pack catalogue', () => {
     expect(teamPackPrimaryAction(CLUTCH_ORIGINALS_TEAM_PACK, next)).toBe('equipped');
   });
 
-  it('publishes twelve original objects across existing cosmetic slots', () => {
-    expect(NEON_PROTOCOL_PACK.id).toBe('neon-protocol');
-    expect(NEON_PROTOCOL_PACK.kind).toBe('original');
-    expect(NEON_PROTOCOL_PACK.price).toBe(1200);
-    expect(NEON_PROTOCOL_PACK.items.map((item) => item.id)).toEqual(NEON_PROTOCOL_EXPECTED_IDS);
-    expect(NEON_PROTOCOL_PACK.items.every((item) => COSMETIC_SLOTS.includes(item.slot))).toBe(true);
-    expect(NEON_PROTOCOL_PACK.items.filter((item) => item.equipByDefault)).toHaveLength(8);
-    expect(new Set(
-      NEON_PROTOCOL_PACK.items.filter((item) => item.equipByDefault).map((item) => item.slot),
-    ).size).toBe(8);
-  });
-
-  it('buys and equips the complete original pack atomically', () => {
-    const initial = makeData(1280, NEON_PROTOCOL_PACK);
-    const next = applyPreviewTeamPackAction(initial, NEON_PROTOCOL_PACK);
-
-    expect(next.balance).toBe(80);
-    expect(next.items.every((item) => item.owned)).toBe(true);
-    expect(next.items.filter((item) => item.equipped).map((item) => item.id)).toEqual([
-      'neon-protocol-room',
-      'neon-protocol-armor-vega',
-      'neon-protocol-glyph-node',
-      'neon-protocol-vector-pedestals',
-      'neon-protocol-phase-frame',
-      'neon-protocol-impulse-effect',
-      'neon-protocol-share-card',
-      'neon-protocol-architect-title',
-    ]);
-    expect(next.equipped.showcase.supports?.id).toBe('neon-protocol-vector-pedestals');
-    expect(next.equipped.factionEffect?.id).toBe('neon-protocol-impulse-effect');
-    expect(teamPackPrimaryAction(NEON_PROTOCOL_PACK, next)).toBe('equipped');
-  });
-
-  it('publishes, buys and equips the twelve Mythes de la Forge objects atomically', () => {
-    expect(MYTHS_FORGE_PACK).toMatchObject({
-      id: 'mythes-forge',
-      kind: 'original',
-      price: 1200,
-    });
-    expect(MYTHS_FORGE_PACK.items.map((item) => item.id)).toEqual(MYTHS_FORGE_EXPECTED_IDS);
-    expect(MYTHS_FORGE_PACK.items.every((item) => COSMETIC_SLOTS.includes(item.slot))).toBe(true);
-    expect(MYTHS_FORGE_PACK.items.filter((item) => item.equipByDefault)).toHaveLength(8);
-    expect(new Set(
-      MYTHS_FORGE_PACK.items.filter((item) => item.equipByDefault).map((item) => item.slot),
-    ).size).toBe(8);
-
-    const next = applyPreviewTeamPackAction(makeData(1280, MYTHS_FORGE_PACK), MYTHS_FORGE_PACK);
-
-    expect(next.balance).toBe(80);
-    expect(next.items.every((item) => item.owned)).toBe(true);
-    expect(next.items.filter((item) => item.equipped).map((item) => item.id)).toEqual([
-      'mythes-forge-room',
-      'mythes-forge-armor-orea',
-      'mythes-forge-ember-sigil',
-      'mythes-forge-magma-pedestals',
-      'mythes-forge-rift-frame',
-      'mythes-forge-resonance-effect',
-      'mythes-forge-share-card',
-      'mythes-forge-master-smith-title',
-    ]);
-    expect(next.equipped.showcase.supports?.id).toBe('mythes-forge-magma-pedestals');
-    expect(next.equipped.factionEffect?.id).toBe('mythes-forge-resonance-effect');
-    expect(teamPackPrimaryAction(MYTHS_FORGE_PACK, next)).toBe('equipped');
-  });
-
-  it('publishes, buys and equips the twelve Circuit Zéro objects atomically', () => {
-    expect(CIRCUIT_ZERO_PACK).toMatchObject({
-      id: 'circuit-zero',
-      kind: 'original',
-      price: 1200,
-    });
-    expect(CIRCUIT_ZERO_PACK.items.map((item) => item.id)).toEqual(CIRCUIT_ZERO_EXPECTED_IDS);
-    expect(CIRCUIT_ZERO_PACK.items.every((item) => COSMETIC_SLOTS.includes(item.slot))).toBe(true);
-    expect(CIRCUIT_ZERO_PACK.items.filter((item) => item.equipByDefault)).toHaveLength(8);
-    expect(new Set(
-      CIRCUIT_ZERO_PACK.items.filter((item) => item.equipByDefault).map((item) => item.slot),
-    ).size).toBe(8);
-
-    const next = applyPreviewTeamPackAction(makeData(1280, CIRCUIT_ZERO_PACK), CIRCUIT_ZERO_PACK);
-
-    expect(next.balance).toBe(80);
-    expect(next.items.every((item) => item.owned)).toBe(true);
-    expect(next.items.filter((item) => item.equipped).map((item) => item.id)).toEqual([
-      'circuit-zero-room',
-      'circuit-zero-kairos-6',
-      'circuit-zero-zero-glyph',
-      'circuit-zero-aero-pedestals',
-      'circuit-zero-wake-frame',
-      'circuit-zero-afterimage-effect',
-      'circuit-zero-share-card',
-      'circuit-zero-chrononaut-title',
-    ]);
-    expect(next.equipped.showcase.supports?.id).toBe('circuit-zero-aero-pedestals');
-    expect(next.equipped.factionEffect?.id).toBe('circuit-zero-afterimage-effect');
-    expect(teamPackPrimaryAction(CIRCUIT_ZERO_PACK, next)).toBe('equipped');
+  it.each([
+    [NEON_PROTOCOL_PACK, NEON_PROTOCOL_EXPECTED_IDS],
+    [MYTHS_FORGE_PACK, MYTHS_FORGE_EXPECTED_IDS],
+    [CIRCUIT_ZERO_PACK, CIRCUIT_ZERO_EXPECTED_IDS],
+  ] as const)('sells the eight retained objects individually: %s', (collection, ids) => {
+    expect(collection.items.map((item) => item.id)).toEqual(ids);
+    expect(collection.items).toHaveLength(8);
+    expect(collection.items.map((item) => item.number)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(collection.items.every((item) => COSMETIC_SLOTS.includes(item.slot))).toBe(true);
+    const data = makeData(1280, collection);
+    expect(data.items.every((item) => item.source === 'achat' && item.acquirable && item.price > 0)).toBe(true);
+    expect(teamPackPrimaryAction(collection, data)).toBe('unavailable');
+    expect(applyPreviewTeamPackAction(data, collection)).toBe(data);
+    expect(COSMETIC_PACK_CATALOG).not.toContain(collection);
   });
 });
 

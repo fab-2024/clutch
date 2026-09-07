@@ -40,6 +40,21 @@ describe('showcase Atelier state', () => {
     expect(repeated).toBe(purchased);
   });
 
+  it.each([
+    ['circuit-zero-zero-glyph', 'core'],
+    ['circuit-zero-sector-banner', 'profileCard'],
+    ['circuit-zero-wake-frame', 'frame'],
+    ['circuit-zero-afterimage-effect', 'factionEffect'],
+  ] as const)('equips %s individually and preserves the other collection objects', (id, equipmentKey) => {
+    const initial = makeData(500);
+    const item = findItem(initial, id);
+    const purchased = applyPreviewAtelierAction(initial, id);
+    expect(purchased.equipped[equipmentKey]?.id).toBe(id);
+    expect(purchased.balance).toBe(500 - item.price);
+    expect(purchased.items.filter((candidate) => candidate.collectionKey === 'circuit-zero' && candidate.owned).map((candidate) => candidate.id)).toEqual([id]);
+    expect(applyPreviewAtelierAction(purchased, id)).toBe(purchased);
+  });
+
   it('keeps exactly one equipped product in each category', () => {
     const first = applyPreviewAtelierAction(makeData(800), 'material_steel');
     const second = applyPreviewAtelierAction(first, 'material_bronze');
@@ -145,6 +160,15 @@ describe('showcase Atelier state', () => {
     });
   });
 
+  it('keeps a collection room usable without purchasing a pedestal', () => {
+    const purchased = applyPreviewAtelierAction(makeData(500), 'circuit-zero-room');
+    expect(purchased.balance).toBe(200);
+    expect(resolveAtelierSceneConfig(purchased.equipped)).toMatchObject({
+      presenterId: 'circuit-zero-aero-pedestals', roomId: null,
+    });
+    expect(resolveAtelierSceneConfig(purchased.equipped, { supports: 'supports_halo' }).roomId).toBe('azure-horizon');
+  });
+
   it('equips the complete room included with a Clutch original pack', () => {
     const initial = makeData(1280);
     initial.items = [
@@ -154,7 +178,8 @@ describe('showcase Atelier state', () => {
 
     const purchased = applyPreviewTeamPackAction(initial, SERMENT_DU_GIVRE_PACK);
 
-    expect(purchased.equipped.showcase.supports?.id).toBe('serment-du-givre-ice-sheet-pedestal');
+    expect(purchased.equipped.showcase.lighting?.id).toBe('serment-du-givre-room');
+    expect(purchased.items.some((item) => item.id === 'serment-du-givre-ice-sheet-pedestal')).toBe(false);
     expect(resolveAtelierSceneConfig(purchased.equipped)).toMatchObject({
       presenterId: 'serment-du-givre-ice-sheet-pedestal',
       roomId: null,

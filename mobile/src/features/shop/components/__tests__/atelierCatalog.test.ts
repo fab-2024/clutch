@@ -3,14 +3,15 @@
 import {
   ATELIER_CATEGORIES,
   ATELIER_CATALOG,
+  INDIVIDUAL_COLLECTION_PRODUCTS,
   PACK_ROOM_ATELIER_PRODUCTS,
   atelierProducts,
   createAtelierPreviewItems,
 } from '../../atelierCatalog';
 
 describe('showcase Atelier catalog', () => {
-  it('keeps the approved order and exposes the nine original-pack pedestals', () => {
-    expect(ATELIER_CATALOG.map((item) => item.id)).toEqual([
+  it('keeps the approved order and exposes the catalogue without original-pack pedestals', () => {
+    expect(ATELIER_CATALOG.filter((item) => item.category !== 'originals').map((item) => item.id)).toEqual([
       'material_graphite',
       'material_steel',
       'material_bronze',
@@ -28,15 +29,6 @@ describe('showcase Atelier catalog', () => {
       'supports_crystal',
       'supports_vault',
       'supports_champagne',
-      'sang-des-titans-monolith-pedestal',
-      'chute-libre-drop-pedestal',
-      'serment-du-givre-ice-sheet-pedestal',
-      'conclave-arcanique-rosette-pedestal',
-      'turbo-arena-kickoff-pedestal',
-      'dernier-round-extraction-pedestal',
-      'circuit-zero-aero-pedestals',
-      'mythes-forge-magma-pedestals',
-      'neon-protocol-vector-pedestals',
       'rank_carbon_cradle',
       'rank_crystal_capsule',
       'rank_royal_crown',
@@ -47,14 +39,23 @@ describe('showcase Atelier catalog', () => {
       'jersey_gallery',
       'jersey_podium',
     ]);
-    expect(new Set(ATELIER_CATALOG.map((item) => item.id))).toHaveProperty('size', 35);
-    expect(ATELIER_CATALOG.filter((item) => !item.packOnly).map((item) => item.price)).toEqual([
+    expect(new Set(ATELIER_CATALOG.filter((item) => item.category !== 'originals').map((item) => item.id))).toHaveProperty('size', 26);
+    expect(ATELIER_CATALOG.filter((item) => !item.packOnly && item.category !== 'originals').map((item) => item.price)).toEqual([
       0, 120, 180, 220, 260,
       0, 100, 100, 80, 120, 80,
       0, 280, 220, 300, 320, 240,
       0, 180, 220, 260, 300, 360,
       0, 200, 240,
     ]);
+  });
+
+  it('offers 24 unique individual objects with the approved rarity prices', () => {
+    expect(INDIVIDUAL_COLLECTION_PRODUCTS).toHaveLength(24);
+    expect(new Set(ATELIER_CATALOG.map((item) => item.id)).size).toBe(ATELIER_CATALOG.length);
+    for (const product of INDIVIDUAL_COLLECTION_PRODUCTS) {
+      expect(product.packOnly).not.toBe(true);
+      expect(product.price).toBe(product.rarity === 'legendaire' ? 300 : product.rarity === 'epique' ? 200 : 100);
+    }
   });
 
   it('maps each category to one server slot and exactly one included default', () => {
@@ -64,7 +65,7 @@ describe('showcase Atelier catalog', () => {
     expect(atelierProducts('materials')).toHaveLength(5);
     expect(atelierProducts('lighting')).toHaveLength(6);
     expect(atelierProducts('supports')).toHaveLength(6);
-    expect(atelierProducts('pedestals')).toHaveLength(9);
+    expect(atelierProducts('pedestals')).toHaveLength(0);
     expect(atelierProducts('ranks')).toHaveLength(6);
     expect(atelierProducts('jerseys')).toHaveLength(3);
     expect(items.filter((item) => item.included).map((item) => item.id)).toEqual([
@@ -85,27 +86,26 @@ describe('showcase Atelier catalog', () => {
       'neon-hangar',
       'volcanic-forge',
     ]);
-    expect(new Set(atelierProducts('pedestals').map((item) => item.slot))).toEqual(new Set(['vitrine_supports']));
+    expect(new Set(atelierProducts('pedestals').map((item) => item.slot))).toEqual(new Set());
     expect(new Set(atelierProducts('ranks').map((item) => item.slot))).toEqual(new Set(['vitrine_rang']));
     expect(new Set(atelierProducts('jerseys').map((item) => item.slot))).toEqual(new Set(['vitrine_maillot']));
   });
 
-  it('maps every original-pack room to the support item that equips its complete scene', () => {
+  it('maps every original-pack room to the room item that equips its complete scene', () => {
     expect(PACK_ROOM_ATELIER_PRODUCTS.map((product) => product.id)).toEqual([
-      'sang-des-titans-monolith-pedestal',
-      'chute-libre-drop-pedestal',
-      'serment-du-givre-ice-sheet-pedestal',
-      'conclave-arcanique-rosette-pedestal',
-      'turbo-arena-kickoff-pedestal',
-      'dernier-round-extraction-pedestal',
-      'circuit-zero-aero-pedestals',
-      'mythes-forge-magma-pedestals',
-      'neon-protocol-vector-pedestals',
+      'sang-des-titans-room',
+      'chute-libre-room',
+      'serment-du-givre-room',
+      'conclave-arcanique-room',
+      'turbo-arena-room',
+      'dernier-round-room',
+      'circuit-zero-room',
+      'mythes-forge-room',
+      'neon-protocol-room',
     ]);
     expect(PACK_ROOM_ATELIER_PRODUCTS.every((product) => (
       product.category === 'supports'
-      && product.slot === 'vitrine_supports'
-      && product.packOnly
+      && product.slot === 'vitrine_eclairage'
     ))).toBe(true);
   });
 });

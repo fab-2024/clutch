@@ -127,7 +127,8 @@ describe('AtelierShopScreen interactions', () => {
   it('stacks one horizontal shelf per collection and removes the live preview', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 
-    expect(screen.getByTestId('atelier-shelf-rooms')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-shelf-rooms')).toBeNull();
+    expect(screen.getAllByText('SALLES')).toHaveLength(1);
     expect(screen.getByTestId('atelier-shelf-level-frames')).toBeTruthy();
     expect(screen.queryByTestId('atelier-shelf-materials')).toBeNull();
     expect(screen.getByTestId('atelier-shelf-lighting')).toBeTruthy();
@@ -137,7 +138,7 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.getByText('Victoire Clutch')).toBeTruthy();
     expect(screen.getByTestId('atelier-shelf-supports')).toBeTruthy();
     expect(screen.getAllByTestId(/atelier-supports-preview-/)).toHaveLength(6);
-    expect(screen.getAllByText('Galerie Obsidienne').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Galerie Obsidienne')).toHaveLength(1);
     expect(screen.getAllByText('Hangar Nocturne').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Forge Volcanique').length).toBeGreaterThan(0);
     expect(screen.getByTestId('atelier-shelf-ranks')).toBeTruthy();
@@ -151,15 +152,13 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.queryByText('APERÇU EN DIRECT')).toBeNull();
   });
 
-  it('opens a selected room in the interactive preview', async () => {
+  it('keeps room purchases accessible from the single room shelf', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 
-    await fireEvent.press(screen.getByTestId('atelier-room-orbital-station'));
+    await fireEvent.press(screen.getByTestId('atelier-product-supports_crystal'));
 
-    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
-      pathname: '/showcase-preview',
-      params: { room: 'orbital-station' },
-    });
+    expect(screen.getByTestId('atelier-product-supports_crystal').props.accessibilityState.selected).toBe(true);
+    expect(screen.getByRole('button', { name: 'Débloquer Station Orbitale pour 300 Volts' })).toBeTruthy();
   });
 
   it('keeps the Founder Pack inside the Boutique', async () => {
@@ -185,9 +184,12 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.queryByTestId('atelier-game-collection-valorant-collection')).toBeNull();
     expect(screen.queryByTestId('atelier-game-collection-rocket-league-collection')).toBeNull();
 
-    expect(screen.getByTestId('atelier-original-pack-circuit-zero')).toBeTruthy();
-    expect(screen.getByTestId('atelier-original-pack-mythes-forge')).toBeTruthy();
-    expect(screen.getByTestId('atelier-original-pack-neon-protocol')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-original-pack-circuit-zero')).toBeNull();
+    expect(screen.getByTestId('atelier-shelf-circuit-zero')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-original-pack-mythes-forge')).toBeNull();
+    expect(screen.getByTestId('atelier-shelf-mythes-forge')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-original-pack-neon-protocol')).toBeNull();
+    expect(screen.getByTestId('atelier-shelf-neon-protocol')).toBeTruthy();
     expect(screen.getByTestId('atelier-original-pack-sang-des-titans')).toBeTruthy();
     expect(screen.getByTestId('atelier-original-pack-chute-libre')).toBeTruthy();
     expect(screen.getByTestId('atelier-original-pack-serment-du-givre')).toBeTruthy();
@@ -201,23 +203,11 @@ describe('AtelierShopScreen interactions', () => {
       params: { packId: 'sang-des-titans' },
     });
 
-    await fireEvent.press(screen.getByTestId('atelier-original-pack-circuit-zero'));
-    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
-      pathname: '/team-pack-preview',
-      params: { packId: 'circuit-zero' },
-    });
 
-    await fireEvent.press(screen.getByTestId('atelier-original-pack-mythes-forge'));
-    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
-      pathname: '/team-pack-preview',
-      params: { packId: 'mythes-forge' },
-    });
 
-    await fireEvent.press(screen.getByTestId('atelier-original-pack-neon-protocol'));
-    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
-      pathname: '/team-pack-preview',
-      params: { packId: 'neon-protocol' },
-    });
+
+
+
 
     await fireEvent.press(screen.getByTestId('atelier-team-pack-clutch-originals-teams'));
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({
@@ -225,6 +215,18 @@ describe('AtelierShopScreen interactions', () => {
       params: { packId: 'clutch-originals-teams' },
     });
   }, 15_000);
+
+  it('buys a single collection object without acquiring its former pack', async () => {
+    const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
+    expect(screen.queryByText('Jeton Chrono')).toBeNull();
+    await fireEvent.press(screen.getByTestId('atelier-product-circuit-zero-kairos-6'));
+    await fireEvent.press(screen.getByTestId('atelier-action-primary'));
+    expect(screen.getByLabelText('Achat de Kairos-6 pour 200 Volts. Ton solde passera de 1 280 à 1 080 Volts.')).toBeTruthy();
+    await act(async () => { fireEvent.press(screen.getByTestId('atelier-purchase-confirm')); });
+    expect(screen.getByLabelText('1 080 Volts disponibles')).toBeTruthy();
+    expect(screen.getByLabelText('Kairos-6, équipé')).toBeTruthy();
+    expect(screen.getByLabelText('Glyphe Zéro, 200 Volts')).toBeTruthy();
+  });
 
   it('reviews a rare purchase before debiting then opens its dedicated reveal', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
@@ -293,7 +295,7 @@ describe('AtelierShopScreen interactions', () => {
         accessibilityLabel: 'Rétablir Sobre cyan',
         label: 'ANNULER',
       },
-      message: 'Émeraude vert / or équipe ta Vitrine.',
+      message: 'Émeraude vert / or est équipé.',
       tone: 'success',
     });
 

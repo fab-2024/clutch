@@ -53,11 +53,8 @@ import {
   type RareAcquisitionEvent,
 } from '../rareAcquisition';
 import {
-  SHOWCASE_ROOM_CATALOG,
-  type ShowcaseRoomDefinition,
-} from '../showcaseRoomCatalog';
-import {
   ORIGINAL_PACK_CATALOG,
+  INDIVIDUAL_COLLECTION_CATALOG,
   TEAM_PACK_CATALOG,
   type TeamPackDefinition,
 } from '../teamPackCatalog';
@@ -68,6 +65,7 @@ import { RareAcquisitionReveal } from './RareAcquisitionReveal';
 type AtelierNotice = { text: string; tone: 'error' | 'info' | 'success' };
 
 const ATELIER_SHELF_TITLES: Record<AtelierCategory, string> = {
+  originals: 'OBJETS DE COLLECTION',
   materials: 'MATIÈRES',
   lighting: 'LUMIÈRES',
   supports: 'SALLES',
@@ -262,14 +260,6 @@ export default function AtelierShopScreen({
     setNotice(null);
   }
 
-  function openRoom(room: ShowcaseRoomDefinition) {
-    selectionFeedback();
-    router.push({
-      pathname: previewData ? '/showcase-preview' : '/showcase',
-      params: { room: room.id },
-    } as never);
-  }
-
   function openTeamPack(pack: TeamPackDefinition) {
     selectionFeedback();
     if (previewData) {
@@ -343,7 +333,7 @@ export default function AtelierShopScreen({
             }
           },
         } : undefined,
-        message: `${product.name} équipe ta Vitrine.`,
+        message: `${product.name} est équipé.`,
         tone: 'success',
       });
       syncAfterMutation(optimistic);
@@ -387,7 +377,7 @@ export default function AtelierShopScreen({
         setPendingAcquisition(reveal);
       } else {
         showSnackbar({
-          message: `${purchaseProduct.name} rejoint ta collection et équipe maintenant ta Vitrine.`,
+          message: `${purchaseProduct.name} rejoint ta collection et est équipé.`,
           tone: 'success',
         });
         successFeedback();
@@ -461,12 +451,6 @@ export default function AtelierShopScreen({
                   </Text>
                 </View>
 
-                <ShowcaseRoomShelf
-                  onOpen={openRoom}
-                  rooms={SHOWCASE_ROOM_CATALOG}
-                  width={shelfCardWidth}
-                />
-
                 <LevelFrameShelf
                   entries={levelFrameCollection}
                   level={profileData?.level.level ?? 42}
@@ -481,6 +465,20 @@ export default function AtelierShopScreen({
                     products={atelierProducts(shelfCategory)}
                     runtimeById={runtimeById}
                     selectedId={selectedProduct?.id ?? null}
+                    width={shelfCardWidth}
+                  />
+                ))}
+
+                {INDIVIDUAL_COLLECTION_CATALOG.map((collection) => (
+                  <AtelierProductShelf
+                    category="originals"
+                    collectionTitle={collection.title}
+                    key={collection.id}
+                    onSelect={handleProductSelection}
+                    products={atelierProducts('originals').filter((product) => product.packId === collection.id)}
+                    runtimeById={runtimeById}
+                    selectedId={selectedProduct?.id ?? null}
+                    shelfId={collection.id}
                     width={shelfCardWidth}
                   />
                 ))}
@@ -694,71 +692,6 @@ function TeamPackShelf({
   );
 }
 
-function ShowcaseRoomShelf({
-  onOpen,
-  rooms,
-  width,
-}: {
-  onOpen: (room: ShowcaseRoomDefinition) => void;
-  rooms: readonly ShowcaseRoomDefinition[];
-  width: number;
-}) {
-  return (
-    <View style={styles.catalogShelf} testID="atelier-shelf-rooms">
-      <ShelfHeading count={rooms.length} eyebrow="VITRINE // ESPACE" title="SALLES" />
-      <ScrollView
-        accessibilityLabel="Parcourir les salles"
-        contentContainerStyle={styles.shelfTrack}
-        decelerationRate="fast"
-        horizontal
-        nestedScrollEnabled
-        showsHorizontalScrollIndicator={false}
-        snapToAlignment="start"
-        snapToInterval={width + spacing.sm}
-        testID="atelier-room-list"
-      >
-        {rooms.map((room, index) => (
-          <Pressable
-            accessibilityHint="Ouvre cette salle pour organiser les objets de ta collection"
-            accessibilityLabel={`${room.name}, huit emplacements personnalisables`}
-            accessibilityRole="button"
-            key={room.id}
-            onPress={() => onOpen(room)}
-            style={({ pressed }) => [
-              styles.roomCard,
-              { borderColor: `${room.accent}66`, width },
-              index < rooms.length - 1 && styles.shelfItem,
-              pressed && styles.pressed,
-            ]}
-            testID={`atelier-room-${room.id}`}
-          >
-            <View style={styles.roomVisual}>
-              <Image
-                resizeMode="cover"
-                source={room.image}
-                style={StyleSheet.absoluteFill}
-              />
-              <View pointerEvents="none" style={styles.roomImageShade} />
-              <View style={styles.roomSlotCount}>
-                <Text style={styles.roomSlotCountText}>8 EMPLACEMENTS</Text>
-              </View>
-            </View>
-            <View style={styles.roomCopy}>
-              <View style={styles.roomTopline}>
-                <Text style={[styles.rarity, { color: room.accent }]}>SALLE</Text>
-                <Text style={styles.roomIncluded}>INCLUS</Text>
-              </View>
-              <Text numberOfLines={1} style={styles.productName}>{room.name}</Text>
-              <Text numberOfLines={2} style={styles.productDescription}>{room.description}</Text>
-              <Text style={styles.roomAction}>PERSONNALISER →</Text>
-            </View>
-          </Pressable>
-        ))}
-      </ScrollView>
-    </View>
-  );
-}
-
 function LevelFrameShelf({
   entries,
   level,
@@ -828,6 +761,8 @@ function LevelFrameShelf({
 
 function AtelierProductShelf({
   category,
+  collectionTitle,
+  shelfId = category,
   onSelect,
   products,
   runtimeById,
@@ -835,19 +770,21 @@ function AtelierProductShelf({
   width,
 }: {
   category: AtelierCategory;
+  collectionTitle?: string;
+  shelfId?: string;
   onSelect: (product: AtelierProduct) => void;
   products: readonly AtelierProduct[];
   runtimeById: ReadonlyMap<string, CosmeticItem>;
   selectedId: string | null;
   width: number;
 }) {
-  const title = ATELIER_SHELF_TITLES[category];
+  const title = collectionTitle ?? ATELIER_SHELF_TITLES[category];
 
   return (
-    <View style={styles.catalogShelf} testID={`atelier-shelf-${category}`}>
+    <View style={styles.catalogShelf} testID={`atelier-shelf-${shelfId}`}>
       <ShelfHeading
         count={products.length}
-        eyebrow={`FINITION // ${ATELIER_CATEGORY_META[category].shortLabel}`}
+        eyebrow={collectionTitle ? 'COLLECTION // À L’UNITÉ' : `FINITION // ${ATELIER_CATEGORY_META[category].shortLabel}`}
         title={title}
       />
       <ScrollView
@@ -859,7 +796,7 @@ function AtelierProductShelf({
         showsHorizontalScrollIndicator={false}
         snapToAlignment="start"
         snapToInterval={width + spacing.sm}
-        testID={`atelier-product-list-${category}`}
+        testID={`atelier-product-list-${shelfId}`}
       >
         {products.map((product, index) => (
           <View key={product.id} style={index < products.length - 1 ? styles.shelfItem : undefined}>
@@ -918,14 +855,19 @@ function ProductCard({
     >
       <View style={[styles.productAccent, { backgroundColor: product.accent }]} />
       <View
-        style={[styles.productVisual, { backgroundColor: `${product.accent}0D` }]}
+        style={[
+          styles.productVisual,
+          { backgroundColor: `${product.accent}0D` },
+          usesRoomPreview && styles.roomProductVisual,
+          usesRankPreview && styles.rankProductVisual,
+        ]}
         testID={usesRankPreview ? `atelier-ranks-preview-${product.id}` : undefined}
       >
         {usesRoomPreview ? (
           <Image
-            resizeMode="cover"
+            resizeMode="contain"
             source={product.image}
-            style={StyleSheet.absoluteFill}
+            style={styles.productImage}
             testID={`atelier-${product.category}-preview-${product.id}`}
           />
         ) : usesScenePreview ? (
@@ -944,19 +886,12 @@ function ProductCard({
             testID={`atelier-${product.category}-preview-${product.id}`}
           />
         ) : usesRankPreview ? (
-          selected && product.overlayImage ? (
-            <Image
-              resizeMode="contain"
-              source={product.overlayImage}
-              style={styles.rankProductImage}
-            />
-          ) : (
-            <View style={styles.rankProductMiniature}>
-              <View style={[styles.rankProductHalo, { borderColor: `${product.accent}B8` }]} />
-              <View style={[styles.rankProductCore, { backgroundColor: product.accent }]} />
-              <View style={[styles.rankProductBase, { borderTopColor: product.accent }]} />
-            </View>
-          )
+          <Image
+            resizeMode="contain"
+            source={product.overlayImage ?? product.image}
+            style={styles.productImage}
+            testID={`atelier-rank-artwork-${product.id}`}
+          />
         ) : (
           <Image resizeMode="contain" source={product.image} style={styles.productImage} />
         )}
@@ -1361,66 +1296,6 @@ const styles = StyleSheet.create({
   shelfItem: {
     marginRight: spacing.sm,
   },
-  roomCard: {
-    overflow: 'hidden',
-    borderRadius: radius.md,
-    borderWidth: 1,
-    backgroundColor: colors.surfaceLow,
-  },
-  roomVisual: {
-    position: 'relative',
-    height: 140,
-    overflow: 'hidden',
-    backgroundColor: colors.background,
-  },
-  roomImageShade: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: 'rgba(2,5,8,.12)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,.08)',
-  },
-  roomSlotCount: {
-    position: 'absolute',
-    right: spacing.xs,
-    bottom: spacing.xs,
-    minHeight: 26,
-    paddingHorizontal: spacing.xs,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(232,255,61,.42)',
-    backgroundColor: 'rgba(5,9,11,.88)',
-  },
-  roomSlotCountText: {
-    ...typography.metadata,
-    color: colors.volt,
-  },
-  roomCopy: {
-    minHeight: 132,
-    padding: spacing.sm,
-  },
-  roomTopline: {
-    minHeight: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  roomIncluded: {
-    ...typography.metadata,
-    color: colors.textMuted,
-  },
-  roomAction: {
-    ...typography.control,
-    marginTop: 'auto',
-    paddingTop: spacing.sm,
-    color: colors.volt,
-  },
   frameCard: {
     position: 'relative',
     minHeight: 286,
@@ -1524,41 +1399,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  rankProductImage: {
-    width: '100%',
-    height: '100%',
+  roomProductVisual: {
+    height: undefined,
+    aspectRatio: 1844 / 853,
   },
-  rankProductMiniature: {
-    position: 'relative',
-    width: 108,
-    height: 112,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  rankProductHalo: {
-    position: 'absolute',
-    top: 10,
-    width: 74,
-    height: 74,
-    borderRadius: 999,
-    borderWidth: 2,
-    opacity: 0.76,
-  },
-  rankProductCore: {
-    position: 'absolute',
-    top: 30,
-    width: 34,
-    height: 34,
-    borderRadius: 6,
-    opacity: 0.84,
-    transform: [{ rotate: '45deg' }],
-  },
-  rankProductBase: {
-    width: 96,
-    height: 29,
-    borderTopWidth: 2,
-    borderRadius: 8,
-    backgroundColor: '#0B1218',
+  rankProductVisual: {
+    height: 164,
+    padding: spacing.xs,
   },
   selectedMark: {
     position: 'absolute',

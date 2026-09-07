@@ -328,9 +328,9 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     accent: '#58DFFF',
     image: require('../../../assets/shop/packs/neon-protocol/neon-protocol-room-empty.png'),
     packId: 'neon-protocol',
-    packOnly: true,
+    packOnly: false,
     pedestal: 'obsidian',
-    price: 0,
+    price: 300,
     rarity: 'legendaire',
     showRankDisplay: false,
     slots: NEON_PROTOCOL_PACK_SLOTS,
@@ -342,9 +342,9 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     accent: '#F06A3A',
     image: require('../../../assets/shop/packs/mythes-forge/mythes-forge-room-empty.png'),
     packId: 'mythes-forge',
-    packOnly: true,
+    packOnly: false,
     pedestal: 'bronze',
-    price: 0,
+    price: 300,
     rarity: 'legendaire',
     showRankDisplay: false,
     slots: MYTHS_FORGE_PACK_SLOTS,
@@ -356,9 +356,9 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     accent: '#C7F000',
     image: require('../../../assets/shop/packs/circuit-zero/circuit-zero-room-empty.png'),
     packId: 'circuit-zero',
-    packOnly: true,
+    packOnly: false,
     pedestal: 'steel',
-    price: 0,
+    price: 300,
     rarity: 'legendaire',
     showRankDisplay: false,
     slots: CIRCUIT_ZERO_PACK_SLOTS,
@@ -540,4 +540,11 @@ export const DEFAULT_SHOWCASE_PRESENTER_ID = SHOWCASE_PRESENTER_CATALOG[0].id;
 
 export function showcasePresenterById(id: string | null | undefined) {
   return SHOWCASE_PRESENTER_CATALOG.find((presenter) => presenter.id === id) ?? null;
+}
+
+// Keep scene layouts independent from the pedestal objects retired from sale.
+export function showcasePresenterByRoomId(id: string | null | undefined) {
+  return SHOWCASE_PRESENTER_CATALOG.find((presenter) => (
+    presenter.packId && id === `${presenter.packId}-room`
+  )) ?? null;
 }

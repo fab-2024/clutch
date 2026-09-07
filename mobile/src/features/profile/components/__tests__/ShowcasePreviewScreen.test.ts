@@ -69,11 +69,10 @@ describe('ShowcasePreviewScreen team-pack moods', () => {
   it('builds the Mythes de la Forge showcase with its magma presenter and resonance', () => {
     const preview = showcasePreviewForMood('forge', 'mythes-forge');
 
-    expect(preview.shop.items.filter((item) => item.collectionKey === 'mythes-forge')).toHaveLength(12);
+    expect(preview.shop.items.filter((item) => item.collectionKey === 'mythes-forge')).toHaveLength(8);
     expect(preview.shop.equipped.showcase).toMatchObject({
       jersey: expect.objectContaining({ id: 'mythes-forge-armor-orea' }),
       lighting: expect.objectContaining({ id: 'mythes-forge-room' }),
-      supports: expect.objectContaining({ id: 'mythes-forge-magma-pedestals' }),
     });
     expect(preview.shop.equipped.factionEffect?.id).toBe('mythes-forge-resonance-effect');
   });
@@ -81,11 +80,10 @@ describe('ShowcasePreviewScreen team-pack moods', () => {
   it('builds the Circuit Zéro showcase with its aerodynamic presenter and afterimage', () => {
     const preview = showcasePreviewForMood('circuit', 'circuit-zero');
 
-    expect(preview.shop.items.filter((item) => item.collectionKey === 'circuit-zero')).toHaveLength(12);
+    expect(preview.shop.items.filter((item) => item.collectionKey === 'circuit-zero')).toHaveLength(8);
     expect(preview.shop.equipped.showcase).toMatchObject({
       jersey: expect.objectContaining({ id: 'circuit-zero-kairos-6' }),
       lighting: expect.objectContaining({ id: 'circuit-zero-room' }),
-      supports: expect.objectContaining({ id: 'circuit-zero-aero-pedestals' }),
     });
     expect(preview.shop.equipped.factionEffect?.id).toBe('circuit-zero-afterimage-effect');
   });
