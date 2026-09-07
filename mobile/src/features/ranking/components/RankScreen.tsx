@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { memo, useCallback, useEffect, useState, type ReactNode } from 'react';
@@ -172,15 +173,32 @@ function RankHeader({
       </View>
 
       <View accessibilityRole="tablist" style={styles.tabs}>
+        <LinearGradient
+          colors={['rgba(172,209,232,.16)', 'rgba(9,25,37,0)', 'rgba(68,128,166,.12)']}
+          locations={[0, 0.45, 1]}
+          pointerEvents="none"
+          style={styles.tabsReflection}
+        />
+        <View pointerEvents="none" style={styles.tabsInnerRim} />
         {SECTIONS.map((item) => (
           <Pressable
             key={item.key}
             accessibilityRole="tab"
             accessibilityState={{ selected: section === item.key }}
             onPress={() => onSection(item.key)}
-            style={[styles.tab, section === item.key && styles.tabActive]}
+            style={({ pressed }) => [styles.tab, section === item.key && styles.tabActive, pressed && styles.pressed]}
           >
-            {item.key !== 'season' ? <View pointerEvents="none" style={styles.tabDivider} /> : null}
+            {section === item.key ? (
+              <>
+                <LinearGradient
+                  colors={['rgba(98,178,255,.32)', 'rgba(7,25,44,0)', 'rgba(54,125,225,.2)']}
+                  locations={[0, 0.46, 1]}
+                  pointerEvents="none"
+                  style={styles.tabReflection}
+                />
+                <View pointerEvents="none" style={styles.tabHighlight} />
+              </>
+            ) : null}
             <Text
               adjustsFontSizeToFit
               minimumFontScale={0.68}
@@ -716,44 +734,70 @@ const styles = StyleSheet.create({
   },
   tabs: {
     marginHorizontal: spacing.md,
+    padding: 5,
     flexDirection: 'row',
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceGlass,
+    borderRadius: radius.pill,
+    backgroundColor: '#071721',
     borderWidth: 1,
-    borderColor: colors.borderHighlight,
-    boxShadow: '0 14px 30px rgba(0,0,0,.2)',
+    borderColor: '#456478',
+    boxShadow: 'inset 0 1px 2px rgba(191,223,244,.16), 0 8px 18px rgba(0,0,0,.22)',
+  },
+  tabsReflection: {
+    ...StyleSheet.absoluteFill,
+    borderRadius: radius.pill,
+  },
+  tabsInnerRim: {
+    position: 'absolute',
+    top: 4,
+    bottom: 4,
+    left: 5,
+    right: 5,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(87,140,181,.2)',
+    boxShadow: 'inset 0 2px 5px rgba(137,190,226,.16), inset 0 -2px 5px rgba(73,143,214,.2)',
   },
   tab: {
     flex: 1,
-    minHeight: 46,
+    minWidth: 0,
+    minHeight: 44,
     paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   tabActive: {
-    borderBottomColor: colors.volt,
+    backgroundColor: '#071A2C',
+    borderColor: '#87C1FF',
+    boxShadow: 'inset 0 2px 7px rgba(119,190,255,.65), inset 0 -2px 7px rgba(45,119,232,.62), 0 0 8px rgba(66,144,252,.34)',
   },
-  tabDivider: {
+  tabReflection: {
+    ...StyleSheet.absoluteFill,
+    borderRadius: radius.pill,
+  },
+  tabHighlight: {
     position: 'absolute',
-    left: 0,
-    top: 11,
-    bottom: 11,
-    width: 1,
-    backgroundColor: colors.borderHighlight,
+    top: 0,
+    left: 17,
+    right: 17,
+    height: 1,
+    backgroundColor: 'rgba(217,237,255,.65)',
   },
   tabText: {
-    fontFamily: fonts.displayBold,
-    color: colors.textMuted,
-    fontSize: 16,
-    lineHeight: 20,
+    fontFamily: fonts.medium,
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
   },
   tabTextCompact: {
-    fontSize: 14,
+    fontSize: 11,
   },
   tabTextActive: {
-    color: colors.text,
+    fontFamily: fonts.bold,
+    color: '#AED4FF',
   },
   stateInset: { marginHorizontal: spacing.md },
   sectionStack: {
