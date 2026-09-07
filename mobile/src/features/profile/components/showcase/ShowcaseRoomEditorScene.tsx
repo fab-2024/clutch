@@ -48,6 +48,7 @@ type ShowcaseRoomEditorSceneProps = {
   lighting: ShowcaseLighting;
   onAtmospherePerformanceReport?: (report: ShowcaseAtmospherePerformanceReport) => void;
   onSlotPress: (slotId: ShowcaseRoomSlotId) => void;
+  pedestalLayerEnabled?: boolean;
   pedestalPlacements?: ShowcaseRoomPedestalPlacements;
   rankAccent?: string;
   rankDisplay?: Pick<ShowcaseRankDisplayDefinition, 'id' | 'name' | 'overlayImage'> | null;
@@ -69,6 +70,32 @@ const THEME_WASH: Record<ShowcaseRoomTheme, readonly [string, string, string]> =
 };
 
 const PEDESTAL_SOURCE_ASPECT_RATIO = 1.5;
+const MAX_ARTWORK_SEAT_SCALE = 1.45;
+
+const ARTWORK_PEDESTAL_SCALE: Record<ShowcasePlaceableKind, number> = {
+  badge: 1.12,
+  banner: 1.18,
+  core: 1.14,
+  frame: 1.1,
+  jersey: 1.35,
+  rank: 0.9,
+  ring: 1.08,
+  title: 1,
+  trophy: 1.28,
+};
+
+const ARTWORK_ITEM_SCALE: Readonly<Record<string, number>> = {
+  'circuit-zero-kairos-6': 0.74,
+  'conclave-arcanique-bloom-banner': 0.94,
+  'conclave-arcanique-brumousse': 0.94,
+  'conclave-arcanique-conclave-seal': 0.94,
+  'dernier-round-sentinel-helmet': 0.94,
+  'dernier-round-squad-banner': 0.9,
+  'dernier-round-vector-carbine': 0.84,
+  'sang-des-titans-eclipse-axe': 1.06,
+  'sang-des-titans-oath-armor': 1.05,
+  'sang-des-titans-rift-bearer-badge': 0.94,
+};
 
 const ARTWORK_BOTTOM_INSET: Partial<Record<ShowcasePlaceableKind, number>> = {
   banner: 0.02,
@@ -79,13 +106,28 @@ const ARTWORK_BOTTOM_INSET: Partial<Record<ShowcasePlaceableKind, number>> = {
   trophy: 0.025,
 };
 
+const ARTWORK_ITEM_BOTTOM_INSET: Readonly<Record<string, number>> = {
+  // Kairos is rendered in a square box from a 3:1 source image.
+  'circuit-zero-kairos-6': 0.069,
+  'conclave-arcanique-bloom-banner': 0.044,
+  'conclave-arcanique-guardian-badge': 0.032,
+  'dernier-round-operator-badge': 0.052,
+  'dernier-round-sentinel-helmet': 0.009,
+  'dernier-round-squad-banner': 0,
+  'dernier-round-vector-carbine': 0,
+  'sang-des-titans-oath-armor': 0.014,
+  'sang-des-titans-rift-bearer-badge': 0.015,
+};
+
 type ShowcaseRoomSlotComposition = {
   artworkLean: number;
   artworkSize: number;
   artworkTranslateY: number;
   artworkYaw: number;
   groundOffset: number;
+  horizontalOffset: number;
   pedestalBottomInset: number;
+  pedestalFootprintWidth: number;
   pedestalHeight: number;
   pedestalWidth: number;
   pedestalYaw: number;
@@ -97,6 +139,7 @@ export function resolveShowcaseRoomSlotComposition({
   canvasHeight,
   canvasWidth,
   itemKind,
+  itemId,
   pedestalId,
   roomId,
   slot,
@@ -104,24 +147,38 @@ export function resolveShowcaseRoomSlotComposition({
   canvasHeight: number;
   canvasWidth: number;
   itemKind?: ShowcasePlaceableKind;
+  itemId?: string;
   pedestalId?: string;
   roomId: string;
   slot: ShowcaseRoomSlotDefinition;
 }): ShowcaseRoomSlotComposition {
   const slotWidth = canvasWidth * Number.parseFloat(slot.width) / 100;
   const slotHeight = canvasHeight * Number.parseFloat(slot.height) / 100;
-  const artworkSize = Math.max(16, Math.min(slotWidth, slotHeight - 20) * 0.88);
   const artworkLift = canvasHeight * (slot.artworkLift ?? 0) / 100;
-  const perspective = resolveShowcaseSlotPerspective(roomId, slot);
+  const catalogItemId = itemId?.replace(/^cosmetic:/, '');
+  const itemScale = catalogItemId ? ARTWORK_ITEM_SCALE[catalogItemId] ?? 1 : 1;
+  const kindBottomInset = ARTWORK_BOTTOM_INSET[itemKind ?? 'badge'] ?? 0;
 
   if (!pedestalId) {
+    const artworkSize = Math.max(
+      16,
+      Math.min(slotWidth, slotHeight - 20) * 0.88 * itemScale,
+    );
+    const artworkBottomInset = artworkSize * (
+      catalogItemId
+        ? ARTWORK_ITEM_BOTTOM_INSET[catalogItemId] ?? kindBottomInset
+        : kindBottomInset
+    );
+
     return {
       artworkLean: 0,
       artworkSize,
-      artworkTranslateY: -artworkLift,
+      artworkTranslateY: -artworkLift + artworkBottomInset,
       artworkYaw: 0,
       groundOffset: 0,
+      horizontalOffset: 0,
       pedestalBottomInset: 0,
+      pedestalFootprintWidth: 0,
       pedestalHeight: 0,
       pedestalWidth: 0,
       pedestalYaw: 0,
@@ -130,16 +187,30 @@ export function resolveShowcaseRoomSlotComposition({
     };
   }
 
+  const perspective = resolveShowcaseSlotPerspective(roomId, slot);
   const geometry = showcasePedestalAssetGeometry(pedestalId);
   const opaquePedestalWidth = canvasWidth * perspective.pedestalWidth / 100;
   const pedestalWidth = opaquePedestalWidth / geometry.opaqueWidthRatio;
   const pedestalHeight = pedestalWidth
     / PEDESTAL_SOURCE_ASPECT_RATIO
-    * perspective.pedestalInclination;
+    * perspective.pedestalInclination
+    * geometry.heightScale;
   const pedestalBottomInset = pedestalHeight * geometry.bottomInset;
   const groundOffset = canvasHeight * perspective.groundOffset / 100;
   const seatLift = pedestalHeight * (1 - geometry.bottomInset - geometry.seatY);
-  const artworkBottomInset = artworkSize * (ARTWORK_BOTTOM_INSET[itemKind ?? 'badge'] ?? 0);
+  const kindScale = ARTWORK_PEDESTAL_SCALE[itemKind ?? 'badge'];
+  const perspectiveScale = perspective.artworkScale;
+  const seatWidth = opaquePedestalWidth * geometry.seatWidthRatio;
+  const artworkSize = Math.max(16, Math.min(
+    seatWidth * kindScale * perspectiveScale * itemScale,
+    seatWidth * MAX_ARTWORK_SEAT_SCALE,
+    slotHeight * Math.max(1.04, perspectiveScale),
+  ));
+  const artworkBottomInset = artworkSize * (
+    catalogItemId
+      ? ARTWORK_ITEM_BOTTOM_INSET[catalogItemId] ?? kindBottomInset
+      : kindBottomInset
+  );
 
   return {
     artworkLean: perspective.artworkLean,
@@ -147,7 +218,9 @@ export function resolveShowcaseRoomSlotComposition({
     artworkTranslateY: groundOffset - seatLift + artworkBottomInset,
     artworkYaw: perspective.artworkYaw,
     groundOffset,
+    horizontalOffset: perspective.horizontalOffset,
     pedestalBottomInset,
+    pedestalFootprintWidth: opaquePedestalWidth,
     pedestalHeight,
     pedestalWidth,
     pedestalYaw: perspective.pedestalYaw,
@@ -165,6 +238,7 @@ export default function ShowcaseRoomEditorScene({
   lighting,
   onAtmospherePerformanceReport,
   onSlotPress,
+  pedestalLayerEnabled = false,
   pedestalPlacements = {},
   rankAccent = '#B87845',
   rankDisplay,
@@ -191,10 +265,15 @@ export default function ShowcaseRoomEditorScene({
     canvasHeight: layout.canvas.height,
     canvasWidth: layout.canvas.width,
     itemKind: assignments.rank?.kind,
-    pedestalId: pedestalPlacements.rank?.id,
+    itemId: assignments.rank?.id,
+    pedestalId: pedestalLayerEnabled ? pedestalPlacements.rank?.id : undefined,
     roomId: room.id,
     slot: rankSlot,
   }) : null;
+  const rankSlotWidth = rankSlot
+    ? layout.canvas.width * Number.parseFloat(rankSlot.width) / 100
+    : 0;
+  const rankDisplaySize = rankComposition ? rankComposition.artworkSize * 1.5 : 0;
 
   return (
     <View
@@ -261,7 +340,9 @@ export default function ShowcaseRoomEditorScene({
               pointerEvents="none"
               style={[styles.rankDisplayLayer, {
                 height: rankSlot.height,
-                left: rankSlot.left,
+                left: layout.canvas.width * (
+                  Number.parseFloat(rankSlot.left) + rankComposition.horizontalOffset
+                ) / 100,
                 top: rankSlot.top,
                 transform: [
                   { perspective: Math.max(600, layout.canvas.width * 1.8) },
@@ -278,18 +359,24 @@ export default function ShowcaseRoomEditorScene({
                 accessible
                 resizeMode="contain"
                 source={rankDisplay.overlayImage}
-                style={styles.rankDisplayOverlay}
+                style={[styles.rankDisplayOverlay, {
+                  bottom: (rankComposition.artworkSize - rankDisplaySize) / 2,
+                  height: rankDisplaySize,
+                  left: (rankSlotWidth - rankDisplaySize) / 2,
+                  width: rankDisplaySize,
+                }]}
               />
             </View>
           </>
         ) : null}
         {slots.map((slot) => {
           const item = assignments[slot.id];
-          const pedestalPlacement = pedestalPlacements[slot.id];
+          const pedestalPlacement = pedestalLayerEnabled ? pedestalPlacements[slot.id] : undefined;
           const composition = resolveShowcaseRoomSlotComposition({
             canvasHeight: layout.canvas.height,
             canvasWidth: layout.canvas.width,
             itemKind: item?.kind,
+            itemId: item?.id,
             pedestalId: pedestalPlacement?.id,
             roomId: room.id,
             slot,
@@ -306,9 +393,16 @@ export default function ShowcaseRoomEditorScene({
                 styles.slot,
                 {
                   height: slot.height,
-                  left: slot.left,
+                  left: layout.canvas.width * (
+                    Number.parseFloat(slot.left) + composition.horizontalOffset
+                  ) / 100,
                   top: slot.top,
                   width: slot.width,
+                  zIndex: Math.round(
+                    layout.canvas.height * (
+                      Number.parseFloat(slot.top) + Number.parseFloat(slot.height)
+                    ) / 100 + composition.groundOffset,
+                  ),
                 },
                 pressed && styles.slotPressed,
               ]}
@@ -399,10 +493,10 @@ const styles = StyleSheet.create({
   },
   rankDisplayLayer: {
     position: 'absolute',
+    overflow: 'visible',
   },
   rankDisplayOverlay: {
-    width: '100%',
-    height: '100%',
+    position: 'absolute',
     opacity: 0.96,
   },
   canvas: {
@@ -441,8 +535,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 0,
     borderRadius: 999,
-    backgroundColor: 'rgba(0, 2, 4, .36)',
-    opacity: 0.68,
+    backgroundColor: 'rgba(0, 2, 4, .48)',
+    opacity: 0.78,
   },
   pedestalArtwork: {
     position: 'absolute',
@@ -457,7 +551,7 @@ const styles = StyleSheet.create({
     left: 0,
     alignItems: 'center',
     justifyContent: 'flex-end',
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   emptySlot: {
     zIndex: 3,

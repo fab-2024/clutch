@@ -298,7 +298,7 @@ export default function ShowcaseAtelierDrawer({
       </View>
 
       <Text style={styles.exclusion}>
-        Les objets posés sur les socles restent dans ta collection : ils ne sont jamais mis en vente ici.
+        Les objets exposés restent dans ta collection : ils ne sont jamais mis en vente ici.
       </Text>
     </View>
   );

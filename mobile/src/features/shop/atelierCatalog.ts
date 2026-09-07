@@ -15,7 +15,6 @@ export type AtelierCategory = 'materials' | 'lighting' | 'supports' | 'pedestals
 export const ATELIER_CATEGORIES = [
   'lighting',
   'supports',
-  'pedestals',
   'ranks',
 ] as const satisfies readonly AtelierCategory[];
 

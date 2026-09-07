@@ -139,11 +139,11 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.queryByText('TOUCHE UN EMPLACEMENT POUR L’ÉQUIPER')).toBeNull();
     expect(screen.queryByTestId('showcase-settings-sheet')).toBeNull();
     expect(screen.getByTestId('showcase-room-background-obsidian-gallery').props.source).toBe(
-      require('../../../../../assets/shop/rooms/room-obsidian-gallery-floor.jpg'),
+      require('../../../../../assets/shop/rooms/room-obsidian-gallery.png'),
     );
-    expect(screen.getByTestId(
+    expect(screen.queryByTestId(
       'showcase-room-pedestal-rank-neon-protocol-vector-pedestals',
-    )).toBeTruthy();
+    )).toBeNull();
     expect(screen.queryByTestId('showcase-rank-display-rank_carbon_cradle')).toBeNull();
     expect(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine')).toBeTruthy();
 
@@ -166,11 +166,12 @@ describe('ShowcaseScreen immersive editor', () => {
 
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     expect(screen.getByTestId('showcase-atelier-drawer')).toBeTruthy();
-    expect(screen.getAllByRole('tab')).toHaveLength(4);
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
     expect(screen.queryByTestId('showcase-atelier-category-materials')).toBeNull();
     expect(screen.queryByTestId('showcase-atelier-category-jerseys')).toBeNull();
+    expect(screen.queryByTestId('showcase-atelier-category-pedestals')).toBeNull();
     expect(screen.getByText('SALLES')).toBeTruthy();
-    expect(screen.getByText(/Les objets posés sur les socles/)).toBeTruthy();
+    expect(screen.getByText(/Les objets exposés restent dans ta collection/)).toBeTruthy();
 
     await fireEvent.press(screen.getByTestId('showcase-atelier-product-lighting_amber'));
     expect(screen.getByTestId('showcase-room-lighting-amber')).toBeTruthy();
@@ -180,10 +181,6 @@ describe('ShowcaseScreen immersive editor', () => {
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-supports'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-product-supports_forge'));
     expect(screen.getByTestId('showcase-room-background-bronze-sanctum')).toBeTruthy();
-
-    await fireEvent.press(screen.getByTestId('showcase-atelier-category-pedestals'));
-    expect(screen.getByTestId('showcase-atelier-product-sang-des-titans-monolith-pedestal')).toBeTruthy();
-    expect(screen.getByTestId('showcase-atelier-product-image-sang-des-titans-monolith-pedestal').props.resizeMode).toBe('contain');
 
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-ranks'));
     expect(screen.getByTestId('showcase-atelier-product-image-rank_carbon_cradle').props.resizeMode).toBe('contain');
@@ -236,7 +233,7 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(within(roomProduct).getByText('BASTION DES CIMES')).toBeTruthy();
   }, 15_000);
 
-  it('changes pedestals on one or several slots without replacing the room', async () => {
+  it('keeps pack pedestals integrated in the room and hides pedestal swapping', async () => {
     const frostShop = applyPreviewTeamPackAction({
       ...ATELIER_SHOP,
       balance: 1280,
@@ -257,29 +254,15 @@ describe('ShowcaseScreen immersive editor', () => {
     await waitFor(() => {
       expect(screen.getByTestId('showcase-room-background-serment-du-givre-ice-sheet-pedestal')).toBeTruthy();
     });
+    expect(screen.getByTestId(
+      'showcase-room-background-serment-du-givre-ice-sheet-pedestal',
+    ).props.source).toBe(require('../../../../../assets/shop/rooms/pack-serment-du-givre.png'));
+    expect(screen.queryAllByTestId(/showcase-room-pedestal-/)).toHaveLength(0);
+
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
-    await fireEvent.press(screen.getByTestId('showcase-atelier-category-pedestals'));
-
-    expect(screen.getByTestId('showcase-pedestal-target-all').props.accessibilityState.checked).toBe(true);
-    await fireEvent.press(screen.getByTestId('showcase-pedestal-target-rank'));
-    await fireEvent.press(screen.getByTestId('showcase-atelier-product-sang-des-titans-monolith-pedestal'));
-
-    expect(screen.getByTestId('showcase-room-pedestal-rank-sang-des-titans-monolith-pedestal')).toBeTruthy();
-    expect(screen.getByTestId('showcase-room-pedestal-trophy-serment-du-givre-ice-sheet-pedestal')).toBeTruthy();
-    expect(screen.getByTestId('showcase-room-background-serment-du-givre-ice-sheet-pedestal')).toBeTruthy();
-
-    await fireEvent.press(screen.getByTestId('showcase-pedestal-target-badge'));
-    expect(screen.getByTestId('showcase-room-pedestal-badge-sang-des-titans-monolith-pedestal')).toBeTruthy();
-    expect(screen.getByText('APPLIQUER · 2')).toBeTruthy();
-    await fireEvent.press(screen.getByTestId('showcase-atelier-primary'));
-
-    await waitFor(() => {
-      expect(mockEquipPedestals).toHaveBeenCalledWith({
-        badge: 'sang-des-titans-monolith-pedestal',
-        rank: 'sang-des-titans-monolith-pedestal',
-      });
-    });
-    expect(screen.getByTestId('showcase-room-background-serment-du-givre-ice-sheet-pedestal')).toBeTruthy();
+    expect(screen.queryByTestId('showcase-atelier-category-pedestals')).toBeNull();
+    expect(screen.queryByTestId('showcase-pedestal-targets')).toBeNull();
+    expect(mockEquipPedestals).not.toHaveBeenCalled();
   }, 15_000);
 
   it('shows only + Ajouter in an empty slot and restores it after removing an object', async () => {

@@ -503,12 +503,13 @@ describe('Showcase room composition', () => {
     expect(onSlotPress.mock.calls.map(([slot]) => slot)).toEqual(['jersey', 'right-free']);
   });
 
-  it('renders different pedestal designs beneath independently selected slots', async () => {
+  it('keeps the dormant separate-pedestal layer behind an explicit opt-in', async () => {
     const screen = await render(
       <ShowcaseRoomEditorScene
         assignments={createDefaultShowcaseRoomAssignments([])}
         lighting="cyan"
         onSlotPress={jest.fn()}
+        pedestalLayerEnabled
         pedestalPlacements={{
           rank: { accent: '#8ED8FF', id: 'ice', image: 101, name: 'Banquise' },
           trophy: { accent: '#C58B55', id: 'stone', image: 102, name: 'Monolithe' },

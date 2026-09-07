@@ -120,6 +120,10 @@ type ShowcaseSceneSnapshot = AtelierSceneConfig & {
   pedestalAssignments: ShowcasePedestalAssignmentIds;
 };
 
+// The current room artwork already contains its pedestals. Keep the per-slot
+// equipment data dormant so pedestal swapping can return without a migration.
+const INTERCHANGEABLE_SHOWCASE_PEDESTALS_ENABLED = false;
+
 export default function ShowcaseScreen({
   atmosphereQualityOverride,
   onAtmospherePerformanceReport,
@@ -397,12 +401,14 @@ export default function ShowcaseScreen({
   const atelierPurchaseItem = atelierPurchaseProduct
     ? atelierRuntimeById.get(atelierPurchaseProduct.id) ?? null
     : null;
-  const pedestalPlacements = useMemo(
-    () => resolvePedestalPlacements(
-      pedestalAssignments,
-      activeSlotIds,
-      sceneDefaultPedestalProductId,
-    ),
+  const pedestalPlacements = useMemo<ShowcaseRoomPedestalPlacements>(
+    () => INTERCHANGEABLE_SHOWCASE_PEDESTALS_ENABLED
+      ? resolvePedestalPlacements(
+        pedestalAssignments,
+        activeSlotIds,
+        sceneDefaultPedestalProductId,
+      )
+      : {},
     [activeSlotIds, pedestalAssignments, sceneDefaultPedestalProductId],
   );
   const ringStats = useMemo(() => adaptShowcaseRingStats(profileData), [profileData]);
@@ -780,6 +786,7 @@ export default function ShowcaseScreen({
                 if (atelierVisible) closeAtelier();
                 setActiveRoomSlot(slotId);
               }}
+              pedestalLayerEnabled={INTERCHANGEABLE_SHOWCASE_PEDESTALS_ENABLED}
               pedestalPlacements={pedestalPlacements}
               rankAccent={rankAccent}
               rankDisplay={!activeRoom && presenter.showRankDisplay === false ? null : visibleRankDisplay}
