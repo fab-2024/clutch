@@ -5,6 +5,7 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.1
 import {
   fetchPandaScoreFeed,
   fetchPandaScoreHistory,
+  fetchPandaScorePending,
   gamesNeedingHistory,
   normalizePandaScoreFeed,
   SUPPORTED_GAMES,
@@ -64,17 +65,38 @@ Deno.serve(async (request: Request) => {
       }, { status: 502 });
     }
 
+    const { data: pending, error: pendingError } = await supabase
+      .from("matchs")
+      .select("id,jeu")
+      .like("id", "ps-match-%")
+      .in("jeu", games)
+      .in("statut", ["a_venir", "en_cours"])
+      .lte("debut", new Date().toISOString())
+      .order("debut", { ascending: false })
+      .limit(1000);
+    if (pendingError) throw pendingError;
+    const reconciliation = await fetchPandaScorePending(pandaScoreToken, pending ?? []);
+    const reconciliationErrors = [...reconciliation.errors];
+    if (pending?.length === 1000) {
+      reconciliationErrors.push({ game: "all", state: "reconcile", error: "pending_limit_reached" });
+    }
+
     const { data: eloStatus, error: eloStatusError } = await supabase.rpc("clutch_elo_status_v2");
     if (eloStatusError) throw eloStatusError;
     const history = await fetchPandaScoreHistory(pandaScoreToken, {
       games: gamesNeedingHistory(eloStatus, games),
     });
     const normalizedHistory = normalizePandaScoreFeed(history) as NormalizedFeed;
-    const normalized = normalizePandaScoreFeed(feed) as NormalizedFeed;
+    const normalized = normalizePandaScoreFeed({
+      responses: [...feed.responses, ...reconciliation.responses],
+    }) as NormalizedFeed;
     const basePayload = {
       games,
       dry_run: dryRun,
-      panda_requests: feed.requests + history.requests,
+      panda_requests: feed.requests + history.requests + reconciliation.requests,
+      reconciliation_errors: reconciliationErrors,
+      reconciliation_pending: pending?.length ?? 0,
+      reconciliation_fetched: reconciliation.responses.reduce((sum, r) => sum + r.matches.length, 0),
       history_errors: history.errors,
       history_matches: normalizedHistory.matches.length,
       panda_request_errors: feed.errors,
@@ -89,7 +111,7 @@ Deno.serve(async (request: Request) => {
 
     if (dryRun) {
       return Response.json({
-        ok: feed.errors.length === 0 && history.errors.length === 0,
+        ok: feed.errors.length === 0 && history.errors.length === 0 && reconciliationErrors.length === 0,
         ...basePayload,
         sample: normalized.matches.slice(0, 12).map(compactMatch),
       });
@@ -112,7 +134,7 @@ Deno.serve(async (request: Request) => {
     }
 
     const payload = {
-      ok: feed.errors.length === 0 && history.errors.length === 0 && imported.erreurs === 0,
+      ok: feed.errors.length === 0 && history.errors.length === 0 && reconciliationErrors.length === 0 && imported.erreurs === 0,
       ...basePayload,
       imported,
       elo_model: eloModel,

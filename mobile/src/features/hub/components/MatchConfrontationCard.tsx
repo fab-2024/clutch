@@ -181,6 +181,8 @@ function MatchMetadata({
       ? 'TERMINÉ'
       : state.phase === 'cancelled'
         ? 'ANNULÉ'
+        : state.phase === 'pending'
+          ? 'STATUT À CONFIRMER'
         : schedule;
 
   return (

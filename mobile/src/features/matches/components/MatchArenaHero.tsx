@@ -263,6 +263,7 @@ function phaseLabel(phase: MatchPhase) {
   if (phase === 'finished') return 'FINAL';
   if (phase === 'cancelled') return 'ANNULÉ';
   if (phase === 'live') return 'LIVE';
+  if (phase === 'pending') return 'EN ATTENTE';
   return 'VERSUS';
 }
 

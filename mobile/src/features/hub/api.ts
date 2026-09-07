@@ -36,7 +36,6 @@ export async function loadHubData(userId: string, followedGames: string[] = []):
   const [
     seasonResult,
     inProgressResult,
-    startedResult,
     upcomingResult,
     leaguesResult,
     communitiesResult,
@@ -49,7 +48,7 @@ export async function loadHubData(userId: string, followedGames: string[] = []):
       .limit(1)
       .maybeSingle(),
     supabase
-      .from('v_matchs')
+      .from('v_matchs_selectionnes')
       .select(MATCH_FIELDS)
       .eq('statut', 'en_cours')
       .in('jeu', games)
@@ -58,17 +57,7 @@ export async function loadHubData(userId: string, followedGames: string[] = []):
       .maybeSingle()
       .overrideTypes<HubMatchRow | null, { merge: false }>(),
     supabase
-      .from('v_matchs')
-      .select(MATCH_FIELDS)
-      .eq('statut', 'a_venir')
-      .in('jeu', games)
-      .lte('debut', now)
-      .order('debut', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .overrideTypes<HubMatchRow | null, { merge: false }>(),
-    supabase
-      .from('v_matchs')
+      .from('v_matchs_selectionnes')
       .select(MATCH_FIELDS)
       .eq('statut', 'a_venir')
       .in('jeu', games)
@@ -83,13 +72,12 @@ export async function loadHubData(userId: string, followedGames: string[] = []):
 
   if (seasonResult.error) throw seasonResult.error;
   if (inProgressResult.error) throw inProgressResult.error;
-  if (startedResult.error) throw startedResult.error;
   if (upcomingResult.error) throw upcomingResult.error;
   if (complementsResult.error) throw complementsResult.error;
 
   const season = seasonResult.data;
   const upcoming = (upcomingResult.data ?? []).map(normalizeHubMatch);
-  const featuredMatch = inProgressResult.data ?? startedResult.data ?? null;
+  const featuredMatch = inProgressResult.data ?? null;
   const match = featuredMatch ? normalizeHubMatch(featuredMatch) : upcoming[0] ?? null;
   const upNext = upcoming.filter((item) => item.id !== match?.id).slice(0, 3);
 

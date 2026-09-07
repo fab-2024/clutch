@@ -61,12 +61,17 @@ describe('match team logos', () => {
     const prediction = { match_id: MATCH.id, choix: 'b', statut: 'en_attente', delta_frags: null };
     supabase.from
       .mockReturnValueOnce(query([MATCH]))
-      .mockReturnValueOnce(query([]))
       .mockReturnValueOnce(query([{ ...MATCH, id: 'upcoming', statut: 'a_venir' }]))
       .mockReturnValueOnce(query([{ ...MATCH, id: 'finished', statut: 'termine' }]))
       .mockReturnValueOnce(query([prediction]));
 
     const result = await loadArenaMatches('user-1');
+
+    expect(supabase.from.mock.calls.map(([table]) => table)).toEqual([
+      'v_matchs_selectionnes', 'v_matchs_selectionnes',
+      'v_matchs_selectionnes', 'pronostics_classes',
+    ]);
+    expect(supabase.rpc).toHaveBeenCalledWith('clutch_mes_calls_v1', { p_saison_id: null });
 
     expect(result.upcoming).toHaveLength(2);
     expect(result.finished).toHaveLength(1);
@@ -87,6 +92,10 @@ describe('match team logos', () => {
       .mockReturnValueOnce(query([{ ...MATCH, id: 'related', team_a: null, team_b: { logo: null } }]));
 
     const result = await loadMatchCenter(MATCH.id);
+
+    expect(supabase.from.mock.calls.map(([table]) => table)).toEqual([
+      'v_matchs', 'v_matchs_selectionnes',
+    ]);
 
     expect(result.match.logo_a).toBe(MATCH.team_a.logo);
     expect(result.match.logo_b).toBe(MATCH.team_b.logo);

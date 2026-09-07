@@ -1,10 +1,11 @@
 import { resolveMatchTeamAccents } from '@/src/utils/teamColors';
+import { classifyMatchPhase, type MatchPhase } from '@/src/utils/matchStatus';
 
 import type { HubMatch, HubPrediction } from './types';
 
 export { resolveTeamAccent } from '@/src/utils/teamColors';
 
-export type HubMatchPhase = 'upcoming' | 'live' | 'finished' | 'cancelled';
+export type HubMatchPhase = MatchPhase;
 export type HubTeamSide = 'a' | 'b';
 
 export type ConfrontationTeam = {
@@ -29,13 +30,7 @@ export type MatchConfrontationState = {
 };
 
 export function getHubMatchPhase(match: HubMatch, now = Date.now()): HubMatchPhase {
-  const status = String(match.statut || '').toLowerCase();
-  if (status === 'annule' || status === 'cancelled') return 'cancelled';
-  if (status === 'termine' || status === 'terminee' || status === 'finished') return 'finished';
-  if (status === 'en_cours' || status === 'live') return 'live';
-
-  const startsAt = new Date(match.debut).getTime();
-  return status === 'a_venir' && Number.isFinite(startsAt) && startsAt <= now ? 'live' : 'upcoming';
+  return classifyMatchPhase(match, now);
 }
 
 export function getMatchConfrontationState(
@@ -67,7 +62,7 @@ export function getMatchConfrontationState(
       ? 'SUIVRE LE LIVE'
       : phase === 'finished'
         ? 'VOIR LE RÉSULTAT'
-        : phase === 'cancelled'
+        : phase === 'cancelled' || phase === 'pending'
           ? 'VOIR LE MATCH'
           : predictionTag
             ? 'OUVRIR MON CALL'
@@ -83,6 +78,8 @@ export function getMatchConfrontationState(
         ? 'TERMINÉ'
         : phase === 'cancelled'
           ? 'ANNULÉ'
+          : phase === 'pending'
+            ? 'STATUT À CONFIRMER'
           : predictionTag
             ? `CALL · ${predictionTag}`
             : 'OUVERT',

@@ -30,29 +30,20 @@ export async function loadArenaMatches(userId: string) {
   const now = new Date().toISOString();
   const [
     inProgressResult,
-    startedResult,
     upcomingResult,
     finishedResult,
     predictionsResult,
     callsResult,
   ] = await Promise.all([
     supabase
-      .from('v_matchs')
+      .from('v_matchs_selectionnes')
       .select(MATCH_FIELDS)
       .eq('statut', 'en_cours')
       .order('debut', { ascending: false })
       .limit(20)
       .overrideTypes<ArenaMatchRow[], { merge: false }>(),
     supabase
-      .from('v_matchs')
-      .select(MATCH_FIELDS)
-      .eq('statut', 'a_venir')
-      .lte('debut', now)
-      .order('debut', { ascending: false })
-      .limit(20)
-      .overrideTypes<ArenaMatchRow[], { merge: false }>(),
-    supabase
-      .from('v_matchs')
+      .from('v_matchs_selectionnes')
       .select(MATCH_FIELDS)
       .eq('statut', 'a_venir')
       .gt('debut', now)
@@ -60,7 +51,7 @@ export async function loadArenaMatches(userId: string) {
       .limit(40)
       .overrideTypes<ArenaMatchRow[], { merge: false }>(),
     supabase
-      .from('v_matchs')
+      .from('v_matchs_selectionnes')
       .select(MATCH_FIELDS)
       .eq('statut', 'termine')
       .order('debut', { ascending: false })
@@ -76,7 +67,6 @@ export async function loadArenaMatches(userId: string) {
   ]);
 
   if (inProgressResult.error) throw inProgressResult.error;
-  if (startedResult.error) throw startedResult.error;
   if (upcomingResult.error) throw upcomingResult.error;
   if (finishedResult.error) throw finishedResult.error;
   if (predictionsResult.error) throw predictionsResult.error;
@@ -91,7 +81,6 @@ export async function loadArenaMatches(userId: string) {
 
   const live = [
     ...(inProgressResult.data ?? []),
-    ...(startedResult.data ?? []),
   ].map((match) => withPrediction(match, predictions));
   live.sort((a, b) => new Date(b.debut).getTime() - new Date(a.debut).getTime());
 
@@ -112,6 +101,7 @@ export async function loadArenaMatches(userId: string) {
 }
 
 export async function loadMatchCenter(matchId: string): Promise<MatchCenterData> {
+  // Old calls must remain reachable even when their teams leave the selection.
   const { data: match, error: matchError } = await supabase
     .from('v_matchs')
     .select(MATCH_FIELDS)
@@ -133,7 +123,7 @@ export async function loadMatchCenter(matchId: string): Promise<MatchCenterData>
     ? typedMatch.debut
     : now;
   const relatedPromise = supabase
-    .from('v_matchs')
+    .from('v_matchs_selectionnes')
     .select(MATCH_FIELDS)
     .eq('jeu', typedMatch.jeu)
     .eq('statut', 'a_venir')

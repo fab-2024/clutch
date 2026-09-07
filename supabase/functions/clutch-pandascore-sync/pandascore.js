@@ -27,17 +27,39 @@ export function buildPandaScoreRequests(games = SUPPORTED_GAMES, perPage = 100) 
     return FEED_STATES.map((state) => {
       const url = new URL(`${API_ORIGIN}/${gamePath}/matches/${state}`);
       url.searchParams.set('page[size]', String(pageSize));
-      url.searchParams.set('sort', state === 'past' ? '-begin_at' : 'begin_at');
+      url.searchParams.set('page[number]', '1');
+      url.searchParams.set('sort', state === 'past' ? '-begin_at,id' : 'begin_at,id');
       return { game, state, url: url.toString() };
     });
   });
 }
 
 export async function fetchPandaScoreFeed(token, options = {}) {
-  if (!token) throw new Error('missing_pandascore_token');
-
-  const fetchImpl = options.fetchImpl ?? fetch;
   const requests = buildPandaScoreRequests(options.games, options.perPage);
+  return fetchRequests(token, requests, options);
+}
+
+// Re-fetch unresolved fixtures by identity: they can fall out of the first past page.
+export async function fetchPandaScorePending(token, pending, options = {}) {
+  const requests = [];
+  for (const game of SUPPORTED_GAMES) {
+    const ids = [...new Set(pending.filter((m) => m.jeu === game)
+      .map((m) => /^ps-match-(\d{1,30})$/.exec(m.id)?.[1]).filter(Boolean))];
+    for (let offset = 0; offset < ids.length; offset += 100) {
+      const batch = ids.slice(offset, offset + 100);
+      const url = new URL(`${API_ORIGIN}/${GAME_PATHS[game]}/matches`);
+      url.searchParams.set('filter[id]', batch.join(','));
+      url.searchParams.set('page[size]', '100');
+      url.searchParams.set('page[number]', '1');
+      requests.push({ game, state: 'reconcile', url: url.toString() });
+    }
+  }
+  return fetchRequests(token, requests, options);
+}
+
+async function fetchRequests(token, requests, options) {
+  if (!token) throw new Error('missing_pandascore_token');
+  const fetchImpl = options.fetchImpl ?? fetch;
   const timeoutMs = Math.max(1_000, Math.min(Number(options.timeoutMs) || 12_000, 30_000));
   const responses = await Promise.all(requests.map(async (request) => {
     try {
@@ -236,6 +258,10 @@ function normalizeStatus(value) {
 }
 
 function shouldReplace(previous, next) {
+  // A stale running copy must never overwrite a terminal result from another feed.
+  const previousTerminal = ['finished', 'canceled'].includes(previous.status);
+  const nextTerminal = ['finished', 'canceled'].includes(next.status);
+  if (previousTerminal !== nextTerminal) return nextTerminal;
   const previousTime = Date.parse(previous.received_at);
   const nextTime = Date.parse(next.received_at);
   if (Number.isFinite(previousTime) && Number.isFinite(nextTime) && nextTime !== previousTime) {

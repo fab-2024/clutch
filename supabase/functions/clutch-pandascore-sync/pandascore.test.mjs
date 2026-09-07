@@ -5,6 +5,7 @@ import {
   buildPandaScoreRequests,
   fetchPandaScoreFeed,
   fetchPandaScoreHistory,
+  fetchPandaScorePending,
   gamesNeedingHistory,
   normalizePandaScoreFeed,
   normalizePandaScoreMatch,
@@ -69,6 +70,40 @@ test('sends the private token only through the bearer header', async () => {
   assert.equal(calls.length, 3);
   assert.ok(calls.every(({ url }) => !url.includes('private-test-token')));
   assert.ok(calls.every(({ authorization }) => authorization === 'Bearer private-test-token'));
+});
+
+test('reconciles unresolved provider matches by ID in bounded batches, excluding demo data', async () => {
+  const calls = [];
+  const pending = Array.from({ length: 101 }, (_, i) => ({ id: `ps-match-${1000 + i}`, jeu: 'lol' }));
+  pending.push({ id: 'm-6', jeu: 'lol' }, { id: 'ps-match-9000', jeu: 'rocket_league' }, pending[0]);
+  const result = await fetchPandaScorePending('test-token', pending, {
+    fetchImpl: async (url, init) => {
+      calls.push(new URL(url));
+      assert.equal(init.headers.Authorization, 'Bearer test-token');
+      return new Response('[]', { status: 200 });
+    },
+  });
+  assert.equal(result.requests, 3);
+  assert.deepEqual(calls.map((url) => url.searchParams.get('filter[id]').split(',').length), [100, 1, 1]);
+  assert.ok(calls.every((url) => !url.toString().includes('m-6')));
+  assert.equal(calls[2].pathname, '/rl/matches');
+});
+
+test('reconciliation failures are explicit and never invent a finished status', async () => {
+  const result = await fetchPandaScorePending('test-token', [{ id: 'ps-match-123', jeu: 'lol' }], {
+    fetchImpl: async () => new Response('{}', { status: 503 }),
+  });
+  assert.equal(result.errors.length, 1);
+  assert.equal(result.responses.length, 0);
+});
+
+test('a final result wins over a stale running copy even with a newer modified timestamp', () => {
+  const running = { ...finishedRocketLeagueMatch, status: 'running', modified_at: '2026-09-07T12:00:00Z', results: [] };
+  for (const matches of [[running, finishedRocketLeagueMatch], [finishedRocketLeagueMatch, running]]) {
+    const result = normalizePandaScoreFeed({ responses: [{ game: 'rocket_league', matches }] });
+    assert.equal(result.matches[0].status, 'finished');
+    assert.equal(result.matches[0].score_a, 4);
+  }
 });
 
 test('normalizes a BO7 Rocket League result in opponent order', () => {

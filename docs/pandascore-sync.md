@@ -7,7 +7,8 @@ Function Supabase : le token privé n'entre jamais dans le bundle mobile.
 ## Périmètre du pilote
 
 - endpoints gratuits `upcoming`, `running` et `past` pour les trois jeux ;
-- neuf requêtes par cycle, toutes les dix minutes, soit 54 requêtes par heure ;
+- neuf requêtes de flux par cycle, toutes les dix minutes, plus la vérification
+  ciblée des matchs encore ouverts (lots de 100 identifiants par jeu) ;
 - équipes, logos HTTPS, événement, horaire et format BO1/BO3/BO5/BO7 ;
 - démarrage, annulation, résultat final et correction PandaScore via les RPC
   auditées déjà utilisées par l'administration ;
@@ -80,6 +81,29 @@ npm run db:advisors
 Le test JavaScript couvre les trois flux gratuits, la normalisation et le BO7.
 Le contrat SQL vérifie création, démarrage, règlement idempotent, correction,
 provenance et journal d'audit.
+
+## Statuts et rattrapage des résultats
+
+Chaque cycle relit également les matchs PandaScore déjà stockés dont la date
+de début est passée et le statut encore ouvert. Le endpoint de liste de chaque
+jeu reçoit `filter[id]` avec au plus 100 identifiants : le résultat d'un match
+reste récupérable même lorsqu'il sort de la première page `past`. Les données
+de démonstration sans identifiant PandaScore sont exclues de cette relecture.
+Un résultat terminal prend priorité sur une copie `running` provenant d'un
+autre flux, même si cette copie porte une date de modification plus récente.
+
+La relecture est limitée à 1 000 matchs par cycle, les plus récents d'abord.
+Une limite atteinte ou une erreur du fournisseur apparaît dans
+`reconciliation_errors` et rend le cycle `ok: false`. Aucun score n'est inventé
+en cas d'échec. Les champs `reconciliation_pending` et `reconciliation_fetched`
+permettent de surveiller le rattrapage. Les règlements passent toujours par
+l'importeur et ses RPC auditées, de manière idempotente.
+
+Le flux de découverte ne classe plus automatiquement un match en direct au
+passage de son horaire prévu. Seul `en_cours` avec un début dans les dernières
+24 heures apparaît en direct. Un statut ouvert plus ancien est masqué du Hub
+et de Matchs ; le détail et les calls existants restent accessibles avec
+« Statut à confirmer ». Les vrais résultats terminés restent dans Résultats.
 
 ## Elo historique et ouverture des calls (V2)
 

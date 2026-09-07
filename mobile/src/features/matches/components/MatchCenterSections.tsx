@@ -499,6 +499,7 @@ export function formatMatchDate(match: MatchCenterData['match']) {
   if (phase === 'finished') return 'MATCH TERMINÉ';
   if (phase === 'cancelled') return 'MATCH ANNULÉ';
   if (phase === 'live') return 'LIVE · PRONOSTICS FERMÉS';
+  if (phase === 'pending') return 'STATUT À CONFIRMER · PRONOSTICS FERMÉS';
   const date = new Date(match.debut);
   return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
 }
