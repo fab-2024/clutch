@@ -310,20 +310,25 @@ describe('ShowcaseScreen immersive editor', () => {
       items: [...standardShop.items, ...createTeamPackPreviewItems(SERMENT_DU_GIVRE_PACK)],
     }, SERMENT_DU_GIVRE_PACK);
     const screen = await render(<ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={packShop} />);
+    await fireEvent.press(screen.getByTestId('showcase-room-slot-jersey'));
+    await fireEvent.press(screen.getByLabelText('Rang BRONZE'));
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-supports'));
     expect(within(screen.getByTestId('showcase-atelier-product-supports_halo')).queryByText('ÉQUIPÉ')).toBeNull();
     await fireEvent.press(screen.getByTestId('showcase-atelier-product-supports_halo'));
     expect(screen.getByTestId('showcase-room-background-azure-horizon')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-slot-jersey').props.accessibilityLabel).toContain('Rang BRONZE');
     await fireEvent.press(screen.getByTestId('showcase-atelier-primary'));
     if (!owned) await fireEvent.press(screen.getByTestId('atelier-purchase-confirm'));
     await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
     expect(screen.getByTestId('showcase-room-background-azure-horizon')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-slot-jersey').props.accessibilityLabel).toContain('Rang BRONZE');
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     expect(within(screen.getByTestId('showcase-atelier-product-supports_halo')).getByText('ÉQUIPÉ')).toBeTruthy();
     expect(within(screen.getByTestId('showcase-atelier-product-serment-du-givre-room')).queryByText('ÉQUIPÉ')).toBeNull();
     await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
     expect(screen.getByTestId('showcase-room-background-azure-horizon')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-slot-jersey').props.accessibilityLabel).toContain('Rang BRONZE');
   }, 30_000);
 
   it('keeps pack pedestals integrated in the room and hides pedestal swapping', async () => {
@@ -361,8 +366,8 @@ describe('ShowcaseScreen immersive editor', () => {
     const slot = () => screen.getByTestId('showcase-room-slot-jersey');
 
     expect(slot().props.accessibilityLabel).toBe('Emplacement maillot, vide');
-    expect(within(slot()).getByText('+')).toBeTruthy();
-    expect(within(slot()).getByText('AJOUTER')).toBeTruthy();
+    expect(within(screen.getByTestId('showcase-room-empty-jersey')).getByText('+')).toBeTruthy();
+    expect(within(screen.getByTestId('showcase-room-empty-jersey')).getByText('AJOUTER')).toBeTruthy();
 
     await fireEvent.press(slot());
     await fireEvent.press(screen.getByLabelText('Rang BRONZE'));
@@ -373,7 +378,7 @@ describe('ShowcaseScreen immersive editor', () => {
     await fireEvent.press(slot());
     await fireEvent.press(screen.getByLabelText('Laisser cet emplacement vide'));
     expect(slot().props.accessibilityLabel).toBe('Emplacement maillot, vide');
-    expect(within(slot()).getByText('AJOUTER')).toBeTruthy();
+    expect(within(screen.getByTestId('showcase-room-empty-jersey')).getByText('AJOUTER')).toBeTruthy();
   });
 
   it('does not create a jersey or duplicate trophies from favorite teams and achievements', () => {

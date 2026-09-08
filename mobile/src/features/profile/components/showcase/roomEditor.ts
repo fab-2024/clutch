@@ -53,6 +53,7 @@ export type ShowcaseRoomPedestalPlacements = Partial<
 
 export type ShowcaseRoomSlotDefinition = {
   artworkLift?: number;
+  artworkScale?: number;
   height: `${number}%`;
   id: ShowcaseRoomSlotId;
   label: string;
@@ -122,6 +123,26 @@ export function createDefaultShowcaseRoomAssignments(
   });
 
   return assignments;
+}
+
+/** Keep the collection intact when a room has different or fewer pedestals. */
+export function adaptShowcaseRoomAssignments(
+  current: ShowcaseRoomAssignments,
+  slots: readonly ShowcaseRoomSlotDefinition[],
+): ShowcaseRoomAssignments {
+  const next = { ...current };
+  const visibleIds = new Set(slots.map((slot) => slot.id));
+  for (const sourceId of SHOWCASE_ROOM_SLOT_IDS) {
+    const item = current[sourceId];
+    if (!item || visibleIds.has(sourceId)) continue;
+    const available = slots.filter((slot) => !next[slot.id]);
+    const target = available.find((slot) => slot.preferredKind === item.kind) ?? available[0];
+    // Retain overflow in its existing slot so a larger room can show it again.
+    if (!target) continue;
+    next[target.id] = item;
+    next[sourceId] = null;
+  }
+  return next;
 }
 
 export function showcasePlaceableKindLabel(kind: ShowcasePlaceableKind) {

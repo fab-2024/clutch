@@ -2,6 +2,7 @@
 
 import {
   SHOWCASE_ROOM_SLOTS,
+  adaptShowcaseRoomAssignments,
   applyShowcasePedestalToSlots,
   createDefaultShowcaseRoomAssignments,
   createEmptyShowcaseRoomAssignments,
@@ -52,5 +53,29 @@ describe('showcase room editor assignments', () => {
     expect(pedestalAssignmentForSlots(mixed, ['trophy', 'badge'])).toBe('stone-pedestal');
     expect(pedestalAssignmentForSlots(mixed, ['rank', 'badge'])).toBeNull();
     expect(pedestalAssignmentForSlots({}, ['rank', 'badge'], 'room-pedestal')).toBe('room-pedestal');
+  });
+});
+
+describe('room changes', () => {
+  it('preserves custom placements and deliberately empty slots', () => {
+    const current = { ...createEmptyShowcaseRoomAssignments(), jersey: ITEMS[3] };
+    expect(adaptShowcaseRoomAssignments(current, SHOWCASE_ROOM_SLOTS)).toEqual(current);
+  });
+
+  it('moves unsupported placements into free pedestals without replacing occupied ones', () => {
+    const current = { ...createEmptyShowcaseRoomAssignments(), jersey: ITEMS[3], 'right-extra': ITEMS[7] };
+    const next = adaptShowcaseRoomAssignments(current, SHOWCASE_ROOM_SLOTS);
+    expect(next.jersey).toBe(ITEMS[3]);
+    expect(next['right-free']).toBe(ITEMS[7]);
+    expect(next['right-extra']).toBeNull();
+    expect(current['right-extra']).toBe(ITEMS[7]);
+  });
+
+  it('keeps overflow when the room is full and shows it again in a larger room', () => {
+    const current = createDefaultShowcaseRoomAssignments(ITEMS);
+    const small = SHOWCASE_ROOM_SLOTS.filter((slot) => slot.id === 'rank');
+    const next = adaptShowcaseRoomAssignments(current, small);
+    expect(next).toEqual(current);
+    expect(adaptShowcaseRoomAssignments(next, SHOWCASE_ROOM_SLOTS)).toEqual(current);
   });
 });

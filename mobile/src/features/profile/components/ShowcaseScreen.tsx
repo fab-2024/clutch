@@ -86,6 +86,7 @@ import ShowcaseRoomEditorScene from './showcase/ShowcaseRoomEditorScene';
 import ShowcaseRoomScene from './showcase/ShowcaseRoomScene';
 import ShowcaseSettingsSheet from './showcase/ShowcaseSettingsSheet';
 import {
+  adaptShowcaseRoomAssignments,
   applyShowcasePedestalToSlots,
   createDefaultShowcaseRoomAssignments,
   createEmptyShowcaseRoomAssignments,
@@ -454,13 +455,16 @@ export default function ShowcaseScreen({
   }, [activeSlotIds, assignmentLayoutKey]);
 
   useEffect(() => {
-    if (!placeableItems.length || initializedRoomRef.current === assignmentLayoutKey) return;
+    if (loading || !placeableItems.length || initializedRoomRef.current === assignmentLayoutKey) return;
+    const firstRoom = initializedRoomRef.current === null;
     initializedRoomRef.current = assignmentLayoutKey;
     setActiveRoomSlot(null);
-    setRoomAssignments(activeRoom
-      ? createDefaultShowcaseRoomAssignments(placeableItems, activeSlots)
-      : createPresenterRoomAssignments(placeableItems, presenter.id));
-  }, [activeRoom, activeSlots, assignmentLayoutKey, placeableItems, presenter.id]);
+    setRoomAssignments((current) => firstRoom
+      ? activeRoom
+        ? createDefaultShowcaseRoomAssignments(placeableItems, activeSlots)
+        : createPresenterRoomAssignments(placeableItems, presenter.id)
+      : adaptShowcaseRoomAssignments(current, activeSlots));
+  }, [activeRoom, activeSlots, assignmentLayoutKey, loading, placeableItems, presenter.id]);
 
   function currentSceneSnapshot(): ShowcaseSceneSnapshot {
     return {

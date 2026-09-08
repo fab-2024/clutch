@@ -165,12 +165,12 @@ const CIRCUIT_ZERO_PACK_SLOTS = [
 
 const TITANS_PACK_SLOTS = [
   { id: 'left-free', label: 'Cadre des Colosses', preferredKind: 'frame', left: '6%', top: '33%', width: '14%', height: '33%', artworkLift: 2 },
-  { id: 'jersey', label: 'Cuirasse des Serments', preferredKind: 'jersey', left: '19%', top: '25%', width: '14%', height: '37%', artworkLift: 2 },
-  { id: 'trophy', label: 'Totem des Trois Voix', preferredKind: 'trophy', left: '31%', top: '30%', width: '12%', height: '30%', artworkLift: 2 },
-  { id: 'rank', label: 'Rang central', preferredKind: 'rank', left: '41%', top: '20%', width: '18%', height: '49%', artworkLift: -1 },
-  { id: 'badge', label: 'Badge Porte-Faille', preferredKind: 'badge', left: '58%', top: '33%', width: '12%', height: '28%', artworkLift: 3 },
-  { id: 'right-extra', label: 'Hache de l’Éclipse', preferredKind: 'core', left: '69%', top: '29%', width: '13%', height: '33%', artworkLift: 3 },
-  { id: 'left-extra', label: 'Bannière du Pacte', preferredKind: 'banner', left: '81%', top: '30%', width: '13%', height: '37%', artworkLift: 3 },
+  { id: 'jersey', label: 'Cuirasse des Serments', preferredKind: 'jersey', left: '19.5%', top: '25%', width: '14%', height: '37%', artworkLift: 0.8, artworkScale: 0.78 },
+  { id: 'trophy', label: 'Totem des Trois Voix', preferredKind: 'trophy', left: '31.2%', top: '30%', width: '12%', height: '30%', artworkLift: 0.7, artworkScale: 0.85 },
+  { id: 'rank', label: 'Rang central', preferredKind: 'rank', left: '41%', top: '20%', width: '18%', height: '49%', artworkLift: -2.2, artworkScale: 1.25 },
+  { id: 'badge', label: 'Badge Porte-Faille', preferredKind: 'badge', left: '56.8%', top: '33%', width: '12%', height: '28%', artworkLift: 2, artworkScale: 0.85 },
+  { id: 'right-extra', label: 'Hache de l’Éclipse', preferredKind: 'core', left: '67.05%', top: '29%', width: '13%', height: '33%', artworkLift: 0.8, artworkScale: 0.8 },
+  { id: 'left-extra', label: 'Bannière du Pacte', preferredKind: 'banner', left: '79.5%', top: '30%', width: '13%', height: '37%', artworkLift: 2.7, artworkScale: 0.85 },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
 const FREEFALL_PACK_SLOTS = [
@@ -185,22 +185,22 @@ const FREEFALL_PACK_SLOTS = [
 
 const FROST_PACK_SLOTS = [
   { id: 'left-free', label: 'Cadre Rempart', preferredKind: 'frame', left: '2%', top: '34%', width: '16%', height: '33%', artworkLift: 3 },
-  { id: 'jersey', label: 'Dragon Veyr', preferredKind: 'jersey', left: '14%', top: '24%', width: '16%', height: '38%', artworkLift: 3 },
-  { id: 'trophy', label: 'Œuf des Cimes', preferredKind: 'trophy', left: '27%', top: '28%', width: '13%', height: '30%', artworkLift: 3 },
-  { id: 'rank', label: 'Rang central', preferredKind: 'rank', left: '40%', top: '17%', width: '20%', height: '46%', artworkLift: -1 },
-  { id: 'badge', label: 'Badge Veilleur', preferredKind: 'badge', left: '60%', top: '30%', width: '13%', height: '28%', artworkLift: 3 },
-  { id: 'right-extra', label: 'Boussole des Neiges', preferredKind: 'core', left: '70%', top: '24%', width: '16%', height: '38%', artworkLift: 3 },
-  { id: 'left-extra', label: 'Bannière du Serment', preferredKind: 'banner', left: '82%', top: '34%', width: '16%', height: '33%', artworkLift: 3 },
+  { id: 'jersey', label: 'Dragon Veyr', preferredKind: 'jersey', left: '12.2%', top: '24%', width: '16%', height: '38%', artworkLift: 2.2, artworkScale: 0.85 },
+  { id: 'trophy', label: 'Œuf des Cimes', preferredKind: 'trophy', left: '26.5%', top: '28%', width: '13%', height: '30%', artworkLift: 3, artworkScale: 0.85 },
+  { id: 'rank', label: 'Rang central', preferredKind: 'rank', left: '39.75%', top: '17%', width: '20%', height: '46%', artworkLift: -1, artworkScale: 1 },
+  { id: 'badge', label: 'Badge Veilleur', preferredKind: 'badge', left: '60%', top: '30%', width: '13%', height: '28%', artworkLift: 1.8, artworkScale: 0.85 },
+  { id: 'right-extra', label: 'Boussole des Neiges', preferredKind: 'core', left: '71.9%', top: '24%', width: '16%', height: '38%', artworkLift: 1.4, artworkScale: 0.72 },
+  { id: 'left-extra', label: 'Bannière du Serment', preferredKind: 'banner', left: '83.8%', top: '34%', width: '16%', height: '33%', artworkLift: 0.4, artworkScale: 0.88 },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
 const ARCANE_PACK_SLOTS = [
   { id: 'left-free', label: 'Cadre Treille', preferredKind: 'frame', left: '2%', top: '31%', width: '13%', height: '29%', artworkLift: 2 },
-  { id: 'jersey', label: 'Brumousse', preferredKind: 'jersey', left: '11%', top: '20%', width: '15%', height: '34%', artworkLift: 2 },
-  { id: 'trophy', label: 'Totem Bourgeon', preferredKind: 'trophy', left: '25%', top: '22%', width: '13%', height: '28%', artworkLift: 2 },
-  { id: 'rank', label: 'Rang central', preferredKind: 'rank', left: '40%', top: '35%', width: '20%', height: '50%', artworkLift: -1 },
-  { id: 'badge', label: 'Badge Gardien', preferredKind: 'badge', left: '61%', top: '22%', width: '13%', height: '28%', artworkLift: 2 },
-  { id: 'right-extra', label: 'Sceau du Conclave', preferredKind: 'core', left: '74%', top: '20%', width: '15%', height: '34%', artworkLift: 2 },
-  { id: 'left-extra', label: 'Bannière Floraison', preferredKind: 'banner', left: '85%', top: '31%', width: '13%', height: '29%', artworkLift: 2 },
+  { id: 'jersey', label: 'Brumousse', preferredKind: 'jersey', left: '10.5%', top: '20%', width: '15%', height: '34%', artworkLift: 2 },
+  { id: 'trophy', label: 'Totem Bourgeon', preferredKind: 'trophy', left: '20.4%', top: '22%', width: '13%', height: '28%', artworkLift: 2 },
+  { id: 'rank', label: 'Rang central', preferredKind: 'rank', left: '40%', top: '9%', width: '20%', height: '35%', artworkLift: 1 },
+  { id: 'badge', label: 'Badge Gardien', preferredKind: 'badge', left: '56.8%', top: '22%', width: '13%', height: '28%', artworkLift: 2 },
+  { id: 'right-extra', label: 'Sceau du Conclave', preferredKind: 'core', left: '74.5%', top: '20%', width: '15%', height: '34%', artworkLift: 2 },
+  { id: 'left-extra', label: 'Bannière Floraison', preferredKind: 'banner', left: '84.5%', top: '31%', width: '13%', height: '29%', artworkLift: 2 },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
 const TURBO_PACK_SLOTS = [

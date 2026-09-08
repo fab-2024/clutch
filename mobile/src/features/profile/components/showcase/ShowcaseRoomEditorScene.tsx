@@ -72,6 +72,7 @@ const THEME_WASH: Record<ShowcaseRoomTheme, readonly [string, string, string]> =
 
 const PEDESTAL_SOURCE_ASPECT_RATIO = 1.5;
 const MAX_ARTWORK_SEAT_SCALE = 1.45;
+const ARTWORK_BACKWARD_TILT = '18deg';
 
 const ARTWORK_PEDESTAL_SCALE: Record<ShowcasePlaceableKind, number> = {
   badge: 1.12,
@@ -96,6 +97,7 @@ const ARTWORK_ITEM_SCALE: Readonly<Record<string, number>> = {
   'sang-des-titans-eclipse-axe': 1.06,
   'sang-des-titans-oath-armor': 1.05,
   'sang-des-titans-rift-bearer-badge': 0.94,
+  'sang-des-titans-three-voices-totem': 0.8,
 };
 
 const ARTWORK_BOTTOM_INSET: Partial<Record<ShowcasePlaceableKind, number>> = {
@@ -158,13 +160,15 @@ export function resolveShowcaseRoomSlotComposition({
   const slotHeight = canvasHeight * Number.parseFloat(slot.height) / 100;
   const artworkLift = canvasHeight * (slot.artworkLift ?? 0) / 100;
   const catalogItemId = itemId?.replace(/^cosmetic:/, '');
-  const itemScale = catalogItemId ? ARTWORK_ITEM_SCALE[catalogItemId] ?? 1 : 1;
+  const itemScale = catalogItemId === 'serment-du-givre-veyr-dragon' && slot.id === 'rank'
+    ? 1.4
+    : catalogItemId ? ARTWORK_ITEM_SCALE[catalogItemId] ?? 1 : 1;
   const kindBottomInset = ARTWORK_BOTTOM_INSET[itemKind ?? 'badge'] ?? 0;
 
   if (!pedestalId) {
     const artworkSize = Math.max(
       16,
-      Math.min(slotWidth, slotHeight - 20) * 0.88 * itemScale,
+      Math.min(slotWidth, slotHeight - 20) * 0.88 * itemScale * (slot.artworkScale ?? 1),
     );
     const artworkBottomInset = artworkSize * (
       catalogItemId
@@ -353,6 +357,7 @@ export default function ShowcaseRoomEditorScene({
                 transform: [
                   { perspective: Math.max(600, layout.canvas.width * 1.8) },
                   { translateY: rankComposition.artworkTranslateY },
+                  { rotateX: ARTWORK_BACKWARD_TILT },
                   { rotateY: `${rankComposition.artworkYaw}deg` },
                   { rotateZ: `${rankComposition.artworkLean}deg` },
                 ],
@@ -470,13 +475,14 @@ export default function ShowcaseRoomEditorScene({
                       { transform: [
                         { perspective: Math.max(600, layout.canvas.width * 1.8) },
                         { translateY: composition.artworkTranslateY },
+                        { rotateX: item.id.replace(/^cosmetic:/, '') === 'sang-des-titans-three-voices-totem'
+                          ? '42deg' : ARTWORK_BACKWARD_TILT },
                         { rotateY: `${composition.artworkYaw}deg` },
                         { rotateZ: `${composition.artworkLean}deg` },
                         { scaleX: mirroredItems[orientationKey(slot.id, item.id)] ? -1 : 1 },
                       ] },
                     ]}>
                       <ShowcasePlaceableArtwork
-                        frontalBase
                         item={item}
                         size={composition.artworkSize}
                       />
