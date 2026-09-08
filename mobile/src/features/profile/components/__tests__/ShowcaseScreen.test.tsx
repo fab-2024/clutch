@@ -161,7 +161,7 @@ describe('ShowcaseScreen immersive editor', () => {
     await fireEvent.press(screen.getByLabelText('Fermer MA VITRINE'));
     expect(screen.queryByTestId('showcase-settings-sheet')).toBeNull();
 
-    await fireEvent.press(screen.getByLabelText('Revenir au Magasin'));
+    await fireEvent.press(screen.getByLabelText('Revenir à la Collection'));
     expect(router.back).toHaveBeenCalled();
   });
 

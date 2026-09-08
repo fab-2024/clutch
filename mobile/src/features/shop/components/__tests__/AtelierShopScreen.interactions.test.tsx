@@ -3,7 +3,7 @@
 import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
-import { createAtelierPreviewItems, INDIVIDUAL_PROFILE_FRAMES } from '../../atelierCatalog';
+import { createAtelierPreviewItems, INDIVIDUAL_COLLECTION_PRODUCTS, INDIVIDUAL_PROFILE_FRAMES } from '../../atelierCatalog';
 import {
   DEFAULT_MONETIZATION_CONTRACT,
   EMPTY_EQUIPPED_COSMETICS,
@@ -13,7 +13,17 @@ import {
 } from '../../types';
 import AtelierShopScreen from '../AtelierShopScreen';
 
+jest.mock('@/src/features/consumables/components/VisualConsumablesScreen', () => ({ VisualConsumablesEntryCard: () => null }));
+
 const mockShowSnackbar = jest.fn();
+
+jest.mock('lucide-react-native/icons/door-open', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/frame', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/gem', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/layout-grid', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/orbit', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/sparkles', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/trophy', () => ({ __esModule: true, default: 'Icon' }));
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('@/src/components/layout/AppAtmosphere', () => ({ AppAtmosphere: () => null }));
@@ -128,7 +138,7 @@ describe('AtelierShopScreen interactions', () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 
     expect(screen.queryByTestId('atelier-shelf-rooms')).toBeNull();
-    expect(screen.getAllByText('SALLES')).toHaveLength(1);
+    expect(within(screen.getByTestId('atelier-shelf-supports')).getByText('SALLES')).toBeTruthy();
     expect(screen.queryByTestId('atelier-shelf-level-frames')).toBeNull();
     expect(screen.queryByText('Signal Ascendant')).toBeNull();
     expect(screen.queryByText('Faille Volt')).toBeNull();
@@ -158,6 +168,39 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.queryByTestId('atelier-category-control')).toBeNull();
     expect(screen.queryByTestId('atelier-scene')).toBeNull();
     expect(screen.queryByText('APERÇU EN DIRECT')).toBeNull();
+  });
+
+  it('filters shelves by category and restores all products', async () => {
+    const screen = await render(<AtelierShopScreen previewData={makeData(1280)} initialCategory="frames" />);
+    expect(screen.getByTestId('atelier-shelf-profile-frames')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-shelf-supports')).toBeNull();
+    await fireEvent.press(screen.getByRole('tab', { name: 'SALLES' }));
+    expect(screen.getByTestId('atelier-shelf-supports')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-shelf-profile-frames')).toBeNull();
+    await fireEvent.press(screen.getByTestId('atelier-product-supports_crystal'));
+    expect(screen.getByRole('button', { name: 'Débloquer Station Orbitale pour 300 Volts' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('tab', { name: 'CONSOMMABLES' }));
+    expect(screen.queryByTestId('atelier-shelf-supports')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Débloquer Station Orbitale pour 300 Volts' })).toBeNull();
+    expect(screen.getByTestId('shop-streak-protector')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('tab', { name: 'TOUT' }));
+    expect(screen.getByTestId('atelier-shelf-profile-frames')).toBeTruthy();
+    expect(screen.getByTestId('atelier-shelf-supports')).toBeTruthy();
+  });
+
+  it('embeds the shop without a second header and keeps consumables last', async () => {
+    const screen = await render(<AtelierShopScreen embedded previewData={makeData(1280)} />);
+    expect(screen.queryByRole('button', { name: 'Revenir au profil' })).toBeNull();
+    expect(screen.queryByText('COMPOSE TON ESPACE.')).toBeNull();
+    expect(screen.queryByTestId('atelier-action')).toBeNull();
+    expect(screen.getAllByRole('tab').at(-1)?.props.accessibilityLabel).toBe('CONSOMMABLES');
+    expect(screen.getByRole('tab', { name: 'EFFETS' })).toBeTruthy();
+    expect(screen.getAllByTestId(/^(atelier-shelf-|shop-consumables-section)/).at(-1)?.props.testID).toBe('shop-consumables-section');
+    await fireEvent.press(screen.getByTestId('atelier-product-supports_crystal'));
+    expect(screen.getByRole('button', { name: 'Débloquer Station Orbitale pour 300 Volts' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('tab', { name: 'CONSOMMABLES' }));
+    expect(screen.getByTestId('shop-consumables-section')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-action')).toBeNull();
   });
 
   it('keeps room purchases accessible from the single room shelf', async () => {
@@ -191,11 +234,11 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.queryByTestId('atelier-game-collection-rocket-league-collection')).toBeNull();
 
     expect(screen.queryByTestId('atelier-original-pack-circuit-zero')).toBeNull();
-    expect(screen.getByTestId('atelier-shelf-circuit-zero')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-shelf-circuit-zero')).toBeNull();
     expect(screen.queryByTestId('atelier-original-pack-mythes-forge')).toBeNull();
-    expect(screen.getByTestId('atelier-shelf-mythes-forge')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-shelf-mythes-forge')).toBeNull();
     expect(screen.queryByTestId('atelier-original-pack-neon-protocol')).toBeNull();
-    expect(screen.getByTestId('atelier-shelf-neon-protocol')).toBeTruthy();
+    expect(screen.queryByTestId('atelier-shelf-neon-protocol')).toBeNull();
     expect(screen.getByTestId('atelier-original-pack-sang-des-titans')).toBeTruthy();
     expect(screen.getByTestId('atelier-original-pack-chute-libre')).toBeTruthy();
     expect(screen.getByTestId('atelier-original-pack-serment-du-givre')).toBeTruthy();
@@ -209,6 +252,43 @@ describe('AtelierShopScreen interactions', () => {
       params: { packId: 'sang-des-titans' },
     });
   }, 15_000);
+
+  it('sorts every individual collection item into a single shelf by type', async () => {
+    const screen = await render(<AtelierShopScreen embedded previewData={makeData(1280)} />);
+    for (const product of INDIVIDUAL_COLLECTION_PRODUCTS) {
+      expect(screen.getAllByTestId(`atelier-product-${product.id}`)).toHaveLength(1);
+    }
+    const roomShelf = within(screen.getByTestId('atelier-shelf-supports'));
+    expect(roomShelf.getAllByRole('button')).toHaveLength(9);
+    for (const id of ['circuit-zero-room', 'mythes-forge-room', 'neon-protocol-room']) {
+      expect(roomShelf.getByTestId(`atelier-product-${id}`)).toBeTruthy();
+      expect(within(screen.getByTestId('atelier-shelf-lighting')).queryByTestId(`atelier-product-${id}`)).toBeNull();
+    }
+    expect(within(screen.getByTestId('atelier-shelf-objects')).getAllByRole('button')).toHaveLength(9);
+    await fireEvent.press(screen.getByRole('tab', { name: 'SALLES' }));
+    await fireEvent.press(screen.getByTestId('atelier-product-circuit-zero-room'));
+    expect(screen.getByRole('button', { name: 'Débloquer Hangar Vectoriel pour 300 Volts' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('tab', { name: 'OBJETS' }));
+    expect(screen.queryByTestId('atelier-product-circuit-zero-room')).toBeNull();
+    expect(screen.queryByTestId('atelier-product-circuit-zero-wake-frame')).toBeNull();
+    expect(screen.queryByTestId('atelier-shelf-original-packs')).toBeNull();
+    await fireEvent.press(screen.getByTestId('atelier-product-circuit-zero-delta-totem'));
+    expect(screen.getByRole('button', { name: 'Débloquer Totem Delta pour 200 Volts' })).toBeTruthy();
+  });
+
+  it('removes banners and badges and sells permanent effects from their own category', async () => {
+    const screen = await render(<AtelierShopScreen embedded previewData={makeData(1280)} />);
+    for (const id of ['circuit-zero-sector-banner', 'circuit-zero-pilot-badge', 'mythes-forge-strata-banner', 'mythes-forge-artisan-badge', 'neon-protocol-banner-phase', 'neon-protocol-pioneer-badge']) {
+      expect(screen.queryByTestId(`atelier-product-${id}`)).toBeNull();
+    }
+    expect(within(screen.getByTestId('atelier-shelf-effects')).getAllByRole('button')).toHaveLength(3);
+    await fireEvent.press(screen.getByRole('tab', { name: 'EFFETS' }));
+    expect(screen.queryByTestId('atelier-shelf-objects')).toBeNull();
+    expect(screen.queryByTestId('shop-consumables-section')).toBeNull();
+    await fireEvent.press(screen.getByTestId('atelier-product-circuit-zero-afterimage-effect'));
+    await fireEvent.press(screen.getByRole('button', { name: 'Débloquer Effet Postimage pour 300 Volts' }));
+    expect(screen.getByLabelText('Achat de Effet Postimage pour 300 Volts. Ton solde passera de 1 280 à 980 Volts.')).toBeTruthy();
+  });
 
   it('buys an individual profile frame and opens the equipped profile', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} previewState={{ forceReduceMotion: true }} />);

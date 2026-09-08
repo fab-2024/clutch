@@ -7,6 +7,7 @@ import { ORIGINAL_PACK_CATALOG } from '@/src/features/shop/teamPackCatalog';
 import type { ShowcaseRoomSlotDefinition } from '../showcase/roomEditor';
 import { resolveShowcaseRoomSlotComposition } from '../showcase/ShowcaseRoomEditorScene';
 import {
+  SHOWCASE_ROOM_PERSPECTIVES,
   hasShowcaseRoomPerspective,
   hasShowcasePedestalAssetGeometry,
   resolveShowcaseSlotPerspective,
@@ -91,15 +92,13 @@ describe('showcase room perspective doctrine', () => {
     expect(vector.heightScale).toBeLessThan(1);
   });
 
-  it('registers measured geometry for every active original-pack pedestal', () => {
+  it('preserves legacy pedestal geometry after removing pedestals from the packs', () => {
     const pedestalIds = ORIGINAL_PACK_CATALOG.flatMap((pack) => pack.items)
       .filter((item) => item.slot === 'vitrine_supports')
       .map((item) => item.id);
 
-    expect(pedestalIds).toHaveLength(9);
-    pedestalIds.forEach((id) => {
-      expect(hasShowcasePedestalAssetGeometry(id)).toBe(true);
-    });
+    expect(pedestalIds).toHaveLength(0);
+    expect(Object.keys(SHOWCASE_ROOM_PERSPECTIVES).filter(hasShowcasePedestalAssetGeometry)).toHaveLength(9);
   });
 
   it('allows a calibrated room slot to override only its floor contact point', () => {
@@ -196,6 +195,8 @@ describe('showcase room perspective doctrine', () => {
       slot: LEFT_SLOT,
     });
 
+    expect(withoutPedestal.artworkContactY).toBeCloseTo(withoutPedestal.artworkTranslateY - withoutPedestal.artworkSize * 0.025);
+    expect(withFallbackPedestal.artworkContactY).toBeCloseTo(withFallbackPedestal.artworkTranslateY - withFallbackPedestal.artworkSize * 0.025);
     expect(withoutPedestal.artworkSize).toBeGreaterThan(16);
     expect(withoutPedestal.artworkSize).not.toBeCloseTo(withFallbackPedestal.artworkSize);
     expect(withoutPedestal).toMatchObject({

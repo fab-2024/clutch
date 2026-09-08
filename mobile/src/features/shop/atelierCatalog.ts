@@ -55,7 +55,7 @@ export const ATELIER_CATEGORY_META: Record<AtelierCategory, {
 };
 
 export const INDIVIDUAL_COLLECTION_PRODUCTS: readonly AtelierProduct[] = INDIVIDUAL_COLLECTION_CATALOG.flatMap((collection) =>
-  collection.items.map((item) => ({
+  collection.items.filter((item) => item.roomKind !== 'banner' && item.roomKind !== 'badge').map((item) => ({
     id: item.id,
     category: 'originals' as const,
     slot: item.slot,

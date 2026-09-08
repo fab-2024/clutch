@@ -879,7 +879,7 @@ export default function ShowcaseScreen({
               profile={profileData} pseudo={profileData?.pseudo ?? pseudo} ownerId={session?.user.id}
               preview={Boolean(previewProfile || previewShop)} />
             <Pressable
-              accessibilityLabel="Revenir au Magasin"
+              accessibilityLabel="Revenir à la Collection"
               accessibilityRole="button"
               onPress={() => router.back()}
               style={({ pressed }) => [styles.floatingButton, pressed && styles.pressed]}

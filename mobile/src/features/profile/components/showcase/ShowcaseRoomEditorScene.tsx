@@ -120,6 +120,7 @@ const ARTWORK_ITEM_BOTTOM_INSET: Readonly<Record<string, number>> = {
 };
 
 type ShowcaseRoomSlotComposition = {
+  artworkContactY: number;
   artworkLean: number;
   artworkSize: number;
   artworkTranslateY: number;
@@ -171,6 +172,7 @@ export function resolveShowcaseRoomSlotComposition({
     );
 
     return {
+      artworkContactY: -artworkLift,
       artworkLean: 0,
       artworkSize,
       artworkTranslateY: -artworkLift + artworkBottomInset,
@@ -213,10 +215,11 @@ export function resolveShowcaseRoomSlotComposition({
   );
 
   return {
-    artworkLean: perspective.artworkLean,
+    artworkContactY: groundOffset - seatLift,
+    artworkLean: perspective.artworkLean * 0.35,
     artworkSize,
     artworkTranslateY: groundOffset - seatLift + artworkBottomInset,
-    artworkYaw: perspective.artworkYaw,
+    artworkYaw: perspective.artworkYaw * 0.65,
     groundOffset,
     horizontalOffset: perspective.horizontalOffset,
     pedestalBottomInset,
@@ -448,20 +451,31 @@ export default function ShowcaseRoomEditorScene({
                   </View>
                 ) : null}
                 {item ? (
-                  <View style={[
-                    styles.slotArtifact,
-                    { transform: [
-                      { perspective: Math.max(600, layout.canvas.width * 1.8) },
-                      { translateY: composition.artworkTranslateY },
-                      { rotateY: `${composition.artworkYaw}deg` },
-                      { rotateZ: `${composition.artworkLean}deg` },
-                    ] },
-                  ]}>
-                    <ShowcasePlaceableArtwork
-                      item={item}
-                      size={composition.artworkSize}
+                  <>
+                    <View
+                      pointerEvents="none"
+                      style={[styles.artworkContactShadow, {
+                        width: Math.min(composition.artworkSize * 0.42, layout.canvas.width * Number.parseFloat(slot.width) / 100 * 0.72),
+                        height: Math.max(2, composition.artworkSize * 0.035),
+                        transform: [{ translateY: composition.artworkContactY }],
+                      }]}
                     />
-                  </View>
+                    <View style={[
+                      styles.slotArtifact,
+                      { transform: [
+                        { perspective: Math.max(600, layout.canvas.width * 1.8) },
+                        { translateY: composition.artworkTranslateY },
+                        { rotateY: `${composition.artworkYaw}deg` },
+                        { rotateZ: `${composition.artworkLean}deg` },
+                      ] },
+                    ]}>
+                      <ShowcasePlaceableArtwork
+                        frontalBase
+                        item={item}
+                        size={composition.artworkSize}
+                      />
+                    </View>
+                  </>
                 ) : (
                   <View
                     style={[
@@ -492,6 +506,7 @@ const styles = StyleSheet.create({
     backgroundColor: SHOWCASE_PALETTE.graphiteDeep,
   },
   rankDisplayLayer: {
+    transformOrigin: '50% 100%',
     position: 'absolute',
     overflow: 'visible',
   },
@@ -542,7 +557,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 1,
   },
+  artworkContactShadow: {
+    position: 'absolute',
+    bottom: -1,
+    zIndex: 2,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0, 2, 4, .3)',
+    boxShadow: '0 1px 4px rgba(0, 2, 4, .22)',
+  },
   slotArtifact: {
+    transformOrigin: '50% 100%',
     position: 'absolute',
     zIndex: 2,
     top: 0,

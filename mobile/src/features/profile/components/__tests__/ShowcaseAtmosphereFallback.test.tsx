@@ -55,7 +55,7 @@ describe('ShowcaseAtmosphereFallback', () => {
     )).toBeTruthy();
   });
 
-  it('keeps a fixed Forge resonance when animation is reduced', async () => {
+  it('keeps the Forge atmosphere without the rings and crosshair overlay', async () => {
     const screen = await render(
       <ShowcaseAtmosphereFallback
         atmosphere={{
@@ -72,10 +72,11 @@ describe('ShowcaseAtmosphereFallback', () => {
       />,
     );
 
-    expect(screen.getByTestId(
+    expect(screen.queryByTestId(
       'showcase-forge-static-resonance',
       { includeHiddenElements: true },
-    )).toBeTruthy();
+    )).toBeNull();
+    expect(screen.getByTestId('showcase-atmosphere-static-reduced-motion', { includeHiddenElements: true })).toBeTruthy();
   });
 
   it('keeps a fixed Circuit Zéro afterimage when animation is reduced', async () => {

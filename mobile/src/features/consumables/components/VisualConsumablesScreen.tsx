@@ -231,20 +231,24 @@ function previewOperation(state: VisualConsumablesState, operation: PendingConsu
   };
 }
 
-export function VisualConsumablesEntryCard({ preview = false }: { preview?: boolean }) {
+export function VisualConsumablesEntryCard({ preview = false, compact = false }: { preview?: boolean; compact?: boolean }) {
   const summary = VISUAL_CONSUMABLE_CATALOG.map((item) => t(item.nameKey)).join(' · ');
   return <Pressable accessibilityRole="button" accessibilityLabel={t('consumables.entry')}
     onPress={() => router.push(preview ? '/consumables-preview' : '/consumables')}
-    style={({ pressed }) => [styles.entry, pressed && styles.pressed]} testID="store-visual-consumables">
-    <View style={styles.entryIcons}><Sparkles color={colors.volt} size={28} /><Activity color="#E879F9" size={24} /></View>
-    <View style={styles.cardCopy}><Text style={styles.cardTitle}>{t('consumables.entry')}</Text>
-      <Text numberOfLines={2} style={styles.description}>{t('consumables.entryDetail')}</Text>
-      <Text numberOfLines={1} style={styles.entrySummary}>{summary}</Text></View>
+    style={({ pressed }) => [styles.entry, compact && styles.compactEntry, pressed && styles.pressed]} testID="store-visual-consumables">
+    <View style={[styles.entryIcons, compact && styles.compactIcons]}><Sparkles color={colors.volt} size={compact ? 21 : 28} /><Activity color="#E879F9" size={compact ? 18 : 24} /></View>
+    <View style={styles.cardCopy}><Text style={[styles.cardTitle, compact && styles.compactTitle]}>{t('consumables.entry')}</Text>
+      <Text numberOfLines={2} style={[styles.description, compact && styles.compactDescription]}>{t('consumables.entryDetail')}</Text>
+      {!compact ? <Text numberOfLines={1} style={styles.entrySummary}>{summary}</Text> : null}</View>
     <Text style={styles.open}>{t('consumables.open')} →</Text>
   </Pressable>;
 }
 
 const styles = StyleSheet.create({
+  compactEntry: { minHeight: 84, margin: 0, marginTop: 0, padding: 10, gap: 8, borderRadius: 16 },
+  compactIcons: { width: 38, height: 42 },
+  compactTitle: { fontSize: 14, lineHeight: 18 },
+  compactDescription: { fontSize: 12, lineHeight: 16 },
   preview: { ...typography.eyebrow, color: colors.info },
   wallet: { padding: spacing.md, gap: spacing.xs, borderRadius: radius.lg, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.borderStrong },
   walletLabel: { ...typography.eyebrow, color: colors.textSecondary },

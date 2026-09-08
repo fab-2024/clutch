@@ -18,7 +18,7 @@ export const mainTabs = [
   { name: 'matches', title: 'Matchs', icon: CalendarDays },
   { name: 'social', title: 'Social', icon: UsersRound },
   { name: 'rank', title: 'Rank', icon: Trophy },
-  { name: 'profile', title: 'Magasin', icon: Store },
+  { name: 'profile', title: 'Collection', icon: Store },
 ] as const;
 
 const nativeGlassAvailable = isGlassEffectAPIAvailable() && isLiquidGlassAvailable();

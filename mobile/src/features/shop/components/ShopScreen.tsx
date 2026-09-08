@@ -5,6 +5,7 @@ import type { ProfileData } from '@/src/features/profile/types';
 import { shopSurfaceFromParam } from '../scope';
 import type { CosmeticShopData } from '../types';
 import AtelierShopScreen, { type AtelierPreviewState } from './AtelierShopScreen';
+import { shopCategoryFromParam } from './ShopCategoryMenu';
 import LockerScreen, { type LockerPreviewState } from './LockerScreen';
 
 export type ShopScreenProps = {
@@ -20,7 +21,7 @@ export default function ShopScreen({
   previewLockerState,
   previewProfile,
 }: ShopScreenProps) {
-  const params = useLocalSearchParams<{ scope?: string | string[] }>();
+  const params = useLocalSearchParams<{ scope?: string | string[]; category?: string | string[] }>();
 
   if (previewLockerState || shopSurfaceFromParam(params.scope) === 'locker') {
     return (
@@ -33,6 +34,7 @@ export default function ShopScreen({
   }
   return (
     <AtelierShopScreen
+      initialCategory={shopCategoryFromParam(params.category)}
       previewData={previewData}
       previewProfile={previewProfile}
       previewState={previewAtelierState}

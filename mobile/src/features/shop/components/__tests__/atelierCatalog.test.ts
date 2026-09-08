@@ -49,8 +49,8 @@ describe('showcase Atelier catalog', () => {
     ]);
   });
 
-  it('offers 24 unique individual objects with the approved rarity prices', () => {
-    expect(INDIVIDUAL_COLLECTION_PRODUCTS).toHaveLength(24);
+  it('offers 18 unique individual objects with the approved rarity prices', () => {
+    expect(INDIVIDUAL_COLLECTION_PRODUCTS).toHaveLength(18);
     expect(new Set(ATELIER_CATALOG.map((item) => item.id)).size).toBe(ATELIER_CATALOG.length);
     for (const product of INDIVIDUAL_COLLECTION_PRODUCTS) {
       expect(product.packOnly).not.toBe(true);

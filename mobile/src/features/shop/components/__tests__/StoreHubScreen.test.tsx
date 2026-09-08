@@ -6,6 +6,14 @@ import type { ReactNode } from 'react';
 
 import StoreHubScreen from '../StoreHubScreen';
 
+jest.mock('lucide-react-native/icons/door-open', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/frame', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/gem', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/layout-grid', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/orbit', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/sparkles', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/trophy', () => ({ __esModule: true, default: 'Icon' }));
+
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('lucide-react-native/icons/arrow-left', () => ({ __esModule: true, default: 'ArrowLeft' }));
 jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, default: 'ChevronRight' }));
@@ -15,23 +23,11 @@ jest.mock('lucide-react-native/icons/shopping-bag', () => ({ __esModule: true, d
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() },
 }));
-jest.mock('@/src/features/consumables/components/VisualConsumablesScreen', () => {
-  const React = jest.requireActual('react') as typeof import('react');
-  const { Pressable, Text } = jest.requireActual('react-native') as typeof import('react-native');
-  const { router: mockedRouter } = jest.requireMock('expo-router') as typeof import('expo-router');
-  return {
-    __esModule: true,
-    default: () => null,
-    VisualConsumablesEntryCard: ({ preview = false }: { preview?: boolean }) => React.createElement(
-      Pressable,
-      {
-        accessibilityRole: 'button',
-        testID: 'store-visual-consumables',
-        onPress: () => mockedRouter.push(preview ? '/consumables-preview' : '/consumables'),
-      },
-      React.createElement(Text, null, 'EFFETS TEMPORAIRES'),
-    ),
-  };
+jest.mock('../AtelierShopScreen', () => {
+  const { View } = jest.requireActual('react-native');
+  return { __esModule: true, default: ({ headerContent, embedded }: { headerContent: ReactNode; embedded: boolean }) => (
+    <View testID={embedded ? 'embedded-shop' : 'standalone-shop'}>{headerContent}</View>
+  ) };
 });
 jest.mock('@/src/features/profile/hooks/useProfileLevel', () => ({ useProfileLevel: () => null }));
 jest.mock('@/src/components/layout/GriffHeader', () => ({
@@ -58,69 +54,30 @@ const push = router.push as jest.Mock;
 describe('StoreHubScreen', () => {
   beforeEach(() => push.mockClear());
 
-  it('keeps the Magasin focused on Vitrine and Boutique', async () => {
+  it('shows the catalogue directly in Magasin while preserving the profile header', async () => {
     const screen = await render(<StoreHubScreen />);
-
-    expect(screen.getByText('MAGASIN')).toBeTruthy();
     expect(screen.getByTestId('store-hub-showcase')).toBeTruthy();
-    expect(screen.getByTestId('store-hub-shop')).toBeTruthy();
-    expect(screen.getByTestId('store-visual-consumables')).toBeTruthy();
-    expect(screen.getByTestId('shop-streak-protector')).toBeTruthy();
-    expect(screen.getByText('OBTENIR · 90 VOLTS')).toBeTruthy();
-    expect(screen.getByTestId('store-hub-profile')).toBeTruthy();
-    expect(screen.getAllByText('TesteurGRIFF')).toHaveLength(2);
-    expect(screen.getByText('ROOKIE DU CALL')).toBeTruthy();
-    expect(screen.getByText('PUBLIC')).toBeTruthy();
-    const rendered = JSON.stringify(screen.toJSON());
-    expect(rendered.indexOf('store-hub-intro')).toBeLessThan(rendered.indexOf('store-hub-profile'));
-    expect(screen.queryByText('PROGRESSION')).toBeNull();
-    expect(screen.queryByText('FACTION')).toBeNull();
-    expect(screen.queryByText('ACTIVATIONS')).toBeNull();
+    await fireEvent.press(screen.getByRole('tab', { name: 'Magasin' }));
+    expect(screen.getByTestId('embedded-shop')).toBeTruthy();
+    expect(screen.queryByTestId('store-hub-shop')).toBeNull();
+    expect(screen.queryByTestId('store-hub-showcase')).toBeNull();
+    expect(screen.getByTestId('profile-header-button')).toBeTruthy();
+    expect(screen.queryByTestId('store-hub-intro')).toBeNull();
+    expect(push).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('tab', { name: 'Vitrine' }));
+    expect(screen.getByTestId('store-hub-showcase')).toBeTruthy();
   });
 
-  it('opens the two production destinations and profile settings', async () => {
-    const screen = await render(<StoreHubScreen />);
-
-    await fireEvent.press(screen.getByTestId('profile-header-button'));
+  it.each([false, true])('preserves profile, showcase and settings navigation (preview=%s)', async (preview) => {
+    const screen = await render(<StoreHubScreen preview={preview} />);
     await fireEvent.press(screen.getByTestId('store-hub-profile'));
+    expect(push).toHaveBeenLastCalledWith(preview ? '/profile-preview' : '/my-profile');
     await fireEvent.press(screen.getByTestId('store-hub-showcase'));
-    await fireEvent.press(screen.getByTestId('store-hub-shop'));
+    expect(push).toHaveBeenLastCalledWith(preview ? '/showcase-preview' : '/showcase');
+    await fireEvent.press(screen.getByRole('tab', { name: 'Magasin' }));
     await fireEvent.press(screen.getByTestId('store-hub-settings'));
-    await fireEvent.press(screen.getByTestId('store-visual-consumables'));
-
-    expect(push).toHaveBeenNthCalledWith(1, '/my-profile');
-    expect(push).toHaveBeenNthCalledWith(2, '/my-profile');
-    expect(push).toHaveBeenNthCalledWith(3, '/showcase');
-    expect(push).toHaveBeenNthCalledWith(4, {
-      pathname: '/shop',
-      params: { scope: 'catalog' },
-    });
-    expect(push).toHaveBeenNthCalledWith(5, '/settings/profile');
-    expect(push).toHaveBeenNthCalledWith(6, '/consumables');
-    await fireEvent.press(screen.getByTestId('shop-streak-protector'));
-    expect(push).toHaveBeenNthCalledWith(7, '/streak');
-  });
-
-  it('keeps preview navigation inside preview routes', async () => {
-    const screen = await render(<StoreHubScreen preview />);
-
+    expect(push).toHaveBeenLastCalledWith(preview ? '/settings-preview' : '/settings/profile');
     await fireEvent.press(screen.getByTestId('profile-header-button'));
-    await fireEvent.press(screen.getByTestId('store-hub-profile'));
-    await fireEvent.press(screen.getByTestId('store-hub-showcase'));
-    await fireEvent.press(screen.getByTestId('store-hub-shop'));
-    await fireEvent.press(screen.getByTestId('store-hub-settings'));
-    await fireEvent.press(screen.getByTestId('store-visual-consumables'));
-
-    expect(push).toHaveBeenNthCalledWith(1, '/profile-preview');
-    expect(push).toHaveBeenNthCalledWith(2, '/profile-preview');
-    expect(push).toHaveBeenNthCalledWith(3, '/showcase-preview');
-    expect(push).toHaveBeenNthCalledWith(4, {
-      pathname: '/shop-preview',
-      params: { scope: 'catalog' },
-    });
-    expect(push).toHaveBeenNthCalledWith(5, '/settings-preview');
-    expect(push).toHaveBeenNthCalledWith(6, '/consumables-preview');
-    await fireEvent.press(screen.getByTestId('shop-streak-protector'));
-    expect(push).toHaveBeenNthCalledWith(7, '/streak-preview');
+    expect(push).toHaveBeenLastCalledWith(preview ? '/profile-preview' : '/my-profile');
   });
 });

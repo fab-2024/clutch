@@ -73,15 +73,15 @@ export function StreakShowcaseBadge() {
   );
 }
 
-export function ProtectorShopCard({ preview = false }: { preview?: boolean }) {
+export function ProtectorShopCard({ preview = false, compact = false }: { preview?: boolean; compact?: boolean }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={t('streak.protector.title')}
       onPress={() => router.push(preview ? '/streak-preview' : '/streak')}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]} testID="shop-streak-protector">
+      style={({ pressed }) => [styles.card, compact && styles.compactCard, pressed && styles.pressed]} testID="shop-streak-protector">
       <View style={styles.top}>
-        <ShieldCheck color={colors.volt} size={30} />
+        <ShieldCheck color={colors.volt} size={compact ? 24 : 30} />
         <View style={styles.copy}>
-          <Text style={styles.title}>{t('streak.protector.title')}</Text>
+          <Text style={[styles.title, compact && styles.compactTitle]}>{t('streak.protector.title')}</Text>
           <Text style={styles.meta}>{t('streak.protector.shop')}</Text>
         </View>
         <ChevronRight color={colors.text} size={20} />
@@ -92,6 +92,8 @@ export function ProtectorShopCard({ preview = false }: { preview?: boolean }) {
 }
 
 const styles = StyleSheet.create({
+  compactCard: { margin: 0, marginTop: 0, padding: 10, gap: 6, borderRadius: 16 },
+  compactTitle: { fontSize: 18, lineHeight: 22 },
   streakCard: { marginHorizontal: spacing.md, marginTop: spacing.sm, marginBottom: spacing.md,
     paddingHorizontal: spacing.md, paddingTop: spacing.md, gap: 12, borderRadius: radius.lg,
     borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(10,21,29,.88)' },

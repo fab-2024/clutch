@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject, type ReactNode } from 'react';
 import {
   Image,
   Pressable,
@@ -10,6 +10,9 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+
+import { VisualConsumablesEntryCard } from '@/src/features/consumables/components/VisualConsumablesScreen';
+import { ProtectorShopCard } from '@/src/features/retention/components/CallStreakCard';
 
 import { Screen } from '@/src/components/layout/Screen';
 import { Button } from '@/src/components/ui/Button';
@@ -48,12 +51,25 @@ import {
 } from '../rareAcquisition';
 import {
   ORIGINAL_PACK_CATALOG,
-  INDIVIDUAL_COLLECTION_CATALOG,
   type TeamPackDefinition,
 } from '../teamPackCatalog';
 import type { CosmeticItem, CosmeticShopData } from '../types';
 import { AtelierPurchaseSheet } from './AtelierPurchaseSheet';
+import { ShopCategoryMenu, type ShopCategory } from './ShopCategoryMenu';
 import { RareAcquisitionReveal } from './RareAcquisitionReveal';
+
+const FINISHING_SHOP_CATEGORY = { lighting: 'lighting', supports: 'rooms', ranks: 'ranks' } as const;
+
+function matchesCatalogCategory(product: AtelierProduct, category: ShopCategory) {
+  if (category === 'all') return true;
+  if (category === 'frames') return product.slot === 'cadre_profil';
+  if (category === 'lighting') return product.slot === 'vitrine_eclairage' && !product.roomId;
+  if (category === 'rooms') return Boolean(product.roomId) || product.slot === 'vitrine_supports';
+  if (category === 'effects') return product.slot === 'effet_faction';
+  if (category === 'ranks') return product.slot === 'vitrine_rang';
+  return category === 'objects' && product.category === 'originals'
+    && !['cadre_profil', 'vitrine_eclairage', 'vitrine_supports', 'vitrine_rang', 'effet_faction'].includes(product.slot);
+}
 
 type AtelierNotice = { text: string; tone: 'error' | 'info' | 'success' };
 
@@ -73,7 +89,7 @@ const ATELIER_SCENE_REFERENCE = {
   sceneTop: 87,
   width: 1844,
 } as const;
-const PRODUCT_VISUAL_HEIGHT = 132;
+const PRODUCT_VISUAL_HEIGHT = 96;
 
 export type AtelierPreviewState = {
   acquisitionProductId?: string;
@@ -85,16 +101,24 @@ export type AtelierPreviewState = {
 };
 
 export type AtelierShopScreenProps = {
+  embedded?: boolean;
+  headerContent?: ReactNode;
+  initialCategory?: ShopCategory;
   previewData?: CosmeticShopData;
   previewProfile?: ProfileData;
   previewState?: AtelierPreviewState;
 };
 
 export default function AtelierShopScreen({
+  embedded = false,
+  headerContent,
+  initialCategory = 'all',
   previewData,
   previewProfile,
   previewState,
 }: AtelierShopScreenProps) {
+  const [hasSelectedProduct, setHasSelectedProduct] = useState(!embedded);
+  const [catalogCategory, setCatalogCategory] = useState<ShopCategory>(initialCategory);
   const { height, width } = useWindowDimensions();
   const { profile, session } = useAuth();
   const { refresh: refreshEconomy, unlimitedVolts, volts } = useEconomy();
@@ -127,7 +151,7 @@ export default function AtelierShopScreen({
   const previewAcquisitionRef = useRef('');
   const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
   const compactHeight = height < 700;
-  const shelfCardWidth = Math.min(268, Math.max(218, width * 0.72));
+  const shelfCardWidth = Math.min(210, Math.max(164, width * 0.46));
   const previewLoading = previewState?.loading ?? false;
   const previewError = previewState?.error ?? null;
 
@@ -233,6 +257,7 @@ export default function AtelierShopScreen({
   }, [previewState?.acquisitionProductId, runtimeById]);
 
   function handleProductSelection(product: AtelierProduct) {
+    setHasSelectedProduct(true);
     if (product.id === selectedProduct?.id) return;
     selectionFeedback();
     setCategory(product.category);
@@ -402,7 +427,7 @@ export default function AtelierShopScreen({
 
   return (
     <Screen>
-      <View style={styles.root}>
+      <View style={[styles.root, embedded && styles.embeddedRoot]}>
         <ScrollView
           contentContainerStyle={[styles.scrollContent, compactHeight && styles.scrollContentCompact]}
           refreshControl={(
@@ -414,8 +439,11 @@ export default function AtelierShopScreen({
           )}
           showsVerticalScrollIndicator={false}
         >
+          {headerContent}
           <View style={[styles.content, compactHeight && styles.contentCompact]}>
-            <AtelierHeader balance={balance} compact={compactHeight} loading={loading} unlimitedVolts={!previewData && unlimitedVolts} />
+            {!embedded ? <AtelierHeader balance={balance} compact={compactHeight} loading={loading} unlimitedVolts={!previewData && unlimitedVolts} /> : null}
+
+            <ShopCategoryMenu selected={catalogCategory} onSelect={setCatalogCategory} />
 
             {loadError ? (
               <View accessible accessibilityLiveRegion="assertive" accessibilityRole="alert" style={styles.errorBanner}>
@@ -431,69 +459,81 @@ export default function AtelierShopScreen({
               <AtelierCatalogSkeleton />
             ) : (
               <View style={styles.catalog} testID="atelier-catalog">
-                <View style={styles.catalogIntro}>
-                  <Text style={styles.sectionEyebrow}>BOUTIQUE // COLLECTION</Text>
+                {!embedded && catalogCategory !== 'consumables' ? <View style={styles.catalogIntro}>
                   <Text style={styles.catalogTitle}>COMPOSE TON ESPACE.</Text>
                   <Text style={styles.catalogDescription}>
                     Fais glisser chaque rayon pour découvrir les différentes finitions.
                   </Text>
-                </View>
+                </View> : null}
 
-                <AtelierProductShelf
+                {catalogCategory === 'all' || catalogCategory === 'frames' ? <AtelierProductShelf
                   category="originals"
                   collectionTitle="CADRES"
-                  eyebrow="IDENTITÉ // PROFIL"
                   shelfId="profile-frames"
                   onSelect={handleProductSelection}
                   products={INDIVIDUAL_PROFILE_FRAMES}
                   runtimeById={runtimeById}
                   selectedId={selectedProduct?.id ?? null}
                   width={shelfCardWidth}
-                />
+                /> : null}
 
-                {ATELIER_CATEGORIES.map((shelfCategory) => (
+                {ATELIER_CATEGORIES.filter((key) => catalogCategory === 'all' || FINISHING_SHOP_CATEGORY[key] === catalogCategory).map((shelfCategory) => (
                   <AtelierProductShelf
                     category={shelfCategory}
                     key={shelfCategory}
                     onSelect={handleProductSelection}
-                    products={atelierProducts(shelfCategory)}
+                    products={[...atelierProducts(shelfCategory), ...atelierProducts('originals').filter((product) => matchesCatalogCategory(product, FINISHING_SHOP_CATEGORY[shelfCategory]))]}
                     runtimeById={runtimeById}
                     selectedId={selectedProduct?.id ?? null}
                     width={shelfCardWidth}
                   />
                 ))}
 
-                {INDIVIDUAL_COLLECTION_CATALOG.map((collection) => (
-                  <AtelierProductShelf
-                    category="originals"
-                    collectionTitle={collection.title}
-                    key={collection.id}
-                    onSelect={handleProductSelection}
-                    products={atelierProducts('originals').filter((product) => product.packId === collection.id && product.slot !== 'cadre_profil')}
-                    runtimeById={runtimeById}
-                    selectedId={selectedProduct?.id ?? null}
-                    shelfId={collection.id}
-                    width={shelfCardWidth}
-                  />
-                ))}
+                {catalogCategory === 'all' || catalogCategory === 'objects' ? <AtelierProductShelf
+                  category="originals"
+                  collectionTitle="OBJETS DE VITRINE"
+                  shelfId="objects"
+                  onSelect={handleProductSelection}
+                  products={atelierProducts('originals').filter((product) => matchesCatalogCategory(product, 'objects'))}
+                  runtimeById={runtimeById}
+                  selectedId={selectedProduct?.id ?? null}
+                  width={shelfCardWidth}
+                /> : null}
 
-                <TeamPackShelf
+                {catalogCategory === 'all' || catalogCategory === 'effects' ? <AtelierProductShelf
+                  category="originals"
+                  collectionTitle="EFFETS"
+                  shelfId="effects"
+                  onSelect={handleProductSelection}
+                  products={atelierProducts('originals').filter((product) => matchesCatalogCategory(product, 'effects'))}
+                  runtimeById={runtimeById}
+                  selectedId={selectedProduct?.id ?? null}
+                  width={shelfCardWidth}
+                /> : null}
+
+                {catalogCategory === 'all' ? <TeamPackShelf
                   kind="original"
                   onOpen={openTeamPack}
                   packs={ORIGINAL_PACK_CATALOG}
-                />
+                /> : null}
 
-                <View style={styles.discoveryLine}>
+                {catalogCategory === 'all' || catalogCategory === 'consumables' ? <View testID="shop-consumables-section" style={styles.consumables}>
+                  <Text accessibilityRole="header" style={styles.catalogTitle}>CONSOMMABLES</Text>
+                  <VisualConsumablesEntryCard compact preview={Boolean(previewData)} />
+                  <ProtectorShopCard compact preview={Boolean(previewData)} />
+                </View> : null}
+
+                {catalogCategory === 'all' ? <View style={styles.discoveryLine}>
                   <Text style={styles.discoveryLabel}>PROCHAINEMENT</Text>
                   <Text style={styles.discoveryValue}>NOUVELLES COLLECTIONS · COLLABS</Text>
-                </View>
+                </View> : null}
 
               </View>
             )}
           </View>
         </ScrollView>
 
-        {!loading && selectedProduct ? (
+        {!loading && hasSelectedProduct && selectedProduct && matchesCatalogCategory(selectedProduct, catalogCategory) ? (
           <AtelierActionDock
             action={action}
             balance={balance}
@@ -553,7 +593,6 @@ function AtelierHeader({
         <Text style={styles.backIcon}>‹</Text>
       </Pressable>
       <View style={styles.headerCopy}>
-        <Text style={styles.headerEyebrow}>BOUTIQUE // VITRINE</Text>
         <Text style={styles.headerTitle}>ATELIER</Text>
       </View>
       <View accessible accessibilityLabel={unlimitedVolts ? 'Volts illimités' : `${formatNumber(balance)} Volts disponibles`} style={styles.balance} testID="atelier-balance">
@@ -580,8 +619,8 @@ function AtelierCatalogSkeleton() {
         <View key={index} style={styles.catalogSkeletonSection}>
           <Skeleton height={22} radius="sm" width="42%" />
           <View style={styles.catalogSkeletonTrack}>
-            <Skeleton height={238} radius="md" width="70%" />
-            <Skeleton height={238} radius="md" tone="subtle" width="24%" />
+            <Skeleton height={190} radius="md" width="70%" />
+            <Skeleton height={190} radius="md" tone="subtle" width="24%" />
           </View>
         </View>
       ))}
@@ -589,11 +628,10 @@ function AtelierCatalogSkeleton() {
   );
 }
 
-function ShelfHeading({ count, eyebrow, title }: { count: number; eyebrow: string; title: string }) {
+function ShelfHeading({ count, title }: { count: number; title: string }) {
   return (
     <View style={styles.shelfHeading}>
       <View style={styles.shelfHeadingCopy}>
-        <Text style={styles.shelfEyebrow}>{eyebrow}</Text>
         <Text style={styles.shelfTitle}>{title}</Text>
       </View>
       <Text accessibilityLabel={`${count} éléments`} style={styles.shelfCount}>
@@ -626,7 +664,6 @@ function TeamPackShelf({
     >
       <ShelfHeading
         count={packs.length}
-        eyebrow={isOriginal ? 'CLUTCH // ORIGINAL' : isGameCollection ? 'JEUX // COLLECTIONS' : 'CLUTCH // ÉQUIPES'}
         title={isOriginal ? 'PACKS ORIGINAUX' : isGameCollection ? 'COLLECTIONS DE JEU' : 'ÉQUIPES ORIGINALES'}
       />
       <View style={styles.teamPackList}>
@@ -656,20 +693,20 @@ function TeamPackShelf({
                 <View style={[styles.teamPackOfficial, { borderColor: `${pack.accent}80` }]}>
                   <View style={[styles.teamPackDot, { backgroundColor: pack.accent }]} />
                   <Text style={styles.teamPackOfficialText}>
-                    {isOriginal ? 'CRÉATION ORIGINALE' : isGameCollection ? 'JEU PARTENAIRE' : 'IDENTITÉS ORIGINALES'}
+                    {isOriginal ? 'ORIGINAL' : isGameCollection ? 'PARTENAIRE' : 'IDENTITÉ'}
                   </Text>
                 </View>
                 <Text style={styles.teamPackCount}>{pack.items.length} OBJETS</Text>
               </View>
               <View>
-                <Text style={[styles.teamPackTitle, { color: pack.accent }]}>{pack.title}</Text>
-                <Text style={styles.teamPackSubtitle}>{pack.subtitle}</Text>
+                <Text numberOfLines={2} style={[styles.teamPackTitle, { color: pack.accent }]}>{pack.title}</Text>
+                <Text numberOfLines={2} style={styles.teamPackSubtitle}>{pack.subtitle}</Text>
                 <View style={styles.teamPackActionRow}>
                   <View style={styles.teamPackPrice}>
                     <CurrencyIcon kind="volts" size={14} />
                     <Text style={styles.teamPackPriceText}>{formatNumber(pack.price)}</Text>
                   </View>
-                  <Text style={[styles.teamPackOpen, { color: pack.accent }]}>VOIR LE PACK →</Text>
+                  <Text style={[styles.teamPackOpen, { color: pack.accent }]}>VOIR →</Text>
                 </View>
               </View>
             </View>
@@ -682,7 +719,6 @@ function TeamPackShelf({
 
 function AtelierProductShelf({
   category,
-  eyebrow,
   collectionTitle,
   shelfId = category,
   onSelect,
@@ -693,7 +729,6 @@ function AtelierProductShelf({
 }: {
   category: AtelierCategory;
   collectionTitle?: string;
-  eyebrow?: string;
   shelfId?: string;
   onSelect: (product: AtelierProduct) => void;
   products: readonly AtelierProduct[];
@@ -707,7 +742,6 @@ function AtelierProductShelf({
     <View style={styles.catalogShelf} testID={`atelier-shelf-${shelfId}`}>
       <ShelfHeading
         count={products.length}
-        eyebrow={eyebrow ?? (collectionTitle ? 'COLLECTION // À L’UNITÉ' : `FINITION // ${ATELIER_CATEGORY_META[category].shortLabel}`)}
         title={title}
       />
       <ScrollView
@@ -1034,6 +1068,8 @@ const noticeToneStyle = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
+  embeddedRoot: { paddingBottom: layout.tabBarHeight + layout.tabBarBottom + spacing.sm },
+  consumables: { gap: spacing.sm },
   root: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -1083,10 +1119,6 @@ const styles = StyleSheet.create({
   headerCopy: {
     flex: 1,
     minWidth: 0,
-  },
-  headerEyebrow: {
-    ...typography.eyebrow,
-    color: colors.volt,
   },
   headerTitle: {
     ...typography.displaySmall,
@@ -1138,19 +1170,17 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     color: colors.textSecondary,
   },
-  sectionEyebrow: {
-    ...typography.eyebrow,
-    color: colors.volt,
-  },
   catalog: {
-    gap: spacing.xl,
+    gap: 18,
   },
   catalogIntro: {
     paddingTop: spacing.xs,
   },
   catalogTitle: {
     ...typography.displaySmall,
-    marginTop: 3,
+    fontSize: 21,
+    lineHeight: 24,
+    marginTop: 0,
     color: colors.text,
   },
   catalogDescription: {
@@ -1163,7 +1193,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   shelfHeading: {
-    minHeight: 48,
+    minHeight: 26,
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
@@ -1173,17 +1203,17 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  shelfEyebrow: {
-    ...typography.eyebrow,
-    color: colors.volt,
-  },
   shelfTitle: {
     ...typography.sectionTitle,
-    marginTop: 2,
+    fontSize: 20,
+    lineHeight: 24,
+    marginTop: 0,
     color: colors.text,
   },
   shelfCount: {
     ...typography.metricSmall,
+    fontSize: 18,
+    lineHeight: 22,
     color: colors.textMuted,
   },
   shelfTrack: {
@@ -1221,7 +1251,7 @@ const styles = StyleSheet.create({
   },
   productVisual: {
     position: 'relative',
-    height: 132,
+    height: PRODUCT_VISUAL_HEIGHT,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1235,15 +1265,15 @@ const styles = StyleSheet.create({
     aspectRatio: 1844 / 853,
   },
   rankProductVisual: {
-    height: 164,
+    height: 106,
     padding: spacing.xs,
   },
   selectedMark: {
     position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    width: 28,
-    height: 28,
+    top: 6,
+    right: 6,
+    width: 22,
+    height: 22,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.sm,
@@ -1255,10 +1285,10 @@ const styles = StyleSheet.create({
   },
   selectedChoice: {
     position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    minWidth: 48,
-    height: 28,
+    top: 6,
+    right: 6,
+    minWidth: 42,
+    height: 22,
     paddingHorizontal: spacing.xs,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1272,15 +1302,15 @@ const styles = StyleSheet.create({
     color: colors.volt,
   },
   productCopy: {
-    minHeight: 106,
-    padding: spacing.sm,
+    minHeight: 90,
+    padding: 8,
   },
   productTopline: {
-    minHeight: 20,
+    minHeight: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: spacing.sm,
+    gap: 4,
   },
   rarity: {
     ...typography.metadata,
@@ -1305,28 +1335,38 @@ const styles = StyleSheet.create({
   },
   priceText: {
     ...typography.metricSmall,
+    fontSize: 16,
+    lineHeight: 18,
     color: colors.text,
   },
   productName: {
     ...typography.metricSmall,
-    marginTop: spacing.xs,
+    fontSize: 18,
+    lineHeight: 20,
+    marginTop: 3,
     color: colors.text,
   },
   productDescription: {
     ...typography.body,
-    marginTop: spacing.xs,
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 3,
     color: colors.textSecondary,
   },
   teamPackList: {
-    gap: spacing.sm,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: spacing.sm,
   },
   teamPackCard: {
     position: 'relative',
-    minHeight: 250,
+    width: '48.5%',
+    minHeight: 204,
     overflow: 'hidden',
     justifyContent: 'flex-end',
     borderWidth: 1,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     backgroundColor: '#0B1218',
   },
   teamPackShade: {
@@ -1340,19 +1380,19 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(4,5,7,.82)',
   },
   teamPackContent: {
-    minHeight: 250,
-    padding: spacing.md,
+    minHeight: 204,
+    padding: 10,
     justifyContent: 'space-between',
   },
   teamPackTopline: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: spacing.sm,
+    gap: 4,
   },
   teamPackOfficial: {
-    minHeight: 28,
-    paddingHorizontal: spacing.sm,
+    minHeight: 20,
+    paddingHorizontal: 6,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
@@ -1367,22 +1407,30 @@ const styles = StyleSheet.create({
   },
   teamPackOfficialText: {
     ...typography.eyebrow,
+    fontSize: 9,
+    lineHeight: 12,
     color: colors.text,
   },
   teamPackCount: {
     ...typography.eyebrow,
+    fontSize: 9,
+    lineHeight: 12,
     color: colors.textSecondary,
   },
   teamPackTitle: {
     fontFamily: fonts.display,
-    fontSize: 40,
-    lineHeight: 38,
-    letterSpacing: -0.8,
+    fontSize: 22,
+    lineHeight: 24,
+    minHeight: 48,
+    letterSpacing: -0.3,
   },
   teamPackSubtitle: {
     ...typography.cardTitle,
     color: colors.text,
-    letterSpacing: 1,
+    fontSize: 11,
+    lineHeight: 14,
+    minHeight: 28,
+    letterSpacing: 0,
   },
   teamPackActionRow: {
     marginTop: spacing.sm,
@@ -1398,10 +1446,14 @@ const styles = StyleSheet.create({
   },
   teamPackPriceText: {
     ...typography.metricSmall,
+    fontSize: 18,
+    lineHeight: 22,
     color: colors.text,
   },
   teamPackOpen: {
     ...typography.control,
+    fontSize: 10,
+    lineHeight: 14,
   },
   discoveryLine: {
     minHeight: layout.minTouchTarget,

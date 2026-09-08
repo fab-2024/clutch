@@ -5,6 +5,7 @@ import type { LevelFrameVariant } from '@/src/features/profile/levelFrames/types
 import { colors, radius, spacing, typography } from '@/src/theme';
 
 type ProfileVitrineIdentityProps = {
+  compact?: boolean;
   level?: number | null;
   levelFrameVariant?: LevelFrameVariant;
   loading?: boolean;
@@ -14,6 +15,7 @@ type ProfileVitrineIdentityProps = {
 };
 
 export default function ProfileVitrineIdentity({
+  compact = false,
   level,
   levelFrameVariant = 'signalAscendant',
   loading = false,
@@ -27,10 +29,10 @@ export default function ProfileVitrineIdentity({
   const statusColor = loading ? colors.textMuted : publicProfile ? colors.success : colors.liveText;
 
   return (
-    <View style={styles.identityRow} testID="profile-vitrine-identity">
+    <View style={[styles.identityRow, compact && styles.compactRow]} testID="profile-vitrine-identity">
       <LevelFrame
         level={typeof displayedLevel === 'number' ? displayedLevel : 0}
-        size={58}
+        size={compact ? 44 : 58}
         variant={levelFrameVariant}
       />
       <View
@@ -39,13 +41,13 @@ export default function ProfileVitrineIdentity({
         style={styles.identityCopy}
       >
         <View style={styles.identityEyebrowRow}>
-          <Text numberOfLines={1} style={styles.eyebrow}>VITRINE</Text>
+          {!compact ? <Text numberOfLines={1} style={styles.eyebrow}>VITRINE</Text> : null}
           <View style={styles.status}>
             <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
             <Text style={[styles.statusText, { color: statusColor }]}>{status}</Text>
           </View>
         </View>
-        <Text adjustsFontSizeToFit minimumFontScale={0.78} numberOfLines={1} style={styles.pseudo}>
+        <Text adjustsFontSizeToFit minimumFontScale={0.78} numberOfLines={1} style={[styles.pseudo, compact && styles.compactPseudo]}>
           {pseudo}
         </Text>
         <Text numberOfLines={1} style={styles.profileTitle}>{profileTitle.toUpperCase()}</Text>
@@ -55,6 +57,8 @@ export default function ProfileVitrineIdentity({
 }
 
 const styles = StyleSheet.create({
+  compactRow: { minHeight: 52 },
+  compactPseudo: { fontSize: 20, lineHeight: 23 },
   identityRow: {
     minHeight: 62,
     flexDirection: 'row',
