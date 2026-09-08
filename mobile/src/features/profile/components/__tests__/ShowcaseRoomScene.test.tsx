@@ -493,7 +493,7 @@ describe('Showcase room composition', () => {
 
     expect(screen.getByTestId('showcase-room-editor')).toBeTruthy();
     expect(screen.getByTestId('showcase-room-background-obsidian-gallery')).toBeTruthy();
-    expect(screen.getAllByRole('button')).toHaveLength(8);
+    expect(screen.getAllByTestId(/^showcase-room-slot-/)).toHaveLength(8);
     expect(screen.getByLabelText('Emplacement maillot, Maillot Fnatic')).toBeTruthy();
     expect(screen.getByLabelText('Emplacement droit, vide')).toBeTruthy();
 
@@ -501,6 +501,25 @@ describe('Showcase room composition', () => {
     await fireEvent.press(screen.getByTestId('showcase-room-slot-right-free'));
 
     expect(onSlotPress.mock.calls.map(([slot]) => slot)).toEqual(['jersey', 'right-free']);
+  });
+
+  it('mirrors an occupied object independently without opening its picker', async () => {
+    const onSlotPress = jest.fn();
+    const screen = await render(
+      <ShowcaseRoomEditorScene
+        assignments={createDefaultShowcaseRoomAssignments([{ accent: '#F5792A', id: 'jersey:fnc', kind: 'jersey', name: 'Fnatic' }])}
+        lighting="competition"
+        onSlotPress={onSlotPress}
+        room={SHOWCASE_ROOM_CATALOG[0]}
+      />,
+    );
+    const artwork = () => screen.getByTestId('showcase-room-artwork-jersey');
+    expect(screen.queryByTestId('showcase-room-mirror-right-free')).toBeNull();
+    for (const scaleX of [-1, 1]) {
+      await fireEvent.press(screen.getByLabelText('Inverser Fnatic'));
+      expect(artwork()).toHaveStyle({ transform: expect.arrayContaining([{ scaleX }]) });
+    }
+    expect(onSlotPress).not.toHaveBeenCalled();
   });
 
   it('keeps the dormant separate-pedestal layer behind an explicit opt-in', async () => {
@@ -543,7 +562,7 @@ describe('Showcase room composition', () => {
 
     expect(screen.getByLabelText('Carbone Mécanique, 10 emplacements personnalisables')).toBeTruthy();
     expect(screen.queryByTestId('showcase-rank-display-rank_orbital_core')).toBeNull();
-    expect(screen.getAllByRole('button')).toHaveLength(10);
+    expect(screen.getAllByTestId(/^showcase-room-slot-/)).toHaveLength(10);
 
     await fireEvent.press(screen.getByTestId('showcase-room-slot-left-extra'));
     await fireEvent.press(screen.getByTestId('showcase-room-slot-right-extra'));

@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import FlipHorizontal from 'lucide-react-native/icons/flip-horizontal-2';
 import { useCallback, useState } from 'react';
 import {
   Image,
@@ -251,6 +252,8 @@ export default function ShowcaseRoomEditorScene({
   slots = SHOWCASE_ROOM_SLOTS,
   theme = 'graphite',
 }: ShowcaseRoomEditorSceneProps) {
+  const [mirroredItems, setMirroredItems] = useState<Record<string, boolean>>({});
+  const orientationKey = (slotId: string, itemId?: string) => `${slotId}:${itemId ?? ''}`;
   const [viewport, setViewport] = useState({ height: 390, width: 844 });
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const next = {
@@ -385,14 +388,9 @@ export default function ShowcaseRoomEditorScene({
             slot,
           });
           return (
-            <Pressable
-              accessibilityHint={item ? 'Changer ou retirer cet objet' : 'Ajouter un objet de ta collection'}
-              accessibilityLabel={`${slot.label}${item ? `, ${showcasePlaceableKindLabel(item.kind)} ${item.name}` : ', vide'}`}
-              accessibilityRole="button"
-              accessibilityState={{ selected: Boolean(item) }}
+            <View
               key={slot.id}
-              onPress={() => onSlotPress(slot.id)}
-              style={({ pressed }) => [
+              style={[
                 styles.slot,
                 {
                   height: slot.height,
@@ -407,11 +405,18 @@ export default function ShowcaseRoomEditorScene({
                     ) / 100 + composition.groundOffset,
                   ),
                 },
-                pressed && styles.slotPressed,
               ]}
-              testID={`showcase-room-slot-${slot.id}`}
             >
               <View style={styles.slotSelection}>
+                <Pressable
+                  accessibilityHint={item ? 'Changer ou retirer cet objet' : 'Ajouter un objet de ta collection'}
+                  accessibilityLabel={`${slot.label}${item ? `, ${showcasePlaceableKindLabel(item.kind)} ${item.name}` : ', vide'}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: Boolean(item) }}
+                  onPress={() => onSlotPress(slot.id)}
+                  style={styles.slotHitArea}
+                  testID={`showcase-room-slot-${slot.id}`}
+                />
                 {pedestalPlacement ? (
                   <View
                     pointerEvents="none"
@@ -460,13 +465,14 @@ export default function ShowcaseRoomEditorScene({
                         transform: [{ translateY: composition.artworkContactY }],
                       }]}
                     />
-                    <View style={[
+                    <View pointerEvents="none" testID={`showcase-room-artwork-${slot.id}`} style={[
                       styles.slotArtifact,
                       { transform: [
                         { perspective: Math.max(600, layout.canvas.width * 1.8) },
                         { translateY: composition.artworkTranslateY },
                         { rotateY: `${composition.artworkYaw}deg` },
                         { rotateZ: `${composition.artworkLean}deg` },
+                        { scaleX: mirroredItems[orientationKey(slot.id, item.id)] ? -1 : 1 },
                       ] },
                     ]}>
                       <ShowcasePlaceableArtwork
@@ -475,9 +481,26 @@ export default function ShowcaseRoomEditorScene({
                         size={composition.artworkSize}
                       />
                     </View>
+                    <Pressable
+                      accessibilityLabel={`Inverser ${item.name}`}
+                      accessibilityHint="Retourner horizontalement l’image"
+                      accessibilityState={{ selected: Boolean(mirroredItems[orientationKey(slot.id, item.id)]) }}
+                      accessibilityRole="button"
+                      onPress={() => {
+                        const key = orientationKey(slot.id, item.id);
+                        setMirroredItems((current) => ({ ...current, [key]: !current[key] }));
+                      }}
+                      style={({ pressed }) => [styles.mirrorButton, {
+                        bottom: composition.artworkSize * 0.9 - composition.artworkTranslateY + 6,
+                      }, pressed && styles.slotPressed]}
+                      testID={`showcase-room-mirror-${slot.id}`}
+                    >
+                      <FlipHorizontal color={mirroredItems[orientationKey(slot.id, item.id)] ? colors.volt : colors.text} size={18} />
+                    </Pressable>
                   </>
                 ) : (
                   <View
+                    pointerEvents="none"
                     style={[
                       styles.emptySlot,
                       { transform: [{ translateY: composition.artworkTranslateY }] },
@@ -489,7 +512,7 @@ export default function ShowcaseRoomEditorScene({
                   </View>
                 )}
               </View>
-            </Pressable>
+            </View>
           );
         })}
       </View>
@@ -556,6 +579,26 @@ const styles = StyleSheet.create({
   pedestalArtwork: {
     position: 'absolute',
     zIndex: 1,
+  },
+  slotHitArea: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 3,
+  },
+  mirrorButton: {
+    position: 'absolute',
+    zIndex: 4,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(5, 13, 18, .85)',
+    borderWidth: 1,
+    borderColor: 'rgba(160, 190, 207, .35)',
   },
   artworkContactShadow: {
     position: 'absolute',

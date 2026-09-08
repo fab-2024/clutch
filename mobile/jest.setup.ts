@@ -17,6 +17,7 @@ jest.mock('lucide-react-native/icons/flame', () => 'Flame');
 jest.mock('lucide-react-native/icons/shield-check', () => 'ShieldCheck');
 jest.mock('lucide-react-native/icons/chevron-right', () => 'ChevronRight');
 jest.mock('lucide-react-native/icons/user-round-plus', () => 'UserRoundPlus');
+jest.mock('lucide-react-native/icons/flip-horizontal-2', () => 'FlipHorizontal');
 jest.mock('lucide-react-native/icons/eye', () => 'Eye');
 jest.mock('lucide-react-native/icons/heart', () => 'Heart');
 jest.mock('lucide-react-native/icons/activity', () => 'Activity');
