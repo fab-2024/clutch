@@ -439,6 +439,7 @@ export const en = {
   'store.showcase.frame': 'Frame',
   'store.showcase.discover': 'Find new pieces',
   'store.showcase.inShop': 'In the shop',
+  'store.giftCardsTab': 'Gift cards',
   'store.showcaseTab': 'Showcase',
   'store.shopTab': 'Store',
   'store.subtitle': 'Your permanent collection and temporary effects, in one place.',

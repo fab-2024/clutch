@@ -23,6 +23,7 @@ import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme'
 
 import type { CosmeticShopData } from '../types';
 import AtelierShopScreen from './AtelierShopScreen';
+import GiftCardsPreviewSection from './GiftCardsPreviewSection';
 
 type StoreHubScreenProps = {
   preview?: boolean;
@@ -32,7 +33,7 @@ type StoreHubScreenProps = {
 const SHOWCASE_IMAGE = require('../../../../assets/showcase/showcase-room-empty-v1.png');
 
 export default function StoreHubScreen({ preview = false, previewData }: StoreHubScreenProps = {}) {
-  const [section, setSection] = useState<'showcase' | 'shop'>('showcase');
+  const [section, setSection] = useState<'showcase' | 'shop' | 'gift-cards'>('showcase');
   const { profile } = useAuth();
   const { equipped } = useCosmetics();
   const openShowcase = () => router.push(preview ? '/showcase-preview' : '/showcase');
@@ -67,7 +68,7 @@ export default function StoreHubScreen({ preview = false, previewData }: StoreHu
       /> : null}
 
       <View accessibilityLabel={t('store.sectionsLabel')} accessibilityRole="tablist" style={styles.tabs}>
-        {(['showcase', 'shop'] as const).map((key) => (
+        {(preview ? ['showcase', 'shop', 'gift-cards'] as const : ['showcase', 'shop'] as const).map((key) => (
           <Pressable
             accessibilityRole="tab"
             accessibilityState={{ selected: section === key }}
@@ -77,7 +78,7 @@ export default function StoreHubScreen({ preview = false, previewData }: StoreHu
             style={({ pressed }) => [styles.tab, pressed && styles.pressed]}
           >
             <View style={styles.tabLabelWrap}>
-              <Text style={[styles.tabLabel, section === key && styles.tabLabelActive]}>{t(key === 'showcase' ? 'store.showcaseTab' : 'store.shopTab')}</Text>
+              <Text style={[styles.tabLabel, section === key && styles.tabLabelActive]}>{t(key === 'showcase' ? 'store.showcaseTab' : key === 'shop' ? 'store.shopTab' : 'store.giftCardsTab')}</Text>
               {section === key ? <View pointerEvents="none" style={styles.tabUnderline} /> : null}
             </View>
           </Pressable>
@@ -88,6 +89,13 @@ export default function StoreHubScreen({ preview = false, previewData }: StoreHu
 
   if (section === 'shop') {
     return <AtelierShopScreen embedded headerContent={header} previewData={previewData} />;
+  }
+
+  if (preview && section === 'gift-cards') {
+    return <Screen><ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      {header}
+      <GiftCardsPreviewSection />
+    </ScrollView></Screen>;
   }
 
   return (

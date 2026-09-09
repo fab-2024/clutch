@@ -431,6 +431,7 @@ export const fr = {
   'store.showcase.frame': 'Cadre',
   'store.showcase.discover': 'Trouver de nouvelles pièces',
   'store.showcase.inShop': 'Dans le magasin',
+  'store.giftCardsTab': 'Cartes cadeaux',
   'store.showcaseTab': 'Vitrine',
   'store.shopTab': 'Magasin',
   'store.subtitle': 'Ta collection permanente et tes effets temporaires, au même endroit.',

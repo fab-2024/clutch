@@ -20,6 +20,9 @@ jest.mock('lucide-react-native/icons/globe', () => ({ __esModule: true, default:
 jest.mock('lucide-react-native/icons/lock', () => ({ __esModule: true, default: 'Icon' }));
 jest.mock('lucide-react-native/icons/plus', () => ({ __esModule: true, default: 'Icon' }));
 jest.mock('lucide-react-native/icons/shopping-cart', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/gift', () => ({ __esModule: true, default: 'Gift' }));
+jest.mock('lucide-react-native/icons/play', () => ({ __esModule: true, default: 'Play' }));
+
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('lucide-react-native/icons/arrow-left', () => ({ __esModule: true, default: 'ArrowLeft' }));
 jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, default: 'ChevronRight' }));
@@ -73,6 +76,18 @@ describe('StoreHubScreen', () => {
     expect(push).not.toHaveBeenCalled();
     await fireEvent.press(screen.getByRole('tab', { name: 'Vitrine' }));
     expect(screen.getByTestId('store-hub-showcase')).toBeTruthy();
+  });
+
+  it('keeps the gift card concept in preview with no real rewarded-ad action', async () => {
+    const live = await render(<StoreHubScreen />);
+    expect(live.queryByRole('tab', { name: 'Cartes cadeaux' })).toBeNull();
+    await live.unmount();
+    const preview = await render(<StoreHubScreen preview />);
+    await fireEvent.press(preview.getByRole('tab', { name: 'Cartes cadeaux' }));
+    expect(preview.getByTestId('gift-cards-preview')).toBeTruthy();
+    expect(preview.getByRole('button', { name: 'Regarder · +10 Volts' })).toBeDisabled();
+    expect(preview.getByText('3 publicités maximum par jour')).toBeTruthy();
+    expect(push).not.toHaveBeenCalled();
   });
 
   it.each([false, true])('opens the personalization shortcuts (preview=%s)', async (preview) => {
