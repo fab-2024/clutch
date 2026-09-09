@@ -4,7 +4,8 @@ import { SHOWCASE_PRESENTER_CATALOG } from '@/src/features/shop/showcasePresente
 import { SHOWCASE_ROOM_CATALOG } from '@/src/features/shop/showcaseRoomCatalog';
 import { ORIGINAL_PACK_CATALOG } from '@/src/features/shop/teamPackCatalog';
 
-import type { ShowcaseRoomSlotDefinition } from '../showcase/roomEditor';
+import type { ShowcaseRoomSlotDefinition, ShowcaseRoomSlotId } from '../showcase/roomEditor';
+import { showcaseSceneLayout } from '../showcase/showcaseSceneLayout';
 import { resolveShowcaseRoomSlotComposition } from '../showcase/ShowcaseRoomEditorScene';
 import {
   SHOWCASE_ROOM_PERSPECTIVES,
@@ -40,6 +41,44 @@ const ACTIVE_AUDITED_SCENES = [
 ];
 
 describe('showcase room perspective doctrine', () => {
+  it.each([
+    { width: 844, height: 390 },
+    { width: 1690, height: 780 },
+    { width: 390, height: 844 },
+  ])('places Forge objects on all eight visible seats at $width × $height', (viewport) => {
+    const forge = SHOWCASE_PRESENTER_CATALOG.find((room) => room.id === 'mythes-forge-magma-pedestals')!;
+    const layout = showcaseSceneLayout(viewport, forge.sceneFrame);
+    // Usable contact areas measured in the original 1672 × 941 room artwork.
+    const seats: Partial<Record<ShowcaseRoomSlotId, [number, number, number, number]>> = {
+      'left-free': [180, 563, 270, 587],
+      'left-extra': [300, 690, 415, 730],
+      ring: [470, 505, 570, 526],
+      jersey: [760, 749, 900, 790],
+      'right-extra': [780, 500, 880, 515],
+      trophy: [1080, 505, 1190, 526],
+      badge: [1240, 690, 1350, 730],
+      'right-free': [1390, 563, 1480, 587],
+    };
+    expect(layout.image).toEqual({ ...viewport, left: 0, top: 0 });
+    expect(forge.slots.map((slot) => slot.id).sort()).toEqual(Object.keys(seats).sort());
+    for (const slot of forge.slots) {
+      const composition = resolveShowcaseRoomSlotComposition({
+        canvasHeight: viewport.height, canvasWidth: viewport.width,
+        itemKind: 'trophy', itemId: 'cosmetic:serment-du-givre-summit-egg',
+        roomId: forge.id, slot,
+      });
+      const [left, top, right, bottom] = seats[slot.id]!;
+      const x = (parseFloat(slot.left) + parseFloat(slot.width) / 2 + composition.horizontalOffset) / 100 * 1672;
+      const contactY = viewport.height * (parseFloat(slot.top) + parseFloat(slot.height)) / 100
+        + composition.artworkTranslateY - composition.artworkSize * 15 / 768;
+      const y = contactY / viewport.height * 941;
+      expect(x).toBeGreaterThanOrEqual(left);
+      expect(x).toBeLessThanOrEqual(right);
+      expect(y).toBeGreaterThanOrEqual(top);
+      expect(y).toBeLessThanOrEqual(bottom);
+    }
+  });
+
   it.each([
     { width: 844, height: 390 },
     { width: 1690, height: 780 },

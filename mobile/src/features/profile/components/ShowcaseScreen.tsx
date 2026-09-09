@@ -134,10 +134,13 @@ export default function ShowcaseScreen({
   reduceMotionOverride,
 }: ShowcaseScreenProps) {
   const params = useLocalSearchParams<{
+    atelier?: string | string[];
     room?: string | string[];
     section?: string | string[];
   }>();
   const requestedSection = showcaseSectionFromParam(params.section);
+  const requestedLighting = readParam(params.atelier) === 'lighting';
+  const lightingEntryOpenedRef = useRef(false);
   const selectedRoom = showcaseRoomById(readParam(params.room));
   const { profile, session } = useAuth();
   const { refresh: refreshCosmetics } = useCosmetics();
@@ -509,6 +512,22 @@ export default function ShowcaseScreen({
     setAtelierPurchaseError(null);
     setAtelierVisible(true);
   }
+
+  useEffect(() => {
+    if (!requestedLighting || loading || !shopData || lightingEntryOpenedRef.current) return;
+    // Let the saved room configuration settle before capturing its preview snapshot.
+    const frame = requestAnimationFrame(() => {
+      lightingEntryOpenedRef.current = true;
+      atelierSceneSnapshotRef.current = {
+        jerseyPresentation, lighting, pedestal, pedestalAssignments: { ...pedestalAssignments },
+        presenterId: presenter.id, rankDisplayId: rankDisplay.id, roomId: activeRoom?.id ?? null, theme,
+      };
+      setAtelierCategory('lighting');
+      setAtelierVisible(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [requestedLighting, loading, shopData, jerseyPresentation, lighting, pedestal,
+    pedestalAssignments, presenter.id, rankDisplay.id, activeRoom?.id, theme]);
 
   function closeAtelier() {
     if (atelierPendingId) return;

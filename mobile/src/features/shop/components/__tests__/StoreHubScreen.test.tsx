@@ -14,6 +14,12 @@ jest.mock('lucide-react-native/icons/orbit', () => ({ __esModule: true, default:
 jest.mock('lucide-react-native/icons/sparkles', () => ({ __esModule: true, default: 'Icon' }));
 jest.mock('lucide-react-native/icons/trophy', () => ({ __esModule: true, default: 'Icon' }));
 
+jest.mock('lucide-react-native/icons/arrow-right', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/chevron-down', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/globe', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/lock', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/plus', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/shopping-cart', () => ({ __esModule: true, default: 'Icon' }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('lucide-react-native/icons/arrow-left', () => ({ __esModule: true, default: 'ArrowLeft' }));
 jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, default: 'ChevronRight' }));
@@ -57,6 +63,7 @@ describe('StoreHubScreen', () => {
   it('shows the catalogue directly in Magasin while preserving the profile header', async () => {
     const screen = await render(<StoreHubScreen />);
     expect(screen.getByTestId('store-hub-showcase')).toBeTruthy();
+    expect(screen.getByText('Ton espace. Ton empreinte.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('tab', { name: 'Magasin' }));
     expect(screen.getByTestId('embedded-shop')).toBeTruthy();
     expect(screen.queryByTestId('store-hub-shop')).toBeNull();
@@ -66,6 +73,20 @@ describe('StoreHubScreen', () => {
     expect(push).not.toHaveBeenCalled();
     await fireEvent.press(screen.getByRole('tab', { name: 'Vitrine' }));
     expect(screen.getByTestId('store-hub-showcase')).toBeTruthy();
+  });
+
+  it.each([false, true])('opens the personalization shortcuts (preview=%s)', async (preview) => {
+    const screen = await render(<StoreHubScreen preview={preview} />);
+    await fireEvent.press(screen.getByTestId('store-hub-lights'));
+    expect(push).toHaveBeenLastCalledWith({ pathname: preview ? '/showcase-preview' : '/showcase', params: { atelier: 'lighting' } });
+    await fireEvent.press(screen.getByTestId('store-hub-frame'));
+    expect(push).toHaveBeenLastCalledWith({ pathname: preview ? '/shop-preview' : '/shop', params: { scope: 'owned', tab: 'cadre_profil' } });
+    await fireEvent.press(screen.getByTestId('store-hub-visibility'));
+    expect(push).toHaveBeenLastCalledWith(preview ? '/settings-preview' : '/settings/profile');
+    await fireEvent.press(screen.getByTestId('store-hub-objects'));
+    expect(push).toHaveBeenLastCalledWith(preview ? '/showcase-preview' : '/showcase');
+    await fireEvent.press(screen.getByTestId('store-hub-discover'));
+    expect(screen.getByTestId('embedded-shop')).toBeTruthy();
   });
 
   it.each([false, true])('preserves profile, showcase and settings navigation (preview=%s)', async (preview) => {

@@ -2,6 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 
 import { PreviewRoute } from '@/src/components/dev/PreviewRoute';
 import { SHOWCASE_ROOM_CATALOG } from '@/src/features/shop/showcaseRoomCatalog';
+import { showcasePresenterById } from '@/src/features/shop/showcasePresenterCatalog';
 import {
   COSMETIC_PACK_CATALOG,
   INDIVIDUAL_COLLECTION_CATALOG,
@@ -22,15 +23,26 @@ const mixedItems: [ShowcaseRoomSlotId, string][] = [
   ['right-free', 'conclave-arcanique-conclave-seal'],
 ];
 const reviewSlots: ShowcaseRoomSlotId[] = ['jersey', 'rank', 'trophy', 'badge', 'title', 'ring'];
+const forgeItems: [ShowcaseRoomSlotId, string][] = [
+  ['left-free', 'dernier-round-scout-drone'],
+  ['left-extra', 'serment-du-givre-veyr-dragon'],
+  ['ring', 'serment-du-givre-summit-egg'],
+  ['jersey', 'conclave-arcanique-brumousse'],
+  ['trophy', 'conclave-arcanique-bud-totem'],
+  ['badge', 'conclave-arcanique-guardian-badge'],
+  ['right-free', 'conclave-arcanique-conclave-seal'],
+];
 
 export default function ShowcaseAlignmentPreviewScreen() {
-  const { pack } = useLocalSearchParams<{ pack?: string }>();
+  const { pack, scene } = useLocalSearchParams<{ pack?: string; scene?: string }>();
+  const presenter = showcasePresenterById(scene);
+  const room = presenter ?? SHOWCASE_ROOM_CATALOG.find((item) => item.id === 'obsidian-gallery')!;
   const collection = [...COSMETIC_PACK_CATALOG, ...INDIVIDUAL_COLLECTION_CATALOG]
     .find((item) => item.id === pack);
   const selected: [ShowcaseRoomSlotId, string][] = collection
     ? collection.items.filter((item) => item.roomKind).slice(0, reviewSlots.length)
       .map((item, index) => [reviewSlots[index], item.id])
-    : mixedItems;
+    : presenter?.id === 'mythes-forge-magma-pedestals' ? forgeItems : mixedItems;
   const assignments = createEmptyShowcaseRoomAssignments();
   for (const [slot, id] of selected) {
     const item = currentCosmeticPackItemById(id);
@@ -39,7 +51,6 @@ export default function ShowcaseAlignmentPreviewScreen() {
       accent: item.accent, image: item.image,
     };
   }
-  const room = SHOWCASE_ROOM_CATALOG.find((item) => item.id === 'obsidian-gallery')!;
   return (
     <PreviewRoute>
       <ShowcaseRoomEditorScene

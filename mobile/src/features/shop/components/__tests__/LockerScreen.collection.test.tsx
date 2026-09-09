@@ -151,6 +151,14 @@ describe('LockerScreen focused collections', () => {
     mockParams = { scope: 'owned', tab: 'badges-rings' };
   });
 
+  it('opens the focused frame collection from the showcase shortcut', async () => {
+    mockParams = { scope: 'owned', tab: 'cadre_profil' };
+    const screen = await render(<LockerScreen previewData={previewData} previewProfile={previewProfile} />);
+    expect(screen.getByText('CADRES')).toBeTruthy();
+    expect(screen.queryByText('LOCKER')).toBeNull();
+    expect(screen.queryByText('LE PACTE GRIFF')).toBeNull();
+  });
+
   it('shows only evolving rings from the profile entry', async () => {
     const screen = await render(
       <LockerScreen previewData={previewData} previewProfile={previewProfile} />,

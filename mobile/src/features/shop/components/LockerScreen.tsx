@@ -835,8 +835,9 @@ function humanize(value: string) { return value.replace(/[-_]/g, ' ').replace(/\
 function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
 function friendlyError(value: string) { if (value.toLowerCase().includes('solde insuffisant')) return 'Ton solde a changé. Recharge le Locker avant de confirmer.'; if (isOfflineError(value)) return 'Connexion indisponible. Tes objets équipés restent visibles sur cet appareil.'; return value; }
 function isOfflineError(value: string) { return /network|fetch|connexion|offline|hors ligne/i.test(value); }
-function collectionTabFromParam(value?: string | string[]): 'showcase_jersey' | 'showcase_ring' | 'showcase_trophy' | 'level_frame' | null {
+function collectionTabFromParam(value?: string | string[]): 'cadre_profil' | 'showcase_jersey' | 'showcase_ring' | 'showcase_trophy' | 'level_frame' | null {
   const normalized = Array.isArray(value) ? value[0] : value;
+  if (normalized === 'cadre_profil') return 'cadre_profil';
   if (normalized === 'jerseys' || normalized === 'maillots') return 'showcase_jersey';
   if (normalized === 'rings' || normalized === 'anneaux' || normalized === 'badges-rings' || normalized === 'badges-anneaux') return 'showcase_ring';
   if (normalized === 'trophies' || normalized === 'trophees') return 'showcase_trophy';

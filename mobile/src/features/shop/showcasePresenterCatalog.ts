@@ -143,14 +143,16 @@ const NEON_PROTOCOL_PACK_SLOTS = [
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
 const MYTHS_FORGE_PACK_SLOTS = [
-  { id: 'left-free', label: 'Cadre Fissure', preferredKind: 'frame', left: '2%', top: '43%', width: '11%', height: '35%' },
-  { id: 'left-extra', label: 'Bannière Strate', preferredKind: 'banner', left: '14%', top: '34%', width: '11%', height: '44%' },
-  { id: 'ring', label: 'Jeton Tellurique', preferredKind: 'ring', left: '26%', top: '42%', width: '10%', height: '36%' },
-  { id: 'jersey', label: 'Armure Oréa', preferredKind: 'jersey', left: '37%', top: '18%', width: '21%', height: '60%' },
-  { id: 'right-extra', label: 'Sigil de Braise', preferredKind: 'core', left: '59%', top: '31%', width: '11%', height: '47%' },
-  { id: 'trophy', label: 'Totem Basalte', preferredKind: 'trophy', left: '71%', top: '35%', width: '10%', height: '43%' },
-  { id: 'badge', label: 'Badge Artisan', preferredKind: 'badge', left: '82%', top: '40%', width: '8%', height: '38%' },
-  { id: 'right-free', label: 'Carte de partage', preferredKind: 'banner', left: '91%', top: '44%', width: '8%', height: '34%' },
+  // Centers and bottom contact lines follow the eight baked-in seats in the full image.
+  // Keep slot IDs stable so existing collections retain their assignments.
+  { id: 'left-free', label: 'Cadre Fissure', preferredKind: 'frame', left: '5.4%', top: '34.2%', width: '16%', height: '27%' },
+  { id: 'left-extra', label: 'Bannière Strate', preferredKind: 'banner', left: '13%', top: '44%', width: '17%', height: '31%' },
+  { id: 'ring', label: 'Jeton Tellurique', preferredKind: 'ring', left: '25.7%', top: '26%', width: '11%', height: '29%' },
+  { id: 'jersey', label: 'Armure Oréa', preferredKind: 'jersey', left: '38.7%', top: '46.5%', width: '22%', height: '35%' },
+  { id: 'right-extra', label: 'Sigil de Braise', preferredKind: 'core', left: '44%', top: '24.3%', width: '11%', height: '30%' },
+  { id: 'trophy', label: 'Totem Basalte', preferredKind: 'trophy', left: '62.4%', top: '25%', width: '11%', height: '30%' },
+  { id: 'badge', label: 'Badge Artisan', preferredKind: 'badge', left: '68.8%', top: '44%', width: '17%', height: '31%' },
+  { id: 'right-free', label: 'Carte de partage', preferredKind: 'banner', left: '77.5%', top: '34.2%', width: '16%', height: '27%' },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
 const CIRCUIT_ZERO_PACK_SLOTS = [
@@ -341,6 +343,7 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     description: 'Huit stations de basalte et de cuivre dressées dans la Forge des Failles.',
     accent: '#F06A3A',
     image: require('../../../assets/shop/packs/mythes-forge/mythes-forge-room-empty.png'),
+    sceneFrame: { width: 1672, height: 941, top: 0, bottom: 941 },
     packId: 'mythes-forge',
     packOnly: false,
     pedestal: 'bronze',

@@ -35,6 +35,10 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }),
 }));
 jest.mock('lucide-react-native/icons/arrow-left', () => 'ArrowLeft');
+jest.mock('lucide-react-native/icons/check', () => 'Check');
+jest.mock('lucide-react-native/icons/chevron-down', () => 'ChevronDown');
+jest.mock('lucide-react-native/icons/chevron-left', () => 'ChevronLeft');
+jest.mock('lucide-react-native/icons/chevron-right', () => 'ChevronRight');
 jest.mock('lucide-react-native/icons/lock', () => 'Lock');
 jest.mock('lucide-react-native/icons/settings-2', () => 'Settings2');
 jest.mock('../ProfileScreen', () => 'ProfileScreen');
@@ -180,12 +184,16 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.queryByTestId('showcase-atelier-category-materials')).toBeNull();
     expect(screen.queryByTestId('showcase-atelier-category-jerseys')).toBeNull();
     expect(screen.queryByTestId('showcase-atelier-category-pedestals')).toBeNull();
-    expect(screen.getByText('SALLES')).toBeTruthy();
-    expect(screen.getByText(/Les objets exposés restent dans ta collection/)).toBeTruthy();
+    expect(screen.getByText('Salles')).toBeTruthy();
+    expect(screen.getByText('Ambiance de la vitrine')).toBeTruthy();
+    expect(screen.getByText('1 / 6')).toBeTruthy();
+    expect(screen.getByTestId('showcase-atelier-previous')).toBeDisabled();
 
-    await fireEvent.press(screen.getByTestId('showcase-atelier-product-lighting_amber'));
+    await fireEvent.press(screen.getByTestId('showcase-atelier-next'));
+    expect(screen.getByText('2 / 6')).toBeTruthy();
+    expect(screen.getByTestId('showcase-atelier-selected-lighting_amber')).toBeTruthy();
     expect(screen.getByTestId('showcase-room-lighting-amber')).toBeTruthy();
-    expect(screen.getByText('ACHETER · 100 VOLTS')).toBeTruthy();
+    expect(screen.getByText('Acheter · 100 volts')).toBeTruthy();
     expect(screen.getByTestId('showcase-atelier-product-image-lighting_amber').props.resizeMode).toBe('cover');
 
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-supports'));
@@ -209,7 +217,7 @@ describe('ShowcaseScreen immersive editor', () => {
     await fireEvent.press(screen.getByTestId('atelier-purchase-confirm'));
 
     await waitFor(() => {
-      expect(screen.getAllByText('ÉQUIPÉ').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Équipé').length).toBeGreaterThan(0);
     });
     expect(screen.getByText('400')).toBeTruthy();
 
@@ -226,7 +234,7 @@ describe('ShowcaseScreen immersive editor', () => {
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-ranks'));
     expect(screen.getByTestId('showcase-rank-display-rank_clutch_revelation')).toBeTruthy();
-    expect(screen.getByText('DÉSÉQUIPER')).toBeTruthy();
+    expect(screen.getByText('Déséquiper')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('showcase-atelier-product-rank_clutch_revelation'));
     expect(screen.queryAllByTestId(/^showcase-rank-display-/)).toHaveLength(0);
     expect(screen.getByText('Écrin déséquipé.')).toBeTruthy();
@@ -234,9 +242,9 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.queryAllByTestId(/^showcase-rank-display-/)).toHaveLength(0);
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-product-rank_clutch_revelation'));
-    expect(screen.getByText('ÉQUIPER')).toBeTruthy();
+    expect(screen.getByText('Équiper')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('showcase-atelier-primary'));
-    expect(screen.getByText('DÉSÉQUIPER')).toBeTruthy();
+    expect(screen.getByText('Déséquiper')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('showcase-atelier-primary'));
     expect(screen.queryAllByTestId(/^showcase-rank-display-/)).toHaveLength(0);
     expect(screen.getByText(String(equippedShop.balance))).toBeTruthy();
@@ -255,7 +263,7 @@ describe('ShowcaseScreen immersive editor', () => {
     await waitFor(() => expect(screen.getByText('Connexion interrompue')).toBeTruthy());
     expect(equipCosmetic).toHaveBeenCalledWith('rank_carbon_cradle');
     expect(screen.getByTestId('showcase-rank-display-rank_clutch_revelation')).toBeTruthy();
-    expect(screen.getByText('DÉSÉQUIPER')).toBeTruthy();
+    expect(screen.getByText('Déséquiper')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
     expect(screen.getByTestId('showcase-rank-display-rank_clutch_revelation')).toBeTruthy();
 
@@ -273,7 +281,7 @@ describe('ShowcaseScreen immersive editor', () => {
     const reopened = await render(<ShowcaseScreen />);
     await fireEvent.press(reopened.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     await fireEvent.press(reopened.getByTestId('showcase-atelier-category-ranks'));
-    expect(within(reopened.getByTestId('showcase-atelier-product-rank_clutch_revelation')).getByText('POSSÉDÉ')).toBeTruthy();
+    expect(within(reopened.getByTestId('showcase-atelier-product-rank_clutch_revelation')).getByText('Possédé')).toBeTruthy();
     expect(reopened.queryAllByTestId(/^showcase-rank-display-/)).toHaveLength(0);
   });
 
@@ -299,7 +307,7 @@ describe('ShowcaseScreen immersive editor', () => {
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-supports'));
     const roomProduct = screen.getByTestId('showcase-atelier-product-serment-du-givre-room');
     expect(roomProduct).toBeTruthy();
-    expect(within(roomProduct).getByText('BASTION DES CIMES')).toBeTruthy();
+    expect(within(roomProduct).getByText('Bastion des Cimes')).toBeTruthy();
   }, 15_000);
 
   it.each([true, false])('keeps the selected standard room after closing over a pack room (owned: %s)', async (owned) => {
@@ -314,7 +322,7 @@ describe('ShowcaseScreen immersive editor', () => {
     await fireEvent.press(screen.getByLabelText('Rang BRONZE'));
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-supports'));
-    expect(within(screen.getByTestId('showcase-atelier-product-supports_halo')).queryByText('ÉQUIPÉ')).toBeNull();
+    expect(within(screen.getByTestId('showcase-atelier-product-supports_halo')).queryByText('Équipé')).toBeNull();
     await fireEvent.press(screen.getByTestId('showcase-atelier-product-supports_halo'));
     expect(screen.getByTestId('showcase-room-background-azure-horizon')).toBeTruthy();
     expect(screen.getByTestId('showcase-room-slot-jersey').props.accessibilityLabel).toContain('Rang BRONZE');
@@ -324,8 +332,8 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.getByTestId('showcase-room-background-azure-horizon')).toBeTruthy();
     expect(screen.getByTestId('showcase-room-slot-jersey').props.accessibilityLabel).toContain('Rang BRONZE');
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
-    expect(within(screen.getByTestId('showcase-atelier-product-supports_halo')).getByText('ÉQUIPÉ')).toBeTruthy();
-    expect(within(screen.getByTestId('showcase-atelier-product-serment-du-givre-room')).queryByText('ÉQUIPÉ')).toBeNull();
+    expect(within(screen.getByTestId('showcase-atelier-product-supports_halo')).getByText('Équipé')).toBeTruthy();
+    expect(within(screen.getByTestId('showcase-atelier-product-serment-du-givre-room')).queryByText('Équipé')).toBeNull();
     await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
     expect(screen.getByTestId('showcase-room-background-azure-horizon')).toBeTruthy();
     expect(screen.getByTestId('showcase-room-slot-jersey').props.accessibilityLabel).toContain('Rang BRONZE');
