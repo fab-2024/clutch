@@ -35,6 +35,7 @@ import { SHOWCASE_LIGHTING_VISUALS } from './showcaseLighting';
 import { SHOWCASE_PALETTE } from './showcasePalette';
 import {
   resolveShowcaseSlotPerspective,
+  showcaseIntegratedSeatContact,
   showcasePedestalAssetGeometry,
 } from './showcaseRoomPerspective';
 import { showcaseSceneLayout, type ShowcaseSceneFrame } from './showcaseSceneLayout';
@@ -72,7 +73,6 @@ const THEME_WASH: Record<ShowcaseRoomTheme, readonly [string, string, string]> =
 
 const PEDESTAL_SOURCE_ASPECT_RATIO = 1.5;
 const MAX_ARTWORK_SEAT_SCALE = 1.45;
-const ARTWORK_BACKWARD_TILT = '18deg';
 
 const ARTWORK_PEDESTAL_SCALE: Record<ShowcasePlaceableKind, number> = {
   badge: 1.12,
@@ -110,16 +110,43 @@ const ARTWORK_BOTTOM_INSET: Partial<Record<ShowcasePlaceableKind, number>> = {
 };
 
 const ARTWORK_ITEM_BOTTOM_INSET: Readonly<Record<string, number>> = {
-  // Kairos is rendered in a square box from a 3:1 source image.
+  'serment-du-givre-summit-egg': 0.01953,
+  // Insets are measured from the alpha contact row / longest source dimension.
   'circuit-zero-kairos-6': 0.069,
-  'conclave-arcanique-bloom-banner': 0.044,
-  'conclave-arcanique-guardian-badge': 0.032,
+  'conclave-arcanique-bloom-banner': 0.04427,
+  'conclave-arcanique-brumousse': 0.02474,
+  'conclave-arcanique-bud-totem': 0.02865,
+  'conclave-arcanique-conclave-seal': 0.03125,
+  'conclave-arcanique-guardian-badge': 0.0286,
+  'conclave-arcanique-trellis-frame': 0.0052,
+  'dernier-round-scout-drone': 0.01823,
   'dernier-round-operator-badge': 0.052,
-  'dernier-round-sentinel-helmet': 0.009,
+  'dernier-round-sentinel-helmet': 0.01042,
   'dernier-round-squad-banner': 0,
-  'dernier-round-vector-carbine': 0,
-  'sang-des-titans-oath-armor': 0.014,
+  'dernier-round-vector-carbine': 0.0,
+  'sang-des-titans-oath-armor': 0.01432,
+  'sang-des-titans-eclipse-axe': 0.01562,
+  'sang-des-titans-three-voices-totem': 0.01953,
   'sang-des-titans-rift-bearer-badge': 0.015,
+  'chute-libre-falcon-jetpack': 0.01042,
+  'chute-libre-loot-capsule': 0.01432,
+  'chute-libre-summit-beacon': 0.00391,
+  'serment-du-givre-veyr-dragon': 0.01562,
+  'serment-du-givre-snow-compass': 0.0013,
+  'serment-du-givre-oath-banner': 0.03385,
+  'turbo-arena-comet-car': 0.03385,
+  'turbo-arena-orbital-ball': 0.03255,
+  'turbo-arena-aerial-trophy': 0.00911,
+  'circuit-zero-zero-glyph': 0.01172,
+  'circuit-zero-sector-banner': 0.01823,
+  'circuit-zero-delta-totem': 0.01042,
+  'circuit-zero-pilot-badge': 0.02604,
+  'mythes-forge-armor-orea': 0.01953,
+  'mythes-forge-ember-sigil': 0.01693,
+  'mythes-forge-basalt-totem': 0.05208,
+  'neon-protocol-armor-vega': 0.01562,
+  'neon-protocol-glyph-node': 0.04167,
+  'neon-protocol-null-totem': 0.03385,
 };
 
 type ShowcaseRoomSlotComposition = {
@@ -166,6 +193,10 @@ export function resolveShowcaseRoomSlotComposition({
   const kindBottomInset = ARTWORK_BOTTOM_INSET[itemKind ?? 'badge'] ?? 0;
 
   if (!pedestalId) {
+    const seat = showcaseIntegratedSeatContact(roomId, slot.id);
+    const slotBottom = Number.parseFloat(slot.top) + Number.parseFloat(slot.height);
+    const slotCenter = Number.parseFloat(slot.left) + Number.parseFloat(slot.width) / 2;
+    const contactY = seat ? canvasHeight * (seat.y - slotBottom) / 100 : -artworkLift;
     const artworkSize = Math.max(
       16,
       Math.min(slotWidth, slotHeight - 20) * 0.88 * itemScale * (slot.artworkScale ?? 1),
@@ -177,13 +208,13 @@ export function resolveShowcaseRoomSlotComposition({
     );
 
     return {
-      artworkContactY: -artworkLift,
+      artworkContactY: contactY,
       artworkLean: 0,
       artworkSize,
-      artworkTranslateY: -artworkLift + artworkBottomInset,
+      artworkTranslateY: contactY + artworkBottomInset,
       artworkYaw: 0,
       groundOffset: 0,
-      horizontalOffset: 0,
+      horizontalOffset: seat ? seat.x - slotCenter : 0,
       pedestalBottomInset: 0,
       pedestalFootprintWidth: 0,
       pedestalHeight: 0,
@@ -357,7 +388,6 @@ export default function ShowcaseRoomEditorScene({
                 transform: [
                   { perspective: Math.max(600, layout.canvas.width * 1.8) },
                   { translateY: rankComposition.artworkTranslateY },
-                  { rotateX: ARTWORK_BACKWARD_TILT },
                   { rotateY: `${rankComposition.artworkYaw}deg` },
                   { rotateZ: `${rankComposition.artworkLean}deg` },
                 ],
@@ -475,8 +505,6 @@ export default function ShowcaseRoomEditorScene({
                       { transform: [
                         { perspective: Math.max(600, layout.canvas.width * 1.8) },
                         { translateY: composition.artworkTranslateY },
-                        { rotateX: item.id.replace(/^cosmetic:/, '') === 'sang-des-titans-three-voices-totem'
-                          ? '42deg' : ARTWORK_BACKWARD_TILT },
                         { rotateY: `${composition.artworkYaw}deg` },
                         { rotateZ: `${composition.artworkLean}deg` },
                         { scaleX: mirroredItems[orientationKey(slot.id, item.id)] ? -1 : 1 },

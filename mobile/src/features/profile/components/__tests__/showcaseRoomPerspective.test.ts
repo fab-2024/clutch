@@ -40,6 +40,34 @@ const ACTIVE_AUDITED_SCENES = [
 ];
 
 describe('showcase room perspective doctrine', () => {
+  it.each([
+    { width: 844, height: 390 },
+    { width: 1690, height: 780 },
+    { width: 390, height: 844 },
+  ])('anchors the bronze tip to the baked-in central seat at $width × $height', (canvas) => {
+    const scenes = [
+      SHOWCASE_ROOM_CATALOG.find((room) => room.id === 'obsidian-gallery')!,
+      SHOWCASE_PRESENTER_CATALOG.find((room) => room.id === 'supports_gallery')!,
+    ];
+    for (const room of scenes) {
+      const slot = room.slots.find((item) => item.id === 'rank')!;
+      const composition = resolveShowcaseRoomSlotComposition({
+        canvasHeight: canvas.height,
+        canvasWidth: canvas.width,
+        itemId: 'rank:bronze',
+        itemKind: 'rank',
+        roomId: room.id,
+        slot,
+      });
+      const bottom = canvas.height * (parseFloat(slot.top) + parseFloat(slot.height)) / 100;
+      // The source bronze image has 49 transparent rows below its tip (512 × 512).
+      const visibleTip = bottom + composition.artworkTranslateY - composition.artworkSize * 49 / 512;
+      expect(visibleTip).toBeCloseTo(canvas.height * 0.557, 0);
+      expect(bottom + composition.artworkContactY).toBeCloseTo(canvas.height * 0.557);
+      expect(parseFloat(slot.left) + parseFloat(slot.width) / 2 + composition.horizontalOffset).toBeCloseTo(49.9);
+    }
+  });
+
   it('requires an explicit perspective profile for every selectable room and presenter', () => {
     SHOWCASE_ROOM_CATALOG.forEach((room) => {
       expect(hasShowcaseRoomPerspective(room.id)).toBe(true);

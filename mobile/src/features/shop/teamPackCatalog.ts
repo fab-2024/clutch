@@ -209,7 +209,7 @@ export const NEON_PROTOCOL_PACK: TeamPackDefinition = {
       equipByDefault: true,
       roomKind: 'jersey',
       roomSlot: 'jersey',
-      image: require('../../../assets/shop/packs/neon-protocol/items/armor-vega.png'),
+      image: require('../../../assets/shop/front-facing/neon-protocol-armor-vega.png'),
     },
     {
       id: 'neon-protocol-glyph-node',
@@ -222,7 +222,7 @@ export const NEON_PROTOCOL_PACK: TeamPackDefinition = {
       equipByDefault: true,
       roomKind: 'core',
       roomSlot: 'right-extra',
-      image: require('../../../assets/shop/packs/neon-protocol/items/glyph-node.png'),
+      image: require('../../../assets/shop/front-facing/neon-protocol-glyph-node.png'),
     },
     {
       id: 'neon-protocol-banner-phase',
@@ -248,7 +248,7 @@ export const NEON_PROTOCOL_PACK: TeamPackDefinition = {
       equipByDefault: false,
       roomKind: 'trophy',
       roomSlot: 'trophy',
-      image: require('../../../assets/shop/packs/neon-protocol/items/null-totem.png'),
+      image: require('../../../assets/shop/front-facing/neon-protocol-null-totem.png'),
     },
     {
       id: 'neon-protocol-pioneer-badge',
@@ -325,7 +325,7 @@ export const MYTHS_FORGE_PACK: TeamPackDefinition = {
       equipByDefault: true,
       roomKind: 'jersey',
       roomSlot: 'jersey',
-      image: require('../../../assets/shop/packs/mythes-forge/items/armor-orea.png'),
+      image: require('../../../assets/shop/front-facing/mythes-forge-armor-orea.png'),
     },
     {
       id: 'mythes-forge-ember-sigil',
@@ -338,7 +338,7 @@ export const MYTHS_FORGE_PACK: TeamPackDefinition = {
       equipByDefault: true,
       roomKind: 'core',
       roomSlot: 'right-extra',
-      image: require('../../../assets/shop/packs/mythes-forge/items/ember-sigil.png'),
+      image: require('../../../assets/shop/front-facing/mythes-forge-ember-sigil.png'),
     },
     {
       id: 'mythes-forge-strata-banner',
@@ -364,7 +364,7 @@ export const MYTHS_FORGE_PACK: TeamPackDefinition = {
       equipByDefault: false,
       roomKind: 'trophy',
       roomSlot: 'trophy',
-      image: require('../../../assets/shop/packs/mythes-forge/items/basalt-totem.png'),
+      image: require('../../../assets/shop/front-facing/mythes-forge-basalt-totem.png'),
     },
     {
       id: 'mythes-forge-artisan-badge',
@@ -454,7 +454,7 @@ export const CIRCUIT_ZERO_PACK: TeamPackDefinition = {
       equipByDefault: true,
       roomKind: 'core',
       roomSlot: 'right-extra',
-      image: require('../../../assets/shop/packs/circuit-zero/items/zero-glyph.png'),
+      image: require('../../../assets/shop/front-facing/circuit-zero-zero-glyph.png'),
     },
     {
       id: 'circuit-zero-sector-banner',
@@ -467,7 +467,7 @@ export const CIRCUIT_ZERO_PACK: TeamPackDefinition = {
       equipByDefault: false,
       roomKind: 'banner',
       roomSlot: 'left-extra',
-      image: require('../../../assets/shop/packs/circuit-zero/items/sector-banner.png'),
+      image: require('../../../assets/shop/front-facing/circuit-zero-sector-banner.png'),
     },
     {
       id: 'circuit-zero-delta-totem',
@@ -480,7 +480,7 @@ export const CIRCUIT_ZERO_PACK: TeamPackDefinition = {
       equipByDefault: false,
       roomKind: 'trophy',
       roomSlot: 'trophy',
-      image: require('../../../assets/shop/packs/circuit-zero/items/delta-totem.png'),
+      image: require('../../../assets/shop/front-facing/circuit-zero-delta-totem.png'),
     },
     {
       id: 'circuit-zero-pilot-badge',
@@ -493,7 +493,7 @@ export const CIRCUIT_ZERO_PACK: TeamPackDefinition = {
       equipByDefault: false,
       roomKind: 'badge',
       roomSlot: 'badge',
-      image: require('../../../assets/shop/packs/circuit-zero/items/pilot-badge.png'),
+      image: require('../../../assets/shop/front-facing/circuit-zero-pilot-badge.png'),
     },
     {
       id: 'circuit-zero-wake-frame',

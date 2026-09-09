@@ -1,4 +1,23 @@
-import type { ShowcaseRoomSlotDefinition } from './roomEditor';
+import type { ShowcaseRoomSlotDefinition, ShowcaseRoomSlotId } from './roomEditor';
+
+// Contact points on the tops of the baked-in pedestals, in full scene percentages.
+// Keep these independent of the selection boxes and collectible dimensions.
+const OBSIDIAN_SEAT_CONTACTS: Partial<Record<ShowcaseRoomSlotId, { x: number; y: number }>> = {
+  'left-free': { x: 6.5, y: 62.5 },
+  jersey: { x: 18.7, y: 61.2 },
+  trophy: { x: 31.5, y: 59.5 },
+  rank: { x: 49.9, y: 55.7 },
+  badge: { x: 64.5, y: 59.5 },
+  title: { x: 74.6, y: 61.2 },
+  ring: { x: 83.6, y: 62.7 },
+  'right-free': { x: 93.4, y: 63.2 },
+};
+
+export function showcaseIntegratedSeatContact(roomId: string, slotId: ShowcaseRoomSlotId) {
+  return roomId === 'obsidian-gallery' || roomId === 'supports_gallery'
+    ? OBSIDIAN_SEAT_CONTACTS[slotId]
+    : undefined;
+}
 
 export type ShowcaseRoomPerspective = {
   artworkLean: number;
