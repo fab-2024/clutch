@@ -67,6 +67,8 @@ describe('StoreHubScreen', () => {
     const screen = await render(<StoreHubScreen />);
     expect(screen.getByTestId('store-hub-showcase')).toBeTruthy();
     expect(screen.getByText('Ton espace. Ton empreinte.')).toBeTruthy();
+    expect(screen.getByTestId('profile-header-button')).toBeTruthy();
+    expect(screen.getByTestId('store-hub-settings')).toBeTruthy();
     await fireEvent.press(screen.getByRole('tab', { name: 'Magasin' }));
     expect(screen.getByTestId('embedded-shop')).toBeTruthy();
     expect(screen.queryByTestId('store-hub-shop')).toBeNull();
@@ -76,6 +78,8 @@ describe('StoreHubScreen', () => {
     expect(push).not.toHaveBeenCalled();
     await fireEvent.press(screen.getByRole('tab', { name: 'Vitrine' }));
     expect(screen.getByTestId('store-hub-showcase')).toBeTruthy();
+    expect(screen.getByTestId('profile-header-button')).toBeTruthy();
+    expect(screen.getByTestId('store-hub-settings')).toBeTruthy();
   });
 
   it('keeps the gift card concept in preview with no real rewarded-ad action', async () => {

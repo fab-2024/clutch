@@ -8,9 +8,9 @@ import {
 } from './types';
 import { SHOWCASE_RANK_DISPLAY_CATALOG } from './showcaseRankDisplayCatalog';
 import { SHOWCASE_ROOM_CATALOG } from './showcaseRoomCatalog';
-import { INDIVIDUAL_COLLECTION_CATALOG, ORIGINAL_PACK_CATALOG, createTeamPackPreviewItems, individualItemPrice, isIndividualCollection } from './teamPackCatalog';
+import { COSMETIC_PACK_CATALOG, INDIVIDUAL_COLLECTION_CATALOG, ORIGINAL_PACK_CATALOG, createTeamPackPreviewItems, individualItemPrice, isIndividualCollection } from './teamPackCatalog';
 
-export type AtelierCategory = 'materials' | 'lighting' | 'supports' | 'pedestals' | 'ranks' | 'jerseys' | 'originals';
+export type AtelierCategory = 'materials' | 'lighting' | 'supports' | 'pedestals' | 'ranks' | 'jerseys' | 'originals' | 'effects';
 
 export const ATELIER_CATEGORIES = [
   'lighting',
@@ -45,6 +45,7 @@ export const ATELIER_CATEGORY_META: Record<AtelierCategory, {
   shortLabel: string;
   slot: CosmeticSlot;
 }> = {
+  effects: { glyph: '✦', label: 'ANIMATIONS', shortLabel: 'ANIMATIONS', slot: 'effet_faction' },
   originals: { glyph: '⬡', label: 'OBJETS DE COLLECTION', shortLabel: 'COLLECTION', slot: 'apparence_core' },
   materials: { glyph: '▤', label: 'MATÉRIAUX', shortLabel: 'MATIÈRE', slot: 'vitrine_materiau' },
   lighting: { glyph: '✦', label: 'ÉCLAIRAGE', shortLabel: 'LUMIÈRE', slot: 'vitrine_eclairage' },
@@ -290,12 +291,22 @@ export const ATELIER_DISCOVERY_ENTRIES: readonly {
 
 export const ATELIER_PRODUCT_IDS = new Set(ATELIER_CATALOG.map((product) => product.id));
 
+export const PACK_EFFECT_ATELIER_PRODUCTS: readonly AtelierProduct[] = [...COSMETIC_PACK_CATALOG, ...INDIVIDUAL_COLLECTION_CATALOG].flatMap((pack) =>
+  pack.items.filter((item) => item.slot === 'effet_faction').map((item) => ({
+    id: item.id, category: 'effects' as const, slot: item.slot, name: item.name,
+    description: item.description, image: item.image, accent: item.accent,
+    rarity: item.rarity, price: individualItemPrice(item.rarity), packId: pack.id,
+    packOnly: !isIndividualCollection(pack.id),
+  })),
+);
+
 export function atelierProducts(category: AtelierCategory) {
+  if (category === 'effects') return PACK_EFFECT_ATELIER_PRODUCTS;
   return ATELIER_CATALOG.filter((product) => product.category === category);
 }
 
 export function atelierProductById(id: string | null | undefined) {
-  return ATELIER_CATALOG.find((product) => product.id === id) ?? null;
+  return ATELIER_CATALOG.find((product) => product.id === id) ?? PACK_EFFECT_ATELIER_PRODUCTS.find((product) => product.id === id) ?? null;
 }
 
 export function createAtelierPreviewItems(): CosmeticItem[] {
@@ -327,7 +338,7 @@ export function createAtelierPreviewItems(): CosmeticItem[] {
       available: true,
       acquirable: true,
       owned: included,
-      equipped: included,
+      equipped: included && product.slot !== 'vitrine_rang',
     };
   })];
 }

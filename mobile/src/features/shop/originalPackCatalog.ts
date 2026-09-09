@@ -264,7 +264,7 @@ export const CONCLAVE_ARCANIQUE_PACK = defineOriginalPack({
       slug: 'room',
       name: 'Clairière du Conclave',
       description: 'Une clairière suspendue bordée d’arches, de fleurs et de cascades lointaines.',
-      image: require('../../../assets/shop/packs/conclave-arcanique/items/conclave-clearing.png'),
+      image: require('../../../assets/shop/rooms/pack-conclave-arcanique-frontal.png'),
     },
     {
       slug: 'brumousse',
@@ -392,7 +392,7 @@ export const DERNIER_ROUND_PACK = defineOriginalPack({
       slug: 'room',
       name: 'Base Avancée',
       description: 'Une armurerie tactique installée au cœur d’un quartier d’entraînement.',
-      image: require('../../../assets/shop/packs/dernier-round/items/forward-base.png'),
+      image: require('../../../assets/shop/rooms/pack-dernier-round-frontal.png'),
     },
     {
       slug: 'sentinel-helmet',

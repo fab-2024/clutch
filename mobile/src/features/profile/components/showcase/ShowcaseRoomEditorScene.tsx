@@ -10,6 +10,7 @@ import {
   type LayoutChangeEvent,
 } from 'react-native';
 
+import { showcaseCentralPedestalBackdrop } from '@/src/features/shop/showcaseCentralPedestalCatalog';
 import type { ShowcaseRoomDefinition } from '@/src/features/shop/showcaseRoomCatalog';
 import type { ShowcaseRankDisplayDefinition } from '@/src/features/shop/showcaseRankDisplayCatalog';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
@@ -17,7 +18,9 @@ import { colors, typography } from '@/src/theme';
 
 import type { ProfileTeam } from '../../types';
 import ShowcaseAtmosphereLayer from './ShowcaseAtmosphereLayer';
-import ShowcasePlaceableArtwork from './ShowcasePlaceableArtwork';
+import ShowcaseCentralPedestalRemoval from './ShowcaseCentralPedestalRemoval';
+import ShowcasePlaceableArtwork, { showcasePlaceableAspectRatio } from './ShowcasePlaceableArtwork';
+import ShowcaseRankDisplayArtwork from './ShowcaseRankDisplayArtwork';
 import type {
   ShowcaseAtmospherePerformanceReport,
   ShowcaseAtmosphereQuality,
@@ -33,6 +36,7 @@ import {
 } from './roomEditor';
 import { SHOWCASE_LIGHTING_VISUALS } from './showcaseLighting';
 import { SHOWCASE_PALETTE } from './showcasePalette';
+import { showcaseRankDisplayLayout } from './showcaseRankDisplayLayout';
 import {
   resolveShowcaseSlotPerspective,
   showcaseIntegratedSeatContact,
@@ -287,6 +291,7 @@ export default function ShowcaseRoomEditorScene({
   slots = SHOWCASE_ROOM_SLOTS,
   theme = 'graphite',
 }: ShowcaseRoomEditorSceneProps) {
+  const [revealedSlot, setRevealedSlot] = useState<ShowcaseRoomSlotId | null>(null);
   const [mirroredItems, setMirroredItems] = useState<Record<string, boolean>>({});
   const orientationKey = (slotId: string, itemId?: string) => `${slotId}:${itemId ?? ''}`;
   const [viewport, setViewport] = useState({ height: 390, width: 844 });
@@ -301,20 +306,17 @@ export default function ShowcaseRoomEditorScene({
   }, []);
   const layout = showcaseSceneLayout(viewport, room.sceneFrame);
   const lightingVisual = SHOWCASE_LIGHTING_VISUALS[lighting];
-  const rankSlot = slots.find((slot) => slot.id === 'rank');
-  const rankComposition = rankSlot ? resolveShowcaseRoomSlotComposition({
-    canvasHeight: layout.canvas.height,
-    canvasWidth: layout.canvas.width,
-    itemKind: assignments.rank?.kind,
-    itemId: assignments.rank?.id,
-    pedestalId: pedestalLayerEnabled ? pedestalPlacements.rank?.id : undefined,
+  const centralSlotId = showcaseCentralPedestalBackdrop(room.id)?.slotId ?? 'rank';
+  const centralItem = assignments[centralSlotId];
+  const centralSlot = slots.find((slot) => slot.id === centralSlotId);
+  const showRankDisplay = Boolean(rankDisplay && centralSlot && centralItem);
+  const displayLayout = showRankDisplay && rankDisplay ? showcaseRankDisplayLayout({
+    displayId: rankDisplay.id,
     roomId: room.id,
-    slot: rankSlot,
+    imageLayout: layout.image,
+    viewportHeight: layout.canvas.height,
+    artworkAspectRatio: showcasePlaceableAspectRatio(centralItem),
   }) : null;
-  const rankSlotWidth = rankSlot
-    ? layout.canvas.width * Number.parseFloat(rankSlot.width) / 100
-    : 0;
-  const rankDisplaySize = rankComposition ? rankComposition.artworkSize * 1.5 : 0;
 
   return (
     <View
@@ -330,6 +332,7 @@ export default function ShowcaseRoomEditorScene({
           style={[styles.background, layout.image]}
           testID={`showcase-room-background-${room.id}`}
         />
+        {showRankDisplay ? <ShowcaseCentralPedestalRemoval roomId={room.id} imageLayout={layout.image} /> : null}
         <LinearGradient
           colors={['rgba(2,5,8,.04)', `${room.accent}0B`, 'rgba(2,5,8,.18)']}
           end={{ x: 1, y: 1 }}
@@ -375,44 +378,19 @@ export default function ShowcaseRoomEditorScene({
           reduceMotion={reduceMotion}
           width={layout.canvas.width}
         />
-        {rankDisplay && rankSlot && rankComposition && assignments.rank?.kind === 'rank' ? (
-          <>
-            <View
-              pointerEvents="none"
-              style={[styles.rankDisplayLayer, {
-                height: rankSlot.height,
-                left: layout.canvas.width * (
-                  Number.parseFloat(rankSlot.left) + rankComposition.horizontalOffset
-                ) / 100,
-                top: rankSlot.top,
-                transform: [
-                  { perspective: Math.max(600, layout.canvas.width * 1.8) },
-                  { translateY: rankComposition.artworkTranslateY },
-                  { rotateY: `${rankComposition.artworkYaw}deg` },
-                  { rotateZ: `${rankComposition.artworkLean}deg` },
-                ],
-                width: rankSlot.width,
-              }]}
-              testID={`showcase-rank-display-${rankDisplay.id}`}
-            >
-              <Image
-                accessibilityLabel={`Écrin de rang ${rankDisplay.name}`}
-                accessible
-                resizeMode="contain"
-                source={rankDisplay.overlayImage}
-                style={[styles.rankDisplayOverlay, {
-                  bottom: (rankComposition.artworkSize - rankDisplaySize) / 2,
-                  height: rankDisplaySize,
-                  left: (rankSlotWidth - rankDisplaySize) / 2,
-                  width: rankDisplaySize,
-                }]}
-              />
-            </View>
-          </>
+        {showRankDisplay && rankDisplay && displayLayout ? (
+          <ShowcaseRankDisplayArtwork
+            restoreOpacity={rankDisplay.id === 'rank_clutch_revelation'}
+            name={rankDisplay.name}
+            source={rankDisplay.overlayImage}
+            style={[styles.rankDisplayOverlay, displayLayout.image]}
+            testID={`showcase-rank-display-${rankDisplay.id}`}
+          />
         ) : null}
         {slots.map((slot) => {
           const item = assignments[slot.id];
-          const pedestalPlacement = pedestalLayerEnabled ? pedestalPlacements[slot.id] : undefined;
+          const pedestalPlacement = pedestalLayerEnabled && !(showRankDisplay && slot.id === centralSlotId)
+            ? pedestalPlacements[slot.id] : undefined;
           const composition = resolveShowcaseRoomSlotComposition({
             canvasHeight: layout.canvas.height,
             canvasWidth: layout.canvas.width,
@@ -422,9 +400,31 @@ export default function ShowcaseRoomEditorScene({
             roomId: room.id,
             slot,
           });
+          if (displayLayout && slot.id === centralSlotId) {
+            const originalSize = composition.artworkSize;
+            const artworkSize = displayLayout.maxArtworkSize;
+            const bottomInset = (composition.artworkTranslateY - composition.artworkContactY)
+              * artworkSize / originalSize;
+            const slotBottom = layout.canvas.height * (
+              Number.parseFloat(slot.top) + Number.parseFloat(slot.height)
+            ) / 100;
+            const slotCenter = Number.parseFloat(slot.left) + Number.parseFloat(slot.width) / 2;
+            composition.artworkSize = artworkSize;
+            composition.artworkContactY = displayLayout.seatY - slotBottom;
+            composition.artworkTranslateY = composition.artworkContactY + bottomInset;
+            composition.horizontalOffset = displayLayout.centerX / layout.canvas.width * 100 - slotCenter;
+            composition.groundOffset = displayLayout.groundY - slotBottom;
+          }
           return (
             <View
               key={slot.id}
+              onPointerEnter={(event) => {
+                if (event.nativeEvent.pointerType !== 'touch') setRevealedSlot(slot.id);
+              }}
+              onPointerLeave={(event) => {
+                if (event.nativeEvent.pointerType !== 'touch') setRevealedSlot(null);
+              }}
+              testID={`showcase-room-slot-area-${slot.id}`}
               style={[
                 styles.slot,
                 {
@@ -448,6 +448,8 @@ export default function ShowcaseRoomEditorScene({
                   accessibilityLabel={`${slot.label}${item ? `, ${showcasePlaceableKindLabel(item.kind)} ${item.name}` : ', vide'}`}
                   accessibilityRole="button"
                   accessibilityState={{ selected: Boolean(item) }}
+                  onFocus={() => setRevealedSlot(slot.id)}
+                  onLongPress={() => setRevealedSlot(slot.id)}
                   onPress={() => onSlotPress(slot.id)}
                   style={styles.slotHitArea}
                   testID={`showcase-room-slot-${slot.id}`}
@@ -515,7 +517,7 @@ export default function ShowcaseRoomEditorScene({
                         size={composition.artworkSize}
                       />
                     </View>
-                    <Pressable
+                    {revealedSlot === slot.id ? <Pressable
                       accessibilityLabel={`Inverser ${item.name}`}
                       accessibilityHint="Retourner horizontalement l’image"
                       accessibilityState={{ selected: Boolean(mirroredItems[orientationKey(slot.id, item.id)]) }}
@@ -530,7 +532,7 @@ export default function ShowcaseRoomEditorScene({
                       testID={`showcase-room-mirror-${slot.id}`}
                     >
                       <FlipHorizontal color={mirroredItems[orientationKey(slot.id, item.id)] ? colors.volt : colors.text} size={18} />
-                    </Pressable>
+                    </Pressable> : null}
                   </>
                 ) : (
                   <View
@@ -562,14 +564,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: SHOWCASE_PALETTE.graphiteDeep,
   },
-  rankDisplayLayer: {
-    transformOrigin: '50% 100%',
-    position: 'absolute',
-    overflow: 'visible',
-  },
   rankDisplayOverlay: {
     position: 'absolute',
-    opacity: 0.96,
   },
   canvas: {
     position: 'absolute',

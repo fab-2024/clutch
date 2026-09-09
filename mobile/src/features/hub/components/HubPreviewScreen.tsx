@@ -1,7 +1,7 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 
 import { usePreviewRoutesEnabled } from '@/src/components/dev/PreviewRoute';
-import { PREVIEW_STREAK } from '@/src/features/retention/preview';
+import { PREVIEW_STREAK, PREVIEW_STREAK_FIVE } from '@/src/features/retention/preview';
 
 import type { HubData, HubMatch } from '../types';
 import { HubExperience } from './HubScreen';
@@ -96,6 +96,7 @@ const PREVIEW_HUB: HubData = {
 
 export default function HubPreviewScreen() {
   const params = useLocalSearchParams<{
+    streak?: string;
     context?: string | string[];
     rank?: string | string[];
     score?: string | string[];
@@ -119,7 +120,7 @@ export default function HubPreviewScreen() {
   };
   return (
     <HubExperience
-      callStreakPreview={PREVIEW_STREAK}
+      callStreakPreview={params.streak === 'five' ? PREVIEW_STREAK_FIVE : PREVIEW_STREAK}
       error={null}
       headerEconomy={{ frags: 1000, volts: 300 }}
       hub={previewHub}

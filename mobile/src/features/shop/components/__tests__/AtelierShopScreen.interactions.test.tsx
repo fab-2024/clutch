@@ -13,7 +13,8 @@ import {
 } from '../../types';
 import AtelierShopScreen from '../AtelierShopScreen';
 
-jest.mock('@/src/features/consumables/components/VisualConsumablesScreen', () => ({ VisualConsumablesEntryCard: () => null }));
+jest.mock('lucide-react-native/icons/arrow-right', () => ({ __esModule: true, default: 'Icon' }));
+jest.mock('lucide-react-native/icons/x', () => ({ __esModule: true, default: 'Icon' }));
 
 const mockShowSnackbar = jest.fn();
 
@@ -194,7 +195,7 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.queryByText('COMPOSE TON ESPACE.')).toBeNull();
     expect(screen.queryByTestId('atelier-action')).toBeNull();
     expect(screen.getAllByRole('tab').at(-1)?.props.accessibilityLabel).toBe('CONSOMMABLES');
-    expect(screen.getByRole('tab', { name: 'EFFETS' })).toBeTruthy();
+    expect(screen.queryByRole('tab', { name: 'EFFETS' })).toBeNull();
     expect(screen.getAllByTestId(/^(atelier-shelf-|shop-consumables-section)/).at(-1)?.props.testID).toBe('shop-consumables-section');
     await fireEvent.press(screen.getByTestId('atelier-product-supports_crystal'));
     expect(screen.getByRole('button', { name: 'Débloquer Station Orbitale pour 300 Volts' })).toBeTruthy();
@@ -255,7 +256,7 @@ describe('AtelierShopScreen interactions', () => {
 
   it('sorts every individual collection item into a single shelf by type', async () => {
     const screen = await render(<AtelierShopScreen embedded previewData={makeData(1280)} />);
-    for (const product of INDIVIDUAL_COLLECTION_PRODUCTS) {
+    for (const product of INDIVIDUAL_COLLECTION_PRODUCTS.filter((item) => item.slot !== 'effet_faction')) {
       expect(screen.getAllByTestId(`atelier-product-${product.id}`)).toHaveLength(1);
     }
     const roomShelf = within(screen.getByTestId('atelier-shelf-supports'));
@@ -276,18 +277,13 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.getByRole('button', { name: 'Débloquer Totem Delta pour 200 Volts' })).toBeTruthy();
   });
 
-  it('removes banners and badges and sells permanent effects from their own category', async () => {
+  it('defers permanent and temporary effects while keeping streak protection available', async () => {
     const screen = await render(<AtelierShopScreen embedded previewData={makeData(1280)} />);
-    for (const id of ['circuit-zero-sector-banner', 'circuit-zero-pilot-badge', 'mythes-forge-strata-banner', 'mythes-forge-artisan-badge', 'neon-protocol-banner-phase', 'neon-protocol-pioneer-badge']) {
-      expect(screen.queryByTestId(`atelier-product-${id}`)).toBeNull();
-    }
-    expect(within(screen.getByTestId('atelier-shelf-effects')).getAllByRole('button')).toHaveLength(3);
-    await fireEvent.press(screen.getByRole('tab', { name: 'EFFETS' }));
-    expect(screen.queryByTestId('atelier-shelf-objects')).toBeNull();
-    expect(screen.queryByTestId('shop-consumables-section')).toBeNull();
-    await fireEvent.press(screen.getByTestId('atelier-product-circuit-zero-afterimage-effect'));
-    await fireEvent.press(screen.getByRole('button', { name: 'Débloquer Effet Postimage pour 300 Volts' }));
-    expect(screen.getByLabelText('Achat de Effet Postimage pour 300 Volts. Ton solde passera de 1 280 à 980 Volts.')).toBeTruthy();
+    expect(screen.queryByRole('tab', { name: 'EFFETS' })).toBeNull();
+    expect(screen.queryByTestId('atelier-shelf-effects')).toBeNull();
+    expect(screen.queryByTestId('atelier-product-circuit-zero-afterimage-effect')).toBeNull();
+    expect(screen.queryByTestId('store-visual-consumables')).toBeNull();
+    expect(screen.getByTestId('shop-streak-protector')).toBeTruthy();
   });
 
   it('buys an individual profile frame and opens the equipped profile', async () => {
@@ -317,9 +313,9 @@ describe('AtelierShopScreen interactions', () => {
   it('reviews a rare purchase before debiting then opens its dedicated reveal', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280)} />);
 
-    fireEvent.press(screen.getByTestId('atelier-product-lighting_emerald'));
+    await fireEvent.press(screen.getByTestId('atelier-product-lighting_emerald'));
     await waitFor(() => expect(screen.getByTestId('atelier-action-primary')).toBeTruthy());
-    fireEvent.press(screen.getByTestId('atelier-action-primary'));
+    await fireEvent.press(screen.getByTestId('atelier-action-primary'));
 
     await waitFor(() => expect(screen.getByTestId('atelier-purchase-sheet')).toBeTruthy());
     expect(screen.getByLabelText(
@@ -328,7 +324,7 @@ describe('AtelierShopScreen interactions', () => {
     expect(screen.getByLabelText('1 280 Volts disponibles')).toBeTruthy();
 
     await act(async () => {
-      fireEvent.press(screen.getByTestId('atelier-purchase-confirm'));
+      await fireEvent.press(screen.getByTestId('atelier-purchase-confirm'));
     });
 
     await waitFor(() => {
@@ -341,7 +337,7 @@ describe('AtelierShopScreen interactions', () => {
     expect(jest.requireMock('@/src/lib/feedback').successFeedback).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      fireEvent.press(screen.getByTestId('rare-acquisition-showcase'));
+      await fireEvent.press(screen.getByTestId('rare-acquisition-showcase'));
     });
     expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/showcase-preview');
     await waitFor(() => expect(screen.queryByTestId('rare-acquisition-reveal')).toBeNull());
@@ -357,7 +353,7 @@ describe('AtelierShopScreen interactions', () => {
 
     await waitFor(() => expect(screen.getByText('PIÈCE ÉPIQUE')).toBeTruthy());
     await act(async () => {
-      fireEvent.press(screen.getByTestId('rare-acquisition-continue'));
+      await fireEvent.press(screen.getByTestId('rare-acquisition-continue'));
     });
 
     await waitFor(() => expect(screen.queryByTestId('rare-acquisition-reveal')).toBeNull());
@@ -367,9 +363,9 @@ describe('AtelierShopScreen interactions', () => {
   it('applies owned equipment immediately to the selected collection', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(1280, true)} />);
 
-    fireEvent.press(screen.getByTestId('atelier-product-lighting_emerald'));
+    await fireEvent.press(screen.getByTestId('atelier-product-lighting_emerald'));
     await waitFor(() => expect(screen.getByTestId('atelier-action-primary')).toHaveTextContent('ÉQUIPER'));
-    fireEvent.press(screen.getByTestId('atelier-action-primary'));
+    await fireEvent.press(screen.getByTestId('atelier-action-primary'));
 
     await waitFor(() => {
       expect(screen.getByLabelText('Émeraude vert / or, équipé')).toBeTruthy();
@@ -399,7 +395,7 @@ describe('AtelierShopScreen interactions', () => {
   it('makes an insufficient balance explicit without keeping a hidden preview action', async () => {
     const screen = await render(<AtelierShopScreen previewData={makeData(60)} />);
 
-    fireEvent.press(screen.getByTestId('atelier-product-lighting_emerald'));
+    await fireEvent.press(screen.getByTestId('atelier-product-lighting_emerald'));
 
     await waitFor(() => {
       expect(screen.getByTestId('atelier-action-primary').props.accessibilityState).toEqual({

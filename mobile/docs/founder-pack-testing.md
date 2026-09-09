@@ -1,4 +1,8 @@
-# Founder Pack — configuration et recette native
+# Founder Pack — documentation historique
+
+> Offre retirée le 9 septembre 2026 : ne pas créer ni activer ce produit.
+> Les écrans de vente redirigent vers la boutique. Les éventuels droits historiques
+> restent conservés. Voir [les six packs actuels](cosmetic-pack-purchases.md).
 
 La phase 5.1 valide une seule hypothèse : des supporters veulent-ils payer une
 fois pour une identité visuelle Clutch forte ? Le produit est donc un achat

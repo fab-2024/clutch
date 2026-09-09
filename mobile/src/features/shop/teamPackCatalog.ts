@@ -1,3 +1,4 @@
+import { packStoreProductId } from '@/src/features/purchases/cosmeticPacks';
 import type { ImageSourcePropType } from 'react-native';
 
 import type {
@@ -1368,7 +1369,7 @@ export function teamPackPrimaryAction(
       .every((definition) => byId.get(definition.id)?.equipped === true);
     return equipped ? 'equipped' : 'equip';
   }
-  return data.balance >= pack.price ? 'buy' : 'insufficient';
+  return packStoreProductId(pack.id) ? 'buy' : data.balance >= pack.price ? 'buy' : 'insufficient';
 }
 
 export function createTeamPackPreviewItems(pack: TeamPackDefinition = NEON_PROTOCOL_PACK): CosmeticItem[] {
@@ -1428,7 +1429,7 @@ export function applyPreviewTeamPackAction(
 
   return {
     ...data,
-    balance: action === 'buy' ? Math.max(0, data.balance - pack.price) : data.balance,
+    balance: action === 'buy' && !packStoreProductId(pack.id) ? Math.max(0, data.balance - pack.price) : data.balance,
     items: nextItems,
     equipped: equipmentFromPack(nextItems, data.equipped, defaultBySlot),
   };

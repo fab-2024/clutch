@@ -14,10 +14,32 @@ const OBSIDIAN_SEAT_CONTACTS: Partial<Record<ShowcaseRoomSlotId, { x: number; y:
 };
 
 export function showcaseIntegratedSeatContact(roomId: string, slotId: ShowcaseRoomSlotId) {
+  if (roomId === 'conclave-arcanique-rosette-pedestal') return ARCANE_SEAT_CONTACTS[slotId];
+  if (roomId === 'dernier-round-extraction-pedestal') return LAST_ROUND_SEAT_CONTACTS[slotId];
   return roomId === 'obsidian-gallery' || roomId === 'supports_gallery'
     ? OBSIDIAN_SEAT_CONTACTS[slotId]
     : undefined;
 }
+
+// Measured on the frontal room backgrounds, independently of their hit areas.
+const ARCANE_SEAT_CONTACTS: Partial<Record<ShowcaseRoomSlotId, { x: number; y: number }>> = {
+  'left-free': { x: 7, y: 59.5 },
+  jersey: { x: 17.4, y: 57 },
+  trophy: { x: 27, y: 54.7 },
+  rank: { x: 50, y: 52.2 },
+  badge: { x: 63.4, y: 53.4 },
+  'right-extra': { x: 82.3, y: 57 },
+  'left-extra': { x: 93, y: 59.5 },
+};
+const LAST_ROUND_SEAT_CONTACTS: Partial<Record<ShowcaseRoomSlotId, { x: number; y: number }>> = {
+  'left-free': { x: 9.1, y: 72.5 },
+  jersey: { x: 20, y: 66.5 },
+  trophy: { x: 33, y: 63.8 },
+  rank: { x: 50, y: 69.5 },
+  badge: { x: 67, y: 63.8 },
+  'right-extra': { x: 80, y: 66.5 },
+  'left-extra': { x: 90.5, y: 72.5 },
+};
 
 export type ShowcaseRoomPerspective = {
   artworkLean: number;

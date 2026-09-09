@@ -24,6 +24,7 @@ export type CallStreakState = {
   volts: number;
   history: { day: string; status: StreakDayStatus; calls: number }[];
   milestones: { days: StreakMilestone; earnedAt: string }[];
+  rewards?: { days: 7 | 14; volts: number; rewardedAt: string | null }[];
   protectorHistory: { id: string; kind: 'bienvenue' | 'achat' | 'utilisation'; quantity: number; stockAfter: number; createdAt: string }[];
 };
 

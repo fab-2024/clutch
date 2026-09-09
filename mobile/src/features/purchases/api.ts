@@ -1,3 +1,4 @@
+import { packStoreProductId } from './cosmeticPacks';
 import { supabase } from '@/src/lib/supabase';
 
 import {
@@ -121,4 +122,19 @@ function nullableDate(value: unknown) {
 function integerValue(value: unknown) {
   const number = Number(value);
   return Number.isFinite(number) ? Math.round(number) : 0;
+}
+
+export async function syncCosmeticPacks(platform: FounderPlatform): Promise<void> {
+  const { data, error } = await supabase.functions.invoke('clutch-pack-sync', { body: { platform } });
+  if (error) throw error;
+  if (asRecord(data).ok !== true) throw new Error('La validation de tes achats est en attente. Utilise « Restaurer mes achats » pour réessayer.');
+}
+
+export async function isCosmeticPackBillingReady(packId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('clutch_pack_cosmetique_v1', { p_pack_id: packId });
+  if (error) return false;
+  const payload = asRecord(data);
+  if (payload.achat_store_requis !== true || payload.produit_store_id !== packStoreProductId(packId)) return false;
+  const readiness = await supabase.functions.invoke('clutch-pack-sync', { body: { action: 'availability' } });
+  return !readiness.error && asRecord(readiness.data).ready === true;
 }

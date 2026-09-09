@@ -2,13 +2,13 @@ import { DailyBonusError, nextBonusDelay, type DailyBonusReceipt } from './daily
 
 const RETRY_DELAYS = [1_000, 5_000, 15_000, 60_000, 300_000] as const;
 
-export function createDailyBonusSession({
-  claim,
+export function createDailyBonusSession<T extends Pick<DailyBonusReceipt, 'serverNow' | 'nextAvailableAt'>>({
+  check,
   onReceipt,
   monotonicNow = () => performance.now(),
 }: {
-  claim: () => Promise<DailyBonusReceipt>;
-  onReceipt: (receipt: DailyBonusReceipt) => void;
+  check: () => Promise<T>;
+  onReceipt: (receipt: T) => void;
   monotonicNow?: () => number;
 }) {
   let active = false;
@@ -33,7 +33,7 @@ export function createDailyBonusSession({
     inFlight = true;
     const startedAt = monotonicNow();
     try {
-      const receipt = await claim();
+      const receipt = await check();
       if (disposed || !active) return;
       failures = 0;
       onReceipt(receipt);

@@ -196,13 +196,13 @@ const FROST_PACK_SLOTS = [
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
 const ARCANE_PACK_SLOTS = [
-  { id: 'left-free', label: 'Cadre Treille', preferredKind: 'frame', left: '2%', top: '31%', width: '13%', height: '29%', artworkLift: 2 },
-  { id: 'jersey', label: 'Brumousse', preferredKind: 'jersey', left: '10.5%', top: '20%', width: '15%', height: '34%', artworkLift: 2 },
-  { id: 'trophy', label: 'Totem Bourgeon', preferredKind: 'trophy', left: '20.4%', top: '22%', width: '13%', height: '28%', artworkLift: 2 },
-  { id: 'rank', label: 'Rang central', preferredKind: 'rank', left: '40%', top: '9%', width: '20%', height: '35%', artworkLift: 1 },
-  { id: 'badge', label: 'Badge Gardien', preferredKind: 'badge', left: '56.8%', top: '22%', width: '13%', height: '28%', artworkLift: 2 },
-  { id: 'right-extra', label: 'Sceau du Conclave', preferredKind: 'core', left: '74.5%', top: '20%', width: '15%', height: '34%', artworkLift: 2 },
-  { id: 'left-extra', label: 'Bannière Floraison', preferredKind: 'banner', left: '84.5%', top: '31%', width: '13%', height: '29%', artworkLift: 2 },
+  { id: 'left-free', label: 'Cadre Treille', preferredKind: 'frame', left: '0.5%', top: '32.5%', width: '13%', height: '29%', artworkLift: 2 },
+  { id: 'jersey', label: 'Brumousse', preferredKind: 'jersey', left: '9.9%', top: '25%', width: '15%', height: '34%', artworkLift: 2 },
+  { id: 'trophy', label: 'Totem Bourgeon', preferredKind: 'trophy', left: '20.5%', top: '28.7%', width: '13%', height: '28%', artworkLift: 2 },
+  { id: 'rank', label: 'Rang central', preferredKind: 'rank', left: '40%', top: '19.2%', width: '20%', height: '35%', artworkLift: 1 },
+  { id: 'badge', label: 'Badge Gardien', preferredKind: 'badge', left: '56.9%', top: '27.4%', width: '13%', height: '28%', artworkLift: 2 },
+  { id: 'right-extra', label: 'Sceau du Conclave', preferredKind: 'core', left: '74.8%', top: '25%', width: '15%', height: '34%', artworkLift: 2 },
+  { id: 'left-extra', label: 'Bannière Floraison', preferredKind: 'banner', left: '86.5%', top: '32.5%', width: '13%', height: '29%', artworkLift: 2 },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
 const TURBO_PACK_SLOTS = [
@@ -216,13 +216,13 @@ const TURBO_PACK_SLOTS = [
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
 const LAST_ROUND_PACK_SLOTS = [
-  { id: 'left-free', label: 'Cadre Balistique', preferredKind: 'frame', left: '1%', top: '38%', width: '17%', height: '40%', artworkLift: 2 },
-  { id: 'jersey', label: 'Casque Sentinelle', preferredKind: 'jersey', left: '13%', top: '27%', width: '17%', height: '38%', artworkLift: 2 },
-  { id: 'trophy', label: 'Drone Éclaireur', preferredKind: 'trophy', left: '27%', top: '30%', width: '14%', height: '31%', artworkLift: 2 },
-  { id: 'rank', label: 'Rang central', preferredKind: 'rank', left: '39%', top: '17%', width: '22%', height: '51%', artworkLift: -1 },
-  { id: 'badge', label: 'Badge Opérateur', preferredKind: 'badge', left: '59%', top: '30%', width: '14%', height: '31%', artworkLift: 2 },
-  { id: 'right-extra', label: 'Carabine Vector', preferredKind: 'core', left: '70%', top: '27%', width: '17%', height: '38%', artworkLift: 2 },
-  { id: 'left-extra', label: 'Bannière Escouade', preferredKind: 'banner', left: '82%', top: '38%', width: '17%', height: '40%', artworkLift: 2 },
+  { id: 'left-free', label: 'Cadre Balistique', preferredKind: 'frame', left: '0.6%', top: '34.5%', width: '17%', height: '40%', artworkLift: 2 },
+  { id: 'jersey', label: 'Casque Sentinelle', preferredKind: 'jersey', left: '11.5%', top: '30.5%', width: '17%', height: '38%', artworkLift: 2 },
+  { id: 'trophy', label: 'Drone Éclaireur', preferredKind: 'trophy', left: '26%', top: '34.8%', width: '14%', height: '31%', artworkLift: 2 },
+  { id: 'rank', label: 'Rang central', preferredKind: 'rank', left: '39%', top: '20.5%', width: '22%', height: '51%', artworkLift: -1 },
+  { id: 'badge', label: 'Badge Opérateur', preferredKind: 'badge', left: '60%', top: '34.8%', width: '14%', height: '31%', artworkLift: 2 },
+  { id: 'right-extra', label: 'Carabine Vector', preferredKind: 'core', left: '71.5%', top: '30.5%', width: '17%', height: '38%', artworkLift: 2 },
+  { id: 'left-extra', label: 'Bannière Escouade', preferredKind: 'banner', left: '82%', top: '34.5%', width: '17%', height: '40%', artworkLift: 2 },
 ] as const satisfies readonly ShowcaseRoomSlotDefinition[];
 
 const LEAGUE_OF_LEGENDS_COLLECTION_SLOTS = [
@@ -416,8 +416,8 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     name: 'Clairière du Conclave',
     description: 'Une rotonde de pierre claire suspendue entre fleurs, arches et cascades.',
     accent: '#BE8BE8',
-    image: require('../../../assets/shop/rooms/pack-conclave-arcanique.png'),
-    sceneFrame: { width: 1844, height: 853, top: 0, bottom: 853 },
+    image: require('../../../assets/shop/rooms/pack-conclave-arcanique-frontal.png'),
+    sceneFrame: { width: 1846, height: 852, top: 0, bottom: 852 },
     packId: 'conclave-arcanique',
     packOnly: true,
     pedestal: 'bronze',
@@ -446,7 +446,7 @@ export const SHOWCASE_PRESENTER_CATALOG: readonly ShowcasePresenterDefinition[] 
     name: 'Base Avancée',
     description: 'Une armurerie tactique aux signaux rouges ouverte sur le quartier d’entraînement.',
     accent: '#FF5D4D',
-    image: require('../../../assets/shop/rooms/pack-dernier-round.png'),
+    image: require('../../../assets/shop/rooms/pack-dernier-round-frontal.png'),
     sceneFrame: { width: 1846, height: 852, top: 0, bottom: 852 },
     packId: 'dernier-round',
     packOnly: true,

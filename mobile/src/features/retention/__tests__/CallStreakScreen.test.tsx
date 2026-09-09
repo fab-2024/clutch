@@ -43,6 +43,8 @@ jest.mock('../purchaseOperation', () => ({
   forgetProtectorPurchase: (...args: unknown[]) => mockForget(...args),
 }));
 jest.mock('lucide-react-native/icons/arrow-left', () => ({ __esModule: true, default: 'ArrowLeft' }));
+jest.mock('lucide-react-native/icons/gift', () => ({ __esModule: true, default: 'Gift' }));
+jest.mock('lucide-react-native/icons/lock', () => ({ __esModule: true, default: 'Lock' }));
 jest.mock('lucide-react-native/icons/check', () => ({ __esModule: true, default: 'Check' }));
 jest.mock('lucide-react-native/icons/flame', () => ({ __esModule: true, default: 'Flame' }));
 jest.mock('lucide-react-native/icons/shield-check', () => ({ __esModule: true, default: 'ShieldCheck' }));
@@ -147,6 +149,7 @@ describe('protector purchase interaction', () => {
 
   it('only exposes earned milestones and selects them through the server', async () => {
     const screen = await render(<CallStreakScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Historique et règles' }));
     expect(screen.getByRole('button', { name: 'Choisir le jalon 30 jours' })).toBeDisabled();
     await fireEvent.press(screen.getByRole('button', { name: 'Choisir le jalon 7 jours' }));
     expect(mockSelect).toHaveBeenCalledWith(7);
@@ -155,6 +158,7 @@ describe('protector purchase interaction', () => {
   it('shares an earned, server-verified milestone link and preserves a selectable fallback', async () => {
     mockState = { ...state, selectedMilestone: 7 };
     const screen = await render(<CallStreakScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Historique et règles' }));
     await fireEvent.press(screen.getByRole('button', { name: 'PARTAGER' }));
     expect(mockPrepareShare).toHaveBeenCalledWith(7, state.userId);
     expect(mockShareLink).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'https://clutch.example/s/Nova/7');
@@ -165,6 +169,7 @@ describe('protector purchase interaction', () => {
     mockState = { ...state, selectedMilestone: 7 };
     mockPrepareShare.mockRejectedValue(new Error('hidden'));
     const screen = await render(<CallStreakScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Historique et règles' }));
     await fireEvent.press(screen.getByRole('button', { name: 'PARTAGER' }));
     expect(mockShareLink).not.toHaveBeenCalled();
   });

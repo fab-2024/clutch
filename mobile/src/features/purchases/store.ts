@@ -122,7 +122,7 @@ async function loadFounderPackage(userId: string, platform: FounderPlatform) {
   return { customerInfo, pack: pack as PurchasesPackage | null };
 }
 
-async function configurePurchases(userId: string, platform: FounderPlatform) {
+export async function configurePurchases(userId: string, platform: FounderPlatform) {
   const apiKey = platform === 'ios'
     ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY?.trim()
     : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY?.trim();

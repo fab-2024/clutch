@@ -208,7 +208,7 @@ describe('original pack catalogue', () => {
       expect(cosmeticPackById(pack.id)).toBe(pack);
 
       const next = applyPreviewTeamPackAction(makeData(1280, pack), pack);
-      expect(next.balance).toBe(80);
+      expect(next.balance).toBe(1280);
       expect(next.items.every((item) => item.owned)).toBe(true);
       expect(next.items.filter((item) => item.equipped).map((item) => item.id)).toEqual(
         defaults.map((item) => item.id),

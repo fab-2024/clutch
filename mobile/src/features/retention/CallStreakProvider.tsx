@@ -36,6 +36,11 @@ export function CallStreakProvider({ children }: PropsWithChildren) {
     setState(next);
     setReceivedAt(monotonicNow());
     setError(null);
+    if (previous?.userId === next.userId && next.rewards?.some((reward) => reward.rewardedAt
+      && !previous.rewards?.some((old) => old.days === reward.days && old.rewardedAt))) {
+      // Refresh the authoritative wallet: do not add a client-estimated reward.
+      void refreshEconomy();
+    }
     if (previous && previous.userId === next.userId && next.current > previous.current) {
       const milestone = next.milestones.find((item) => !previous.milestones.some((old) => old.days === item.days));
       if (milestone) {
@@ -46,7 +51,7 @@ export function CallStreakProvider({ children }: PropsWithChildren) {
         });
       }
     }
-  }, [showSnackbar]);
+  }, [refreshEconomy, showSnackbar]);
 
   const refresh = useCallback((force = false): Promise<void> => {
     if (!userId || AppState.currentState === 'background' || AppState.currentState === 'inactive') return Promise.resolve();

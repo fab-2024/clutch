@@ -59,7 +59,6 @@ const GROUPS: DeveloperGroup[] = [
       { label: 'Activité de la vitrine', path: '/growth-preview' },
       { label: 'Registre des Volts', path: '/economy-preview' },
       { label: 'Consommables', path: '/consumables-preview' },
-      { label: 'Founder Pack', path: '/founder-pack-preview' },
       { label: 'Team Pack', path: '/team-pack-preview' },
     ],
   },

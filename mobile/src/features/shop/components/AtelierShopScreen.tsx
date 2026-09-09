@@ -1,3 +1,5 @@
+import { COSMETIC_PACK_PRICE, packStoreProductId } from '@/src/features/purchases/cosmeticPacks';
+import { SHOP_EFFECTS_ENABLED, isShopItemAvailable } from '../effectAvailability';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject, type ReactNode } from 'react';
 import {
@@ -11,8 +13,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
-import { VisualConsumablesEntryCard } from '@/src/features/consumables/components/VisualConsumablesScreen';
-import { ProtectorShopCard } from '@/src/features/retention/components/CallStreakCard';
+import ConsumablesShopSection from '@/src/features/consumables/components/ConsumablesShopSection';
 
 import { Screen } from '@/src/components/layout/Screen';
 import { Button } from '@/src/components/ui/Button';
@@ -74,6 +75,7 @@ function matchesCatalogCategory(product: AtelierProduct, category: ShopCategory)
 type AtelierNotice = { text: string; tone: 'error' | 'info' | 'success' };
 
 const ATELIER_SHELF_TITLES: Record<AtelierCategory, string> = {
+  effects: 'ANIMATIONS',
   originals: 'OBJETS DE COLLECTION',
   materials: 'MATIÈRES',
   lighting: 'LUMIÈRES',
@@ -125,7 +127,7 @@ export default function AtelierShopScreen({
   const { refresh: refreshCosmetics } = useCosmetics();
   const { showSnackbar } = useSnackbar();
   const requestedPreviewProduct = atelierProductById(previewState?.productId);
-  const previewProduct = requestedPreviewProduct && isVisibleAtelierCategory(requestedPreviewProduct.category)
+  const previewProduct = requestedPreviewProduct && isShopItemAvailable(requestedPreviewProduct) && isVisibleAtelierCategory(requestedPreviewProduct.category)
     ? requestedPreviewProduct
     : null;
   const initialProduct = previewProduct ?? atelierProductById('lighting_cyan');
@@ -232,7 +234,7 @@ export default function AtelierShopScreen({
     () => new Map(atelierRuntimeItems(data).map((item) => [item.id, item])),
     [data],
   );
-  const products = useMemo(() => atelierProducts(category), [category]);
+  const products = useMemo(() => atelierProducts(category).filter(isShopItemAvailable), [category]);
   const equippedIds = useMemo(
     () => equippedAtelierIds(data?.equipped ?? profileData?.cosmetics),
     [data?.equipped, profileData?.cosmetics],
@@ -500,7 +502,7 @@ export default function AtelierShopScreen({
                   width={shelfCardWidth}
                 /> : null}
 
-                {catalogCategory === 'all' || catalogCategory === 'effects' ? <AtelierProductShelf
+                {SHOP_EFFECTS_ENABLED && (catalogCategory === 'all' || catalogCategory === 'effects') ? <AtelierProductShelf
                   category="originals"
                   collectionTitle="EFFETS"
                   shelfId="effects"
@@ -517,11 +519,7 @@ export default function AtelierShopScreen({
                   packs={ORIGINAL_PACK_CATALOG}
                 /> : null}
 
-                {catalogCategory === 'all' || catalogCategory === 'consumables' ? <View testID="shop-consumables-section" style={styles.consumables}>
-                  <Text accessibilityRole="header" style={styles.catalogTitle}>CONSOMMABLES</Text>
-                  <VisualConsumablesEntryCard compact preview={Boolean(previewData)} />
-                  <ProtectorShopCard compact preview={Boolean(previewData)} />
-                </View> : null}
+                {catalogCategory === 'all' || catalogCategory === 'consumables' ? <ConsumablesShopSection preview={Boolean(previewData)} /> : null}
 
                 {catalogCategory === 'all' ? <View style={styles.discoveryLine}>
                   <Text style={styles.discoveryLabel}>PROCHAINEMENT</Text>
@@ -669,8 +667,8 @@ function TeamPackShelf({
       <View style={styles.teamPackList}>
         {packs.map((pack) => (
           <Pressable
-            accessibilityHint={`Ouvre la collection complète et ses ${pack.items.length} objets`}
-            accessibilityLabel={`Ouvrir ${pack.name}, ${pack.items.length} objets, ${formatNumber(pack.price)} Volts`}
+            accessibilityHint={`Ouvre la collection complète et ses ${pack.items.filter(isShopItemAvailable).length} objets`}
+            accessibilityLabel={`Ouvrir ${pack.name}, ${pack.items.filter(isShopItemAvailable).length} objets, ${packStoreProductId(pack.id) ? COSMETIC_PACK_PRICE : `${formatNumber(pack.price)} Volts`}`}
             accessibilityRole="button"
             key={pack.id}
             onPress={() => onOpen(pack)}
@@ -696,15 +694,14 @@ function TeamPackShelf({
                     {isOriginal ? 'ORIGINAL' : isGameCollection ? 'PARTENAIRE' : 'IDENTITÉ'}
                   </Text>
                 </View>
-                <Text style={styles.teamPackCount}>{pack.items.length} OBJETS</Text>
+                <Text style={styles.teamPackCount}>{pack.items.filter(isShopItemAvailable).length} OBJETS</Text>
               </View>
               <View>
                 <Text numberOfLines={2} style={[styles.teamPackTitle, { color: pack.accent }]}>{pack.title}</Text>
                 <Text numberOfLines={2} style={styles.teamPackSubtitle}>{pack.subtitle}</Text>
                 <View style={styles.teamPackActionRow}>
                   <View style={styles.teamPackPrice}>
-                    <CurrencyIcon kind="volts" size={14} />
-                    <Text style={styles.teamPackPriceText}>{formatNumber(pack.price)}</Text>
+                    <Text style={styles.teamPackPriceText}>{packStoreProductId(pack.id) ? COSMETIC_PACK_PRICE : `${formatNumber(pack.price)} Volts`}</Text>
                   </View>
                   <Text style={[styles.teamPackOpen, { color: pack.accent }]}>VOIR →</Text>
                 </View>

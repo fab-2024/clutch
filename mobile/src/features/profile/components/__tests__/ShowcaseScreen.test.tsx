@@ -4,9 +4,11 @@ import { fireEvent, render, waitFor, within } from '@testing-library/react-nativ
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 
+import { t } from '@/src/lib/i18n';
+import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { rankEmblemSource } from '@/src/features/ranking/components/RankEmblem';
-import { equipCosmetic, loadCosmeticShop } from '@/src/features/shop/api';
-import { applyPreviewAtelierAction } from '@/src/features/shop/atelierState';
+import { equipCosmetic, loadCosmeticShop, unequipRankDisplay } from '@/src/features/shop/api';
+import { applyPreviewAtelierAction, applyPreviewRankDisplayRemoval } from '@/src/features/shop/atelierState';
 import { loadProfileData } from '../../api';
 import { createAtelierPreviewItems } from '@/src/features/shop/atelierCatalog';
 import {
@@ -23,10 +25,14 @@ import ShowcaseScreen, { resolveRoomPlaceableItems } from '../ShowcaseScreen';
 
 const mockEquipPedestals = jest.fn(async () => undefined);
 const mockPedestalAssignments = {};
+let mockRouteFocused = true;
 
 jest.mock('expo-router', () => ({
   router: { back: jest.fn() },
-  useFocusEffect: () => undefined,
+  useFocusEffect: (callback: () => (() => void) | void) => {
+    const React = jest.requireActual('react');
+    React.useEffect(() => mockRouteFocused ? callback() : undefined, [callback, mockRouteFocused]);
+  },
   useLocalSearchParams: () => ({}),
 }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
@@ -46,6 +52,7 @@ jest.mock('../showcase/ShowcaseRoomScene', () => 'ShowcaseRoomScene');
 jest.mock('@/src/features/analytics/api', () => ({ trackAnalyticsEvent: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('@/src/features/shop/api', () => ({
   equipCosmetic: jest.fn(),
+  unequipRankDisplay: jest.fn(),
   loadCosmeticShop: jest.fn(),
   purchaseCosmetic: jest.fn(),
 }));
@@ -138,7 +145,62 @@ const ATELIER_SHOP: CosmeticShopData = {
 };
 
 describe('ShowcaseScreen immersive editor', () => {
-  it('removes the permanent bars and keeps settings available on demand', async () => {
+  beforeEach(() => { mockRouteFocused = true; });
+
+  it('reloads the equipped display when returning from the shop without moving the central object', async () => {
+    jest.mocked(loadProfileData).mockResolvedValue(PREVIEW_PROFILE);
+    jest.mocked(loadCosmeticShop).mockResolvedValue(ATELIER_SHOP);
+    const screen = await render(<ShowcaseScreen />);
+    await waitFor(() => expect(screen.getByTestId('showcase-room-slot-rank').props.accessibilityLabel).toContain('BRONZE'));
+    expect(screen.queryByTestId('showcase-rank-display-rank_crystal_capsule')).toBeNull();
+
+    mockRouteFocused = false;
+    await screen.rerender(<ShowcaseScreen />);
+    jest.mocked(loadCosmeticShop).mockResolvedValue(applyPreviewAtelierAction(ATELIER_SHOP, 'rank_crystal_capsule'));
+    mockRouteFocused = true;
+    await screen.rerender(<ShowcaseScreen />);
+    await waitFor(() => expect(screen.getByTestId('showcase-rank-display-rank_crystal_capsule')).toBeTruthy());
+    expect(screen.getByTestId('showcase-room-slot-rank').props.accessibilityLabel).toContain('BRONZE');
+  });
+
+  it('shows the equipped display around a pack central object in a collection room', async () => {
+    const packShop = applyPreviewTeamPackAction({
+      ...ATELIER_SHOP,
+      balance: 3000,
+      items: [...ATELIER_SHOP.items, ...createTeamPackPreviewItems(SERMENT_DU_GIVRE_PACK)],
+    }, SERMENT_DU_GIVRE_PACK);
+    const equippedShop = applyPreviewAtelierAction(packShop, 'rank_orbital_core');
+    const screen = await render(<ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={equippedShop} />);
+    await fireEvent.press(screen.getByTestId('showcase-room-slot-rank'));
+    await fireEvent.press(screen.getByLabelText('Trophée Œuf des Cimes'));
+    expect(screen.getByTestId('showcase-room-background-serment-du-givre-ice-sheet-pedestal')).toBeTruthy();
+    expect(screen.getByTestId('showcase-rank-display-rank_orbital_core')).toBeTruthy();
+    expect(screen.getByTestId('showcase-central-pedestal-removal')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-slot-rank').props.accessibilityLabel).not.toContain('Rang BRONZE');
+  });
+
+  it('records Setup clicks and explains the upcoming feature', async () => {
+    jest.mocked(loadProfileData).mockResolvedValue(PREVIEW_PROFILE);
+    jest.mocked(loadCosmeticShop).mockResolvedValue(EMPTY_SHOP);
+    const screen = await render(<ShowcaseScreen />);
+    await waitFor(() => expect(screen.getByTestId('showcase-room-background-obsidian-gallery')).toBeTruthy());
+    expect(screen.queryByTestId('showcase-setup-notice')).toBeNull();
+    await fireEvent.press(screen.getByLabelText('Setup'));
+    expect(screen.getByText('Setup arrive dans une prochaine mise à jour.')).toBeTruthy();
+    expect(trackAnalyticsEvent).toHaveBeenCalledWith({ type: 'collection_affichee', campaignKey: 'showcase-setup-click' });
+    await fireEvent.press(screen.getByLabelText('Fermer le message Setup'));
+    expect(screen.queryByTestId('showcase-setup-notice')).toBeNull();
+  });
+
+  it('does not count Setup clicks in preview mode', async () => {
+    const screen = await render(<ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={EMPTY_SHOP} />);
+    jest.mocked(trackAnalyticsEvent).mockClear();
+    await fireEvent.press(screen.getByLabelText('Setup'));
+    expect(screen.getByTestId('showcase-setup-notice')).toBeTruthy();
+    expect(trackAnalyticsEvent).not.toHaveBeenCalled();
+  });
+
+  it('removes the eye and settings controls while preserving profile and back navigation', async () => {
     const screen = await render(<ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={EMPTY_SHOP} />);
 
     expect(screen.getByLabelText(`Voir le profil de ${PREVIEW_PROFILE.pseudo}`)).toBeTruthy();
@@ -157,13 +219,8 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.queryByTestId('showcase-rank-display-rank_carbon_cradle')).toBeNull();
     expect(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine')).toBeTruthy();
 
-    await fireEvent.press(screen.getByLabelText('Ouvrir les réglages de la vitrine'));
-    expect(screen.getByTestId('showcase-settings-sheet')).toBeTruthy();
-    expect(screen.getAllByRole('tab')).toHaveLength(5);
-    expect(screen.getByLabelText('SALLE, GALERIE OBSIDIENNE')).toBeTruthy();
-
-    await fireEvent.press(screen.getByLabelText('Fermer MA VITRINE'));
-    expect(screen.queryByTestId('showcase-settings-sheet')).toBeNull();
+    expect(screen.queryByLabelText('Ouvrir les réglages de la vitrine')).toBeNull();
+    expect(screen.queryByLabelText(t('showcase.social.entry'))).toBeNull();
 
     await fireEvent.press(screen.getByLabelText('Revenir à la Collection'));
     expect(router.back).toHaveBeenCalled();
@@ -185,6 +242,7 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.queryByTestId('showcase-atelier-category-jerseys')).toBeNull();
     expect(screen.queryByTestId('showcase-atelier-category-pedestals')).toBeNull();
     expect(screen.getByText('Salles')).toBeTruthy();
+    expect(screen.queryByTestId('showcase-atelier-category-effects')).toBeNull();
     expect(screen.getByText('Ambiance de la vitrine')).toBeTruthy();
     expect(screen.getByText('1 / 6')).toBeTruthy();
     expect(screen.getByTestId('showcase-atelier-previous')).toBeDisabled();
@@ -204,6 +262,7 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.getByTestId('showcase-atelier-product-image-rank_carbon_cradle').props.resizeMode).toBe('contain');
 
     await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
+    expect(screen.queryByTestId('showcase-titan-wave')).toBeNull();
     expect(screen.getByTestId('showcase-room-theme-graphite')).toBeTruthy();
     expect(screen.getByTestId('showcase-room-lighting-cyan')).toBeTruthy();
     expect(screen.getByTestId('showcase-room-background-obsidian-gallery')).toBeTruthy();
@@ -226,22 +285,22 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.getByTestId('showcase-room-lighting-amber')).toBeTruthy();
   });
 
-  it('removes an equipped rank display on a second tap and can equip it again', async () => {
-    const equippedShop = applyPreviewAtelierAction(ATELIER_SHOP, 'rank_clutch_revelation');
+  it.each(['rank_clutch_revelation', 'rank_carbon_cradle'])('removes %s on a second tap and can equip it again', async (displayId) => {
+    const equippedShop = applyPreviewAtelierAction(ATELIER_SHOP, displayId);
     const screen = await render(
       <ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={equippedShop} />,
     );
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-ranks'));
-    expect(screen.getByTestId('showcase-rank-display-rank_clutch_revelation')).toBeTruthy();
+    expect(screen.getByTestId(`showcase-rank-display-${displayId}`)).toBeTruthy();
     expect(screen.getByText('Déséquiper')).toBeTruthy();
-    await fireEvent.press(screen.getByTestId('showcase-atelier-product-rank_clutch_revelation'));
+    await fireEvent.press(screen.getByTestId(`showcase-atelier-product-${displayId}`));
     expect(screen.queryAllByTestId(/^showcase-rank-display-/)).toHaveLength(0);
     expect(screen.getByText('Écrin déséquipé.')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
     expect(screen.queryAllByTestId(/^showcase-rank-display-/)).toHaveLength(0);
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
-    await fireEvent.press(screen.getByTestId('showcase-atelier-product-rank_clutch_revelation'));
+    await fireEvent.press(screen.getByTestId(`showcase-atelier-product-${displayId}`));
     expect(screen.getByText('Équiper')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('showcase-atelier-primary'));
     expect(screen.getByText('Déséquiper')).toBeTruthy();
@@ -254,25 +313,22 @@ describe('ShowcaseScreen immersive editor', () => {
     const equippedShop = applyPreviewAtelierAction(ATELIER_SHOP, 'rank_clutch_revelation');
     jest.mocked(loadProfileData).mockResolvedValue(PREVIEW_PROFILE);
     jest.mocked(loadCosmeticShop).mockResolvedValue(equippedShop);
-    jest.mocked(equipCosmetic).mockRejectedValueOnce(new Error('Connexion interrompue'));
+    jest.mocked(unequipRankDisplay).mockRejectedValueOnce(new Error('Connexion interrompue'));
     const screen = await render(<ShowcaseScreen />);
     await waitFor(() => expect(screen.getByTestId('showcase-rank-display-rank_clutch_revelation')).toBeTruthy());
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-ranks'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-product-rank_clutch_revelation'));
     await waitFor(() => expect(screen.getByText('Connexion interrompue')).toBeTruthy());
-    expect(equipCosmetic).toHaveBeenCalledWith('rank_carbon_cradle');
+    expect(unequipRankDisplay).toHaveBeenCalled();
     expect(screen.getByTestId('showcase-rank-display-rank_clutch_revelation')).toBeTruthy();
     expect(screen.getByText('Déséquiper')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
     expect(screen.getByTestId('showcase-rank-display-rank_clutch_revelation')).toBeTruthy();
 
-    const removedShop = applyPreviewAtelierAction(equippedShop, 'rank_carbon_cradle');
+    const removedShop = applyPreviewRankDisplayRemoval(equippedShop);
     jest.mocked(loadCosmeticShop).mockResolvedValue(removedShop);
-    jest.mocked(equipCosmetic).mockResolvedValueOnce({
-      itemId: 'rank_carbon_cradle', slot: 'vitrine_rang',
-      balance: removedShop.balance, purchased: false, equipped: true,
-    });
+    jest.mocked(unequipRankDisplay).mockResolvedValueOnce(undefined);
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-product-rank_clutch_revelation'));
     await waitFor(() => expect(screen.getByText('Écrin déséquipé.')).toBeTruthy());

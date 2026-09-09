@@ -28,6 +28,21 @@ Clutch est réservé aux personnes de 15 ans ou plus. Seule la confirmation de
 cette condition est stockée dans `private.preferences_confidentialite` ; aucune
 date de naissance n'est demandée ou conservée.
 
+## Intérêt pour le futur Setup de la vitrine
+
+Le bouton « Setup » ouvre un message annonçant une prochaine mise à jour.
+Chaque clic hors mode aperçu envoie `collection_affichee` avec la campagne
+`showcase-setup-click`, via le contrat analytics existant. Ce filtre distingue
+les ouvertures du message des impressions générales de la collection. Aucun
+événement Setup n’est envoyé simplement à l’affichage du bouton.
+
+La mesure reste soumise au consentement analytics : elle ne couvre donc pas
+les utilisateurs ayant refusé la collecte. Pour mesurer l’intérêt, compter les
+événements de cette campagne (clics) et les utilisateurs distincts (personnes
+intéressées). Exclure cette campagne des rapports d’impressions de collections.
+Les clics répétés ne sont pas dédupliqués. Une erreur de collecte ne bloque
+jamais l’ouverture du message.
+
 ## Conservation et suppression
 
 Les événements bruts sont purgés automatiquement au plus tard après treize

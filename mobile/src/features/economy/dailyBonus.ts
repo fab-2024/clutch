@@ -57,11 +57,31 @@ export function parseDailyBonusReceipt(value: unknown, expectedUserId: string): 
   };
 }
 
-export function nextBonusDelay(receipt: DailyBonusReceipt, requestElapsedMs = 0) {
+export function nextBonusDelay(receipt: Pick<DailyBonusReceipt, 'nextAvailableAt' | 'serverNow'>, requestElapsedMs = 0) {
   // Neither the device's calendar nor its wall clock grants a reward. Scheduling
   // is only a hint, based on the interval returned by the server (including DST).
   return Math.max(1_000, Math.min(
     27 * 60 * 60 * 1_000,
     Date.parse(receipt.nextAvailableAt) - Date.parse(receipt.serverNow) - requestElapsedMs,
   ));
+}
+
+export type DailyBonusStatus = {
+  userId: string;
+  available: boolean;
+  rewardDay: string;
+  serverNow: string;
+  nextAvailableAt: string;
+};
+
+export function parseDailyBonusStatus(value: unknown, userId: string): DailyBonusStatus {
+  const raw = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  if (raw.user_id !== userId || typeof raw.disponible !== 'boolean'
+    || raw.montant_quotidien !== DAILY_VOLT_BONUS || typeof raw.jour !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(raw.jour)
+    || typeof raw.heure_serveur !== 'string' || !Number.isFinite(Date.parse(raw.heure_serveur))
+    || typeof raw.prochain_bonus_le !== 'string' || !Number.isFinite(Date.parse(raw.prochain_bonus_le))
+    || Date.parse(raw.prochain_bonus_le) <= Date.parse(raw.heure_serveur)) {
+    throw new DailyBonusError('invalid_response', false);
+  }
+  return { userId, available: raw.disponible, rewardDay: raw.jour, serverNow: raw.heure_serveur, nextAvailableAt: raw.prochain_bonus_le };
 }

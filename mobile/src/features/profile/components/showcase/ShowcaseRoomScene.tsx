@@ -14,7 +14,6 @@ import {
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
 import {
-  DEFAULT_SHOWCASE_RANK_DISPLAY_ID,
   showcaseRankDisplayById,
   type ShowcaseRankDisplayDefinition,
 } from '@/src/features/shop/showcaseRankDisplayCatalog';
@@ -29,6 +28,7 @@ import { teamHue } from '@/src/utils/teams';
 
 import type { ProfileBadge, ProfileData } from '../../types';
 import LockedDisplaySlot from './LockedDisplaySlot';
+import ShowcaseRankDisplayArtwork from './ShowcaseRankDisplayArtwork';
 import ShowcaseAtmosphereLayer from './ShowcaseAtmosphereLayer';
 import type {
   ShowcaseAtmospherePerformanceReport,
@@ -157,8 +157,7 @@ export default function ShowcaseRoomScene({
   const teamAccent = team ? `hsl(${teamHue(team.tag, team.nom)}, 72%, 58%)` : '#71808B';
   const light = SHOWCASE_LIGHTING_VISUALS[lighting];
   const pedestalAccent = PEDESTAL_ACCENT[pedestal];
-  const equippedRankDisplay = showcaseRankDisplayById(cosmetics?.showcase.rankDisplay?.id)
-    ?? showcaseRankDisplayById(DEFAULT_SHOWCASE_RANK_DISPLAY_ID)!;
+  const equippedRankDisplay = showcaseRankDisplayById(cosmetics?.showcase.rankDisplay?.id);
   const resolvedRankDisplay = rankDisplay === undefined ? equippedRankDisplay : rankDisplay;
   const tokens = cosmeticTokens(cosmetics);
   const topTokens = tokens.slice(0, 3);
@@ -280,10 +279,9 @@ export default function ShowcaseRoomScene({
           ]}
         >
           {resolvedRankDisplay ? (
-            <Image
-              accessibilityLabel={`Écrin de rang ${resolvedRankDisplay.name}`}
-              accessible
-              resizeMode="contain"
+            <ShowcaseRankDisplayArtwork
+              restoreOpacity={resolvedRankDisplay.id === 'rank_clutch_revelation'}
+              name={resolvedRankDisplay.name}
               source={resolvedRankDisplay.overlayImage}
               style={[styles.rankDisplayOverlay, compact && styles.rankDisplayOverlayPreview]}
               testID={`showcase-rank-display-${resolvedRankDisplay.id}`}
@@ -521,7 +519,7 @@ const styles = StyleSheet.create({
   shelfBottom: { top: '66%' },
   rankStage: { position: 'absolute', left: '35%', top: '12%', width: '30%', height: '56%', alignItems: 'center', justifyContent: 'flex-end' },
   rankStagePreview: { left: '32%', top: '8%', width: '36%', height: '62%' },
-  rankDisplayOverlay: { position: 'absolute', top: '-20%', left: '-25%', width: '150%', height: '125%', opacity: 0.94 },
+  rankDisplayOverlay: { position: 'absolute', top: '-20%', left: '-25%', width: '150%', height: '125%' },
   rankDisplayOverlayPreview: { top: '-14%', left: '-18%', width: '136%', height: '118%' },
   rankBeam: { position: 'absolute', top: '2%', width: '16%', height: '72%', borderRadius: 90, opacity: 0.028 },
   rankHalo: { position: 'absolute', bottom: '20%', width: '34%', aspectRatio: 1, borderRadius: 999, borderWidth: 1, opacity: 0.055 },

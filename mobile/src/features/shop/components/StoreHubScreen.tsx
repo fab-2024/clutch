@@ -48,7 +48,7 @@ export default function StoreHubScreen({ preview = false, previewData }: StoreHu
 
   const header = (
     <View style={styles.header}>
-      {section === 'shop' ? <GriffHeader
+      <GriffHeader
         accessory={(
           <Pressable
             accessibilityLabel={t('store.settingsLabel')}
@@ -65,7 +65,7 @@ export default function StoreHubScreen({ preview = false, previewData }: StoreHu
         economy={preview ? { frags: 1480, volts: previewData?.balance ?? 320 } : undefined}
         leading={<ProfileHeaderButton preview={preview} pseudo={pseudo} />}
         variant="wallet"
-      /> : null}
+      />
 
       <View accessibilityLabel={t('store.sectionsLabel')} accessibilityRole="tablist" style={styles.tabs}>
         {(preview ? ['showcase', 'shop', 'gift-cards'] as const : ['showcase', 'shop'] as const).map((key) => (

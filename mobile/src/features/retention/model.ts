@@ -53,6 +53,18 @@ export function parseCallStreakState(value: unknown, ownerId: string): CallStrea
     return { days: row.palier, earnedAt: row.obtenu_le };
   });
   const today = raw.jour;
+  const rewards = raw.recompenses === undefined ? [] : (() => {
+    if (!Array.isArray(raw.recompenses) || raw.recompenses.length !== 2) return fail();
+    const parsed = raw.recompenses.map((value) => {
+      const row = object(value);
+      if ((row.palier !== 7 && row.palier !== 14) || row.volts !== (row.palier === 7 ? 50 : 100)
+        || (row.credite_le !== null && !isTimestamp(row.credite_le))
+        || (row.credite_le !== null && row.palier > best)) return fail();
+      return { days: row.palier as 7 | 14, volts: row.palier === 7 ? 50 : 100, rewardedAt: row.credite_le as string | null };
+    });
+    if (new Set(parsed.map((reward) => reward.days)).size !== 2) return fail();
+    return parsed;
+  })();
   if (new Set(history.map((day) => day.day)).size !== history.length
     || history.some((day, index) => day.day > today || (index > 0 && day.day <= history[index - 1].day))
     || new Set(milestones.map((milestone) => milestone.days)).size !== milestones.length
@@ -72,7 +84,7 @@ export function parseCallStreakState(value: unknown, ownerId: string): CallStrea
     eligibleMatchId: raw.match_eligible_id as string | null, hadOpportunityToday: raw.opportunite_du_jour,
     protectors: raw.stock_protecteurs, maxProtectors: 2, protectorPrice: 90, purchaseOperationId: raw.operation_achat,
     protectionUsed: raw.protection_utilisee, selectedMilestone: raw.jalon_selectionne as StreakMilestone | null,
-    volts: raw.solde_volts, history, milestones, protectorHistory,
+    volts: raw.solde_volts, history, milestones, protectorHistory, rewards,
   };
 }
 

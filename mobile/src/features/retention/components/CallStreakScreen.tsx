@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import ArrowLeft from 'lucide-react-native/icons/arrow-left';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import Check from 'lucide-react-native/icons/check';
 import ShieldCheck from 'lucide-react-native/icons/shield-check';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -21,8 +22,11 @@ import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme'
 
 import { monotonicNow, useCallStreak } from '../context';
 import { CallStreakError, streakDayMessage } from '../model';
+import { nextStreakTarget } from '../presentation';
 import { forgetProtectorPurchase, loadPendingProtectorPurchase, rememberProtectorPurchase } from '../purchaseOperation';
 import type { CallStreakState, StreakMilestone } from '../types';
+import { CallStreakProgress } from './CallStreakProgress';
+import { CallStreakRewards } from './CallStreakRewards';
 import { CallStreakCalendar } from './CallStreakCalendar';
 import { useStreakCountdown } from './CallStreakCard';
 import { CallStreakFlame, CallStreakGlow } from './CallStreakFlame';
@@ -140,6 +144,7 @@ export default function CallStreakScreen({ previewState }: { previewState?: Call
     finally { if (ownerRef.current === owner) { mutationLock.current = false; setBusy(false); } }
   }
 
+  const target = state ? nextStreakTarget(state) : null;
   const error = mutationError ?? (!preview ? streak.error : null);
   const canPurchase = Boolean(state && storageReady && !busy && (pendingOperation || (state.protectors < state.maxProtectors && state.volts >= state.protectorPrice)));
   return (
@@ -152,7 +157,7 @@ export default function CallStreakScreen({ previewState }: { previewState?: Call
             style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
             <ArrowLeft size={24} color={colors.text} />
           </Pressable>
-          <Text accessibilityRole="header" style={styles.title}>{t('streak.screenTitle')}</Text>
+          <Text accessibilityRole="header" style={styles.title}>{t('streak.design.screenTitle')}</Text>
           <View style={styles.headerSpacer} />
         </View>
         {error ? <View accessibilityRole="alert" style={styles.panel}><Text style={styles.body}>{error}</Text><Button label={t('common.retry')} variant="secondary" onPress={() => {
@@ -163,35 +168,38 @@ export default function CallStreakScreen({ previewState }: { previewState?: Call
           <>
             <View style={styles.summary} testID="streak-summary">
               <View style={styles.hero}>
-                <CallStreakFlame height={isShortLandscape ? 112 : isCompactWidth ? 156 : 176} />
-                <Text style={styles.flameLabel}>{t('streak.flame')}</Text>
-                <Text style={[styles.count, state.current >= 100 && styles.countLong]}>{formatNumber(state.current)}</Text>
-                <Text style={styles.dayUnit}>{t('streak.dayUnit', { count: state.current })}</Text>
+                <CallStreakFlame height={isShortLandscape || isCompactWidth ? 94 : 112} />
+                <View style={styles.heroCopy}>
+                  <View style={styles.heroCountRow}>
+                    <Text style={[styles.count, state.current >= 100 && styles.countLong]}>{formatNumber(state.current)}</Text>
+                    <Text style={styles.dayUnit}>{t('streak.design.consecutive', { count: state.current })}</Text>
+                  </View>
+                  <Text style={styles.meta}>{t('streak.design.subtitle')}</Text>
+                  <View style={styles.dayMessage}>
+                    {state.todayValidated ? <Check color={colors.volt} size={20} /> : <View style={styles.pendingRing} />}
+                    <Text style={styles.dayStatus}>{t(state.todayValidated ? 'streak.design.validated' : 'streak.design.pending')}</Text>
+                  </View>
+                </View>
               </View>
-              <View style={styles.dayMessage}>
-                <Text style={[styles.status, state.todayValidated && styles.accent]}>
-                  {!state.todayValidated && state.eligibleMatchId ? t('streak.keepAlive') : streakDayMessage(state)}
-                </Text>
-                {!state.todayValidated ? <Text style={styles.meta}>{t('streak.day.end', { time: remaining })}</Text> : null}
-              </View>
+              {!state.todayValidated && !state.eligibleMatchId ? <Text style={styles.meta}>{streakDayMessage(state)}</Text> : null}
               <Pressable accessibilityRole="button" testID="streak-call"
                 onPress={() => router.push(preview ? '/matches-preview'
                   : !state.todayValidated && state.eligibleMatchId ? `/match/${encodeURIComponent(state.eligibleMatchId)}` as never : '/(tabs)/matches')}
                 style={({ pressed }) => [styles.callButton, pressed && styles.pressed]}>
-                <Text style={styles.callButtonText}>{t(!state.todayValidated && state.eligibleMatchId ? 'streak.call' : 'streak.matches')}</Text>
+                <Text style={styles.callButtonText}>{t(!state.todayValidated && state.eligibleMatchId ? 'streak.design.call' : 'streak.matches')}</Text>
               </Pressable>
-              <View style={styles.stats}>
-                <Metric value={formatNumber(state.best)} label={t('streak.best')} unit={t('streak.dayUnit', { count: state.best })} />
-                <View style={styles.statDivider} />
-                <Metric value={`${state.protectors} / ${state.maxProtectors}`} label={t('streak.protector.short')} />
-              </View>
             </View>
-            <CallStreakCalendar state={state} />
+            <CallStreakRewards state={state} />
+            <View style={styles.progressSection}>
+              <Text accessibilityRole="header" style={styles.sectionTitle}>{t('streak.design.progress', { count: target?.days ?? 7 })}</Text>
+              <CallStreakProgress state={state} />
+              <Text style={styles.meta}>{t('streak.design.progressCount', { current: Math.min(state.current, target?.days ?? 7), count: target?.days ?? 7 })}</Text>
+            </View>
             <View style={styles.protectorPanel} testID="streak-protector-panel">
               <View style={styles.protectorRow}>
                 <View style={styles.shield}><ShieldCheck color={colors.volt} size={25} /></View>
                 <View style={styles.protectorCopy}>
-                  <Text style={styles.protectorTitle}>{t('streak.protector.title')}</Text>
+                  <Text style={styles.protectorTitle}>{t('streak.design.protection')}</Text>
                   <Text style={styles.accent}>{t('streak.protector.stockAvailable', { count: state.protectors, max: state.maxProtectors })}</Text>
                 </View>
                 <Pressable disabled={!canPurchase} ref={purchaseButton} testID="streak-buy-protector"
@@ -199,8 +207,9 @@ export default function CallStreakScreen({ previewState }: { previewState?: Call
                   onPress={() => { setMutationError(null); setSheetVisible(true); }}
                   style={({ pressed }) => [styles.purchaseButton, !canPurchase && styles.purchaseDisabled, pressed && styles.pressed]}>
                   <Text style={[styles.purchaseText, !canPurchase && styles.disabledText]}>
-                    {t(pendingOperation ? 'streak.protector.verify' : state.protectors >= state.maxProtectors ? 'streak.protector.full' : 'streak.protector.buy', { price: state.protectorPrice })}
+                    {t(pendingOperation ? 'streak.protector.verify' : state.protectors >= state.maxProtectors ? 'streak.protector.full' : 'streak.design.manage', { price: state.protectorPrice })}
                   </Text>
+                  {canPurchase && !pendingOperation ? <ChevronRight color={colors.volt} size={17} /> : null}
                 </Pressable>
               </View>
               <Text style={styles.protectorDescription}>{t('streak.protector.summary')}</Text>
@@ -208,20 +217,26 @@ export default function CallStreakScreen({ previewState }: { previewState?: Call
               {pendingOperation ? <Text style={styles.body}>{t('streak.protector.pending')}</Text> : null}
               {!canPurchase && state.protectors < state.maxProtectors && !busy ? <Text style={styles.meta}>{!preview && unlimitedVolts ? t('economy.unlimitedBalanceLabel') : t('economy.availableBalanceLabel', { amount: formatNumber(state.volts) })}</Text> : null}
             </View>
-            <View style={styles.panel}>
-              <Text accessibilityRole="header" style={styles.sectionTitle}>{t('streak.milestones')}</Text>
-              <CallStreakMilestones state={state} busy={busy} onChoose={(days) => { void chooseMilestone(days); }} />
-              <Text style={styles.meta}>{t('streak.milestone.browse')}</Text>
-              {state.selectedMilestone ? <><Text style={styles.meta}>{t('streak.milestone.description')}</Text><Button fullWidth variant="secondary" disabled={busy} label={t('streak.share')} onPress={() => { void shareMilestone(); }} /><Button fullWidth variant="ghost" disabled={busy} label={t('streak.milestone.none')} onPress={() => { void chooseMilestone(null); }} /></> : null}
-              {sharedMilestoneUrl ? <Text selectable style={styles.meta}>{sharedMilestoneUrl}</Text> : null}
-            </View>
             <View style={styles.details}>
-              <Pressable accessibilityRole="button" accessibilityState={{ expanded: detailsVisible }} onPress={() => setDetailsVisible((visible) => !visible)}
-                style={styles.detailsToggle}>
-                <Text style={styles.meta}>{t('streak.details')}</Text>
-                <ChevronRight color={colors.textSecondary} size={17} style={{ transform: [{ rotate: detailsVisible ? '90deg' : '0deg' }] }} />
-              </Pressable>
+              <View style={styles.stats}>
+                <Metric value={formatNumber(state.best)} label={t('streak.design.best')} unit={t('streak.dayUnit', { count: state.best }).toLowerCase()} />
+                <View style={styles.statDivider} />
+                <Pressable accessibilityRole="button" accessibilityState={{ expanded: detailsVisible }} onPress={() => setDetailsVisible((visible) => !visible)}
+                  style={styles.detailsToggle}>
+                  <Text style={styles.meta}>{t('streak.design.details')}</Text>
+                  <ChevronRight color={colors.textSecondary} size={17} style={{ transform: [{ rotate: detailsVisible ? '90deg' : '0deg' }] }} />
+                </Pressable>
+              </View>
               {detailsVisible ? <View style={styles.actions}>
+                <CallStreakCalendar state={state} />
+                <View style={styles.panel}>
+                  <Text accessibilityRole="header" style={styles.sectionTitle}>{t('streak.milestones')}</Text>
+                  <CallStreakMilestones state={state} busy={busy} onChoose={(days) => { void chooseMilestone(days); }} />
+                  <Text style={styles.meta}>{t('streak.milestone.browse')}</Text>
+                  {state.selectedMilestone ? <><Text style={styles.meta}>{t('streak.milestone.description')}</Text><Button fullWidth variant="secondary" disabled={busy} label={t('streak.share')} onPress={() => { void shareMilestone(); }} /><Button fullWidth variant="ghost" disabled={busy} label={t('streak.milestone.none')} onPress={() => { void chooseMilestone(null); }} /></> : null}
+                  {sharedMilestoneUrl ? <Text selectable style={styles.meta}>{sharedMilestoneUrl}</Text> : null}
+                </View>
+                {!state.todayValidated ? <Text style={styles.meta}>{t('streak.day.end', { time: remaining })}</Text> : null}
                 <Text style={styles.body}>{t('streak.description')}</Text>
                 <Text style={styles.meta}>{t('streak.total')} · {formatNumber(state.totalValidatedDays)}</Text>
                 <Text style={styles.meta}>{t('streak.timeZone', { zone: state.timeZone })}</Text>
@@ -263,24 +278,28 @@ const styles = StyleSheet.create({
   header: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 },
   back: { minWidth: layout.minTouchTarget, minHeight: layout.minTouchTarget, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, backgroundColor: 'rgba(3,14,23,.6)' },
   headerSpacer: { width: layout.minTouchTarget },
-  title: { flex: 1, fontFamily: fonts.display, fontSize: 25, lineHeight: 29, textAlign: 'center', color: colors.text },
+  title: { flex: 1, fontFamily: fonts.display, fontSize: 25, lineHeight: 29, textAlign: 'left', color: colors.text },
   sectionTitle: { fontFamily: fonts.displayBold, fontSize: 21, lineHeight: 24, color: colors.text, flexShrink: 1 },
   body: { ...typography.body, color: colors.textSecondary },
   meta: { ...typography.caption, color: colors.textSecondary },
   panel: { padding: 14, gap: 8, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: 'rgba(9,20,29,.72)' },
-  summary: { paddingTop: 8, gap: 10 },
-  hero: { alignItems: 'center' },
-  flameLabel: { fontFamily: fonts.displayBold, fontSize: 19, lineHeight: 23, color: colors.volt, marginTop: 14 },
-  count: { fontFamily: fonts.display, fontSize: 96, lineHeight: 98, letterSpacing: -2, color: colors.volt, textAlign: 'center' },
-  countLong: { fontSize: 76, lineHeight: 82 },
-  dayUnit: { fontFamily: fonts.displayBold, fontSize: 20, lineHeight: 22, color: colors.volt },
-  dayMessage: { alignItems: 'center', gap: 4 },
+  summary: { padding: 12, gap: 10, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.md, backgroundColor: 'rgba(5,18,25,.72)' },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  heroCopy: { flex: 1, minWidth: 0, gap: 5 },
+  heroCountRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  progressSection: { gap: 10, paddingVertical: 8 },
+  pendingRing: { width: 17, height: 17, borderRadius: 9, borderWidth: 1.5, borderColor: colors.volt },
+  dayStatus: { ...typography.caption, flex: 1, color: colors.textSecondary },
+  count: { fontFamily: fonts.display, fontSize: 86, lineHeight: 90, letterSpacing: -2, color: colors.volt, textAlign: 'center' },
+  countLong: { fontSize: 52, lineHeight: 66 },
+  dayUnit: { flex: 1, minWidth: 0, fontFamily: fonts.bold, fontSize: 20, lineHeight: 25, color: colors.text },
+  dayMessage: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 5 },
   status: { ...typography.bodyComfort, color: colors.text, textAlign: 'center' },
   accent: { ...typography.control, color: colors.volt },
   callButton: { minHeight: layout.controlHeight, marginTop: 7, paddingHorizontal: spacing.md, paddingVertical: 12, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm, backgroundColor: colors.volt },
   callButtonText: { fontFamily: fonts.display, fontSize: 20, lineHeight: 24, color: colors.background, textAlign: 'center' },
   stats: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, marginTop: 3, marginBottom: 3 },
-  metric: { flex: 1, minWidth: 0, alignItems: 'center', gap: 4 },
+  metric: { flex: 1, minWidth: 0, alignItems: 'flex-start', gap: 4 },
   metricLabel: { ...typography.caption, color: colors.textSecondary },
   metricValueRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'center', columnGap: 5 },
   metricValue: { ...typography.metric, color: colors.text },
@@ -291,13 +310,13 @@ const styles = StyleSheet.create({
   protectorCopy: { flex: 1, minWidth: 0, gap: 3 },
   protectorTitle: { fontFamily: fonts.displayBold, fontSize: 17, lineHeight: 20, color: colors.text },
   protectorDescription: { ...typography.caption, marginLeft: 46, color: colors.textSecondary },
-  purchaseButton: { width: 112, minHeight: layout.minTouchTarget, flexShrink: 0, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 8, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.volt },
+  purchaseButton: { width: 82, minHeight: layout.minTouchTarget, flexShrink: 0, flexDirection: 'row', gap: 3, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 8, borderRadius: radius.sm },
   purchaseText: { fontFamily: fonts.displayBold, fontSize: 13, lineHeight: 16, color: colors.volt, textAlign: 'center' },
   purchaseDisabled: { borderColor: colors.border },
   disabledText: { color: colors.textDisabled },
   pressed: { opacity: .75 },
   details: { gap: 8, paddingHorizontal: 4 },
-  detailsToggle: { minHeight: layout.minTouchTarget, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  detailsToggle: { flex: 1.3, paddingLeft: 16, minHeight: layout.minTouchTarget, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   previewNote: { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
   historyRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', paddingVertical: spacing.sm, borderBottomWidth: 1, borderColor: colors.borderSubtle },
   historyCopy: { flex: 1, gap: spacing.xs },

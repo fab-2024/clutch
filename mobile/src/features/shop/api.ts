@@ -65,6 +65,11 @@ export async function equipCosmetic(itemId: string): Promise<CosmeticMutation> {
   return mutateCosmetic('clutch_equiper_cosmetique_v1', itemId);
 }
 
+export async function unequipRankDisplay(): Promise<void> {
+  const { error } = await supabase.rpc('clutch_desequiper_ecrin_v1');
+  if (error) throw error;
+}
+
 async function callCosmeticMutation(name: string, itemId: string): Promise<CosmeticMutation> {
   const { data, error } = await supabase.rpc(name, { p_objet_id: itemId });
   if (error) throw error;

@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Animated, AppState, Easing, StyleSheet, View } from 'react-native';
 
 import {
   showcaseAtmosphereColor,
@@ -15,17 +16,35 @@ const STATIC_DUST = [
 export default function ShowcaseAtmosphereFallback({
   atmosphere,
   reason,
+  animated = false,
 }: {
+  animated?: boolean;
   atmosphere: ShowcaseAtmosphere;
   reason: ShowcaseAtmosphereStaticReason;
 }) {
+  const [phase] = useState(() => new Animated.Value(0));
+  const [foreground, setForeground] = useState(AppState.currentState !== 'background');
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => setForeground(state === 'active'));
+    return () => subscription.remove();
+  }, []);
+  useEffect(() => {
+    phase.setValue(0);
+    if (!animated || !foreground) return;
+    const animation = Animated.loop(Animated.sequence([
+      Animated.timing(phase, { toValue: 1, duration: atmosphere.driftDurationMs / 3, easing: Easing.inOut(Easing.sin), useNativeDriver: false, isInteraction: false }),
+      Animated.timing(phase, { toValue: 0, duration: atmosphere.driftDurationMs / 3, easing: Easing.inOut(Easing.sin), useNativeDriver: false, isInteraction: false }),
+    ]));
+    animation.start();
+    return () => animation.stop();
+  }, [animated, atmosphere.driftDurationMs, foreground, phase]);
   return (
-    <View
+    <Animated.View
       accessibilityElementsHidden
       accessible={false}
       importantForAccessibility="no-hide-descendants"
       pointerEvents="none"
-      style={StyleSheet.absoluteFill}
+      style={[StyleSheet.absoluteFill, animated && { opacity: phase.interpolate({ inputRange: [0, 1], outputRange: [.55, 1] }) }]}
       testID={`showcase-atmosphere-static-${reason}`}
     >
       <LinearGradient
@@ -113,7 +132,7 @@ export default function ShowcaseAtmosphereFallback({
           ]}
         />
       ))}
-    </View>
+    </Animated.View>
   );
 }
 

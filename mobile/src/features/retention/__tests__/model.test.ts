@@ -44,3 +44,20 @@ describe('call-day streak contract', () => {
     expect(streakDayMessage({ ...state, eligibleMatchId: null })).toContain('évaluée à minuit');
   });
 });
+
+
+describe('streak reward contract', () => {
+  const rewards = [{ palier: 7, volts: 50, credite_le: payload.heure_serveur }, { palier: 14, volts: 100, credite_le: null }];
+  it('uses server receipts and remains compatible before the migration is installed', () => {
+    expect(parseCallStreakState(payload, OWNER).rewards).toEqual([]);
+    expect(parseCallStreakState({ ...payload, recompenses: rewards }, OWNER).rewards).toEqual([
+      { days: 7, volts: 50, rewardedAt: payload.heure_serveur }, { days: 14, volts: 100, rewardedAt: null },
+    ]);
+  });
+  it.each([
+    [], [rewards[0], rewards[0]], [{ ...rewards[0], volts: 500 }, rewards[1]],
+    [{ ...rewards[0], credite_le: 'invalid' }, rewards[1]],
+  ])('rejects invalid reward schedules or receipts: %j', (...items) => {
+    expect(() => parseCallStreakState({ ...payload, recompenses: items }, OWNER)).toThrow(CallStreakError);
+  });
+});

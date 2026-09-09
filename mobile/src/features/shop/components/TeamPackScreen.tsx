@@ -1,3 +1,9 @@
+import { useAuth } from '@/src/providers/AuthProvider';
+import { isCosmeticPackBillingReady, syncCosmeticPacks } from '@/src/features/purchases/api';
+import { COSMETIC_PACK_PRICE, packStoreProductId } from '@/src/features/purchases/cosmeticPacks';
+import { currentFounderPlatform } from '@/src/features/purchases/store';
+import { loadPackStore, purchasePackFromStore, restorePackPurchases, type PackStoreSnapshot } from '@/src/features/purchases/packStore';
+import { isShopItemAvailable } from '../effectAvailability';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -15,7 +21,6 @@ import {
 import { Screen } from '@/src/components/layout/Screen';
 import { BaseSheet } from '@/src/components/overlays/BaseSheet';
 import { Button } from '@/src/components/ui/Button';
-import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { errorFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
@@ -49,6 +54,12 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
   const params = useLocalSearchParams<{ key?: string | string[] }>();
   const routeId = packId ?? readParam(params.key) ?? SANG_DES_TITANS_PACK.id;
   const pack = cosmeticPackById(routeId);
+  const { session } = useAuth();
+  const userId = session?.user.id;
+  const activeUser = useRef(userId);
+  activeUser.current = userId;
+  const busy = useRef(false);
+  const [store, setStore] = useState<PackStoreSnapshot | null>(null);
   const { refresh: refreshCosmetics } = useCosmetics();
   const { refresh: refreshEconomy } = useEconomy();
   const { showSnackbar } = useSnackbar();
@@ -73,8 +84,18 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
     else setLoading(true);
     setError(null);
     try {
-      const nextData = await loadCosmeticShop();
-      if (requestId === requestRef.current) setData(nextData);
+      let nextData = await loadCosmeticShop();
+      let nextStore: PackStoreSnapshot | null = null;
+      if (userId && packStoreProductId(routeId)) {
+        const billingReady = await isCosmeticPackBillingReady(routeId);
+        nextStore = billingReady ? await loadPackStore(userId, routeId).catch(() => ({ availability: 'unavailable' as const, localizedPrice: null })) : { availability: 'unavailable', localizedPrice: null };
+        const platform = currentFounderPlatform();
+        if (nextStore.availability === 'owned' && platform) {
+          await syncCosmeticPacks(platform);
+          nextData = await loadCosmeticShop();
+        }
+      }
+      if (requestId === requestRef.current) { setData(nextData); setStore(nextStore); }
     } catch (caught) {
       if (requestId === requestRef.current) setError(friendlyError(caught));
     } finally {
@@ -83,7 +104,7 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
         setRefreshing(false);
       }
     }
-  }, [previewData]);
+  }, [previewData, routeId, userId]);
 
   useEffect(() => {
     void load();
@@ -94,48 +115,79 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
     () => new Map((data?.items ?? []).map((item) => [item.id, item])),
     [data?.items],
   );
+  const visibleItems = pack?.items.filter(isShopItemAvailable) ?? [];
   const action = pack ? teamPackPrimaryAction(pack, data) : 'unavailable';
   const originalCreation = pack ? isClutchOriginal(pack) : false;
 
   async function handlePrimaryAction() {
-    if (!pack || !data || pending || (action !== 'buy' && action !== 'equip')) return;
-    const previous = data;
+    if (!pack || !data || loading || busy.current || (action !== 'buy' && action !== 'equip')) return;
+    if (!previewData && packStoreProductId(pack.id) && action === 'buy' && store?.availability !== 'ready' && store?.availability !== 'owned') return;
+    busy.current = true;
     setPending(true);
     setError(null);
     try {
-      const mutation = previewData
-        ? null
-        : action === 'buy'
-          ? await purchaseCosmeticPack(pack.id)
-          : await equipCosmeticPack(pack.id);
-      const next = applyPreviewTeamPackAction(previous, pack);
-      setData(mutation ? { ...next, balance: mutation.balance } : next);
+      if (previewData) {
+        setData(applyPreviewTeamPackAction(data, pack));
+      } else {
+        if (!userId) throw new Error('Connecte-toi pour retrouver ta collection.');
+        if (action === 'buy' && !packStoreProductId(pack.id)) {
+          await purchaseCosmeticPack(pack.id);
+        } else if (action === 'buy') {
+          const outcome = await purchasePackFromStore(userId, pack.id);
+          if (activeUser.current !== userId || outcome === 'cancelled') return;
+          if (outcome === 'pending') {
+            showSnackbar({ message: 'Paiement en attente de confirmation du store.', tone: 'info' });
+            return;
+          }
+          const platform = currentFounderPlatform();
+          if (!platform) return;
+          await syncCosmeticPacks(platform);
+          if (activeUser.current !== userId) return;
+          const verified = await loadCosmeticShop();
+          const verifiedAction = teamPackPrimaryAction(pack, verified);
+          if (verifiedAction !== 'equip' && verifiedAction !== 'equipped') {
+            throw new Error('Ton achat est en cours de validation. Utilise « Restaurer mes achats » pour réessayer, sans repayer.');
+          }
+        }
+        if (activeUser.current !== userId) return;
+        await equipCosmeticPack(pack.id);
+        const next = await loadCosmeticShop();
+        if (activeUser.current !== userId) return;
+        setData(next);
+        await Promise.allSettled([refreshCosmetics(), refreshEconomy()]);
+      }
       successFeedback();
       showSnackbar({
-        message: action === 'buy'
-          ? `${pack.name} débloqué et équipé dans ta Vitrine.`
-          : `Le ${pack.name} équipe maintenant ta Vitrine.`,
+        message: action === 'buy' ? `${pack.name} débloqué et équipé dans ta Vitrine.` : `Le ${pack.name} équipe maintenant ta Vitrine.`,
         tone: 'success',
       });
-
-      if (!previewData) {
-        const requestId = ++requestRef.current;
-        void Promise.allSettled([
-          loadCosmeticShop(),
-          refreshCosmetics(),
-          refreshEconomy(),
-        ]).then(([shopResult]) => {
-          if (requestId !== requestRef.current || shopResult.status !== 'fulfilled') return;
-          setData(shopResult.value);
-        });
-      }
     } catch (caught) {
-      setData(previous);
-      setError(friendlyError(caught));
-      errorFeedback();
+      if (activeUser.current === userId) { setError(friendlyError(caught)); errorFeedback(); }
     } finally {
+      busy.current = false;
       setPending(false);
     }
+  }
+
+  async function handleRestore() {
+    if (!pack || !userId || busy.current || previewData) return;
+    busy.current = true;
+    setPending(true);
+    setError(null);
+    try {
+      await restorePackPurchases(userId, pack.id);
+      if (activeUser.current !== userId) return;
+      const platform = currentFounderPlatform();
+      if (!platform) return;
+      await syncCosmeticPacks(platform);
+      const next = await loadCosmeticShop();
+      if (activeUser.current !== userId) return;
+      setData(next);
+      await refreshCosmetics();
+      showSnackbar({ message: 'Tes achats ont été synchronisés.', tone: 'success' });
+    } catch (caught) {
+      if (activeUser.current === userId) setError(friendlyError(caught));
+    } finally { busy.current = false; setPending(false); }
   }
 
   if (!pack) {
@@ -192,7 +244,7 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
               <Text style={styles.headerTitle}>{pack.name.toLocaleUpperCase('fr-FR')}</Text>
             </View>
             <View style={styles.itemCount}>
-              <Text style={styles.itemCountValue}>{pack.items.length}</Text>
+              <Text style={styles.itemCountValue}>{visibleItems.length}</Text>
               <Text style={styles.itemCountLabel}>OBJETS</Text>
             </View>
           </View>
@@ -224,7 +276,7 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
                         : 'COLLECTION OFFICIELLE'}
                   </Text>
                 </View>
-                <Text style={styles.heroMetaText}>{pack.items.length} COSMÉTIQUES</Text>
+                <Text style={styles.heroMetaText}>{visibleItems.length} COSMÉTIQUES</Text>
               </View>
             </View>
           </View>
@@ -250,16 +302,16 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
           {loading ? (
             <View accessibilityLabel={`Chargement du ${pack.name}`} accessibilityRole="progressbar" style={styles.loading}>
               <ActivityIndicator color={pack.accent} />
-              <Text style={styles.loadingText}>SYNCHRONISATION DES {pack.items.length} OBJETS…</Text>
+              <Text style={styles.loadingText}>SYNCHRONISATION DES {visibleItems.length} OBJETS…</Text>
             </View>
           ) : (
             <View style={styles.itemGrid} testID="team-pack-item-grid">
-              {pack.items.map((item) => {
+              {visibleItems.map((item, index) => {
                 const runtime = runtimeById.get(item.id);
                 return (
                   <Pressable
                     accessibilityHint="Ouvre la fiche détaillée de cet objet"
-                    accessibilityLabel={`${item.name}, objet ${item.number} sur ${pack.items.length}${runtime?.owned ? ', possédé' : ''}`}
+                    accessibilityLabel={`${item.name}, objet ${index + 1} sur ${visibleItems.length}${runtime?.owned ? ', possédé' : ''}`}
                     accessibilityRole="button"
                     key={item.id}
                     onPress={() => {
@@ -281,7 +333,7 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
                         style={styles.itemImage}
                       />
                       <View style={[styles.numberPill, { borderColor: `${pack.accent}80` }]}>
-                        <Text style={[styles.numberText, { color: pack.accent }]}>{item.number}</Text>
+                        <Text style={[styles.numberText, { color: pack.accent }]}>{index + 1}</Text>
                       </View>
                       {runtime?.owned ? (
                         <View style={styles.ownedPill}>
@@ -298,6 +350,14 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
               })}
             </View>
           )}
+
+          {packStoreProductId(pack.id) ? <View style={styles.licenseBlock}>
+            <Text style={styles.licenseText}>Achat unique · Pack permanent · Aucun Volt débité.</Text>
+            {!previewData && store?.availability === 'mobile_only' ? <Text style={styles.licenseText}>Disponible à l’achat dans l’application iPhone ou Android.</Text> : null}
+            {!previewData && store?.availability !== 'mobile_only' ? <Pressable accessibilityRole="button" disabled={pending || !userId} onPress={() => void handleRestore()}>
+              <Text style={styles.retry}>Restaurer mes achats</Text>
+            </Pressable> : null}
+          </View> : null}
 
           <View style={[styles.licenseBlock, { borderColor: `${pack.accent}38` }]}>
             <Text style={[styles.licenseTitle, { color: pack.accent }]}>
@@ -316,9 +376,11 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
         <TeamPackActionDock
           action={action}
           balance={data?.balance ?? 0}
+          priceLabel={packStoreProductId(pack.id) ? store?.localizedPrice ?? COSMETIC_PACK_PRICE : `${formatNumber(pack.price)} Volts`}
+            storeReady={!packStoreProductId(pack.id) || Boolean(previewData) || store?.availability === 'ready' || store?.availability === 'owned'}
           onPress={() => void handlePrimaryAction()}
           pack={pack}
-          pending={pending}
+          pending={pending || loading}
         />
 
         <BaseSheet
@@ -332,15 +394,17 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
           {selectedItem ? (
             <View style={styles.sheetContent}>
               <View style={[styles.sheetImageWrap, { borderColor: `${pack.accent}70` }]}>
+
                 <Image
                   accessibilityIgnoresInvertColors
                   resizeMode="contain"
                   source={selectedItem.image}
                   style={styles.sheetImage}
                 />
+
               </View>
               <View style={styles.sheetMetaRow}>
-                <Text style={[styles.sheetNumber, { color: pack.accent }]}>OBJET {selectedItem.number}/{pack.items.length}</Text>
+                <Text style={[styles.sheetNumber, { color: pack.accent }]}>OBJET {visibleItems.findIndex((item) => item.id === selectedItem.id) + 1}/{visibleItems.length}</Text>
                 <Text style={styles.sheetSlot}>{slotLabel(selectedItem.slot)}</Text>
               </View>
               <Text style={styles.sheetDescription}>{selectedItem.description}</Text>
@@ -361,34 +425,37 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
 function TeamPackActionDock({
   action,
   balance,
+  priceLabel,
+  storeReady,
   onPress,
   pack,
   pending,
 }: {
   action: TeamPackPrimaryAction;
   balance: number;
+  priceLabel: string;
+  storeReady: boolean;
   onPress: () => void;
   pack: TeamPackDefinition;
   pending: boolean;
 }) {
-  const disabled = pending || action === 'equipped' || action === 'insufficient' || action === 'unavailable';
+  const disabled = pending || (action === 'buy' && !storeReady) || action === 'equipped' || action === 'insufficient' || action === 'unavailable';
   return (
     <View style={[styles.dock, { borderTopColor: `${pack.accent}42` }]} testID="team-pack-action-dock">
       <View style={styles.dockCopy}>
         <Text style={styles.dockEyebrow}>PACK COMPLET</Text>
         {action === 'buy' || action === 'insufficient' ? (
-          <View accessibilityLabel={`${formatNumber(pack.price)} Volts`} style={styles.dockPrice}>
-            <CurrencyIcon kind="volts" size={15} />
-            <Text style={styles.dockPriceText}>{formatNumber(pack.price)}</Text>
+          <View accessibilityLabel={priceLabel} style={styles.dockPrice}>
+            <Text style={styles.dockPriceText}>{priceLabel}</Text>
           </View>
         ) : (
           <Text style={[styles.dockState, action === 'equipped' && { color: pack.accent }]}>
-            {action === 'equipped' ? 'CONFIGURATION ACTIVE' : `${pack.items.length} OBJETS POSSÉDÉS`}
+            {action === 'equipped' ? 'CONFIGURATION ACTIVE' : `${pack.items.filter(isShopItemAvailable).length} OBJETS POSSÉDÉS`}
           </Text>
         )}
       </View>
       <Pressable
-        accessibilityLabel={actionAccessibilityLabel(action, balance, pack.price, pack.name)}
+        accessibilityLabel={action === 'insufficient' ? `Solde insuffisant. Il manque ${formatNumber(pack.price - balance)} Volts` : actionAccessibilityLabel(action, priceLabel, pack.name)}
         accessibilityRole="button"
         accessibilityState={{ busy: pending, disabled }}
         disabled={disabled}
@@ -405,7 +472,7 @@ function TeamPackActionDock({
           <ActivityIndicator color="#0A0A0A" />
         ) : (
           <Text style={[styles.packActionText, disabled && styles.packActionTextDisabled]}>
-            {actionLabel(action)}
+            {action === 'buy' && !storeReady ? 'BIENTÔT DISPONIBLE' : actionLabel(action)}
           </Text>
         )}
       </Pressable>
@@ -421,11 +488,10 @@ function actionLabel(action: TeamPackPrimaryAction) {
   return 'INDISPONIBLE';
 }
 
-function actionAccessibilityLabel(action: TeamPackPrimaryAction, balance: number, price: number, packName: string) {
-  if (action === 'buy') return `Acheter et équiper le ${packName} pour ${formatNumber(price)} Volts`;
+function actionAccessibilityLabel(action: TeamPackPrimaryAction, price: string, packName: string) {
+  if (action === 'buy') return `Acheter et équiper le ${packName} pour ${price}`;
   if (action === 'equip') return `Équiper le ${packName}`;
   if (action === 'equipped') return `Le ${packName} est équipé`;
-  if (action === 'insufficient') return `Solde insuffisant. Il manque ${formatNumber(price - balance)} Volts`;
   return `Le ${packName} est indisponible`;
 }
 

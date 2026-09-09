@@ -1,6 +1,7 @@
 /// <reference types="jest" />
 
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
 import type { ReactNode } from 'react';
 
 import {
@@ -27,6 +28,15 @@ import TeamPackScreen from '../TeamPackScreen';
 
 const mockShowSnackbar = jest.fn();
 
+jest.mock('@/src/providers/AuthProvider', () => ({ useAuth: () => ({ session: { user: { id: 'test-user' } } }) }));
+jest.mock('@/src/features/purchases/api', () => ({ isCosmeticPackBillingReady: jest.fn().mockResolvedValue(true), syncCosmeticPacks: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('@/src/features/purchases/store', () => ({ currentFounderPlatform: () => 'ios' }));
+jest.mock('@/src/features/purchases/packStore', () => ({
+  loadPackStore: jest.fn().mockResolvedValue({ availability: 'ready', localizedPrice: '2,99 €' }),
+  purchasePackFromStore: jest.fn().mockResolvedValue('purchased'),
+  restorePackPurchases: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('expo-router', () => ({
   Redirect: ({ href }: { href: string }) => {
@@ -35,6 +45,7 @@ jest.mock('expo-router', () => ({
   },
   router: { back: jest.fn(), push: jest.fn() },
   useLocalSearchParams: () => ({ key: 'fnatic-black-orange' }),
+  useFocusEffect: (callback: () => void) => jest.requireActual('react').useEffect(callback, [callback]),
 }));
 jest.mock('react-native-reanimated', () => {
   const ReactNative = jest.requireActual('react-native');
@@ -45,6 +56,7 @@ jest.mock('react-native-reanimated', () => {
     runOnJS: (callback: () => void) => callback,
     useAnimatedStyle: (factory: () => object) => factory(),
     useReducedMotion: () => true,
+    cancelAnimation: jest.fn(),
     useSharedValue: (value: number) => ({ value }),
     withTiming: (value: number) => value,
   };
@@ -95,13 +107,65 @@ jest.mock('@/src/providers/SnackbarProvider', () => ({
 }));
 
 describe('TeamPackScreen', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+  });
+  afterEach(() => jest.restoreAllMocks());
 
 
   it.each([NEON_PROTOCOL_PACK, MYTHS_FORGE_PACK, CIRCUIT_ZERO_PACK])('redirects former bundle $id to individual sales', async (collection) => {
     const screen = await render(<TeamPackScreen packId={collection.id} previewData={makeData(1280, collection)} />);
     expect(screen.getByText('/shop-preview')).toBeTruthy();
     expect(screen.queryByTestId('team-pack-primary')).toBeNull();
+  });
+
+  it('shows the cash price and allows a preview purchase with zero Volts', async () => {
+    const screen = await render(<TeamPackScreen packId={SANG_DES_TITANS_PACK.id} previewData={makeData(0, SANG_DES_TITANS_PACK)} />);
+    expect(screen.getByText('2,99 €')).toBeTruthy();
+    await act(async () => { fireEvent.press(screen.getByTestId('team-pack-primary-action')); });
+    expect(screen.getByText('PACK ÉQUIPÉ')).toBeTruthy();
+  });
+
+  it('keeps checkout disabled until the backend billing migration is ready', async () => {
+    const billing = jest.requireMock('@/src/features/purchases/api');
+    billing.isCosmeticPackBillingReady.mockResolvedValueOnce(false);
+    jest.requireMock('@/src/features/shop/api').loadCosmeticShop.mockResolvedValue(makeData(0, SANG_DES_TITANS_PACK));
+    const screen = await render(<TeamPackScreen packId={SANG_DES_TITANS_PACK.id} />);
+    await waitFor(() => expect(screen.getByText('BIENTÔT DISPONIBLE')).toBeTruthy());
+    expect(screen.getByTestId('team-pack-primary-action').props.accessibilityState.disabled).toBe(true);
+    expect(jest.requireMock('@/src/features/purchases/packStore').purchasePackFromStore).not.toHaveBeenCalled();
+  });
+
+  it.each(['cancelled', 'pending'])('never grants a pack after a %s store result', async (outcome) => {
+    const shop = jest.requireMock('@/src/features/shop/api');
+    const store = jest.requireMock('@/src/features/purchases/packStore');
+    shop.loadCosmeticShop.mockResolvedValue(makeData(0, SANG_DES_TITANS_PACK));
+    store.purchasePackFromStore.mockResolvedValueOnce(outcome);
+    const screen = await render(<TeamPackScreen packId={SANG_DES_TITANS_PACK.id} />);
+    await waitFor(() => expect(screen.getByTestId('team-pack-primary-action').props.accessibilityState.disabled).toBe(false));
+    await act(async () => { fireEvent.press(screen.getByTestId('team-pack-primary-action')); });
+    expect(shop.equipCosmeticPack).not.toHaveBeenCalled();
+    expect(shop.purchaseCosmeticPack).not.toHaveBeenCalled();
+    expect(jest.requireMock('@/src/features/purchases/api').syncCosmeticPacks).not.toHaveBeenCalled();
+    expect(screen.queryByText('PACK ÉQUIPÉ')).toBeNull();
+  });
+
+  it('does not grant a paid pack until the server inventory confirms ownership', async () => {
+    const shop = jest.requireMock('@/src/features/shop/api');
+    shop.loadCosmeticShop.mockResolvedValue(makeData(0, SANG_DES_TITANS_PACK));
+    const screen = await render(<TeamPackScreen packId={SANG_DES_TITANS_PACK.id} />);
+    await waitFor(() => expect(screen.getByTestId('team-pack-primary-action').props.accessibilityState.disabled).toBe(false));
+    await act(async () => { fireEvent.press(screen.getByTestId('team-pack-primary-action')); });
+    expect(jest.requireMock('@/src/features/purchases/api').syncCosmeticPacks).toHaveBeenCalled();
+    expect(shop.equipCosmeticPack).not.toHaveBeenCalled();
+    expect(screen.getByText(/Ton achat est en cours de validation/)).toBeTruthy();
+  });
+
+  it('keeps effects out of the pack display while they are deferred', async () => {
+    const screen = await render(<TeamPackScreen packId={SANG_DES_TITANS_PACK.id} previewData={makeData(1280, SANG_DES_TITANS_PACK)} />);
+    expect(screen.queryByTestId('team-pack-item-sang-des-titans-titan-wave-effect')).toBeNull();
+    expect(screen.queryByTestId('titan-wave-preview')).toBeNull();
   });
 
   it('renders a new original pack with its eight retained objects', async () => {
@@ -114,7 +178,7 @@ describe('TeamPackScreen', () => {
 
     expect(screen.getByText('COLLECTION // ORIGINALE')).toBeTruthy();
     expect(screen.getAllByText('DERNIER PACTE')).toHaveLength(2);
-    expect(screen.getAllByTestId(/^team-pack-item-sang-des-titans-/)).toHaveLength(8);
+    expect(screen.getAllByTestId(/^team-pack-item-sang-des-titans-/)).toHaveLength(7);
     expect(screen.queryByText('Jeton du Tribut')).toBeNull();
     expect(screen.queryByText('Carte Dernier Pacte')).toBeNull();
     expect(screen.queryByText('Titre Porte-Serment')).toBeNull();
@@ -154,7 +218,7 @@ describe('TeamPackScreen', () => {
 
     expect(screen.getByTestId('team-pack-hero')).toBeTruthy();
     expect(screen.getAllByText('BLACK & ORANGE')).toHaveLength(2);
-    expect(screen.getAllByTestId(/^team-pack-item-fnatic-/)).toHaveLength(12);
+    expect(screen.getAllByTestId(/^team-pack-item-fnatic-/)).toHaveLength(11);
 
     await act(async () => {
       fireEvent.press(screen.getByTestId('team-pack-item-fnatic-jersey'));
@@ -176,7 +240,7 @@ describe('TeamPackScreen', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('team-pack-primary-action')).toHaveTextContent('PACK ÉQUIPÉ');
-      expect(screen.getByLabelText('Maillot Fnatic, objet 2 sur 12, possédé')).toBeTruthy();
+      expect(screen.getByLabelText('Maillot Fnatic, objet 2 sur 11, possédé')).toBeTruthy();
     });
     expect(mockShowSnackbar).toHaveBeenCalledWith({
       message: 'Pack Fnatic débloqué et équipé dans ta Vitrine.',
@@ -190,7 +254,7 @@ describe('TeamPackScreen', () => {
     );
 
     expect(screen.getAllByText('BLUE WALL')).toHaveLength(2);
-    expect(screen.getAllByTestId(/^team-pack-item-kc-/)).toHaveLength(12);
+    expect(screen.getAllByTestId(/^team-pack-item-kc-/)).toHaveLength(11);
 
     await act(async () => {
       fireEvent.press(screen.getByTestId('team-pack-item-kc-jersey'));
@@ -208,7 +272,7 @@ describe('TeamPackScreen', () => {
     );
 
     expect(screen.getAllByText('GENTLE MATES PARIS')).toHaveLength(2);
-    expect(screen.getAllByTestId(/^team-pack-item-m8-/)).toHaveLength(12);
+    expect(screen.getAllByTestId(/^team-pack-item-m8-/)).toHaveLength(11);
 
     await act(async () => {
       fireEvent.press(screen.getByTestId('team-pack-item-m8-jersey'));

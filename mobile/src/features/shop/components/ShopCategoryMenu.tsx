@@ -1,3 +1,4 @@
+import { SHOP_EFFECTS_ENABLED } from '../effectAvailability';
 import DoorOpen from 'lucide-react-native/icons/door-open';
 import Gem from 'lucide-react-native/icons/gem';
 import LayoutGrid from 'lucide-react-native/icons/layout-grid';
@@ -25,7 +26,7 @@ function Orbit({ color, size }: { color: string; size: number }) {
   </Svg>;
 }
 
-export const SHOP_CATEGORIES = [
+const ALL_SHOP_CATEGORIES = [
   { id: 'all', label: 'TOUT', Icon: LayoutGrid },
   { id: 'frames', label: 'CADRES', Icon: Frame },
   { id: 'lighting', label: 'LUMIÈRES', Icon: Orbit },
@@ -36,7 +37,8 @@ export const SHOP_CATEGORIES = [
   { id: 'consumables', label: 'CONSOMMABLES', Icon: Sparkles },
 ] as const;
 
-export type ShopCategory = typeof SHOP_CATEGORIES[number]['id'];
+export const SHOP_CATEGORIES = ALL_SHOP_CATEGORIES.filter((category) => SHOP_EFFECTS_ENABLED || category.id !== 'effects');
+export type ShopCategory = typeof ALL_SHOP_CATEGORIES[number]['id'];
 
 export function shopCategoryFromParam(value?: string | string[]): ShopCategory {
   const id = Array.isArray(value) ? value[0] : value;

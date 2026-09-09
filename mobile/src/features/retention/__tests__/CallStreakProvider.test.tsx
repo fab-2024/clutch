@@ -129,6 +129,17 @@ describe('CallStreakProvider', () => {
     expect(mockDismiss).toHaveBeenCalledWith('streak-snackbar');
   });
 
+  it('refreshes the wallet once when the server confirms a new milestone reward', async () => {
+    await render(tree());
+    mockLoad.mockResolvedValue({ ...state, current: 7, serverNow: '2026-09-03T08:00:01Z',
+      rewards: [{ days: 7, volts: 50, rewardedAt: '2026-09-03T08:00:01Z' }, { days: 14, volts: 100, rewardedAt: null }] });
+    await act(async () => { notifyCallStreakChanged(); });
+    expect(mockRefreshEconomy).toHaveBeenCalledTimes(1);
+    expect(mockConfirm).not.toHaveBeenCalled();
+    await act(async () => { notifyCallStreakChanged(); });
+    expect(mockRefreshEconomy).toHaveBeenCalledTimes(1);
+  });
+
   it('refreshes at server midnight without polling in the background or incrementing locally', async () => {
     mockLoad.mockResolvedValueOnce({ ...state, dayEndsAt: '2026-09-03T08:00:02Z' });
     const screen = await render(tree());

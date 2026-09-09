@@ -1,3 +1,4 @@
+import { SHOP_EFFECTS_ENABLED } from '@/src/features/shop/effectAvailability';
 import { useEffect, useRef, type RefObject } from 'react';
 import Check from 'lucide-react-native/icons/check';
 import ChevronDown from 'lucide-react-native/icons/chevron-down';
@@ -67,10 +68,11 @@ const CATEGORY_LABELS: Record<AtelierCategory, string> = {
   supports: 'Salles',
   pedestals: 'Socles',
   ranks: 'Rang',
+  effects: 'Animations',
   jerseys: 'Maillot',
 };
 
-export const SHOWCASE_ATELIER_CATEGORIES = ['supports', 'lighting', 'ranks'] as const;
+export const SHOWCASE_ATELIER_CATEGORIES = (['supports', 'lighting', 'ranks', 'effects'] as const).filter((category) => SHOP_EFFECTS_ENABLED || category !== 'effects');
 
 export default function ShowcaseAtelierDrawer({
   action,
@@ -450,6 +452,7 @@ function primaryAccessibilityHint(action: AtelierPrimaryAction, product: Atelier
 function productStateLabel(item: CosmeticItem | null, product: AtelierProduct) {
   if (item?.equipped) return 'équipé';
   if (item?.owned) return 'possédé';
+  if (product.packOnly) return 'dans le pack';
   if (!item || !item.available || !item.acquirable) return 'indisponible';
   return `${formatNumber(item.price || product.price)} Volts`;
 }

@@ -15,7 +15,7 @@ describe('daily bonus foreground session', () => {
     let resolve!: (value: DailyBonusReceipt) => void;
     const claim = jest.fn().mockImplementation(() => new Promise<DailyBonusReceipt>((done) => { resolve = done; }));
     const onReceipt = jest.fn();
-    const session = createDailyBonusSession({ claim, onReceipt, monotonicNow: () => 0 });
+    const session = createDailyBonusSession({ check: claim, onReceipt, monotonicNow: () => 0 });
     session.retry();
     expect(claim).not.toHaveBeenCalled();
     session.setActive(true);
@@ -42,7 +42,7 @@ describe('daily bonus foreground session', () => {
 
   it('retries transient failures with a capped backoff and clears timers on logout', async () => {
     const claim = jest.fn().mockRejectedValue(new DailyBonusError('network', true));
-    const session = createDailyBonusSession({ claim, onReceipt: jest.fn() });
+    const session = createDailyBonusSession({ check: claim, onReceipt: jest.fn() });
     session.setActive(true);
     await Promise.resolve();
     for (const [index, delay] of [1_000, 5_000, 15_000, 60_000, 300_000, 300_000].entries()) {
@@ -61,7 +61,7 @@ describe('daily bonus foreground session', () => {
   it('lets reconnection retry early without leaving a duplicate timer', async () => {
     const claim = jest.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue(receipt);
     const onReceipt = jest.fn();
-    const session = createDailyBonusSession({ claim, onReceipt, monotonicNow: () => 0 });
+    const session = createDailyBonusSession({ check: claim, onReceipt, monotonicNow: () => 0 });
     session.setActive(true);
     await Promise.resolve();
     session.retry();
@@ -75,7 +75,7 @@ describe('daily bonus foreground session', () => {
 
   it('does not retry denied claims or deliver a previous account’s delayed response', async () => {
     const claim = jest.fn().mockRejectedValue(new DailyBonusError('42501', false));
-    const session = createDailyBonusSession({ claim, onReceipt: jest.fn() });
+    const session = createDailyBonusSession({ check: claim, onReceipt: jest.fn() });
     session.setActive(true);
     await Promise.resolve();
     expect(jest.getTimerCount()).toBe(0);
@@ -83,7 +83,7 @@ describe('daily bonus foreground session', () => {
     let resolve!: (value: DailyBonusReceipt) => void;
     const onReceipt = jest.fn();
     const oldSession = createDailyBonusSession({
-      claim: () => new Promise((done) => { resolve = done; }), onReceipt,
+      check: () => new Promise((done) => { resolve = done; }), onReceipt,
     });
     oldSession.setActive(true);
     oldSession.dispose();

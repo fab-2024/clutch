@@ -1,0 +1,138 @@
+{
+  "bundle_id": "com.fabthetap.clutch",
+  "products": [
+    {
+      "pack_id": "sang-des-titans",
+      "product_id": "clutch_pack_sang_des_titans_v1",
+      "entitlement_id": "pack_sang_des_titans",
+      "reference_name": "GRIFF — Sang des Titans",
+      "type": "non_consumable",
+      "base_territory": "FRA",
+      "target_price": {
+        "currency": "EUR",
+        "amount": "2.99"
+      },
+      "localizations": {
+        "fr-FR": {
+          "display_name": "Pack Sang des Titans",
+          "description": "Le Dernier Pacte s’invite dans ta vitrine."
+        },
+        "en-US": {
+          "display_name": "Sang des Titans Pack",
+          "description": "Last Pact cosmetics for your showcase."
+        }
+      }
+    },
+    {
+      "pack_id": "chute-libre",
+      "product_id": "clutch_pack_chute_libre_v1",
+      "entitlement_id": "pack_chute_libre",
+      "reference_name": "GRIFF — Chute Libre",
+      "type": "non_consumable",
+      "base_territory": "FRA",
+      "target_price": {
+        "currency": "EUR",
+        "amount": "2.99"
+      },
+      "localizations": {
+        "fr-FR": {
+          "display_name": "Pack Chute Libre",
+          "description": "Un style nomade pour ta vitrine."
+        },
+        "en-US": {
+          "display_name": "Chute Libre Pack",
+          "description": "Nomad Lookout cosmetics for your showcase."
+        }
+      }
+    },
+    {
+      "pack_id": "serment-du-givre",
+      "product_id": "clutch_pack_serment_du_givre_v1",
+      "entitlement_id": "pack_serment_du_givre",
+      "reference_name": "GRIFF — Serment du Givre",
+      "type": "non_consumable",
+      "base_territory": "FRA",
+      "target_price": {
+        "currency": "EUR",
+        "amount": "2.99"
+      },
+      "localizations": {
+        "fr-FR": {
+          "display_name": "Pack Serment du Givre",
+          "description": "Les cimes gelées s’invitent dans ta vitrine."
+        },
+        "en-US": {
+          "display_name": "Serment du Givre Pack",
+          "description": "Frozen summit cosmetics for your showcase."
+        }
+      }
+    },
+    {
+      "pack_id": "conclave-arcanique",
+      "product_id": "clutch_pack_conclave_arcanique_v1",
+      "entitlement_id": "pack_conclave_arcanique",
+      "reference_name": "GRIFF — Conclave Arcanique",
+      "type": "non_consumable",
+      "base_territory": "FRA",
+      "target_price": {
+        "currency": "EUR",
+        "amount": "2.99"
+      },
+      "localizations": {
+        "fr-FR": {
+          "display_name": "Pack Conclave Arcanique",
+          "description": "La magie du Conclave pour ta vitrine."
+        },
+        "en-US": {
+          "display_name": "Conclave Arcanique Pack",
+          "description": "Arcane Conclave cosmetics for your showcase."
+        }
+      }
+    },
+    {
+      "pack_id": "turbo-arena",
+      "product_id": "clutch_pack_turbo_arena_v1",
+      "entitlement_id": "pack_turbo_arena",
+      "reference_name": "GRIFF — Turbo Arena",
+      "type": "non_consumable",
+      "base_territory": "FRA",
+      "target_price": {
+        "currency": "EUR",
+        "amount": "2.99"
+      },
+      "localizations": {
+        "fr-FR": {
+          "display_name": "Pack Turbo Arena",
+          "description": "Le Dôme Turbo s’invite dans ta vitrine."
+        },
+        "en-US": {
+          "display_name": "Turbo Arena Pack",
+          "description": "Turbo Dome cosmetics for your showcase."
+        }
+      }
+    },
+    {
+      "pack_id": "dernier-round",
+      "product_id": "clutch_pack_dernier_round_v1",
+      "entitlement_id": "pack_dernier_round",
+      "reference_name": "GRIFF — Dernier Round",
+      "type": "non_consumable",
+      "base_territory": "FRA",
+      "target_price": {
+        "currency": "EUR",
+        "amount": "2.99"
+      },
+      "localizations": {
+        "fr-FR": {
+          "display_name": "Pack Dernier Round",
+          "description": "Un style tactique pour ta vitrine."
+        },
+        "en-US": {
+          "display_name": "Dernier Round Pack",
+          "description": "Forward Base cosmetics for your showcase."
+        }
+      }
+    }
+  ],
+  "app_name": "GRIFF"
+}

@@ -23,6 +23,9 @@ export type ShowcaseAtmosphereLayerProps = {
 };
 
 export default function ShowcaseAtmosphereLayerWeb({
+  active,
+  reduceMotion,
+  quality,
   cosmetics,
   favoriteTeam,
   lightingAccent,
@@ -37,5 +40,6 @@ export default function ShowcaseAtmosphereLayerWeb({
     rankOrder,
   });
 
-  return <ShowcaseAtmosphereFallback atmosphere={atmosphere} reason="web" />;
+  return <ShowcaseAtmosphereFallback atmosphere={atmosphere} reason="web"
+    animated={active && !reduceMotion && quality !== 'static' && Boolean(cosmetics?.factionEffect)} />;
 }

@@ -4,6 +4,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { View } from 'react-native';
 
 import { SHOWCASE_ROOM_CATALOG } from '@/src/features/shop/showcaseRoomCatalog';
+import { showcaseCentralPedestalBackdrop } from '@/src/features/shop/showcaseCentralPedestalCatalog';
 import { createPresenterRoomAssignments } from '@/src/features/shop/showcasePresenterAssignments';
 import { SHOWCASE_PRESENTER_CATALOG } from '@/src/features/shop/showcasePresenterCatalog';
 import { SHOWCASE_RANK_DISPLAY_CATALOG } from '@/src/features/shop/showcaseRankDisplayCatalog';
@@ -39,6 +40,7 @@ import {
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('@/src/features/onboarding/components/TeamLogo', () => 'TeamLogo');
 jest.mock('../ProfileScreen', () => 'ProfileScreen');
+jest.mock('@/src/components/dev/PreviewRoute', () => ({ usePreviewRoutesEnabled: () => true }));
 jest.mock('../showcase/ShowcaseAtmosphereLayer', () => {
   const React = jest.requireActual('react');
   const ReactNative = jest.requireActual('react-native');
@@ -69,6 +71,47 @@ const ROOM_PROPS = {
 } as const;
 
 describe('Showcase room composition', () => {
+  it.each(['core', 'trophy', 'rank'] as const)('frames the central %s and hides the display when that slot is emptied', async (kind) => {
+    const room = SHOWCASE_ROOM_CATALOG[0];
+    const assignments = createDefaultShowcaseRoomAssignments([]);
+    assignments.rank = { accent: '#B9E8FF', id: 'central-object', kind, name: 'Objet central' };
+    const props = { lighting: 'cyan' as const, onSlotPress: jest.fn(), rankDisplay: SHOWCASE_RANK_DISPLAY_CATALOG[1], room };
+    const screen = await render(<ShowcaseRoomEditorScene {...props} assignments={assignments} />);
+    expect(screen.getByTestId('showcase-rank-display-rank_crystal_capsule')).toBeTruthy();
+    expect(screen.getByTestId('showcase-central-pedestal-removal')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-artwork-rank')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('showcase-room-slot-rank'));
+    expect(props.onSlotPress).toHaveBeenCalledWith('rank');
+    await screen.rerender(<ShowcaseRoomEditorScene {...props} rankDisplay={null} assignments={assignments} />);
+    expect(screen.queryByTestId('showcase-central-pedestal-removal')).toBeNull();
+    expect(screen.getByTestId('showcase-room-artwork-rank')).toBeTruthy();
+    await screen.rerender(<ShowcaseRoomEditorScene {...props} assignments={{ ...assignments, rank: null }} />);
+    expect(screen.queryByTestId('showcase-rank-display-rank_crystal_capsule')).toBeNull();
+    expect(screen.queryByTestId('showcase-central-pedestal-removal')).toBeNull();
+  });
+
+  it('defines a removable central pedestal for every room and collection layout', () => {
+    for (const room of [...SHOWCASE_ROOM_CATALOG, ...SHOWCASE_PRESENTER_CATALOG]) {
+      const backdrop = showcaseCentralPedestalBackdrop(room.id);
+      expect(backdrop).not.toBeNull();
+      expect(room.slots.some((slot) => slot.id === backdrop?.slotId)).toBe(true);
+    }
+  });
+
+  it('replaces only the main pedestal in the Forge des failles', async () => {
+    const room = SHOWCASE_PRESENTER_CATALOG.find((candidate) => candidate.id === 'mythes-forge-magma-pedestals')!;
+    const assignments = createDefaultShowcaseRoomAssignments([], room.slots);
+    assignments.jersey = { accent: '#F5792A', id: 'central-forge-object', kind: 'core', name: 'Objet central' };
+    const onSlotPress = jest.fn();
+    const screen = await render(<ShowcaseRoomEditorScene assignments={assignments} room={room} slots={room.slots}
+      lighting="amber" onSlotPress={onSlotPress} rankDisplay={SHOWCASE_RANK_DISPLAY_CATALOG[4]} />);
+    expect(screen.getByTestId('showcase-rank-display-rank_volcanic_forge')).toBeTruthy();
+    expect(screen.getByTestId('showcase-central-pedestal-removal')).toBeTruthy();
+    expect(screen.getAllByTestId(/^showcase-room-slot-(?!area-)/)).toHaveLength(room.slots.length);
+    await fireEvent.press(screen.getByTestId('showcase-room-slot-jersey'));
+    expect(onSlotPress).toHaveBeenCalledWith('jersey');
+  });
+
   it('keeps a pack presenter available after its owner previews another presenter', async () => {
     const onPresenterChange = jest.fn();
     const props = {
@@ -175,7 +218,7 @@ describe('Showcase room composition', () => {
 
     expect(screen.getByTestId('showcase-atmosphere-active')).toBeTruthy();
     expect(screen.getByLabelText('Atmosphère kc-blue-wall-effect, mouvements réduits')).toBeTruthy();
-    expect(screen.getAllByTestId(/^showcase-room-slot-/)).toHaveLength(10);
+    expect(screen.getAllByTestId(/^showcase-room-slot-(?!area-)/)).toHaveLength(10);
     await fireEvent.press(screen.getByTestId('showcase-room-slot-left-free'));
     await fireEvent.press(screen.getByTestId('showcase-room-slot-right-free'));
     expect(onSlotPress.mock.calls).toEqual([['left-free'], ['right-free']]);
@@ -233,7 +276,7 @@ describe('Showcase room composition', () => {
     );
 
     expect(screen.getByLabelText('Atmosphère m8-sparkle-effect, mouvements réduits')).toBeTruthy();
-    expect(screen.getAllByTestId(/^showcase-room-slot-/)).toHaveLength(10);
+    expect(screen.getAllByTestId(/^showcase-room-slot-(?!area-)/)).toHaveLength(10);
     await fireEvent.press(screen.getByTestId('showcase-room-slot-left-free'));
     await fireEvent.press(screen.getByTestId('showcase-room-slot-right-free'));
     expect(onSlotPress.mock.calls).toEqual([['left-free'], ['right-free']]);
@@ -493,7 +536,7 @@ describe('Showcase room composition', () => {
 
     expect(screen.getByTestId('showcase-room-editor')).toBeTruthy();
     expect(screen.getByTestId('showcase-room-background-obsidian-gallery')).toBeTruthy();
-    expect(screen.getAllByTestId(/^showcase-room-slot-/)).toHaveLength(8);
+    expect(screen.getAllByTestId(/^showcase-room-slot-(?!area-)/)).toHaveLength(8);
     expect(screen.getByLabelText('Emplacement maillot, Maillot Fnatic')).toBeTruthy();
     expect(screen.getByLabelText('Emplacement droit, vide')).toBeTruthy();
 
@@ -515,10 +558,17 @@ describe('Showcase room composition', () => {
     );
     const artwork = () => screen.getByTestId('showcase-room-artwork-jersey');
     expect(screen.queryByTestId('showcase-room-mirror-right-free')).toBeNull();
+    expect(screen.queryByLabelText('Inverser Fnatic')).toBeNull();
+    await fireEvent(screen.getByTestId('showcase-room-slot-area-jersey'), 'pointerEnter', { nativeEvent: { pointerType: 'mouse' } });
     for (const scaleX of [-1, 1]) {
       await fireEvent.press(screen.getByLabelText('Inverser Fnatic'));
       expect(artwork()).toHaveStyle({ transform: expect.arrayContaining([{ scaleX }]) });
     }
+    await fireEvent(screen.getByTestId('showcase-room-slot-area-jersey'), 'pointerLeave', { nativeEvent: { pointerType: 'mouse' } });
+    expect(screen.queryByLabelText('Inverser Fnatic')).toBeNull();
+    await fireEvent(screen.getByTestId('showcase-room-slot-jersey'), 'longPress');
+    await fireEvent(screen.getByTestId('showcase-room-slot-area-jersey'), 'pointerLeave', { nativeEvent: { pointerType: 'touch' } });
+    expect(screen.getByLabelText('Inverser Fnatic')).toBeTruthy();
     expect(onSlotPress).not.toHaveBeenCalled();
   });
 
@@ -562,7 +612,7 @@ describe('Showcase room composition', () => {
 
     expect(screen.getByLabelText('Carbone Mécanique, 10 emplacements personnalisables')).toBeTruthy();
     expect(screen.queryByTestId('showcase-rank-display-rank_orbital_core')).toBeNull();
-    expect(screen.getAllByTestId(/^showcase-room-slot-/)).toHaveLength(10);
+    expect(screen.getAllByTestId(/^showcase-room-slot-(?!area-)/)).toHaveLength(10);
 
     await fireEvent.press(screen.getByTestId('showcase-room-slot-left-extra'));
     await fireEvent.press(screen.getByTestId('showcase-room-slot-right-extra'));

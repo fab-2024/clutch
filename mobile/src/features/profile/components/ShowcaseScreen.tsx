@@ -1,7 +1,7 @@
+import { SHOP_EFFECTS_ENABLED } from '@/src/features/shop/effectAvailability';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import ArrowLeft from 'lucide-react-native/icons/arrow-left';
-import Eye from 'lucide-react-native/icons/eye';
-import Settings2 from 'lucide-react-native/icons/settings-2';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -15,12 +15,11 @@ import {
 import { useReducedMotion } from 'react-native-reanimated';
 
 import { Screen } from '@/src/components/layout/Screen';
-import { t } from '@/src/lib/i18n';
 import ShowcaseOwnerProfile from '../showcaseSocial/components/ShowcaseOwnerProfile';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import { rankEmblemSource } from '@/src/features/ranking/components/RankEmblem';
-import { equipCosmetic, loadCosmeticShop, purchaseCosmetic } from '@/src/features/shop/api';
+import { equipCosmetic, loadCosmeticShop, purchaseCosmetic, unequipRankDisplay } from '@/src/features/shop/api';
 import {
   PACK_ROOM_ATELIER_PRODUCTS,
   atelierProductById,
@@ -31,6 +30,7 @@ import {
 import {
   applyAtelierTry,
   applyPreviewAtelierAction,
+  applyPreviewRankDisplayRemoval,
   atelierPrimaryAction,
   atelierRuntimeItems,
   equippedAtelierIds,
@@ -57,7 +57,7 @@ import {
   cosmeticPackItemById,
   currentCosmeticPackItemById,
 } from '@/src/features/shop/teamPackCatalog';
-import type { CosmeticItem, CosmeticShopData, EquippedCosmetics } from '@/src/features/shop/types';
+import { EMPTY_EQUIPPED_COSMETICS, type CosmeticItem, type CosmeticShopData, type EquippedCosmetics } from '@/src/features/shop/types';
 import { resolveEquippedAchievementBadges } from '@/src/features/profile/achievementBadges/equipment';
 import { useAchievementBadgeEquipment } from '@/src/features/profile/achievementBadges/useAchievementBadgeEquipment';
 import ShowcaseRingDetailSheet from '@/src/features/profile/showcaseRings/components/ShowcaseRingDetailSheet';
@@ -153,6 +153,7 @@ export default function ShowcaseScreen({
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [section, setSection] = useState<ShowcaseSection>(requestedSection);
+  const [setupNoticeVisible, setSetupNoticeVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [atelierVisible, setAtelierVisible] = useState(false);
   const [atelierCategory, setAtelierCategory] = useState<AtelierCategory>('lighting');
@@ -166,7 +167,7 @@ export default function ShowcaseScreen({
   const [lighting, setLighting] = useState<ShowcaseLighting>('cyan');
   const [presenterId, setPresenterId] = useState<string>(DEFAULT_SHOWCASE_PRESENTER_ID);
   const [roomId, setRoomId] = useState<string | null>(selectedRoom?.id ?? null);
-  const [rankDisplayId, setRankDisplayId] = useState<string>(DEFAULT_SHOWCASE_RANK_DISPLAY_ID);
+  const [rankDisplayId, setRankDisplayId] = useState<string>('');
   const [rankDisplayPendingId, setRankDisplayPendingId] = useState<string | null>(null);
   const [jerseyPresentation, setJerseyPresentation] = useState<ShowcaseJerseyPresentation>('locker');
   const [selectedRingFamily, setSelectedRingFamily] = useState<ShowcaseRingFamily | null>(null);
@@ -202,11 +203,6 @@ export default function ShowcaseScreen({
   );
   const atmosphereActive = routeFocused && appState === 'active';
 
-  useFocusEffect(useCallback(() => {
-    setRouteFocused(true);
-    return () => setRouteFocused(false);
-  }, []));
-
   useEffect(() => {
     const subscription = AppState.addEventListener('change', setAppState);
     return () => subscription.remove();
@@ -240,6 +236,7 @@ export default function ShowcaseScreen({
         loadCosmeticShop(),
       ]);
       if (requestId !== requestRef.current) return;
+      savedAtelierAppliedRef.current = false;
       setProfileData(nextProfile);
       setShopData(nextShop);
     } catch (caught) {
@@ -267,13 +264,15 @@ export default function ShowcaseScreen({
     });
   }, [previewShop, refreshCosmetics, refreshEconomy]);
 
-  useEffect(() => {
-    void load();
+  useFocusEffect(useCallback(() => {
+    setRouteFocused(true);
+    void load(savedAtelierAppliedRef.current);
     return () => {
+      setRouteFocused(false);
       requestRef.current += 1;
       atelierSyncRef.current += 1;
     };
-  }, [load]);
+  }, [load]));
 
   useEffect(() => {
     if (previewProfile || loading || !profileData || trackedRef.current) return;
@@ -349,15 +348,24 @@ export default function ShowcaseScreen({
       ? ownedDisplays
       : SHOWCASE_RANK_DISPLAY_CATALOG.filter((display) => display.id === DEFAULT_SHOWCASE_RANK_DISPLAY_ID);
   }, [previewProfile, previewShop, shopData?.items]);
-  const cosmetics = resolveEquipped(shopData, profileData?.cosmetics);
+  const savedCosmetics = resolveEquipped(shopData, profileData?.cosmetics);
+  const previewEffect = atelierVisible && atelierTrial.effects
+    ? atelierProducts('effects').find((effect) => effect.id === atelierTrial.effects)
+    : null;
+  const resolvedCosmetics = previewEffect ? {
+    ...(savedCosmetics ?? EMPTY_EQUIPPED_COSMETICS),
+    factionEffect: { id: previewEffect.id, slot: 'effet_faction' as const, level: 1,
+      name: previewEffect.name, description: previewEffect.description, rarity: previewEffect.rarity,
+      styleKey: previewEffect.id, accent: previewEffect.accent },
+  } : savedCosmetics;
+  const cosmetics = !SHOP_EFFECTS_ENABLED && resolvedCosmetics
+    ? { ...resolvedCosmetics, factionEffect: null } : resolvedCosmetics;
   const presenter = showcasePresenterById(presenterId)
     ?? showcasePresenterById(DEFAULT_SHOWCASE_PRESENTER_ID)!;
   const activeRoom = showcaseRoomById(roomId);
   const rankDisplay = showcaseRankDisplayById(rankDisplayId)
     ?? showcaseRankDisplayById(DEFAULT_SHOWCASE_RANK_DISPLAY_ID)!;
-  const visibleRankDisplay = rankDisplay.id === DEFAULT_SHOWCASE_RANK_DISPLAY_ID
-    ? null
-    : rankDisplay;
+  const visibleRankDisplay = rankDisplayId ? rankDisplay : null;
   const activeSlots = activeRoom?.slots ?? presenter.slots;
   const editableScene = activeRoom ?? {
     ...presenter,
@@ -383,7 +391,7 @@ export default function ShowcaseScreen({
   );
   const atelierSelectedId = atelierTrial[atelierCategory]
     ?? (atelierCategory === 'pedestals' ? previewPedestalIdForTargets : null)
-    ?? atelierEquippedIds[atelierCategory]
+    ?? (atelierEquippedIds[atelierCategory] || null)
     ?? atelierCategoryProducts[0]?.id
     ?? null;
   const atelierSelectedProduct = atelierCategoryProducts.find((product) => product.id === atelierSelectedId)
@@ -403,7 +411,6 @@ export default function ShowcaseScreen({
     ? atelierPrimaryAction(atelierSelectedItem, shopData?.balance ?? 0)
     : 'unavailable';
   const canRemoveRankDisplay = atelierSelectedProduct?.category === 'ranks'
-    && atelierSelectedProduct.id !== DEFAULT_SHOWCASE_RANK_DISPLAY_ID
     && atelierSelectedProduct.id === rankDisplayId
     && Boolean(atelierSelectedItem?.equipped);
   const atelierPurchaseProduct = atelierProductById(atelierPurchaseId);
@@ -476,7 +483,7 @@ export default function ShowcaseScreen({
       pedestal,
       pedestalAssignments: { ...pedestalAssignments },
       presenterId: presenter.id,
-      rankDisplayId: rankDisplay.id,
+      rankDisplayId,
       roomId: activeRoom?.id ?? null,
       theme,
     };
@@ -520,14 +527,14 @@ export default function ShowcaseScreen({
       lightingEntryOpenedRef.current = true;
       atelierSceneSnapshotRef.current = {
         jerseyPresentation, lighting, pedestal, pedestalAssignments: { ...pedestalAssignments },
-        presenterId: presenter.id, rankDisplayId: rankDisplay.id, roomId: activeRoom?.id ?? null, theme,
+        presenterId: presenter.id, rankDisplayId, roomId: activeRoom?.id ?? null, theme,
       };
       setAtelierCategory('lighting');
       setAtelierVisible(true);
     });
     return () => cancelAnimationFrame(frame);
   }, [requestedLighting, loading, shopData, jerseyPresentation, lighting, pedestal,
-    pedestalAssignments, presenter.id, rankDisplay.id, activeRoom?.id, theme]);
+    pedestalAssignments, presenter.id, rankDisplayId, activeRoom?.id, theme]);
 
   function closeAtelier() {
     if (atelierPendingId) return;
@@ -575,7 +582,6 @@ export default function ShowcaseScreen({
   function previewAtelierProduct(product: AtelierProduct) {
     if (atelierPendingId) return;
     if (product.category === 'ranks'
-      && product.id !== DEFAULT_SHOWCASE_RANK_DISPLAY_ID
       && product.id === rankDisplayId
       && atelierRuntimeById.get(product.id)?.equipped) {
       void removeRankDisplay();
@@ -682,24 +688,21 @@ export default function ShowcaseScreen({
 
   async function removeRankDisplay() {
     if (!shopData || atelierPendingId) return;
-    const bareDisplay = shopData.items.find((item) => item.id === DEFAULT_SHOWCASE_RANK_DISPLAY_ID);
-    if (!bareDisplay?.owned) return;
     const previousData = shopData;
     const previousSnapshot = atelierSceneSnapshotRef.current;
     const previousTrial = atelierTrial;
     const previousId = rankDisplayId;
-    // The default display is the persisted, unframed rank presentation.
-    const optimistic = applyPreviewAtelierAction(shopData, bareDisplay.id);
+    const optimistic = applyPreviewRankDisplayRemoval(shopData);
     atelierSyncRef.current += 1;
     setAtelierPendingId(previousId);
     setShopData(optimistic);
-    setRankDisplayId(bareDisplay.id);
-    setAtelierTrial(applyAtelierTry(atelierTrial, 'ranks', bareDisplay.id));
+    setRankDisplayId('');
+    setAtelierTrial(applyAtelierTry(atelierTrial, 'ranks', ''));
     updateAtelierSnapshot(optimistic, 'ranks');
     setAtelierNotice({ text: 'Retrait de l’écrin…', tone: 'info' });
 
     try {
-      if (!previewShop) await equipCosmetic(bareDisplay.id);
+      if (!previewShop) await unequipRankDisplay();
       setAtelierNotice({ text: 'Écrin déséquipé.', tone: 'success' });
       syncAtelierAfterMutation(optimistic);
     } catch (caught) {
@@ -851,7 +854,7 @@ export default function ShowcaseScreen({
           {section === 'showcase' ? (
             <ShowcaseRoomEditorScene
               assignments={roomAssignments}
-              atmosphereActive={atmosphereActive && !loading && !settingsVisible && !atelierVisible && !activeRoomSlot}
+              atmosphereActive={atmosphereActive && !loading && !settingsVisible && (!atelierVisible || atelierCategory === 'effects') && !activeRoomSlot}
               atmosphereQuality={atmosphereQualityOverride}
               cosmetics={cosmetics}
               favoriteTeam={profileData?.favoriteTeam}
@@ -865,7 +868,7 @@ export default function ShowcaseScreen({
               pedestalLayerEnabled={INTERCHANGEABLE_SHOWCASE_PEDESTALS_ENABLED}
               pedestalPlacements={pedestalPlacements}
               rankAccent={rankAccent}
-              rankDisplay={!activeRoom && presenter.showRankDisplay === false ? null : visibleRankDisplay}
+              rankDisplay={visibleRankDisplay}
               rankOrder={profileData?.ranking.grade.ordre}
               reduceMotion={reduceMotion}
               room={editableScene}
@@ -909,25 +912,35 @@ export default function ShowcaseScreen({
             >
               <ArrowLeft color={colors.text} size={20} />
             </Pressable>
-            <Pressable accessibilityLabel={t('showcase.social.entry')} accessibilityRole="button"
-              onPress={() => router.push((previewProfile || previewShop ? '/growth-preview?section=activity' : '/showcase-activity') as never)}
-              style={({ pressed }) => [styles.floatingButton, pressed && styles.pressed]}>
-              <Eye color={colors.text} size={20} />
-            </Pressable>
-            <Pressable
-              accessibilityLabel="Ouvrir les réglages de la vitrine"
-              accessibilityRole="button"
-              accessibilityState={{ expanded: settingsVisible }}
-              onPress={() => {
-                if (atelierPendingId) return;
-                if (atelierVisible) closeAtelier();
-                setSettingsVisible(true);
-              }}
-              style={({ pressed }) => [styles.floatingButton, pressed && styles.pressed]}
-            >
-              <Settings2 color={colors.text} size={20} />
-            </Pressable>
           </View>
+
+          <Pressable
+            accessibilityLabel="Setup"
+            accessibilityRole="button"
+            accessibilityState={{ expanded: setupNoticeVisible }}
+            onPress={() => {
+              setSetupNoticeVisible(true);
+              if (!previewProfile && !previewShop) {
+                void trackAnalyticsEvent({
+                  type: 'collection_affichee',
+                  campaignKey: 'showcase-setup-click',
+                }).catch(() => undefined);
+              }
+            }}
+            style={({ pressed }) => [styles.setupButton, pressed && styles.pressed]}
+            testID="showcase-setup-button"
+          >
+            <ChevronRight color={colors.volt} size={26} />
+            <Text style={styles.setupLabel}>SETUP</Text>
+          </Pressable>
+          {setupNoticeVisible ? (
+            <View style={styles.setupNotice} testID="showcase-setup-notice">
+              <Text accessibilityRole="alert" style={styles.setupNoticeText}>Setup arrive dans une prochaine mise à jour.</Text>
+              <Pressable accessibilityLabel="Fermer le message Setup" accessibilityRole="button" onPress={() => setSetupNoticeVisible(false)} style={styles.setupDismiss}>
+                <Text style={styles.setupLabel}>FERMER</Text>
+              </Pressable>
+            </View>
+          ) : null}
 
           {loading ? (
             <View accessibilityLabel="Installation de ta collection" accessibilityRole="progressbar" pointerEvents="none" style={styles.loading}>
@@ -1013,7 +1026,7 @@ export default function ShowcaseScreen({
             onThemeChange={setTheme}
             presenterId={activeRoom?.productId ?? presenter.id}
             rankDisplayDisabled={Boolean(rankDisplayPendingId) || refreshing || loading}
-            rankDisplayId={rankDisplay.id}
+            rankDisplayId={rankDisplayId}
             rankDisplays={rankDisplayOptions}
             theme={theme}
             unlockedPresenterIds={unlockedPresenterIds}
@@ -1185,6 +1198,11 @@ function friendlyAtelierError(caught: unknown, fallback: string) {
 const styles = StyleSheet.create({
   screen: { position: 'relative', flex: 1, minWidth: 0, backgroundColor: SHOWCASE_PALETTE.graphiteDeep },
   sceneWrap: { position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden' },
+  setupButton: { position: 'absolute', right: 12, top: '50%', minWidth: 58, minHeight: 64, padding: 10, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: 18, backgroundColor: 'rgba(3,7,10,.8)', borderWidth: 1, borderColor: 'rgba(164,188,204,.25)' },
+  setupLabel: { color: colors.text, fontSize: 11, fontWeight: '700', letterSpacing: 1 },
+  setupNotice: { position: 'absolute', right: 82, top: '50%', width: 218, padding: 16, borderRadius: 16, backgroundColor: '#0C1922', borderWidth: 1, borderColor: 'rgba(164,188,204,.3)' },
+  setupNoticeText: { color: colors.text, fontSize: 14, lineHeight: 20 },
+  setupDismiss: { minHeight: 44, justifyContent: 'center', alignItems: 'flex-end', marginTop: 4 },
   floatingControls: { position: 'absolute', top: 12, right: 12, left: 12, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
   floatingButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: 'rgba(3,7,10,.64)', borderWidth: 1, borderColor: 'rgba(164,188,204,.2)' },
   loading: { position: 'absolute', top: 12, left: '50%', minHeight: 30, marginLeft: -96, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(5,8,11,.86)', borderWidth: 1, borderColor: '#30414E' },

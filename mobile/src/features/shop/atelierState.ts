@@ -11,7 +11,6 @@ import {
   showcasePresenterById,
   showcasePresenterByRoomId,
 } from './showcasePresenterCatalog';
-import { DEFAULT_SHOWCASE_RANK_DISPLAY_ID } from './showcaseRankDisplayCatalog';
 import { showcaseRoomByProductId } from './showcaseRoomCatalog';
 import { conflictingCollectionRoom, DEFAULT_SHOWCASE_LIGHTING_ID } from './showcaseRoomSelection';
 import type { CosmeticItem, CosmeticShopData, EquippedCosmetics, CosmeticSlot } from './types';
@@ -30,12 +29,13 @@ export type AtelierSceneConfig = {
 };
 
 const DEFAULT_IDS: Record<AtelierCategory, string> = {
+  effects: '',
   originals: 'circuit-zero-kairos-6',
   materials: 'material_graphite',
   lighting: DEFAULT_SHOWCASE_LIGHTING_ID,
   supports: 'supports_gallery',
   pedestals: 'sang-des-titans-monolith-pedestal',
-  ranks: DEFAULT_SHOWCASE_RANK_DISPLAY_ID,
+  ranks: '',
   jerseys: 'jersey_locker',
 };
 
@@ -82,6 +82,14 @@ export function applyPreviewAtelierAction(data: CosmeticShopData, itemId: string
   };
 }
 
+export function applyPreviewRankDisplayRemoval(data: CosmeticShopData): CosmeticShopData {
+  return {
+    ...data,
+    items: data.items.map((item) => item.slot === 'vitrine_rang' ? { ...item, equipped: false } : item),
+    equipped: { ...data.equipped, showcase: { ...data.equipped.showcase, rankDisplay: null } },
+  };
+}
+
 export function applyAtelierTry(
   selection: AtelierTrySelection,
   category: AtelierCategory,
@@ -93,6 +101,7 @@ export function applyAtelierTry(
 export function equippedAtelierIds(equipped: EquippedCosmetics | null | undefined): Record<AtelierCategory, string> {
   const lightingId = equipped?.showcase.lighting?.id;
   return {
+    effects: equipped?.factionEffect?.id ?? '',
     originals: equipped?.core?.id ?? DEFAULT_IDS.originals,
     materials: equipped?.showcase.material?.id ?? DEFAULT_IDS.materials,
     lighting: equipped?.showcase.lighting?.id ?? DEFAULT_IDS.lighting,
