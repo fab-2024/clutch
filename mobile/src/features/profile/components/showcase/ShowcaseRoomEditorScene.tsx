@@ -57,7 +57,7 @@ type ShowcaseRoomEditorSceneProps = {
   pedestalLayerEnabled?: boolean;
   pedestalPlacements?: ShowcaseRoomPedestalPlacements;
   rankAccent?: string;
-  rankDisplay?: Pick<ShowcaseRankDisplayDefinition, 'id' | 'name' | 'overlayImage'> | null;
+  rankDisplay?: Pick<ShowcaseRankDisplayDefinition, 'id' | 'name' | 'overlayImage' | 'foregroundClip'> | null;
   rankOrder?: number | null;
   reduceMotion?: boolean;
   room: Pick<ShowcaseRoomDefinition, 'accent' | 'id' | 'image' | 'name'> & {
@@ -402,7 +402,8 @@ export default function ShowcaseRoomEditorScene({
           });
           if (displayLayout && slot.id === centralSlotId) {
             const originalSize = composition.artworkSize;
-            const artworkSize = displayLayout.maxArtworkSize;
+            const displayItemScale = rankDisplay?.id === 'rank_carbon_cradle' ? 1.25 : 1;
+            const artworkSize = displayLayout.maxArtworkSize * displayItemScale;
             const bottomInset = (composition.artworkTranslateY - composition.artworkContactY)
               * artworkSize / originalSize;
             const slotBottom = layout.canvas.height * (
@@ -551,6 +552,16 @@ export default function ShowcaseRoomEditorScene({
             </View>
           );
         })}
+        {showRankDisplay && rankDisplay?.foregroundClip && displayLayout ? (
+          <ShowcaseRankDisplayArtwork
+            restoreOpacity={false}
+            foregroundClip={rankDisplay.foregroundClip}
+            name={rankDisplay.name}
+            source={rankDisplay.overlayImage}
+            style={[styles.rankDisplayOverlay, displayLayout.image, { zIndex: Math.round(displayLayout.groundY) + 1 }]}
+            testID={`showcase-rank-display-front-${rankDisplay.id}`}
+          />
+        ) : null}
       </View>
     </View>
   );

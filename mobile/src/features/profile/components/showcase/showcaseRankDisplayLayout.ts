@@ -8,7 +8,7 @@ const DISPLAY_GEOMETRY: Readonly<Record<string, {
   rank_carbon_cradle: { width: 1024, height: 945, baseLeft: 151, baseRight: 860, contactY: 867, seatY: 624, interiorTop: 190, interiorWidth: 340 },
   rank_crystal_capsule: { width: 1024, height: 709, baseLeft: 292, baseRight: 727, contactY: 653, seatY: 480, interiorTop: 140, interiorWidth: 280 },
   rank_royal_crown: { width: 1024, height: 1024, baseLeft: 132, baseRight: 892, contactY: 949, seatY: 690, interiorTop: 190, interiorWidth: 380 },
-  rank_orbital_core: { width: 1024, height: 596, baseLeft: 271, baseRight: 749, contactY: 545, seatY: 380, interiorTop: 108, interiorWidth: 265 },
+  rank_orbital_core: { width: 1024, height: 596, baseLeft: 271, baseRight: 749, contactY: 558, seatY: 378, interiorTop: 128, interiorWidth: 265 },
   rank_volcanic_forge: { width: 1024, height: 628, baseLeft: 263, baseRight: 754, contactY: 550, seatY: 398, interiorTop: 128, interiorWidth: 240 },
   rank_clutch_revelation: { width: 1024, height: 1024, baseLeft: 187, baseRight: 836, contactY: 871, seatY: 675, interiorTop: 180, interiorWidth: 440 },
 };

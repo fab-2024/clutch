@@ -9,6 +9,7 @@ export type ShowcaseRankDisplayDefinition = {
   image: ImageSourcePropType;
   name: string;
   overlayImage: ImageSourcePropType;
+  foregroundClip?: { viewBox: string; path: string };
   price: number;
   rarity: CosmeticRarity;
 };
@@ -27,10 +28,10 @@ export const SHOWCASE_RANK_DISPLAY_CATALOG: readonly ShowcaseRankDisplayDefiniti
   {
     id: 'rank_crystal_capsule',
     name: 'Capsule Cristal',
-    description: 'Une capsule transparente monumentale protège le rang sous une lumière froide.',
-    accent: '#B9E8FF',
-    image: require('../../../assets/shop/atelier/ranks/overlays/rank-crystal-capsule-opaque.png'),
-    overlayImage: require('../../../assets/shop/atelier/ranks/overlays/rank-crystal-capsule-opaque.png'),
+    description: 'Une vitrine en verre clair protège le rang sous une lumière de galerie.',
+    accent: '#D8D4C8',
+    image: require('../../../assets/shop/atelier/ranks/overlays/rank-crystal-capsule-glass.png'),
+    overlayImage: require('../../../assets/shop/atelier/ranks/overlays/rank-crystal-capsule-glass.png'),
     price: 180,
     rarity: 'rare',
   },
@@ -51,6 +52,11 @@ export const SHOWCASE_RANK_DISPLAY_CATALOG: readonly ShowcaseRankDisplayDefiniti
     accent: '#7ED9F4',
     image: require('../../../assets/shop/atelier/ranks/overlays/rank-orbital-core-opaque.png'),
     overlayImage: require('../../../assets/shop/atelier/ranks/overlays/rank-orbital-core-opaque.png'),
+    // Only the near half of the horizontal orbit occludes the artwork.
+    foregroundClip: {
+      viewBox: '0 0 1024 596',
+      path: 'M280 223 L300 240 L320 254 L360 274 L400 287 L450 298 L480 302 L520 304 L550 303 L600 297 L650 285 L690 269 L720 244 L720 267 L690 292 L650 308 L600 320 L550 326 L520 327 L480 325 L450 321 L400 310 L360 297 L320 278 L300 263 L280 246 Z',
+    },
     price: 260,
     rarity: 'epique',
   },

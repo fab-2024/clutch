@@ -64,7 +64,7 @@ type ShowcaseRoomSceneProps = {
   onRingPress?: () => void;
   pedestal?: ShowcasePedestalSkin;
   rankAccent: string;
-  rankDisplay?: Pick<ShowcaseRankDisplayDefinition, 'id' | 'name' | 'overlayImage'> | null;
+  rankDisplay?: Pick<ShowcaseRankDisplayDefinition, 'id' | 'name' | 'overlayImage' | 'foregroundClip'> | null;
   rankLabel: string;
   reduceMotion?: boolean;
   roomImage?: ImageSourcePropType;
@@ -297,6 +297,16 @@ export default function ShowcaseRoomScene({
             </View>
           )}
           <View style={{ height: metrics.pedestalHeight, marginTop: compact ? -22 : -30, width: metrics.pedestalWidth }} />
+          {resolvedRankDisplay?.foregroundClip ? (
+            <ShowcaseRankDisplayArtwork
+              restoreOpacity={false}
+              foregroundClip={resolvedRankDisplay.foregroundClip}
+              name={resolvedRankDisplay.name}
+              source={resolvedRankDisplay.overlayImage}
+              style={[styles.rankDisplayOverlay, compact && styles.rankDisplayOverlayPreview]}
+              testID={`showcase-rank-display-front-${resolvedRankDisplay.id}`}
+            />
+          ) : null}
           <View style={[styles.rankPlate, compact && styles.rankPlatePreview, { borderColor: pedestalAccent }]}>
             <Text style={[styles.rankLevel, compact && styles.rankLevelPreview]}>NIVEAU {loading ? '—' : level}</Text>
             <Text adjustsFontSizeToFit numberOfLines={1} style={[styles.rankName, compact && styles.rankNamePreview, { color: rankAccent }]}>{loading ? '—' : rankLabel}</Text>
