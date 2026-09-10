@@ -7,7 +7,7 @@ import ShowcaseObjectPickerSheet from '../showcase/ShowcaseObjectPickerSheet';
 import {
   SHOWCASE_ROOM_SLOTS,
   type ShowcasePlaceableItem,
-} from '../showcase/roomEditor';
+} from '@/src/features/profile/showcase/roomEditor';
 
 jest.mock('@/src/components/overlays/BaseSheet', () => {
   const ReactNative = jest.requireActual('react-native');

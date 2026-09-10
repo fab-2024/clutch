@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { checkMobileImportBoundaries } from './mobile-import-boundaries.mjs';
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const mobileRoot = join(repositoryRoot, 'mobile');
@@ -31,10 +32,15 @@ for (const path of walk(mobileRoot)) {
   const isFeatureApi = /^mobile\/src\/features\/.+\/api\.ts$/.test(repositoryPath);
   const isSupabaseInfrastructure = repositoryPath.startsWith('mobile/src/lib/supabase/');
 
-  const importsSupabaseClient =
-    /(?:from\s+|import\s*\(|require\s*\()\s*['"]@\/src\/lib\/supabase(?:\/[^'"]*)?['"]/.test(
-      source,
-    );
+  const { importsSupabaseClient, importsComponents } = checkMobileImportBoundaries({
+    importer: path, source, mobileRoot,
+  });
+  const isPackDefinition = repositoryPath.startsWith('mobile/src/features/shop/packs/');
+  const isShowcaseDomain = repositoryPath.startsWith('mobile/src/features/profile/showcase/')
+    && !repositoryPath.includes('/__tests__/');
+  if ((isPackDefinition || isShowcaseDomain) && importsComponents) {
+    violations.push(`domain/catalogue module imports UI components: ${repositoryPath}`);
+  }
 
   if (importsSupabaseClient && !isFeatureApi && !isSupabaseInfrastructure) {
     violations.push(`Supabase client imported outside a feature API: ${repositoryPath}`);

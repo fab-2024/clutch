@@ -1,5 +1,5 @@
 import type { ImageSourcePropType } from 'react-native';
-import type { ShowcaseRoomSlotId } from '@/src/features/profile/components/showcase/roomEditor';
+import type { ShowcaseRoomSlotId } from '@/src/features/profile/showcase/roomEditor';
 
 type CentralPedestalBackdrop = {
   floor: ImageSourcePropType;

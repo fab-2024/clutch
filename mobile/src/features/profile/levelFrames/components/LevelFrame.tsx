@@ -151,7 +151,7 @@ function FrameFrontArtwork({
   if (variant === 'voltRift') return <VoltRiftFront accent={accent} ids={ids} />;
   if (variant === 'azurOrbit') return <AzurOrbitFront accent={accent} ids={ids} />;
   if (variant === 'founderForge') return <FounderForgeFront accent={accent} ids={ids} />;
-  if (variant === 'violetSovereign') return <VioletSovereignFront accent={accent} ids={ids} />;
+  if (variant === 'violetSovereign') return <VioletSovereignFront ids={ids} />;
   if (variant === 'obsidianFracture') return <ObsidianFractureFront accent={accent} ids={ids} />;
   return <NovaPrismFront accent={accent} ids={ids} />;
 }
@@ -256,7 +256,7 @@ function VioletSovereignBack({ accent, ids }: { accent: string; ids: FrameIds })
   );
 }
 
-function VioletSovereignFront({ accent, ids }: { accent: string; ids: FrameIds }) {
+function VioletSovereignFront({ ids }: { ids: FrameIds }) {
   return (
     <G>
       <Gem ids={ids} points="60,2 70,19 60,29 50,19" />

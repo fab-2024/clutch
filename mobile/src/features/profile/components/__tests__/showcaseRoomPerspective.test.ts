@@ -4,7 +4,7 @@ import { SHOWCASE_PRESENTER_CATALOG } from '@/src/features/shop/showcasePresente
 import { SHOWCASE_ROOM_CATALOG } from '@/src/features/shop/showcaseRoomCatalog';
 import { ORIGINAL_PACK_CATALOG } from '@/src/features/shop/teamPackCatalog';
 
-import type { ShowcaseRoomSlotDefinition, ShowcaseRoomSlotId } from '../showcase/roomEditor';
+import type { ShowcaseRoomSlotDefinition, ShowcaseRoomSlotId } from '@/src/features/profile/showcase/roomEditor';
 import { showcaseSceneLayout } from '../showcase/showcaseSceneLayout';
 import { resolveShowcaseRoomSlotComposition } from '../showcase/ShowcaseRoomEditorScene';
 import {

@@ -1,5 +1,5 @@
 import { SHOP_EFFECTS_ENABLED } from '@/src/features/shop/effectAvailability';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import ArrowLeft from 'lucide-react-native/icons/arrow-left';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -20,6 +20,7 @@ import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { gradeAccent, isZeroRank, ZERO_RANK_ACCENT } from '@/src/features/ranking/grades';
 import { rankEmblemSource } from '@/src/features/ranking/components/RankEmblem';
 import { equipCosmetic, loadCosmeticShop, purchaseCosmetic, unequipRankDisplay } from '@/src/features/shop/api';
+import { returnToCollection } from '@/src/features/shop/shopNavigation';
 import {
   PACK_ROOM_ATELIER_PRODUCTS,
   atelierProductById,
@@ -96,7 +97,7 @@ import {
   type ShowcasePlaceableKind,
   type ShowcaseRoomPedestalPlacements,
   type ShowcaseRoomSlotId,
-} from './showcase/roomEditor';
+} from '@/src/features/profile/showcase/roomEditor';
 import type {
   ShowcaseAtmospherePerformanceReport,
   ShowcaseAtmosphereQuality,
@@ -907,7 +908,7 @@ export default function ShowcaseScreen({
             <Pressable
               accessibilityLabel="Revenir à la Collection"
               accessibilityRole="button"
-              onPress={() => router.back()}
+              onPress={() => returnToCollection(Boolean(previewProfile || previewShop))}
               style={({ pressed }) => [styles.floatingButton, pressed && styles.pressed]}
             >
               <ArrowLeft color={colors.text} size={20} />

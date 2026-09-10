@@ -33,7 +33,7 @@ import {
   type ShowcaseRoomPedestalPlacements,
   type ShowcaseRoomSlotDefinition,
   type ShowcaseRoomSlotId,
-} from './roomEditor';
+} from '@/src/features/profile/showcase/roomEditor';
 import { SHOWCASE_LIGHTING_VISUALS } from './showcaseLighting';
 import { SHOWCASE_PALETTE } from './showcasePalette';
 import { showcaseRankDisplayLayout } from './showcaseRankDisplayLayout';

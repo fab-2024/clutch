@@ -19,6 +19,7 @@ import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout
 import { CurrencyIcon } from '@/src/components/ui/CurrencyIcon';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
+import { APP_ROUTES } from '@/src/features/navigation/routes';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { SupporterIdentity } from '@/src/features/shop/components/CosmeticRenderer';
 import { errorFeedback, impactFeedback, successFeedback } from '@/src/lib/feedback';
@@ -224,7 +225,7 @@ export default function ResultRevealScreen({
       }
 
       if (target === 'history') {
-        router.replace('/(tabs)/profile');
+        router.replace(APP_ROUTES.profile);
         return;
       }
 

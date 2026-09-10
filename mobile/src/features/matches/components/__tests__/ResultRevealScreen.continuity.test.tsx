@@ -1,6 +1,7 @@
 /// <reference types="jest" />
 
-import { render, type RenderResult } from '@testing-library/react-native';
+import { fireEvent, render, type RenderResult } from '@testing-library/react-native';
+import { router } from 'expo-router';
 
 import type { MatchResultReveal } from '../../types';
 import ResultRevealScreen from '../ResultRevealScreen';
@@ -71,6 +72,12 @@ jest.mock('../../api', () => ({
 }));
 
 describe('ResultRevealScreen journey continuity', () => {
+  it('opens the personal profile history instead of Collection', async () => {
+    const screen = await render(<ResultRevealScreen previewData={promotionResult()} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'VOIR MON HISTORIQUE' }));
+    expect(router.replace).toHaveBeenCalledWith('/my-profile');
+  });
+
   it('keeps the fixture and score visible while the official verdict loads', async () => {
     const screen = await render(<ResultRevealScreen />);
 

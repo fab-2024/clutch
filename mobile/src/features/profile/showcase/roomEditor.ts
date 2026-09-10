@@ -1,5 +1,5 @@
 import type { ImageSourcePropType } from 'react-native';
-import type { PublicAchievementBadge } from '../../achievementBadges/types';
+import type { PublicAchievementBadge } from '../achievementBadges/types';
 
 export const SHOWCASE_ROOM_SLOT_IDS = [
   'left-free',

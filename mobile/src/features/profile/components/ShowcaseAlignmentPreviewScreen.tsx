@@ -10,7 +10,7 @@ import {
 } from '@/src/features/shop/teamPackCatalog';
 
 import ShowcaseRoomEditorScene from './showcase/ShowcaseRoomEditorScene';
-import { createEmptyShowcaseRoomAssignments, type ShowcaseRoomSlotId } from './showcase/roomEditor';
+import { createEmptyShowcaseRoomAssignments, type ShowcaseRoomSlotId } from '@/src/features/profile/showcase/roomEditor';
 
 const mixedItems: [ShowcaseRoomSlotId, string][] = [
   ['left-free', 'conclave-arcanique-guardian-badge'],

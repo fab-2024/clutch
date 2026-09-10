@@ -6,6 +6,7 @@ import Trophy from 'lucide-react-native/icons/trophy';
 import { useState, type ComponentType } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
+import { SOCIAL_MISSIONS_ROUTE } from '@/src/features/social/routes';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { Surface } from '@/src/components/ui/Surface';
 import { colors, fonts, spacing, typography } from '@/src/theme';
@@ -103,7 +104,7 @@ export function HubDailyChallenges() {
   const [activeCard, setActiveCard] = useState(0);
   const cardWidth = Math.min(328, Math.max(264, width - 68));
   const snapInterval = cardWidth + 10;
-  const openMissions = () => router.push('/(tabs)/social/missions');
+  const openMissions = () => router.push(SOCIAL_MISSIONS_ROUTE);
 
   return (
     <View style={styles.missionSection}>
@@ -371,7 +372,7 @@ function openContext(context: HubContextItem) {
     return;
   }
   if (context.kind === 'mission') {
-    router.push('/(tabs)/social/missions');
+    router.push(SOCIAL_MISSIONS_ROUTE);
     return;
   }
   const { reward } = context;

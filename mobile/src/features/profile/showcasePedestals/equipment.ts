@@ -4,7 +4,7 @@ import {
   SHOWCASE_ROOM_SLOT_IDS,
   type ShowcasePedestalAssignmentIds,
   type ShowcaseRoomSlotId,
-} from '../components/showcase/roomEditor';
+} from '@/src/features/profile/showcase/roomEditor';
 
 const STORAGE_PREFIX = '@griff/showcase-pedestals/v1';
 const listeners = new Set<(

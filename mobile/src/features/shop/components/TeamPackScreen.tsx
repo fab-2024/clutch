@@ -1,7 +1,7 @@
 import { useAuth } from '@/src/providers/AuthProvider';
 import { isCosmeticPackBillingReady, syncCosmeticPacks } from '@/src/features/purchases/api';
 import { COSMETIC_PACK_PRICE, packStoreProductId } from '@/src/features/purchases/cosmeticPacks';
-import { currentFounderPlatform } from '@/src/features/purchases/store';
+import { currentStorePlatform } from '@/src/features/purchases/store';
 import { loadPackStore, purchasePackFromStore, restorePackPurchases, type PackStoreSnapshot } from '@/src/features/purchases/packStore';
 import { isShopItemAvailable } from '../effectAvailability';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -89,7 +89,7 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
       if (userId && packStoreProductId(routeId)) {
         const billingReady = await isCosmeticPackBillingReady(routeId);
         nextStore = billingReady ? await loadPackStore(userId, routeId).catch(() => ({ availability: 'unavailable' as const, localizedPrice: null })) : { availability: 'unavailable', localizedPrice: null };
-        const platform = currentFounderPlatform();
+        const platform = currentStorePlatform();
         if (nextStore.availability === 'owned' && platform) {
           await syncCosmeticPacks(platform);
           nextData = await loadCosmeticShop();
@@ -139,7 +139,7 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
             showSnackbar({ message: 'Paiement en attente de confirmation du store.', tone: 'info' });
             return;
           }
-          const platform = currentFounderPlatform();
+          const platform = currentStorePlatform();
           if (!platform) return;
           await syncCosmeticPacks(platform);
           if (activeUser.current !== userId) return;
@@ -177,7 +177,7 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
     try {
       await restorePackPurchases(userId, pack.id);
       if (activeUser.current !== userId) return;
-      const platform = currentFounderPlatform();
+      const platform = currentStorePlatform();
       if (!platform) return;
       await syncCosmeticPacks(platform);
       const next = await loadCosmeticShop();

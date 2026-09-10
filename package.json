@@ -18,7 +18,7 @@
     "economy:simulate": "node scripts/simulate-volts-economy.mjs",
     "db:advisors": "supabase db advisors --local --type all --level warn --fail-on error",
     "pandascore:test": "node --test supabase/functions/clutch-pandascore-sync/pandascore.test.mjs",
-    "mobile:architecture": "node scripts/check-mobile.mjs",
+    "mobile:architecture": "node --test scripts/mobile-import-boundaries.test.mjs && node scripts/check-mobile.mjs",
     "mobile:typecheck": "npm --prefix mobile run typecheck",
     "mobile:lint": "npm --prefix mobile run lint -- --max-warnings=0",
     "mobile:test": "npm --prefix mobile run test:ci",

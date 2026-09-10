@@ -56,7 +56,7 @@ const GROUPS: DeveloperGroup[] = [
       { label: 'Boutique', path: '/shop-preview' },
       { label: 'Vitrine', path: '/showcase-preview' },
       { label: 'Profil', path: '/profile-preview' },
-      { label: 'Activité de la vitrine', path: '/growth-preview' },
+      { label: 'Activité de la vitrine', path: '/growth-preview?section=activity' },
       { label: 'Registre des Volts', path: '/economy-preview' },
       { label: 'Consommables', path: '/consumables-preview' },
       { label: 'Team Pack', path: '/team-pack-preview' },

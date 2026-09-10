@@ -5,7 +5,7 @@ import type {
   ShowcasePedestalSkin,
   ShowcaseRoomTheme,
 } from '@/src/features/profile/components/showcase/types';
-import type { ShowcaseRoomSlotDefinition } from '@/src/features/profile/components/showcase/roomEditor';
+import type { ShowcaseRoomSlotDefinition } from '@/src/features/profile/showcase/roomEditor';
 import type { ShowcaseSceneFrame } from '@/src/features/profile/components/showcase/showcaseSceneLayout';
 
 import type { CosmeticRarity } from './types';

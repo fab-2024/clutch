@@ -1,3 +1,5 @@
+> Rapport historique : certaines routes citées ont été supprimées. Pour les points d’entrée actuels, consulter [architecture.md](architecture.md).
+
 # Rapport écran par écran — design, motion et refonte GRIFF
 
 - Date : 25 août 2026

@@ -8,7 +8,7 @@ import {
   type ShowcasePlaceableItem,
   type ShowcasePlaceableKind,
   type ShowcaseRoomSlotDefinition,
-} from './roomEditor';
+} from '@/src/features/profile/showcase/roomEditor';
 import ShowcasePlaceableArtwork from './ShowcasePlaceableArtwork';
 
 type ShowcaseObjectPickerSheetProps = {

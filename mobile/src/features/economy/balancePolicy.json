@@ -1,0 +1,12 @@
+{
+  "dailyBonus": 10,
+  "onboarding": 300,
+  "streakMilestones": [{ "days": 7, "volts": 50 }, { "days": 14, "volts": 100 }],
+  "individualPrices": { "rare": 100, "epique": 200, "legendaire": 300 },
+  "referenceMissionReward": 25,
+  "profiles": [
+    { "id": "occasionnel", "activeDays": 8, "missions": 2 },
+    { "id": "regulier", "activeDays": 20, "missions": 8 },
+    { "id": "assidu", "activeDays": 30, "missions": 16 }
+  ]
+}

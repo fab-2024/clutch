@@ -41,14 +41,6 @@ type SocialHomeExperienceProps = {
 };
 
 export default function SocialHomeScreen() {
-  return <SocialHomeScreenForVariant factionHeroVariant="current" />;
-}
-
-export function SocialHomeV2Screen() {
-  return <SocialHomeScreenForVariant factionHeroVariant="v2" />;
-}
-
-function SocialHomeScreenForVariant({ factionHeroVariant }: { factionHeroVariant: FactionHeroVariant }) {
   const { profile } = useAuth();
   const { acknowledgeMutation, data, error, load, loading, refreshing } = useCommunityDashboard();
 
@@ -56,7 +48,7 @@ function SocialHomeScreenForVariant({ factionHeroVariant }: { factionHeroVariant
     <SocialHomeExperience
       data={data}
       error={error}
-      factionHeroVariant={factionHeroVariant}
+      factionHeroVariant="v2"
       favoriteTeamId={profile?.equipe_favorite_id}
       loading={loading}
       onMutationPresented={acknowledgeMutation}

@@ -22,6 +22,7 @@ import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { loadProfileData } from '@/src/features/profile/api';
 import type { ProfileData } from '@/src/features/profile/types';
 import { errorFeedback, selectionFeedback, successFeedback } from '@/src/lib/feedback';
+import { returnToCollection } from '../shopNavigation';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { useEconomy } from '@/src/providers/EconomyProvider';
@@ -443,7 +444,7 @@ export default function AtelierShopScreen({
         >
           {headerContent}
           <View style={[styles.content, compactHeight && styles.contentCompact]}>
-            {!embedded ? <AtelierHeader balance={balance} compact={compactHeight} loading={loading} unlimitedVolts={!previewData && unlimitedVolts} /> : null}
+            {!embedded ? <AtelierHeader balance={balance} compact={compactHeight} loading={loading} unlimitedVolts={!previewData && unlimitedVolts} onBack={() => returnToCollection(Boolean(previewData || previewProfile))} /> : null}
 
             <ShopCategoryMenu selected={catalogCategory} onSelect={setCatalogCategory} />
 
@@ -574,18 +575,20 @@ function AtelierHeader({
   compact,
   loading,
   unlimitedVolts,
+  onBack,
 }: {
   balance: number;
   compact: boolean;
   loading: boolean;
   unlimitedVolts: boolean;
+  onBack: () => void;
 }) {
   return (
     <View style={[styles.header, compact && styles.headerCompact]}>
       <Pressable
         accessibilityLabel="Revenir au profil"
         accessibilityRole="button"
-        onPress={() => router.back()}
+        onPress={onBack}
         style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
       >
         <Text style={styles.backIcon}>‹</Text>
@@ -939,7 +942,7 @@ function AtelierActionDock({
                 accessibilityLabel={primaryAccessibilityLabel(action, product, price, balance)}
                 disabled={disabled}
                 fullWidth
-                label={primaryLabel(action, item, product, balance)}
+                label={primaryLabel(action, item, product)}
                 loading={pending}
                 onPress={onPrimary}
                 ref={primaryRef}
@@ -995,7 +998,6 @@ function primaryLabel(
   action: AtelierPrimaryAction,
   item: CosmeticItem | null,
   product: AtelierProduct,
-  balance: number,
 ) {
   const price = item?.price ?? product.price;
   if (action === 'equip') return 'ÉQUIPER';

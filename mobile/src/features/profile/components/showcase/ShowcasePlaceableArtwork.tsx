@@ -2,7 +2,7 @@ import { Asset } from 'expo-asset';
 import { Image, StyleSheet, Text, type ImageURISource } from 'react-native';
 
 import AchievementBadgeArtwork from '../../achievementBadges/components/AchievementBadgeArtwork';
-import { showcasePlaceableGlyph, type ShowcasePlaceableItem } from './roomEditor';
+import { showcasePlaceableGlyph, type ShowcasePlaceableItem } from '@/src/features/profile/showcase/roomEditor';
 
 export function showcasePlaceableAspectRatio(item?: ShowcasePlaceableItem | null) {
   if (!item?.image) return 1;

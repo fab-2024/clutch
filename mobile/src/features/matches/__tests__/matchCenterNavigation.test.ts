@@ -165,6 +165,6 @@ describe('returnFromMatchCenter', () => {
     returnFromMatchResult(target, 'profile');
 
     expect(back).not.toHaveBeenCalled();
-    expect(replace).toHaveBeenCalledWith('/(tabs)/profile');
+    expect(replace).toHaveBeenCalledWith('/my-profile');
   });
 });

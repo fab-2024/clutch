@@ -1,19 +1,20 @@
 import { router, usePathname } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SOCIAL_ROUTES } from '@/src/features/social/routes';
 import { useResponsiveLayout } from '@/src/components/layout/useResponsiveLayout';
 import { colors, fonts, layout } from '@/src/theme';
 
 type SocialSectionKey = 'faction' | 'circle' | 'challenges';
 
 const SECTIONS: {
-  href: string;
+  href: (typeof SOCIAL_ROUTES)[keyof typeof SOCIAL_ROUTES];
   key: SocialSectionKey;
   label: string;
 }[] = [
-  { key: 'faction', label: 'Faction', href: '/(tabs)/social' },
-  { key: 'circle', label: 'Cercle', href: '/(tabs)/social/friends' },
-  { key: 'challenges', label: 'Défis', href: '/(tabs)/social/duels' },
+  { key: 'faction', label: 'Faction', href: SOCIAL_ROUTES.home },
+  { key: 'circle', label: 'Cercle', href: SOCIAL_ROUTES.friends },
+  { key: 'challenges', label: 'Défis', href: SOCIAL_ROUTES.duels },
 ];
 
 export default function SocialSectionNav({
@@ -41,7 +42,7 @@ export default function SocialSectionNav({
               accessibilityState={{ selected }}
               aria-selected={selected}
               key={item.key}
-              onPress={() => router.replace(item.href as never)}
+              onPress={() => router.replace(item.href)}
               style={({ pressed }) => [
                 styles.item,
                 pressed && styles.pressed,
@@ -61,7 +62,7 @@ export default function SocialSectionNav({
 
 function sectionFromPath(pathname: string): SocialSectionKey {
   if (pathname.includes('/social/friends') || pathname.includes('/social/requests') || pathname.includes('/social/leagues')) return 'circle';
-  if (pathname.includes('/social/missions') || pathname.includes('/social/duels')) return 'challenges';
+  if (pathname.includes('/social/duels')) return 'challenges';
   return 'faction';
 }
 

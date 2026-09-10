@@ -72,7 +72,7 @@ begin
   select public.clutch_acheter_cosmetique_v1('titre-profil-2') into v_purchase;
 
   if not (v_purchase ->> 'achete')::boolean
-     or (v_purchase ->> 'solde')::integer <> 750
+     or (v_purchase ->> 'solde')::integer <> 900
      or not exists (
        select 1 from public.inventaire i
        where i.user_id = v_user and i.objet_id = 'titre-profil-2'
@@ -90,7 +90,7 @@ begin
   select public.clutch_acheter_cosmetique_v1('titre-profil-2') into v_repeat;
 
   if (v_repeat ->> 'achete')::boolean
-     or (v_repeat ->> 'solde')::integer <> 750
+     or (v_repeat ->> 'solde')::integer <> 900
      or (
        select count(*) from public.volts_mouvements m
        where m.user_id = v_user
@@ -105,10 +105,10 @@ begin
   select public.clutch_acheter_cosmetique_v1('material_steel') into v_showcase_repeat;
 
   if not (v_showcase_purchase ->> 'achete')::boolean
-     or (v_showcase_purchase ->> 'solde')::integer <> 630
+     or (v_showcase_purchase ->> 'solde')::integer <> 780
      or (v_showcase_purchase ->> 'emplacement') <> 'vitrine_materiau'
      or (v_showcase_repeat ->> 'achete')::boolean
-     or (v_showcase_repeat ->> 'solde')::integer <> 630
+     or (v_showcase_repeat ->> 'solde')::integer <> 780
      or (
        select count(*) from public.volts_mouvements m
        where m.user_id = v_user
@@ -129,7 +129,7 @@ begin
   select public.clutch_acheter_cosmetique_v1('lighting_emerald') into v_lighting_purchase;
 
   if not (v_lighting_purchase ->> 'achete')::boolean
-     or (v_lighting_purchase ->> 'solde')::integer <> 510
+     or (v_lighting_purchase ->> 'solde')::integer <> 660
      or (v_lighting_purchase ->> 'emplacement') <> 'vitrine_eclairage'
      or not exists (
        select 1 from public.inventaire i
@@ -143,7 +143,7 @@ begin
   select public.clutch_acheter_cosmetique_v1('supports_crystal') into v_presenter_purchase;
 
   if not (v_presenter_purchase ->> 'achete')::boolean
-     or (v_presenter_purchase ->> 'solde')::integer <> 210
+     or (v_presenter_purchase ->> 'solde')::integer <> 360
      or (v_presenter_purchase ->> 'emplacement') <> 'vitrine_supports'
      or not exists (
        select 1 from public.inventaire i
@@ -157,7 +157,7 @@ begin
   select public.clutch_acheter_cosmetique_v1('rank_crystal_capsule') into v_rank_display_purchase;
 
   if not (v_rank_display_purchase ->> 'achete')::boolean
-     or (v_rank_display_purchase ->> 'solde')::integer <> 30
+     or (v_rank_display_purchase ->> 'solde')::integer <> 180
      or (v_rank_display_purchase ->> 'emplacement') <> 'vitrine_rang'
      or not exists (
        select 1 from public.inventaire i

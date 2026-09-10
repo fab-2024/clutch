@@ -12,7 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import type { RankRules, RankSeason, RankSeasonState } from '../types';
+import type { RankSeason, RankSeasonState } from '../types';
 import { RankSeasonProgress } from './RankSeasonProgress';
 import { SeasonJourneyLadder } from './SeasonJourneyLadder';
 import { journeyStyles as styles } from './SeasonJourney.styles';
@@ -23,7 +23,6 @@ type SeasonJourneyCardProps = {
   onChooseMatch: () => void;
   onToggleRules: () => void;
   reduceMotionOverride?: boolean;
-  rules: RankRules;
   rulesVisible: boolean;
   season: RankSeason;
   state: RankSeasonState;
@@ -33,7 +32,6 @@ export function SeasonJourneyCard({
   onChooseMatch,
   onToggleRules,
   reduceMotionOverride,
-  rules,
   rulesVisible,
   season,
   state,

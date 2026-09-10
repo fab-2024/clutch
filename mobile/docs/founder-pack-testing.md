@@ -1,5 +1,7 @@
 # Founder Pack — documentation historique
 
+> Archive : offre Founder retirée. Les anciens handlers mobiles ont été supprimés ; les routes redirigent vers la boutique. Pour les packs actuels, voir [cosmetic-pack-purchases.md](cosmetic-pack-purchases.md). Les contrats serveur historiques sont conservés.
+
 > Offre retirée le 9 septembre 2026 : ne pas créer ni activer ce produit.
 > Les écrans de vente redirigent vers la boutique. Les éventuels droits historiques
 > restent conservés. Voir [les six packs actuels](cosmetic-pack-purchases.md).

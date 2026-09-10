@@ -20,7 +20,7 @@ const previewScreens = {
   matches: MatchesPreviewScreen,
   social: SocialPreview,
   rank: RankPreviewScreen,
-  profile: StoreHubPreviewScreen,
+  collection: StoreHubPreviewScreen,
 };
 
 export default function NavigationPreviewScreen() {

@@ -93,8 +93,8 @@ begin
   into v_purchase;
 
   if not (v_purchase ->> 'achete')::boolean
-     or (v_purchase ->> 'prix')::integer <> 250
-     or (v_purchase ->> 'solde')::integer <> 150
+     or (v_purchase ->> 'prix')::integer <> 100
+     or (v_purchase ->> 'solde')::integer <> 300
   then
     raise exception 'Cosmetic debit is inconsistent: %', v_purchase;
   end if;
@@ -124,7 +124,7 @@ begin
       and m.source_economique = 'achat_cosmetique'
       and m.objet_id = 'titre-profil-2'
       and m.cle_idempotence = 'achat:titre-profil-2'
-      and m.solde_apres = 150
+      and m.solde_apres = 300
   ) then
     raise exception 'Volt ledger enrichment is incomplete';
   end if;
@@ -132,7 +132,7 @@ begin
   select public.clutch_journal_volts_v1(20, null)
   into v_journal;
 
-  if (v_journal ->> 'solde')::integer <> 150
+  if (v_journal ->> 'solde')::integer <> 300
      or jsonb_array_length(v_journal -> 'mouvements') <> 3
      or (v_journal ->> 'has_more')::boolean
      or coalesce((v_journal #>> '{integrite,conversion_volts_vers_frags}')::boolean, true)
@@ -142,7 +142,7 @@ begin
        from jsonb_array_elements(v_journal -> 'mouvements') movement(value)
        where movement.value #>> '{objet,id}' = 'titre-profil-2'
          and movement.value ->> 'cle_idempotence' = 'achat:titre-profil-2'
-         and (movement.value ->> 'solde_apres')::integer = 150
+         and (movement.value ->> 'solde_apres')::integer = 300
      )
   then
     raise exception 'Volt journal RPC is incomplete: %', v_journal;

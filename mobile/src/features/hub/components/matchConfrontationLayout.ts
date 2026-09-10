@@ -1,1 +1,0 @@
-export const MATCH_PLATE_OUTWARD_SHIFT = 14;

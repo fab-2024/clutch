@@ -28,7 +28,7 @@ import { colors, radius, spacing, typography } from '@/src/theme';
 import type {
   ShowcaseRoomSlotDefinition,
   ShowcaseRoomSlotId,
-} from './roomEditor';
+} from '@/src/features/profile/showcase/roomEditor';
 
 export type ShowcaseAtelierNotice = {
   text: string;

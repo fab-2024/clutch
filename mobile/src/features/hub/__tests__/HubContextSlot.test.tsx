@@ -145,7 +145,7 @@ describe('HubContextSlot', () => {
     expect(screen.getByTestId('hub-mission-page-1')).toHaveStyle({ backgroundColor: '#FFFFFF', width: 38 });
     fireEvent.press(callMission);
 
-    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/(tabs)/social/missions');
+    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith({ pathname: '/(tabs)/social/duels', params: { missions: '1' } });
   }, 15_000);
 
   it('opens the owned collection for a new reward', async () => {

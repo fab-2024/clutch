@@ -1,6 +1,8 @@
+import balancePolicy from './balancePolicy.json';
+
 import { t } from '@/src/lib/i18n';
 
-export const DAILY_VOLT_BONUS = 10;
+export const DAILY_VOLT_BONUS = balancePolicy.dailyBonus;
 
 export type DailyBonusReceipt = {
   userId: string;

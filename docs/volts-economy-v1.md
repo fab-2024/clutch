@@ -1,5 +1,7 @@
 # Économie des Volts v1
 
+> Document historique. Les règles actuelles et la simulation sont décrites dans [Économie GRIFF v2](volts-economy-v2.md). Le bonus quotidien se récupère désormais manuellement.
+
 Les Volts financent uniquement l’identité visuelle du supporter. Ils ne sont ni convertibles en Frags, ni utilisables dans le classement.
 
 ## Sources gratuites

@@ -30,7 +30,7 @@ const mockShowSnackbar = jest.fn();
 
 jest.mock('@/src/providers/AuthProvider', () => ({ useAuth: () => ({ session: { user: { id: 'test-user' } } }) }));
 jest.mock('@/src/features/purchases/api', () => ({ isCosmeticPackBillingReady: jest.fn().mockResolvedValue(true), syncCosmeticPacks: jest.fn().mockResolvedValue(undefined) }));
-jest.mock('@/src/features/purchases/store', () => ({ currentFounderPlatform: () => 'ios' }));
+jest.mock('@/src/features/purchases/store', () => ({ currentStorePlatform: () => 'ios' }));
 jest.mock('@/src/features/purchases/packStore', () => ({
   loadPackStore: jest.fn().mockResolvedValue({ availability: 'ready', localizedPrice: '2,99 €' }),
   purchasePackFromStore: jest.fn().mockResolvedValue('purchased'),

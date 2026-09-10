@@ -202,9 +202,9 @@ begin
   select public.clutch_acheter_cosmetique_v1('cadre-profil-2') into v_repeat;
 
   if not (v_purchase ->> 'achete')::boolean
-     or (v_purchase ->> 'solde')::integer <> 650
+     or (v_purchase ->> 'solde')::integer <> 900
      or (v_repeat ->> 'achete')::boolean
-     or (v_repeat ->> 'solde')::integer <> 650
+     or (v_repeat ->> 'solde')::integer <> 900
      or (
        select count(*)
        from public.volts_mouvements m

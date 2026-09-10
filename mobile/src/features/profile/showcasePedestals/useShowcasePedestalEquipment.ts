@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { ShowcasePedestalAssignmentIds } from '../components/showcase/roomEditor';
+import type { ShowcasePedestalAssignmentIds } from '@/src/features/profile/showcase/roomEditor';
 import {
   loadShowcasePedestalEquipment,
   saveShowcasePedestalEquipment,

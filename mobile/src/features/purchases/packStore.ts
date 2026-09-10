@@ -1,7 +1,7 @@
 import type { PurchasesError } from 'react-native-purchases';
 
 import { packEntitlementId, packStoreProductId } from './cosmeticPacks';
-import { configurePurchases, currentFounderPlatform } from './store';
+import { configurePurchases, currentStorePlatform } from './store';
 
 export type PackStoreSnapshot = {
   availability: 'ready' | 'owned' | 'unavailable' | 'mobile_only';
@@ -10,7 +10,7 @@ export type PackStoreSnapshot = {
 export type PackPurchaseOutcome = 'purchased' | 'already_owned' | 'cancelled' | 'pending';
 
 async function packStore(userId: string, packId: string) {
-  const platform = currentFounderPlatform();
+  const platform = currentStorePlatform();
   const productId = packStoreProductId(packId);
   if (!platform || !productId) throw new Error('Cet achat est disponible dans l’application iPhone ou Android.');
   try {
@@ -21,7 +21,7 @@ async function packStore(userId: string, packId: string) {
 }
 
 export async function loadPackStore(userId: string, packId: string): Promise<PackStoreSnapshot> {
-  if (!currentFounderPlatform()) return { availability: 'mobile_only', localizedPrice: null };
+  if (!currentStorePlatform()) return { availability: 'mobile_only', localizedPrice: null };
   const { Purchases, productId } = await packStore(userId, packId);
   const [products, customer] = await Promise.all([
     Purchases.getProducts([productId], Purchases.PRODUCT_CATEGORY.NON_SUBSCRIPTION),

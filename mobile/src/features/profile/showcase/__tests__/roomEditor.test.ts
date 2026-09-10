@@ -8,7 +8,7 @@ import {
   createEmptyShowcaseRoomAssignments,
   pedestalAssignmentForSlots,
   type ShowcasePlaceableItem,
-} from '../showcase/roomEditor';
+} from '@/src/features/profile/showcase/roomEditor';
 
 const ITEMS: ShowcasePlaceableItem[] = [
   { accent: '#31D7E2', id: 'frame:one', kind: 'frame', name: 'Cadre Brut' },

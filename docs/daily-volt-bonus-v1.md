@@ -1,5 +1,7 @@
 # Bonus quotidien — premier lot de la roadmap
 
+> Document historique. Les règles actuelles et la simulation sont décrites dans [Économie GRIFF v2](volts-economy-v2.md). Le bonus quotidien se récupère désormais manuellement.
+
 Ce lot livre le bonus automatique de **10 Volts** et les premières fondations
 communes : calendrier serveur, registre existant, analytics et traductions.
 Les séries de calls, protecteurs et rappels sont désormais décrits dans le

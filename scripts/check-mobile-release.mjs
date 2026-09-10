@@ -35,7 +35,6 @@ for (const path of [
   'mobile/src/features/matches/components/MatchCenterSections.tsx',
   'mobile/src/features/matches/components/MatchesArenaSections.tsx',
   'mobile/src/features/social/faction/hooks/useCommunityDashboard.ts',
-  'mobile/src/features/social/faction/components/FactionSections.tsx',
   'mobile/src/features/social/components/SocialHomeSections.tsx',
   'supabase/functions/clutch-account-delete/index.ts',
   'supabase/migrations/20260822134313_release_readiness_privacy.sql',
@@ -99,7 +98,6 @@ for (const route of previewRoutes()) {
 for (const screen of [
   'mobile/src/features/matches/components/MatchCenterScreen.tsx',
   'mobile/src/features/matches/components/MatchesScreen.tsx',
-  'mobile/src/features/social/faction/components/FactionScreen.tsx',
   'mobile/src/features/social/components/SocialHomeScreen.tsx',
 ]) {
   const lines = readFileSync(resolve(root, screen), 'utf8').split(/\r?\n/).length;
@@ -154,7 +152,7 @@ function pluginOptions(plugins, name) {
 function previewRoutes() {
   return [
     'campaign-preview.tsx', 'campaign-report-preview.tsx', 'economy-preview.tsx',
-    'founder-pack-preview.tsx', 'hub-preview.tsx', 'match-center-preview.tsx',
+    'growth-preview.tsx', 'hub-preview.tsx', 'match-center-preview.tsx',
     'matches-preview.tsx', 'onboarding-preview.tsx', 'profile-preview.tsx',
     'result-preview.tsx', 'shop-preview.tsx', 'social-preview.tsx',
   ];

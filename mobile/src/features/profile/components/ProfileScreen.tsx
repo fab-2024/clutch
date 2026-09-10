@@ -3,6 +3,7 @@ import Settings2 from 'lucide-react-native/icons/settings-2';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { SOCIAL_ROUTES } from '@/src/features/social/routes';
 import { Screen } from '@/src/components/layout/Screen';
 import { CurrencyIcon, type CurrencyKind } from '@/src/components/ui/CurrencyIcon';
 import { FeatureStateView } from '@/src/components/ui/FeatureStateView';
@@ -192,7 +193,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             data={data}
             loading={loading}
             levelFrameVariant={levelFrameEquipment.variant}
-            onAddFriend={() => router.push('/(tabs)/social/friends')}
+            onAddFriend={() => router.push(SOCIAL_ROUTES.friends)}
             onEditAvatar={() => {
               setAvatarPickerError(null);
               setAvatarPickerOpen(true);
@@ -322,7 +323,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
 
         <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>FACTION</Text><Text style={styles.sectionTitle}>TA COULEUR DANS GRIFF.</Text></View></View>
         {data?.favoriteTeam ? (
-          <Pressable onPress={() => router.push('/(tabs)/social/faction')} style={({ pressed }) => [styles.factionCard, pressed && styles.pressed]}>
+          <Pressable onPress={() => router.push(SOCIAL_ROUTES.home)} style={({ pressed }) => [styles.factionCard, pressed && styles.pressed]}>
             <View style={[styles.teamMark, { borderColor: teamColor }]}><Text style={[styles.teamMarkText, { color: teamColor }]}>{data.favoriteTeam.tag}</Text></View>
             <View style={styles.factionCopy}><Text style={styles.factionEyebrow}>RELIQUE · FORME {roman(data.favoriteTeam.relique_niveau)}</Text><Text style={styles.factionName}>{data.favoriteTeam.nom}</Text><Text style={styles.factionMeta}>{data.favoriteTeam.relique} · {formatNumber(data.favoriteTeam.supporters)} supporter{data.favoriteTeam.supporters > 1 ? 's' : ''}</Text></View>
             <Text style={styles.arrow}>→</Text>

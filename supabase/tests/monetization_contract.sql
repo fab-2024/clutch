@@ -77,7 +77,7 @@ begin
   select public.clutch_acheter_cosmetique_v1('titre-profil-2') into v_purchase;
   if (v_purchase ->> 'contrat_version')::integer <> 5
      or not (v_purchase ->> 'achete')::boolean
-     or (v_purchase ->> 'solde')::integer <> 250
+     or (v_purchase ->> 'solde')::integer <> 400
      or (
        select count(*)
        from public.volts_mouvements m

@@ -1,6 +1,6 @@
 import type { ImageSourcePropType } from 'react-native';
 
-import type { TeamPackDefinition, TeamPackItemDefinition } from './teamPackCatalog';
+import type { TeamPackDefinition, TeamPackItemDefinition } from './packs/types';
 
 type OriginalPackItemSeed = {
   accent?: string;

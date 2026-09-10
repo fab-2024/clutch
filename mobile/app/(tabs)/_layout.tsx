@@ -12,8 +12,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="social" />
       <Tabs.Screen name="rank" />
       <Tabs.Screen name="room" options={{ href: null }} />
-      <Tabs.Screen name="profile" />
-      <Tabs.Screen name="community" options={{ href: null }} />
+      <Tabs.Screen name="collection" />
     </Tabs>
   );
 }

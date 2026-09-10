@@ -1,4 +1,4 @@
-import type { ShowcaseRoomSlotDefinition, ShowcaseRoomSlotId } from './roomEditor';
+import type { ShowcaseRoomSlotDefinition, ShowcaseRoomSlotId } from '@/src/features/profile/showcase/roomEditor';
 
 // Contact points on the tops of the baked-in pedestals, in full scene percentages.
 // Keep these independent of the selection boxes and collectible dimensions.

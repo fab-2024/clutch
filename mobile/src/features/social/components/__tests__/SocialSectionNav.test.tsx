@@ -23,7 +23,7 @@ describe('SocialSectionNav', () => {
     mockPathname = '/social/duels';
   });
 
-  it.each(['/social/duels', '/social/missions'])('keeps Défis selected on %s without a redundant Duels rail', async (pathname) => {
+  it.each(['/social/duels'])('keeps Défis selected on %s without a redundant Duels rail', async (pathname) => {
     mockPathname = pathname;
     const screen = await render(<SocialSectionNav />);
 

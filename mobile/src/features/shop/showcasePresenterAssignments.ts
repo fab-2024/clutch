@@ -2,7 +2,7 @@ import {
   createDefaultShowcaseRoomAssignments,
   type ShowcasePlaceableItem,
   type ShowcaseRoomAssignments,
-} from '@/src/features/profile/components/showcase/roomEditor';
+} from '@/src/features/profile/showcase/roomEditor';
 
 import {
   DEFAULT_SHOWCASE_PRESENTER_ID,

@@ -1,24 +1,20 @@
-import { router, usePathname } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback } from 'react';
 
 import DuelsScreen from './DuelsScreen';
 
 export default function DuelsMissionsEntryScreen() {
-  const pathname = usePathname();
-  const missionsAlias = isMissionsAliasPath(pathname);
+  const { missions } = useLocalSearchParams<{ missions?: string | string[] }>();
+  const missionsRequested = (Array.isArray(missions) ? missions[0] : missions) === '1';
 
-  const returnToCanonicalRoute = useCallback(() => {
-    if (missionsAlias) router.replace('/(tabs)/social/duels');
-  }, [missionsAlias]);
+  const clearMissionsRequest = useCallback(() => {
+    if (missionsRequested) router.setParams({ missions: undefined });
+  }, [missionsRequested]);
 
   return (
     <DuelsScreen
-      initialMissionsOpen={missionsAlias}
-      onMissionsClosed={returnToCanonicalRoute}
+      initialMissionsOpen={missionsRequested}
+      onMissionsClosed={clearMissionsRequest}
     />
   );
-}
-
-export function isMissionsAliasPath(pathname: string) {
-  return pathname.includes('/social/missions');
 }

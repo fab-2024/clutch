@@ -13,6 +13,7 @@ import {
   type ListRenderItemInfo,
 } from 'react-native';
 
+import { SOCIAL_ROUTES } from '@/src/features/social/routes';
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
 import { Screen } from '@/src/components/layout/Screen';
 import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/FeatureStateView';
@@ -263,7 +264,6 @@ function SeasonSection({
           onChooseMatch={chooseMatch}
           onToggleRules={() => setShowRules((visible) => !visible)}
           reduceMotionOverride={reduceMotionOverride}
-          rules={dashboard.rules}
           rulesVisible={showRules}
           season={dashboard.season}
           state={state}
@@ -437,9 +437,9 @@ function LeaderboardEmpty({ scope }: { scope: RankScope }) {
       ? 'Choisis une faction pour rejoindre ce classement.'
       : 'Les premiers joueurs classés apparaîtront après leur prochain verdict.';
   const action = scope === 'cercle'
-    ? { label: 'OUVRIR LE CERCLE', route: '/(tabs)/social/friends' as const }
+    ? { label: 'OUVRIR LE CERCLE', route: SOCIAL_ROUTES.friends }
     : scope === 'faction'
-      ? { label: 'VOIR LES FACTIONS', route: '/(tabs)/social/faction' as const }
+      ? { label: 'VOIR LES FACTIONS', route: SOCIAL_ROUTES.home }
       : null;
 
   return (

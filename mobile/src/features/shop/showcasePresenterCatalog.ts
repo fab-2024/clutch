@@ -1,6 +1,6 @@
 import type { ImageSourcePropType } from 'react-native';
 
-import type { ShowcaseRoomSlotDefinition } from '@/src/features/profile/components/showcase/roomEditor';
+import type { ShowcaseRoomSlotDefinition } from '@/src/features/profile/showcase/roomEditor';
 import type { ShowcasePedestalSkin } from '@/src/features/profile/components/showcase/types';
 import type { ShowcaseSceneFrame } from '@/src/features/profile/components/showcase/showcaseSceneLayout';
 

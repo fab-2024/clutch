@@ -29,7 +29,7 @@ jest.mock('lucide-react-native/icons/trophy', () => ({ __esModule: true, default
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('@/src/components/layout/AppAtmosphere', () => ({ AppAtmosphere: () => null }));
 jest.mock('expo-router', () => ({
-  router: { back: jest.fn(), push: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn(), canGoBack: jest.fn(() => true), replace: jest.fn() },
   useLocalSearchParams: () => ({}),
 }));
 jest.mock('react-native-reanimated', () => {

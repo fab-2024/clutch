@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { t } from '@/src/lib/i18n';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
 import { rankEmblemSource } from '@/src/features/ranking/components/RankEmblem';
-import { equipCosmetic, loadCosmeticShop, unequipRankDisplay } from '@/src/features/shop/api';
+import { loadCosmeticShop, unequipRankDisplay } from '@/src/features/shop/api';
 import { applyPreviewAtelierAction, applyPreviewRankDisplayRemoval } from '@/src/features/shop/atelierState';
 import { loadProfileData } from '../../api';
 import { createAtelierPreviewItems } from '@/src/features/shop/atelierCatalog';
@@ -28,7 +28,7 @@ const mockPedestalAssignments = {};
 let mockRouteFocused = true;
 
 jest.mock('expo-router', () => ({
-  router: { back: jest.fn() },
+  router: { back: jest.fn(), canGoBack: jest.fn(() => true), replace: jest.fn() },
   useFocusEffect: (callback: () => (() => void) | void) => {
     const React = jest.requireActual('react');
     React.useEffect(() => mockRouteFocused ? callback() : undefined, [callback, mockRouteFocused]);
@@ -224,6 +224,9 @@ describe('ShowcaseScreen immersive editor', () => {
 
     await fireEvent.press(screen.getByLabelText('Revenir à la Collection'));
     expect(router.back).toHaveBeenCalled();
+    jest.mocked(router.canGoBack).mockReturnValueOnce(false);
+    await fireEvent.press(screen.getByLabelText('Revenir à la Collection'));
+    expect(router.replace).toHaveBeenCalledWith('/store-preview');
   });
 
   it('previews and buys room finishes without selling displayed objects', async () => {

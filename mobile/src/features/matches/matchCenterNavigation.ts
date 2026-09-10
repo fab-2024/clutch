@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 
+import { APP_ROUTES } from '@/src/features/navigation/routes';
 import { resolveTeamLogoUri } from '@/src/features/onboarding/teamLogos';
 import { prefetchRemoteImages } from '@/src/lib/imageCache';
 
@@ -111,7 +112,7 @@ export function returnFromMatchResult(
     return;
   }
   if (source === 'profile') {
-    router.replace('/(tabs)/profile');
+    router.replace(APP_ROUTES.profile);
     return;
   }
   if (source === 'match') {

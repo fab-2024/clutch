@@ -109,7 +109,6 @@ function RootNavigator() {
           <Stack.Screen name="settings/safety" />
           <Stack.Screen name="shop" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="showcase" options={{ animation: 'fade', orientation: Platform.OS === 'web' ? 'default' : 'landscape' }} />
-          <Stack.Screen name="founder-pack" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="team-pack/[key]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="economy" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="streak" options={{ animation: 'slide_from_right' }} />
@@ -142,7 +141,6 @@ function RootNavigator() {
         <Stack.Screen name="store-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="shop-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="showcase-preview" options={{ animation: 'fade', orientation: Platform.OS === 'web' ? 'default' : 'landscape' }} />
-        <Stack.Screen name="founder-pack-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="team-pack-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="economy-preview" options={{ animation: 'fade' }} />
         <Stack.Screen name="streak-preview" options={{ animation: 'fade' }} />

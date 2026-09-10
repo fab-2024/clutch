@@ -1,1 +1,1 @@
-export { SocialHomeV2Screen as default } from '@/src/features/social';
+export { default } from '@/src/features/social/components/SocialHomeScreen';

@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 
+import { SOCIAL_ROUTES } from '@/src/features/social/routes';
 import { GriffLockup } from '@/src/components/brand/GriffLogo';
 import { Screen } from '@/src/components/layout/Screen';
 import { Button } from '@/src/components/ui/Button';
@@ -154,7 +155,7 @@ export default function DuelInvitationScreen() {
           <Pressable
             accessibilityLabel="Retour aux défis"
             accessibilityRole="button"
-            onPress={() => router.replace('/(tabs)/social/duels')}
+            onPress={() => router.replace(SOCIAL_ROUTES.duels)}
             style={({ pressed }) => [styles.back, pressed && styles.pressed]}
           >
             <Text style={styles.backText}>← DÉFIS</Text>

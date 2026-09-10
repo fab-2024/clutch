@@ -35,7 +35,7 @@ import ShowcaseTopNavigation from '../showcase/ShowcaseTopNavigation';
 import {
   createDefaultShowcaseRoomAssignments,
   type ShowcasePlaceableItem,
-} from '../showcase/roomEditor';
+} from '@/src/features/profile/showcase/roomEditor';
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('@/src/features/onboarding/components/TeamLogo', () => 'TeamLogo');

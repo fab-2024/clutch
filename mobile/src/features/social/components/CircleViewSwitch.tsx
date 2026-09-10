@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 
+import { SOCIAL_ROUTES } from '@/src/features/social/routes';
 import {
   SegmentedControl,
   type SegmentedControlItem,
@@ -21,8 +22,8 @@ export default function CircleViewSwitch({ pendingCount = 0, value }: CircleView
   function openSection(section: CircleSection) {
     if (section === value) return;
     router.replace(section === 'league'
-      ? '/(tabs)/social/leagues'
-      : '/(tabs)/social/friends');
+      ? SOCIAL_ROUTES.leagues
+      : SOCIAL_ROUTES.friends);
   }
 
   return (
