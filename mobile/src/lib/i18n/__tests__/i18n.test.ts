@@ -6,6 +6,24 @@ import { loadLocalePreference, saveLocalePreference } from '../preference';
 describe('P3 localization', () => {
   afterEach(() => setActiveLocale('fr-FR'));
 
+  it('starts and translates plurals when the native runtime lacks Intl.PluralRules', () => {
+    const descriptor = Object.getOwnPropertyDescriptor(Intl, 'PluralRules')!;
+    try {
+      Reflect.deleteProperty(Intl, 'PluralRules');
+      jest.isolateModules(() => {
+        const nativeI18n = require('..') as typeof import('..');
+        expect(nativeI18n.t('economy.dailyBonus.awarded', { amount: 10 })).toBe('Bonus quotidien : +10 Volts');
+        expect(nativeI18n.t('economy.displayed', { count: 0 })).toBe('0 AFFICHÉ');
+        expect(nativeI18n.t('economy.displayed', { count: 2 })).toBe('2 AFFICHÉS');
+        nativeI18n.setActiveLocale('en-US');
+        expect(nativeI18n.t('streak.days', { count: 1 })).toContain('DAY');
+        expect(nativeI18n.t('streak.days', { count: 2 })).toContain('DAYS');
+      });
+    } finally {
+      Object.defineProperty(Intl, 'PluralRules', descriptor);
+    }
+  });
+
   it('falls back to French for unsupported or missing system locales', () => {
     for (const locale of ['fr-FR', 'fr-fr', 'invalid', null, undefined]) {
       expect(resolveLocale(locale)).toBe('fr-FR');

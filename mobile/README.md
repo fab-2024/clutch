@@ -4,6 +4,38 @@ Application principale de GRIFF, construite avec Expo, React Native et Expo
 Router. L'ancienne application web reste disponible dans `../web` uniquement
 comme référence pendant la migration.
 
+La branche mobile de travail est `codex/mobile-architecture-feature`.
+`mobile-foundation` correspond à une ancienne version de l'application.
+
+## Développement iOS local avec Xcode
+
+Depuis `mobile/`, installer les dépendances avec `npm ci`, puis lancer
+`npm run ios` pour générer si nécessaire le projet natif, compiler et ouvrir
+l'application dans le simulateur. Xcode et CocoaPods doivent être installés.
+Pour ouvrir le projet dans Xcode, utiliser `ios/GRIFF.xcworkspace` après sa
+génération, afin d'inclure les dépendances CocoaPods.
+
+Pour relancer uniquement le serveur JavaScript d'une application déjà compilée :
+
+```bash
+npx expo start --dev-client
+```
+
+Le serveur Expo et le projet Xcode doivent provenir de la même copie de travail.
+Sur ce Mac, si `--localhost` n'écoute que sur `::1` alors que le client demande
+`127.0.0.1`, lancer le serveur ainsi :
+
+```bash
+REACT_NATIVE_PACKAGER_HOSTNAME=127.0.0.1 npx expo start --dev-client --port 8081
+```
+
+`node_modules/`, `ios/Pods/` et `ios/build/` sont régénérables. Ne pas supprimer
+les sources, le fichier `.env` ou les fichiers de verrouillage pour nettoyer
+une ancienne installation. Conserver `expo-dev-client`, `react-native-screens`
+et `react-native-worklets` même sans import direct : ils servent au client de
+développement, à la navigation et aux animations. `react-dom` et
+`react-native-web` restent nécessaires aux prévisualisations web.
+
 ## Démarrage
 
 ```bash

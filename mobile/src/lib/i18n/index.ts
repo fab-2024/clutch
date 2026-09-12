@@ -1,3 +1,7 @@
+import '@formatjs/intl-pluralrules/polyfill.js';
+import '@formatjs/intl-pluralrules/locale-data/fr.js';
+import '@formatjs/intl-pluralrules/locale-data/en.js';
+
 import { en } from './en';
 import { fr } from './fr';
 

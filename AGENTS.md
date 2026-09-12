@@ -2,9 +2,9 @@
 
 - `mobile/` is the primary Clutch application. Product work targets Hub,
   Matchs, Social, Room and Moi.
-- `mobile-foundation` remains the reference branch until the migration is
-  merged and verified. Do not use `main` as the mobile base unless explicitly
-  requested.
+- `codex/mobile-architecture-feature` is the current mobile working branch,
+  explicitly selected by the user. `mobile-foundation` is historical. Do not
+  use it or `main` as the mobile base unless explicitly requested.
 - Files under `mobile/app/` are Expo Router entries. Keep screen logic inside
   `mobile/src/features/`; route files should normally only re-export a screen.
 - Only feature `api.ts` modules may import the Supabase client. Screens,
