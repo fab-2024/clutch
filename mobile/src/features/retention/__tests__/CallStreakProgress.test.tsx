@@ -21,11 +21,20 @@ describe('streak milestone presentation', () => {
   it('shows the next real reward and keeps the Hub preview navigation local', async () => {
     const screen = await render(<CompactCallStreakCard previewState={PREVIEW_STREAK_FIVE} />);
     expect(screen.getByText('50 Volts')).toBeTruthy();
-    expect(screen.getByText('Encore 2 jours')).toBeTruthy();
-    expect(screen.getByLabelText('Jour 6 : À valider')).toBeTruthy();
-    expect(screen.queryByLabelText('Jour 6 : Call validé')).toBeNull();
+    expect(screen.getByText('Ta série · 5 jours')).toBeTruthy();
+    expect(screen.getByText('Prochain palier · 7 jours')).toBeTruthy();
+    expect(screen.queryByLabelText('Jour 6 : À valider')).toBeNull();
     await fireEvent.press(screen.getByTestId('call-streak-card'));
     expect(router.push).toHaveBeenCalledWith('/streak-preview');
+  });
+
+  it('invites a new player to start only when a call is available', async () => {
+    const state = { ...PREVIEW_STREAK_FIVE, current: 0, todayValidated: false, eligibleMatchId: 'available-match' };
+    const screen = await render(<CompactCallStreakCard previewState={state} />);
+    expect(screen.getByText('Lance ta série aujourd’hui')).toBeTruthy();
+    expect(screen.getByText('50 Volts')).toBeTruthy();
+    await screen.rerender(<CompactCallStreakCard previewState={{ ...state, eligibleMatchId: null }} />);
+    expect(screen.queryByText('Lance ta série aujourd’hui')).toBeNull();
   });
 
   it('moves today from pending to validated without awarding an extra day', async () => {
