@@ -139,7 +139,7 @@ describe('ProfileSettingsScreen', () => {
 
   it('lets the player choose an avatar and autosaves the selection', async () => {
     const screen = await render(<ProfileSettingsScreen previewState={previewState} />);
-    const avatar = screen.getByRole('radio', { name: 'Choisir l’avatar Drone pulsar' });
+    const avatar = screen.getByRole('radio', { name: 'Choisir l’avatar Vector' });
 
     expect(avatar.props.accessibilityState.checked).toBe(false);
     await fireEvent.press(avatar);

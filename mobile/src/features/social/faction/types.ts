@@ -49,6 +49,7 @@ export type CommunityMe = {
   top_activite: CommunityActivity[];
   archives: CommunityArchive[];
   mutation_a_presenter: CommunityMutationPresentation | null;
+  derniere_mutation_presentee?: CommunityMutationPresentation | null;
 };
 
 export type CommunityData = {

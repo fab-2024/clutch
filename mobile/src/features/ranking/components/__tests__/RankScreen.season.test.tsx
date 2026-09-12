@@ -1,3 +1,4 @@
+jest.mock('@/src/features/profile/api', () => ({ loadProfileData: jest.fn().mockRejectedValue(new Error('Profil indisponible')) }));
 /// <reference types="jest" />
 
 import { fireEvent, render, within } from '@testing-library/react-native';

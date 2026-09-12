@@ -30,6 +30,7 @@ import ProfileShowcaseCard from './ProfileShowcaseCard';
 import { t } from '@/src/lib/i18n';
 import { showcasePath } from '@/src/lib/publicLinks';
 import ProfileShareCard from './ProfileShareCard';
+import { PlayerIdentityCard } from '../identity/PlayerIdentityCard';
 
 type ProfileScreenProps = {
   previewData?: ProfileData;
@@ -256,7 +257,31 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
 
         {publicView ? <ProfileSafetyActions onBlocked={handlePublicBlocked} pseudo={pseudo} /> : null}
 
-        <ProfileShowcaseCard
+        {publicView && data && !loading ? (
+          <View style={{ marginHorizontal: spacing.md, gap: spacing.sm }}>
+            <PlayerIdentityCard
+              pseudo={data.pseudo || pseudo}
+              avatarId={data.avatarId}
+              cosmetics={cosmetics}
+              team={data.favoriteTeam}
+              grade={data.ranking.grade}
+              season={data.ranking.saison_nom}
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Voir la vitrine de ${data.pseudo || pseudo}`}
+              onPress={() => {
+                const path = showcasePath(data.pseudo || pseudo);
+                if (previewData) router.push('/growth-preview?section=showcase' as never);
+                else if (path) router.push(path as never);
+              }}
+              style={styles.settingsEntry}
+            >
+              <Text style={styles.settingsTitle}>Voir la vitrine</Text>
+              <Text style={styles.settingsArrow}>→</Text>
+            </Pressable>
+          </View>
+        ) : <ProfileShowcaseCard
           avatarId={data?.avatarId}
           cosmetics={cosmetics}
           level={data?.level.level ?? 0}
@@ -275,7 +300,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
           rankLabel={rankLabel}
           relicLevel={data?.favoriteTeam?.relique_niveau ?? 1}
           teamTag={data?.favoriteTeam?.tag || 'GRIFF'}
-        />
+        />}
 
         {!publicView ? (
           <View style={styles.profileTools}>

@@ -83,7 +83,7 @@ describe('mutation presentation idempotence', () => {
     id: 'event-42',
     from_level: 2,
     to_level: 5,
-    name: 'Cuve',
+    name: 'Nexus',
     threshold: 5_000,
     reward: 1_000,
     awakened: false,
@@ -115,7 +115,7 @@ describe('mutation presentation idempotence', () => {
       id: 'collective:kc:relic-v2:5',
       from_level: 2,
       to_level: 5,
-      name: 'Cuve',
+      name: 'Nexus',
       reward: 0,
     });
   });
@@ -140,7 +140,7 @@ describe('mutation presentation idempotence', () => {
       id: 'faction-event:server-500:relic-v2:3',
       from_level: 2,
       to_level: 3,
-      name: 'Flacon',
+      name: 'Cœur d’arène',
       reward: 300,
       occurred_at: archive.cree_le,
     });
@@ -184,6 +184,7 @@ describe('mutation presentation idempotence', () => {
     await rememberRelicMutation(firstLoad, pending!);
     const nextLoad = await attachPendingRelicMutation(communityAt(500));
     expect(nextLoad.moi?.mutation_a_presenter).toBeNull();
+    expect(nextLoad.moi?.derniere_mutation_presentee).toMatchObject({ id: pending!.id, from_level: 1, to_level: 3 });
   });
 
   it('stores a quiet baseline when no mutation has been reached', async () => {

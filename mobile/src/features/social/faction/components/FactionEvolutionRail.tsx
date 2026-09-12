@@ -2,11 +2,13 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { COMMUNITY_FORMS } from '@/src/features/social/faction/constants';
-import { relicContainerForLevel } from '@/src/features/social/faction/relicArtwork';
+import { useSharedValue } from 'react-native-reanimated';
+import { RestingMachine } from '../reactor/FocusedModule';
+import type { ReactorStage } from '../reactor/model';
 import type { CommunityFaction, FactionProgress } from '@/src/features/social/faction/types';
 import { colors, fonts, typography } from '@/src/theme';
 
-import StaticRelicVial from './StaticRelicVial';
+
 
 type MiniatureState = 'complete' | 'current' | 'next' | 'locked';
 
@@ -46,7 +48,7 @@ export default function FactionEvolutionRail({
               <FactionRelicMiniature comfortable={comfortable} level={form.level} size={miniatureSize} state={state} />
             </View>
             <Text
-              numberOfLines={comfortable ? 1 : 2}
+              numberOfLines={2}
               style={[
                 styles.evolutionLabel,
                 comfortable && styles.evolutionLabelComfortable,
@@ -92,13 +94,7 @@ export function FactionRelicMiniature({
           state === 'current' && comfortable && styles.imageHaloCurrentComfortable,
           state === 'complete' && styles.imageHaloComplete,
         ]} />
-        <StaticRelicVial
-          container={relicContainerForLevel(normalizedLevel)}
-          height={height}
-          opacity={opacity}
-          testID={`relic-miniature-${normalizedLevel}`}
-          width={size}
-        />
+        <ReactorMiniature level={normalizedLevel as ReactorStage} opacity={opacity} />
         {masked ? <View style={styles.lockShade} /> : null}
       </View>
 
@@ -133,6 +129,13 @@ export function FactionRelicMiniature({
       ) : null}
     </View>
   );
+}
+
+function ReactorMiniature({ level, opacity }: { level: ReactorStage; opacity: number }) {
+  const fill = useSharedValue(.63), clock = useSharedValue(0);
+  return <View style={[StyleSheet.absoluteFill, { opacity }]} testID={`relic-miniature-${level}`}>
+    <RestingMachine stage={level} fill={fill} mutation={clock} reaction={clock} reduced />
+  </View>;
 }
 
 function miniatureState(level: number, currentLevel: number, awakened: boolean): MiniatureState {

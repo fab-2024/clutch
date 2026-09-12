@@ -19,6 +19,10 @@ import { Screen } from '@/src/components/layout/Screen';
 import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
 import { trackAnalyticsEvent } from '@/src/features/analytics/api';
+import { loadProfileData } from '@/src/features/profile/api';
+import type { ProfileData } from '@/src/features/profile/types';
+import PlayerAvatar from '@/src/features/profile/avatars/PlayerAvatar';
+import { PlayerIdentityCard, IdentitySurface, equippedIdentityStyle } from '@/src/features/profile/identity/PlayerIdentityCard';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
 
@@ -370,6 +374,21 @@ function LeaderboardList({
   refreshing: boolean;
 }) {
   const rows = dashboard.leaderboards[scope];
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = rows.find(row => row.id === selectedId) ?? rows.find(row => row.me) ?? rows[0] ?? null;
+  const [identities, setIdentities] = useState<Record<string, ProfileData>>({});
+  const [identityError, setIdentityError] = useState(false);
+  const selectedPseudo = selected?.pseudo;
+  useEffect(() => {
+    let active = true;
+    setIdentityError(false);
+    if (!selectedPseudo) return;
+    void loadProfileData(selectedPseudo).then(data => {
+      if (active) setIdentities(current => ({ ...current, [selectedPseudo]: data }));
+    }).catch(() => { if (active) setIdentityError(true); });
+    return () => { active = false; };
+  }, [selectedPseudo]);
+  const detail = selectedPseudo ? identities[selectedPseudo] ?? null : null;
   const me = rows.find((row) => row.me) ?? null;
   const scopeLabel = SCOPES.find((item) => item.key === scope)?.label ?? scope;
   const renderRow = useCallback(({ index, item }: ListRenderItemInfo<RankLeaderboardRow>) => (
@@ -377,8 +396,11 @@ function LeaderboardList({
       first={index === 0}
       last={index === rows.length - 1}
       row={item}
+      selected={selected?.id === item.id}
+      onSelect={setSelectedId}
+      identity={identities[item.pseudo] ?? null}
     />
-  ), [rows.length]);
+  ), [rows.length, selected?.id, identities]);
 
   return (
     <FlatList
@@ -388,7 +410,17 @@ function LeaderboardList({
       keyExtractor={(row) => row.id}
       ListEmptyComponent={<LeaderboardEmpty scope={scope} />}
       ListFooterComponent={(
-        <Text style={styles.boardRule}>TRIÉ PAR FRAGS · PRÉCISION UTILISÉE UNIQUEMENT EN CAS D’ÉGALITÉ</Text>
+        <View style={{ paddingTop: 24, gap: 10 }}>
+          {selected ? <>
+            <Text style={styles.cardTitle}>Aperçu du joueur</Text>
+            <PlayerIdentityCard compact pseudo={selected.pseudo} avatarId={detail?.avatarId} cosmetics={detail?.cosmetics} team={detail?.favoriteTeam} grade={selected.grade} season={dashboard.season?.name} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={styles.boardUnit}>{identityError ? 'Habillage indisponible' : detail ? `Style : ${equippedIdentityStyle(detail.cosmetics)?.name ?? detail.cosmetics.profileCard?.name ?? 'Clutch Original'}` : 'Chargement de l’identité…'}</Text>
+              <Pressable accessibilityRole="link" accessibilityLabel={`Voir le profil de ${selected.pseudo}`} onPress={() => router.push({ pathname: '/u/[pseudo]', params: { pseudo: selected.pseudo } })} style={{ padding: 12 }}><Text style={{ color: colors.volt }}>Voir le profil →</Text></Pressable>
+            </View>
+          </> : null}
+          <Text style={styles.boardRule}>TRIÉ PAR FRAGS · PRÉCISION UTILISÉE UNIQUEMENT EN CAS D’ÉGALITÉ</Text>
+        </View>
       )}
       ListHeaderComponent={(
         <>
@@ -480,8 +512,9 @@ function MyPositionCard({ row, scope }: { row: RankLeaderboardRow; scope: string
 const LeaderboardRow = memo(function LeaderboardRow({
   first,
   last,
-  row,
+  row, selected, onSelect, identity,
 }: {
+  selected: boolean; onSelect: (id: string) => void; identity: ProfileData | null;
   first: boolean;
   last: boolean;
   row: RankLeaderboardRow;
@@ -491,21 +524,28 @@ const LeaderboardRow = memo(function LeaderboardRow({
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => router.push({ pathname: '/u/[pseudo]', params: { pseudo: row.pseudo } })}
+      accessibilityLabel={`Aperçu de ${row.pseudo}`}
+      accessibilityState={{ selected }}
+      onPress={() => onSelect(row.id)}
+      onLongPress={() => router.push({ pathname: '/u/[pseudo]', params: { pseudo: row.pseudo } })}
       style={({ pressed }) => [
         styles.boardRow,
+        { overflow: 'hidden' },
+        selected && { borderColor: '#BEA481', borderWidth: 1 },
         first && styles.boardRowFirst,
         last && styles.boardRowLast,
         row.me && styles.boardRowMe,
         pressed && styles.pressed,
       ]}
     >
+      {row.me || selected ? <IdentitySurface accent={identity?.cosmetics.profileCard?.accent ?? identity?.cosmetics.frame?.accent ?? '#DFFF7A'} /> : null}
       <Text style={[styles.boardRank, row.me && styles.boardRankMe]}>{row.rank ? String(row.rank) : '—'}</Text>
-      <RankEmblem grade={row.grade} size={46} />
+      <PlayerAvatar avatarId={identity?.avatarId} cosmetics={identity?.cosmetics} label={row.pseudo} size={44} />
       <View style={styles.boardIdentity}>
         <Text numberOfLines={1} style={styles.boardPseudo}>{row.pseudo}{row.me ? ' · TOI' : ''}</Text>
         <Text style={[styles.boardGrade, { color: accent }]}>{row.grade.libelle?.toUpperCase() || 'CLASSÉ'}</Text>
       </View>
+      <RankEmblem grade={row.grade} size={26} />
       <View style={styles.boardScore}>
         <Text style={styles.boardFrags}>{formatNumber(row.frags)}</Text>
         <Text style={styles.boardUnit}>FRAGS</Text>

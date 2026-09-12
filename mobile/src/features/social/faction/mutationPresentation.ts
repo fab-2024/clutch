@@ -14,6 +14,7 @@ export type RelicPresentationMemory = {
   eventId: string;
   level: number;
   presentedAt: string;
+  mutation?: CommunityMutationPresentation;
 };
 
 export async function attachPendingRelicMutation(data: CommunityData): Promise<CommunityData> {
@@ -37,7 +38,7 @@ export async function attachPendingRelicMutation(data: CommunityData): Promise<C
   }
 
   return data.moi
-    ? { ...data, moi: { ...data.moi, mutation_a_presenter: pending } }
+    ? { ...data, moi: { ...data.moi, mutation_a_presenter: pending, derniere_mutation_presentee: memory?.mutation ?? null } }
     : data;
 }
 
@@ -53,6 +54,7 @@ export async function rememberRelicMutation(
     {
       eventId: mutation.id,
       level: mutation.to_level,
+      mutation,
       presentedAt: new Date().toISOString(),
     },
   );
@@ -131,6 +133,7 @@ async function readPresentationMemory(key: string): Promise<RelicPresentationMem
       eventId: String(value.eventId),
       level: Math.max(0, Math.min(COMMUNITY_FORMS.length - 1, Number(value.level))),
       presentedAt: String(value.presentedAt),
+      mutation: value.mutation && Number.isFinite(value.mutation.from_level) && Number.isFinite(value.mutation.to_level) && value.mutation.to_level > value.mutation.from_level && value.mutation.to_level <= 6 ? value.mutation : undefined,
     };
   } catch {
     return null;

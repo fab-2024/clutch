@@ -1,10 +1,9 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import Pencil from 'lucide-react-native/icons/pencil';
 import UserRoundPlus from 'lucide-react-native/icons/user-round-plus';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
-import PlayerAvatar from '@/src/features/profile/avatars/PlayerAvatar';
+import { PlayerIdentityCard } from '../identity/PlayerIdentityCard';
 import CallStreakCard from '@/src/features/retention/components/CallStreakCard';
 import type { EquippedCosmetics } from '@/src/features/shop/types';
 import type { LevelFrameVariant } from '@/src/features/profile/levelFrames/types';
@@ -96,80 +95,16 @@ function ProfileIdentityCard({
 }) {
   const displayedPseudo = data?.pseudo || pseudo;
   const publicProfile = !loading && data?.publicProfile !== false;
-  const profileTitle = loading
-    ? 'Synchronisation du profil'
-    : cosmetics?.title?.name
-      || data?.profileTitle
-      || data?.level.prestigeLabel
-      || 'Supporter Clutch';
-  const statusColor = publicProfile ? colors.success : colors.liveText;
-
-  return (
-    <View style={styles.identityCard} testID="profile-identity-card">
-      <LinearGradient
-        colors={['rgba(23,32,39,.72)', 'rgba(7,11,15,.94)', 'rgba(3,7,10,.98)']}
-        end={{ x: 1, y: 1 }}
-        pointerEvents="none"
-        start={{ x: 0, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <PlayerAvatar avatarId={data?.avatarId} cosmetics={cosmetics} label={displayedPseudo} size={94} />
-
-      <View style={styles.identityContent}>
-        <View style={styles.identityTopRow}>
-          <View
-            accessible
-            accessibilityLabel={`${displayedPseudo}, ${profileTitle}`}
-            style={styles.identityCopy}
-          >
-            <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={styles.pseudo}>
-              {displayedPseudo}
-            </Text>
-            <Text numberOfLines={1} style={styles.profileTitle}>{profileTitle.toUpperCase()}</Text>
-          </View>
-          <Pressable
-            accessibilityLabel="Modifier la visibilité de mon profil"
-            accessibilityRole="button"
-            accessibilityState={{ disabled: loading }}
-            disabled={loading}
-            onPress={onModify}
-            style={({ pressed }) => [styles.status, pressed && styles.pressed]}
-          >
-            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-            <Text style={[styles.statusText, { color: statusColor }]}>
-              {loading ? 'SYNCHRO' : publicProfile ? 'PUBLIC' : 'PRIVÉ'}
-            </Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.identityActions}>
-          <Pressable
-            accessibilityLabel="Ajouter un ami"
-            accessibilityRole="button"
-            accessibilityState={{ disabled: loading }}
-            disabled={loading}
-            onPress={onAddFriend}
-            style={({ pressed }) => [styles.friendAction, pressed && styles.friendActionPressed]}
-          >
-            <UserRoundPlus color="#070A0E" size={21} strokeWidth={2.2} />
-            <Text adjustsFontSizeToFit minimumFontScale={0.78} numberOfLines={1} style={styles.friendActionText}>
-              AJOUTER UN AMI
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityLabel="Modifier ma photo de profil"
-            accessibilityRole="button"
-            accessibilityState={{ disabled: loading || !data }}
-            disabled={loading || !data}
-            onPress={onEditAvatar}
-            style={({ pressed }) => [styles.editAvatarAction, (loading || !data) && styles.disabled, pressed && styles.pressed]}
-          >
-            <Pencil color={colors.text} size={21} strokeWidth={2} />
-          </Pressable>
-        </View>
-      </View>
+  return <View testID="profile-identity-card" style={{ marginHorizontal: spacing.md, gap: 10 }}>
+    <PlayerIdentityCard pseudo={displayedPseudo} avatarId={data?.avatarId} cosmetics={cosmetics} team={data?.favoriteTeam} grade={data?.ranking.grade} season={data?.ranking.saison_nom} />
+    <View style={styles.identityActions}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Ajouter un ami" disabled={loading} onPress={onAddFriend} style={styles.friendAction}>
+        <UserRoundPlus color="#070A0E" size={21} /><Text style={styles.friendActionText}>AJOUTER UN AMI</Text>
+      </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Modifier ma photo de profil" disabled={loading || !data} onPress={onEditAvatar} style={styles.editAvatarAction}><Pencil color={colors.text} size={21} /></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Modifier la visibilité de mon profil" disabled={loading} onPress={onModify} style={styles.status}><Text style={[styles.statusText, { color: colors.textSecondary }]}>{loading ? 'SYNCHRO' : publicProfile ? 'PUBLIC' : 'PRIVÉ'}</Text></Pressable>
     </View>
-  );
+  </View>;
 }
 
 function ProfileOverviewSkeleton() {

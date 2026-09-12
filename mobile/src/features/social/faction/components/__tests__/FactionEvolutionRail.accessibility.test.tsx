@@ -9,6 +9,9 @@ import { accessibility } from '@/src/theme';
 
 import FactionEvolutionRail from '../FactionEvolutionRail';
 
+jest.mock('react-native-reanimated', () => ({ useSharedValue: (value: number) => ({ value }) }));
+jest.mock('../../reactor/FocusedModule', () => ({ RestingMachine: require('react-native').View }));
+
 jest.mock('@/src/features/onboarding/components/TeamLogo', () => {
   const { View } = require('react-native');
   return View;
@@ -35,7 +38,7 @@ describe('FactionEvolutionRail accessibility', () => {
     expect(screen.getByLabelText(`${current.name}, forme actuelle`)).toBeTruthy();
   });
 
-  it('keeps the comfortable five-step rail on one labelled line', async () => {
+  it('keeps the comfortable five-step rail fully labelled without truncation', async () => {
     const current = COMMUNITY_FORMS.find((form) => form.level === 1)!;
     const screen = await render(
       <FactionEvolutionRail
@@ -47,13 +50,13 @@ describe('FactionEvolutionRail accessibility', () => {
     COMMUNITY_FORMS.filter((form) => form.level >= 1 && form.level <= 5).forEach((form) => {
       const label = screen.getByText(form.name.toUpperCase());
       expect(label.props.adjustsFontSizeToFit).toBeUndefined();
-      expect(label.props.numberOfLines).toBe(1);
+      expect(label.props.numberOfLines).toBe(2);
       expect(StyleSheet.flatten(label.props.style).fontSize).toBeGreaterThanOrEqual(
         accessibility.minimumFunctionalFontSize,
       );
     });
 
-    expect(screen.getByLabelText('Ampoule, forme actuelle')).toBeTruthy();
-    expect(screen.getByLabelText('Bonbonne, forme verrouillée')).toBeTruthy();
+    expect(screen.getByLabelText('Module, forme actuelle')).toBeTruthy();
+    expect(screen.getByLabelText('Citadelle, forme verrouillée')).toBeTruthy();
   });
 });

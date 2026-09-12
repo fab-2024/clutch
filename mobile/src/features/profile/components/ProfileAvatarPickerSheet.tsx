@@ -36,7 +36,7 @@ export default function ProfileAvatarPickerSheet({
       visible={visible}
     >
       <Text style={styles.intro}>
-        Sélectionne une icône. Elle sera enregistrée sur ton profil et visible dans l’application.
+        15 avatars gratuits, disponibles dès maintenant. Ton choix sera visible sur ton profil et dans les classements.
       </Text>
 
       {error ? (

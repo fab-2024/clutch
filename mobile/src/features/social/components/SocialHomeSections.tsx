@@ -113,6 +113,7 @@ export function FactionRelicHero({
         faction={faction}
         instabilityPreviewOverride={instabilityPreviewOverride}
         mutation={mutation}
+          replayMutation={me?.derniere_mutation_presentee}
         onDiagnosticsChange={onRelicDiagnosticsChange}
         onMutationPresented={onMutationPresented}
         onSupporterContributionPresented={onSupporterContributionPresented}

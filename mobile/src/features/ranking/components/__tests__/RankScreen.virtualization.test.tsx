@@ -1,3 +1,4 @@
+jest.mock('@/src/features/profile/api', () => ({ loadProfileData: jest.fn().mockRejectedValue(new Error('Profil indisponible')) }));
 /// <reference types="jest" />
 
 import { fireEvent, render } from '@testing-library/react-native';
@@ -33,6 +34,15 @@ jest.mock('../SeasonJourneyCard', () => ({ SeasonJourneyCard: () => null }));
 jest.mock('../../api', () => ({ loadRankDashboard: jest.fn() }));
 
 describe('RankScreen leaderboard', () => {
+  it('selects a player before opening their profile', async () => {
+    const screen = await render(<RankScreen previewData={makeDashboard(2)} />);
+    await fireEvent.press(screen.getByRole('tab', { name: 'Classements' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Aperçu de Player 2' }));
+    expect(screen.getByRole('button', { name: 'Aperçu de Player 2' }).props.accessibilityState.selected).toBe(true);
+    expect(screen.getByRole('link', { name: 'Voir le profil de Player 2' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('link', { name: 'Voir le profil de Player 2' }));
+    expect(require('expo-router').router.push).toHaveBeenCalledWith({ pathname: '/u/[pseudo]', params: { pseudo: 'Player 2' } });
+  });
   it('renders a long ladder through a bounded virtualized list', async () => {
     const screen = await render(<RankScreen previewData={makeDashboard(24)} />);
 

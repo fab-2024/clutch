@@ -53,7 +53,7 @@ jest.mock('../ProfileAvatarPickerSheet', () => {
       View,
       { accessibilityLabel: `Avatar sélectionné ${selectedAvatarId ?? 'aucun'}`, testID: 'profile-avatar-picker' },
       React.createElement(Pressable, {
-        accessibilityLabel: 'Choisir l’avatar Oracle neurale',
+        accessibilityLabel: 'Choisir l’avatar Nova',
         accessibilityRole: 'radio',
         onPress: () => onSelect('void-dragon'),
       }),
@@ -139,7 +139,7 @@ describe('ProfileScreen private navigation', () => {
     await fireEvent.press(screen.getByLabelText('Modifier ma photo de profil'));
     await waitFor(() => expect(screen.getByTestId('profile-avatar-picker')).toBeTruthy());
 
-    await fireEvent.press(screen.getByRole('radio', { name: 'Choisir l’avatar Oracle neurale' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Choisir l’avatar Nova' }));
     await waitFor(() => expect(screen.queryByTestId('profile-avatar-picker')).toBeNull());
 
     await fireEvent.press(screen.getByLabelText('Modifier ma photo de profil'));
@@ -152,7 +152,7 @@ describe('ProfileScreen private navigation', () => {
     await waitFor(() => expect(screen.getByLabelText('Modifier ma photo de profil')).toBeTruthy());
 
     await fireEvent.press(screen.getByLabelText('Modifier ma photo de profil'));
-    await fireEvent.press(screen.getByRole('radio', { name: 'Choisir l’avatar Oracle neurale' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Choisir l’avatar Nova' }));
 
     await waitFor(() => expect(mockSaveProfileAvatar).toHaveBeenCalledWith('user-1', 'void-dragon'));
     expect(mockRefreshProfile).toHaveBeenCalledTimes(1);

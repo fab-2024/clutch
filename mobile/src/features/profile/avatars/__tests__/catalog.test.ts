@@ -7,8 +7,9 @@ import {
 describe('player avatar catalog', () => {
   it('offers the fifteen original avatars from the active sheet', () => {
     expect(PLAYER_AVATARS).toHaveLength(15);
+    expect(PLAYER_AVATARS.every(avatar => avatar.access === 'free')).toBe(true);
     expect(new Set(PLAYER_AVATARS.map((avatar) => avatar.id)).size).toBe(15);
-    expect(PLAYER_AVATARS.map((avatar) => avatar.label)).toContain('Drone pulsar');
+    expect(PLAYER_AVATARS.map((avatar) => avatar.label)).toContain('Vector');
   });
 
   it('replaces a previously saved legacy selection without exposing it again', () => {

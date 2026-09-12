@@ -36,9 +36,9 @@ describe('ProfileAvatarPickerSheet', () => {
     );
 
     expect(screen.getAllByRole('radio')).toHaveLength(PLAYER_AVATARS.length);
-    expect(screen.getByRole('radio', { name: 'Choisir l’avatar Drone pulsar' }).props.accessibilityState.checked).toBe(true);
+    expect(screen.getByRole('radio', { name: 'Choisir l’avatar Vector' }).props.accessibilityState.checked).toBe(true);
 
-    await fireEvent.press(screen.getByRole('radio', { name: 'Choisir l’avatar Oracle neurale' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Choisir l’avatar Nova' }));
     expect(onSelect).toHaveBeenCalledWith('void-dragon');
   });
 
