@@ -42,7 +42,7 @@ describe('Partner campaign editorial language', () => {
     expect(screen.getByText('SYNCHRO')).toBeTruthy();
     expect(screen.getByText('PARTENAIRE // INTERNE')).toBeTruthy();
     expect(screen.getByText('JOUEUR_01')).toBeTruthy();
-    expect(screen.getByText('← LOCKER')).toBeTruthy();
+    expect(screen.getByText('← COLLECTION')).toBeTruthy();
     expect(screen.getByText('Faire 3 Calls'.toUpperCase())).toBeTruthy();
 
     expect(screen.queryByText('SYNC')).toBeNull();

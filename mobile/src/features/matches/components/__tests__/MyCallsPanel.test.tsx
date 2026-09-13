@@ -36,7 +36,7 @@ describe('MyCallsPanel', () => {
     const lockedTab = screen.getByRole('tab', { name: 'VERROUILLÉS, 1' });
     expect(lockedTab.props.accessibilityState.selected).toBe(true);
     expect(screen.getByRole('button', { name: 'Karmine Corp contre Team Vitality, VERROUILLÉ' })).toBeTruthy();
-    expect(screen.getByText('OUVRIR LE MATCH CENTER')).toBeTruthy();
+    expect(screen.getByText('OUVRIR LE CENTRE DU MATCH')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('tab', { name: 'RÉUSSIS, 1' }));
 

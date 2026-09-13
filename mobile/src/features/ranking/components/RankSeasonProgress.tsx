@@ -18,7 +18,7 @@ export function RankSeasonProgress({ state }: RankSeasonProgressProps) {
     <View style={styles.metrics}>
       <View style={styles.metricColumns}>
         <View style={styles.metricColumn}>
-          <Text style={styles.metricLabel}>RATING ACTUEL</Text>
+          <Text style={styles.metricLabel}>SCORE ACTUEL</Text>
           <Text adjustsFontSizeToFit numberOfLines={1} style={styles.ratingValue}>
             {formatNumber(state.frags)}
           </Text>

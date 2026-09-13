@@ -298,7 +298,7 @@ export default function MatchCenterScreen({
             action={{ label: 'RÉESSAYER', onPress: () => void load() }}
             compact
             description={error}
-            title="Match Center indisponible"
+            title="Centre du match indisponible"
             variant="error"
           />
         ) : null}
@@ -455,7 +455,7 @@ export default function MatchCenterScreen({
 
             <View style={styles.infoCard}>
               <Text style={styles.infoEyebrow}>COMMENT ÇA MARCHE</Text>
-              <Text style={styles.infoTitle}>Ton rating, pas ton portefeuille.</Text>
+              <Text style={styles.infoTitle}>Ton score, pas ton portefeuille.</Text>
               <Text style={styles.infoCopy}>
                 Correct : tu gagnes des Frags. Faux : tu en perds. La probabilité du modèle est figée pour tous les joueurs avant ton choix.
               </Text>

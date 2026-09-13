@@ -54,7 +54,7 @@ export default function LevelFrameGallery({
 
       <View style={styles.heading}>
         <View>
-          <Text style={styles.headingEyebrow}>{`${mode === 'shop' ? 'BOUTIQUE' : 'LOCKER'} // CADRES DE NIVEAU`}</Text>
+          <Text style={styles.headingEyebrow}>{`${mode === 'shop' ? 'BOUTIQUE' : 'COLLECTION'} // CADRES DE NIVEAU`}</Text>
           <Text style={styles.headingTitle}>{mode === 'shop' ? 'UNE AUTRE MATIÈRE.' : 'CHOISIS TON SIGNAL.'}</Text>
         </View>
         <Text style={styles.count}>{String(entries.length).padStart(2, '0')}</Text>
@@ -148,7 +148,7 @@ function LevelFrameCard({
         </Pressable>
       ) : (
         <View style={[styles.shopState, entry.owned && styles.shopStateOwned]}>
-          <Text style={[styles.shopStateText, entry.owned && styles.shopStateTextOwned]}>{entry.owned ? 'DÉJÀ DANS TON LOCKER' : sourceLabel(entry)}</Text>
+          <Text style={[styles.shopStateText, entry.owned && styles.shopStateTextOwned]}>{entry.owned ? 'DÉJÀ DANS TA COLLECTION' : sourceLabel(entry)}</Text>
         </View>
       )}
     </View>
@@ -167,14 +167,14 @@ function rarityColor(entry: LevelFrameCollectionEntry) {
 }
 
 function sourceLabel(entry: LevelFrameCollectionEntry) {
-  if (entry.source === 'founder_pack') return 'FOUNDER PACK';
+  if (entry.source === 'founder_pack') return 'PACK FONDATEUR';
   if (entry.source === 'included') return 'INCLUS';
   return 'VOLTS';
 }
 
 function priceLabel(entry: LevelFrameCollectionEntry) {
   if (entry.source === 'included') return 'INCLUS · ÉVOLUTIF';
-  if (entry.source === 'founder_pack') return 'FOUNDER PACK';
+  if (entry.source === 'founder_pack') return 'PACK FONDATEUR';
   return entry.price ? `${formatNumber(entry.price)} VOLTS` : 'INDISPONIBLE';
 }
 

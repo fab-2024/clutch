@@ -126,16 +126,16 @@ export const PREVIEW_PROFILE: ProfileData = {
   level: {
     xp: 200,
     level: 2,
-    title: 'Rookie du Call',
+    title: 'Débutant du Call',
     prestige: 'starter',
-    prestigeLabel: 'Starter',
+    prestigeLabel: 'Débutant',
     progress: 0.52,
     remaining: 800,
   },
   cosmetics: {
     frame: { id: 'cadre-profil-1', slot: 'cadre_profil', level: 1, name: 'Cadre Brut', description: '', rarity: 'commun', styleKey: 'frame-raw', accent: '#AAB4BE' },
-    title: { id: 'titre-profil-1', slot: 'titre_profil', level: 1, name: 'Rookie du Call', description: '', rarity: 'commun', styleKey: 'title-rookie', accent: '#AAB4BE' },
-    core: { id: 'apparence-core-1', slot: 'apparence_core', level: 1, name: 'Core Origine', description: '', rarity: 'commun', styleKey: 'core-origin', accent: '#E8FF3D' },
+    title: { id: 'titre-profil-1', slot: 'titre_profil', level: 1, name: 'Débutant du Call', description: '', rarity: 'commun', styleKey: 'title-rookie', accent: '#AAB4BE' },
+    core: { id: 'apparence-core-1', slot: 'apparence_core', level: 1, name: 'Noyau Origine', description: '', rarity: 'commun', styleKey: 'core-origin', accent: '#E8FF3D' },
     factionEffect: { id: 'effet-faction-1', slot: 'effet_faction', level: 1, name: 'Aura Discrète', description: '', rarity: 'commun', styleKey: 'faction-aura', accent: '#C6A34A' },
     profileCard: { id: 'carte-profil-1', slot: 'carte_profil', level: 1, name: 'Carte Noire', description: '', rarity: 'commun', styleKey: 'card-black', accent: '#AAB4BE' },
     showcase: {

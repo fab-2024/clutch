@@ -77,7 +77,7 @@ type LockerTab = IdentityCosmeticSlot | 'showcase_jersey' | 'showcase_ring' | 's
 const SLOT_META: Record<IdentityCosmeticSlot, { label: string; short: string; promise: string; glyph: string }> = {
   cadre_profil: { label: 'Cadres', short: 'CADRE', promise: 'Signe ton profil sans toucher à tes performances.', glyph: '▣' },
   titre_profil: { label: 'Titres', short: 'TITRE', promise: 'Affiche une identité gagnée, jamais un avantage.', glyph: 'T' },
-  apparence_core: { label: 'Core', short: 'CORE', promise: 'Change la matière du noyau visible sur ton Hub.', glyph: 'C' },
+  apparence_core: { label: 'Noyau', short: 'NOYAU', promise: 'Change la matière du noyau visible sur ton Hub.', glyph: 'C' },
   effet_faction: { label: 'Reliques', short: 'RELIQUE', promise: 'Habille la relique sans accélérer sa progression.', glyph: '✦' },
   carte_profil: { label: 'Bannières', short: 'BANNIÈRE', promise: 'Prépare une signature visuelle à partager.', glyph: '◇' },
 };
@@ -189,7 +189,7 @@ export default function LockerScreen({ previewData, previewProfile, previewState
       }
     } catch (caught) {
       if (requestId === requestRef.current) {
-        const detail = caught instanceof Error ? caught.message : 'Impossible de charger le Locker.';
+        const detail = caught instanceof Error ? caught.message : 'Impossible de charger la collection.';
         if (cachedDataRef.current && isOfflineError(detail)) {
           setData(cachedDataRef.current);
           setOffline(true);
@@ -617,7 +617,7 @@ export default function LockerScreen({ previewData, previewProfile, previewState
           </Pressable>
           <View style={styles.headerIdentity}>
             <Text style={styles.headerEyebrow}>COLLECTION D’IDENTITÉ</Text>
-            <Text style={styles.headerTitle}>{focusedCollection ? activeMeta.label.toUpperCase() : 'LOCKER'}</Text>
+            <Text style={styles.headerTitle}>{focusedCollection ? activeMeta.label.toUpperCase() : 'COLLECTION'}</Text>
           </View>
           <View accessible accessibilityLabel={unlimitedVolts ? 'Volts illimités' : `${formatNumber(data?.balance ?? 0)} Volts`} style={styles.balancePill}>
             <CurrencyIcon color="#080A0C" kind="volts" size={15} />
@@ -703,7 +703,7 @@ export default function LockerScreen({ previewData, previewProfile, previewState
             onEquip={handleLevelFrameEquip}
           />
         ) : loading ? (
-          <LockerContentSkeleton label="Chargement du Locker" />
+          <LockerContentSkeleton label="Chargement de la collection" />
         ) : visibleItems.length ? (
           <View style={styles.grid}>
             {visibleItems.map((item) => <ItemCard balance={data?.balance ?? 0} confirming={confirmingId === item.id} item={item} key={item.id} pending={pendingId === item.id} pseudo={pseudo} onAction={() => void handleItem(item)} onOpen={() => openItem(item)} />)}
@@ -825,15 +825,15 @@ function uniqueCollections(items: CosmeticItem[]) { return Array.from(new Set(it
 function itemAction(item: CosmeticItem, pending: boolean, confirming: boolean, missing: number) { if (pending) return 'SYNCHRONISATION…'; if (item.equipped) return item.included ? 'ÉQUIPÉ' : 'RETIRER'; if (item.owned) return 'ÉQUIPER'; if (!item.acquirable) return acquisitionAction(item); if (missing) return `MANQUE ${formatNumber(missing)} V`; return confirming ? `CONFIRMER · ${formatNumber(item.price)} V` : `DÉBLOQUER · ${formatNumber(item.price)} V`; }
 function rarityColor(rarity: CosmeticRarity, accent: string) { return rarity === 'commun' ? '#87929E' : accent; }
 function rarityLabel(rarity: CosmeticRarity) { if (rarity === 'legendaire') return 'LÉGENDAIRE'; if (rarity === 'epique') return 'ÉPIQUE'; if (rarity === 'rare') return 'RARE'; return 'COMMUN'; }
-function sourceLabel(source: CosmeticItem['source']) { if (source === 'mission') return 'MISSION'; if (source === 'partenaire') return 'PARTENAIRE'; if (source === 'founder_pack') return 'FOUNDER PACK'; if (source === 'gratuit') return 'OFFERT'; return 'VOLTS'; }
+function sourceLabel(source: CosmeticItem['source']) { if (source === 'mission') return 'MISSION'; if (source === 'partenaire') return 'PARTENAIRE'; if (source === 'founder_pack') return 'PACK FONDATEUR'; if (source === 'gratuit') return 'OFFERT'; return 'VOLTS'; }
 function acquisitionAction(item: CosmeticItem) { return item.available ? sourceLabel(item.source) : 'INDISPONIBLE'; }
-function acquisitionMessage(item: CosmeticItem) { if (!item.available) return `${item.name} n’est plus disponible à l’acquisition, mais reste permanent pour ses propriétaires.`; if (item.source === 'mission') return `${item.name} se débloque en accomplissant sa mission.`; if (item.source === 'partenaire') return `${item.name} se débloque via son activation partenaire.`; if (item.source === 'founder_pack') return `${item.name} est réservé au Founder Pack.`; return `${item.name} ne peut pas être débloqué depuis le Locker.`; }
+function acquisitionMessage(item: CosmeticItem) { if (!item.available) return `${item.name} n’est plus disponible à l’acquisition, mais reste permanent pour ses propriétaires.`; if (item.source === 'mission') return `${item.name} se débloque en accomplissant sa mission.`; if (item.source === 'partenaire') return `${item.name} se débloque via son activation partenaire.`; if (item.source === 'founder_pack') return `${item.name} est réservé au pack Fondateur.`; return `${item.name} ne peut pas être débloqué depuis la collection.`; }
 function provenanceLabel(item: CosmeticItem) { const identity = item.team?.tag || item.brandKey || humanize(item.collectionKey); return `${identity.toUpperCase()} · ${sourceLabel(item.source)}`; }
 function sourceDetail(item: CosmeticItem) { return [sourceLabel(item.source), item.campaignKey ? humanize(item.campaignKey) : null, item.brandKey ? humanize(item.brandKey) : null].filter(Boolean).join(' · '); }
 function availabilityLabel(item: CosmeticItem) { if (!item.available && item.owned) return 'Retiré · conservé dans ta collection'; if (!item.available) return 'Indisponible'; if (item.availableUntil) return `Disponible jusqu’au ${new Date(item.availableUntil).toLocaleDateString('fr-FR')}`; return 'Disponible sans expiration'; }
 function humanize(value: string) { return value.replace(/[-_]/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()); }
 function formatNumber(value: number) { return new Intl.NumberFormat('fr-FR').format(Number(value || 0)); }
-function friendlyError(value: string) { if (value.toLowerCase().includes('solde insuffisant')) return 'Ton solde a changé. Recharge le Locker avant de confirmer.'; if (isOfflineError(value)) return 'Connexion indisponible. Tes objets équipés restent visibles sur cet appareil.'; return value; }
+function friendlyError(value: string) { if (value.toLowerCase().includes('solde insuffisant')) return 'Ton solde a changé. Recharge la collection avant de confirmer.'; if (isOfflineError(value)) return 'Connexion indisponible. Tes objets équipés restent visibles sur cet appareil.'; return value; }
 function isOfflineError(value: string) { return /network|fetch|connexion|offline|hors ligne/i.test(value); }
 function collectionTabFromParam(value?: string | string[]): 'cadre_profil' | 'showcase_jersey' | 'showcase_ring' | 'showcase_trophy' | 'level_frame' | null {
   const normalized = Array.isArray(value) ? value[0] : value;

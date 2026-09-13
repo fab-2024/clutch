@@ -50,7 +50,7 @@ export function LiveBadge({ scale = 1 }: { scale?: number }) {
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.highlight} />
-      <Text style={[styles.text, { fontSize: 13 * scale, lineHeight: 16 * scale }]}>LIVE</Text>
+      <Text style={[styles.text, { fontSize: 13 * scale, lineHeight: 16 * scale }]}>EN DIRECT</Text>
     </Animated.View>
   );
 }

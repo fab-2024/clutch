@@ -248,7 +248,7 @@ export const DEFAULT_MONETIZATION_CONTRACT: MonetizationContract = {
     {
       id: 'competitive-integrity',
       label: 'FRAGS INACHETABLES',
-      detail: 'Le rating, le rang et les résultats de Calls ne s’achètent jamais.',
+      detail: 'Le score, le rang et les résultats de Calls ne s’achètent jamais.',
     },
     {
       id: 'cosmetics-only',

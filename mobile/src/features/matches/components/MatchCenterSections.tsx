@@ -37,7 +37,7 @@ export function PredictionZone({
     return <ClosedState eyebrow="VERDICT" title="Le match est terminé." copy="Le résultat est figé. Ton historique conserve le delta Frags associé." />;
   }
   if (match.statut === 'annule') {
-    return <ClosedState eyebrow="MATCH ANNULÉ" title="Cette affiche ne sera pas jouée." copy="Le pronostic éventuel est annulé sans modifier ton rating." />;
+    return <ClosedState eyebrow="MATCH ANNULÉ" title="Cette affiche ne sera pas jouée." copy="Le pronostic éventuel est annulé sans modifier ton score." />;
   }
   if (!open) {
     return <ClosedState eyebrow="PRONOSTICS FERMÉS" title="Le match a commencé." copy="Après le coup d’envoi, aucun nouveau pronostic classé n’est accepté." />;
@@ -63,7 +63,7 @@ export function PredictionZone({
         <View style={styles.selectionOutcome}>
           <View style={styles.selectionOutcomeHeader}>
             <Text style={styles.selectionOutcomeEyebrow}>TON CALL · {selectedTag}</Text>
-            <Text style={styles.selectionOutcomeMeta}>IMPACT SUR TON RATING</Text>
+            <Text style={styles.selectionOutcomeMeta}>IMPACT SUR TON SCORE</Text>
           </View>
           <View style={styles.riskRow}>
             <RiskCell label="À GAGNER" value={`+${Math.abs(selectedProjection.gain)}`} positive />
@@ -175,10 +175,10 @@ export function LockedPrediction({ data }: { data: MatchCenterData }) {
         ? 'CALL ANNULÉ'
         : 'TON CHOIX EST VERROUILLÉ';
   const outcomeCopy = cancelled
-    ? 'Le match a été annulé : ton rating Frags reste inchangé.'
+    ? 'Le match a été annulé : ton score Frags reste inchangé.'
     : settled
-      ? 'Ton rating de saison a été mis à jour et ce verdict rejoint maintenant ton historique.'
-      : 'Après le résultat, GRIFF tranche le call puis applique automatiquement le delta à ton rating.';
+      ? 'Ton score de saison a été mis à jour et ce verdict rejoint maintenant ton historique.'
+      : 'Après le résultat, GRIFF tranche le call puis applique automatiquement le delta à ton score.';
 
   return (
     <View style={[styles.lockedCard, won && styles.lockedCardWin, lost && styles.lockedCardLoss]}>
@@ -217,7 +217,7 @@ export function LockedPrediction({ data }: { data: MatchCenterData }) {
         <Text style={styles.timelineArrow}>→</Text>
         <TimelineStep complete={resolved} label="VERDICT" meta={cancelled ? 'ANNULÉ' : settled ? 'TERMINÉ' : 'À VENIR'} />
         <Text style={styles.timelineArrow}>→</Text>
-        <TimelineStep complete={settled} label="RATING" meta={cancelled ? 'INCHANGÉ' : settled ? 'MIS À JOUR' : 'APRÈS MATCH'} />
+        <TimelineStep complete={settled} label="SCORE" meta={cancelled ? 'INCHANGÉ' : settled ? 'MIS À JOUR' : 'APRÈS MATCH'} />
       </View>
 
       <View style={styles.lockedActions}>
@@ -232,12 +232,12 @@ export function LockedPrediction({ data }: { data: MatchCenterData }) {
           </Pressable>
         ) : null}
         <Pressable
-          accessibilityLabel={settled ? 'Choisir un prochain call' : 'Suivre ce call dans mes calls'}
+          accessibilityLabel={settled ? 'Choisir un autre match' : 'Revenir aux matchs'}
           accessibilityRole="button"
-          onPress={() => router.push({ pathname: '/(tabs)/matches', params: { view: 'calls' } })}
+          onPress={() => router.push('/(tabs)/matches')}
           style={({ pressed }) => [settled ? styles.lockedSecondaryAction : styles.lockedPrimaryAction, pressed && styles.confirmPressed]}
         >
-          <Text style={settled ? styles.lockedSecondaryText : styles.lockedPrimaryText}>{settled ? 'PROCHAIN CALL' : 'SUIVRE DANS MES CALLS'}</Text>
+          <Text style={settled ? styles.lockedSecondaryText : styles.lockedPrimaryText}>{settled ? 'CHOISIR UN AUTRE MATCH' : 'RETOUR AUX MATCHS'}</Text>
         </Pressable>
       </View>
     </View>
@@ -369,7 +369,7 @@ export function RelatedMatches({ matches, source }: { matches: ArenaMatch[]; sou
     <View style={styles.relatedSection}>
       <View>
         <Text style={styles.relatedEyebrow}>PROCHAINS MATCHS</Text>
-        <Text style={styles.relatedTitle}>Continue dans la même Arena.</Text>
+        <Text style={styles.relatedTitle}>Continue dans la même arène.</Text>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relatedRail}>
         {matches.map((match) => (
@@ -424,8 +424,8 @@ export function LoadingCard({ snapshot }: { snapshot?: MatchJourneySnapshot | nu
     { name: snapshot?.teamB, tag: snapshot?.tagB, provided: snapshot?.accentB },
   );
   const accessibleLabel = snapshot
-    ? `Chargement du Match Center, ${snapshot.teamA} contre ${snapshot.teamB}`
-    : 'Chargement du Match Center';
+    ? `Chargement du centre du match, ${snapshot.teamA} contre ${snapshot.teamB}`
+    : 'Chargement du centre du match';
   const loadingHero = (
     <View style={styles.loadingCard}>
       {snapshot ? (
@@ -498,7 +498,7 @@ export function formatMatchDate(match: MatchCenterData['match']) {
   const phase = matchPhase(match);
   if (phase === 'finished') return 'MATCH TERMINÉ';
   if (phase === 'cancelled') return 'MATCH ANNULÉ';
-  if (phase === 'live') return 'LIVE · PRONOSTICS FERMÉS';
+  if (phase === 'live') return 'EN DIRECT · PRONOSTICS FERMÉS';
   if (phase === 'pending') return 'STATUT À CONFIRMER · PRONOSTICS FERMÉS';
   const date = new Date(match.debut);
   return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();

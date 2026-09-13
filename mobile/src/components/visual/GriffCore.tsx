@@ -25,7 +25,7 @@ type GriffCoreProps = {
 export default function GriffCore({
   size = 244,
   compact = false,
-  label = 'CORE // ACTIF',
+  label = 'NOYAU // ACTIF',
   styleKey,
   accent,
 }: GriffCoreProps) {

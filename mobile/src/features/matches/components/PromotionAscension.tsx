@@ -160,7 +160,7 @@ export function PromotionCeremony({
         <Animated.View style={[styles.ceremonyScene, verdictMotion]}>
           <Text style={[styles.ceremonyEyebrow, { color: colors.success }]}>VERDICT SCELLÉ</Text>
           <Text style={styles.verdictTitle}>CALL VALIDÉ.</Text>
-          <Text style={styles.ceremonyMeta}>Le rating saisonnier se met à jour.</Text>
+          <Text style={styles.ceremonyMeta}>Le score saisonnier se met à jour.</Text>
         </Animated.View>
 
         <Animated.View style={[styles.ceremonyScene, fragsMotion]}>

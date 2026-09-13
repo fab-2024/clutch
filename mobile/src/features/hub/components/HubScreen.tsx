@@ -29,10 +29,7 @@ import { InlinePredictionPanel } from '@/src/features/matches/components/InlineP
 import type { ArenaMatch } from '@/src/features/matches/types';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
-import CompactCallStreakCard from '@/src/features/retention/components/CompactCallStreakCard';
 import type { CallStreakState } from '@/src/features/retention/types';
-import { RankEmblem } from '@/src/features/ranking/components/RankEmblem';
-import { gradeAccent } from '@/src/features/ranking/grades';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, fonts, layout, spacing, typography } from '@/src/theme';
 
@@ -45,6 +42,7 @@ import {
 } from '../matchPresentation';
 import type { HubData, HubMatch, HubPrediction } from '../types';
 import { HubContextSkeleton, HubDailyChallenges } from './HubContextSlot';
+import { HubProgressPanel } from './HubProgressPanel';
 import { MatchConfrontationCard } from './MatchConfrontationCard';
 
 type HubGame = 'lol' | 'rocket_league' | 'valorant';
@@ -197,9 +195,8 @@ export function HubExperience({
         </View>
 
         <View style={styles.seasonSection}>
-          <Text style={styles.seasonHeaderTitle}>Ta progression</Text>
-          <SeasonProgressCard hub={hub} loading={loading} />
-          {!headerEconomy || callStreakPreview ? <CompactCallStreakCard previewState={callStreakPreview} /> : null}
+          <Text style={styles.seasonHeaderTitle}>Ma progression</Text>
+          <HubProgressPanel hub={hub} loading={loading} previewState={callStreakPreview} />
         </View>
 
         <View style={styles.contextSlot}>
@@ -276,7 +273,7 @@ function MatchHero({
   return (
     <View style={styles.matchFeature}>
       <MatchConfrontationCard
-        accessibilityHint={opensInline ? 'Déplie le pronostic dans le Hub' : 'Ouvre le Match Center'}
+        accessibilityHint={opensInline ? 'Déplie le pronostic dans le Hub' : 'Ouvre le centre du match'}
         match={match}
         onPress={open}
         onPressIn={prepare}
@@ -388,7 +385,7 @@ function UpNextMatchCard({
   return (
     <Pressable
       accessibilityLabel={match.equipe_a + ' contre ' + match.equipe_b + ', ' + formatMatchSchedule(match.debut)}
-      accessibilityHint={opensInline ? 'Déplie le pronostic dans le Hub' : 'Ouvre le Match Center'}
+      accessibilityHint={opensInline ? 'Déplie le pronostic dans le Hub' : 'Ouvre le centre du match'}
       accessibilityRole="button"
       onPress={() => getHubMatchPhase(match) === 'upcoming' ? onOpenPrediction(match) : openMatchCenter(transitionTarget, { source: 'hub' })}
       onPressIn={() => prepareMatchCenter(transitionTarget, userId)}
@@ -477,50 +474,6 @@ function UpNextMatchCard({
   );
 }
 
-function SeasonProgressCard({ hub, loading }: { hub: HubData; loading: boolean }) {
-  const { isCompactWidth } = useResponsiveLayout();
-  const grade = hub.frags?.grade;
-  const gradeLabel = loading ? '—' : grade?.libelle || 'Non classé';
-  const frags = loading || !hub.frags ? '—' : formatNumber(hub.frags.frags);
-  const accent = loading ? colors.textSecondary : gradeAccent(grade);
-  const emblemSize = isCompactWidth ? 54 : 64;
-  const progress = Math.max(0, Math.min(1, grade?.progression ?? 0));
-  const nextRank = loading || !grade ? 'Progression à confirmer'
-    : grade.prochain_libelle ? `Prochain rang : ${grade.prochain_libelle}` : 'Rang maximal atteint';
-
-  return (
-    <Pressable
-      accessibilityLabel={`Ouvrir ma saison, rang ${gradeLabel}, ${frags} Frags. ${nextRank}`}
-      accessibilityRole="button"
-      onPress={openRankScreen}
-      style={({ pressed }) => [styles.seasonCard, pressed && styles.pressed]}
-      testID="hub-season-ranking"
-    >
-      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.seasonEmblem}>
-        <RankEmblem grade={grade} size={emblemSize} />
-      </View>
-      <View style={styles.seasonIdentity}>
-        <View style={styles.seasonSummary}>
-          <View style={styles.seasonIdentity}>
-            <Text numberOfLines={1} style={[styles.seasonGrade, { color: accent }]}>{gradeLabel}</Text>
-            <Text numberOfLines={1} style={styles.seasonContext}>{hub.seasonName ?? 'Saison en cours'}</Text>
-          </View>
-          <View style={styles.seasonMetric}>
-            <Text adjustsFontSizeToFit numberOfLines={1} style={[styles.seasonMetricValue, { color: accent }]}>{frags}</Text>
-            <Text style={styles.seasonContext}>Frags</Text>
-          </View>
-          <ChevronRight color={colors.textSecondary} size={21} strokeWidth={2.5} />
-        </View>
-        <View style={styles.seasonTrack} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(progress * 100) }} accessibilityLabel="Progression vers le prochain rang">
-          <View style={[styles.seasonFill, { width: `${progress * 100}%`, backgroundColor: accent }]} />
-          <View style={[styles.seasonDot, { left: `${progress * 100}%`, backgroundColor: accent }]} />
-        </View>
-        <Text numberOfLines={1} style={styles.seasonNextRank}>{nextRank}</Text>
-      </View>
-    </Pressable>
-  );
-}
-
 function EmptyHero() {
   return (
     <View style={styles.emptyState}>
@@ -585,14 +538,6 @@ function hubMatchToArenaMatch(match: HubMatch): ArenaMatch {
     score_b: match.score_b ?? null,
     prediction: null,
   };
-}
-
-function openRankScreen() {
-  router.push('/(tabs)/rank');
-}
-
-function formatNumber(value: number) {
-  return new Intl.NumberFormat('fr-FR').format(Number(value || 0));
 }
 
 function gameKey(game: string): HubGame {
@@ -798,21 +743,6 @@ const styles = StyleSheet.create({
   },
   seasonSection: { marginHorizontal: spacing.md, gap: 8 },
   seasonHeaderTitle: { color: colors.text, fontFamily: fonts.bold, fontSize: 18, lineHeight: 23, marginBottom: 2 },
-  seasonCard: {
-    minHeight: 96, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12,
-    borderRadius: 14, backgroundColor: 'rgba(10,21,29,.88)', borderWidth: 1, borderColor: colors.border,
-  },
-  seasonEmblem: { flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
-  seasonIdentity: { flex: 1, minWidth: 0 },
-  seasonSummary: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  seasonGrade: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 20 },
-  seasonContext: { color: colors.textSecondary, fontFamily: fonts.medium, fontSize: 11, lineHeight: 15 },
-  seasonMetric: { maxWidth: 70, minWidth: 35, alignItems: 'center' },
-  seasonMetricValue: { fontFamily: fonts.bold, fontSize: 18, lineHeight: 21 },
-  seasonTrack: { marginTop: 10, height: 5, borderRadius: 3, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.border },
-  seasonFill: { height: '100%', borderRadius: 3 },
-  seasonDot: { position: 'absolute', top: -2, marginLeft: -3, width: 7, height: 7, borderRadius: 4 },
-  seasonNextRank: { marginTop: 5, color: colors.textSecondary, fontFamily: fonts.medium, fontSize: 10, lineHeight: 14 },
   emptyState: {
     marginHorizontal: 8,
     marginTop: 8,

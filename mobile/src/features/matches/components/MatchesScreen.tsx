@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Image,
   Pressable,
@@ -18,7 +18,7 @@ import { colors } from '@/src/theme';
 
 import { prefetchMatchCenterData } from '../matchCenterCache';
 import { warmMatchCenter, type MatchCenterTarget } from '../matchCenterNavigation';
-import type { ArenaMatch, MyCallsDashboard } from '../types';
+import type { ArenaMatch } from '../types';
 import { useMatchesDashboard } from '../hooks/useMatchesDashboard';
 import { matchPhase } from '../utils';
 import {
@@ -34,16 +34,14 @@ import {
   findDefaultDayKey,
   formatMonth,
   type GameFilter,
-  type StatusFilter,
 } from './MatchesArenaSections';
 import { styles } from './MatchesScreen.styles';
 import { InlinePredictionPanel } from './InlinePredictionPanel';
-import { MyCallsPanel } from './MyCallsPanel';
 import { ArenaFilters } from './MatchesFilters';
 import { MatchesHeader } from './MatchesHeader';
 
 const GAME_GLOBAL_BACKGROUNDS = {
-  followed: require('../../../../assets/matches/matches-followed-global-background.jpg'),
+  all: require('../../../../assets/matches/matches-followed-global-background.jpg'),
   lol: require('../../../../assets/matches/matches-lol-global-background.jpg'),
   valorant: require('../../../../assets/matches/matches-valorant-global-background.jpg'),
   rocket_league: require('../../../../assets/matches/matches-rocket-league-global-background.jpg'),
@@ -52,31 +50,25 @@ const GAME_GLOBAL_BACKGROUNDS = {
 type MatchesExperienceProps = {
   error: string | null;
   finished: ArenaMatch[];
-  followedGames: string[];
   headerEconomy?: { frags: number; volts: number };
-  isAdmin: boolean;
   loading: boolean;
   onRefresh: () => void;
   onRetry: () => void;
   refreshing: boolean;
   upcoming: ArenaMatch[];
   userId?: string;
-  calls: MyCallsDashboard;
 };
 
 export default function MatchesScreen() {
-  const { profile, session } = useAuth();
-  const { calls, error, finished, load, loading, refreshing, upcoming } = useMatchesDashboard(
+  const { session } = useAuth();
+  const { error, finished, load, loading, refreshing, upcoming } = useMatchesDashboard(
     session?.user.id,
   );
 
   return (
     <MatchesExperience
       error={error}
-      calls={calls}
       finished={finished}
-      followedGames={profile?.jeux_suivis ?? []}
-      isAdmin={Boolean(profile?.est_admin)}
       loading={loading}
       onRefresh={() => void load(true)}
       onRetry={() => void load()}
@@ -88,12 +80,9 @@ export default function MatchesScreen() {
 }
 
 export function MatchesExperience({
-  calls,
   error,
   finished,
-  followedGames,
   headerEconomy,
-  isAdmin,
   loading,
   onRefresh,
   onRetry,
@@ -102,56 +91,49 @@ export function MatchesExperience({
   userId,
 }: MatchesExperienceProps) {
   const params = useLocalSearchParams<{
-    view?: string | string[];
     duelRivalId?: string | string[];
     duelRivalPseudo?: string | string[];
   }>();
-  const requestedView = Array.isArray(params.view) ? params.view[0] : params.view;
   const duelRivalId = Array.isArray(params.duelRivalId) ? params.duelRivalId[0] : params.duelRivalId;
   const duelRivalPseudo = Array.isArray(params.duelRivalPseudo) ? params.duelRivalPseudo[0] : params.duelRivalPseudo;
-  const [status, setStatus] = useState<StatusFilter>('upcoming');
-  const [game, setGame] = useState<GameFilter>('followed');
-  const [callsOnly, setCallsOnly] = useState(requestedView === 'calls');
+  const [game, setGame] = useState<GameFilter>('all');
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const [expandedPredictionId, setExpandedPredictionId] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
 
-  useEffect(() => {
-    if (requestedView === 'calls') setCallsOnly(true);
-  }, [requestedView]);
-
-  const source = useMemo(
-    () => status === 'finished' ? finished : upcoming.filter((match) => matchPhase(match) === status),
-    [finished, status, upcoming],
-  );
-  const liveCount = useMemo(
-    () => filterMatches(upcoming, game, followedGames, false, query).filter((match) => matchPhase(match) === 'live').length,
-    [followedGames, game, query, upcoming],
-  );
+  const source = useMemo(() => {
+    const uniqueMatches = new Map<string, ArenaMatch>();
+    [...upcoming, ...finished].forEach((match) => uniqueMatches.set(match.id, match));
+    return [...uniqueMatches.values()].sort(
+      (a, b) => new Date(a.debut).getTime() - new Date(b.debut).getTime(),
+    );
+  }, [finished, upcoming]);
   const scopedMatches = useMemo(
-    () => filterMatches(source, game, followedGames, false, query),
-    [followedGames, game, query, source],
+    () => filterMatches(source, game, query),
+    [game, query, source],
   );
-  const callCount = calls.compteurs.verrouilles;
-  const filtered = useMemo(
-    () => callsOnly ? scopedMatches.filter((match) => Boolean(match.prediction)) : scopedMatches,
-    [callsOnly, scopedMatches],
-  );
-  const calendarDays = useMemo(() => buildCalendarDays(status, filtered), [filtered, status]);
+  const calendarDays = useMemo(() => buildCalendarDays(scopedMatches), [scopedMatches]);
   const defaultDayKey = useMemo(
-    () => findDefaultDayKey(calendarDays, filtered, status),
-    [calendarDays, filtered, status],
+    () => findDefaultDayKey(calendarDays, scopedMatches),
+    [calendarDays, scopedMatches],
   );
   const activeDayKey = selectedDayKey && calendarDays.some((day) => dateKey(day) === selectedDayKey)
     ? selectedDayKey
     : defaultDayKey;
   const visibleMatches = useMemo(
-    () => status === 'live' ? filtered : filtered.filter((match) => dateKey(new Date(match.debut)) === activeDayKey),
-    [activeDayKey, filtered, status],
+    () => scopedMatches.filter((match) => dateKey(new Date(match.debut)) === activeDayKey),
+    [activeDayKey, scopedMatches],
   );
   const liveMatches = visibleMatches.filter((match) => matchPhase(match) === 'live');
-  const standardMatches = visibleMatches.filter((match) => matchPhase(match) !== 'live');
+  const upcomingMatches = visibleMatches.filter((match) => {
+    const phase = matchPhase(match);
+    return phase !== 'live' && phase !== 'finished' && phase !== 'cancelled';
+  });
+  const resultMatches = visibleMatches.filter((match) => {
+    const phase = matchPhase(match);
+    return phase === 'finished' || phase === 'cancelled';
+  });
   const activeDate = calendarDays.find((day) => dateKey(day) === activeDayKey) ?? calendarDays[0];
   const prepareMatch = useCallback((match: MatchCenterTarget) => {
     warmMatchCenter(match);
@@ -159,13 +141,6 @@ export function MatchesExperience({
       void prefetchMatchCenterData({ matchId: match.id, userId }).catch(() => undefined);
     }
   }, [userId]);
-
-  function changeStatus(nextStatus: StatusFilter) {
-    setStatus(nextStatus);
-    setCallsOnly(false);
-    setSelectedDayKey(null);
-    setExpandedPredictionId(null);
-  }
 
   function changeGame(nextGame: GameFilter) {
     setGame(nextGame);
@@ -180,6 +155,27 @@ export function MatchesExperience({
   const closeInlinePrediction = useCallback(() => {
     setExpandedPredictionId(null);
   }, []);
+
+  const renderMatch = (match: ArenaMatch) => expandedPredictionId === match.id ? (
+    <InlinePredictionPanel
+      key={match.id}
+      match={match}
+      onClose={closeInlinePrediction}
+      onPredictionLocked={onRefresh}
+      rivalId={duelRivalId}
+      rivalPseudo={duelRivalPseudo}
+      userId={userId}
+    />
+  ) : (
+    <MatchRow
+      key={match.id}
+      match={match}
+      onOpenPrediction={openInlinePrediction}
+      onPrepareMatch={prepareMatch}
+      rivalId={duelRivalId}
+      rivalPseudo={duelRivalPseudo}
+    />
+  );
 
   return (
     <Screen atmosphere="none">
@@ -214,8 +210,10 @@ export function MatchesExperience({
           query={query}
           searchOpen={searchOpen}
           onQueryChange={setQuery}
-          onRefresh={onRefresh}
-          onShowCalls={() => { setCallsOnly(true); setExpandedPredictionId(null); }}
+          onShowToday={() => {
+            setSelectedDayKey(dateKey(new Date()));
+            setExpandedPredictionId(null);
+          }}
           onToggleSearch={() => {
             setSearchOpen((current) => !current);
             if (searchOpen) setQuery('');
@@ -232,35 +230,20 @@ export function MatchesExperience({
           </View>
         ) : null}
 
-        <View>
-          <ArenaFilters
-            callCount={callCount}
-            callsOnly={callsOnly}
-            game={game}
-            isAdmin={isAdmin}
-            liveCount={liveCount}
-            status={status}
-            onCallsOnlyChange={(nextCallsOnly) => {
-              setCallsOnly(nextCallsOnly);
+        <View style={styles.calendarInset}>
+          <ScheduleHero
+            activeDayKey={activeDayKey}
+            calendarDays={calendarDays}
+            matches={scopedMatches}
+            monthLabel={formatMonth(activeDate)}
+            onSelectDay={(dayKey) => {
+              setSelectedDayKey(dayKey);
               setExpandedPredictionId(null);
             }}
-            onGameChange={changeGame}
-            onStatusChange={changeStatus}
-          >
-            <ScheduleHero
-              activeDayKey={activeDayKey}
-              calendarDays={calendarDays}
-              matches={filtered}
-              monthLabel={formatMonth(activeDate)}
-              status={status}
-              onSelectDay={(dayKey) => {
-                setSelectedDayKey(dayKey);
-                setExpandedPredictionId(null);
-              }}
-              onToggleHistory={() => changeStatus(status === 'upcoming' ? 'finished' : 'upcoming')}
-            />
-          </ArenaFilters>
+          />
         </View>
+
+        <ArenaFilters game={game} onGameChange={changeGame} />
 
         {error ? (
           <FeatureStateView
@@ -276,45 +259,30 @@ export function MatchesExperience({
 
         {loading ? (
           <MatchSkeleton />
-        ) : error && !source.length ? null : callsOnly ? (
-          <View>
-            <MyCallsPanel dashboard={calls} followedGames={followedGames} game={game} onPrepareMatch={prepareMatch} query={query} />
-          </View>
-        ) : visibleMatches.length ? (
+        ) : error && !source.length ? null : visibleMatches.length ? (
           <View style={styles.matchesSection}>
-            <SectionHead callsOnly={callsOnly} count={visibleMatches.length} date={activeDate} status={status} />
             {liveMatches.length ? (
               <View style={styles.liveStack}>
                 {liveMatches.map((match) => <LiveMatchCard key={match.id} match={match} onPrepareMatch={prepareMatch} rivalId={duelRivalId} rivalPseudo={duelRivalPseudo} />)}
               </View>
             ) : null}
-            {standardMatches.length ? (
+            {upcomingMatches.length ? (
+              <>
+                <SectionHead count={upcomingMatches.length} mode="upcoming" />
+                <View style={styles.matchList}>{upcomingMatches.map(renderMatch)}</View>
+              </>
+            ) : null}
+            {resultMatches.length ? (
+              <>
+                <SectionHead count={resultMatches.length} mode="finished" />
               <View style={styles.matchList}>
-                {standardMatches.map((match) => expandedPredictionId === match.id ? (
-                  <InlinePredictionPanel
-                    key={match.id}
-                    match={match}
-                    onClose={closeInlinePrediction}
-                    onPredictionLocked={onRefresh}
-                    rivalId={duelRivalId}
-                    rivalPseudo={duelRivalPseudo}
-                    userId={userId}
-                  />
-                ) : (
-                  <MatchRow
-                    key={match.id}
-                    match={match}
-                    onOpenPrediction={openInlinePrediction}
-                    onPrepareMatch={prepareMatch}
-                    rivalId={duelRivalId}
-                    rivalPseudo={duelRivalPseudo}
-                  />
-                ))}
+                  {resultMatches.map(renderMatch)}
               </View>
+              </>
             ) : null}
           </View>
         ) : (
-          <EmptyArena callsOnly={callsOnly} query={query} status={status} />
+          <EmptyArena />
         )}
       </ScrollView>
     </Screen>

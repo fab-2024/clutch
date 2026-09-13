@@ -93,7 +93,7 @@ export function returnFromMatchCenter(
     return;
   }
   if (source === 'calls') {
-    router.replace({ pathname: '/(tabs)/matches', params: { view: 'calls' } });
+    router.replace('/(tabs)/matches');
     return;
   }
   router.replace('/(tabs)/matches');
@@ -123,7 +123,7 @@ export function returnFromMatchResult(
     return;
   }
   if (source === 'calls') {
-    router.replace({ pathname: '/(tabs)/matches', params: { view: 'calls' } });
+    router.replace('/(tabs)/matches');
     return;
   }
   router.replace('/(tabs)/matches');

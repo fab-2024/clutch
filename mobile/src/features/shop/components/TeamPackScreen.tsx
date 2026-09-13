@@ -57,7 +57,6 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
   const { session } = useAuth();
   const userId = session?.user.id;
   const activeUser = useRef(userId);
-  activeUser.current = userId;
   const busy = useRef(false);
   const [store, setStore] = useState<PackStoreSnapshot | null>(null);
   const { refresh: refreshCosmetics } = useCosmetics();
@@ -70,6 +69,10 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<TeamPackItemDefinition | null>(null);
   const requestRef = useRef(0);
+
+  useEffect(() => {
+    activeUser.current = userId;
+  }, [userId]);
 
   const load = useCallback(async (refresh = false) => {
     if (previewData) {
@@ -136,7 +139,7 @@ export default function TeamPackScreen({ packId, previewData }: TeamPackScreenPr
           const outcome = await purchasePackFromStore(userId, pack.id);
           if (activeUser.current !== userId || outcome === 'cancelled') return;
           if (outcome === 'pending') {
-            showSnackbar({ message: 'Paiement en attente de confirmation du store.', tone: 'info' });
+            showSnackbar({ message: 'Paiement en attente de confirmation de la boutique.', tone: 'info' });
             return;
           }
           const platform = currentStorePlatform();

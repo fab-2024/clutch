@@ -84,13 +84,13 @@ export const termsDocument: LegalDocument = {
       title: 'Compétition',
       paragraphs: [
         'Les Frags mesurent le classement compétitif, l’XP la progression permanente et les Volts l’accès aux cosmétiques. Aucun de ces éléments n’est une monnaie réelle, retirable ou échangeable contre de l’argent.',
-        'Les résultats sont réglés à partir des sources indiquées dans le Match Center. En cas d’erreur manifeste ou de match annulé, GRIFF peut corriger ou annuler un verdict de manière traçable.',
+        'Les résultats sont réglés à partir des sources indiquées dans le centre du match. En cas d’erreur manifeste ou de match annulé, GRIFF peut corriger ou annuler un verdict de manière traçable.',
       ],
     },
     {
       title: 'Achats',
       paragraphs: [
-        'Les achats intégrés sont facturés et remboursés selon les règles du store utilisé. Le Founder Pack est un achat unique de contenus visuels et ne procure aucun avantage compétitif.',
+        'Les achats intégrés sont facturés et remboursés selon les règles de la boutique utilisée. Le pack Fondateur est un achat unique de contenus visuels et ne procure aucun avantage compétitif.',
       ],
     },
     {

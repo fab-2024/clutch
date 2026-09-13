@@ -86,19 +86,19 @@ export default function AdminMatchesScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.volt} />}
       >
         <View style={styles.topBar}>
-          <Pressable accessibilityLabel="Retour à l’Arena" accessibilityRole="button" onPress={() => router.replace('/(tabs)/matches')} style={styles.back}><Text style={styles.backText}>← ARENA</Text></Pressable>
+          <Pressable accessibilityLabel="Retour à l’arène" accessibilityRole="button" onPress={() => router.replace('/(tabs)/matches')} style={styles.back}><Text style={styles.backText}>← ARÈNE</Text></Pressable>
           <View style={styles.securePill}><View style={styles.secureDot} /><Text style={styles.secureText}>ADMIN</Text></View>
         </View>
 
         <View style={styles.intro}>
           <Text style={styles.eyebrow}>OPS // MATCHS</Text>
-          <Text style={styles.title}>GARDE L’ARENA{`\n`}À L’HEURE.</Text>
-          <Text style={styles.subtitle}>Crée les affiches, démarre le live, reporte ou fige le résultat. Chaque action reste validée côté serveur.</Text>
+          <Text style={styles.title}>GARDE L’ARÈNE{`\n`}À L’HEURE.</Text>
+          <Text style={styles.subtitle}>Crée les affiches, démarre le direct, reporte ou fige le résultat. Chaque action reste validée côté serveur.</Text>
         </View>
 
         <View style={styles.stats}>
           <AdminStat label="OUVERTS" value={openMatches.length} />
-          <AdminStat label="LIVE" value={liveCount} accent />
+          <AdminStat label="EN DIRECT" value={liveCount} accent />
           <AdminStat label="À TRAITER" value={attentionCount} warning={attentionCount > 0} />
         </View>
 
@@ -116,7 +116,7 @@ export default function AdminMatchesScreen() {
             {openMatches.map((match) => <AdminMatchCard key={match.id} match={match} onChanged={() => load()} />)}
           </View>
         ) : (
-          <StateCard title="AUCUN MATCH OUVERT." copy="Crée la prochaine affiche pour réactiver l’Arena." />
+          <StateCard title="AUCUN MATCH OUVERT." copy="Crée la prochaine affiche pour réactiver l’arène." />
         )}
 
         {closedMatches.length ? (
@@ -246,7 +246,7 @@ function AdminMatchCard({ match, onChanged }: { match: AdminMatch; onChanged: ()
     : match.statut === 'annule'
       ? 'ANNULÉ'
       : phase === 'live'
-        ? 'LIVE'
+        ? 'EN DIRECT'
         : 'À VENIR';
 
   async function run(action: () => Promise<unknown>) {

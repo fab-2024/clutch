@@ -97,7 +97,7 @@ export function matchJourneyUsesArenaMotion(value?: string | string[]) {
 export function matchJourneySourceLabel(source: MatchJourneySource) {
   if (source === 'hub') return 'HUB';
   if (source === 'calls') return 'MES CALLS';
-  if (source === 'match') return 'MATCH CENTER';
+  if (source === 'match') return 'CENTRE DU MATCH';
   if (source === 'profile') return 'PROFIL';
   if (source === 'duel') return 'DUEL';
   if (source === 'matches') return 'MATCHS';

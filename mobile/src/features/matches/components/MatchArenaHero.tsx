@@ -262,7 +262,7 @@ function ArenaHeroTeam({
 function phaseLabel(phase: MatchPhase) {
   if (phase === 'finished') return 'FINAL';
   if (phase === 'cancelled') return 'ANNULÉ';
-  if (phase === 'live') return 'LIVE';
+  if (phase === 'live') return 'EN DIRECT';
   if (phase === 'pending') return 'EN ATTENTE';
   return 'VERSUS';
 }

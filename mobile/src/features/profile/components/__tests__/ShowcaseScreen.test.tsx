@@ -185,17 +185,17 @@ describe('ShowcaseScreen immersive editor', () => {
     const screen = await render(<ShowcaseScreen />);
     await waitFor(() => expect(screen.getByTestId('showcase-room-background-classique')).toBeTruthy());
     expect(screen.queryByTestId('showcase-setup-notice')).toBeNull();
-    await fireEvent.press(screen.getByLabelText('Setup'));
-    expect(screen.getByText('Setup arrive dans une prochaine mise à jour.')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Configuration'));
+    expect(screen.getByText('La configuration arrive dans une prochaine mise à jour.')).toBeTruthy();
     expect(trackAnalyticsEvent).toHaveBeenCalledWith({ type: 'collection_affichee', campaignKey: 'showcase-setup-click' });
-    await fireEvent.press(screen.getByLabelText('Fermer le message Setup'));
+    await fireEvent.press(screen.getByLabelText('Fermer le message de configuration'));
     expect(screen.queryByTestId('showcase-setup-notice')).toBeNull();
   });
 
   it('does not count Setup clicks in preview mode', async () => {
     const screen = await render(<ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={EMPTY_SHOP} />);
     jest.mocked(trackAnalyticsEvent).mockClear();
-    await fireEvent.press(screen.getByLabelText('Setup'));
+    await fireEvent.press(screen.getByLabelText('Configuration'));
     expect(screen.getByTestId('showcase-setup-notice')).toBeTruthy();
     expect(trackAnalyticsEvent).not.toHaveBeenCalled();
   });
@@ -205,7 +205,7 @@ describe('ShowcaseScreen immersive editor', () => {
 
     expect(screen.getByLabelText(`Voir le profil de ${PREVIEW_PROFILE.pseudo}`)).toBeTruthy();
     expect(screen.getByText('0 VUES')).toBeTruthy();
-    expect(screen.getByText('0 LIKE')).toBeTruthy();
+    expect(screen.getByText('0 MENTION J’AIME')).toBeTruthy();
     expect(screen.queryByRole('tablist')).toBeNull();
     expect(screen.queryByText('PERSONNALISER')).toBeNull();
     expect(screen.queryByText('TOUCHE UN EMPLACEMENT POUR L’ÉQUIPER')).toBeNull();

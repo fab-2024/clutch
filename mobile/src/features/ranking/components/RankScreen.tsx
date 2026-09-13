@@ -55,7 +55,7 @@ const SECTIONS: { key: Section; label: string }[] = [
 ];
 
 const SCOPES: { key: RankScope; label: string }[] = [
-  { key: 'global', label: 'Global' },
+  { key: 'global', label: 'Général' },
   { key: 'cercle', label: 'Cercle' },
   { key: 'faction', label: 'Faction' },
 ];
@@ -585,7 +585,7 @@ function RewardsSection({ dashboard }: { dashboard: RankDashboard }) {
       </View>
 
       <View style={styles.conservationCard}>
-        <Text style={styles.cardTitle}>Ton rating repart. Ta marque reste.</Text>
+        <Text style={styles.cardTitle}>Ton score repart. Ta marque reste.</Text>
         <Text style={styles.cardCopy}>La récompense dépend du meilleur grade atteint. XP, objets, badges historiques et records restent sur ton profil.</Text>
       </View>
     </View>

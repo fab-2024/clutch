@@ -57,7 +57,7 @@ export function useMatchCenterData({ matchId, onResolved, previewData, userId }:
     } catch (caught) {
       if (requestId !== requestRef.current) return;
       console.error(caught);
-      setError(caught instanceof Error ? caught.message : 'Impossible de charger le Match Center.');
+      setError(caught instanceof Error ? caught.message : 'Impossible de charger le centre du match.');
     } finally {
       if (requestId === requestRef.current) {
         setLoading(false);

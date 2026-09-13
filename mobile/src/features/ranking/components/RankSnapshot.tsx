@@ -64,7 +64,7 @@ export function RankSnapshot({ seasonName, state }: RankSnapshotProps) {
           {state.rank ? `#${state.rank}` : '—'}
         </Text>
         <Text numberOfLines={2} style={styles.rankMeta}>
-          {state.classifiedPlayers ? `SUR ${formatNumber(state.classifiedPlayers)}` : 'GLOBAL'}
+          {state.classifiedPlayers ? `SUR ${formatNumber(state.classifiedPlayers)}` : 'GÉNÉRAL'}
         </Text>
       </View>
     </View>

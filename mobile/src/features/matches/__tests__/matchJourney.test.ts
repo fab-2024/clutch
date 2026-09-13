@@ -82,7 +82,7 @@ describe('match journey continuity', () => {
     expect(matchJourneySourceFromSegments(['match', '[id]'])).toBe('match');
     expect(matchJourneySourceFromSegments(['u', '[pseudo]'])).toBe('profile');
     expect(matchJourneySourceLabel('calls')).toBe('MES CALLS');
-    expect(matchJourneySourceLabel('match')).toBe('MATCH CENTER');
+    expect(matchJourneySourceLabel('match')).toBe('CENTRE DU MATCH');
     expect(matchJourneyUsesArenaMotion('arena')).toBe(true);
     expect(matchJourneyUsesArenaMotion('unknown')).toBe(false);
   });

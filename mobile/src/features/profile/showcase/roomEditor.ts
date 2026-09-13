@@ -148,7 +148,7 @@ export function adaptShowcaseRoomAssignments(
 export function showcasePlaceableKindLabel(kind: ShowcasePlaceableKind) {
   if (kind === 'badge') return 'Badge';
   if (kind === 'banner') return 'Bannière';
-  if (kind === 'core') return 'Core';
+  if (kind === 'core') return 'Noyau';
   if (kind === 'frame') return 'Cadre';
   if (kind === 'jersey') return 'Maillot';
   if (kind === 'rank') return 'Rang';

@@ -54,14 +54,14 @@ describe('P3 notification preferences', () => {
     const preferences = await loadNotificationPreferences();
     expect(preferences).toMatchObject({ streakRisk: false, streakProtected: true, quietHoursEnabled: true,
       quietHoursStart: 1320, quietHoursEnd: 480, retentionAvailable: true, expansionAvailable: true,
-      locale: 'en-US', lockImminent: false, verdict: true,
+      locale: 'fr-FR', lockImminent: false, verdict: true,
       recommendation: { source: 'activity', sampleSize: 9, quietHoursStart: 1380, quietHoursEnd: 540,
         categories: ['streakRisk', 'matchStart'] } });
     await saveNotificationPreferences(preferences);
     expect(mockRpc).toHaveBeenLastCalledWith('clutch_enregistrer_preferences_notification_v3', expect.objectContaining({
       p_fuseau: 'Europe/Paris', p_serie_en_danger: false, p_serie_protegee: true,
       p_silence_actif: true, p_silence_debut: 1320, p_silence_fin: 480,
-      p_verrouillage_imminent: false, p_verdict: true, p_locale: 'en-US',
+      p_verrouillage_imminent: false, p_verdict: true, p_locale: 'fr-FR',
     }));
   });
 

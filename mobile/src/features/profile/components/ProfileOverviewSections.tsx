@@ -132,7 +132,7 @@ function RankSection({
       >
         <View pointerEvents="none" style={styles.rankAtmosphere} />
         <View style={styles.rankTopRow}>
-          <Text style={styles.rankCardLabel}>RANKED</Text>
+          <Text style={styles.rankCardLabel}>CLASSEMENT</Text>
           <View style={styles.inlineAction}>
             <Text style={styles.inlineActionText}>VOIR LE CLASSEMENT</Text>
             <ChevronRight color={colors.volt} size={18} strokeWidth={2.2} />
@@ -201,7 +201,7 @@ function StatsSection({ data, loading }: { data: ProfileData | null; loading: bo
       style={styles.statsCard}
       testID="profile-stats-card"
     >
-      <Text style={styles.statsTitle}>TES STATS</Text>
+      <Text style={styles.statsTitle}>TES STATISTIQUES</Text>
       <View style={styles.statsRow}>
         {metrics.map((metric, index) => (
           <StatMetric

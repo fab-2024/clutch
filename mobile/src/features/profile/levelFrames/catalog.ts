@@ -35,7 +35,7 @@ export const LEVEL_FRAME_CATALOG: Record<LevelFrameVariant, LevelFrameDefinition
   founderForge: {
     accent: '#E0A154',
     description: 'Un châssis de cuivre martelé réservé aux premiers bâtisseurs de GRIFF.',
-    name: 'Forge Founder',
+    name: 'Forge Fondatrice',
     price: null,
     rarity: 'legendary',
     source: 'founder_pack',

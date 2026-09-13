@@ -12,7 +12,7 @@ export default function GiftCardsPreviewSection() {
     <View style={styles.content} testID="gift-cards-preview">
       <Text style={styles.preview}>APERÇU DU CONCEPT · AUCUN ÉCHANGE RÉEL</Text>
       <Text style={styles.title}>Ta passion. Tes récompenses.</Text>
-      <Text style={styles.subtitle}>Gaming et merch d’équipe : un nouvel objectif pour ta collection.</Text>
+      <Text style={styles.subtitle}>Jeux vidéo et produits d’équipe : un nouvel objectif pour ta collection.</Text>
       <View style={styles.adCard}>
         <View style={styles.row}>
           <View style={styles.play}><Play color={colors.volt} size={20} /></View>
@@ -38,8 +38,8 @@ export default function GiftCardsPreviewSection() {
       </View>
       <Text style={styles.muted}>Un seuil envisagé de 10 000 Volts. Les marques et la valeur des cartes restent à confirmer.</Text>
       {[
-        { title: 'Gaming', subtitle: 'Pour tes prochaines découvertes', accent: '#78C9EA' },
-        { title: 'Merch d’équipe', subtitle: 'Porte les couleurs qui te rassemblent', accent: '#BBA0FF' },
+        { title: 'Jeux vidéo', subtitle: 'Pour tes prochaines découvertes', accent: '#78C9EA' },
+        { title: 'Produits d’équipe', subtitle: 'Porte les couleurs qui te rassemblent', accent: '#BBA0FF' },
       ].map((card) => (
         <View key={card.title} style={styles.giftCard}>
           <LinearGradient colors={['#152A35', '#091720']} style={styles.giftArt}>

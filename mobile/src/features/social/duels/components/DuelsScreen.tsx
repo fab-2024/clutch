@@ -178,7 +178,7 @@ export default function DuelsScreen({
         </View>
 
         <View style={styles.rivalryList}>
-          {loading ? <DuelListSkeleton /> : duels.length ? duels.map((duel) => <DuelCard key={duel.token} duel={duel} onOpen={() => openDuel(duel.token)} />) : error ? null : <View style={styles.emptyList}><Text style={styles.emptyListText}>Ton premier duel apparaîtra ici après un challenge.</Text></View>}
+          {loading ? <DuelListSkeleton /> : duels.length ? duels.map((duel) => <DuelCard key={duel.token} duel={duel} onOpen={() => openDuel(duel.token)} />) : error ? null : <View style={styles.emptyList}><Text style={styles.emptyListText}>Ton premier duel apparaîtra ici après un défi.</Text></View>}
         </View>
 
         <DuelMissionsSection

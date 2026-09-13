@@ -261,7 +261,7 @@ function dailyMissionCards(): DailyMissionCard[] {
       accent: '#C670FF',
       colors: ['#7417D0', '#4B06A3', '#25005E'],
       current: 0,
-      eyebrow: 'MISSION LIVE',
+      eyebrow: 'MISSION EN DIRECT',
       goal: 2,
       key: 'live',
       rewardVolts: 20,
@@ -324,10 +324,10 @@ function resultPresentation(result: HubRecentResult, now: number): ContextPresen
     accent: won ? colors.success : colors.liveText,
     accessibilityLabel: `Verdict ${outcome}. ${score}. Call ${choice}. ${won ? 'Gain' : 'Perte'} de ${formatNumber(Math.abs(delta))} Frags.`,
     action: 'REVOIR',
-    description: won ? `Ton call ${choice} est validé. Ton rating progresse.` : `Ton call ${choice} n’est pas passé. Ton rating est mis à jour.`,
+    description: won ? `Ton call ${choice} est validé. Ton score progresse.` : `Ton call ${choice} n’est pas passé. Ton score est mis à jour.`,
     eyebrow: `VERDICT · ${result.event || gameLabel(result.game)}`,
     footer: formatPastTime(result.resolvedAt, now),
-    hint: 'Ouvre le verdict détaillé et l’évolution de ton rating',
+    hint: 'Ouvre le verdict détaillé et l’évolution de ton score',
     Icon: Trophy,
     metric: deltaLabel,
     metricLabel: 'FRAGS',
@@ -403,7 +403,7 @@ function formatPastTime(value: string, now: number) {
 
 function rewardCategory(reward: HubReward) {
   const slots: Record<string, string> = {
-    apparence_core: 'Apparence de Core',
+    apparence_core: 'Apparence du noyau',
     cadre_profil: 'Cadre de profil',
     carte_profil: 'Bannière de profil',
     effet_faction: 'Effet de relique',
@@ -414,7 +414,7 @@ function rewardCategory(reward: HubReward) {
 
 function rewardSource(source: string) {
   if (source === 'mission') return 'Mission accomplie';
-  if (source === 'founder_pack') return 'Founder Pack';
+  if (source === 'founder_pack') return 'Pack Fondateur';
   if (source === 'partenaire') return 'Activation partenaire';
   return humanize(source || 'Collection GRIFF');
 }

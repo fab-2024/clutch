@@ -112,7 +112,7 @@ export default function PartnerCampaignScreen({ previewData }: PartnerCampaignSc
     const claimed = await run(
       'claim',
       () => claimPartnerCampaignRewards(campaignKey),
-      'Le lot Nova est maintenant permanent dans ton Locker.',
+      'Le lot Nova est maintenant permanent dans ta collection.',
     );
     if (claimed) await refreshCosmetics();
   }
@@ -154,7 +154,7 @@ export default function PartnerCampaignScreen({ previewData }: PartnerCampaignSc
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Pressable accessibilityLabel="Revenir au Locker" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><Text style={styles.backText}>← LOCKER</Text></Pressable>
+          <Pressable accessibilityLabel="Revenir à la collection" accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><Text style={styles.backText}>← COLLECTION</Text></Pressable>
           <View style={styles.headerCopy}><Text style={styles.headerEyebrow}>ACTIVATION // PROTOTYPE</Text><Text style={styles.headerTitle}>{data.campaign.partner.toUpperCase()}</Text></View>
           <Pressable accessibilityLabel="Actualiser la progression" accessibilityRole="button" disabled={refreshing} onPress={() => void load(true)} style={({ pressed }) => [styles.sync, pressed && styles.pressed]}><Text style={styles.syncText}>SYNCHRO</Text></Pressable>
         </View>
@@ -270,7 +270,7 @@ function TaskCard({ busy, campaignKey, data, onRun, task }: {
         <Text style={styles.taskTitle}>{task.title.toUpperCase()}</Text>
         <Text style={styles.taskDescription}>{task.description}</Text>
         <View style={styles.taskTrack}><View style={[styles.taskFill, task.completed && styles.taskFillComplete, { width: `${Math.max(task.progress ? 4 : 0, pct)}%` }]} /></View>
-        {task.type === 'calls' && !task.completed ? <Pressable accessibilityRole="button" disabled={!data.joined} onPress={() => router.push('/(tabs)/matches')}><Text style={[styles.taskAction, !data.joined && styles.taskActionDisabled]}>{data.joined ? 'ALLER DANS L’ARENA →' : 'REJOINS D’ABORD NOVA WEEK'}</Text></Pressable> : null}
+        {task.type === 'calls' && !task.completed ? <Pressable accessibilityRole="button" disabled={!data.joined} onPress={() => router.push('/(tabs)/matches')}><Text style={[styles.taskAction, !data.joined && styles.taskActionDisabled]}>{data.joined ? 'ALLER DANS L’ARÈNE →' : 'REJOINS D’ABORD NOVA WEEK'}</Text></Pressable> : null}
         {task.type === 'faction_mission' && !task.completed ? (
           <Pressable
             accessibilityRole="button"
@@ -289,7 +289,7 @@ function TaskCard({ busy, campaignKey, data, onRun, task }: {
 function CampaignMatchCard({ busy, joined, match, onFollow }: { busy: boolean; joined: boolean; match: PartnerCampaignMatch; onFollow: () => void }) {
   return (
     <View style={[styles.matchCard, match.followed && styles.matchCardFollowed]}>
-      <View style={styles.matchTop}><Text style={styles.matchGame}>{gameLabel(match.game)}</Text><Text style={styles.matchDate}>{match.status === 'en_cours' ? 'LIVE' : shortDate(match.startsAt)}</Text></View>
+      <View style={styles.matchTop}><Text style={styles.matchGame}>{gameLabel(match.game)}</Text><Text style={styles.matchDate}>{match.status === 'en_cours' ? 'EN DIRECT' : shortDate(match.startsAt)}</Text></View>
       <Text numberOfLines={1} style={styles.matchEvent}>{match.event.toUpperCase()}</Text>
       <View style={styles.versus}><Text style={styles.teamTag}>{match.tagA}</Text><Text style={styles.vs}>VS</Text><Text style={styles.teamTag}>{match.tagB}</Text></View>
       <Text numberOfLines={1} style={styles.matchNames}>{match.teamA} · {match.teamB}</Text>
@@ -305,7 +305,7 @@ function RewardCard({ reward }: { reward: PartnerCampaignReward }) {
       <Text style={[styles.rewardRarity, { color: reward.accent }]}>{reward.rarity.toUpperCase()}</Text>
       <Text numberOfLines={2} style={styles.rewardName}>{reward.name}</Text>
       <Text numberOfLines={2} style={styles.rewardDescription}>{reward.description}</Text>
-      <Text style={styles.rewardState}>{reward.owned ? 'DANS TON LOCKER ✓' : slotLabel(reward.slot)}</Text>
+      <Text style={styles.rewardState}>{reward.owned ? 'DANS TA COLLECTION ✓' : slotLabel(reward.slot)}</Text>
     </View>
   );
 }
@@ -318,7 +318,7 @@ function RewardVisual({ reward }: { reward: PartnerCampaignReward }) {
 
 function SectionHeader({ eyebrow, meta, title }: { eyebrow: string; meta: string; title: string }) { return <View style={styles.sectionHeader}><View style={styles.sectionHeaderCopy}><Text style={styles.sectionEyebrow}>{eyebrow}</Text><Text style={styles.sectionTitle}>{title}</Text></View><Text style={styles.sectionMeta}>{meta}</Text></View>; }
 function firstParam(value?: string | string[]) { return Array.isArray(value) ? value[0] : value; }
-function taskMeta(type: PartnerCampaignTask['type']) { if (type === 'match_follow') return { glyph: '◉', eyebrow: 'SIGNAL 01 // SUIVI' }; if (type === 'calls') return { glyph: '◎', eyebrow: 'SIGNAL 02 // ARENA' }; return { glyph: '✦', eyebrow: 'SIGNAL 03 // FACTION' }; }
+function taskMeta(type: PartnerCampaignTask['type']) { if (type === 'match_follow') return { glyph: '◉', eyebrow: 'SIGNAL 01 // SUIVI' }; if (type === 'calls') return { glyph: '◎', eyebrow: 'SIGNAL 02 // ARÈNE' }; return { glyph: '✦', eyebrow: 'SIGNAL 03 // FACTION' }; }
 function slotLabel(slot: PartnerCampaignReward['slot']) { if (slot === 'cadre_profil') return 'CADRE DE PROFIL'; if (slot === 'titre_profil') return 'TITRE SUPPORTER'; return 'VARIATION DE RELIQUE'; }
 function gameLabel(game: string) { if (game === 'lol') return 'LEAGUE OF LEGENDS'; if (game === 'valorant') return 'VALORANT'; if (game === 'rocket_league') return 'ROCKET LEAGUE'; return game.toUpperCase(); }
 function shortDate(value: string) { return new Date(value).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }).toUpperCase(); }

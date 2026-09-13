@@ -59,7 +59,7 @@ export function getMatchConfrontationState(
 
   return {
     action: phase === 'live'
-      ? 'SUIVRE LE LIVE'
+      ? 'SUIVRE EN DIRECT'
       : phase === 'finished'
         ? 'VOIR LE RÉSULTAT'
         : phase === 'cancelled' || phase === 'pending'
@@ -73,7 +73,7 @@ export function getMatchConfrontationState(
     scoreB,
     scoreLabel,
     status: phase === 'live'
-      ? 'LIVE'
+      ? 'EN DIRECT'
       : phase === 'finished'
         ? 'TERMINÉ'
         : phase === 'cancelled'

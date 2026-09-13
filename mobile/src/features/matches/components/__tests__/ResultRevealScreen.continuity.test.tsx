@@ -83,7 +83,7 @@ describe('ResultRevealScreen journey continuity', () => {
 
     expect(screen.getByTestId('result-transition-loading').props.accessibilityState).toEqual({ busy: true });
     expect(screen.getByLabelText('Chargement du verdict, G2 Esports contre Fnatic')).toBeTruthy();
-    expect(screen.getByText('DEPUIS MATCH CENTER')).toBeTruthy();
+    expect(screen.getByText('DEPUIS CENTRE DU MATCH')).toBeTruthy();
     expect(screen.getByText('G2')).toBeTruthy();
     expect(screen.getByText('FNC')).toBeTruthy();
     expect(screen.getByText('2 — 1')).toBeTruthy();

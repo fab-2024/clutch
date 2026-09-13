@@ -59,7 +59,7 @@ export function levelFromXp(xp: number): LevelState {
             ? 'explorateur'
             : 'starter';
   const prestigeLabel = {
-    starter: 'Starter',
+    starter: 'Débutant',
     explorateur: 'Explorateur',
     analyste: 'Analyste',
     veteran: 'Vétéran',

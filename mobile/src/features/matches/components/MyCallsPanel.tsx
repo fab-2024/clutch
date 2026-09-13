@@ -120,7 +120,7 @@ function CallCard({ call, onPrepareMatch }: { call: MyCallItem; onPrepareMatch?:
     ? 'FAIRE MON CALL'
     : resolved
       ? 'REVOIR LE VERDICT'
-      : 'OUVRIR LE MATCH CENTER';
+      : 'OUVRIR LE CENTRE DU MATCH';
   const matchTarget = {
     equipe_a: call.equipe_a,
     equipe_b: call.equipe_b,

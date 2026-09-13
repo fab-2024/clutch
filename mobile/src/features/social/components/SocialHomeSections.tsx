@@ -210,16 +210,19 @@ function FactionLeaderCard({
   const supporterLabel = faction.membres === 1 ? 'SUPPORTER' : 'SUPPORTERS';
 
   return (
-    <LinearGradient
+    <View
       accessible
       accessibilityLabel={`1. ${faction.nom}, ${faction.membres} ${supporterLabel.toLowerCase()}, progression ${signed(faction.croissance_24h)} sur 24 heures${selected ? ', ma faction' : ''}`}
       accessibilityRole="summary"
-      colors={palette.gradient}
-      end={{ x: 1, y: 1 }}
-      start={{ x: 0, y: 0 }}
       style={[styles.factionLeaderCard, compact && styles.factionLeaderCardCompact, { borderColor: palette.border }]}
       testID="faction-ranking-leader"
     >
+      <LinearGradient
+        colors={palette.gradient}
+        end={{ x: 1, y: 1 }}
+        start={{ x: 0, y: 0 }}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={[styles.factionLeaderBeam, { backgroundColor: palette.accent }]} />
       <View style={[styles.factionLeaderBeam, styles.factionLeaderBeamSecondary, { backgroundColor: palette.accent }]} />
       <View style={styles.factionLeaderVisual}>
@@ -247,7 +250,7 @@ function FactionLeaderCard({
           {signed(faction.croissance_24h)} <Text style={styles.factionLeaderGrowthPeriod}>· 24 H</Text>
         </Text>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -267,16 +270,19 @@ function FactionPodiumRow({
   const supporterLabel = faction.membres === 1 ? 'SUPPORTER' : 'SUPPORTERS';
 
   return (
-    <LinearGradient
+    <View
       accessible
       accessibilityLabel={`${rank}. ${faction.nom}, ${faction.membres} ${supporterLabel.toLowerCase()}, progression ${signed(faction.croissance_24h)} sur 24 heures${selected ? ', ma faction' : ''}`}
       accessibilityRole="summary"
-      colors={palette.gradient}
-      end={{ x: 1, y: .5 }}
-      start={{ x: 0, y: .5 }}
       style={[styles.factionPodiumRow, compact && styles.factionPodiumRowCompact, { borderColor: palette.border }]}
       testID={`faction-ranking-row-${rank}`}
     >
+      <LinearGradient
+        colors={palette.gradient}
+        end={{ x: 1, y: .5 }}
+        start={{ x: 0, y: .5 }}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={[styles.factionPodiumGlow, { backgroundColor: palette.accent }]} />
       <Text style={[styles.factionPodiumRank, compact && styles.factionPodiumRankCompact]}>#{rank}</Text>
       <View style={[styles.factionPodiumLogo, compact && styles.factionPodiumLogoCompact]}>
@@ -297,7 +303,7 @@ function FactionPodiumRow({
         <View style={styles.factionPodiumDivider} />
         <Text style={styles.factionPodiumGrowth}>{signed(faction.croissance_24h)} <Text style={styles.factionPodiumPeriod}>· 24 H</Text></Text>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 

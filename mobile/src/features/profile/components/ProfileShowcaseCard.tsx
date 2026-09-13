@@ -115,7 +115,7 @@ export default function ProfileShowcaseCard({
         />
       </View>
 
-      <Text style={styles.visibilityPromise}>VISIBLE SUR RANK, SOCIAL ET TES CALLS</Text>
+      <Text style={styles.visibilityPromise}>VISIBLE DANS LE CLASSEMENT, LE SOCIAL ET TES CALLS</Text>
 
       {onOpenShowcase || onOpenLoadout ? <View style={styles.actions}>
         {onOpenShowcase ? <Pressable
@@ -128,12 +128,12 @@ export default function ProfileShowcaseCard({
         </Pressable> : null}
         {onOpenLoadout ? (
           <Pressable
-            accessibilityLabel="Modifier mon Loadout"
+            accessibilityLabel="Modifier mon équipement"
             accessibilityRole="button"
             onPress={onOpenLoadout}
             style={({ pressed }) => [styles.secondaryAction, pressed && styles.pressed]}
           >
-            <Text style={styles.secondaryActionText}>MODIFIER MON LOADOUT</Text>
+            <Text style={styles.secondaryActionText}>MODIFIER MON ÉQUIPEMENT</Text>
             {volts != null ? <Text style={styles.balance}>{formatNumber(volts)} V</Text> : null}
           </Pressable>
         ) : null}

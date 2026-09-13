@@ -275,16 +275,6 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
     });
   }
 
-  function syncNotificationLocale(locale: NotificationPreferences['locale']) {
-    setNotificationPreferences((current) => {
-      if (!current) return current;
-      const next = { ...current, locale };
-      if (current.expansionAvailable) notificationAutosave.commit(next);
-      else showSnackbar({ message: t('language.notificationError'), tone: 'info' });
-      return next;
-    });
-  }
-
   function openTeamConfirmation(organization: TeamOrganization) {
     if (organization.key === selectedOrganization || teamSaving) return;
     teamReturnFocusRef.current = teamCardRefs.current.get(organization.key) ?? null;
@@ -520,7 +510,7 @@ export default function ProfileSettingsScreen({ previewState }: ProfileSettingsS
 
         <View style={styles.section}>
           <View style={styles.sectionHeading}><View><Text style={styles.sectionEyebrow}>{t('settings.language.eyebrow')}</Text><Text style={styles.sectionTitle}>{t('settings.language.title')}</Text></View></View>
-          <LanguagePreferences onLocaleChange={syncNotificationLocale} />
+          <LanguagePreferences />
         </View>
 
         <View style={styles.section}>

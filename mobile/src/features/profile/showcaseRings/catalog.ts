@@ -172,11 +172,11 @@ const STAGE_SEEDS: Record<ShowcaseRingFamily, readonly StageSeed[]> = {
     { name: 'Apogée', threshold: 100, condition: 'Avoir une vraie interaction avec 100 amis distincts' },
   ],
   echo: [
-    { name: 'Germe', threshold: 5, condition: 'Recevoir des likes de 5 utilisateurs uniques sur la vitrine' },
-    { name: 'Éveil', threshold: 25, condition: 'Recevoir des likes de 25 utilisateurs uniques sur la vitrine' },
-    { name: 'Manifestation', threshold: 100, condition: 'Recevoir des likes de 100 utilisateurs uniques sur la vitrine' },
-    { name: 'Ascendance', threshold: 500, condition: 'Recevoir des likes de 500 utilisateurs uniques sur la vitrine' },
-    { name: 'Apogée', threshold: 2000, condition: 'Recevoir des likes de 2 000 utilisateurs uniques sur la vitrine' },
+    { name: 'Germe', threshold: 5, condition: 'Recevoir des mentions J’aime de 5 utilisateurs uniques sur la vitrine' },
+    { name: 'Éveil', threshold: 25, condition: 'Recevoir des mentions J’aime de 25 utilisateurs uniques sur la vitrine' },
+    { name: 'Manifestation', threshold: 100, condition: 'Recevoir des mentions J’aime de 100 utilisateurs uniques sur la vitrine' },
+    { name: 'Ascendance', threshold: 500, condition: 'Recevoir des mentions J’aime de 500 utilisateurs uniques sur la vitrine' },
+    { name: 'Apogée', threshold: 2000, condition: 'Recevoir des mentions J’aime de 2 000 utilisateurs uniques sur la vitrine' },
   ],
   metamorphosis: [
     { name: 'Germe', threshold: 1, condition: 'Amener 1 relique à son évolution maximale' },

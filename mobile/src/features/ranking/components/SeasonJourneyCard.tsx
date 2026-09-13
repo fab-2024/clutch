@@ -86,7 +86,7 @@ export function SeasonJourneyCard({
             {season.name.toUpperCase()}
           </Text>
           <Pressable
-            accessibilityLabel={`${rulesVisible ? 'Masquer' : 'Afficher'} les règles du rating`}
+            accessibilityLabel={`${rulesVisible ? 'Masquer' : 'Afficher'} les règles du score`}
             accessibilityRole="button"
             onPress={onToggleRules}
             style={({ pressed }) => [

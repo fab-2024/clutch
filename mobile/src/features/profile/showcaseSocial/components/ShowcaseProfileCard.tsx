@@ -35,9 +35,9 @@ export default function ShowcaseProfileCard({
   const likeCount = <>
     <Heart size={17} color={liked ? colors.volt : colors.textMuted} fill={liked ? colors.volt : 'transparent'} />
     <Text accessibilityLiveRegion="polite" style={[styles.count, liked && styles.liked]}>
-      {likes === null ? '— LIKES' : t('showcase.social.likes', { count: likes })}
+      {likes === null ? '— MENTIONS J’AIME' : t('showcase.social.likes', { count: likes })}
     </Text>
-    {onLike ? <Text style={styles.action}>{liked ? 'AIMÉ' : 'LIKER'}</Text> : null}
+    {onLike ? <Text style={styles.action}>{liked ? 'AIMÉ' : 'J’AIME'}</Text> : null}
   </>;
   return <View style={styles.card} testID="showcase-profile-card">
     {onProfile ? <Pressable accessibilityRole="button" accessibilityLabel={`Voir le profil de ${pseudo}`}

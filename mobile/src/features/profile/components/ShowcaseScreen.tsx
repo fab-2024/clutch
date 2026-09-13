@@ -903,7 +903,7 @@ export default function ShowcaseScreen({
           </View>
 
           <Pressable
-            accessibilityLabel="Setup"
+            accessibilityLabel="Configuration"
             accessibilityRole="button"
             accessibilityState={{ expanded: setupNoticeVisible }}
             onPress={() => {
@@ -919,12 +919,12 @@ export default function ShowcaseScreen({
             testID="showcase-setup-button"
           >
             <ChevronRight color={colors.volt} size={26} />
-            <Text style={styles.setupLabel}>SETUP</Text>
+            <Text style={styles.setupLabel}>CONFIGURATION</Text>
           </Pressable>
           {setupNoticeVisible ? (
             <View style={styles.setupNotice} testID="showcase-setup-notice">
-              <Text accessibilityRole="alert" style={styles.setupNoticeText}>Setup arrive dans une prochaine mise à jour.</Text>
-              <Pressable accessibilityLabel="Fermer le message Setup" accessibilityRole="button" onPress={() => setSetupNoticeVisible(false)} style={styles.setupDismiss}>
+              <Text accessibilityRole="alert" style={styles.setupNoticeText}>La configuration arrive dans une prochaine mise à jour.</Text>
+              <Pressable accessibilityLabel="Fermer le message de configuration" accessibilityRole="button" onPress={() => setSetupNoticeVisible(false)} style={styles.setupDismiss}>
                 <Text style={styles.setupLabel}>FERMER</Text>
               </Pressable>
             </View>

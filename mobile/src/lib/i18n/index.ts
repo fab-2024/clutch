@@ -1,12 +1,10 @@
 import '@formatjs/intl-pluralrules/polyfill.js';
 import '@formatjs/intl-pluralrules/locale-data/fr.js';
-import '@formatjs/intl-pluralrules/locale-data/en.js';
 
-import { en } from './en';
 import { fr } from './fr';
 
 export const FALLBACK_LOCALE = 'fr-FR';
-export const SUPPORTED_LOCALES = [FALLBACK_LOCALE, 'en-US'] as const;
+export const SUPPORTED_LOCALES = [FALLBACK_LOCALE] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 export type TranslationKey = keyof typeof fr;
 type Variables = Record<string, string | number>;
@@ -14,7 +12,6 @@ type TranslationValue = string | { one: string; other: string };
 
 const dictionaries: Record<SupportedLocale, Record<TranslationKey, TranslationValue>> = {
   'fr-FR': fr,
-  'en-US': en,
 };
 let activeLocale: SupportedLocale = FALLBACK_LOCALE;
 

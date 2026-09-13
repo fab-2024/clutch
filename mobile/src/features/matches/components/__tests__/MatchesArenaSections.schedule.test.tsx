@@ -41,15 +41,13 @@ describe('ScheduleHero', () => {
         matches={[]}
         monthLabel="AOÛT 2026"
         onSelectDay={onSelectDay}
-        onToggleHistory={jest.fn()}
-        status="upcoming"
       />,
     );
 
     const heroStyle = StyleSheet.flatten(screen.getByTestId('matches-schedule-hero').props.style);
-    expect(heroStyle.minHeight).toBeGreaterThanOrEqual(120);
-    expect(heroStyle.minHeight).toBeLessThanOrEqual(160);
-    expect(heroStyle.paddingBottom).toBe(14);
+    expect(heroStyle.minHeight).toBeGreaterThanOrEqual(88);
+    expect(heroStyle.minHeight).toBeLessThanOrEqual(110);
+    expect(heroStyle.paddingBottom).toBe(8);
     expect(screen.queryByText('PROCHAINS MATCHS')).toBeNull();
     expect(screen.getByText('AOÛT 2026')).toBeTruthy();
 
@@ -77,6 +75,7 @@ describe('match card navigation', () => {
     const match = matchFixture('a_venir');
     const screen = await render(<MatchRow match={match} onOpenPrediction={onOpenPrediction} />);
 
+    expect(screen.getByTestId('match-card-upcoming')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Alpha Team contre Beta Esports' }));
 
     expect(onOpenPrediction).toHaveBeenCalledWith(match);
@@ -87,6 +86,7 @@ describe('match card navigation', () => {
     const match = matchFixture('en_cours');
     const screen = await render(<LiveMatchCard match={match} />);
 
+    expect(screen.getByTestId('match-card-live')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Alpha Team contre Beta Esports, en direct' }));
 
     expect(openMatchCenter).toHaveBeenCalledTimes(1);

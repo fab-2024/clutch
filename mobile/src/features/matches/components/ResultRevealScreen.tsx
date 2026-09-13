@@ -237,7 +237,7 @@ export default function ResultRevealScreen({
         }
       }
 
-      router.replace({ pathname: '/(tabs)/matches', params: { view: 'calls' } });
+      router.replace('/(tabs)/matches');
     } catch (caught) {
       setError(messageFrom(caught, 'Le résultat reste affiché. Réessaie pour continuer.'));
       setBusy(false);
@@ -246,7 +246,7 @@ export default function ResultRevealScreen({
 
   if (loading) return journeySnapshot
     ? <ResultTransitionState snapshot={journeySnapshot} source={journeySource} />
-    : <RevealState title="VERDICT EN APPROCHE…" copy="GRIFF vérifie le score et ton rating." />;
+    : <RevealState title="VERDICT EN APPROCHE…" copy="GRIFF vérifie le résultat et ton score." />;
   if (!result) return <RevealState title="AUCUN VERDICT À RÉVÉLER." copy={error || 'Ce résultat n’est pas disponible dans ton historique.'} action="RETOUR AUX MATCHS" onPress={() => router.replace('/(tabs)/matches')} />;
 
   const won = result.statut === 'gagne';
@@ -328,7 +328,7 @@ export default function ResultRevealScreen({
         ) : null}
 
         <View style={styles.ratingCard}>
-          <View style={styles.sectionHeader}><View><Text style={styles.sectionEyebrow}>RATING SAISONNIER</Text><Text style={styles.sectionTitle}>Ton rating passe à {formatNumber(result.frags_apres)} Frags.</Text></View><View style={[styles.deltaPill, { backgroundColor: `${tone}18`, borderColor: `${tone}66` }]}><CurrencyIcon color={tone} kind="frags" size={14} /><Text style={[styles.deltaText, { color: tone }]}>{signed(result.delta_frags)}</Text></View></View>
+          <View style={styles.sectionHeader}><View><Text style={styles.sectionEyebrow}>SCORE SAISONNIER</Text><Text style={styles.sectionTitle}>Ton score passe à {formatNumber(result.frags_apres)} Frags.</Text></View><View style={[styles.deltaPill, { backgroundColor: `${tone}18`, borderColor: `${tone}66` }]}><CurrencyIcon color={tone} kind="frags" size={14} /><Text style={[styles.deltaText, { color: tone }]}>{signed(result.delta_frags)}</Text></View></View>
           <View style={styles.ratingFlow}>
             <Metric label="AVANT" value={formatNumber(result.frags_avant)} />
             <View style={styles.ratingArrow}><Text style={[styles.ratingArrowText, { color: tone }]}>→</Text></View>
@@ -479,8 +479,8 @@ function GradeHeadline({ transition }: { transition: GradeTransition }) {
   const content = transition.kind === 'promotion'
     ? { eyebrow: 'PROMOTION', title: `${transition.before?.libelle} → ${transition.after?.libelle}`, copy: 'Ton call te fait franchir un nouveau seuil.' }
     : transition.kind === 'demotion'
-      ? { eyebrow: 'RÉTROGRADATION', title: `${transition.before?.libelle} → ${transition.after?.libelle}`, copy: 'Le grade suit ton rating. Le prochain call peut relancer la remontée.' }
-      : { eyebrow: 'GRADE MAINTENU', title: transition.after?.libelle ?? 'Bronze', copy: 'Ton rating évolue, ton grade reste dans le même palier.' };
+      ? { eyebrow: 'RÉTROGRADATION', title: `${transition.before?.libelle} → ${transition.after?.libelle}`, copy: 'Le grade suit ton score. Le prochain call peut relancer la remontée.' }
+      : { eyebrow: 'GRADE MAINTENU', title: transition.after?.libelle ?? 'Bronze', copy: 'Ton score évolue, ton grade reste dans le même palier.' };
   const accent = transition.kind === 'demotion' ? colors.danger : gradeAccent(transition.after);
   return <View style={styles.gradeHeader}><View style={[styles.gradeMark, { borderColor: accent, backgroundColor: `${accent}16` }]}><Text style={[styles.gradeGlyph, { color: accent }]}>◆</Text></View><View style={styles.gradeCopy}><Text style={[styles.gradeEyebrow, { color: accent }]}>{content.eyebrow}</Text><Text style={styles.gradeTitle}>{content.title}</Text><Text style={styles.gradeText}>{content.copy}</Text></View></View>;
 }

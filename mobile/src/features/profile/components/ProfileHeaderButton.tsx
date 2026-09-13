@@ -24,7 +24,7 @@ export default function ProfileHeaderButton({
 
   return (
     <Pressable
-      accessibilityHint="Affiche ton classement Ranked, tes anneaux, tes trophées et tes maillots."
+      accessibilityHint="Affiche ton classement, tes anneaux, tes trophées et tes maillots."
       accessibilityLabel={`Ouvrir mon profil, ${pseudo}`}
       accessibilityRole="button"
       onPress={() => router.push(preview ? '/profile-preview' : '/my-profile')}

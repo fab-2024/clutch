@@ -96,7 +96,7 @@ export default function LoginScreen() {
 
   return (
     <AuthShell
-      eyebrow={mode === 'signin' ? 'RETOUR DANS L’ARENA' : 'NOUVEAU CHALLENGER'}
+      eyebrow={mode === 'signin' ? 'RETOUR DANS L’ARÈNE' : 'NOUVEAU JOUEUR'}
       subtitle={mode === 'signin'
         ? 'Retrouve tes pronostics, tes duels et ta faction.'
         : 'Crée ton identité GRIFF. Tu choisiras ensuite tes jeux et ton équipe.'}

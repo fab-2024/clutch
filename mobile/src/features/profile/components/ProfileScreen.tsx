@@ -148,7 +148,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
     ? 'SYNCHRO'
     : data?.ranking.grade.libelle?.toUpperCase() ?? 'BRONZE';
   const rankColor = starting ? ZERO_RANK_ACCENT : gradeAccent(data?.ranking.grade);
-  const profileTitle = cosmetics?.title?.name || data?.profileTitle || data?.level.prestigeLabel || 'Starter';
+  const profileTitle = cosmetics?.title?.name || data?.profileTitle || data?.level.prestigeLabel || 'Débutant';
 
   if (publicView && publicBlocked) {
     return (
@@ -326,7 +326,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
         {!loading && data?.ranking.grade.classe ? <GradeProgressCard ranking={data.ranking} /> : null}
 
         <View style={styles.statsGrid}>
-          <Stat currency="frags" label="RATING" value={loading ? '—' : formatNumber(data?.ranking.frags ?? 0)} detail={starting ? 'DÉPART DE SAISON' : 'FRAGS'} featured />
+          <Stat currency="frags" label="SCORE" value={loading ? '—' : formatNumber(data?.ranking.frags ?? 0)} detail={starting ? 'DÉPART DE SAISON' : 'FRAGS'} featured />
           <Stat label="RANG" value={loading ? '—' : data?.ranking.rang ? `#${data.ranking.rang}` : '—'} detail={data?.ranking.percentile == null ? 'SAISON' : `PERCENTILE ${formatDecimal(data.ranking.percentile)}`} />
           <Stat label="RÉUSSITE" value={loading || settledCalls === 0 ? '—' : `${accuracy}%`} detail={settledCalls === 0 ? 'AUCUN VERDICT' : `${data?.ranking.pronostics_gagnes ?? 0}/${settledCalls}`} />
           <Stat label="SÉRIE" value={loading || settledCalls === 0 ? '—' : `${data?.currentStreak ?? 0}`} detail={settledCalls === 0 ? 'NON COMMENCÉE' : 'VICTOIRES'} />

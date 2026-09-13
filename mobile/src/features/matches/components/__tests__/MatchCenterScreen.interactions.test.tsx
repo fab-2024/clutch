@@ -356,7 +356,7 @@ describe('MatchCenterScreen prediction confirmation', () => {
     const screen = await render(<MatchCenterScreen previewData={liveData} />);
 
     expect(screen.getByTestId('live-match-center')).toBeTruthy();
-    expect(screen.getByText('MATCH CENTER')).toBeTruthy();
+    expect(screen.getByText('CENTRE DU MATCH')).toBeTruthy();
     expect(screen.getByText('ESTIMATION CLUTCH')).toBeTruthy();
     expect(screen.getByText('VOTES COMMUNAUTÉ')).toBeTruthy();
     expect(screen.getByText(/71% · 29%/)).toBeTruthy();

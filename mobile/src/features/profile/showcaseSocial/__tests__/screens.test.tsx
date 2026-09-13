@@ -119,7 +119,7 @@ describe('showcase owner profile overlay', () => {
     const screen = await render(<ShowcaseOwnerProfile profile={null} pseudo="Nova" ownerId="viewer" preview={false} />);
     expect(screen.getByText('Nova')).toBeTruthy();
     expect(screen.getByText('86 VUES')).toBeTruthy();
-    expect(screen.getByText('12 LIKES')).toBeTruthy();
+    expect(screen.getByText('12 MENTIONS J’AIME')).toBeTruthy();
     expect(mockLoad).toHaveBeenCalledWith('Nova', 'viewer', false);
     expect(screen.queryByTestId('showcase-like')).toBeNull();
     await fireEvent.press(screen.getByLabelText('Voir le profil de Nova'));
@@ -129,9 +129,9 @@ describe('showcase owner profile overlay', () => {
     mockLoad.mockRejectedValueOnce(new Error('network'));
     const screen = await render(<ShowcaseOwnerProfile profile={null} pseudo="Nova" ownerId="viewer" preview={false} />);
     expect(screen.getByText('— VUES')).toBeTruthy();
-    expect(screen.getByText('— LIKES')).toBeTruthy();
+    expect(screen.getByText('— MENTIONS J’AIME')).toBeTruthy();
     mockLoad.mockResolvedValue(PREVIEW_SHOWCASE_OWNER);
-    await fireEvent.press(screen.getByLabelText('Actualiser les vues et les likes'));
+    await fireEvent.press(screen.getByLabelText('Actualiser les vues et les mentions J’aime'));
     expect(screen.getByText('86 VUES')).toBeTruthy();
   });
 });
@@ -151,9 +151,9 @@ describe('showcase interaction', () => {
     let resolve!: (value: unknown) => void;
     mockLike.mockReturnValue(new Promise((done) => { resolve = done; }));
     const screen = await render(<PublicShowcaseScreen />);
-    expect(screen.getByText('12 LIKES')).toBeTruthy();
+    expect(screen.getByText('12 MENTIONS J’AIME')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('showcase-like'));
-    expect(screen.getByText('13 LIKES')).toBeTruthy();
+    expect(screen.getByText('13 MENTIONS J’AIME')).toBeTruthy();
     expect(screen.getByTestId('showcase-like')).toBeDisabled();
     await fireEvent.press(screen.getByTestId('showcase-like'));
     expect(mockLike).toHaveBeenCalledTimes(1);
@@ -165,9 +165,9 @@ describe('showcase interaction', () => {
     mockLike.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(null);
     const screen = await render(<PublicShowcaseScreen />);
     await fireEvent.press(screen.getByTestId('showcase-like'));
-    expect(screen.getByText('12 LIKES')).toBeTruthy();
+    expect(screen.getByText('12 MENTIONS J’AIME')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('showcase-like'));
-    expect(screen.queryByText('12 LIKES')).toBeNull();
+    expect(screen.queryByText('12 MENTIONS J’AIME')).toBeNull();
     expect(screen.getByText('Cette vitrine est privée, inaccessible ou introuvable.')).toBeTruthy();
   });
   it('discards an old account response after switching accounts', async () => {
@@ -177,8 +177,8 @@ describe('showcase interaction', () => {
     mockViewer = 'another-account'; mockLoad.mockResolvedValueOnce({ ...PREVIEW_SHOWCASE, likes: 4 });
     await screen.rerender(<PublicShowcaseScreen />);
     await act(async () => oldResponse({ ...PREVIEW_SHOWCASE, likes: 99 }));
-    expect(screen.getByText('4 LIKES')).toBeTruthy();
-    expect(screen.queryByText('99 LIKES')).toBeNull();
+    expect(screen.getByText('4 MENTIONS J’AIME')).toBeTruthy();
+    expect(screen.queryByText('99 MENTIONS J’AIME')).toBeNull();
   });
   it('preview likes never call the backend or publish links', async () => {
     const screen = await render(<PublicShowcaseScreen previewData={PREVIEW_SHOWCASE} />);

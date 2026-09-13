@@ -33,7 +33,7 @@ type MatchConfrontationCardProps = {
 const CARD_ASPECT_RATIO = 1.55;
 
 export function MatchConfrontationCard({
-  accessibilityHint = 'Ouvre le Match Center',
+  accessibilityHint = 'Ouvre le centre du match',
   match,
   onPress,
   onPressIn,

@@ -187,7 +187,7 @@ export function showcaseRingMetricLabel(family: ShowcaseRingFamily, value: numbe
   if (family === 'ascension') return `${amount} PROMOTION${amount > 1 ? 'S' : ''}`;
   if (family === 'duelist') return `${amount} DUEL${amount > 1 ? 'S' : ''} GAGNÉ${amount > 1 ? 'S' : ''}`;
   if (family === 'pact') return `${amount} AMI${amount > 1 ? 'S' : ''} ACTIF${amount > 1 ? 'S' : ''}`;
-  if (family === 'echo') return `${formatNumber(amount)} LIKE${amount > 1 ? 'S' : ''} UNIQUE${amount > 1 ? 'S' : ''}`;
+  if (family === 'echo') return `${formatNumber(amount)} MENTION${amount > 1 ? 'S' : ''} J’AIME UNIQUE${amount > 1 ? 'S' : ''}`;
   return `${amount} RELIQUE${amount > 1 ? 'S' : ''} À L’APOGÉE`;
 }
 

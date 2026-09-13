@@ -179,7 +179,7 @@ export function InlinePredictionPanel({
           <View style={styles.lockedIcon}><Check color="#080B0F" size={22} strokeWidth={3} /></View>
           <Text style={styles.lockedEyebrow}>TON CALL · {lockedTag}</Text>
           <Text style={styles.lockedTitle}>CALL VERROUILLÉ</Text>
-          <Text style={styles.lockedCopy}>{rivalId ? `Ton camp est prêt face à ${rivalPseudo || 'ton rival'}.` : `${lockedTeam} rejoint maintenant la section « Mes calls ».`}</Text>
+          <Text style={styles.lockedCopy}>{rivalId ? `Ton camp est prêt face à ${rivalPseudo || 'ton rival'}.` : `Ton call sur ${lockedTeam} est maintenant verrouillé.`}</Text>
           {duelError ? <Text accessibilityRole="alert" style={styles.duelError}>{duelError}</Text> : null}
           <View style={styles.lockedActions}>
             {rivalId ? (

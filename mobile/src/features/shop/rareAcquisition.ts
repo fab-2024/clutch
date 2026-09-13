@@ -40,7 +40,7 @@ const PRESENTED_EVENT_LIMIT = 64;
 const SLOT_LABELS: Record<CosmeticSlot, string> = {
   cadre_profil: 'CADRE DE PROFIL',
   titre_profil: 'TITRE DE PROFIL',
-  apparence_core: 'APPARENCE DE CORE',
+  apparence_core: 'APPARENCE DE NOYAU',
   effet_faction: 'EFFET DE RELIQUE',
   carte_profil: 'BANNIÈRE DE PROFIL',
   vitrine_materiau: 'MATIÈRE DE VITRINE',
@@ -105,14 +105,14 @@ export function rareAcquisitionLabel(rarity: CosmeticRarity) {
 
 export function rareAcquisitionOriginLabel(origin: RareAcquisitionOrigin) {
   if (origin === 'hub') return 'HUB // RÉCOMPENSE RÉCLAMÉE';
-  if (origin === 'locker') return 'LOCKER // ACQUISITION CONFIRMÉE';
+  if (origin === 'locker') return 'COLLECTION // ACQUISITION CONFIRMÉE';
   return 'ATELIER // ACQUISITION CONFIRMÉE';
 }
 
 function sourceLabel(source: CosmeticSource) {
   if (source === 'mission') return 'MISSION ACCOMPLIE';
   if (source === 'partenaire') return 'ACTIVATION PARTENAIRE';
-  if (source === 'founder_pack') return 'FOUNDER PACK';
+  if (source === 'founder_pack') return 'PACK FONDATEUR';
   if (source === 'gratuit') return 'OFFERT PAR GRIFF';
   return 'ACQUISITION VOLTS';
 }

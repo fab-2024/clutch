@@ -2,7 +2,7 @@
 
 import { fireEvent, render } from '@testing-library/react-native';
 
-import type { ArenaMatch, MyCallsDashboard } from '../../types';
+import type { ArenaMatch } from '../../types';
 import { MatchesExperience } from '../MatchesScreen';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), replace: jest.fn() }, useLocalSearchParams: () => ({}) }));
@@ -18,70 +18,63 @@ jest.mock('@/src/features/profile/components/ProfileHeaderButton', () => ({ __es
 jest.mock('@/src/features/onboarding/components/GameLogo', () => ({ __esModule: true, default: () => null }));
 jest.mock('@/src/features/onboarding/components/TeamLogo', () => ({ __esModule: true, default: () => null }));
 jest.mock('../InlinePredictionPanel', () => ({ InlinePredictionPanel: () => null }));
-jest.mock('../MyCallsPanel', () => ({ MyCallsPanel: 'MyCallsPanel' }));
 jest.mock('react-native-reanimated', () => {
   const RN = jest.requireActual('react-native');
   return { __esModule: true, default: { View: RN.View }, FadeIn: { duration: () => ({}) } };
 });
 
-const CALLS: MyCallsDashboard = {
-  saison_id: null, saison_nom: null,
-  compteurs: { ouverts: 0, verrouilles: 2, reussis: 0, manques: 0 },
-  ouverts: [], verrouilles: [], reussis: [], manques: [],
-};
-
 describe('Matches filters', () => {
-  it('separates upcoming, live and finished matches and scopes the live badge to the chosen game', async () => {
+  it('shows one calendar feed and filters it with Tous, LOL, VALO and RL', async () => {
+    const now = new Date();
     const screen = await render(<MatchesExperience
-      calls={CALLS}
       error={null}
-      finished={[match('result', 'termine', 'lol', '2026-09-01T10:00:00.000Z')]}
-      followedGames={['lol', 'valorant']}
-      isAdmin={false}
+      finished={[match('result', 'termine', 'lol', dateAt(now, -2))]}
       loading={false}
       onRefresh={jest.fn()}
       onRetry={jest.fn()}
       refreshing={false}
       upcoming={[
-        match('future', 'a_venir', 'lol', '2099-09-07T10:00:00.000Z'),
-        match('live-lol', 'en_cours', 'lol', new Date(Date.now() - 60 * 60 * 1000).toISOString()),
-        match('live-val', 'en_cours', 'valorant', new Date(Date.now() - 30 * 60 * 1000).toISOString()),
+        match('future', 'a_venir', 'lol', dateAt(now, 2)),
+        match('live-lol', 'en_cours', 'lol', dateAt(now, -1)),
+        match('live-val', 'en_cours', 'valorant', dateAt(now, -1)),
       ]}
     />);
 
-    expect(screen.getAllByRole('tab').slice(4).map((tab) => tab.props.accessibilityLabel)).toEqual(['En cours, 2 matchs', 'À venir', 'Résultats']);
+    expect(screen.getAllByRole('tab').map((tab) => tab.props.accessibilityLabel)).toEqual([
+      'Tous les jeux',
+      'League of Legends',
+      'Valorant',
+      'Rocket League',
+    ]);
     expect(screen.getByRole('button', { name: 'future A contre future B' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'live-lol A contre live-lol B, en direct' })).toBeNull();
-
-    await fireEvent.press(screen.getByRole('tab', { name: 'En cours, 2 matchs' }));
     expect(screen.getByRole('button', { name: 'live-lol A contre live-lol B, en direct' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'live-val A contre live-val B, en direct' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'future A contre future B' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'result A contre result B' })).toBeTruthy();
+    expect(screen.queryByText('En cours')).toBeNull();
+    expect(screen.queryByText('À venir')).toBeNull();
+    expect(screen.queryByText('Résultats')).toBeNull();
+    expect(screen.queryByText('Mes calls')).toBeNull();
+    expect(screen.queryByText('ADMINISTRER LE CALENDRIER')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Afficher les matchs d’aujourd’hui' })).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('tab', { name: 'League of Legends' }));
-    expect(screen.getByRole('tab', { name: 'En cours, 1 match' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'live-val A contre live-val B, en direct' })).toBeNull();
-
-    await fireEvent.press(screen.getByRole('tab', { name: 'Résultats' }));
-    expect(screen.getByRole('button', { name: 'result A contre result B' })).toBeTruthy();
-
-    await fireEvent.press(screen.getByRole('button', { name: 'Mes calls, 2 verrouillés' }));
-    expect(screen.getByRole('button', { name: 'Fermer Mes calls' }).props.accessibilityState.expanded).toBe(true);
-    await fireEvent.press(screen.getByRole('tab', { name: 'À venir' }));
-    expect(screen.getByRole('button', { name: 'future A contre future B' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Fermer Mes calls' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'live-lol A contre live-lol B, en direct' })).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Rechercher un match' }));
     await fireEvent.changeText(screen.getByLabelText('Rechercher une équipe ou une compétition'), 'unknown');
     expect(screen.queryByRole('button', { name: 'future A contre future B' })).toBeNull();
+    expect(screen.getByText('Pas de match ce jour')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Fermer la recherche' }));
     expect(screen.getByRole('button', { name: 'future A contre future B' })).toBeTruthy();
-
-    await fireEvent.press(screen.getByRole('button', { name: 'Options des matchs' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Mes calls' }));
-    expect(screen.getByRole('button', { name: 'Fermer Mes calls' }).props.accessibilityState.expanded).toBe(true);
   });
 });
+
+function dateAt(base: Date, hourOffset: number) {
+  const date = new Date(base);
+  date.setHours(date.getHours() + hourOffset);
+  return date.toISOString();
+}
 
 function match(id: string, statut: ArenaMatch['statut'], jeu: string, debut: string): ArenaMatch {
   return {

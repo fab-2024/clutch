@@ -188,7 +188,7 @@ export default function DuelInvitationScreen() {
               <View style={styles.marketPill}><View style={styles.marketDot} /><Text style={styles.marketText}>CLASSÉ · {duel.marche_libelle.toUpperCase()}</Text></View>
               <Text style={styles.kicker}>{duel.statut === 'termine' ? 'VERDICT DU DUEL' : 'INVITATION AU FACE-À-FACE'}</Text>
               <View style={styles.faceoff}>
-                <Fighter pseudo={duel.createur_pseudo} tag={choiceTag(duel, duel.createur_choix)} role="CHALLENGER" />
+                <Fighter pseudo={duel.createur_pseudo} tag={choiceTag(duel, duel.createur_choix)} role="JOUEUR À L’ORIGINE DU DÉFI" />
                 <View style={styles.vsBlock}><Text style={styles.vs}>VS</Text><View style={styles.vsLine} /></View>
                 <Fighter pseudo={duel.accepteur_pseudo || duel.cible_pseudo || 'PLACE LIBRE'} tag={duel.tag_oppose} role={duel.cible_pseudo && !duel.accepteur_pseudo ? 'CIBLÉ' : 'RIVAL'} right participant={Boolean(duel.accepteur_pseudo || duel.cible_pseudo)} />
               </View>

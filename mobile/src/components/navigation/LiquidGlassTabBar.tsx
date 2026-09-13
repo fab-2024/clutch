@@ -17,7 +17,7 @@ export const mainTabs = [
   { name: 'index', title: 'Hub', icon: House },
   { name: 'matches', title: 'Matchs', icon: CalendarDays },
   { name: 'social', title: 'Social', icon: UsersRound },
-  { name: 'rank', title: 'Rank', icon: Trophy },
+  { name: 'rank', title: 'Classement', icon: Trophy },
   { name: 'collection', title: 'Collection', icon: Store },
 ] as const;
 

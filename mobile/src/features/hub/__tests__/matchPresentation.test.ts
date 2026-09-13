@@ -48,7 +48,7 @@ describe('hub match confrontation presentation', () => {
   it('keeps missing scores explicit during a live match', () => {
     const state = getMatchConfrontationState({ ...BASE_MATCH, statut: 'en_cours', debut: '2026-08-23T17:30:00.000Z' }, null, NOW);
     expect(state.scoreLabel).toBe('— – —');
-    expect(state.status).toBe('LIVE');
+    expect(state.status).toBe('EN DIRECT');
     expect(state.winner).toBeNull();
   });
 

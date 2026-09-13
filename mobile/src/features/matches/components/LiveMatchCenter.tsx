@@ -51,8 +51,8 @@ export function LiveMatchCenter({
 
   function shareMatch() {
     void Share.share({
-      message: `${match.equipe_a} — ${match.equipe_b} est en direct dans le Match Center Clutch.`,
-      title: `${match.tag_a} — ${match.tag_b} · Match Center`,
+      message: `${match.equipe_a} — ${match.equipe_b} est en direct dans le centre du match Clutch.`,
+      title: `${match.tag_a} — ${match.tag_b} · Centre du match`,
     }).catch(() => undefined);
   }
 
@@ -70,7 +70,7 @@ export function LiveMatchCenter({
           <Text style={styles.backText}>RETOUR</Text>
         </Pressable>
 
-        <Text numberOfLines={1} style={styles.headerTitle}>MATCH CENTER</Text>
+        <Text numberOfLines={1} style={styles.headerTitle}>CENTRE DU MATCH</Text>
 
         <Pressable
           accessibilityHint="Ouvre les options de partage du téléphone"

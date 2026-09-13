@@ -166,7 +166,7 @@ const BASE_PREVIEW: RankDashboard = {
   reward: {
     status: 'a_annoncer',
     title: 'Récompense de fin de saison',
-    detail: 'Ta récompense finale est protégée par ton meilleur grade atteint, même si ton rating redescend.',
+    detail: 'Ta récompense finale est protégée par ton meilleur grade atteint, même si ton score redescend.',
   },
 };
 

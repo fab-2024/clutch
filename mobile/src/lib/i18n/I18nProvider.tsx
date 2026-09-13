@@ -1,7 +1,8 @@
 import { createContext, Fragment, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 
-import { getActiveLocale, setActiveLocale, type SupportedLocale } from '.';
+import { setActiveLocale, type SupportedLocale } from '.';
 import {
+  APP_LOCALE,
   loadLocalePreference,
   localeForPreference,
   saveLocalePreference,
@@ -16,8 +17,8 @@ type I18nContextValue = {
 };
 
 const fallback: I18nContextValue = {
-  locale: getActiveLocale(),
-  preference: 'system',
+  locale: APP_LOCALE,
+  preference: APP_LOCALE,
   ready: true,
   changePreference: async (next) => {
     const locale = localeForPreference(next);
@@ -30,11 +31,10 @@ const fallback: I18nContextValue = {
 const I18nContext = createContext<I18nContextValue>(fallback);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [preference, setPreference] = useState<LocalePreference>('system');
+  const [preference, setPreference] = useState<LocalePreference>(APP_LOCALE);
   const [locale, setLocale] = useState<SupportedLocale>(() => {
-    const initial = localeForPreference('system');
-    setActiveLocale(initial);
-    return initial;
+    setActiveLocale(APP_LOCALE);
+    return APP_LOCALE;
   });
   const [ready, setReady] = useState(false);
 
