@@ -108,6 +108,42 @@ describe('ProfileScreen private navigation', () => {
     expect(push).toHaveBeenCalledWith('/showcase-preview');
   }, 15_000); // The first cold render compiles the complete showroom scene.
 
+  it('keeps the current profile and opens the new statistics tab', async () => {
+    const screen = await render(<ProfileScreen previewData={{
+      ...PREVIEW_PROFILE,
+      currentStreak: 7,
+      recent: [{
+        id: 'rl-call',
+        match_id: 'rl-match',
+        statut: 'gagne',
+        choix: 'a',
+        conviction: null,
+        delta_frags: 24,
+        cree_le: '2026-09-12T18:00:00.000Z',
+        regle_le: '2026-09-12T20:00:00.000Z',
+        jeu: 'rocket_league',
+        evenement: 'RLCS Major',
+        equipe_a: 'Karmine Corp',
+        equipe_b: 'Team Vitality',
+        tag_a: 'KC',
+        tag_b: 'VIT',
+        score_a: 4,
+        score_b: 2,
+      }],
+      ranking: { ...PREVIEW_PROFILE.ranking, frags: 620, pronostics_gagnes: 11, pronostics_regles: 18 },
+    }} />);
+
+    expect(screen.getByRole('tab', { name: 'PROFIL' }).props.accessibilityState).toEqual({ selected: true });
+    expect(screen.queryByTestId('profile-stats-overview')).toBeNull();
+
+    await fireEvent.press(screen.getByRole('tab', { name: 'STATISTIQUES' }));
+
+    expect(screen.getByTestId('profile-stats-overview')).toBeTruthy();
+    expect(screen.getByText('APERÇU DE SAISON')).toBeTruthy();
+    expect(screen.getByText('620')).toBeTruthy();
+    expect(screen.getByText('RL')).toBeTruthy();
+  });
+
   it('shows the equipped rank display on the public profile card', async () => {
     const screen = await render(
       <ProfileScreen previewData={PREVIEW_PROFILE} profilePseudo="FabTheTap" publicView />,

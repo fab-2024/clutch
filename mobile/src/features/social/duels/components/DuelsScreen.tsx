@@ -135,17 +135,15 @@ export default function DuelsScreen({
           <DuelRefreshNotice message={error} onRetry={() => void load(true)} />
         ) : null}
 
-        <View style={styles.featuredSection}>
-          <View style={styles.featuredHeading}>
-            <Text style={styles.featuredLabel}>DUEL EN COURS</Text>
-            <DuelSectionStatus duel={featured} loading={loading} />
+        {loading || featured ? (
+          <View style={styles.featuredSection}>
+            {loading
+              ? <DuelHeroSkeleton />
+              : featured
+                ? <DuelHero duel={featured} onOpen={() => openDuel(featured.token)} />
+                : null}
           </View>
-          {loading
-            ? <DuelHeroSkeleton />
-            : featured
-              ? <DuelHero duel={featured} onOpen={() => openDuel(featured.token)} />
-              : null}
-        </View>
+        ) : null}
 
         <View style={styles.intro}>
           <Text style={styles.title}>À TOI DE JOUER.</Text>
@@ -199,23 +197,6 @@ export default function DuelsScreen({
         visible={missionsOpen}
       />
     </>
-  );
-}
-
-function DuelSectionStatus({ duel, loading }: { duel: DuelRow | null; loading: boolean }) {
-  const status = duel ? effectiveStatus(duel) : null;
-  const active = status === 'en_attente' || status === 'accepte';
-  const label = loading
-    ? 'CHARGEMENT'
-    : duel && status
-      ? `${statusLabel(status)} · ${gameLabel(duel.jeu)}`
-      : 'AUCUN ACTIF';
-
-  return (
-    <View style={styles.featuredStatus}>
-      <View style={[styles.featuredStatusDot, active && styles.featuredStatusDotActive]} />
-      <Text style={styles.featuredStatusText}>{label}</Text>
-    </View>
   );
 }
 
@@ -515,35 +496,6 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   featuredSection: { gap: 9 },
-  featuredHeading: {
-    minHeight: 28,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  featuredLabel: {
-    ...typography.eyebrow,
-    color: colors.textSecondary,
-    letterSpacing: .8,
-  },
-  featuredStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-  },
-  featuredStatusDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: colors.textDisabled,
-  },
-  featuredStatusDotActive: { backgroundColor: colors.live },
-  featuredStatusText: {
-    ...typography.label,
-    color: colors.textMuted,
-    letterSpacing: .35,
-  },
   intro: {
     gap: 7,
     paddingTop: 8,

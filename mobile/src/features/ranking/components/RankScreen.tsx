@@ -45,7 +45,6 @@ import type {
 } from '../types';
 import { RankEmblem } from './RankEmblem';
 import { RankSeasonHero } from './RankSeasonHero';
-import { RankSnapshot } from './RankSnapshot';
 import { SeasonJourneyCard } from './SeasonJourneyCard';
 
 type Section = 'season' | 'leaderboards' | 'rewards';
@@ -107,7 +106,6 @@ export default function RankScreen({ previewData, previewReduceMotion }: RankScr
     <RankHeader
       dashboard={dashboard}
       error={error}
-      loading={loading}
       onRetry={() => void load()}
       onSection={setSection}
       preview={Boolean(previewData)}
@@ -152,7 +150,6 @@ export default function RankScreen({ previewData, previewReduceMotion }: RankScr
 function RankHeader({
   dashboard,
   error,
-  loading,
   onRetry,
   onSection,
   preview,
@@ -160,7 +157,6 @@ function RankHeader({
 }: {
   dashboard: RankDashboard | null;
   error: string | null;
-  loading: boolean;
   onRetry: () => void;
   onSection: (section: Section) => void;
   preview: boolean;
@@ -206,10 +202,6 @@ function RankHeader({
           </Pressable>
         ))}
       </View>
-
-      {section === 'rewards' ? loading ? <RankSnapshotSkeleton /> : dashboard?.state ? (
-        <RankSnapshot seasonName={dashboard.season?.name} state={dashboard.state} />
-      ) : null : null}
 
       {error ? (
         <FeatureStateView
@@ -753,24 +745,6 @@ function RankSkeleton() {
         </View>
       </View>
       <Skeleton height={48} radius="md" width="100%" />
-    </SkeletonGroup>
-  );
-}
-
-function RankSnapshotSkeleton() {
-  return (
-    <SkeletonGroup label={FEATURE_STATE_COPY.rank.loading.title} style={styles.snapshotSkeleton} testID="rank-snapshot-loading">
-      <Skeleton height={66} radius="lg" width={66} />
-      <View style={styles.snapshotSkeletonCopy}>
-        <Skeleton height={8} radius="pill" tone="subtle" width="44%" />
-        <Skeleton height={20} radius="sm" width="72%" />
-        <Skeleton height={4} radius="pill" width="100%" />
-        <Skeleton height={8} radius="pill" tone="subtle" width="84%" />
-      </View>
-      <View style={styles.snapshotSkeletonRank}>
-        <Skeleton height={32} radius="sm" width={58} />
-        <Skeleton height={8} radius="pill" tone="subtle" width={50} />
-      </View>
     </SkeletonGroup>
   );
 }
@@ -1395,9 +1369,6 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     gap: 6,
   },
-  snapshotSkeleton: { minHeight: 128, marginHorizontal: spacing.md, paddingVertical: spacing.md, paddingHorizontal: spacing.sm, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radius.lg, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderSubtle },
-  snapshotSkeletonCopy: { flex: 1, minWidth: 0, gap: 8 },
-  snapshotSkeletonRank: { width: 66, alignItems: 'flex-end', gap: 7 },
   skeletonHorizon: { minHeight: 280, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 16, borderRadius: radius.lg, backgroundColor: '#0B1218', borderWidth: 1, borderColor: colors.border },
   skeletonHorizonCopy: { flex: 1, minWidth: 0, gap: 8 },
   pressed: {

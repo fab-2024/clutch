@@ -26,6 +26,7 @@ import { loadProfileData, saveProfileAvatar } from '../api';
 import type { ProfileBadge, ProfileData, ProfileRanking, RecentPrediction } from '../types';
 import OwnProfileOverview from './OwnProfileOverview';
 import ProfileAvatarPickerSheet from './ProfileAvatarPickerSheet';
+import ProfileStatsOverview from './ProfileStatsOverview';
 import ProfileShowcaseCard from './ProfileShowcaseCard';
 import { t } from '@/src/lib/i18n';
 import { showcasePath } from '@/src/lib/publicLinks';
@@ -33,12 +34,15 @@ import ProfileShareCard from './ProfileShareCard';
 import { PlayerIdentityCard } from '../identity/PlayerIdentityCard';
 
 type ProfileScreenProps = {
+  initialPrivateTab?: PrivateProfileTab;
   previewData?: ProfileData;
   profilePseudo?: string;
   publicView?: boolean;
 };
 
-export default function ProfileScreen({ previewData, profilePseudo, publicView = false }: ProfileScreenProps) {
+type PrivateProfileTab = 'profile' | 'stats';
+
+export default function ProfileScreen({ initialPrivateTab = 'profile', previewData, profilePseudo, publicView = false }: ProfileScreenProps) {
   const { profile, refreshProfile, session } = useAuth();
   const { equipped } = useCosmetics();
   const { refresh: refreshEconomy } = useEconomy();
@@ -50,6 +54,7 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [avatarSavingId, setAvatarSavingId] = useState<string | null>(null);
   const [avatarPickerError, setAvatarPickerError] = useState<string | null>(null);
+  const [privateTab, setPrivateTab] = useState<PrivateProfileTab>(initialPrivateTab);
 
   const ownPseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'joueur';
   const pseudo = profilePseudo?.trim() || ownPseudo;
@@ -189,7 +194,20 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             />
           ) : null}
 
-          {error && !data ? null : <OwnProfileOverview
+          <View accessibilityRole="tablist" style={styles.privateTabs}>
+            <PrivateProfileTabButton
+              label="PROFIL"
+              onPress={() => setPrivateTab('profile')}
+              selected={privateTab === 'profile'}
+            />
+            <PrivateProfileTabButton
+              label="STATISTIQUES"
+              onPress={() => setPrivateTab('stats')}
+              selected={privateTab === 'stats'}
+            />
+          </View>
+
+          {error && !data ? null : privateTab === 'profile' ? <OwnProfileOverview
             cosmetics={cosmetics}
             data={data}
             loading={loading}
@@ -217,7 +235,28 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
             pseudo={data?.pseudo || pseudo}
             rankAccent={rankColor}
             rankLabel={rankLabel}
-          />}
+          /> : data ? (
+            <ProfileStatsOverview
+              cosmetics={cosmetics}
+              data={data}
+              onOpenMatch={(item) => openMatchResult({
+                id: item.match_id,
+                equipe_a: item.equipe_a,
+                equipe_b: item.equipe_b,
+                evenement: item.evenement,
+                jeu: item.jeu,
+                score_a: item.score_a,
+                score_b: item.score_b,
+                tag_a: item.tag_a,
+                tag_b: item.tag_b,
+              }, { source: 'profile' })}
+              pseudo={data.pseudo || pseudo}
+            />
+          ) : (
+            <View style={styles.privateStatsLoading}>
+              <Text style={styles.privateStatsLoadingText}>SYNCHRONISATION DU PROFIL…</Text>
+            </View>
+          )}
         </ScrollView>
         <ProfileAvatarPickerSheet
           error={avatarPickerError}
@@ -392,6 +431,19 @@ export default function ProfileScreen({ previewData, profilePseudo, publicView =
   );
 }
 
+function PrivateProfileTabButton({ label, onPress, selected }: { label: string; onPress: () => void; selected: boolean }) {
+  return (
+    <Pressable
+      accessibilityRole="tab"
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={({ pressed }) => [styles.privateTab, selected && styles.privateTabSelected, pressed && styles.pressed]}
+    >
+      <Text style={[styles.privateTabText, selected && styles.privateTabTextSelected]}>{label}</Text>
+    </Pressable>
+  );
+}
+
 function ProfileHeader({
   onOpenSettings,
   publicProfile,
@@ -540,6 +592,13 @@ const styles = StyleSheet.create({
   blockedStateButtonText: { ...typography.action, color: '#080A0C' },
   content: { width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center', paddingBottom: layout.tabBarContentInset, gap: 22 },
   privateContent: { gap: 14 },
+  privateTabs: { minHeight: 45, marginHorizontal: spacing.md, padding: 3, flexDirection: 'row', borderRadius: 15, backgroundColor: '#09131A', borderWidth: 1, borderColor: '#1D3846' },
+  privateTab: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
+  privateTabSelected: { backgroundColor: '#F3F4ED' },
+  privateTabText: { ...typography.control, color: colors.textMuted, letterSpacing: 0.5 },
+  privateTabTextSelected: { color: '#091016' },
+  privateStatsLoading: { minHeight: 360, marginHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center' },
+  privateStatsLoadingText: { ...typography.eyebrow, color: colors.textMuted },
   privateHeader: { minHeight: 78, paddingHorizontal: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
   privateHeaderBack: { minHeight: 50, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: colors.surfaceLow, borderWidth: 1, borderColor: colors.borderStrong },
   privateHeaderBackText: { ...typography.action, color: colors.text, letterSpacing: 0.45 },

@@ -5,7 +5,7 @@ import { INDIVIDUAL_PROFILE_FRAMES } from '@/src/features/shop/atelierCatalog';
 import { EMPTY_EQUIPPED_COSMETICS } from '@/src/features/shop/types';
 
 import { evaluateBadges, resolveBadgeSelection } from '../badges';
-import type { ProfileData, ProfileRanking } from '../types';
+import type { ProfileData, ProfileRanking, RecentPrediction } from '../types';
 import ProfileScreen from './ProfileScreen';
 
 const PREVIEW_RANKING: ProfileRanking = {
@@ -148,13 +148,24 @@ export const PREVIEW_PROFILE: ProfileData = {
   },
 };
 
+const PREVIEW_STATS_RECENT: RecentPrediction[] = [
+  previewCall('stats-1', 'lol', 'FNC', 'KC', 'LEC · Saison régulière', 'a', 'gagne', 24, '2026-08-14T18:45:00.000Z'),
+  previewCall('stats-2', 'valorant', 'M8', 'TH', 'VCT EMEA', 'b', 'perdu', -16, '2026-08-22T19:10:00.000Z'),
+  previewCall('stats-3', 'rocket_league', 'BDS', 'KC', 'RLCS Major', 'a', 'gagne', 20, '2026-08-29T17:30:00.000Z'),
+  previewCall('stats-4', 'lol', 'G2', 'VIT', 'LEC · Playoffs', 'b', 'gagne', 28, '2026-09-03T20:00:00.000Z'),
+  previewCall('stats-5', 'valorant', 'FNC', 'M8', 'VCT EMEA', 'a', 'gagne', 18, '2026-09-08T18:15:00.000Z'),
+  previewCall('stats-6', 'rocket_league', 'KC', 'VIT', 'RLCS Major', 'a', 'gagne', 26, '2026-09-12T21:00:00.000Z'),
+];
+
 export default function ProfilePreviewScreen() {
-  const params = useLocalSearchParams<{ variant?: string | string[]; frameId?: string }>();
+  const params = useLocalSearchParams<{ tab?: string | string[]; variant?: string | string[]; frameId?: string }>();
   const previewEnabled = usePreviewRoutesEnabled();
   if (!previewEnabled) return <Redirect href="/" />;
-  const data = profileForPreview(normalizePreviewVariant(params.variant));
+  const statsTab = normalizeScalar(params.tab) === 'stats';
+  const baseData = profileForPreview(normalizePreviewVariant(params.variant));
+  const data = statsTab ? profileForStatsPreview(baseData) : baseData;
   const frame = INDIVIDUAL_PROFILE_FRAMES.find((item) => item.id === params.frameId);
-  return <ProfileScreen previewData={frame ? {
+  return <ProfileScreen initialPrivateTab={statsTab ? 'stats' : 'profile'} previewData={frame ? {
     ...data, cosmetics: { ...data.cosmetics, frame: { ...frame, level: 1, styleKey: frame.id } },
   } : data} />;
 }
@@ -162,8 +173,61 @@ export default function ProfilePreviewScreen() {
 type ProfilePreviewVariant = 'default' | 'long' | 'minimal' | 'private';
 
 function normalizePreviewVariant(value?: string | string[]): ProfilePreviewVariant {
-  const variant = Array.isArray(value) ? value[0] : value;
+  const variant = normalizeScalar(value);
   return variant === 'long' || variant === 'minimal' || variant === 'private' ? variant : 'default';
+}
+
+function normalizeScalar(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function profileForStatsPreview(data: ProfileData): ProfileData {
+  return {
+    ...data,
+    currentStreak: 7,
+    recent: PREVIEW_STATS_RECENT,
+    bestGame: { jeu: 'lol', pronostics: 8, gagnes: 6, precision_pct: 75 },
+    ranking: {
+      ...data.ranking,
+      frags: 620,
+      pic_frags: 646,
+      pronostics_gagnes: 11,
+      pronostics_regles: 18,
+      rang: 3,
+      grade: { ...data.ranking.grade, progression: 620 / 850 },
+    },
+  };
+}
+
+function previewCall(
+  id: string,
+  jeu: string,
+  tagA: string,
+  tagB: string,
+  evenement: string,
+  choix: 'a' | 'b',
+  statut: 'gagne' | 'perdu',
+  delta: number,
+  settledAt: string,
+): RecentPrediction {
+  return {
+    id,
+    match_id: `match-${id}`,
+    statut,
+    choix,
+    conviction: null,
+    delta_frags: delta,
+    cree_le: settledAt,
+    regle_le: settledAt,
+    jeu,
+    evenement,
+    equipe_a: tagA,
+    equipe_b: tagB,
+    tag_a: tagA,
+    tag_b: tagB,
+    score_a: statut === 'gagne' && choix === 'a' ? 3 : 1,
+    score_b: statut === 'gagne' && choix === 'b' ? 3 : 1,
+  };
 }
 
 function profileForPreview(variant: ProfilePreviewVariant): ProfileData {
