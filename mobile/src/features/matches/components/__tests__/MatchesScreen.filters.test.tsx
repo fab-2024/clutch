@@ -55,7 +55,12 @@ describe('Matches filters', () => {
     expect(screen.queryByText('Résultats')).toBeNull();
     expect(screen.queryByText('Mes calls')).toBeNull();
     expect(screen.queryByText('ADMINISTRER LE CALENDRIER')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Afficher les matchs d’aujourd’hui' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ouvrir le calendrier' })).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Ouvrir le calendrier' }));
+    expect(screen.getByTestId('matches-calendar-modal')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Choisir aujourd’hui' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Fermer' }));
 
     await fireEvent.press(screen.getByRole('tab', { name: 'League of Legends' }));
     expect(screen.queryByRole('button', { name: 'live-val A contre live-val B, en direct' })).toBeNull();

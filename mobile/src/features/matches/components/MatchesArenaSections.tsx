@@ -283,29 +283,18 @@ export function toGameId(game?: string | null): GameId | null {
   return null;
 }
 
-export function buildCalendarDays(matches: ArenaMatch[]) {
-  const today = startOfDay(new Date());
-  const validDates = matches.map((match) => startOfDay(new Date(match.debut))).filter((date) => !Number.isNaN(date.getTime()));
-  const nearby = validDates.some((date) => date >= addDays(today, -3) && date <= addDays(today, 3));
-  if (nearby || !validDates.length) return Array.from({ length: 7 }, (_, index) => addDays(today, index - 3));
-
-  const next = validDates
-    .filter((date) => date > today)
-    .sort((a, b) => a.getTime() - b.getTime())[0];
-  const previous = validDates
-    .filter((date) => date < today)
-    .sort((a, b) => b.getTime() - a.getTime())[0];
-  const anchor = next ?? previous ?? today;
-  return Array.from({ length: 7 }, (_, index) => addDays(anchor, index - 3));
+export function buildCalendarDays(anchor = new Date()) {
+  const center = startOfDay(anchor);
+  return Array.from({ length: 7 }, (_, index) => addDays(center, index - 3));
 }
 
 export function findDefaultDayKey(days: Date[], matches: ArenaMatch[]) {
   const dayKeys = new Set(matches.map((match) => dateKey(new Date(match.debut))));
   const todayKey = dateKey(startOfDay(new Date()));
+  if (days.some((day) => dateKey(day) === todayKey)) return todayKey;
   const live = matches.find((match) => matchPhase(match) === 'live');
   const liveKey = live ? dateKey(new Date(live.debut)) : null;
   if (liveKey && days.some((day) => dateKey(day) === liveKey)) return liveKey;
-  if (dayKeys.has(todayKey) && days.some((day) => dateKey(day) === todayKey)) return todayKey;
   const firstUpcoming = days.find((day) => day >= startOfDay(new Date()) && dayKeys.has(dateKey(day)));
   if (firstUpcoming) return dateKey(firstUpcoming);
   const latestFinished = [...days].reverse().find((day) => dayKeys.has(dateKey(day)));

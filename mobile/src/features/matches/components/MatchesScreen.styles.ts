@@ -55,7 +55,7 @@ export const styles = StyleSheet.create({
   matchRow: { minHeight: 140, overflow: 'hidden', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(59,119,151,.72)', backgroundColor: '#061E2D', padding: 8, gap: 6 },
   matchRowFinished: { borderColor: 'rgba(96,111,122,.52)', backgroundColor: '#09121A' },
   matchRowCancelled: { borderColor: 'rgba(96,111,122,.35)', backgroundColor: '#070D12', opacity: .78 },
-  matchAccent: { position: 'absolute', zIndex: 4, left: 0, top: 0, bottom: 0, width: 4, shadowOpacity: .95, shadowRadius: 7, shadowOffset: { width: 2, height: 0 } },
+  matchAccent: { position: 'absolute', zIndex: 4, left: 0, top: 0, bottom: 0, width: 4 },
   matchPattern: { position: 'absolute', top: -64, right: 30, width: 62, height: 230, backgroundColor: 'rgba(255,255,255,.025)', transform: [{ rotate: '32deg' }] },
   rowHeader: { zIndex: 2, minHeight: 19, flexDirection: 'row', alignItems: 'center', gap: 7 },
   rowEvent: { flex: 1, minWidth: 0, color: colors.textSecondary, fontFamily: fonts.medium, fontSize: 11, lineHeight: 15 },

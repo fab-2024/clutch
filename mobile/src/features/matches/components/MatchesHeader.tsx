@@ -5,19 +5,19 @@ import { colors, fonts, layout, spacing } from '@/src/theme';
 import { CalendarIcon, CloseIcon, SearchIcon } from './MatchesArenaSections';
 
 type Props = {
+  onOpenCalendar: () => void;
   onQueryChange: (value: string) => void;
-  onShowToday: () => void;
   onToggleSearch: () => void;
   query: string;
   searchOpen: boolean;
 };
 
-export function MatchesHeader({ onQueryChange, onShowToday, onToggleSearch, query, searchOpen }: Props) {
+export function MatchesHeader({ onOpenCalendar, onQueryChange, onToggleSearch, query, searchOpen }: Props) {
   return (
     <View style={styles.root}>
       <View style={styles.row}>
         <Text accessibilityRole="header" style={styles.title}>Matchs</Text>
-        <Pressable accessibilityLabel="Afficher les matchs d’aujourd’hui" accessibilityRole="button" onPress={onShowToday} style={styles.action}>
+        <Pressable accessibilityLabel="Ouvrir le calendrier" accessibilityRole="button" onPress={onOpenCalendar} style={styles.action}>
           <CalendarIcon color={colors.text} size={22} />
         </Pressable>
         <Pressable accessibilityLabel={searchOpen ? 'Fermer la recherche' : 'Rechercher un match'} accessibilityRole="button" onPress={onToggleSearch} style={styles.action}>

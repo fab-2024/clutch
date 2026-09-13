@@ -117,7 +117,7 @@ const GLOBAL: RankLeaderboardRow[] = [
   row('akira', 'Akira', 2, 1724, 36, 27, MYTHIQUE),
   row('aya', 'Aya', 28, 1168, 24, 17, OR),
   row('melo', 'Melo', 147, 1036, 18, 12, ARGENT),
-  row('pierre-louis', 'Pierre-Louis', 148, 1032, 16, 10, ARGENT, true),
+  row('fabthetap', 'FabTheTap', 148, 1032, 16, 10, ARGENT, true),
   row('sora', 'Sora', 149, 1027, 22, 14, ARGENT),
 ];
 
@@ -144,14 +144,14 @@ const BASE_PREVIEW: RankDashboard = {
     global: GLOBAL,
     cercle: [
       row('akira', 'Akira', 1, 1591, 36, 27, DIAMANT),
-      row('pierre-louis', 'Pierre-Louis', 2, 1032, 16, 10, ARGENT, true),
+      row('fabthetap', 'FabTheTap', 2, 1032, 16, 10, ARGENT, true),
       row('zoe', 'Zoé', 3, 420, 3, 2, { ...BRONZE, progression: 420 / 850 }),
     ],
     faction: [
       row('nova', 'Nova', 1, 1924, 42, 31, ETERNEL),
       row('nox', 'Nox', 2, 1376, 28, 19, PLATINE),
-      row('pierre-louis', 'Pierre-Louis', 18, 1032, 16, 10, ARGENT, true),
-      row('lina', 'Lina', 19, 318, 4, 3, { ...BRONZE, progression: 318 / 850 }),
+      row('fabthetap', 'FabTheTap', 3, 1032, 16, 10, ARGENT, true),
+      row('lina', 'Lina', 4, 318, 4, 3, { ...BRONZE, progression: 318 / 850 }),
     ],
   },
   recentMovements: [

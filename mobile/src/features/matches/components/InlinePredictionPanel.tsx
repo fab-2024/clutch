@@ -21,6 +21,10 @@ import type { ArenaMatch, ProjectionChoice } from '../types';
 import { formatPredictionCountdown, gameLabel, predictionIsOpen } from '../utils';
 import { PredictionConfirmationSheet } from './PredictionConfirmationSheet';
 
+const CALL_ACCENT = '#FF754D';
+const CALL_ACCENT_STRONG = '#FF4E32';
+const CALL_SURFACE = '#06131C';
+
 type InlinePredictionPanelProps = {
   match: ArenaMatch;
   onClose: () => void;
@@ -240,7 +244,7 @@ export function InlinePredictionPanel({
       {selectedProjection && selectedTag ? (
         <View style={styles.selectionBlock}>
           <View style={styles.selectionPill}>
-            <View style={styles.selectionPillIcon}><Check color="#080B0F" size={11} strokeWidth={3.4} /></View>
+            <View style={styles.selectionPillIcon}><Check color="#071118" size={12} strokeWidth={3.4} /></View>
             <Text style={styles.selectionPillText}>TON CALL · {selectedTag}</Text>
           </View>
           <View style={styles.riskCard}>
@@ -276,7 +280,14 @@ export function InlinePredictionPanel({
         ]}
         testID="inline-prediction-review"
       >
-        <Lock color="#080B0F" size={18} strokeWidth={2.2} />
+        <LinearGradient
+          colors={['#FFF9EF', '#F3EEE5']}
+          end={{ x: 1, y: 1 }}
+          pointerEvents="none"
+          start={{ x: 0, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <Lock color="#E33725" size={21} strokeWidth={2.35} />
         <Text style={styles.reviewButtonText}>VÉRIFIER ET VERROUILLER</Text>
       </Pressable>
 
@@ -310,7 +321,7 @@ export function InlinePredictionPanel({
 }
 
 function PanelShell({
-  accents,
+  accents: _accents,
   children,
   match,
   onClose,
@@ -323,15 +334,20 @@ function PanelShell({
   return (
     <View style={styles.panel} testID={`inline-prediction-panel-${match.id}`}>
       <LinearGradient
-        colors={[`${accents.a}22`, 'rgba(3,8,13,.97)', `${accents.b}1E`]}
-        end={{ x: 1, y: .58 }}
+        colors={['#0A2637', '#061A29', '#03121F']}
+        end={{ x: 1, y: 1 }}
         pointerEvents="none"
-        start={{ x: 0, y: .42 }}
+        start={{ x: 0, y: 0 }}
         style={StyleSheet.absoluteFill}
       />
+      <View pointerEvents="none" style={styles.panelTextureA} />
+      <View pointerEvents="none" style={styles.panelTextureB} />
       <View style={styles.header}>
         <View style={styles.headerCopy}>
-          <Text style={styles.when}>{formatDay(match.debut)} · {formatTime(match.debut)}</Text>
+          <View style={styles.whenRow}>
+            <View style={styles.gameSlash} />
+            <Text style={styles.when}>{formatDay(match.debut)} · {formatTime(match.debut)}</Text>
+          </View>
           <Text numberOfLines={1} style={styles.event}>{gameLabel(match.jeu)} · {match.evenement}</Text>
         </View>
         <View style={styles.headerActions}>
@@ -370,11 +386,12 @@ function InlineChoice({
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={({ pressed }) => [styles.choice, selected && styles.choiceSelected, pressed && styles.choicePressed]}
+      style={({ pressed }) => [styles.choice, { borderColor: `${accent}72` }, selected && styles.choiceSelected, pressed && styles.choicePressed]}
     >
-      <LinearGradient colors={[`${accent}2E`, '#07121C']} pointerEvents="none" style={StyleSheet.absoluteFill} />
-      {selected ? <View style={styles.choiceCheck}><Check color="#080B0F" size={14} strokeWidth={3.2} /></View> : null}
-      <TeamLogo accent={selected ? colors.volt : accent} contentScale={1.08} frameless name={name} size={78} tag={tag} uri={uri} />
+      <LinearGradient colors={[`${accent}30`, CALL_SURFACE, '#040D14']} end={{ x: .5, y: 1 }} pointerEvents="none" start={{ x: .5, y: 0 }} style={StyleSheet.absoluteFill} />
+      <View pointerEvents="none" style={[styles.choiceGlow, { backgroundColor: accent }]} />
+      {selected ? <View style={styles.choiceCheck}><Check color="#F8FAFA" size={16} strokeWidth={3.2} /></View> : null}
+      <TeamLogo accent={accent} contentScale={1.08} frameless name={name} size={90} tag={tag} uri={uri} />
       <Text adjustsFontSizeToFit numberOfLines={1} style={styles.choiceTag}>{tag}</Text>
     </Pressable>
   );
@@ -481,49 +498,54 @@ function formatTime(value: string) {
 }
 
 const styles = StyleSheet.create({
-  panel: { position: 'relative', overflow: 'hidden', padding: 16, gap: 14, borderRadius: 22, backgroundColor: '#03090E', borderWidth: 1, borderColor: '#2C5269' },
-  header: { zIndex: 1, minHeight: 42, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
+  panel: { position: 'relative', overflow: 'hidden', padding: 17, gap: 18, borderRadius: 22, backgroundColor: '#041521', borderWidth: 1, borderColor: '#2B5C75' },
+  panelTextureA: { position: 'absolute', top: 152, left: -66, width: 250, height: 34, backgroundColor: 'rgba(64,137,173,.08)', transform: [{ rotate: '-35deg' }] },
+  panelTextureB: { position: 'absolute', top: 320, right: -80, width: 270, height: 42, backgroundColor: 'rgba(39,105,140,.08)', transform: [{ rotate: '-32deg' }] },
+  header: { zIndex: 1, minHeight: 54, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
   headerCopy: { flex: 1, minWidth: 0 },
-  when: { ...typography.action, color: colors.volt, letterSpacing: .25 },
-  event: { ...typography.label, marginTop: 4, color: colors.textMuted, letterSpacing: .2 },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  formatPill: { minHeight: 27, paddingHorizontal: 9, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#14202A', borderWidth: 1, borderColor: '#344653' },
-  formatText: { ...typography.label, color: colors.textMuted },
-  closeButton: { width: 44, height: 44, marginTop: -7, marginRight: -7, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A1218', borderWidth: 1, borderColor: '#2B3A45' },
-  closeText: { marginTop: -2, color: colors.textMuted, fontSize: 23, lineHeight: 24 },
-  question: { ...typography.displaySmall, zIndex: 1, color: colors.text, fontSize: 27, lineHeight: 30, letterSpacing: -.35 },
-  choices: { zIndex: 1, minHeight: 144, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  choice: { position: 'relative', flex: 1, minWidth: 0, minHeight: 136, overflow: 'hidden', padding: 9, borderRadius: 18, alignItems: 'center', justifyContent: 'flex-end', gap: 5, backgroundColor: '#07121C', borderWidth: 1, borderColor: '#53606B' },
-  choiceSelected: { borderWidth: 2, borderColor: colors.volt, boxShadow: '0 0 14px rgba(220,255,36,.38)' },
+  whenRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  gameSlash: { width: 8, height: 21, backgroundColor: '#F05E5C', transform: [{ skewX: '-12deg' }] },
+  when: { color: '#F4F6F7', fontFamily: fonts.bold, fontSize: 16, lineHeight: 20, letterSpacing: .2 },
+  event: { ...typography.label, marginTop: 5, color: '#9FAFBB', fontSize: 12, lineHeight: 16, letterSpacing: .25 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  formatPill: { minHeight: 33, paddingHorizontal: 13, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0C1821', borderWidth: 1, borderColor: '#3A5363' },
+  formatText: { color: '#A5B4C0', fontFamily: fonts.bold, fontSize: 14, lineHeight: 18 },
+  closeButton: { width: 50, height: 50, marginTop: -8, marginRight: -7, borderRadius: 25, alignItems: 'center', justifyContent: 'center', backgroundColor: '#07121A', borderWidth: 1, borderColor: '#294454' },
+  closeText: { marginTop: -3, color: '#8294A2', fontFamily: fonts.medium, fontSize: 27, lineHeight: 29 },
+  question: { zIndex: 1, color: '#F6F6F3', fontFamily: fonts.display, fontSize: 32, lineHeight: 36, letterSpacing: -.55 },
+  choices: { zIndex: 1, minHeight: 180, flexDirection: 'row', alignItems: 'center', gap: 9 },
+  choice: { position: 'relative', flex: 1, minWidth: 0, minHeight: 174, overflow: 'hidden', padding: 10, borderRadius: 18, alignItems: 'center', justifyContent: 'flex-end', gap: 7, backgroundColor: CALL_SURFACE, borderWidth: 1.25 },
+  choiceSelected: { borderWidth: 2, borderColor: CALL_ACCENT, shadowColor: CALL_ACCENT_STRONG, shadowOpacity: .34, shadowRadius: 13, shadowOffset: { width: 0, height: 0 } },
   choicePressed: { transform: [{ scale: .98 }] },
-  choiceCheck: { position: 'absolute', top: 7, right: 7, zIndex: 3, width: 25, height: 25, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  choiceTag: { color: colors.text, fontFamily: fonts.display, fontSize: 24, lineHeight: 27 },
-  versus: { width: 37, alignItems: 'center', justifyContent: 'center' },
-  versusDash: { color: colors.textMuted, fontSize: 19 },
-  versusText: { color: colors.textMuted, fontFamily: fonts.display, fontSize: 20, lineHeight: 23 },
-  selectionBlock: { zIndex: 1, marginTop: 4 },
-  selectionPill: { zIndex: 2, minHeight: 30, alignSelf: 'center', marginBottom: -15, paddingHorizontal: 12, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#15200A', borderWidth: 1, borderColor: '#52621E' },
-  selectionPillIcon: { width: 17, height: 17, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
-  selectionPillText: { ...typography.eyebrow, color: colors.volt, letterSpacing: .55 },
-  riskCard: { minHeight: 84, paddingTop: 13, borderRadius: 17, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(4,10,15,.88)', borderWidth: 1, borderColor: '#293942' },
+  choiceGlow: { position: 'absolute', top: 26, width: 82, height: 82, borderRadius: 41, opacity: .08, transform: [{ scaleX: 1.4 }] },
+  choiceCheck: { position: 'absolute', top: 9, right: 9, zIndex: 3, width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: CALL_ACCENT, borderWidth: 1, borderColor: '#FFD1C2' },
+  choiceTag: { color: '#F5F5F2', fontFamily: fonts.display, fontSize: 27, lineHeight: 30 },
+  versus: { width: 40, alignItems: 'center', justifyContent: 'center', gap: 2 },
+  versusDash: { color: '#758896', fontSize: 21 },
+  versusText: { color: '#9AA9B5', fontFamily: fonts.display, fontSize: 20, lineHeight: 23 },
+  selectionBlock: { zIndex: 1, marginTop: 2 },
+  selectionPill: { zIndex: 2, minHeight: 38, alignSelf: 'center', marginBottom: -19, paddingHorizontal: 17, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: '#07131B', borderWidth: 1.25, borderColor: CALL_ACCENT },
+  selectionPillIcon: { width: 23, height: 23, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: CALL_ACCENT },
+  selectionPillText: { color: '#F0F1EF', fontFamily: fonts.bold, fontSize: 12, lineHeight: 16, letterSpacing: .7 },
+  riskCard: { minHeight: 100, paddingTop: 18, borderRadius: 17, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(4,15,22,.94)', borderWidth: 1, borderColor: '#244658' },
   riskMetric: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  riskArrow: { color: colors.volt, fontSize: 24, fontWeight: '800' },
-  riskLabel: { ...typography.metadata, color: colors.textMuted, letterSpacing: .55 },
+  riskArrow: { color: '#91A3B0', fontSize: 27, fontWeight: '800' },
+  riskLabel: { ...typography.metadata, color: '#8FA0AD', fontSize: 11, letterSpacing: .7 },
   riskValueRow: { marginTop: 3, flexDirection: 'row', alignItems: 'center', gap: 3 },
-  riskValue: { ...typography.bodyStrong, fontSize: 17 },
-  riskUnit: { ...typography.label },
-  riskDivider: { width: 1, height: 45, backgroundColor: '#293942' },
-  choiceHint: { ...typography.metadata, zIndex: 1, minHeight: 38, color: colors.textMuted, textAlign: 'center', textAlignVertical: 'center', letterSpacing: .5 },
-  rule: { ...typography.caption, zIndex: 1, color: colors.textMuted, textAlign: 'center' },
+  riskValue: { fontFamily: fonts.bold, fontSize: 23, lineHeight: 27 },
+  riskUnit: { fontFamily: fonts.bold, fontSize: 11, lineHeight: 15 },
+  riskDivider: { width: 1, height: 56, backgroundColor: '#285064' },
+  choiceHint: { ...typography.metadata, zIndex: 1, minHeight: 42, color: '#92A2AE', textAlign: 'center', textAlignVertical: 'center', letterSpacing: .55 },
+  rule: { ...typography.caption, zIndex: 1, color: '#91A2AF', textAlign: 'center', fontSize: 12, lineHeight: 16 },
   submitError: { zIndex: 1, padding: 10, borderRadius: 12, backgroundColor: `${colors.danger}14`, borderWidth: 1, borderColor: `${colors.danger}66` },
   submitErrorTitle: { ...typography.control, color: colors.danger },
   submitErrorCopy: { ...typography.caption, marginTop: 3, color: '#F0A3AB' },
-  reviewButton: { zIndex: 1, minHeight: 55, borderRadius: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, backgroundColor: colors.volt, borderWidth: 1, borderColor: '#F1FF46' },
+  reviewButton: { zIndex: 1, minHeight: 61, overflow: 'hidden', borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 11, backgroundColor: '#F8F2E9', borderWidth: 1, borderColor: CALL_ACCENT },
   reviewButtonDisabled: { opacity: .38 },
-  reviewButtonText: { ...typography.action, color: '#080B0F', fontSize: 15, letterSpacing: .2 },
-  countdown: { zIndex: 1, minHeight: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  countdownLabel: { ...typography.metadata, color: colors.textMuted, letterSpacing: .55 },
-  countdownValue: { ...typography.control, color: colors.volt },
+  reviewButtonText: { color: '#071119', fontFamily: fonts.display, fontSize: 18, lineHeight: 22, letterSpacing: .15 },
+  countdown: { zIndex: 1, minHeight: 48, borderRadius: 13, borderWidth: 1, borderColor: '#24485B', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: 'rgba(4,15,22,.82)' },
+  countdownLabel: { ...typography.metadata, color: '#8598A6', letterSpacing: .65 },
+  countdownValue: { fontFamily: fonts.bold, fontSize: 14, lineHeight: 18, color: CALL_ACCENT },
   lockedState: { zIndex: 1, minHeight: 280, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.md },
   lockedIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.volt },
   lockedEyebrow: { ...typography.eyebrow, marginTop: 16, color: colors.volt, letterSpacing: .8 },

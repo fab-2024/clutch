@@ -15,6 +15,8 @@ const mockLoad = jest.fn(async () => undefined);
 
 jest.mock('lucide-react-native/icons/chevron-down', () => ({ __esModule: true, default: 'chevron-down' }));
 jest.mock('lucide-react-native/icons/chevron-up', () => ({ __esModule: true, default: 'chevron-up' }));
+jest.mock('lucide-react-native/icons/crown', () => ({ __esModule: true, default: 'crown' }));
+jest.mock('lucide-react-native/icons/info', () => ({ __esModule: true, default: 'info' }));
 jest.mock('lucide-react-native/icons/ticket', () => ({ __esModule: true, default: 'ticket' }));
 jest.mock('lucide-react-native/icons/trophy', () => ({ __esModule: true, default: 'trophy' }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
@@ -68,6 +70,7 @@ jest.mock('react-native-safe-area-context', () => {
 });
 jest.mock('@/src/components/brand/GriffLogo', () => ({ GriffLockup: () => null }));
 jest.mock('@/src/components/ui/CurrencyIcon', () => ({ CurrencyIcon: () => null }));
+jest.mock('@/src/features/onboarding/components/GameLogo', () => ({ __esModule: true, default: () => null }));
 jest.mock('@/src/features/onboarding/components/TeamLogo', () => ({
   __esModule: true,
   default: () => null,

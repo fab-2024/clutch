@@ -3,15 +3,12 @@ import { router } from 'expo-router';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Image,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
-  type ImageSourcePropType,
 } from 'react-native';
 
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
@@ -27,31 +24,20 @@ import {
 } from '@/src/features/matches/matchCenterNavigation';
 import { InlinePredictionPanel } from '@/src/features/matches/components/InlinePredictionPanel';
 import type { ArenaMatch } from '@/src/features/matches/types';
-import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
 import type { CallStreakState } from '@/src/features/retention/types';
 import { useAuth } from '@/src/providers/AuthProvider';
-import { colors, fonts, layout, spacing, typography } from '@/src/theme';
+import { colors, fonts, layout, spacing } from '@/src/theme';
 
 import { loadHubData } from '../api';
 import {
-  formatMatchSchedule,
   getHubMatchPhase,
   getMatchConfrontationState,
-  withAlpha,
 } from '../matchPresentation';
 import type { HubData, HubMatch, HubPrediction } from '../types';
 import { HubContextSkeleton, HubDailyChallenges } from './HubContextSlot';
 import { HubProgressPanel } from './HubProgressPanel';
 import { MatchConfrontationCard } from './MatchConfrontationCard';
-
-type HubGame = 'lol' | 'rocket_league' | 'valorant';
-
-const GAME_BACKGROUNDS: Record<HubGame, ImageSourcePropType> = {
-  lol: require('../../../../assets/onboarding/lol-characters.jpg'),
-  rocket_league: require('../../../../assets/onboarding/rocket-league-arena.png'),
-  valorant: require('../../../../assets/onboarding/valorant-characters.jpg'),
-};
 
 const EMPTY_HUB: HubData = {
   seasonId: null,
@@ -138,7 +124,7 @@ export function HubExperience({
   const [inlinePredictionMatchId, setInlinePredictionMatchId] = useState<string | null>(null);
   const inlinePredictionMatch = hub.nextMatch?.id === inlinePredictionMatchId
     ? hub.nextMatch
-    : hub.upNext.find((match) => match.id === inlinePredictionMatchId) ?? null;
+    : null;
   const closeInlinePrediction = useCallback(() => setInlinePredictionMatchId(null), []);
   const openInlinePrediction = useCallback((match: HubMatch) => setInlinePredictionMatchId(match.id), []);
 
@@ -203,23 +189,6 @@ export function HubExperience({
           {loading ? <HubContextSkeleton /> : <HubDailyChallenges />}
         </View>
 
-        {!loading && hub.upNext.length ? (
-          <View>
-            <UpNext matches={hub.upNext} onOpenPrediction={openInlinePrediction} userId={userId} />
-          </View>
-        ) : null}
-
-        {!loading && inlinePredictionMatch && inlinePredictionMatch.id !== hub.nextMatch?.id && getHubMatchPhase(inlinePredictionMatch) === 'upcoming' ? (
-          <View style={styles.inlinePredictionUpcoming}>
-            <InlinePredictionPanel
-              key={inlinePredictionMatch.id}
-              match={hubMatchToArenaMatch(inlinePredictionMatch)}
-              onClose={closeInlinePrediction}
-              onPredictionLocked={onRefresh}
-              userId={userId}
-            />
-          </View>
-        ) : null}
       </ScrollView>
     </Screen>
   );
@@ -330,150 +299,6 @@ function MatchCallAction({
   );
 }
 
-function UpNext({ matches, onOpenPrediction, userId }: { matches: HubMatch[]; onOpenPrediction: (match: HubMatch) => void; userId?: string }) {
-  const { width } = useWindowDimensions();
-  const cardWidth = Math.min(310, Math.max(276, width - spacing.md * 2));
-
-  return (
-    <View style={styles.upNextSection}>
-      <View style={styles.sectionHead}>
-        <Text style={styles.sectionKicker}>À SUIVRE</Text>
-        <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/matches')}>
-          <Text style={styles.sectionLink}>TOUT VOIR →</Text>
-        </Pressable>
-      </View>
-      <ScrollView
-        contentContainerStyle={styles.upNextRail}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-      >
-        {matches.map((match) => (
-          <UpNextMatchCard cardWidth={cardWidth} key={match.id} match={match} onOpenPrediction={onOpenPrediction} userId={userId} />
-        ))}
-      </ScrollView>
-    </View>
-  );
-}
-
-function UpNextMatchCard({
-  cardWidth,
-  match,
-  onOpenPrediction,
-  userId,
-}: {
-  cardWidth: number;
-  match: HubMatch;
-  onOpenPrediction: (match: HubMatch) => void;
-  userId?: string;
-}) {
-  const confrontation = getMatchConfrontationState(match, null);
-  const transitionTarget: MatchCenterTarget = {
-    ...match,
-    couleur_a: confrontation.teamA.accent,
-    couleur_b: confrontation.teamB.accent,
-    logo_a: confrontation.teamA.logo,
-    logo_b: confrontation.teamB.logo,
-  };
-  const cardHeight = Math.round(cardWidth / 2.18);
-  const logoSize = Math.round(cardWidth * .18);
-  const formatValue = Number(match.format);
-  const format = Number.isInteger(formatValue) && formatValue > 0
-    ? 'BO' + formatValue
-    : 'FORMAT À CONFIRMER';
-  const opensInline = getHubMatchPhase(match) === 'upcoming';
-
-  return (
-    <Pressable
-      accessibilityLabel={match.equipe_a + ' contre ' + match.equipe_b + ', ' + formatMatchSchedule(match.debut)}
-      accessibilityHint={opensInline ? 'Déplie le pronostic dans le Hub' : 'Ouvre le centre du match'}
-      accessibilityRole="button"
-      onPress={() => getHubMatchPhase(match) === 'upcoming' ? onOpenPrediction(match) : openMatchCenter(transitionTarget, { source: 'hub' })}
-      onPressIn={() => prepareMatchCenter(transitionTarget, userId)}
-      style={({ pressed }) => [
-        styles.upNextCard,
-        { height: cardHeight, width: cardWidth },
-        pressed && styles.pressed,
-      ]}
-      testID={`hub-up-next-match-${match.id}`}
-    >
-      <Image
-        resizeMode="cover"
-        source={GAME_BACKGROUNDS[gameKey(match.jeu)]}
-        style={styles.upNextBackdrop}
-      />
-      <LinearGradient
-        colors={[
-          withAlpha(confrontation.teamA.accent, .38),
-          'rgba(2,7,13,.28)',
-          withAlpha(confrontation.teamB.accent, .34),
-        ]}
-        end={{ x: 1, y: .52 }}
-        start={{ x: 0, y: .48 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <LinearGradient
-        colors={['rgba(2,6,11,.22)', 'rgba(2,6,11,.36)', 'rgba(2,6,11,.94)']}
-        end={{ x: .5, y: 1 }}
-        start={{ x: .5, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
-
-      <View
-        style={[
-          styles.upNextLogo,
-          styles.upNextLogoLeft,
-          { height: logoSize, marginTop: -logoSize / 2, width: logoSize },
-        ]}
-        testID={`hub-up-next-logo-a-${match.id}`}
-      >
-        <TeamLogo
-          accent={confrontation.teamA.accent}
-          contentScale={upNextLogoContentScale(confrontation.teamA.name)}
-          frameless
-          name={confrontation.teamA.name}
-          size={logoSize}
-          tag={confrontation.teamA.tag}
-          uri={confrontation.teamA.logo}
-        />
-      </View>
-      <View
-        style={[
-          styles.upNextLogo,
-          styles.upNextLogoRight,
-          { height: logoSize, marginTop: -logoSize / 2, width: logoSize },
-        ]}
-        testID={`hub-up-next-logo-b-${match.id}`}
-      >
-        <TeamLogo
-          accent={confrontation.teamB.accent}
-          contentScale={upNextLogoContentScale(confrontation.teamB.name)}
-          frameless
-          name={confrontation.teamB.name}
-          size={logoSize}
-          tag={confrontation.teamB.tag}
-          uri={confrontation.teamB.logo}
-        />
-      </View>
-
-      <View style={[styles.upNextConfrontation, { left: logoSize + 18, right: logoSize + 18 }]}>
-        <Text numberOfLines={1} style={styles.upNextWhen}>{formatMatchSchedule(match.debut)}</Text>
-        <View style={styles.upNextDuel}>
-          <Text adjustsFontSizeToFit minimumFontScale={.58} numberOfLines={1} style={styles.upNextTag}>
-            {confrontation.teamA.tag}
-          </Text>
-          <Text style={styles.upNextVs}>VS</Text>
-          <Text adjustsFontSizeToFit minimumFontScale={.58} numberOfLines={1} style={styles.upNextTag}>
-            {confrontation.teamB.tag}
-          </Text>
-        </View>
-        <Text adjustsFontSizeToFit minimumFontScale={.72} numberOfLines={1} style={styles.upNextEvent}>
-          {match.evenement.toUpperCase()} · {format}
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
-
 function EmptyHero() {
   return (
     <View style={styles.emptyState}>
@@ -540,21 +365,6 @@ function hubMatchToArenaMatch(match: HubMatch): ArenaMatch {
   };
 }
 
-function gameKey(game: string): HubGame {
-  const key = String(game || '').toLowerCase();
-  if (key.includes('rocket') || key === 'rl') return 'rocket_league';
-  if (key.includes('valorant')) return 'valorant';
-  return 'lol';
-}
-
-function upNextLogoContentScale(name: string) {
-  if (name === 'Karmine Corp') return .72;
-  if (name === 'Team Vitality') return 1.06;
-  if (name === 'G2 Esports') return 1.02;
-  if (name === 'Fnatic') return 1;
-  return .9;
-}
-
 const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
@@ -578,9 +388,6 @@ const styles = StyleSheet.create({
   },
   inlinePredictionPrimary: {
     marginHorizontal: 4,
-  },
-  inlinePredictionUpcoming: {
-    marginHorizontal: spacing.md,
   },
   contextSlot: {
     marginHorizontal: spacing.md,
@@ -623,123 +430,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,.12)',
     boxShadow: '0 2px 5px rgba(0,0,0,.32)',
-  },
-  upNextSection: {
-    gap: 10,
-  },
-  sectionHead: {
-    marginHorizontal: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  sectionKicker: {
-    color: colors.text,
-    fontFamily: fonts.bold,
-    fontSize: 14,
-    lineHeight: 17,
-    letterSpacing: .5,
-  },
-  sectionLink: {
-    ...typography.action,
-    color: colors.text,
-    letterSpacing: .35,
-  },
-  upNextRail: {
-    paddingHorizontal: spacing.md,
-    gap: 10,
-  },
-  upNextCard: {
-    position: 'relative',
-    overflow: 'hidden',
-    borderRadius: 18,
-    backgroundColor: '#0B1218',
-    borderWidth: 1,
-    borderColor: '#30414E',
-  },
-  upNextBackdrop: {
-    position: 'absolute',
-    inset: 0,
-    width: '100%',
-    height: '100%',
-  },
-  upNextWhen: {
-    ...typography.label,
-    color: colors.volt,
-    fontSize: 11,
-    lineHeight: 13,
-    letterSpacing: .35,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,.95)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  upNextLogo: {
-    position: 'absolute',
-    zIndex: 2,
-    top: '50%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  upNextLogoLeft: {
-    left: 12,
-  },
-  upNextLogoRight: {
-    right: 12,
-  },
-  upNextConfrontation: {
-    position: 'absolute',
-    zIndex: 4,
-    top: 14,
-    bottom: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  upNextDuel: {
-    width: '100%',
-    marginTop: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-  },
-  upNextTag: {
-    flex: 1,
-    minWidth: 0,
-    color: '#F7F8F9',
-    fontFamily: fonts.display,
-    fontSize: 29,
-    lineHeight: 31,
-    textAlign: 'center',
-    letterSpacing: -.65,
-    textShadowColor: 'rgba(0,0,0,.94)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 7,
-  },
-  upNextVs: {
-    flexShrink: 0,
-    color: colors.volt,
-    fontFamily: fonts.display,
-    fontSize: 16,
-    lineHeight: 19,
-    letterSpacing: .1,
-    textShadowColor: 'rgba(0,0,0,.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 5,
-  },
-  upNextEvent: {
-    width: '100%',
-    marginTop: 3,
-    color: '#AEB8C0',
-    fontFamily: fonts.bold,
-    fontSize: 9,
-    lineHeight: 12,
-    letterSpacing: .25,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,.95)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
   },
   seasonSection: { marginHorizontal: spacing.md, gap: 8 },
   seasonHeaderTitle: { color: colors.text, fontFamily: fonts.bold, fontSize: 18, lineHeight: 23, marginBottom: 2 },

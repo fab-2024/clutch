@@ -24,7 +24,9 @@ import type { ProfileData } from '@/src/features/profile/types';
 import PlayerAvatar from '@/src/features/profile/avatars/PlayerAvatar';
 import { PlayerIdentityCard, IdentitySurface, equippedIdentityStyle } from '@/src/features/profile/identity/PlayerIdentityCard';
 import ProfileHeaderButton from '@/src/features/profile/components/ProfileHeaderButton';
+import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import { colors, fonts, layout, radius, spacing, typography } from '@/src/theme';
+import { resolveTeamAccent } from '@/src/utils/teamColors';
 
 import { loadRankDashboard } from '../api';
 import {
@@ -55,8 +57,8 @@ const SECTIONS: { key: Section; label: string }[] = [
 ];
 
 const SCOPES: { key: RankScope; label: string }[] = [
-  { key: 'global', label: 'Général' },
-  { key: 'cercle', label: 'Cercle' },
+  { key: 'global', label: 'Global' },
+  { key: 'cercle', label: 'Amis' },
   { key: 'faction', label: 'Faction' },
 ];
 const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
@@ -205,7 +207,7 @@ function RankHeader({
         ))}
       </View>
 
-      {section !== 'season' ? loading ? <RankSnapshotSkeleton /> : dashboard?.state ? (
+      {section === 'rewards' ? loading ? <RankSnapshotSkeleton /> : dashboard?.state ? (
         <RankSnapshot seasonName={dashboard.season?.name} state={dashboard.state} />
       ) : null : null}
 
@@ -379,18 +381,43 @@ function LeaderboardList({
   const [identities, setIdentities] = useState<Record<string, ProfileData>>({});
   const [identityError, setIdentityError] = useState(false);
   const selectedPseudo = selected?.pseudo;
+  const me = rows.find((row) => row.me) ?? null;
+  const profileTargets = Array.from(new Set([
+    ...rows.slice(0, 3).map((row) => row.pseudo),
+    me?.pseudo,
+    selectedPseudo,
+  ].filter((pseudo): pseudo is string => Boolean(pseudo))));
+  const profileTargetsKey = profileTargets.join('\u0000');
+
   useEffect(() => {
     let active = true;
     setIdentityError(false);
-    if (!selectedPseudo) return;
-    void loadProfileData(selectedPseudo).then(data => {
-      if (active) setIdentities(current => ({ ...current, [selectedPseudo]: data }));
-    }).catch(() => { if (active) setIdentityError(true); });
+    const missing = profileTargets.filter((pseudo) => !identities[pseudo]);
+    if (!missing.length) return;
+    void Promise.allSettled(missing.map(async (pseudo) => ({ pseudo, data: await loadProfileData(pseudo) })))
+      .then((results) => {
+        if (!active) return;
+        const loaded: Record<string, ProfileData> = {};
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled') loaded[result.value.pseudo] = result.value.data;
+          else if (missing[index] === selectedPseudo) setIdentityError(true);
+        });
+        if (Object.keys(loaded).length) setIdentities((current) => ({ ...current, ...loaded }));
+      });
     return () => { active = false; };
-  }, [selectedPseudo]);
+  // The key changes only when the visible podium, the current player or the selection changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileTargetsKey]);
+
   const detail = selectedPseudo ? identities[selectedPseudo] ?? null : null;
-  const me = rows.find((row) => row.me) ?? null;
-  const scopeLabel = SCOPES.find((item) => item.key === scope)?.label ?? scope;
+  const meDetail = me ? identities[me.pseudo] ?? null : null;
+  const faction = meDetail?.favoriteTeam ?? (scope === 'faction' ? detail?.favoriteTeam ?? null : null);
+  const factionAccent = resolveTeamAccent({ name: faction?.nom, tag: faction?.tag });
+  const boardTitle = scope === 'faction'
+    ? `Classement ${faction?.nom ?? 'de ta faction'}`
+    : scope === 'cercle'
+      ? 'Classement des amis'
+      : 'Classement global';
   const renderRow = useCallback(({ index, item }: ListRenderItemInfo<RankLeaderboardRow>) => (
     <LeaderboardRow
       first={index === 0}
@@ -410,14 +437,21 @@ function LeaderboardList({
       keyExtractor={(row) => row.id}
       ListEmptyComponent={<LeaderboardEmpty scope={scope} />}
       ListFooterComponent={(
-        <View style={{ paddingTop: 24, gap: 10 }}>
+        <View style={styles.playerPreviewSection}>
           {selected ? <>
-            <Text style={styles.cardTitle}>Aperçu du joueur</Text>
-            <PlayerIdentityCard compact pseudo={selected.pseudo} avatarId={detail?.avatarId} cosmetics={detail?.cosmetics} team={detail?.favoriteTeam} grade={selected.grade} season={dashboard.season?.name} />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={styles.boardUnit}>{identityError ? 'Habillage indisponible' : detail ? `Style : ${equippedIdentityStyle(detail.cosmetics)?.name ?? detail.cosmetics.profileCard?.name ?? 'Clutch Original'}` : 'Chargement de l’identité…'}</Text>
-              <Pressable accessibilityRole="link" accessibilityLabel={`Voir le profil de ${selected.pseudo}`} onPress={() => router.push({ pathname: '/u/[pseudo]', params: { pseudo: selected.pseudo } })} style={{ padding: 12 }}><Text style={{ color: colors.volt }}>Voir le profil →</Text></Pressable>
+            <View style={styles.playerPreviewHeading}>
+              <Text style={styles.playerPreviewTitle}>Aperçu du joueur</Text>
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel={`Voir le profil de ${selected.pseudo}`}
+                onPress={() => router.push({ pathname: '/u/[pseudo]', params: { pseudo: selected.pseudo } })}
+                style={({ pressed }) => [styles.playerPreviewLink, pressed && styles.pressed]}
+              >
+                <Text style={styles.playerPreviewLinkText}>VOIR LE PROFIL →</Text>
+              </Pressable>
             </View>
+            <PlayerIdentityCard compact pseudo={selected.pseudo} avatarId={detail?.avatarId} cosmetics={detail?.cosmetics} team={detail?.favoriteTeam} grade={selected.grade} season={dashboard.season?.name} />
+            <Text style={styles.playerPreviewStyle}>{identityError ? 'Personnalisation indisponible' : detail ? `PERSONNALISATION · ${equippedIdentityStyle(detail.cosmetics)?.name ?? detail.cosmetics.profileCard?.name ?? 'Clutch Original'}` : 'CHARGEMENT DE LA PERSONNALISATION…'}</Text>
           </> : null}
           <Text style={styles.boardRule}>TRIÉ PAR FRAGS · PRÉCISION UTILISÉE UNIQUEMENT EN CAS D’ÉGALITÉ</Text>
         </View>
@@ -433,20 +467,38 @@ function LeaderboardList({
                   accessibilityRole="tab"
                   accessibilityState={{ selected: scope === item.key }}
                   onPress={() => onScope(item.key)}
-                  style={[styles.scopeTab, scope === item.key && styles.scopeTabActive]}
+                  style={({ pressed }) => [styles.scopeTab, pressed && styles.pressed]}
                 >
                   <Text style={[styles.scopeText, scope === item.key && styles.scopeTextActive]}>{item.label}</Text>
+                  {scope === item.key ? <View style={styles.scopeUnderline} /> : null}
                 </Pressable>
               ))}
             </View>
 
-            {me ? <MyPositionCard row={me} scope={scopeLabel} /> : null}
+            {rows.length >= 3 ? (
+              <LeaderboardPodium
+                identities={identities}
+                onSelect={setSelectedId}
+                rows={rows.slice(0, 3)}
+                selectedId={selected?.id ?? null}
+              />
+            ) : null}
 
             <View style={styles.boardHeading}>
-              <View>
-                <Text style={styles.cardTitle}>LE CLASSEMENT.</Text>
+              <View style={styles.boardHeadingIdentity}>
+                {scope === 'faction' && faction ? (
+                  <TeamLogo
+                    accent={factionAccent}
+                    frameless
+                    name={faction.nom}
+                    size={34}
+                    tag={faction.tag}
+                    uri={faction.logo}
+                  />
+                ) : null}
+                <Text numberOfLines={1} style={styles.boardTitle}>{boardTitle}</Text>
               </View>
-              <Text style={styles.boardCount}>{rows.length}</Text>
+              <Text style={styles.boardScoreLabel}>FRAGS</Text>
             </View>
           </View>
         </>
@@ -459,6 +511,51 @@ function LeaderboardList({
       testID="rank-leaderboard-list"
       windowSize={7}
     />
+  );
+}
+
+function LeaderboardPodium({
+  identities,
+  onSelect,
+  rows,
+  selectedId,
+}: {
+  identities: Record<string, ProfileData>;
+  onSelect: (id: string) => void;
+  rows: RankLeaderboardRow[];
+  selectedId: string | null;
+}) {
+  const ordered = [rows[1], rows[0], rows[2]].filter((row): row is RankLeaderboardRow => Boolean(row));
+  return (
+    <View accessibilityLabel="Podium du classement" style={styles.podium}>
+      {ordered.map((row) => {
+        const identity = identities[row.pseudo] ?? null;
+        const winner = row.rank === 1;
+        const selected = row.id === selectedId;
+        return (
+          <Pressable
+            key={row.id}
+            accessibilityLabel={`Aperçu de ${row.pseudo}, position ${row.rank ?? 'non classée'}`}
+            accessibilityRole="button"
+            accessibilityState={{ selected }}
+            onPress={() => onSelect(row.id)}
+            style={({ pressed }) => [
+              styles.podiumCard,
+              winner && styles.podiumCardWinner,
+              selected && styles.podiumCardSelected,
+              pressed && styles.pressed,
+            ]}
+          >
+            <View style={[styles.podiumRank, winner && styles.podiumRankWinner]}>
+              <Text style={[styles.podiumRankText, winner && styles.podiumRankTextWinner]}>{row.rank ?? '—'}</Text>
+            </View>
+            <PlayerAvatar avatarId={identity?.avatarId} cosmetics={identity?.cosmetics} label={row.pseudo} size={winner ? 58 : 52} />
+            <Text numberOfLines={1} style={styles.podiumPseudo}>{row.pseudo}</Text>
+            <Text style={[styles.podiumAccuracy, winner && styles.podiumAccuracyWinner]}>{Math.round(row.accuracy)} %</Text>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
@@ -488,27 +585,6 @@ function LeaderboardEmpty({ scope }: { scope: RankScope }) {
   );
 }
 
-function MyPositionCard({ row, scope }: { row: RankLeaderboardRow; scope: string }) {
-  const starting = isZeroRank(row.frags);
-  const accent = starting ? ZERO_RANK_ACCENT : gradeAccent(row.grade);
-  const accuracy = row.settledCalls ? Math.round((row.wonCalls / row.settledCalls) * 100) : 0;
-
-  return (
-    <View style={[styles.meCard, { borderColor: accent + '88', backgroundColor: accent + '14' }]}>
-      <RankEmblem grade={row.grade} size={84} />
-      <View style={styles.meIdentity}>
-        <Text style={[styles.meEyebrow, { color: accent }]}>TA POSITION</Text>
-        <Text style={styles.meGrade}>{row.grade.libelle?.toUpperCase() || 'CLASSÉ'}</Text>
-        <Text style={styles.meMeta}>{formatNumber(row.frags)} FRAGS · {accuracy}% PRÉCISION</Text>
-      </View>
-      <View style={styles.meRankBlock}>
-        <Text style={[styles.meRank, { color: accent }]}>{row.rank ? '#' + row.rank : '—'}</Text>
-        <Text style={styles.meScope}>{scope.toUpperCase()}</Text>
-      </View>
-    </View>
-  );
-}
-
 const LeaderboardRow = memo(function LeaderboardRow({
   first,
   last,
@@ -519,8 +595,6 @@ const LeaderboardRow = memo(function LeaderboardRow({
   last: boolean;
   row: RankLeaderboardRow;
 }) {
-  const starting = isZeroRank(row.frags);
-  const accent = starting ? ZERO_RANK_ACCENT : gradeAccent(row.grade);
   return (
     <Pressable
       accessibilityRole="button"
@@ -540,15 +614,16 @@ const LeaderboardRow = memo(function LeaderboardRow({
     >
       {row.me || selected ? <IdentitySurface accent={identity?.cosmetics.profileCard?.accent ?? identity?.cosmetics.frame?.accent ?? '#DFFF7A'} /> : null}
       <Text style={[styles.boardRank, row.me && styles.boardRankMe]}>{row.rank ? String(row.rank) : '—'}</Text>
-      <PlayerAvatar avatarId={identity?.avatarId} cosmetics={identity?.cosmetics} label={row.pseudo} size={44} />
+      <PlayerAvatar avatarId={identity?.avatarId} cosmetics={identity?.cosmetics} label={row.pseudo} size={48} />
       <View style={styles.boardIdentity}>
-        <Text numberOfLines={1} style={styles.boardPseudo}>{row.pseudo}{row.me ? ' · TOI' : ''}</Text>
-        <Text style={[styles.boardGrade, { color: accent }]}>{row.grade.libelle?.toUpperCase() || 'CLASSÉ'}</Text>
+        <View style={styles.boardPseudoRow}>
+          <Text numberOfLines={1} style={[styles.boardPseudo, row.me && styles.boardPseudoMe]}>{row.pseudo}</Text>
+          {row.me ? <Text style={styles.mePill}>TOI</Text> : null}
+        </View>
       </View>
-      <RankEmblem grade={row.grade} size={26} />
+      <RankEmblem grade={row.grade} size={24} />
       <View style={styles.boardScore}>
         <Text style={styles.boardFrags}>{formatNumber(row.frags)}</Text>
-        <Text style={styles.boardUnit}>FRAGS</Text>
       </View>
     </Pressable>
   );
@@ -930,79 +1005,155 @@ const styles = StyleSheet.create({
     minHeight: 70,
     flexDirection: 'row',
   },
-  scopeTabs: { flexDirection: 'row', gap: 10 },
-  scopeTab: { flex: 1, minHeight: 44, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 22, borderWidth: 1, borderColor: 'rgba(143,156,176,.24)' },
-  scopeTabActive: { backgroundColor: 'rgba(143,156,176,.08)', borderColor: 'rgba(235,241,247,.6)' },
-  scopeText: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 20, color: colors.textMuted },
-  scopeTextActive: { color: colors.text },
-  leaderboardHeader: {
-    marginHorizontal: spacing.md,
-    paddingTop: 17,
-    paddingBottom: 13,
-    gap: 13,
-  },
-  boardHeading: {
+  scopeTabs: {
     minHeight: 48,
     flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(95,138,165,.30)',
+  },
+  scopeTab: {
+    position: 'relative',
+    flex: 1,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scopeText: {
+    fontFamily: fonts.medium,
+    fontSize: 15,
+    lineHeight: 21,
+    color: '#8F9AAA',
+  },
+  scopeTextActive: {
+    fontFamily: fonts.bold,
+    color: colors.text,
+  },
+  scopeUnderline: {
+    position: 'absolute',
+    left: 19,
+    right: 19,
+    bottom: -1,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: colors.volt,
+  },
+  leaderboardHeader: {
+    marginHorizontal: spacing.md,
+    paddingTop: 10,
+    paddingBottom: 8,
+    gap: 14,
+  },
+  podium: {
+    minHeight: 124,
+    flexDirection: 'row',
     alignItems: 'flex-end',
+    gap: 7,
+  },
+  podiumCard: {
+    position: 'relative',
+    flex: 1,
+    minWidth: 0,
+    minHeight: 112,
+    paddingTop: 16,
+    paddingBottom: 9,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    borderRadius: 15,
+    backgroundColor: '#0A1721',
+    borderWidth: 1,
+    borderColor: '#17394D',
+    overflow: 'visible',
+  },
+  podiumCardWinner: {
+    minHeight: 122,
+    borderColor: '#A6842D',
+    backgroundColor: '#111A1D',
+  },
+  podiumCardSelected: {
+    borderColor: '#C09B72',
+    backgroundColor: '#152029',
+  },
+  podiumRank: {
+    position: 'absolute',
+    top: -12,
+    width: 25,
+    height: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 13,
+    backgroundColor: '#AAB5C4',
+    borderWidth: 2,
+    borderColor: '#E1E6EB',
+  },
+  podiumRankWinner: {
+    width: 29,
+    height: 29,
+    top: -15,
+    borderRadius: 15,
+    backgroundColor: '#D2A432',
+    borderColor: '#FFD865',
+  },
+  podiumRankText: {
+    fontFamily: fonts.displayBold,
+    fontSize: 12,
+    color: '#18202A',
+  },
+  podiumRankTextWinner: {
+    fontSize: 14,
+    color: '#312100',
+  },
+  podiumPseudo: {
+    width: '100%',
+    marginTop: 5,
+    paddingHorizontal: 5,
+    fontFamily: fonts.displayBold,
+    fontSize: 14,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  podiumAccuracy: {
+    marginTop: 1,
+    fontFamily: fonts.bold,
+    fontSize: 13,
+    color: '#D9E0E7',
+    fontVariant: ['tabular-nums'],
+  },
+  podiumAccuracyWinner: {
+    color: colors.volt,
+  },
+  boardHeading: {
+    minHeight: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
-  boardCount: {
-    ...typography.metricSmall,
-    color: colors.textSecondary,
-    fontVariant: ['tabular-nums'],
-  },
-  meCard: {
-    position: 'relative',
-    minHeight: 126,
-    padding: 14,
-    overflow: 'hidden',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-    borderRadius: 24,
-    borderWidth: 1,
-  },
-  meIdentity: {
+  boardHeadingIdentity: {
     flex: 1,
     minWidth: 0,
-  },
-  meEyebrow: {
-    ...typography.eyebrow,
-  },
-  meGrade: {
-    ...typography.cardTitle,
-    marginTop: 3,
-    color: colors.text,
-  },
-  meMeta: {
-    ...typography.eyebrow,
-    marginTop: 4,
-    color: colors.textMuted,
-  },
-  meRankBlock: {
-    alignItems: 'flex-end',
-  },
-  meRank: {
-    fontFamily: fonts.display,
-    fontSize: 38,
-    lineHeight: 40,
-    fontVariant: ['tabular-nums'],
-  },
-  meScope: {
-    ...typography.eyebrow,
-    marginTop: 2,
-    color: colors.textMuted,
-  },
-  boardRow: {
-    minHeight: 75,
-    marginHorizontal: spacing.md,
-    paddingHorizontal: 11,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: colors.surfaceLow,
+  },
+  boardTitle: {
+    flexShrink: 1,
+    fontFamily: fonts.displayBold,
+    fontSize: 16,
+    lineHeight: 21,
+    color: colors.text,
+  },
+  boardScoreLabel: {
+    ...typography.eyebrow,
+    color: colors.textMuted,
+  },
+  boardRow: {
+    minHeight: 67,
+    marginHorizontal: spacing.md,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    backgroundColor: '#081620',
     borderLeftWidth: 1,
     borderRightWidth: 1,
     borderColor: colors.borderSubtle,
@@ -1019,7 +1170,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.lg,
   },
   boardRowMe: {
-    backgroundColor: '#11170E',
+    backgroundColor: '#121B20',
   },
   boardRank: {
     width: 28,
@@ -1035,30 +1186,76 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  boardPseudoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
   boardPseudo: {
     ...typography.bodyStrong,
+    flexShrink: 1,
     color: colors.text,
   },
-  boardGrade: {
-    ...typography.eyebrow,
-    marginTop: 3,
+  boardPseudoMe: {
+    fontFamily: fonts.displayBold,
+  },
+  mePill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    overflow: 'hidden',
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(190,164,129,.24)',
+    fontFamily: fonts.bold,
+    fontSize: 9,
+    lineHeight: 11,
+    color: '#D7C5AD',
   },
   boardScore: {
+    minWidth: 54,
     alignItems: 'flex-end',
   },
   boardFrags: {
-    ...typography.metricSmall,
+    fontFamily: fonts.displayBold,
+    fontSize: 18,
+    lineHeight: 23,
     color: colors.text,
     fontVariant: ['tabular-nums'],
   },
-  boardUnit: {
+  playerPreviewSection: {
+    marginHorizontal: spacing.md,
+    paddingTop: 22,
+    gap: 10,
+  },
+  playerPreviewHeading: {
+    minHeight: 38,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  playerPreviewTitle: {
+    fontFamily: fonts.displayBold,
+    fontSize: 17,
+    lineHeight: 22,
+    color: colors.text,
+  },
+  playerPreviewLink: {
+    minHeight: 38,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playerPreviewLinkText: {
+    ...typography.eyebrow,
+    color: colors.volt,
+  },
+  playerPreviewStyle: {
     ...typography.eyebrow,
     color: colors.textMuted,
   },
   boardRule: {
     ...typography.eyebrow,
     marginTop: spacing.sm,
-    paddingHorizontal: spacing.md,
     paddingBottom: layout.tabBarContentInset,
     color: colors.textSubtle,
     textAlign: 'center',

@@ -7,7 +7,7 @@ import { layout } from '@/src/theme';
 
 import { openMatchCenter } from '../../matchCenterNavigation';
 import type { ArenaMatch } from '../../types';
-import { LiveMatchCard, MatchRow, ScheduleHero, dateKey } from '../MatchesArenaSections';
+import { LiveMatchCard, MatchRow, ScheduleHero, buildCalendarDays, dateKey, findDefaultDayKey } from '../MatchesArenaSections';
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('react-native-reanimated', () => {
@@ -28,6 +28,12 @@ jest.mock('../../matchCenterNavigation', () => ({
 }));
 
 describe('ScheduleHero', () => {
+  it('keeps today in the middle and selected by default', () => {
+    const days = buildCalendarDays();
+    expect(dateKey(days[3])).toBe(dateKey(new Date()));
+    expect(findDefaultDayKey(days, [])).toBe(dateKey(new Date()));
+  });
+
   it('keeps the schedule compact while preserving seven accessible day targets', async () => {
     const calendarDays = Array.from(
       { length: 7 },

@@ -144,13 +144,10 @@ export default function DuelsScreen({
             ? <DuelHeroSkeleton />
             : featured
               ? <DuelHero duel={featured} onOpen={() => openDuel(featured.token)} />
-              : error
-                ? null
-                : <EmptyDuelHero />}
+              : null}
         </View>
 
         <View style={styles.intro}>
-          <Text style={styles.eyebrow}>SOCIAL // DÉFIS</Text>
           <Text style={styles.title}>À TOI DE JOUER.</Text>
           <Text style={styles.subtitle}>Crée un face-à-face ou rejoins un rival.</Text>
         </View>
@@ -406,16 +403,6 @@ function DuelPlayer({ pending = false, side, tag }: { pending?: boolean; side: '
   );
 }
 
-function EmptyDuelHero() {
-  return (
-    <View style={styles.emptyHero}>
-      <Text style={styles.emptyEyebrow}>AUCUNE RIVALITÉ ACTIVE</Text>
-      <Text style={styles.emptyTitle}>TON PROCHAIN FACE-À-FACE T’ATTEND.</Text>
-      <Text style={styles.emptyText}>Choisis un match pour lancer le premier round.</Text>
-    </View>
-  );
-}
-
 function DuelCard({ duel, onOpen }: { duel: DuelRow; onOpen: () => void }) {
   const creator = duel.moi_role === 'createur';
   const targeted = duel.moi_role === 'cible';
@@ -560,11 +547,6 @@ const styles = StyleSheet.create({
   intro: {
     gap: 7,
     paddingTop: 8,
-  },
-  eyebrow: {
-    ...typography.eyebrow,
-    color: colors.volt,
-    letterSpacing: 1.1,
   },
   title: {
     ...typography.displayMedium,
@@ -923,19 +905,6 @@ const styles = StyleSheet.create({
   cardTitle: { ...typography.cardTitle, marginTop: 4, color: colors.text },
   cardVs: { color: colors.volt },
   cardDate: { ...typography.caption, marginTop: 4, color: colors.textMuted },
-  emptyHero: {
-    minHeight: 142,
-    justifyContent: 'center',
-    padding: 20,
-    borderRadius: 24,
-    backgroundColor: '#111A22',
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 7,
-  },
-  emptyEyebrow: { ...typography.eyebrow, color: colors.volt, letterSpacing: .8 },
-  emptyTitle: { ...typography.displaySmall, maxWidth: 320, color: colors.text },
-  emptyText: { ...typography.body, maxWidth: 330, color: colors.textMuted },
   emptyList: {
     padding: 18,
     borderRadius: 20,

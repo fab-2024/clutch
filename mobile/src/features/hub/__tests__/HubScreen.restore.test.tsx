@@ -143,18 +143,8 @@ describe('HubExperience restoration', () => {
     expect(screen.getByText('DÉFIS DU JOUR')).toBeTruthy();
     expect(screen.queryByText('NOUVELLE RÉCOMPENSE')).toBeNull();
     expect(screen.queryByTestId('hub-season-controls')).toBeNull();
-    expect(screen.getByText('À SUIVRE')).toBeTruthy();
-    expect(screen.getByText('G2')).toBeTruthy();
-    expect(screen.getByText('VS')).toBeTruthy();
-    expect(screen.getByText('FNC')).toBeTruthy();
-    expect(screen.getByText('LFL SUMMER SPLIT · BO3')).toBeTruthy();
-
-    const upNextStyle = StyleSheet.flatten(screen.getByTestId('hub-up-next-match-next-g2-fnc').props.style);
-    const logoStyle = StyleSheet.flatten(screen.getByTestId('hub-up-next-logo-a-next-g2-fnc').props.style);
-    expect(upNextStyle.height).toBe(Math.round(upNextStyle.width / 2.18));
-    expect(upNextStyle.height).toBeLessThan(upNextStyle.width / 2);
-    expect(logoStyle.width).toBeLessThan(upNextStyle.width * .2);
-    expect(logoStyle.height).toBe(logoStyle.width);
+    expect(screen.queryByText('À SUIVRE')).toBeNull();
+    expect(screen.queryByTestId('hub-up-next-match-next-g2-fnc')).toBeNull();
   });
 
   it('keeps daily challenges visible when a reward was acquired recently', async () => {
@@ -225,26 +215,6 @@ describe('HubExperience restoration', () => {
     );
 
     await fireEvent.press(screen.getByTestId('primary-match-poster'));
-
-    expect(screen.getByTestId('hub-inline-prediction')).toBeTruthy();
-    expect(openMatchCenter).not.toHaveBeenCalled();
-  });
-
-  it('opens an À suivre card in the same inline panel', async () => {
-    const screen = await render(
-      <HubExperience
-        error={null}
-        headerEconomy={{ frags: 1000, volts: 300 }}
-        hub={HUB}
-        loading={false}
-        onRefresh={jest.fn()}
-        onRetry={jest.fn()}
-        refreshing={false}
-        userId="user-1"
-      />,
-    );
-
-    await fireEvent.press(screen.getByTestId('hub-up-next-match-next-g2-fnc'));
 
     expect(screen.getByTestId('hub-inline-prediction')).toBeTruthy();
     expect(openMatchCenter).not.toHaveBeenCalled();

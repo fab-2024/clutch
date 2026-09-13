@@ -327,6 +327,7 @@ const styles = StyleSheet.create({
   progressMeter: {
     position: 'relative',
     minHeight: 62,
+    marginTop: 6,
     marginHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',

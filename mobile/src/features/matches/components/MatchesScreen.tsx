@@ -39,6 +39,7 @@ import { styles } from './MatchesScreen.styles';
 import { InlinePredictionPanel } from './InlinePredictionPanel';
 import { ArenaFilters } from './MatchesFilters';
 import { MatchesHeader } from './MatchesHeader';
+import { MatchesCalendarModal } from './MatchesCalendarModal';
 
 const GAME_GLOBAL_BACKGROUNDS = {
   all: require('../../../../assets/matches/matches-followed-global-background.jpg'),
@@ -97,6 +98,8 @@ export function MatchesExperience({
   const duelRivalId = Array.isArray(params.duelRivalId) ? params.duelRivalId[0] : params.duelRivalId;
   const duelRivalPseudo = Array.isArray(params.duelRivalPseudo) ? params.duelRivalPseudo[0] : params.duelRivalPseudo;
   const [game, setGame] = useState<GameFilter>('all');
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarAnchor, setCalendarAnchor] = useState(() => new Date());
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const [expandedPredictionId, setExpandedPredictionId] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -113,7 +116,7 @@ export function MatchesExperience({
     () => filterMatches(source, game, query),
     [game, query, source],
   );
-  const calendarDays = useMemo(() => buildCalendarDays(scopedMatches), [scopedMatches]);
+  const calendarDays = useMemo(() => buildCalendarDays(calendarAnchor), [calendarAnchor]);
   const defaultDayKey = useMemo(
     () => findDefaultDayKey(calendarDays, scopedMatches),
     [calendarDays, scopedMatches],
@@ -145,6 +148,7 @@ export function MatchesExperience({
   function changeGame(nextGame: GameFilter) {
     setGame(nextGame);
     setSelectedDayKey(null);
+    setCalendarAnchor(new Date());
     setExpandedPredictionId(null);
   }
 
@@ -210,14 +214,25 @@ export function MatchesExperience({
           query={query}
           searchOpen={searchOpen}
           onQueryChange={setQuery}
-          onShowToday={() => {
-            setSelectedDayKey(dateKey(new Date()));
-            setExpandedPredictionId(null);
-          }}
+          onOpenCalendar={() => setCalendarOpen(true)}
           onToggleSearch={() => {
             setSearchOpen((current) => !current);
             if (searchOpen) setQuery('');
           }}
+        />
+
+        <MatchesCalendarModal
+          matches={scopedMatches}
+          onClose={() => setCalendarOpen(false)}
+          onSelectDay={(dayKey) => {
+            const [year, month, day] = dayKey.split('-').map(Number);
+            setCalendarAnchor(new Date(year, month - 1, day, 12));
+            setSelectedDayKey(dayKey);
+            setExpandedPredictionId(null);
+            setCalendarOpen(false);
+          }}
+          selectedDayKey={activeDayKey}
+          visible={calendarOpen}
         />
 
         {duelRivalId ? (
