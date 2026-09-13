@@ -1,18 +1,20 @@
+import type { ReactNode } from 'react';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import Triangle from 'lucide-react-native/icons/triangle';
+import UsersRound from 'lucide-react-native/icons/users-round';
 import {
   Platform,
   Pressable,
   Share,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 
 import { publicAppUrl } from '@/src/config/release';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
-import { relicSignatureTheme } from '@/src/features/shop/components/CosmeticRenderer';
 import CollectiveRelic from '@/src/features/social/faction/components/CollectiveRelic';
 import FactionEvolutionRail from '@/src/features/social/faction/components/FactionEvolutionRail';
 import type {
@@ -26,8 +28,8 @@ import type {
   FactionProgress,
 } from '@/src/features/social/faction/types';
 import { factionProgress, gameLabel } from '@/src/features/social/faction/utils';
-import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, fonts, typography } from '@/src/theme';
+import { resolveTeamAccent } from '@/src/utils/teamColors';
 
 type FactionRelicHeroV2Props = {
   faction: CommunityFaction | null;
@@ -52,10 +54,13 @@ export default function FactionRelicHeroV2({
   relicProgressOverride,
   supporterContribution,
 }: FactionRelicHeroV2Props) {
-  const { equipped } = useCosmetics();
+  const { width: viewportWidth } = useWindowDimensions();
   const progress = relicProgressOverride ?? factionProgress(faction?.membres ?? 0, faction?.niveau_atteint);
-  const signature = relicSignatureTheme(equipped.factionEffect);
   const mutation = mutationOverride === undefined ? me?.mutation_a_presenter : mutationOverride;
+  const teamAccent = resolveTeamAccent({ name: faction?.nom, tag: faction?.tag });
+  const hudAccent = relicHudAccent(faction, teamAccent);
+  const progressPercent = Math.round(progress.progress * 100);
+  const sceneHeight = relicSceneHeightForWidth(viewportWidth);
 
   async function inviteSupporters() {
     if (!faction) return;
@@ -82,7 +87,7 @@ export default function FactionRelicHeroV2({
         <View style={styles.identity}>
           <View style={styles.factionSeal}>
             {faction ? (
-              <TeamLogo accent={colors.volt} contentScale={1} frameless name={faction.nom} size={60} tag={faction.tag} uri={faction.logo} />
+              <TeamLogo accent={teamAccent} contentScale={1} frameless name={faction.nom} size={54} tag={faction.tag} uri={faction.logo} />
             ) : (
               <Text style={styles.relicQuestion}>?</Text>
             )}
@@ -110,10 +115,8 @@ export default function FactionRelicHeroV2({
           start={{ x: .1, y: 0 }}
           style={StyleSheet.absoluteFill}
         />
-        <View style={[styles.heroAura, { backgroundColor: signature.aura, boxShadow: signature.glow }]} />
-        <View style={styles.coldAura} />
-
         <CollectiveRelic
+          accent={teamAccent}
           compact
           faction={faction}
           instabilityPreviewOverride={instabilityPreviewOverride}
@@ -123,12 +126,12 @@ export default function FactionRelicHeroV2({
           onMutationPresented={onMutationPresented}
           onSupporterContributionPresented={onSupporterContributionPresented}
           progress={progress}
+          sceneHeight={sceneHeight}
           supporterContribution={supporterContribution}
         />
 
         {faction ? (
           <View style={styles.progressBlock}>
-            <Text style={styles.relicForm}>RELIQUE · {progress.current.name.toUpperCase()}</Text>
             <View
               accessibilityLabel={`${formatNumber(progress.charge)} supporters sur ${formatNumber(progress.objective)}`}
               accessibilityRole="progressbar"
@@ -140,32 +143,36 @@ export default function FactionRelicHeroV2({
                   ? 'Forme terminale'
                   : `${formatNumber(progress.remaining)} avant ${progress.next?.name ?? 'la prochaine forme'}`,
               }}
+              testID="relic-hud"
               style={styles.progressMeter}
             >
-              <RelicProgressArcs />
-              <View style={styles.progressContent}>
-                <Text
-                  adjustsFontSizeToFit
-                  minimumFontScale={.68}
-                  numberOfLines={1}
-                  style={styles.progressCount}
-                >
-                  <Text style={styles.progressCharge}>{progress.max ? '10 000+' : formatNumber(progress.charge)}</Text>
-                  {!progress.max ? <Text style={styles.progressObjective}> / {formatNumber(progress.objective)}</Text> : null}
-                </Text>
-                <Text
-                  adjustsFontSizeToFit
-                  minimumFontScale={.72}
-                  numberOfLines={1}
-                  style={styles.thresholdText}
-                >
-                  <Text style={styles.thresholdValue}>{progress.max ? 'MAX' : formatNumber(progress.remaining)}</Text>
-                  <Text style={styles.thresholdLabel}>
-                    {progress.max ? '  FORME TERMINALE' : `  AVANT ${progress.next?.name.toUpperCase()}`}
-                  </Text>
-                </Text>
-              </View>
+              <RelicMetricCard
+                accessibilityLabel={`Progression de l’étape, ${progress.max ? 'maximum atteint' : `${progressPercent} pour cent`}`}
+                icon={<UsersRound color="#DCE5EA" size={18} strokeWidth={2.2} />}
+                label="DE L’ÉTAPE"
+                testID="relic-metric-progress"
+                value={progress.max ? 'MAX' : `${progressPercent} %`}
+              />
+              <RelicMetricCard
+                accent={hudAccent}
+                accessibilityLabel={`Gain récent, ${signed(faction.croissance_24h)} points sur 24 heures`}
+                emphasized
+                icon={<Triangle color={hudAccent} fill={hudAccent} size={15} strokeWidth={2} testID="relic-metric-accent-icon" />}
+                label="SUR 24 H"
+                testID="relic-metric-growth"
+                unit="PTS"
+                value={signed(faction.croissance_24h)}
+              />
+              <RelicMetricCard
+                accessibilityLabel={`${formatNumber(progress.charge)} membres de la faction`}
+                icon={<UsersRound color="#DCE5EA" size={18} strokeWidth={2.2} />}
+                label="MEMBRES"
+                minimumFontScale={.58}
+                testID="relic-metric-members"
+                value={formatNumber(progress.charge)}
+              />
             </View>
+            <Text style={styles.lightHint}>L’éclairage s’éteint après la réaction.</Text>
 
             <Pressable
               accessibilityHint={`Partage une invitation à rejoindre ${faction.nom}`}
@@ -193,49 +200,51 @@ export default function FactionRelicHeroV2({
   );
 }
 
-function RelicProgressArcs() {
+type RelicMetricCardProps = {
+  accent?: string;
+  accessibilityLabel: string;
+  emphasized?: boolean;
+  icon: ReactNode;
+  label: string;
+  minimumFontScale?: number;
+  testID: string;
+  unit?: string;
+  value: string;
+};
+
+function RelicMetricCard({ accent = '#DCE5EA', accessibilityLabel, emphasized = false, icon, label, minimumFontScale = .68, testID, unit, value }: RelicMetricCardProps) {
   return (
-    <Svg
-      preserveAspectRatio="none"
-      style={styles.progressArcs}
-      testID="relic-progress-arcs"
-      viewBox="0 0 400 112"
-      width="100%"
-      height="100%"
-    >
-      <Path
-        d="M 22 55 C 92 13 308 13 378 55"
-        fill="none"
-        opacity={.12}
-        stroke={colors.volt}
-        strokeLinecap="round"
-        strokeWidth={12}
+    <View accessibilityLabel={accessibilityLabel} accessible style={styles.metricCard} testID={testID}>
+      <LinearGradient
+        colors={['rgba(14,31,42,.98)', 'rgba(5,15,22,.98)', 'rgba(2,8,13,.99)']}
+        locations={[0, .46, 1]}
+        style={StyleSheet.absoluteFill}
       />
-      <Path
-        d="M 43 72 C 112 104 288 104 357 72"
-        fill="none"
-        opacity={.1}
-        stroke={colors.volt}
-        strokeLinecap="round"
-        strokeWidth={10}
-      />
-      <Path
-        d="M 22 55 C 92 13 308 13 378 55"
-        fill="none"
-        opacity={.86}
-        stroke={colors.volt}
-        strokeLinecap="round"
-        strokeWidth={2.5}
-      />
-      <Path
-        d="M 43 72 C 112 104 288 104 357 72"
-        fill="none"
-        opacity={.92}
-        stroke={colors.volt}
-        strokeLinecap="round"
-        strokeWidth={3}
-      />
-    </Svg>
+      {emphasized ? (
+        <LinearGradient
+          colors={[alpha(accent, .13), alpha(accent, 0)]}
+          end={{ x: .5, y: 1 }}
+          start={{ x: .5, y: 0 }}
+          style={styles.metricAccentWash}
+        />
+      ) : null}
+      <View pointerEvents="none" style={styles.metricInnerBorder} />
+      <View pointerEvents="none" style={styles.metricTopReflection} />
+      <View style={styles.metricContent}>
+        <View style={styles.metricIcon}>{icon}</View>
+        <View style={styles.metricCopy}>
+          <Text
+            adjustsFontSizeToFit
+            minimumFontScale={minimumFontScale}
+            numberOfLines={1}
+            style={[styles.metricValue, emphasized && { color: accent, textShadowColor: alpha(accent, .48), textShadowRadius: 5 }]}
+          >
+            {value}{unit ? <Text style={styles.metricUnit}> {unit}</Text> : null}
+          </Text>
+          <Text numberOfLines={1} style={styles.metricLabel}>{label}</Text>
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -260,116 +269,140 @@ function signed(value: number) {
   return `${value >= 0 ? '+' : '−'}${formatNumber(Math.abs(value))}`;
 }
 
+export function relicHudAccent(faction: Pick<CommunityFaction, 'nom' | 'tag'> | null, fallback: string) {
+  const name = faction?.nom.trim().toLocaleLowerCase('fr-FR');
+  const tag = faction?.tag.trim().toLocaleUpperCase('fr-FR');
+  return name === 'fnatic' || tag === 'FNC' ? colors.volt : fallback;
+}
+
+function alpha(color: string, opacity: number) {
+  if (!/^#[\da-f]{6}$/i.test(color)) return color;
+  return `${color}${Math.round(Math.max(0, Math.min(1, opacity)) * 255).toString(16).padStart(2, '0')}`;
+}
+
+export function relicSceneHeightForWidth(width: number) {
+  if (!Number.isFinite(width)) return 310;
+  return Math.max(286, Math.min(324, Math.round(width * .84)));
+}
+
 const styles = StyleSheet.create({
   hero: {
     position: 'relative',
     overflow: 'hidden',
     marginHorizontal: -18,
     paddingHorizontal: 0,
-    paddingTop: 44,
+    paddingTop: 0,
     paddingBottom: 12,
     backgroundColor: '#0B1218',
   },
-  heroAura: {
-    position: 'absolute',
-    width: 330,
-    height: 330,
-    left: 30,
-    top: 62,
-    borderRadius: 165,
-    opacity: .42,
-  },
-  coldAura: {
-    position: 'absolute',
-    width: 330,
-    height: 360,
-    left: -90,
-    top: 90,
-    borderRadius: 180,
-    backgroundColor: 'rgba(23,123,145,.035)',
-    boxShadow: '0 0 84px rgba(32,140,162,.055)',
-  },
   relicQuestion: { ...typography.metricSmall, color: colors.text },
-  identityHeader: { marginHorizontal: -18, paddingVertical: 12 },
+  identityHeader: { marginHorizontal: -18, paddingTop: 2, paddingBottom: 4 },
   identity: {
     zIndex: 4,
-    minHeight: 96,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    minHeight: 82,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    borderRadius: 14,
+    gap: 10,
+    borderRadius: 12,
     backgroundColor: 'rgba(4,9,13,.96)',
     borderWidth: 1,
     borderColor: '#2B3A43',
   },
   factionSeal: {
-    width: 60,
-    height: 60,
+    width: 54,
+    height: 54,
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
   identityCopy: { flex: 1, minWidth: 0 },
-  factionName: { ...typography.bodyStrong, fontSize: 18, lineHeight: 24, color: '#F8F9F7', letterSpacing: .1 },
+  factionName: { ...typography.bodyStrong, fontSize: 17, lineHeight: 22, color: '#F8F9F7', letterSpacing: .1 },
   factionMeta: { ...typography.caption, fontSize: 11, lineHeight: 16, marginTop: 3, color: '#8D99A2' },
   growthBlock: { flexShrink: 0, alignItems: 'flex-end' },
   growthLabel: { ...typography.label, fontSize: 11, lineHeight: 16, color: colors.textMuted, letterSpacing: .15 },
-  growthValue: { ...typography.metricSmall, fontSize: 26, lineHeight: 30, marginTop: 2, color: colors.text },
-  progressBlock: { zIndex: 4, marginTop: 8 },
-  relicForm: {
-    marginHorizontal: 18,
-    color: colors.text,
-    fontFamily: fonts.displayBold,
-    fontSize: 13,
-    lineHeight: 16,
-    letterSpacing: .45,
-  },
+  growthValue: { ...typography.metricSmall, fontSize: 24, lineHeight: 27, marginTop: 1, color: colors.text },
+  progressBlock: { zIndex: 4, backgroundColor: 'transparent' },
   progressMeter: {
     position: 'relative',
-    minHeight: 112,
-    marginTop: -1,
+    minHeight: 62,
+    marginHorizontal: 10,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
   },
-  progressArcs: {
+  metricCard: {
+    position: 'relative',
+    flex: 1,
+    minWidth: 0,
+    height: 60,
+    overflow: 'hidden',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#316F91',
+    backgroundColor: 'rgba(4,13,19,.98)',
+    boxShadow: '0 0 9px rgba(47,153,211,.16), inset 0 0 12px rgba(33,111,156,.16)',
+  },
+  metricAccentWash: {
     position: 'absolute',
     top: 0,
-    right: 0,
-    bottom: 0,
     left: 0,
+    right: 0,
+    height: 32,
   },
-  progressContent: {
-    zIndex: 2,
-    width: '100%',
-    paddingHorizontal: 48,
+  metricInnerBorder: {
+    position: 'absolute',
+    inset: 3,
+    borderRadius: 3.5,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(116,190,229,.24)',
+  },
+  metricTopReflection: {
+    position: 'absolute',
+    top: 1,
+    left: 5,
+    right: 5,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(199,229,243,.34)',
+  },
+  metricContent: {
+    flex: 1,
+    paddingHorizontal: 6,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
   },
-  progressCount: {
-    width: '100%',
-    color: '#F0F2F2',
-    fontFamily: fonts.display,
-    fontSize: 28,
-    lineHeight: 31,
-    letterSpacing: -.45,
-    textAlign: 'center',
-  },
-  progressCharge: { color: colors.text, fontFamily: fonts.display, fontSize: 30, lineHeight: 32 },
-  progressObjective: { color: '#F0F2F2', fontFamily: fonts.display, fontSize: 24, lineHeight: 28 },
-  thresholdText: {
-    width: '100%',
-    marginTop: 3,
-    color: '#AEB7BD',
+  metricIcon: { width: 19, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
+  metricCopy: { minWidth: 0, alignItems: 'flex-start', justifyContent: 'center' },
+  metricValue: {
+    maxWidth: '100%',
+    color: '#EDF1EF',
     fontFamily: fonts.displayBold,
-    fontSize: 14,
-    lineHeight: 18,
-    letterSpacing: .15,
+    fontSize: 19,
+    lineHeight: 20,
+    letterSpacing: -.1,
+  },
+  metricUnit: { fontSize: 9, lineHeight: 10, letterSpacing: .05 },
+  metricLabel: {
+    marginTop: 1,
+    color: '#93A3AD',
+    fontFamily: fonts.displayBold,
+    fontSize: 8,
+    lineHeight: 10,
+    letterSpacing: .12,
+  },
+  lightHint: {
+    marginTop: 9,
+    marginBottom: 7,
+    color: '#81909A',
+    fontFamily: fonts.medium,
+    fontSize: 9,
+    lineHeight: 12,
     textAlign: 'center',
   },
-  thresholdValue: { color: colors.text, fontFamily: fonts.display, fontSize: 20, lineHeight: 21 },
-  thresholdLabel: { color: '#AEB7BD', fontFamily: fonts.displayBold, fontSize: 14, lineHeight: 18 },
   inviteButton: {
     minHeight: 59,
     marginTop: 3,

@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { Circle, ClipPath, Defs, G, Image as SvgImage, Rect } from 'react-native-svg';
+import { Circle, ClipPath, Defs, FeColorMatrix, Filter, G, Image as SvgImage, Rect } from 'react-native-svg';
 import Animated, { type SharedValue, useAnimatedProps, useDerivedValue } from 'react-native-reanimated';
 import { bubbleEnergy, ramp } from './motion';
 
@@ -13,12 +13,12 @@ const LEFT = 355, RIGHT = 643, TOP = 246, BOTTOM = 687;
 // and lower caustic. No opaque vector panel is painted over the vessel.
 const CLEAR_TOP = 250, CLEAR_BOTTOM = 347, BODY_TOP = 378, BODY_BOTTOM = 681;
 const SURFACE_TOP = 354, SURFACE_HEIGHT = 24;
-type Props = { id: string; fill: SharedValue<number>; reaction: SharedValue<number>; mutation: SharedValue<number>; reduced: boolean };
+type Props = { accent?: string; id: string; fill: SharedValue<number>; reaction: SharedValue<number>; mutation: SharedValue<number>; reduced: boolean };
 function matrix(scale: number, y: number): { transform?: string; matrix?: number[] } {
   'worklet';
   return WEB ? { transform: `matrix(1 0 0 ${scale} 0 ${y})` } : { matrix: [1, 0, 0, scale, 0, y] };
 }
-export function ModuleElixir({ id, fill, reaction, mutation, reduced }: Props) {
+export function ModuleElixir({ accent = '#6D45A8', id, fill, reaction, mutation, reduced }: Props) {
   const level = useDerivedValue(() => {
     const fraction = Math.max(0, Math.min(1, fill.value));
     const wave = reduced ? 0 : Math.sin((reaction.value + mutation.value) * .009) * bubbleEnergy(reaction.value, mutation.value) * 2;
@@ -44,20 +44,23 @@ export function ModuleElixir({ id, fill, reaction, mutation, reduced }: Props) {
       {window('surface-photo', SURFACE_TOP, SURFACE_HEIGHT)}
       {window('bottom-photo', 674, 13)}
       <ClipPath id={`${id}-wet`}><Volume x={LEFT} width={RIGHT - LEFT} animatedProps={volume} /></ClipPath>
+      <Filter id={`${id}-tint`} x="0" y="0" width="100%" height="100%">
+        <FeColorMatrix type="matrix" values={elixirTintMatrix(accent)} />
+      </Filter>
     </Defs>
     <G clipPath={`url(#${id}-cavity-photo)`}>
       <Moving animatedProps={empty}><G clipPath={`url(#${id}-clear-photo)`}><SvgImage href={SOURCE} width="1000" height="1000" /></G></Moving>
-      <Moving animatedProps={body}><G clipPath={`url(#${id}-body-photo)`}><SvgImage href={SOURCE} width="1000" height="1000" /></G></Moving>
-      <Moving animatedProps={surface}><G clipPath={`url(#${id}-surface-photo)`}><SvgImage href={SOURCE} width="1000" height="1000" /></G></Moving>
+      <Moving animatedProps={body}><G clipPath={`url(#${id}-body-photo)`}><SvgImage filter={`url(#${id}-tint)`} href={SOURCE} width="1000" height="1000" /></G></Moving>
+      <Moving animatedProps={surface}><G clipPath={`url(#${id}-surface-photo)`}><SvgImage filter={`url(#${id}-tint)`} href={SOURCE} width="1000" height="1000" /></G></Moving>
       <G clipPath={`url(#${id}-wet)`}>
-        <Moving animatedProps={bottom}><G clipPath={`url(#${id}-bottom-photo)`}><SvgImage href={SOURCE} width="1000" height="1000" /></G></Moving>
-        {[0, 1, 2, 3, 4, 5].map(index => <RisingBubble key={index} index={index} level={level} reaction={reaction} mutation={mutation} reduced={reduced} />)}
+        <Moving animatedProps={bottom}><G clipPath={`url(#${id}-bottom-photo)`}><SvgImage filter={`url(#${id}-tint)`} href={SOURCE} width="1000" height="1000" /></G></Moving>
+        {[0, 1, 2, 3, 4, 5].map(index => <RisingBubble accent={accent} key={index} index={index} level={level} reaction={reaction} mutation={mutation} reduced={reduced} />)}
       </G>
     </G>
   </G>;
 }
 
-function RisingBubble({ index, level, reaction, mutation, reduced }: { index: number; level: SharedValue<number>; reaction: SharedValue<number>; mutation: SharedValue<number>; reduced: boolean }) {
+function RisingBubble({ accent, index, level, reaction, mutation, reduced }: { accent: string; index: number; level: SharedValue<number>; reaction: SharedValue<number>; mutation: SharedValue<number>; reduced: boolean }) {
   const radius = [6, 8, 5, 7, 5.5, 7.5][index];
   const delay = [0, 180, 65, 260, 120, 220][index];
   const originX = [420, 575, 460, 540, 395, 605][index];
@@ -73,5 +76,21 @@ function RisingBubble({ index, level, reaction, mutation, reduced }: { index: nu
       opacity: reduced || depth < radius ? 0 : bubbleEnergy(reaction.value, mutation.value) * .9,
     };
   });
-  return <Bubble r={radius} fill="#79bfff" fillOpacity={.16} stroke="#b7e5ff" strokeWidth={1.8} animatedProps={props} />;
+  return <Bubble r={radius} fill={accent} fillOpacity={.2} stroke="#F4F7FA" strokeOpacity={.72} strokeWidth={1.8} animatedProps={props} />;
+}
+
+export function elixirTintMatrix(accent: string) {
+  const normalized = accent.replace('#', '');
+  const expanded = normalized.length === 3 ? normalized.split('').map((value) => value + value).join('') : normalized;
+  const parsed = /^[0-9a-f]{6}$/i.test(expanded) ? Number.parseInt(expanded, 16) : 0x6D45A8;
+  const red = ((parsed >> 16) & 255) / 255;
+  const green = ((parsed >> 8) & 255) / 255;
+  const blue = (parsed & 255) / 255;
+  const gain = 1.28;
+  return [
+    .2126 * red * gain, .7152 * red * gain, .0722 * red * gain, 0, 0,
+    .2126 * green * gain, .7152 * green * gain, .0722 * green * gain, 0, 0,
+    .2126 * blue * gain, .7152 * blue * gain, .0722 * blue * gain, 0, 0,
+    0, 0, 0, 1, 0,
+  ].join(' ');
 }

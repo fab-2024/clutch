@@ -1,6 +1,6 @@
 import { memo, useId } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Svg, { Defs, G, Image as SvgImage, Mask, Path } from 'react-native-svg';
+import Svg, { Defs, FeColorMatrix, Filter, G, Image as SvgImage, Mask, Path } from 'react-native-svg';
 import type { SharedValue } from 'react-native-reanimated';
 import { MACHINE_ART, machineFrame } from './artwork';
 import type { ReactorStage } from './model';
@@ -17,15 +17,18 @@ const ModuleHousing = memo(function ModuleHousing({ stage, box }: { stage: React
   const TRANSFORM = `translate(${frame.x} ${frame.y}) scale(${frame.scale})`;
   const id = `housing-${useId().replace(/:/g, '')}`;
   return <Svg width="100%" height="100%" viewBox={box} style={StyleSheet.absoluteFill}>
-    <Defs><Mask id={id} x="0" y="0" width="1000" height="1000" maskUnits="userSpaceOnUse">
-      <Path d={ART.silhouette} fill="white" />
-      {ART.holes && <Path d={ART.holes} fill="black" />}
-    </Mask></Defs>
-    <G transform={TRANSFORM}><G mask={`url(#${id})`}><SvgImage href={ART.source} width="1000" height="1000" /></G></G>
+    <Defs>
+      <Mask id={id} x="0" y="0" width="1000" height="1000" maskUnits="userSpaceOnUse">
+        <Path d={ART.silhouette} fill="white" />
+        {ART.holes && <Path d={ART.holes} fill="black" />}
+      </Mask>
+      <Filter id={`${id}-steel`} x="0" y="0" width="100%" height="100%"><FeColorMatrix type="saturate" values="0.08" /></Filter>
+    </Defs>
+    <G transform={TRANSFORM}><G mask={`url(#${id})`}><SvgImage filter={`url(#${id}-steel)`} href={ART.source} width="1000" height="1000" /></G></G>
   </Svg>;
 });
 
-type Props = { fill: SharedValue<number>; reaction: SharedValue<number>; mutation: SharedValue<number>; reduced: boolean };
+type Props = { accent?: string; fill: SharedValue<number>; reaction: SharedValue<number>; mutation: SharedValue<number>; reduced: boolean };
 export function FocusedModule(props: Props) {
   return <RestingMachine stage={1} box={MODULE_BOX} {...props} />;
 }
@@ -42,7 +45,7 @@ export function RestingMachine({ stage, box = '0 0 1000 1000', ...props }: Props
       </G>
     </Svg>
     {<Svg width="100%" height="100%" viewBox={box} style={StyleSheet.absoluteFill}>
-      <G transform={transform}><PipeReaction stage={stage} reaction={props.reaction} mutation={props.mutation} reduced={props.reduced} /></G>
+      <G transform={transform}><PipeReaction accent={props.accent} stage={stage} reaction={props.reaction} mutation={props.mutation} reduced={props.reduced} /></G>
     </Svg>}
   </View>;
 }

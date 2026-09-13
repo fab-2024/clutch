@@ -7,13 +7,28 @@ import { REACTION_DURATION } from './motion';
 import { OVERHEAT_DURATION, overheatFill, overheatMachineTime, overheatTemperature } from './overheatMotion';
 import { OverheatEffects } from './OverheatEffects';
 import { ForgeEffects } from './ForgeEffects';
+import { RelicChamberBackdrop } from './RelicChamberBackdrop';
 import { ReactorMachine } from './ReactorMachine';
 import { useReactorSound } from './useReactorSound';
 
 export type ReactorSceneHandle = { react: () => void; evolve: (destination?: ReactorStage, targetRatio?: number) => void };
-type Props = { focusModule?: boolean; stage: ReactorStage; fillRatio: number; onEvolutionComplete: () => void; onEvolutionPhase?: (phase: number) => void; onEvolutionCancel?: () => void; reduceMotionOverride?: boolean; animateContribution?: boolean };
+type Props = {
+  accent?: string;
+  animateContribution?: boolean;
+  focusModule?: boolean;
+  height?: number;
+  fillRatio: number;
+  onEvolutionCancel?: () => void;
+  onEvolutionComplete: () => void;
+  onEvolutionPhase?: (phase: number) => void;
+  reduceMotionOverride?: boolean;
+  stage: ReactorStage;
+  teamLogo?: string | null;
+  teamName?: string;
+  teamTag?: string;
+};
 
-export const ReactorScene = forwardRef<ReactorSceneHandle, Props>(function ReactorScene({ focusModule = false, stage, fillRatio, onEvolutionComplete, onEvolutionPhase, onEvolutionCancel, reduceMotionOverride, animateContribution = true }, ref) {
+export const ReactorScene = forwardRef<ReactorSceneHandle, Props>(function ReactorScene({ accent = '#30A9FF', focusModule = false, height, stage, fillRatio, onEvolutionComplete, onEvolutionPhase, onEvolutionCancel, reduceMotionOverride, animateContribution = true, teamLogo, teamName = 'Clutch', teamTag = 'C' }, ref) {
   const systemReduced = useReducedMotion();
   const reduced = reduceMotionOverride ?? systemReduced;
   const [assembly, setAssembly] = useState({ from: stage, to: stage });
@@ -21,7 +36,6 @@ export const ReactorScene = forwardRef<ReactorSceneHandle, Props>(function React
   const busy = useRef(false);
   const epoch = useRef(0);
   const callbacks = useRef({ onEvolutionComplete, onEvolutionPhase, onEvolutionCancel });
-  callbacks.current = { onEvolutionComplete, onEvolutionPhase, onEvolutionCancel };
   const previousFill = useRef(fillRatio);
   const restingFill = useSharedValue(fillRatio);
   const startingFill = useSharedValue(fillRatio);
@@ -34,6 +48,10 @@ export const ReactorScene = forwardRef<ReactorSceneHandle, Props>(function React
   const heat = useDerivedValue(() => reduced || !mutating.value ? 0 : overheatTemperature(mutation.value));
   const { play, stop } = useReactorSound(require('../../../../../assets/social/reactor/audio/overheat-demo.wav'));
   const reportPhase = useCallback((phase: number) => callbacks.current.onEvolutionPhase?.(phase), []);
+
+  useLayoutEffect(() => {
+    callbacks.current = { onEvolutionComplete, onEvolutionPhase, onEvolutionCancel };
+  }, [onEvolutionCancel, onEvolutionComplete, onEvolutionPhase]);
   useAnimatedReaction(() => {
     if (!mutating.value || reduced) return -1;
     const t = mutation.value;
@@ -134,16 +152,20 @@ export const ReactorScene = forwardRef<ReactorSceneHandle, Props>(function React
     },
   }), [stage, next, reduced, reaction, restingFill, startingFill, mutation, mutating, targetFill]);
 
-  return <View style={styles.scene} testID="reactor-scene" pointerEvents="none">
-    <View style={styles.wall} /><View style={styles.floor} /><View style={styles.shadow} />
-    <ReactorMachine forge active={!!transition} heat={transition && !reduced ? heat : undefined} focusModule={focusModule && !transition} from={assembly.from} to={assembly.to} fill={fill} mutation={machineTime} reaction={reaction} reduced={reduced} />
+  return <View style={[styles.scene, height ? { height } : styles.sceneSquare]} testID="reactor-scene" pointerEvents="none">
+    <RelicChamberBackdrop accent={accent} mutation={mutation} reaction={reaction} reduced={reduced} teamLogo={teamLogo} teamName={teamName} teamTag={teamTag} />
+    <View style={styles.machineStage}>
+      <View style={styles.machineSquare}>
+        <ReactorMachine accent={accent} forge active={!!transition} heat={transition && !reduced ? heat : undefined} focusModule={focusModule && !transition} from={assembly.from} to={assembly.to} fill={fill} mutation={machineTime} reaction={reaction} reduced={reduced} />
+      </View>
+    </View>
     {transition && !reduced && <><ForgeEffects stage={assembly.to} time={machineTime} /><OverheatEffects stage={assembly.from} time={mutation} heat={heat} /></>}
   </View>;
 });
 
 const styles = StyleSheet.create({
-  scene: { width: '100%', aspectRatio: 1, overflow: 'hidden', backgroundColor: '#0b0d10' },
-  wall: { position: 'absolute', left: '12%', right: '12%', top: 0, bottom: '15%', borderLeftWidth: 1, borderRightWidth: 1, borderColor: '#202a32', backgroundColor: '#121519' },
-  floor: { position: 'absolute', top: '85%', width: '100%', bottom: 0, backgroundColor: '#191b1e', borderTopWidth: 1, borderColor: '#293039' },
-  shadow: { position: 'absolute', left: '27%', right: '27%', top: '87%', height: '2%', borderRadius: 100, backgroundColor: '#0b0d10' },
+  scene: { width: '100%', overflow: 'hidden', backgroundColor: '#030609' },
+  sceneSquare: { aspectRatio: 1 },
+  machineStage: { position: 'absolute', inset: 0, alignItems: 'center' },
+  machineSquare: { height: '100%', aspectRatio: 1, transform: [{ scale: 1.17 }, { translateY: 8 }] },
 });

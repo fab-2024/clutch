@@ -10,7 +10,7 @@ export type MachineArtwork = {
 // these runtime silhouettes remove their painted backdrop without modifying the artwork.
 export const MACHINE_ART: Record<ReactorStage, MachineArtwork> = {
   1: {
-    source: require('../../../../../assets/social/reactor/module-material-study.png'), height: 445, bottom: 965, center: 500,
+    source: require('../../../../../assets/social/reactor/module-material-study.png'), height: 510, bottom: 965, center: 500,
     silhouette: 'M153 880 L183 812 Q194 779 246 774 L246 760 L238 750 L238 700 L250 696 L250 654 L261 650 L261 258 L251 246 L250 201 L239 191 L239 144 L250 132 L320 118 L321 85 Q345 64 381 61 Q384 35 500 35 Q616 35 620 61 Q675 69 679 85 L680 118 L750 132 L761 144 L761 191 L750 201 L749 246 L739 258 L739 650 L750 654 L750 696 L762 700 L762 750 L750 760 L750 774 Q804 779 817 812 L847 880 L847 916 Q844 964 500 965 Q156 964 153 916 Z',
     holes: 'M322 249 L350 239 L350 692 L323 694 Z M650 239 L677 249 L677 694 L650 692 Z',
     core: [338, 664], base: 778,

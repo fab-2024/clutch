@@ -7,12 +7,15 @@ const mockEvolve = jest.fn();
 const mockReact = jest.fn();
 let mockScene: any;
 jest.mock('../../reactor/ReactorScene', () => {
-  const React = require('react');
-  return { ReactorScene: React.forwardRef((props: any, ref: any) => {
+  const React = jest.requireActual<typeof import('react')>('react');
+  const { View } = jest.requireActual<typeof import('react-native')>('react-native');
+  const MockReactorScene = React.forwardRef((props: any, ref: any) => {
     mockScene = props;
     React.useImperativeHandle(ref, () => ({ evolve: mockEvolve, react: mockReact }));
-    return React.createElement(require('react-native').View);
-  }) };
+    return React.createElement(View);
+  });
+  MockReactorScene.displayName = 'MockReactorScene';
+  return { ReactorScene: MockReactorScene };
 });
 const faction = { equipe_id: 'kc', nom: 'KC' } as CommunityFaction;
 const event: CommunityMutationPresentation = { id: 'event', from_level: 1, to_level: 4, name: 'Citadelle', threshold: 2000, reward: 0, awakened: false, occurred_at: '2026-09-12' };
@@ -60,4 +63,15 @@ it('leaves failed persistence retryable instead of silently losing the event', a
   await fireEvent.press(screen.getByText('Voir l’évolution'));
   await act(async () => mockScene.onEvolutionComplete());
   expect(acknowledge).toHaveBeenCalledTimes(2);
+});
+
+it('keeps mutation replay as a compact scene action in the faction hero', async () => {
+  const screen = await render(<CollectiveRelic compact faction={faction} progress={factionProgress(3500)} mutation={event} sceneHeight={324} />);
+
+  expect(mockScene.height).toBe(324);
+  expect(screen.getByTestId('relic-replay-compact')).toBeTruthy();
+  expect(screen.getByText('VOIR L’ÉVOLUTION')).toBeTruthy();
+
+  await fireEvent.press(screen.getByTestId('relic-replay-compact'));
+  expect(mockEvolve).toHaveBeenCalledWith(4, .5);
 });

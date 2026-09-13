@@ -3,7 +3,7 @@ import type { SharedValue } from 'react-native-reanimated';
 import type { Cavity } from './artwork';
 import { ModuleElixir } from './ModuleElixir';
 
-type Props = { cavity: Cavity; id: string; fill: SharedValue<number>; reaction: SharedValue<number>; mutation: SharedValue<number>; reduced: boolean };
+type Props = { accent?: string; cavity: Cavity; id: string; fill: SharedValue<number>; reaction: SharedValue<number>; mutation: SharedValue<number>; reduced: boolean };
 
 // Reuse the approved optical material, not the Module's mechanical silhouette.
 // Each source cavity was measured separately; metal collars stay outside it.
