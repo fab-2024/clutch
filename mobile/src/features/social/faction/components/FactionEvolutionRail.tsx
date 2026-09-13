@@ -13,6 +13,13 @@ import { colors, fonts, typography } from '@/src/theme';
 type MiniatureState = 'complete' | 'current' | 'next' | 'locked';
 
 const RAIL_FORMS = COMMUNITY_FORMS.filter((form) => form.level >= 1 && form.level <= 5);
+const MINIATURE_VIEW_BOXES: Record<ReactorStage, string> = {
+  1: '205 332 590 600',
+  2: '145 218 710 710',
+  3: '108 242 784 700',
+  4: '88 108 824 824',
+  5: '34 8 932 932',
+};
 
 export default function FactionEvolutionRail({
   comfortable = false,
@@ -27,7 +34,7 @@ export default function FactionEvolutionRail({
     <View style={[styles.evolutionRail, comfortable && styles.evolutionRailComfortable]}>
       {RAIL_FORMS.map((form, index) => {
         const state = miniatureState(form.level, currentLevel, progress.awakened);
-        const miniatureSize = comfortable ? (state === 'current' ? 50 : 40) : 43;
+        const miniatureSize = comfortable ? 58 : 46;
         return (
           <View
             accessibilityLabel={`${form.name}, ${stateLabel(state)}`}
@@ -45,7 +52,7 @@ export default function FactionEvolutionRail({
               </View>
             ) : null}
             <View style={comfortable ? styles.miniatureSlotComfortable : undefined}>
-              <FactionRelicMiniature comfortable={comfortable} level={form.level} size={miniatureSize} state={state} />
+              <FactionRelicMiniature level={form.level} size={miniatureSize} state={state} />
             </View>
             <Text
               numberOfLines={2}
@@ -67,13 +74,11 @@ export default function FactionEvolutionRail({
 }
 
 export function FactionRelicMiniature({
-  comfortable = false,
   faction,
   level,
   size = 48,
   state,
 }: {
-  comfortable?: boolean;
   faction?: CommunityFaction | null;
   level: number;
   size?: number;
@@ -83,19 +88,14 @@ export function FactionRelicMiniature({
   const height = Math.round(size * 1.22);
   const medallionSize = Math.max(18, Math.round(size * .42));
   const masked = state === 'locked' || state === 'next';
-  const opacity = masked ? .34 : state === 'complete' ? .82 : 1;
+  const opacity = state === 'locked' ? .58 : state === 'next' ? .72 : state === 'complete' ? .82 : 1;
 
   return (
     <View style={[styles.miniature, { width: size, height }]}>
       <View style={[styles.imageWindow, { width: size, height }]}>
-        <View style={[
-          styles.imageHalo,
-          state === 'current' && styles.imageHaloCurrent,
-          state === 'current' && comfortable && styles.imageHaloCurrentComfortable,
-          state === 'complete' && styles.imageHaloComplete,
-        ]} />
         <ReactorMiniature level={normalizedLevel as ReactorStage} opacity={opacity} />
         {masked ? <View style={styles.lockShade} /> : null}
+        {state === 'current' ? <View style={styles.currentMarker} /> : null}
       </View>
 
       {faction ? (
@@ -122,7 +122,7 @@ export function FactionRelicMiniature({
       ) : null}
 
       {masked ? (
-        <View style={[styles.lockBadge, { top: Math.round(height * .39) }]}>
+        <View style={styles.lockBadge}>
           <View style={styles.lockLoop} />
           <View style={styles.lockBody}><Text style={styles.lockDot}>•</Text></View>
         </View>
@@ -134,7 +134,14 @@ export function FactionRelicMiniature({
 function ReactorMiniature({ level, opacity }: { level: ReactorStage; opacity: number }) {
   const fill = useSharedValue(.63), clock = useSharedValue(0);
   return <View style={[StyleSheet.absoluteFill, { opacity }]} testID={`relic-miniature-${level}`}>
-    <RestingMachine stage={level} fill={fill} mutation={clock} reaction={clock} reduced />
+    <RestingMachine
+      box={MINIATURE_VIEW_BOXES[level]}
+      stage={level}
+      fill={fill}
+      mutation={clock}
+      reaction={clock}
+      reduced
+    />
   </View>;
 }
 
@@ -155,7 +162,7 @@ function stateLabel(state: MiniatureState) {
 
 const styles = StyleSheet.create({
   evolutionRail: {
-    minHeight: 88,
+    minHeight: 96,
     marginTop: 3,
     paddingHorizontal: 2,
     paddingTop: 2,
@@ -167,7 +174,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#091117',
   },
   evolutionRailComfortable: {
-    minHeight: 94,
+    minHeight: 102,
     marginTop: 0,
     paddingHorizontal: 0,
     paddingTop: 0,
@@ -188,11 +195,11 @@ const styles = StyleSheet.create({
     width: '55%',
     height: 1,
     right: '-28%',
-    top: 31,
+    top: 35,
     backgroundColor: '#152633',
   },
-  connectorComplete: { backgroundColor: '#557F79' },
-  connectorComfortable: { top: 40 },
+  connectorComplete: { backgroundColor: '#285E7D' },
+  connectorComfortable: { top: 37 },
   connectorDot: {
     position: 'absolute',
     width: 4,
@@ -202,10 +209,10 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: '#4B565E',
   },
-  connectorDotComplete: { backgroundColor: colors.volt },
+  connectorDotComplete: { backgroundColor: '#2EA8FF' },
   miniature: { position: 'relative', alignItems: 'center', justifyContent: 'flex-start' },
   miniatureSlotComfortable: {
-    height: 64,
+    height: 72,
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
@@ -215,32 +222,20 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     backgroundColor: '#0B1218',
   },
-  imageHalo: {
-    position: 'absolute',
-    left: '17%',
-    right: '17%',
-    top: '22%',
-    bottom: '9%',
-    borderRadius: 999,
-    backgroundColor: 'rgba(19,81,95,.12)',
-  },
-  imageHaloCurrent: {
-    backgroundColor: 'rgba(31,177,188,.22)',
-    boxShadow: '0 0 12px rgba(56,208,215,.23)',
-  },
-  imageHaloCurrentComfortable: {
-    left: '10%',
-    right: '10%',
-    top: '12%',
-    bottom: '3%',
-    backgroundColor: 'rgba(232,255,61,.2)',
-    boxShadow: '0 0 14px rgba(232,255,61,.28)',
-  },
-  imageHaloComplete: { backgroundColor: 'rgba(28,113,122,.16)' },
   lockShade: {
     position: 'absolute',
     inset: 0,
-    backgroundColor: 'rgba(3,6,8,.48)',
+    backgroundColor: 'rgba(3,6,8,.14)',
+  },
+  currentMarker: {
+    position: 'absolute',
+    bottom: 1,
+    left: '34%',
+    right: '34%',
+    height: 2,
+    borderRadius: 2,
+    backgroundColor: '#2EA8FF',
+    boxShadow: '0 0 7px rgba(46,168,255,.55)',
   },
   miniMedallion: {
     position: 'absolute',
@@ -255,8 +250,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 18,
     height: 22,
-    left: '50%',
-    marginLeft: -9,
+    top: 4,
+    right: 0,
     alignItems: 'center',
   },
   lockLoop: {

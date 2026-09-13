@@ -179,10 +179,6 @@ export function FactionWar({ factions, mine }: { factions: CommunityFaction[]; m
     <View style={styles.warSection}>
       <View style={[styles.sectionHeading, styles.warSectionHeading]}>
         <Text adjustsFontSizeToFit minimumFontScale={0.82} numberOfLines={1} style={[styles.warSectionTitle, compact && styles.warSectionTitleCompact]}>CLASSEMENT DES FACTIONS</Text>
-        <View style={styles.warPeriod}>
-          <View style={styles.warPeriodDot} />
-          <Text style={styles.warPeriodText}>24 H</Text>
-        </View>
       </View>
       <View style={styles.warBoard} testID="faction-ranking-board">
         {leader ? <FactionLeaderCard compact={compact} faction={leader} mine={mine} /> : null}

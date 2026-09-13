@@ -60,7 +60,7 @@ describe('Social faction rankings', () => {
     expect(screen.getByTestId('faction-ranking-leader')).toBeTruthy();
     expect(screen.getByTestId('faction-ranking-row-2')).toBeTruthy();
     expect(screen.getByTestId('faction-ranking-row-3')).toBeTruthy();
-    expect(screen.getByText('24 H')).toBeTruthy();
+    expect(screen.queryByText('24 H')).toBeNull();
     expect(screen.getByLabelText('1. Fnatic, 12 supporters, progression +0 sur 24 heures, ma faction')).toBeTruthy();
     expect(screen.getByLabelText('2. Team Vitality, 9 supporters, progression +0 sur 24 heures')).toBeTruthy();
     expect(screen.getByLabelText('3. Karmine Corp, 7 supporters, progression +0 sur 24 heures')).toBeTruthy();
