@@ -29,7 +29,9 @@ describe('ProfileHeaderButton', () => {
     const buttonStyle = StyleSheet.flatten(screen.getByTestId('profile-header-button').props.style);
 
     expect(buttonStyle.minHeight).toBe(52);
-    expect(screen.getByTestId('profile-header-avatar', { includeHiddenElements: true }).props.size).toBe(52);
+    const avatar = screen.getByTestId('profile-header-avatar', { includeHiddenElements: true });
+    expect(avatar.props.size).toBe(52);
+    expect(avatar.props.cosmetics).toBeUndefined();
   });
 
   it.each([false, true])('shows only the profile name beside the avatar (preview: %s)', async (preview) => {

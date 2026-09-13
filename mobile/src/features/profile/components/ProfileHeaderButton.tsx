@@ -3,7 +3,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import PlayerAvatar from '@/src/features/profile/avatars/PlayerAvatar';
 import { useAuth } from '@/src/providers/AuthProvider';
-import { useCosmetics } from '@/src/providers/CosmeticsProvider';
 import { colors, fonts, layout, typography } from '@/src/theme';
 
 const PROFILE_AVATAR_SIZE = layout.headerControlHeight;
@@ -18,7 +17,6 @@ export default function ProfileHeaderButton({
   pseudo: pseudoOverride,
 }: ProfileHeaderButtonProps = {}) {
   const { profile, session } = useAuth();
-  const { equipped } = useCosmetics();
   const pseudo = pseudoOverride
     || profile?.pseudo
     || session?.user.email?.split('@')[0]
@@ -40,7 +38,6 @@ export default function ProfileHeaderButton({
       >
         <PlayerAvatar
           avatarId={preview ? 'chaos-smile' : profile?.avatar_id}
-          cosmetics={equipped}
           label={pseudo}
           size={PROFILE_AVATAR_SIZE}
         />
