@@ -475,6 +475,7 @@ export const en = {
   'store.showcase.firstPiece': 'Your first piece',
   'store.showcase.personalize': 'Make it yours',
   'store.showcase.objects': 'Objects',
+  'store.showcase.cabinets': 'Cabinets',
   'store.showcase.lights': 'Lighting',
   'store.showcase.frame': 'Frame',
   'store.showcase.discover': 'Find new pieces',

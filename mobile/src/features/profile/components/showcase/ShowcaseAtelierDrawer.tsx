@@ -65,14 +65,14 @@ const CATEGORY_LABELS: Record<AtelierCategory, string> = {
   originals: 'Collection',
   materials: 'Couleur',
   lighting: 'Éclairage',
-  supports: 'Salles',
+  supports: 'Vitrines',
   pedestals: 'Socles',
   ranks: 'Rang',
   effects: 'Animations',
   jerseys: 'Maillot',
 };
 
-export const SHOWCASE_ATELIER_CATEGORIES = (['supports', 'lighting', 'ranks', 'effects'] as const).filter((category) => SHOP_EFFECTS_ENABLED || category !== 'effects');
+export const SHOWCASE_ATELIER_CATEGORIES = (['supports', 'effects'] as const).filter((category) => SHOP_EFFECTS_ENABLED || category !== 'effects');
 
 export default function ShowcaseAtelierDrawer({
   action,
@@ -170,8 +170,8 @@ export default function ShowcaseAtelierDrawer({
     return (
       <View pointerEvents="box-none" style={[styles.closedDock, { bottom: Math.max(insets.bottom, spacing.sm) }]}>
         <Pressable
-          accessibilityHint="Prévisualise et achète les finitions de la pièce"
-          accessibilityLabel="Ouvrir l’Atelier de la Vitrine"
+          accessibilityHint="Choisis l’ambiance et la finition de ta vitrine"
+          accessibilityLabel="Personnaliser la Vitrine"
           accessibilityRole="button"
           accessibilityState={{ disabled: loading, expanded: false }}
           disabled={loading}
@@ -185,8 +185,8 @@ export default function ShowcaseAtelierDrawer({
         >
           <View style={styles.openTabMark} />
           <View style={styles.openTabCopy}>
-            <Text style={styles.openTabTitle}>ATELIER VITRINE</Text>
-            <Text style={styles.openTabSubtitle}>APERÇU DIRECT · ACHAT</Text>
+            <Text style={styles.openTabTitle}>PERSONNALISER</Text>
+            <Text style={styles.openTabSubtitle}>CLASSIQUE · GALERIE · MIDNIGHT</Text>
           </View>
           <Text style={styles.chevron}>⌃</Text>
         </Pressable>
@@ -420,6 +420,7 @@ function primaryLabel(
   if (action === 'equip') return 'ÉQUIPER';
   if (action === 'equipped') return 'ÉQUIPÉ';
   if (action === 'insufficient') return 'VOLTS INSUFFISANTS';
+  if (product?.storePriceCents) return 'BIENTÔT · 3,99 €';
   return 'INDISPONIBLE';
 }
 
@@ -452,6 +453,7 @@ function primaryAccessibilityHint(action: AtelierPrimaryAction, product: Atelier
 function productStateLabel(item: CosmeticItem | null, product: AtelierProduct) {
   if (item?.equipped) return 'équipé';
   if (item?.owned) return 'possédé';
+  if (product.storePriceCents) return '3,99 €';
   if (product.packOnly) return 'dans le pack';
   if (!item || !item.available || !item.acquirable) return 'indisponible';
   return `${formatNumber(item.price || product.price)} Volts`;

@@ -13,9 +13,7 @@ import { COSMETIC_PACK_CATALOG, INDIVIDUAL_COLLECTION_CATALOG, ORIGINAL_PACK_CAT
 export type AtelierCategory = 'materials' | 'lighting' | 'supports' | 'pedestals' | 'ranks' | 'jerseys' | 'originals' | 'effects';
 
 export const ATELIER_CATEGORIES = [
-  'lighting',
   'supports',
-  'ranks',
 ] as const satisfies readonly AtelierCategory[];
 
 export function isVisibleAtelierCategory(category: AtelierCategory) {
@@ -34,6 +32,7 @@ export type AtelierProduct = {
   packId?: string;
   packOnly?: boolean;
   price: number;
+  storePriceCents?: number;
   rarity: CosmeticRarity;
   roomId?: string;
   slot: CosmeticSlot;
@@ -49,7 +48,7 @@ export const ATELIER_CATEGORY_META: Record<AtelierCategory, {
   originals: { glyph: '⬡', label: 'OBJETS DE COLLECTION', shortLabel: 'COLLECTION', slot: 'apparence_core' },
   materials: { glyph: '▤', label: 'MATÉRIAUX', shortLabel: 'MATIÈRE', slot: 'vitrine_materiau' },
   lighting: { glyph: '✦', label: 'ÉCLAIRAGE', shortLabel: 'LUMIÈRE', slot: 'vitrine_eclairage' },
-  supports: { glyph: '◫', label: 'SALLES', shortLabel: 'SALLE', slot: 'vitrine_supports' },
+  supports: { glyph: '◫', label: 'VITRINES', shortLabel: 'VITRINE', slot: 'vitrine_supports' },
   pedestals: { glyph: '▱', label: 'SOCLES', shortLabel: 'SOCLE', slot: 'vitrine_supports' },
   ranks: { glyph: '◆', label: 'ÉCRINS DE RANG', shortLabel: 'RANG', slot: 'vitrine_rang' },
   jerseys: { glyph: '⌁', label: 'MAILLOTS', shortLabel: 'MAILLOT', slot: 'vitrine_maillot' },
@@ -203,6 +202,7 @@ export const ATELIER_CATALOG: readonly AtelierProduct[] = [
     name: room.name,
     description: room.description,
     price: room.price,
+    storePriceCents: room.storePriceCents,
     rarity: room.rarity,
     accent: room.accent,
     image: room.image,
@@ -312,7 +312,7 @@ export function atelierProductById(id: string | null | undefined) {
 export function createAtelierPreviewItems(): CosmeticItem[] {
   const individualItems = INDIVIDUAL_COLLECTION_CATALOG.flatMap((collection) => createTeamPackPreviewItems(collection));
   return [...individualItems, ...ATELIER_CATALOG.filter((product) => !product.packOnly && product.category !== 'originals').map((product): CosmeticItem => {
-    const included = product.price === 0;
+    const included = product.price === 0 && !product.storePriceCents;
     return {
       id: product.id,
       slot: product.slot,
@@ -336,7 +336,7 @@ export function createAtelierPreviewItems(): CosmeticItem[] {
       license: { type: 'interne', holder: 'GRIFF' },
       included,
       available: true,
-      acquirable: true,
+      acquirable: !product.storePriceCents,
       owned: included,
       equipped: included && product.slot !== 'vitrine_rang',
     };

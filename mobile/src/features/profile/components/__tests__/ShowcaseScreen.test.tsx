@@ -173,9 +173,9 @@ describe('ShowcaseScreen immersive editor', () => {
     const screen = await render(<ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={equippedShop} />);
     await fireEvent.press(screen.getByTestId('showcase-room-slot-rank'));
     await fireEvent.press(screen.getByLabelText('Trophée Œuf des Cimes'));
-    expect(screen.getByTestId('showcase-room-background-serment-du-givre-ice-sheet-pedestal')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-background-classique')).toBeTruthy();
     expect(screen.getByTestId('showcase-rank-display-rank_orbital_core')).toBeTruthy();
-    expect(screen.getByTestId('showcase-central-pedestal-removal')).toBeTruthy();
+    expect(screen.queryByTestId('showcase-central-pedestal-removal')).toBeNull();
     expect(screen.getByTestId('showcase-room-slot-rank').props.accessibilityLabel).not.toContain('Rang BRONZE');
   });
 
@@ -183,7 +183,7 @@ describe('ShowcaseScreen immersive editor', () => {
     jest.mocked(loadProfileData).mockResolvedValue(PREVIEW_PROFILE);
     jest.mocked(loadCosmeticShop).mockResolvedValue(EMPTY_SHOP);
     const screen = await render(<ShowcaseScreen />);
-    await waitFor(() => expect(screen.getByTestId('showcase-room-background-obsidian-gallery')).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId('showcase-room-background-classique')).toBeTruthy());
     expect(screen.queryByTestId('showcase-setup-notice')).toBeNull();
     await fireEvent.press(screen.getByLabelText('Setup'));
     expect(screen.getByText('Setup arrive dans une prochaine mise à jour.')).toBeTruthy();
@@ -210,8 +210,8 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.queryByText('PERSONNALISER')).toBeNull();
     expect(screen.queryByText('TOUCHE UN EMPLACEMENT POUR L’ÉQUIPER')).toBeNull();
     expect(screen.queryByTestId('showcase-settings-sheet')).toBeNull();
-    expect(screen.getByTestId('showcase-room-background-obsidian-gallery').props.source).toBe(
-      require('../../../../../assets/shop/rooms/room-obsidian-gallery.png'),
+    expect(screen.getByTestId('showcase-room-background-classique').props.source).toBe(
+      require('../../../../../assets/shop/rooms/cabinet-classique.png'),
     );
     expect(screen.queryByTestId(
       'showcase-room-pedestal-rank-neon-protocol-vector-pedestals',
@@ -258,8 +258,8 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.getByTestId('showcase-atelier-product-image-lighting_amber').props.resizeMode).toBe('cover');
 
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-supports'));
-    await fireEvent.press(screen.getByTestId('showcase-atelier-product-supports_forge'));
-    expect(screen.getByTestId('showcase-room-background-bronze-sanctum')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('showcase-atelier-product-cabinet_galerie'));
+    expect(screen.getByTestId('showcase-room-background-galerie')).toBeTruthy();
 
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-ranks'));
     expect(screen.getByTestId('showcase-atelier-product-image-rank_carbon_cradle').props.resizeMode).toBe('contain');
@@ -268,7 +268,7 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(screen.queryByTestId('showcase-titan-wave')).toBeNull();
     expect(screen.getByTestId('showcase-room-theme-graphite')).toBeTruthy();
     expect(screen.getByTestId('showcase-room-lighting-cyan')).toBeTruthy();
-    expect(screen.getByTestId('showcase-room-background-obsidian-gallery')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-background-classique')).toBeTruthy();
 
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-lighting'));
@@ -344,7 +344,7 @@ describe('ShowcaseScreen immersive editor', () => {
     expect(reopened.queryAllByTestId(/^showcase-rank-display-/)).toHaveLength(0);
   });
 
-  it('exposes an owned pack room in Salles and renders it as the equipped scene', async () => {
+  it('replaces retired pack rooms while preserving owned pack objects', async () => {
     const packShop = applyPreviewTeamPackAction({
       ...ATELIER_SHOP,
       balance: 1280,
@@ -358,45 +358,30 @@ describe('ShowcaseScreen immersive editor', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('showcase-room-background-serment-du-givre-ice-sheet-pedestal')).toBeTruthy();
+      expect(screen.getByTestId('showcase-room-background-classique')).toBeTruthy();
     });
     expect(screen.queryByTestId('showcase-rank-display-rank_carbon_cradle')).toBeNull();
 
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-supports'));
-    const roomProduct = screen.getByTestId('showcase-atelier-product-serment-du-givre-room');
-    expect(roomProduct).toBeTruthy();
-    expect(within(roomProduct).getByText('Bastion des Cimes')).toBeTruthy();
+    expect(screen.queryByTestId('showcase-atelier-product-serment-du-givre-room')).toBeNull();
+    expect(screen.getByTestId('showcase-atelier-product-cabinet_galerie')).toBeTruthy();
   }, 15_000);
 
-  it.each([true, false])('keeps the selected standard room after closing over a pack room (owned: %s)', async (owned) => {
-    const initial = { ...ATELIER_SHOP, balance: 3000 };
-    const standardShop = owned ? applyPreviewAtelierAction(initial, 'supports_halo') : initial;
-    const packShop = applyPreviewTeamPackAction({
-      ...standardShop,
-      items: [...standardShop.items, ...createTeamPackPreviewItems(SERMENT_DU_GIVRE_PACK)],
-    }, SERMENT_DU_GIVRE_PACK);
-    const screen = await render(<ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={packShop} />);
+  it.each(['galerie', 'midnight'])('previews %s without a Volts purchase or permanent equipment', async (room) => {
+    const screen = await render(<ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={ATELIER_SHOP} />);
     await fireEvent.press(screen.getByTestId('showcase-room-slot-jersey'));
     await fireEvent.press(screen.getByLabelText('Rang BRONZE'));
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
     await fireEvent.press(screen.getByTestId('showcase-atelier-category-supports'));
-    expect(within(screen.getByTestId('showcase-atelier-product-supports_halo')).queryByText('Équipé')).toBeNull();
-    await fireEvent.press(screen.getByTestId('showcase-atelier-product-supports_halo'));
-    expect(screen.getByTestId('showcase-room-background-azure-horizon')).toBeTruthy();
-    expect(screen.getByTestId('showcase-room-slot-jersey').props.accessibilityLabel).toContain('Rang BRONZE');
-    await fireEvent.press(screen.getByTestId('showcase-atelier-primary'));
-    if (!owned) await fireEvent.press(screen.getByTestId('atelier-purchase-confirm'));
+    await fireEvent.press(screen.getByTestId(`showcase-atelier-product-cabinet_${room}`));
+    expect(screen.getByTestId(`showcase-room-background-${room}`)).toBeTruthy();
+    expect(screen.getByTestId('showcase-atelier-primary')).toBeDisabled();
+    expect(screen.queryByTestId('atelier-purchase-sheet')).toBeNull();
     await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
-    expect(screen.getByTestId('showcase-room-background-azure-horizon')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-background-classique')).toBeTruthy();
     expect(screen.getByTestId('showcase-room-slot-jersey').props.accessibilityLabel).toContain('Rang BRONZE');
-    await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
-    expect(within(screen.getByTestId('showcase-atelier-product-supports_halo')).getByText('Équipé')).toBeTruthy();
-    expect(within(screen.getByTestId('showcase-atelier-product-serment-du-givre-room')).queryByText('Équipé')).toBeNull();
-    await fireEvent.press(screen.getByLabelText('Fermer l’Atelier de la Vitrine'));
-    expect(screen.getByTestId('showcase-room-background-azure-horizon')).toBeTruthy();
-    expect(screen.getByTestId('showcase-room-slot-jersey').props.accessibilityLabel).toContain('Rang BRONZE');
-  }, 30_000);
+  });
 
   it('keeps pack pedestals integrated in the room and hides pedestal swapping', async () => {
     const frostShop = applyPreviewTeamPackAction({
@@ -415,11 +400,11 @@ describe('ShowcaseScreen immersive editor', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('showcase-room-background-serment-du-givre-ice-sheet-pedestal')).toBeTruthy();
+      expect(screen.getByTestId('showcase-room-background-classique')).toBeTruthy();
     });
     expect(screen.getByTestId(
-      'showcase-room-background-serment-du-givre-ice-sheet-pedestal',
-    ).props.source).toBe(require('../../../../../assets/shop/rooms/pack-serment-du-givre.png'));
+      'showcase-room-background-classique',
+    ).props.source).toBe(require('../../../../../assets/shop/rooms/cabinet-classique.png'));
     expect(screen.queryAllByTestId(/showcase-room-pedestal-/)).toHaveLength(0);
 
     await fireEvent.press(screen.getByLabelText('Ouvrir l’Atelier de la Vitrine'));
@@ -432,19 +417,19 @@ describe('ShowcaseScreen immersive editor', () => {
     const screen = await render(<ShowcaseScreen previewProfile={PREVIEW_PROFILE} previewShop={EMPTY_SHOP} />);
     const slot = () => screen.getByTestId('showcase-room-slot-jersey');
 
-    expect(slot().props.accessibilityLabel).toBe('Emplacement maillot, vide');
+    expect(slot().props.accessibilityLabel).toBe('Étagère 1 · Place 2, vide');
     expect(within(screen.getByTestId('showcase-room-empty-jersey')).getByText('+')).toBeTruthy();
     expect(within(screen.getByTestId('showcase-room-empty-jersey')).getByText('AJOUTER')).toBeTruthy();
 
     await fireEvent.press(slot());
     await fireEvent.press(screen.getByLabelText('Rang BRONZE'));
-    expect(slot().props.accessibilityLabel).toBe('Emplacement maillot, Rang BRONZE');
+    expect(slot().props.accessibilityLabel).toBe('Étagère 1 · Place 2, Rang BRONZE');
     expect(within(slot()).queryByText('AJOUTER')).toBeNull();
     expect(within(slot()).queryByText('BRONZE')).toBeNull();
 
     await fireEvent.press(slot());
     await fireEvent.press(screen.getByLabelText('Laisser cet emplacement vide'));
-    expect(slot().props.accessibilityLabel).toBe('Emplacement maillot, vide');
+    expect(slot().props.accessibilityLabel).toBe('Étagère 1 · Place 2, vide');
     expect(within(screen.getByTestId('showcase-room-empty-jersey')).getByText('AJOUTER')).toBeTruthy();
   });
 

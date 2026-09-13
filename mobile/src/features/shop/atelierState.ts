@@ -42,6 +42,7 @@ const DEFAULT_IDS: Record<AtelierCategory, string> = {
 export function atelierPrimaryAction(item: CosmeticItem, balance: number): AtelierPrimaryAction {
   if (item.equipped) return 'equipped';
   if (item.owned) return 'equip';
+  if (showcaseRoomByProductId(item.id)?.storePriceCents) return 'unavailable';
   if (!item.available || !item.acquirable) return 'unavailable';
   return balance >= item.price ? 'buy' : 'insufficient';
 }

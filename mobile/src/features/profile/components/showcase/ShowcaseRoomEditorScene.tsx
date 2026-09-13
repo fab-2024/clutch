@@ -304,7 +304,13 @@ export default function ShowcaseRoomEditorScene({
       current.height === next.height && current.width === next.width ? current : next
     ));
   }, []);
-  const layout = showcaseSceneLayout(viewport, room.sceneFrame);
+  const isCabinet = ['classique', 'galerie', 'midnight'].includes(room.id);
+  const cabinetWidth = Math.min(viewport.width, viewport.height * 1.5);
+  const cabinetHeight = cabinetWidth / 1.5;
+  const layout = isCabinet ? {
+    canvas: { width: cabinetWidth, height: cabinetHeight, left: (viewport.width - cabinetWidth) / 2, top: (viewport.height - cabinetHeight) / 2 },
+    image: { width: cabinetWidth, height: cabinetHeight, left: 0, top: 0 },
+  } : showcaseSceneLayout(viewport, room.sceneFrame);
   const lightingVisual = SHOWCASE_LIGHTING_VISUALS[lighting];
   const centralSlotId = showcaseCentralPedestalBackdrop(room.id)?.slotId ?? 'rank';
   const centralItem = assignments[centralSlotId];

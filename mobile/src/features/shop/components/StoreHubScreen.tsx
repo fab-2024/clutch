@@ -9,7 +9,6 @@ import ShoppingCart from 'lucide-react-native/icons/shopping-cart';
 import Expand from 'lucide-react-native/icons/expand';
 import Settings2 from 'lucide-react-native/icons/settings-2';
 import { useState } from 'react';
-import type { ReactNode } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { GriffHeader } from '@/src/components/layout/GriffHeader';
@@ -30,7 +29,7 @@ type StoreHubScreenProps = {
   previewData?: CosmeticShopData;
 };
 
-const SHOWCASE_IMAGE = require('../../../../assets/showcase/showcase-room-empty-v1.png');
+const SHOWCASE_IMAGE = require('../../../../assets/shop/rooms/cabinet-classique.png');
 
 export default function StoreHubScreen({ preview = false, previewData }: StoreHubScreenProps = {}) {
   const [section, setSection] = useState<'showcase' | 'shop' | 'gift-cards'>('showcase');
@@ -42,8 +41,6 @@ export default function StoreHubScreen({ preview = false, previewData }: StoreHu
   const pseudo = preview ? 'FabTheTap' : profile?.pseudo || t('store.fallbackPseudo');
   const avatarId = preview ? 'chaos-smile' : profile?.avatar_id;
   const cosmetics = previewData?.equipped ?? equipped;
-  const openLighting = () => router.push({ pathname: preview ? '/showcase-preview' : '/showcase', params: { atelier: 'lighting' } });
-  const openFrames = () => router.push({ pathname: preview ? '/shop-preview' : '/shop', params: { scope: 'owned', tab: 'cadre_profil' } });
   const publicProfile = preview || profile?.profil_public !== false;
 
   const header = (
@@ -143,19 +140,7 @@ export default function StoreHubScreen({ preview = false, previewData }: StoreHu
           </Pressable>
         </View>
         <View style={styles.personalization}>
-          <Text style={styles.sectionTitle}>{t('store.showcase.personalize')}</Text>
-          <View style={styles.shortcuts}>
-            <PersonalizationTile label={t('store.showcase.objects')} onPress={openShowcase} testID="store-hub-objects">
-              <Image source={require('../../../../assets/rank/rank-tier-pedestal-v1.png')} resizeMode="contain" style={styles.pedestal} />
-              <View style={styles.tilePlus}><Plus color={colors.text} size={26} /></View>
-            </PersonalizationTile>
-            <PersonalizationTile label={t('store.showcase.lights')} onPress={openLighting} testID="store-hub-lights">
-              <Image source={SHOWCASE_IMAGE} resizeMode="cover" style={styles.lightArt} />
-            </PersonalizationTile>
-            <PersonalizationTile label={t('store.showcase.frame')} onPress={openFrames} testID="store-hub-frame">
-              <PlayerAvatar avatarId={avatarId} cosmetics={cosmetics} label={pseudo} size={72} />
-            </PersonalizationTile>
-          </View>
+          <Text style={styles.sectionTitle}>Tes collections</Text>
           <Pressable accessibilityRole="button" onPress={() => setSection('shop')}
             style={({ pressed }) => [styles.shopLink, pressed && styles.pressed]} testID="store-hub-discover">
             <View style={styles.cart}><ShoppingCart size={26} color={colors.text} /></View>
@@ -169,16 +154,6 @@ export default function StoreHubScreen({ preview = false, previewData }: StoreHu
       </ScrollView>
     </Screen>
   );
-}
-
-function PersonalizationTile({ children, label, onPress, testID }: {
-  children: ReactNode; label: string; onPress: () => void; testID: string;
-}) {
-  return <Pressable accessibilityLabel={label} accessibilityRole="button" onPress={onPress}
-    style={({ pressed }) => [styles.tile, pressed && styles.pressed]} testID={testID}>
-    <View pointerEvents="none" style={styles.tileArt}>{children}</View>
-    <Text style={styles.tileLabel}>{label}</Text>
-  </Pressable>;
 }
 
 const styles = StyleSheet.create({
@@ -218,15 +193,6 @@ const styles = StyleSheet.create({
   composeLabel: { ...typography.action, color: colors.background, fontSize: 17, lineHeight: 22 },
   personalization: { paddingHorizontal: 12, paddingTop: 18 },
   sectionTitle: { ...typography.sectionTitle, color: colors.text, fontSize: 23, lineHeight: 29, marginBottom: 10 },
-  shortcuts: { flexDirection: 'row', gap: 8 },
-  tile: { flex: 1, minWidth: 0, aspectRatio: 1.06, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: 12,
-    overflow: 'hidden', backgroundColor: colors.surfaceGlass, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 8 },
-  tileArt: { flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  tileLabel: { ...typography.control, color: colors.text, fontSize: 14, lineHeight: 19 },
-  pedestal: { position: 'absolute', bottom: -8, width: '100%', height: '70%' },
-  tilePlus: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: colors.volt,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 4, backgroundColor: colors.background },
-  lightArt: { position: 'absolute', width: '220%', height: '240%', left: '-60%', top: '-20%' },
   shopLink: { marginTop: 16, minHeight: 60, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: 12,
     padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.surfaceGlass },
   cart: { paddingRight: 12, borderRightWidth: 1, borderRightColor: colors.borderSubtle },

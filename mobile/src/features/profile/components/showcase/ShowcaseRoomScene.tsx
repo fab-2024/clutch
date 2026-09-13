@@ -72,7 +72,7 @@ type ShowcaseRoomSceneProps = {
   theme?: ShowcaseRoomTheme;
 };
 
-const ROOM_ASSET = require('../../../../../assets/showcase/showcase-room-empty-v1.png');
+const ROOM_ASSET = require('../../../../../assets/shop/rooms/cabinet-classique.png');
 const JERSEY_ASSET = require('../../../../../assets/showcase/showcase-jersey-base-v1.png');
 const TROPHY_ASSET = require('../../../../../assets/showcase/showcase-trophy-v1.png');
 const DEFAULT_FULL_SCENE_SIZE = { height: 276, width: 844 };

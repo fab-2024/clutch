@@ -73,7 +73,7 @@ describe('showcase Atelier state', () => {
       applyAtelierTry(
         applyAtelierTry({}, 'lighting', 'lighting_violet'),
         'supports',
-        'supports_halo',
+        'supports_gallery',
       ),
       'pedestals',
       'sang-des-titans-monolith-pedestal',
@@ -89,7 +89,7 @@ describe('showcase Atelier state', () => {
     expect(trial).toEqual({
       lighting: 'lighting_violet',
       pedestals: 'sang-des-titans-monolith-pedestal',
-      supports: 'supports_halo',
+      supports: 'supports_gallery',
     });
     expect(scene).toEqual({
       theme: 'carbon',
@@ -97,7 +97,7 @@ describe('showcase Atelier state', () => {
       pedestal: 'bronze',
       presenterId: 'supports_gallery',
       rankDisplayId: 'rank_orbital_core',
-      roomId: 'azure-horizon',
+      roomId: 'classique',
       jerseyPresentation: 'podium',
     });
     expect(resolveAtelierSceneConfig(data.equipped, { lighting: 'lighting_white' }).lighting).toBe('competition');
@@ -168,18 +168,18 @@ describe('showcase Atelier state', () => {
     expect(resolveAtelierSceneConfig(purchased.equipped)).toMatchObject({
       presenterId: 'circuit-zero-aero-pedestals', roomId: null,
     });
-    expect(resolveAtelierSceneConfig(purchased.equipped, { supports: 'supports_halo' }).roomId).toBe('azure-horizon');
+    expect(resolveAtelierSceneConfig(purchased.equipped, { supports: 'supports_gallery' }).roomId).toBe('classique');
   });
 
   it('replaces a collection room persistently, including an already-owned standard room', () => {
-    const standard = applyPreviewAtelierAction(makeData(2000), 'supports_halo');
+    const standard = applyPreviewAtelierAction(makeData(2000), 'supports_gallery');
     const collection = applyPreviewAtelierAction(standard, 'circuit-zero-room');
     expect(equippedAtelierIds(collection.equipped).supports).toBe('circuit-zero-room');
-    expect(atelierRuntimeItems(collection).find((item) => item.id === 'supports_halo')?.equipped).toBe(false);
-    const restored = applyPreviewAtelierAction(collection, 'supports_halo');
+    expect(atelierRuntimeItems(collection).find((item) => item.id === 'supports_gallery')?.equipped).toBe(false);
+    const restored = applyPreviewAtelierAction(collection, 'supports_gallery');
     expect(restored.balance).toBe(collection.balance);
     expect(restored.equipped.showcase.lighting?.id).toBe('lighting_cyan');
-    expect(resolveAtelierSceneConfig(restored.equipped).roomId).toBe('azure-horizon');
+    expect(resolveAtelierSceneConfig(restored.equipped).roomId).toBe('classique');
     expect(atelierRuntimeItems(restored).filter((item) => item.id === 'circuit-zero-room' && item.equipped)).toHaveLength(0);
     const collectionAgain = applyPreviewAtelierAction(restored, 'circuit-zero-room');
     expect(resolveAtelierSceneConfig(collectionAgain.equipped).presenterId).toBe('circuit-zero-aero-pedestals');

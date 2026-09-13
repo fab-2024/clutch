@@ -94,16 +94,13 @@ describe('StoreHubScreen', () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  it.each([false, true])('opens the personalization shortcuts (preview=%s)', async (preview) => {
+  it.each([false, true])('keeps showcase customization inside the showcase (preview=%s)', async (preview) => {
     const screen = await render(<StoreHubScreen preview={preview} />);
-    await fireEvent.press(screen.getByTestId('store-hub-lights'));
-    expect(push).toHaveBeenLastCalledWith({ pathname: preview ? '/showcase-preview' : '/showcase', params: { atelier: 'lighting' } });
-    await fireEvent.press(screen.getByTestId('store-hub-frame'));
-    expect(push).toHaveBeenLastCalledWith({ pathname: preview ? '/shop-preview' : '/shop', params: { scope: 'owned', tab: 'cadre_profil' } });
+    expect(screen.queryByTestId('store-hub-lights')).toBeNull();
+    expect(screen.queryByTestId('store-hub-frame')).toBeNull();
+    expect(screen.queryByTestId('store-hub-objects')).toBeNull();
     await fireEvent.press(screen.getByTestId('store-hub-visibility'));
     expect(push).toHaveBeenLastCalledWith(preview ? '/settings-preview' : '/settings/profile');
-    await fireEvent.press(screen.getByTestId('store-hub-objects'));
-    expect(push).toHaveBeenLastCalledWith(preview ? '/showcase-preview' : '/showcase');
     await fireEvent.press(screen.getByTestId('store-hub-discover'));
     expect(screen.getByTestId('embedded-shop')).toBeTruthy();
   });

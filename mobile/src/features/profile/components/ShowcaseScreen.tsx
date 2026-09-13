@@ -22,7 +22,6 @@ import { rankEmblemSource } from '@/src/features/ranking/components/RankEmblem';
 import { equipCosmetic, loadCosmeticShop, purchaseCosmetic, unequipRankDisplay } from '@/src/features/shop/api';
 import { returnToCollection } from '@/src/features/shop/shopNavigation';
 import {
-  PACK_ROOM_ATELIER_PRODUCTS,
   atelierProductById,
   atelierProducts,
   type AtelierCategory,
@@ -140,7 +139,7 @@ export default function ShowcaseScreen({
     section?: string | string[];
   }>();
   const requestedSection = showcaseSectionFromParam(params.section);
-  const requestedLighting = readParam(params.atelier) === 'lighting';
+  const requestedLighting = ['lighting', 'supports'].includes(readParam(params.atelier) ?? '');
   const lightingEntryOpenedRef = useRef(false);
   const selectedRoom = showcaseRoomById(readParam(params.room));
   const { profile, session } = useAuth();
@@ -157,7 +156,7 @@ export default function ShowcaseScreen({
   const [setupNoticeVisible, setSetupNoticeVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [atelierVisible, setAtelierVisible] = useState(false);
-  const [atelierCategory, setAtelierCategory] = useState<AtelierCategory>('lighting');
+  const [atelierCategory, setAtelierCategory] = useState<AtelierCategory>('supports');
   const [atelierTrial, setAtelierTrial] = useState<AtelierTrySelection>({});
   const [atelierPendingId, setAtelierPendingId] = useState<string | null>(null);
   const [atelierPurchaseId, setAtelierPurchaseId] = useState<string | null>(null);
@@ -324,19 +323,7 @@ export default function ShowcaseScreen({
     () => equippedAtelierIds(shopData?.equipped ?? profileData?.cosmetics),
     [profileData?.cosmetics, shopData?.equipped],
   );
-  const atelierCategoryProducts = useMemo(
-    () => {
-      const products = atelierProducts(atelierCategory);
-      if (atelierCategory !== 'supports') return products;
-      return [
-        ...products,
-        ...PACK_ROOM_ATELIER_PRODUCTS.filter((product) => (
-          atelierRuntimeById.get(product.id)?.owned === true
-        )),
-      ];
-    },
-    [atelierCategory, atelierRuntimeById],
-  );
+  const atelierCategoryProducts = useMemo(() => atelierProducts(atelierCategory), [atelierCategory]);
   const rankDisplayOptions = useMemo(() => {
     if (previewProfile && previewShop) return SHOWCASE_RANK_DISPLAY_CATALOG;
     const ownedIds = new Set(
@@ -363,7 +350,7 @@ export default function ShowcaseScreen({
     ? { ...resolvedCosmetics, factionEffect: null } : resolvedCosmetics;
   const presenter = showcasePresenterById(presenterId)
     ?? showcasePresenterById(DEFAULT_SHOWCASE_PRESENTER_ID)!;
-  const activeRoom = showcaseRoomById(roomId);
+  const activeRoom = showcaseRoomById(roomId) ?? showcaseRoomById('classique')!;
   const rankDisplay = showcaseRankDisplayById(rankDisplayId)
     ?? showcaseRankDisplayById(DEFAULT_SHOWCASE_RANK_DISPLAY_ID)!;
   const visibleRankDisplay = rankDisplayId ? rankDisplay : null;
@@ -372,7 +359,7 @@ export default function ShowcaseScreen({
     ...presenter,
     image: presenter.editorImage ?? presenter.image,
   };
-  const assignmentLayoutKey = activeRoom ? `room:${activeRoom.id}` : `presenter:${presenter.id}`;
+  const assignmentLayoutKey = roomId ? `room:${roomId}` : `presenter:${presenter.id}`;
   const activeSlotIds = useMemo(() => activeSlots.map((slot) => slot.id), [activeSlots]);
   const scenePedestalProductId = pedestalProductIdForScene(activeRoom?.productId ?? presenter.id);
   const sceneDefaultPedestalProductId = scenePedestalProductId
@@ -471,11 +458,11 @@ export default function ShowcaseScreen({
     initializedRoomRef.current = assignmentLayoutKey;
     setActiveRoomSlot(null);
     setRoomAssignments((current) => firstRoom
-      ? activeRoom
+      ? roomId
         ? createDefaultShowcaseRoomAssignments(placeableItems, activeSlots)
-        : createPresenterRoomAssignments(placeableItems, presenter.id)
+        : adaptShowcaseRoomAssignments(createPresenterRoomAssignments(placeableItems, presenter.id), activeSlots)
       : adaptShowcaseRoomAssignments(current, activeSlots));
-  }, [activeRoom, activeSlots, assignmentLayoutKey, loading, placeableItems, presenter.id]);
+  }, [activeRoom, activeSlots, assignmentLayoutKey, loading, placeableItems, presenter.id, roomId]);
 
   function currentSceneSnapshot(): ShowcaseSceneSnapshot {
     return {
@@ -530,7 +517,7 @@ export default function ShowcaseScreen({
         jerseyPresentation, lighting, pedestal, pedestalAssignments: { ...pedestalAssignments },
         presenterId: presenter.id, rankDisplayId, roomId: activeRoom?.id ?? null, theme,
       };
-      setAtelierCategory('lighting');
+      setAtelierCategory('supports');
       setAtelierVisible(true);
     });
     return () => cancelAnimationFrame(frame);

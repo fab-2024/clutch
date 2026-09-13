@@ -38,7 +38,8 @@ export function showcaseRankDisplayLayout({ displayId, roomId, imageLayout, view
   roomId: string;
   imageLayout: { width: number; height: number; left: number; top: number };
 }) {
-  const backdrop = showcaseCentralPedestalBackdrop(roomId);
+  const backdrop = showcaseCentralPedestalBackdrop(roomId)
+    ?? (['classique', 'galerie', 'midnight'].includes(roomId) ? { outline: '78,39 91,39 91,43 78,43' } : null);
   const geometry = DISPLAY_GEOMETRY[displayId];
   if (!backdrop || !geometry) return null;
   const points = backdrop.outline.split(' ').map((point) => point.split(',').map(Number));

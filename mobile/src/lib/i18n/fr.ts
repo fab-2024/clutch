@@ -467,6 +467,7 @@ export const fr = {
   'store.showcase.firstPiece': 'Ta première pièce',
   'store.showcase.personalize': 'À ton image',
   'store.showcase.objects': 'Objets',
+  'store.showcase.cabinets': 'Vitrines',
   'store.showcase.lights': 'Lumières',
   'store.showcase.frame': 'Cadre',
   'store.showcase.discover': 'Trouver de nouvelles pièces',
