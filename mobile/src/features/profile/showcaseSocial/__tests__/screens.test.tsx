@@ -114,25 +114,15 @@ describe('verified milestone links', () => {
 });
 
 describe('showcase owner profile overlay', () => {
-  it('loads owner counters without registering a visit and keeps own likes read-only', async () => {
-    mockLoad.mockResolvedValue(PREVIEW_SHOWCASE_OWNER);
+  it('keeps the owner identity but removes views and likes from the vitrine', async () => {
     const screen = await render(<ShowcaseOwnerProfile profile={null} pseudo="Nova" ownerId="viewer" preview={false} />);
     expect(screen.getByText('Nova')).toBeTruthy();
-    expect(screen.getByText('86 VUES')).toBeTruthy();
-    expect(screen.getByText('12 MENTIONS J’AIME')).toBeTruthy();
-    expect(mockLoad).toHaveBeenCalledWith('Nova', 'viewer', false);
+    expect(screen.queryByTestId('showcase-views')).toBeNull();
+    expect(screen.queryByTestId('showcase-like-count')).toBeNull();
+    expect(mockLoad).not.toHaveBeenCalled();
     expect(screen.queryByTestId('showcase-like')).toBeNull();
     await fireEvent.press(screen.getByLabelText('Voir le profil de Nova'));
     expect(mockPush).toHaveBeenCalledWith('/my-profile');
-  });
-  it('does not substitute zero counters for a failed read and lets the owner retry', async () => {
-    mockLoad.mockRejectedValueOnce(new Error('network'));
-    const screen = await render(<ShowcaseOwnerProfile profile={null} pseudo="Nova" ownerId="viewer" preview={false} />);
-    expect(screen.getByText('— VUES')).toBeTruthy();
-    expect(screen.getByText('— MENTIONS J’AIME')).toBeTruthy();
-    mockLoad.mockResolvedValue(PREVIEW_SHOWCASE_OWNER);
-    await fireEvent.press(screen.getByLabelText('Actualiser les vues et les mentions J’aime'));
-    expect(screen.getByText('86 VUES')).toBeTruthy();
   });
 });
 

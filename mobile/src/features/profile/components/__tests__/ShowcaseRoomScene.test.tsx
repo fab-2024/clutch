@@ -71,14 +71,14 @@ const ROOM_PROPS = {
 } as const;
 
 describe('Showcase room composition', () => {
-  it.each(['core', 'trophy', 'rank'] as const)('frames the central %s and hides the display when that slot is emptied', async (kind) => {
+  it.each(['core', 'trophy', 'rank'] as const)('keeps the cabinet pedestal and hides the central %s display when that slot is emptied', async (kind) => {
     const room = SHOWCASE_ROOM_CATALOG[0];
     const assignments = createDefaultShowcaseRoomAssignments([]);
     assignments.rank = { accent: '#B9E8FF', id: 'central-object', kind, name: 'Objet central' };
     const props = { lighting: 'cyan' as const, onSlotPress: jest.fn(), rankDisplay: SHOWCASE_RANK_DISPLAY_CATALOG[1], room };
     const screen = await render(<ShowcaseRoomEditorScene {...props} assignments={assignments} />);
     expect(screen.getByTestId('showcase-rank-display-rank_crystal_capsule')).toBeTruthy();
-    expect(screen.getByTestId('showcase-central-pedestal-removal')).toBeTruthy();
+    expect(screen.queryByTestId('showcase-central-pedestal-removal')).toBeNull();
     expect(screen.getByTestId('showcase-room-artwork-rank')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('showcase-room-slot-rank'));
     expect(props.onSlotPress).toHaveBeenCalledWith('rank');
@@ -90,8 +90,11 @@ describe('Showcase room composition', () => {
     expect(screen.queryByTestId('showcase-central-pedestal-removal')).toBeNull();
   });
 
-  it('defines a removable central pedestal for every room and collection layout', () => {
-    for (const room of [...SHOWCASE_ROOM_CATALOG, ...SHOWCASE_PRESENTER_CATALOG]) {
+  it('keeps cabinet pedestals integrated and defines removal masks for compatible legacy layouts', () => {
+    for (const room of SHOWCASE_ROOM_CATALOG) {
+      expect(showcaseCentralPedestalBackdrop(room.id)).toBeNull();
+    }
+    for (const room of SHOWCASE_PRESENTER_CATALOG.filter((candidate) => candidate.showRankDisplay !== false)) {
       const backdrop = showcaseCentralPedestalBackdrop(room.id);
       expect(backdrop).not.toBeNull();
       expect(room.slots.some((slot) => slot.id === backdrop?.slotId)).toBe(true);
@@ -535,7 +538,7 @@ describe('Showcase room composition', () => {
     );
 
     expect(screen.getByTestId('showcase-room-editor')).toBeTruthy();
-    expect(screen.getByTestId('showcase-room-background-obsidian-gallery')).toBeTruthy();
+    expect(screen.getByTestId('showcase-room-background-classique')).toBeTruthy();
     expect(screen.getAllByTestId(/^showcase-room-slot-(?!area-)/)).toHaveLength(8);
     expect(screen.getByLabelText('Emplacement maillot, Maillot Fnatic')).toBeTruthy();
     expect(screen.getByLabelText('Emplacement droit, vide')).toBeTruthy();

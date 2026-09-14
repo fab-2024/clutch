@@ -10,7 +10,7 @@ import {
 } from '../../atelierCatalog';
 
 describe('showcase Atelier catalog', () => {
-  it('keeps the approved order and exposes the catalogue without original-pack pedestals', () => {
+  it('keeps the approved order and exposes independent showcase fittings', () => {
     expect(ATELIER_CATALOG.filter((item) => item.category !== 'originals').map((item) => item.id)).toEqual([
       'material_graphite',
       'material_steel',
@@ -24,11 +24,11 @@ describe('showcase Atelier catalog', () => {
       'lighting_emerald',
       'lighting_acid',
       'supports_gallery',
-      'supports_halo',
-      'supports_forge',
-      'supports_crystal',
-      'supports_vault',
-      'supports_champagne',
+      'cabinet_galerie',
+      'cabinet_midnight',
+      'neon-protocol-vector-pedestals',
+      'sang-des-titans-monolith-pedestal',
+      'serment-du-givre-ice-sheet-pedestal',
       'rank_carbon_cradle',
       'rank_crystal_capsule',
       'rank_royal_crown',
@@ -43,7 +43,8 @@ describe('showcase Atelier catalog', () => {
     expect(ATELIER_CATALOG.filter((item) => !item.packOnly && item.category !== 'originals').map((item) => item.price)).toEqual([
       0, 120, 180, 220, 260,
       0, 100, 100, 80, 120, 80,
-      0, 280, 220, 300, 320, 240,
+      0, 0, 0,
+      0, 0, 0,
       0, 180, 220, 260, 300, 360,
       0, 200, 240,
     ]);
@@ -58,20 +59,23 @@ describe('showcase Atelier catalog', () => {
     }
   });
 
-  it('maps each category to one server slot and exactly one included default', () => {
+  it('exposes the three independent showcase controls with their defaults', () => {
     const items = createAtelierPreviewItems();
-    expect(ATELIER_CATEGORIES).toEqual(['lighting', 'supports', 'ranks']);
+    expect(ATELIER_CATEGORIES).toEqual(['supports', 'lighting', 'pedestals']);
     expect(items.every((item) => /^[a-z0-9-]+$/.test(item.styleKey))).toBe(true);
     expect(atelierProducts('materials')).toHaveLength(5);
     expect(atelierProducts('lighting')).toHaveLength(6);
-    expect(atelierProducts('supports')).toHaveLength(6);
-    expect(atelierProducts('pedestals')).toHaveLength(0);
+    expect(atelierProducts('supports')).toHaveLength(3);
+    expect(atelierProducts('pedestals')).toHaveLength(3);
     expect(atelierProducts('ranks')).toHaveLength(6);
     expect(atelierProducts('jerseys')).toHaveLength(3);
     expect(items.filter((item) => item.included).map((item) => item.id)).toEqual([
       'material_graphite',
       'lighting_cyan',
       'supports_gallery',
+      'neon-protocol-vector-pedestals',
+      'sang-des-titans-monolith-pedestal',
+      'serment-du-givre-ice-sheet-pedestal',
       'rank_carbon_cradle',
       'jersey_locker',
     ]);
@@ -79,14 +83,13 @@ describe('showcase Atelier catalog', () => {
     expect(new Set(atelierProducts('lighting').map((item) => item.slot))).toEqual(new Set(['vitrine_eclairage']));
     expect(new Set(atelierProducts('supports').map((item) => item.slot))).toEqual(new Set(['vitrine_supports']));
     expect(atelierProducts('supports').map((item) => item.roomId)).toEqual([
-      'obsidian-gallery',
-      'azure-horizon',
-      'bronze-sanctum',
-      'orbital-station',
-      'neon-hangar',
-      'volcanic-forge',
+      'classique',
+      'galerie',
+      'midnight',
     ]);
-    expect(new Set(atelierProducts('pedestals').map((item) => item.slot))).toEqual(new Set());
+    expect(new Set(atelierProducts('pedestals').map((item) => item.slot))).toEqual(new Set(['vitrine_supports']));
+    expect(items.filter((item) => atelierProducts('pedestals').some((product) => product.id === item.id))
+      .every((item) => item.owned && !item.equipped)).toBe(true);
     expect(new Set(atelierProducts('ranks').map((item) => item.slot))).toEqual(new Set(['vitrine_rang']));
     expect(new Set(atelierProducts('jerseys').map((item) => item.slot))).toEqual(new Set(['vitrine_maillot']));
   });

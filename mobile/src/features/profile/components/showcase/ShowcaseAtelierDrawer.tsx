@@ -1,4 +1,3 @@
-import { SHOP_EFFECTS_ENABLED } from '@/src/features/shop/effectAvailability';
 import { useEffect, useRef, type RefObject } from 'react';
 import Check from 'lucide-react-native/icons/check';
 import ChevronDown from 'lucide-react-native/icons/chevron-down';
@@ -72,7 +71,7 @@ const CATEGORY_LABELS: Record<AtelierCategory, string> = {
   jerseys: 'Maillot',
 };
 
-export const SHOWCASE_ATELIER_CATEGORIES = (['supports', 'effects'] as const).filter((category) => SHOP_EFFECTS_ENABLED || category !== 'effects');
+export const SHOWCASE_ATELIER_CATEGORIES = ['supports', 'lighting', 'pedestals'] as const;
 
 export default function ShowcaseAtelierDrawer({
   action,
@@ -170,7 +169,7 @@ export default function ShowcaseAtelierDrawer({
     return (
       <View pointerEvents="box-none" style={[styles.closedDock, { bottom: Math.max(insets.bottom, spacing.sm) }]}>
         <Pressable
-          accessibilityHint="Choisis l’ambiance et la finition de ta vitrine"
+          accessibilityHint="Choisis séparément la vitrine, sa lumière et ses socles"
           accessibilityLabel="Personnaliser la Vitrine"
           accessibilityRole="button"
           accessibilityState={{ disabled: loading, expanded: false }}
@@ -186,7 +185,7 @@ export default function ShowcaseAtelierDrawer({
           <View style={styles.openTabMark} />
           <View style={styles.openTabCopy}>
             <Text style={styles.openTabTitle}>PERSONNALISER</Text>
-            <Text style={styles.openTabSubtitle}>CLASSIQUE · GALERIE · MIDNIGHT</Text>
+            <Text style={styles.openTabSubtitle}>VITRINE · ÉCLAIRAGE · SOCLES</Text>
           </View>
           <Text style={styles.chevron}>⌃</Text>
         </Pressable>
@@ -201,7 +200,7 @@ export default function ShowcaseAtelierDrawer({
       testID="showcase-atelier-drawer"
     >
       <View style={[styles.header, short && styles.headerShort, narrow && styles.headerNarrow, { marginHorizontal: horizontalPadding }]}>
-        <Text style={[styles.title, large && styles.titleLarge, narrow && styles.titleNarrow, short && styles.titleShort]}>Ambiance de la vitrine</Text>
+        <Text style={[styles.title, large && styles.titleLarge, narrow && styles.titleNarrow, short && styles.titleShort]}>Personnalisation de la vitrine</Text>
         {!narrow ? categoryTabs : null}
         <View accessible accessibilityLabel={`${formatNumber(balance)} Volts disponibles`}
           style={styles.balance} testID="showcase-atelier-balance">
@@ -326,7 +325,7 @@ export default function ShowcaseAtelierDrawer({
           >
             {notice?.text ?? (category === 'pedestals'
               ? pedestalTargetHint(pedestalTargetIds.length, pedestalSlots.length)
-              : 'Sélectionne une ambiance pour la voir dans ta vitrine.')}
+              : 'Sélectionne cet élément pour le voir dans ta vitrine.')}
           </Text>
         </View>
         <View style={[styles.pagination, narrow && styles.paginationNarrow]} testID="showcase-atelier-pagination">

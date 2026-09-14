@@ -14,6 +14,8 @@ export type AtelierCategory = 'materials' | 'lighting' | 'supports' | 'pedestals
 
 export const ATELIER_CATEGORIES = [
   'supports',
+  'lighting',
+  'pedestals',
 ] as const satisfies readonly AtelierCategory[];
 
 export function isVisibleAtelierCategory(category: AtelierCategory) {
@@ -208,6 +210,39 @@ export const ATELIER_CATALOG: readonly AtelierProduct[] = [
     image: room.image,
     roomId: room.id,
   })),
+  {
+    id: 'neon-protocol-vector-pedestals',
+    category: 'pedestals',
+    slot: 'vitrine_supports',
+    name: 'Vectoriel',
+    description: 'Un socle noir traversé d’un faisceau cyan, à équiper emplacement par emplacement.',
+    price: 0,
+    rarity: 'commun',
+    accent: '#27D7F2',
+    image: require('../../../assets/shop/packs/neon-protocol/items/vector-pedestal.png'),
+  },
+  {
+    id: 'sang-des-titans-monolith-pedestal',
+    category: 'pedestals',
+    slot: 'vitrine_supports',
+    name: 'Monolithe',
+    description: 'Un socle minéral cerclé de bronze, indépendant du décor de la vitrine.',
+    price: 0,
+    rarity: 'rare',
+    accent: '#D88B43',
+    image: require('../../../assets/shop/packs/sang-des-titans/items/monolith-pedestal.png'),
+  },
+  {
+    id: 'serment-du-givre-ice-sheet-pedestal',
+    category: 'pedestals',
+    slot: 'vitrine_supports',
+    name: 'Plaque de givre',
+    description: 'Un socle de glace et d’acier, indépendant du décor et de son éclairage.',
+    price: 0,
+    rarity: 'rare',
+    accent: '#7CCBFF',
+    image: require('../../../assets/shop/packs/serment-du-givre/items/ice-sheet-pedestal.png'),
+  },
   ...SHOWCASE_RANK_DISPLAY_CATALOG.map((display) => ({
     id: display.id,
     category: 'ranks' as const,
@@ -338,7 +373,7 @@ export function createAtelierPreviewItems(): CosmeticItem[] {
       available: true,
       acquirable: !product.storePriceCents,
       owned: included,
-      equipped: included && product.slot !== 'vitrine_rang',
+      equipped: included && product.category !== 'pedestals' && product.slot !== 'vitrine_rang',
     };
   })];
 }

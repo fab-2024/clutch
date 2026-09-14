@@ -10,8 +10,8 @@ describe('replacement cabinet shop', () => {
     expect(PACK_ROOM_ATELIER_PRODUCTS.filter(isShopItemAvailable)).toEqual([]);
   });
 
-  it('removes retired aisles and keeps legacy products resolvable for inventory', () => {
-    expect(ATELIER_CATEGORIES).toEqual(['supports']);
+  it('keeps the three independently equipped controls visible in the Atelier', () => {
+    expect(ATELIER_CATEGORIES).toEqual(['supports', 'lighting', 'pedestals']);
     expect(atelierProductById('lighting_cyan')).not.toBeNull();
     expect(atelierProductById('rank_carbon_cradle')).not.toBeNull();
   });

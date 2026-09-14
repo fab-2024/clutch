@@ -195,7 +195,8 @@ describe('showcase Atelier state', () => {
     const purchased = applyPreviewTeamPackAction(initial, SERMENT_DU_GIVRE_PACK);
 
     expect(purchased.equipped.showcase.lighting?.id).toBe('serment-du-givre-room');
-    expect(purchased.items.some((item) => item.id === 'serment-du-givre-ice-sheet-pedestal')).toBe(false);
+    expect(purchased.items.find((item) => item.id === 'serment-du-givre-ice-sheet-pedestal'))
+      .toMatchObject({ owned: true, equipped: false });
     expect(resolveAtelierSceneConfig(purchased.equipped)).toMatchObject({
       presenterId: 'serment-du-givre-ice-sheet-pedestal',
       roomId: null,

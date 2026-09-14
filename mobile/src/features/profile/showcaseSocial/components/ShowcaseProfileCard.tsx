@@ -15,6 +15,7 @@ type Props = {
   views: number | null;
   likes: number | null;
   showViews?: boolean;
+  showLikes?: boolean;
   liked?: boolean;
   busy?: boolean;
   onLike?: () => void;
@@ -22,7 +23,7 @@ type Props = {
 };
 
 export default function ShowcaseProfileCard({
-  pseudo, avatarId, cosmetics, subtitle, views, likes, showViews = true,
+  pseudo, avatarId, cosmetics, subtitle, views, likes, showViews = true, showLikes = true,
   liked = false, busy = false, onLike, onProfile,
 }: Props) {
   const identity = <>
@@ -47,11 +48,11 @@ export default function ShowcaseProfileCard({
       <Eye size={17} color={colors.textMuted} />
       <Text style={styles.count}>{views === null ? '—' : formatNumber(views)} {views === 1 ? 'VUE' : 'VUES'}</Text>
     </View> : null}
-    {onLike ? <Pressable accessibilityRole="checkbox" accessibilityLabel={t(liked ? 'showcase.social.unlike' : 'showcase.social.like')}
+    {showLikes && onLike ? <Pressable accessibilityRole="checkbox" accessibilityLabel={t(liked ? 'showcase.social.unlike' : 'showcase.social.like')}
       accessibilityState={{ checked: liked, disabled: busy, busy }} aria-checked={liked} aria-busy={busy}
       disabled={busy} onPress={onLike} style={[styles.stat, styles.likeButton, liked && styles.likeSelected]}
       testID="showcase-like">{likeCount}</Pressable>
-      : <View style={styles.stat} testID="showcase-like-count">{likeCount}</View>}
+      : showLikes ? <View style={styles.stat} testID="showcase-like-count">{likeCount}</View> : null}
   </View>;
 }
 

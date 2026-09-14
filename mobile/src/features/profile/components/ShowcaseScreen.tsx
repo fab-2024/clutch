@@ -1,7 +1,6 @@
 import { SHOP_EFFECTS_ENABLED } from '@/src/features/shop/effectAvailability';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import ArrowLeft from 'lucide-react-native/icons/arrow-left';
-import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -24,6 +23,7 @@ import { returnToCollection } from '@/src/features/shop/shopNavigation';
 import {
   atelierProductById,
   atelierProducts,
+  createAtelierPreviewItems,
   type AtelierCategory,
   type AtelierProduct,
 } from '@/src/features/shop/atelierCatalog';
@@ -39,19 +39,16 @@ import {
   type AtelierTrySelection,
 } from '@/src/features/shop/atelierState';
 import { AtelierPurchaseSheet } from '@/src/features/shop/components/AtelierPurchaseSheet';
-import { createPresenterRoomAssignments } from '@/src/features/shop/showcasePresenterAssignments';
 import {
   DEFAULT_SHOWCASE_PRESENTER_ID,
   showcasePresenterById,
 } from '@/src/features/shop/showcasePresenterCatalog';
 import {
   DEFAULT_SHOWCASE_RANK_DISPLAY_ID,
-  SHOWCASE_RANK_DISPLAY_CATALOG,
   showcaseRankDisplayById,
 } from '@/src/features/shop/showcaseRankDisplayCatalog';
 import {
   showcaseRoomById,
-  showcaseRoomByProductId,
 } from '@/src/features/shop/showcaseRoomCatalog';
 import {
   cosmeticPackItemById,
@@ -79,16 +76,13 @@ import type { ProfileData } from '../types';
 import ShowcaseAtelierDrawer, {
   type ShowcaseAtelierNotice,
 } from './showcase/ShowcaseAtelierDrawer';
-import ShowcaseCustomizationBar from './showcase/ShowcaseCustomizationBar';
 import ShowcaseObjectPickerSheet from './showcase/ShowcaseObjectPickerSheet';
 import { SHOWCASE_COLLECTIBLE_ASSETS } from './showcase/ShowcasePhysicalObject';
 import ShowcaseRoomEditorScene from './showcase/ShowcaseRoomEditorScene';
 import ShowcaseRoomScene from './showcase/ShowcaseRoomScene';
-import ShowcaseSettingsSheet from './showcase/ShowcaseSettingsSheet';
 import {
   adaptShowcaseRoomAssignments,
   applyShowcasePedestalToSlots,
-  createDefaultShowcaseRoomAssignments,
   createEmptyShowcaseRoomAssignments,
   pedestalAssignmentForSlots,
   type ShowcasePedestalAssignmentIds,
@@ -122,9 +116,11 @@ type ShowcaseSceneSnapshot = AtelierSceneConfig & {
   pedestalAssignments: ShowcasePedestalAssignmentIds;
 };
 
-// The current room artwork already contains its pedestals. Keep the per-slot
-// equipment data dormant so pedestal swapping can return without a migration.
-const INTERCHANGEABLE_SHOWCASE_PEDESTALS_ENABLED = false;
+const LOCAL_PEDESTAL_RUNTIME = new Map(
+  createAtelierPreviewItems()
+    .filter((item) => atelierProductById(item.id)?.category === 'pedestals')
+    .map((item) => [item.id, item]),
+);
 
 export default function ShowcaseScreen({
   atmosphereQualityOverride,
@@ -150,11 +146,8 @@ export default function ShowcaseScreen({
   const [profileData, setProfileData] = useState<ProfileData | null>(previewProfile ?? null);
   const [shopData, setShopData] = useState<CosmeticShopData | null>(previewShop ?? null);
   const [loading, setLoading] = useState(!previewProfile || !previewShop);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [section, setSection] = useState<ShowcaseSection>(requestedSection);
-  const [setupNoticeVisible, setSetupNoticeVisible] = useState(false);
-  const [settingsVisible, setSettingsVisible] = useState(false);
   const [atelierVisible, setAtelierVisible] = useState(false);
   const [atelierCategory, setAtelierCategory] = useState<AtelierCategory>('supports');
   const [atelierTrial, setAtelierTrial] = useState<AtelierTrySelection>({});
@@ -168,7 +161,6 @@ export default function ShowcaseScreen({
   const [presenterId, setPresenterId] = useState<string>(DEFAULT_SHOWCASE_PRESENTER_ID);
   const [roomId, setRoomId] = useState<string | null>(selectedRoom?.id ?? null);
   const [rankDisplayId, setRankDisplayId] = useState<string>('');
-  const [rankDisplayPendingId, setRankDisplayPendingId] = useState<string | null>(null);
   const [jerseyPresentation, setJerseyPresentation] = useState<ShowcaseJerseyPresentation>('locker');
   const [selectedRingFamily, setSelectedRingFamily] = useState<ShowcaseRingFamily | null>(null);
   const [activeRoomSlot, setActiveRoomSlot] = useState<ShowcaseRoomSlotId | null>(null);
@@ -184,7 +176,6 @@ export default function ShowcaseScreen({
   const trackedRef = useRef(false);
   const savedAtelierAppliedRef = useRef(false);
   const initializedRoomRef = useRef<string | null>(null);
-  const rankDisplayMutationRef = useRef(false);
   const pseudo = profile?.pseudo || session?.user.email?.split('@')[0] || 'Supporter';
   const ringEquipment = useShowcaseRingEquipment(
     previewProfile ? `preview-${previewProfile.pseudo}` : pseudo,
@@ -222,13 +213,11 @@ export default function ShowcaseScreen({
       setProfileData(previewProfile);
       setShopData(previewShop);
       setLoading(false);
-      setRefreshing(false);
       return;
     }
 
     const requestId = ++requestRef.current;
-    if (refresh) setRefreshing(true);
-    else setLoading(true);
+    if (!refresh) setLoading(true);
     setError(null);
     try {
       const [nextProfile, nextShop] = await Promise.all([
@@ -246,7 +235,6 @@ export default function ShowcaseScreen({
     } finally {
       if (requestId === requestRef.current) {
         setLoading(false);
-        setRefreshing(false);
       }
     }
   }, [previewProfile, previewShop, pseudo]);
@@ -301,19 +289,11 @@ export default function ShowcaseScreen({
   useEffect(() => {
     if (!selectedRoom) return;
     setRoomId(selectedRoom.id);
-    setTheme(selectedRoom.theme);
-    setLighting(selectedRoom.lighting);
   }, [selectedRoom]);
 
   const ownedItems = useMemo(
     () => shopData?.items.filter((item) => item.owned) ?? [],
     [shopData?.items],
-  );
-  const unlockedPresenterIds = useMemo(
-    () => ownedItems
-      .filter((item) => item.slot === 'vitrine_supports')
-      .map((item) => item.id),
-    [ownedItems],
   );
   const atelierRuntimeById = useMemo(
     () => new Map(atelierRuntimeItems(shopData).map((item) => [item.id, item])),
@@ -324,18 +304,6 @@ export default function ShowcaseScreen({
     [profileData?.cosmetics, shopData?.equipped],
   );
   const atelierCategoryProducts = useMemo(() => atelierProducts(atelierCategory), [atelierCategory]);
-  const rankDisplayOptions = useMemo(() => {
-    if (previewProfile && previewShop) return SHOWCASE_RANK_DISPLAY_CATALOG;
-    const ownedIds = new Set(
-      shopData?.items
-        .filter((item) => item.slot === 'vitrine_rang' && item.owned)
-        .map((item) => item.id) ?? [],
-    );
-    const ownedDisplays = SHOWCASE_RANK_DISPLAY_CATALOG.filter((display) => ownedIds.has(display.id));
-    return ownedDisplays.length > 0
-      ? ownedDisplays
-      : SHOWCASE_RANK_DISPLAY_CATALOG.filter((display) => display.id === DEFAULT_SHOWCASE_RANK_DISPLAY_ID);
-  }, [previewProfile, previewShop, shopData?.items]);
   const savedCosmetics = resolveEquipped(shopData, profileData?.cosmetics);
   const previewEffect = atelierVisible && atelierTrial.effects
     ? atelierProducts('effects').find((effect) => effect.id === atelierTrial.effects)
@@ -362,8 +330,6 @@ export default function ShowcaseScreen({
   const assignmentLayoutKey = roomId ? `room:${roomId}` : `presenter:${presenter.id}`;
   const activeSlotIds = useMemo(() => activeSlots.map((slot) => slot.id), [activeSlots]);
   const scenePedestalProductId = pedestalProductIdForScene(activeRoom?.productId ?? presenter.id);
-  const sceneDefaultPedestalProductId = scenePedestalProductId
-    ?? defaultPedestalProductIdForSkin(activeRoom?.pedestal ?? presenter.pedestal);
   const pedestalTargetIds = pedestalTargetSlots.length > 0
     ? pedestalTargetSlots
     : activeSlotIds;
@@ -387,11 +353,11 @@ export default function ShowcaseScreen({
     ?? null;
   const atelierDisplayRuntimeById = useMemo(() => {
     if (atelierCategory !== 'pedestals') return atelierRuntimeById;
-    return new Map(Array.from(atelierRuntimeById.entries()).map(([id, item]) => [
-      id,
-      { ...item, equipped: id === savedPedestalIdForTargets },
-    ]));
-  }, [atelierCategory, atelierRuntimeById, savedPedestalIdForTargets]);
+    return new Map(atelierCategoryProducts.map((product) => {
+      const item = atelierRuntimeById.get(product.id) ?? LOCAL_PEDESTAL_RUNTIME.get(product.id);
+      return [product.id, item ? { ...item, equipped: product.id === savedPedestalIdForTargets } : item];
+    }).filter((entry): entry is [string, CosmeticItem] => Boolean(entry[1])));
+  }, [atelierCategory, atelierCategoryProducts, atelierRuntimeById, savedPedestalIdForTargets]);
   const atelierSelectedItem = atelierSelectedProduct
     ? atelierDisplayRuntimeById.get(atelierSelectedProduct.id) ?? null
     : null;
@@ -406,14 +372,8 @@ export default function ShowcaseScreen({
     ? atelierRuntimeById.get(atelierPurchaseProduct.id) ?? null
     : null;
   const pedestalPlacements = useMemo<ShowcaseRoomPedestalPlacements>(
-    () => INTERCHANGEABLE_SHOWCASE_PEDESTALS_ENABLED
-      ? resolvePedestalPlacements(
-        pedestalAssignments,
-        activeSlotIds,
-        sceneDefaultPedestalProductId,
-      )
-      : {},
-    [activeSlotIds, pedestalAssignments, sceneDefaultPedestalProductId],
+    () => resolvePedestalPlacements(pedestalAssignments, activeSlotIds, null),
+    [activeSlotIds, pedestalAssignments],
   );
   const ringStats = useMemo(() => adaptShowcaseRingStats(profileData), [profileData]);
   const ringProgressions = useMemo(
@@ -453,16 +413,11 @@ export default function ShowcaseScreen({
   }, [activeSlotIds, assignmentLayoutKey]);
 
   useEffect(() => {
-    if (loading || !placeableItems.length || initializedRoomRef.current === assignmentLayoutKey) return;
-    const firstRoom = initializedRoomRef.current === null;
+    if (loading || initializedRoomRef.current === assignmentLayoutKey) return;
     initializedRoomRef.current = assignmentLayoutKey;
     setActiveRoomSlot(null);
-    setRoomAssignments((current) => firstRoom
-      ? roomId
-        ? createDefaultShowcaseRoomAssignments(placeableItems, activeSlots)
-        : adaptShowcaseRoomAssignments(createPresenterRoomAssignments(placeableItems, presenter.id), activeSlots)
-      : adaptShowcaseRoomAssignments(current, activeSlots));
-  }, [activeRoom, activeSlots, assignmentLayoutKey, loading, placeableItems, presenter.id, roomId]);
+    setRoomAssignments((current) => adaptShowcaseRoomAssignments(current, activeSlots));
+  }, [activeSlots, assignmentLayoutKey, loading]);
 
   function currentSceneSnapshot(): ShowcaseSceneSnapshot {
     return {
@@ -769,66 +724,6 @@ export default function ShowcaseScreen({
     setAtelierPurchaseError(null);
   }
 
-  function changePresenter(nextId: string) {
-    const nextRoom = showcaseRoomByProductId(nextId);
-    if (nextRoom) {
-      setRoomId(nextRoom.id);
-      setPresenterId(DEFAULT_SHOWCASE_PRESENTER_ID);
-      return;
-    }
-    const next = showcasePresenterById(nextId);
-    if (!next) return;
-    setRoomId(null);
-    setPresenterId(next.id);
-  }
-
-  async function changeRankDisplay(nextId: string) {
-    const next = showcaseRankDisplayById(nextId);
-    if (!next || next.id === rankDisplay.id || rankDisplayMutationRef.current || refreshing || loading) return;
-
-    const item = shopData?.items.find((candidate) => candidate.id === next.id) ?? null;
-    const previewMode = Boolean(previewProfile && previewShop);
-    if (!previewMode && !item?.owned) return;
-
-    const previousId = rankDisplay.id;
-    const previousShop = shopData;
-    const mutationRequestId = previewMode ? requestRef.current : ++requestRef.current;
-    rankDisplayMutationRef.current = true;
-    setRankDisplayPendingId(next.id);
-    setError(null);
-    setRankDisplayId(next.id);
-
-    if (previewMode) {
-      rankDisplayMutationRef.current = false;
-      setRankDisplayPendingId(null);
-      return;
-    }
-
-    if (shopData) setShopData(applyPreviewAtelierAction(shopData, next.id));
-
-    try {
-      await equipCosmetic(next.id);
-      const [shopResult] = await Promise.allSettled([
-        loadCosmeticShop(),
-        refreshCosmetics(),
-      ]);
-      if (requestRef.current === mutationRequestId && shopResult.status === 'fulfilled') {
-        setShopData(shopResult.value);
-      }
-    } catch (caught) {
-      if (requestRef.current === mutationRequestId) {
-        setRankDisplayId(previousId);
-        setShopData(previousShop);
-        setError(caught instanceof Error
-          ? caught.message
-          : 'Impossible d’équiper cet écrin de rang.');
-      }
-    } finally {
-      rankDisplayMutationRef.current = false;
-      setRankDisplayPendingId(null);
-    }
-  }
-
   function assignRoomItem(item: ShowcasePlaceableItem | null) {
     if (!activeRoomSlot) return;
     setRoomAssignments((current) => ({ ...current, [activeRoomSlot]: item }));
@@ -842,7 +737,7 @@ export default function ShowcaseScreen({
           {section === 'showcase' ? (
             <ShowcaseRoomEditorScene
               assignments={roomAssignments}
-              atmosphereActive={atmosphereActive && !loading && !settingsVisible && (!atelierVisible || atelierCategory === 'effects') && !activeRoomSlot}
+              atmosphereActive={atmosphereActive && !loading && !atelierVisible && !activeRoomSlot}
               atmosphereQuality={atmosphereQualityOverride}
               cosmetics={cosmetics}
               favoriteTeam={profileData?.favoriteTeam}
@@ -853,7 +748,7 @@ export default function ShowcaseScreen({
                 if (atelierVisible) closeAtelier();
                 setActiveRoomSlot(slotId);
               }}
-              pedestalLayerEnabled={INTERCHANGEABLE_SHOWCASE_PEDESTALS_ENABLED}
+              pedestalLayerEnabled
               pedestalPlacements={pedestalPlacements}
               rankAccent={rankAccent}
               rankDisplay={visibleRankDisplay}
@@ -901,34 +796,6 @@ export default function ShowcaseScreen({
               <ArrowLeft color={colors.text} size={20} />
             </Pressable>
           </View>
-
-          <Pressable
-            accessibilityLabel="Configuration"
-            accessibilityRole="button"
-            accessibilityState={{ expanded: setupNoticeVisible }}
-            onPress={() => {
-              setSetupNoticeVisible(true);
-              if (!previewProfile && !previewShop) {
-                void trackAnalyticsEvent({
-                  type: 'collection_affichee',
-                  campaignKey: 'showcase-setup-click',
-                }).catch(() => undefined);
-              }
-            }}
-            style={({ pressed }) => [styles.setupButton, pressed && styles.pressed]}
-            testID="showcase-setup-button"
-          >
-            <ChevronRight color={colors.volt} size={26} />
-            <Text style={styles.setupLabel}>CONFIGURATION</Text>
-          </Pressable>
-          {setupNoticeVisible ? (
-            <View style={styles.setupNotice} testID="showcase-setup-notice">
-              <Text accessibilityRole="alert" style={styles.setupNoticeText}>La configuration arrive dans une prochaine mise à jour.</Text>
-              <Pressable accessibilityLabel="Fermer le message de configuration" accessibilityRole="button" onPress={() => setSetupNoticeVisible(false)} style={styles.setupDismiss}>
-                <Text style={styles.setupLabel}>FERMER</Text>
-              </Pressable>
-            </View>
-          ) : null}
 
           {loading ? (
             <View accessibilityLabel="Installation de ta collection" accessibilityRole="progressbar" pointerEvents="none" style={styles.loading}>
@@ -993,34 +860,6 @@ export default function ShowcaseScreen({
           visible={Boolean(atelierPurchaseProduct && atelierPurchaseItem)}
         />
 
-        <ShowcaseSettingsSheet
-          loading={loading}
-          objectCount={placeableItems.length}
-          onClose={() => setSettingsVisible(false)}
-          onRefresh={() => {
-            if (!rankDisplayMutationRef.current) void load(true);
-          }}
-          onSelect={setSection}
-          refreshing={refreshing}
-          section={section}
-          visible={settingsVisible}
-        >
-          <ShowcaseCustomizationBar
-            layout="sheet"
-            lighting={lighting}
-            onLightingChange={setLighting}
-            onPresenterChange={changePresenter}
-            onRankDisplayChange={(nextId) => { void changeRankDisplay(nextId); }}
-            onThemeChange={setTheme}
-            presenterId={activeRoom?.productId ?? presenter.id}
-            rankDisplayDisabled={Boolean(rankDisplayPendingId) || refreshing || loading}
-            rankDisplayId={rankDisplayId}
-            rankDisplays={rankDisplayOptions}
-            theme={theme}
-            unlockedPresenterIds={unlockedPresenterIds}
-          />
-        </ShowcaseSettingsSheet>
-
         <ShowcaseRingDetailSheet
           onClose={() => setSelectedRingFamily(null)}
           onEquip={ringEquipment.equip}
@@ -1064,12 +903,6 @@ export function resolvePedestalPlacements(
 function pedestalProductIdForScene(sceneProductId: string) {
   const product = atelierProductById(sceneProductId);
   return product?.category === 'pedestals' ? product.id : null;
-}
-
-export function defaultPedestalProductIdForSkin(skin: ShowcasePedestalSkin) {
-  if (skin === 'steel') return 'serment-du-givre-ice-sheet-pedestal';
-  if (skin === 'bronze') return 'sang-des-titans-monolith-pedestal';
-  return 'neon-protocol-vector-pedestals';
 }
 
 export function resolveRoomPlaceableItems({
@@ -1186,11 +1019,6 @@ function friendlyAtelierError(caught: unknown, fallback: string) {
 const styles = StyleSheet.create({
   screen: { position: 'relative', flex: 1, minWidth: 0, backgroundColor: SHOWCASE_PALETTE.graphiteDeep },
   sceneWrap: { position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden' },
-  setupButton: { position: 'absolute', right: 12, top: '50%', minWidth: 58, minHeight: 64, padding: 10, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: 18, backgroundColor: 'rgba(3,7,10,.8)', borderWidth: 1, borderColor: 'rgba(164,188,204,.25)' },
-  setupLabel: { color: colors.text, fontSize: 11, fontWeight: '700', letterSpacing: 1 },
-  setupNotice: { position: 'absolute', right: 82, top: '50%', width: 218, padding: 16, borderRadius: 16, backgroundColor: '#0C1922', borderWidth: 1, borderColor: 'rgba(164,188,204,.3)' },
-  setupNoticeText: { color: colors.text, fontSize: 14, lineHeight: 20 },
-  setupDismiss: { minHeight: 44, justifyContent: 'center', alignItems: 'flex-end', marginTop: 4 },
   floatingControls: { position: 'absolute', top: 12, right: 12, left: 12, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
   floatingButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: 'rgba(3,7,10,.64)', borderWidth: 1, borderColor: 'rgba(164,188,204,.2)' },
   loading: { position: 'absolute', top: 12, left: '50%', minHeight: 30, marginLeft: -96, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(5,8,11,.86)', borderWidth: 1, borderColor: '#30414E' },

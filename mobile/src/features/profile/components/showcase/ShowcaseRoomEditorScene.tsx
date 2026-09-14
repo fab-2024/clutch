@@ -305,7 +305,7 @@ export default function ShowcaseRoomEditorScene({
     ));
   }, []);
   const isCabinet = ['classique', 'galerie', 'midnight'].includes(room.id);
-  const cabinetWidth = Math.min(viewport.width, viewport.height * 1.5);
+  const cabinetWidth = Math.min(viewport.width, viewport.height * 1.6);
   const cabinetHeight = cabinetWidth / 1.5;
   const layout = isCabinet ? {
     canvas: { width: cabinetWidth, height: cabinetHeight, left: (viewport.width - cabinetWidth) / 2, top: (viewport.height - cabinetHeight) / 2 },
