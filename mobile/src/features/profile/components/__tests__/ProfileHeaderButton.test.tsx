@@ -43,4 +43,14 @@ describe('ProfileHeaderButton', () => {
     expect(screen.getByRole('button').props.accessibilityHint).not.toMatch(/XP|niveau|synchronisation/i);
     expect(screen.getByRole('button').props.accessibilityLabel).toBe('Ouvrir mon profil, FabTheTap');
   });
+
+  it('keeps the pseudo at its intended size in the compact collection header', async () => {
+    const screen = await render(<ProfileHeaderButton compact preview />);
+    const avatar = screen.getByTestId('profile-header-avatar', { includeHiddenElements: true });
+    const pseudo = screen.getByText('FabTheTap');
+
+    expect(avatar.props.size).toBe(44);
+    expect(pseudo.props.adjustsFontSizeToFit).toBeUndefined();
+    expect(StyleSheet.flatten(pseudo.props.style).fontSize).toBe(17);
+  });
 });

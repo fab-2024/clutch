@@ -36,6 +36,8 @@ describe('GriffHeader', () => {
 
     expect(headerStyle.minHeight).toBe(84);
     expect(economyStyle.boxShadow).toBeUndefined();
+    expect(economyStyle.borderWidth).toBe(0);
+    expect(economyStyle.backgroundColor).toBe('transparent');
     expect(lockupStyle.width).toBe(118);
     expect(screen.getByLabelText('GRIFF')).toBeTruthy();
     expect(screen.getByTestId('griff-lockup-dot')).toBeTruthy();
@@ -53,7 +55,7 @@ describe('GriffHeader', () => {
     expect(screen.getByText('GRIFF')).toBeTruthy();
     expect(lockupStyle.width).toBe(104);
     expect(headerStyle.minHeight).toBe(84);
-    expect(economyStyle.width).toBe(170);
+    expect(economyStyle.width).toBe(154);
     expect(screen.getByRole('summary')).toBeTruthy();
   });
 
@@ -74,8 +76,8 @@ describe('GriffHeader', () => {
     expect(screen.getByTestId('wallet-accessory')).toBeTruthy();
     expect(headerStyle.paddingHorizontal).toBe(8);
     expect(headerStyle.paddingRight).toBe(8);
-    expect(lockupStyle.width).toBe(88);
-    expect(economyStyle.width).toBe(162);
+    expect(lockupStyle.width).toBe(108);
+    expect(economyStyle.width).toBe(144);
   });
 
   it('aligns compact wallet actions with the right content edge', async () => {
@@ -106,7 +108,7 @@ describe('GriffHeader', () => {
 
     expect(screen.getByTestId('profile-identity')).toBeTruthy();
     expect(screen.queryByTestId('griff-lockup')).toBeNull();
-    expect(leadingStyle.width).toBe(88);
+    expect(leadingStyle.width).toBe(108);
   });
 
   it('preserves the existing default presentation for non-wallet contexts', async () => {

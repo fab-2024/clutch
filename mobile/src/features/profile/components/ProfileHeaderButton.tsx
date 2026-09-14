@@ -8,11 +8,13 @@ import { colors, fonts, layout, typography } from '@/src/theme';
 const PROFILE_AVATAR_SIZE = layout.headerControlHeight;
 
 type ProfileHeaderButtonProps = {
+  compact?: boolean;
   preview?: boolean;
   pseudo?: string;
 };
 
 export default function ProfileHeaderButton({
+  compact = false,
   preview = false,
   pseudo: pseudoOverride,
 }: ProfileHeaderButtonProps = {}) {
@@ -39,11 +41,11 @@ export default function ProfileHeaderButton({
         <PlayerAvatar
           avatarId={preview ? 'chaos-smile' : profile?.avatar_id}
           label={pseudo}
-          size={PROFILE_AVATAR_SIZE}
+          size={compact ? 44 : PROFILE_AVATAR_SIZE}
         />
       </View>
       <View style={styles.copy}>
-        <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={1} style={styles.pseudo}>{pseudo}</Text>
+        <Text ellipsizeMode="tail" numberOfLines={1} style={styles.pseudo}>{pseudo}</Text>
       </View>
     </Pressable>
   );

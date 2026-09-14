@@ -29,7 +29,7 @@ export function GriffHeader({ accessory, compact = false, economy, leading, vari
   const hasWalletAccessory = walletPresentation && accessory != null;
   const narrowWalletAccessory = hasWalletAccessory && narrowWallet;
   const leadingWidth = walletPresentation
-    ? narrowWalletAccessory ? 88 : narrowWallet ? 104 : compactPresentation ? 108 : 118
+    ? narrowWalletAccessory ? 108 : narrowWallet ? 104 : compactPresentation ? 128 : 118
     : 96;
   const economySummary = (
     <View
@@ -108,7 +108,7 @@ function Balance({
         kind === 'volts' ? styles.voltsMark : styles.fragsMark,
         compact && styles.balanceMarkCompact,
       ]}>
-        <CurrencyIcon kind={kind} size={compact ? 25 : 24} />
+        <CurrencyIcon kind={kind} size={compact ? 22 : 24} />
       </View>
       <View style={styles.balanceCopy}>
         <Text style={[styles.balanceLabel, compact && styles.balanceLabelCompact]}>{label}</Text>
@@ -194,14 +194,12 @@ const styles = StyleSheet.create({
     minHeight: layout.headerControlHeight,
     paddingHorizontal: 5,
     gap: 0,
-    borderRadius: 18,
-    backgroundColor: colors.surfaceGlass,
-    borderWidth: 1,
-    borderColor: colors.borderHighlight,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
   },
-  economyWalletCompact: { width: 170, borderRadius: 17 },
+  economyWalletCompact: { width: 154 },
   economyWalletNarrow: { flexShrink: 0 },
-  economyWalletAccessoryNarrow: { width: 162 },
+  economyWalletAccessoryNarrow: { width: 144 },
   walletActions: {
     flexShrink: 0,
     flexDirection: 'row',
@@ -230,8 +228,8 @@ const styles = StyleSheet.create({
     minWidth: 0,
     minHeight: layout.headerControlHeight - 2,
     flex: 1,
-    paddingHorizontal: 6,
-    gap: 5,
+    paddingHorizontal: 2,
+    gap: 2,
     borderWidth: 0,
     borderRadius: 0,
     backgroundColor: 'transparent',
@@ -246,7 +244,7 @@ const styles = StyleSheet.create({
   fragsMark: { backgroundColor: colors.surfaceLow },
   voltsMark: { backgroundColor: colors.surfaceLow },
   balanceMarkCompact: {
-    width: 28,
+    width: 22,
     height: 36,
     borderRadius: 0,
     backgroundColor: 'transparent',

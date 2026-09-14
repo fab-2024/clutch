@@ -60,7 +60,7 @@ export default function StoreHubScreen({ preview = false, previewData }: StoreHu
         )}
         compact
         economy={preview ? { frags: 1480, volts: previewData?.balance ?? 320 } : undefined}
-        leading={<ProfileHeaderButton preview={preview} pseudo={pseudo} />}
+        leading={<ProfileHeaderButton compact preview={preview} pseudo={pseudo} />}
         variant="wallet"
       />
 
@@ -103,7 +103,7 @@ export default function StoreHubScreen({ preview = false, previewData }: StoreHu
           <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={1} style={styles.heading}>{t('store.showcase.heading')}</Text>
           <Text style={styles.subtitle}>{t('store.showcase.subtitle')}</Text>
         </View>
-        <View style={styles.hero}>
+        <View style={styles.hero} testID="store-hub-showcase-shell">
           <View style={styles.identityRow}>
             <Pressable accessibilityLabel={t('store.profileLabel', { pseudo })} accessibilityRole="button"
               onPress={openProfile} style={styles.identity} testID="store-hub-profile">
@@ -170,9 +170,8 @@ const styles = StyleSheet.create({
   intro: { paddingHorizontal: spacing.md, paddingTop: 16, paddingBottom: 18 },
   heading: { ...typography.sectionTitle, fontSize: 25, lineHeight: 31, letterSpacing: -.6, color: colors.text },
   subtitle: { ...typography.body, fontSize: 16, lineHeight: 23, color: colors.textSecondary },
-  hero: { marginHorizontal: 12, borderRadius: 20, borderWidth: 1, borderColor: colors.borderStrong,
-    overflow: 'hidden', backgroundColor: colors.surfaceGlass },
-  identityRow: { padding: 12, minHeight: 66, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  hero: { marginHorizontal: 12 },
+  identityRow: { paddingHorizontal: 4, paddingVertical: 12, minHeight: 66, flexDirection: 'row', alignItems: 'center', gap: 8 },
   identity: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 },
   identityCopy: { flex: 1, minWidth: 0 },
   eyebrow: { ...typography.metadata, fontSize: 10, lineHeight: 15, color: colors.textSecondary, letterSpacing: .5 },
@@ -188,7 +187,7 @@ const styles = StyleSheet.create({
   plusCircle: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: colors.volt,
     alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,17,24,.8)' },
   firstPieceLabel: { ...typography.caption, color: colors.text, fontSize: 10 },
-  compose: { margin: 12, minHeight: 44, flexDirection: 'row', gap: 8, justifyContent: 'center', alignItems: 'center',
+  compose: { marginTop: 12, minHeight: 44, flexDirection: 'row', gap: 8, justifyContent: 'center', alignItems: 'center',
     backgroundColor: colors.volt, borderRadius: 10 },
   composeLabel: { ...typography.action, color: colors.background, fontSize: 17, lineHeight: 22 },
   personalization: { paddingHorizontal: 12, paddingTop: 18 },

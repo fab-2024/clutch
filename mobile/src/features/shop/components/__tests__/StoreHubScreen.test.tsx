@@ -3,6 +3,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
+import { StyleSheet } from 'react-native';
 
 import StoreHubScreen from '../StoreHubScreen';
 
@@ -69,6 +70,9 @@ describe('StoreHubScreen', () => {
     expect(screen.getByText('Ton espace. Ton empreinte.')).toBeTruthy();
     expect(screen.getByTestId('profile-header-button')).toBeTruthy();
     expect(screen.getByTestId('store-hub-settings')).toBeTruthy();
+    const showcaseShell = StyleSheet.flatten(screen.getByTestId('store-hub-showcase-shell').props.style);
+    expect(showcaseShell.borderWidth ?? 0).toBe(0);
+    expect(showcaseShell.backgroundColor).toBeUndefined();
     await fireEvent.press(screen.getByRole('tab', { name: 'Magasin' }));
     expect(screen.getByTestId('embedded-shop')).toBeTruthy();
     expect(screen.queryByTestId('store-hub-shop')).toBeNull();
