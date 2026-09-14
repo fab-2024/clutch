@@ -414,7 +414,6 @@ function rewardCategory(reward: HubReward) {
 
 function rewardSource(source: string) {
   if (source === 'mission') return 'Mission accomplie';
-  if (source === 'founder_pack') return 'Pack Fondateur';
   if (source === 'partenaire') return 'Activation partenaire';
   return humanize(source || 'Collection GRIFF');
 }

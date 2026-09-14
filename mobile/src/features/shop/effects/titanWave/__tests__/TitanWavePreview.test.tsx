@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { AccessibilityInfo, AppState, type AppStateStatus } from 'react-native';
 import { cancelAnimation, withTiming } from 'react-native-reanimated';
 import TitanWavePreview from '../TitanWavePreview';
@@ -63,13 +63,16 @@ it('keeps a static illustration when motion is reduced', async () => {
 });
 
  it('projects only internal layers in the room and ignores replay requests during playback', async () => {
-  const screen = await render(<TitanWavePreview presentation="scene" replaySignal={0} reduceMotionOverride={false} />);
-  await fireEvent(screen.getByTestId('titan-wave-preview', { includeHiddenElements: true }), 'layout', { nativeEvent: { layout: { width: 768, height: 512 } } });
+ const screen = await render(<TitanWavePreview presentation="scene" replaySignal={0} reduceMotionOverride={false} />);
+  await act(() => screen.getByTestId('titan-wave-preview', { includeHiddenElements: true }).props.onLayout({
+    nativeEvent: { layout: { width: 768, height: 512 } },
+  }));
+  expect(withTiming).not.toHaveBeenCalled();
   expect(screen.queryByTestId('titan-wave-rest')).toBeNull();
   expect(screen.queryByText('Toucher pour rejouer')).toBeNull();
   expect(screen.getByTestId('titan-wave-preview', { includeHiddenElements: true }).props.pointerEvents).toBe('none');
   await screen.rerender(<TitanWavePreview presentation="scene" replaySignal={1} reduceMotionOverride={false} />);
-  expect(withTiming).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(withTiming).toHaveBeenCalledTimes(1));
   await act(() => mockFinish?.(true));
   await screen.rerender(<TitanWavePreview presentation="scene" replaySignal={2} reduceMotionOverride={false} />);
   expect(withTiming).toHaveBeenCalledTimes(2);

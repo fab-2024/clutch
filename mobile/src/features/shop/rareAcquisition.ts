@@ -112,7 +112,6 @@ export function rareAcquisitionOriginLabel(origin: RareAcquisitionOrigin) {
 function sourceLabel(source: CosmeticSource) {
   if (source === 'mission') return 'MISSION ACCOMPLIE';
   if (source === 'partenaire') return 'ACTIVATION PARTENAIRE';
-  if (source === 'founder_pack') return 'PACK FONDATEUR';
   if (source === 'gratuit') return 'OFFERT PAR GRIFF';
   return 'ACQUISITION VOLTS';
 }

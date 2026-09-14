@@ -48,7 +48,7 @@ La dernière évolution terminée est conservée dans la mémoire locale existan
 
 La réaction légère inclut désormais le battement local du noyau avant les conduits et les bulles sur les cinq formes, Module compris. La charge de mutation comporte une impulsion dans les conduits. Les pièces restent des découpes 2,5D des illustrations : le noyau est raccordé par déplacement et fondu local, et les tuyaux par révélation, sans simulation d’emboîtement 3D.
 
-Validation : typecheck et architecture réussis ; 95 tests de faction réussis, couvrant la lecture, le replay, les paliers sautés, l’annulation, les erreurs de stockage, la persistance et la progression continue. Vérification native du parcours Voir → message d’évolution → Revoir dans `/social-v2-preview`, puis du réacteur sur `/social` avec la faction réelle Fnatic à 1 supporter. Aucun compteur serveur n’a été modifié pour ces essais. Son WAV vérifié à 3,9 s, PCM mono 22 050 Hz et non silencieux ; qualité à l’écoute non confirmée. Les sources et animations visuelles restent celles de la passe matière validée.
+Validation : typecheck et architecture réussis ; les tests de faction couvrent la lecture, le replay, les paliers sautés, l’annulation, les erreurs de stockage, la persistance et la progression continue. Vérification native du parcours Voir → message d’évolution → Revoir dans `/social-preview`, puis du réacteur sur `/social` avec la faction réelle Fnatic à 1 supporter. Aucun compteur serveur n’a été modifié pour ces essais. Son WAV vérifié à 3,9 s, PCM mono 22 050 Hz et non silencieux ; qualité à l’écoute non confirmée. Les sources et animations visuelles restent celles de la passe matière validée.
 
 ## Vidéo de démonstration
 

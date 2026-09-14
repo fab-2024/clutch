@@ -31,18 +31,6 @@ import {
   CIRCUIT_ZERO_PACK,
 } from './packs/individualCollections';
 
-import {
-  FNATIC_TEAM_PACK,
-  KC_TEAM_PACK,
-  M8_TEAM_PACK,
-} from './packs/archivedTeamPacks';
-
-import {
-  LEAGUE_OF_LEGENDS_COLLECTION_PACK,
-  VALORANT_COLLECTION_PACK,
-  ROCKET_LEAGUE_COLLECTION_PACK,
-} from './packs/archivedGameCollections';
-
 export type { CosmeticPackKind, TeamPackDefinition, TeamPackItemDefinition, TeamPackPrimaryAction } from './packs/types';
 export {
   CHUTE_LIBRE_PACK,
@@ -60,17 +48,6 @@ export {
   MYTHS_FORGE_PACK,
   CIRCUIT_ZERO_PACK,
 } from './packs/individualCollections';
-export {
-  FNATIC_TEAM_PACK,
-  KC_TEAM_PACK,
-  M8_TEAM_PACK,
-} from './packs/archivedTeamPacks';
-export {
-  LEAGUE_OF_LEGENDS_COLLECTION_PACK,
-  VALORANT_COLLECTION_PACK,
-  ROCKET_LEAGUE_COLLECTION_PACK,
-} from './packs/archivedGameCollections';
-
 export const ORIGINAL_PACK_CATALOG: readonly TeamPackDefinition[] = [
   SANG_DES_TITANS_PACK,
   CHUTE_LIBRE_PACK,
@@ -101,32 +78,14 @@ export const TEAM_PACK_CATALOG: readonly TeamPackDefinition[] = [
 
 export const GAME_COLLECTION_PACK_CATALOG: readonly TeamPackDefinition[] = [];
 
-export const ARCHIVED_TEAM_PACK_CATALOG: readonly TeamPackDefinition[] = [
-  FNATIC_TEAM_PACK,
-  KC_TEAM_PACK,
-  M8_TEAM_PACK,
-];
-
-export const ARCHIVED_GAME_COLLECTION_PACK_CATALOG: readonly TeamPackDefinition[] = [
-  LEAGUE_OF_LEGENDS_COLLECTION_PACK,
-  VALORANT_COLLECTION_PACK,
-  ROCKET_LEAGUE_COLLECTION_PACK,
-];
-
 export const COSMETIC_PACK_CATALOG: readonly TeamPackDefinition[] = [
   ...ORIGINAL_PACK_CATALOG,
   ...TEAM_PACK_CATALOG,
 ];
 
-export const ARCHIVED_COSMETIC_PACK_CATALOG: readonly TeamPackDefinition[] = [
-  ...ARCHIVED_TEAM_PACK_CATALOG,
-  ...ARCHIVED_GAME_COLLECTION_PACK_CATALOG,
-];
-
 export const ALL_COSMETIC_PACK_CATALOG: readonly TeamPackDefinition[] = [
   ...COSMETIC_PACK_CATALOG,
   ...INDIVIDUAL_COLLECTION_CATALOG,
-  ...ARCHIVED_COSMETIC_PACK_CATALOG,
 ];
 
 const COSMETIC_PACK_ITEM_BY_ID = new Map(

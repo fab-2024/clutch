@@ -32,15 +32,6 @@ export const LEVEL_FRAME_CATALOG: Record<LevelFrameVariant, LevelFrameDefinition
     source: 'volts',
     variant: 'azurOrbit',
   },
-  founderForge: {
-    accent: '#E0A154',
-    description: 'Un châssis de cuivre martelé réservé aux premiers bâtisseurs de GRIFF.',
-    name: 'Forge Fondatrice',
-    price: null,
-    rarity: 'legendary',
-    source: 'founder_pack',
-    variant: 'founderForge',
-  },
   violetSovereign: {
     accent: '#A982FF',
     description: 'Une couronne de prismes violets enchâssée dans un alliage sombre et cérémoniel.',
@@ -74,7 +65,6 @@ export const LEVEL_FRAME_CATALOG_ORDER: readonly LevelFrameVariant[] = [
   'signalAscendant',
   'voltRift',
   'azurOrbit',
-  'founderForge',
   'violetSovereign',
   'obsidianFracture',
   'novaPrism',
@@ -87,14 +77,11 @@ export const PREVIEW_OWNED_LEVEL_FRAMES: readonly LevelFrameVariant[] = [
 ];
 
 export function resolveOwnedLevelFrames({
-  founder = false,
   preview = false,
 }: {
-  founder?: boolean;
   preview?: boolean;
 } = {}): LevelFrameVariant[] {
   const owned = new Set<LevelFrameVariant>(['signalAscendant']);
-  if (founder) owned.add('founderForge');
   if (preview) PREVIEW_OWNED_LEVEL_FRAMES.forEach((variant) => owned.add(variant));
   return LEVEL_FRAME_CATALOG_ORDER.filter((variant) => owned.has(variant));
 }

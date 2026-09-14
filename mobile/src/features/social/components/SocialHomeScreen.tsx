@@ -13,19 +13,15 @@ import { colors } from '@/src/theme';
 
 import {
   EmptyFactions,
-  FactionRelicHero,
   FactionWar,
   SocialHomeSkeleton,
 } from './SocialHomeSections';
 import FactionRelicHeroV2 from './FactionRelicHeroV2';
 import { styles } from './SocialHomeScreen.styles';
 
-export type FactionHeroVariant = 'current' | 'v2';
-
 type SocialHomeExperienceProps = {
   data: CommunityData;
   error: string | null;
-  factionHeroVariant?: FactionHeroVariant;
   favoriteTeamId?: string | null;
   loading: boolean;
   mutationOverride?: CommunityMutationPresentation | null;
@@ -48,7 +44,6 @@ export default function SocialHomeScreen() {
     <SocialHomeExperience
       data={data}
       error={error}
-      factionHeroVariant="v2"
       favoriteTeamId={profile?.equipe_favorite_id}
       loading={loading}
       onMutationPresented={acknowledgeMutation}
@@ -62,7 +57,6 @@ export default function SocialHomeScreen() {
 export function SocialHomeExperience({
   data,
   error,
-  factionHeroVariant = 'current',
   favoriteTeamId,
   loading,
   mutationOverride,
@@ -90,8 +84,6 @@ export function SocialHomeExperience({
       ?? null,
     [favoriteTeamId, rankedFactions],
   );
-  const RelicHero = factionHeroVariant === 'v2' ? FactionRelicHeroV2 : FactionRelicHero;
-
   return (
     <ScrollView
       style={styles.root}
@@ -112,7 +104,7 @@ export function SocialHomeExperience({
 
       <View>
         {loading ? <SocialHomeSkeleton /> : error && !faction && !rankedFactions.length ? null : (
-          <RelicHero
+          <FactionRelicHeroV2
             faction={faction}
             me={data.moi}
             mutationOverride={mutationOverride}

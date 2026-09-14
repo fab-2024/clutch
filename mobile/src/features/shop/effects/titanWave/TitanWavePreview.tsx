@@ -67,13 +67,14 @@ export default function TitanWavePreview({ active = true, presentation = 'detail
       setPlaying(false);
       return;
     }
-    if (ready && !started.current) { started.current = true; play(); }
-  }, [clock, enabled, play, previewTimeMs, ready]);
+    if (!scene && ready && !started.current) { started.current = true; play(); }
+  }, [clock, enabled, play, previewTimeMs, ready, scene]);
   useEffect(() => {
     if (replaySeen.current === replaySignal) return;
+    if (!enabled || !ready || previewTimeMs !== undefined) return;
     replaySeen.current = replaySignal;
     play();
-  }, [play, replaySignal]);
+  }, [enabled, play, previewTimeMs, ready, replaySignal]);
   useEffect(() => () => { cancelAnimation(clock); busy.current = false; }, [clock]);
 
   const fissuresStyle = useAnimatedStyle(() => ({ opacity: pulse(clock.value, 0, 280, 1480) * .95 }));

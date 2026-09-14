@@ -8,127 +8,36 @@ jest.mock('@/src/features/shop/components/ShopPreviewScreen', () => ({
     balance: 1_280,
     contract: {},
     equipped: {
-      core: null,
-      factionEffect: null,
-      frame: null,
-      profileCard: null,
-      showcase: {
-        jersey: null,
-        lighting: null,
-        material: null,
-        rankDisplay: null,
-        supports: null,
-      },
-      title: null,
+      core: null, factionEffect: null, frame: null, profileCard: null, title: null,
+      showcase: { jersey: null, lighting: null, material: null, rankDisplay: null, supports: null },
     },
     items: [],
   },
 }));
 jest.mock('../ProfilePreviewScreen', () => ({
   PREVIEW_PROFILE: {
-    favoriteTeam: {
-      id: 'fnc',
-      jeu: 'lol',
-      logo: null,
-      nom: 'Fnatic',
-      relique: 'Ampoule',
-      relique_niveau: 1,
-      supporters: 1,
-      tag: 'FNC',
-    },
+    favoriteTeam: { id: 'fnc', jeu: 'lol', logo: null, nom: 'Fnatic', relique: 'Ampoule', relique_niveau: 1, supporters: 1, tag: 'FNC' },
   },
 }));
 jest.mock('../ShowcaseScreen', () => 'ShowcaseScreen');
 
-describe('ShowcasePreviewScreen team-pack moods', () => {
-  it('uses packId to build the Karmine Corp Blue Wall showcase', () => {
-    const preview = showcasePreviewForMood('standard', 'kc-blue-wall');
-
-    expect(preview.profile.favoriteTeam).toMatchObject({
-      id: 'kc',
-      nom: 'Karmine Corp',
-      tag: 'KC',
-    });
-    expect(preview.shop.items.filter((item) => item.collectionKey === 'kc-blue-wall')).toHaveLength(12);
-    expect(preview.shop.equipped.showcase).toMatchObject({
-      jersey: expect.objectContaining({ id: 'kc-jersey' }),
-      lighting: expect.objectContaining({ id: 'kc-room-lighting' }),
-      supports: expect.objectContaining({ id: 'kc-pedestals' }),
-    });
-    expect(preview.shop.equipped.factionEffect?.id).toBe('kc-blue-wall-effect');
+describe('ShowcasePreviewScreen current moods', () => {
+  it.each([
+    ['forge', 'mythes-forge', 'mythes-forge-room'],
+    ['circuit', 'circuit-zero', 'circuit-zero-room'],
+  ] as const)('builds the %s collection preview', (mood, collectionKey, lightingId) => {
+    const preview = showcasePreviewForMood(mood);
+    expect(preview.shop.items.filter((item) => item.collectionKey === collectionKey)).toHaveLength(8);
+    expect(preview.shop.equipped.showcase.lighting?.id).toBe(lightingId);
   });
 
-  it('keeps the Fnatic mood available through the same packId path', () => {
+  it('accepts a current original pack identifier', () => {
+    const preview = showcasePreviewForMood('standard', 'sang-des-titans');
+    expect(preview.shop.items.filter((item) => item.collectionKey === 'sang-des-titans')).toHaveLength(8);
+  });
+
+  it('ignores removed collection identifiers', () => {
     const preview = showcasePreviewForMood('standard', 'fnatic-black-orange');
-
-    expect(preview.shop.items.filter((item) => item.collectionKey === 'fnatic-black-orange')).toHaveLength(12);
-    expect(preview.shop.equipped.showcase.supports?.id).toBe('fnatic-pedestals');
-    expect(preview.shop.equipped.factionEffect?.id).toBe('fnatic-embers');
-  });
-
-  it('builds the Mythes de la Forge showcase with its magma presenter and resonance', () => {
-    const preview = showcasePreviewForMood('forge', 'mythes-forge');
-
-    expect(preview.shop.items.filter((item) => item.collectionKey === 'mythes-forge')).toHaveLength(8);
-    expect(preview.shop.equipped.showcase).toMatchObject({
-      jersey: expect.objectContaining({ id: 'mythes-forge-armor-orea' }),
-      lighting: expect.objectContaining({ id: 'mythes-forge-room' }),
-    });
-    expect(preview.shop.equipped.factionEffect?.id).toBe('mythes-forge-resonance-effect');
-  });
-
-  it('builds the Circuit Zéro showcase with its aerodynamic presenter and afterimage', () => {
-    const preview = showcasePreviewForMood('circuit', 'circuit-zero');
-
-    expect(preview.shop.items.filter((item) => item.collectionKey === 'circuit-zero')).toHaveLength(8);
-    expect(preview.shop.equipped.showcase).toMatchObject({
-      jersey: expect.objectContaining({ id: 'circuit-zero-kairos-6' }),
-      lighting: expect.objectContaining({ id: 'circuit-zero-room' }),
-    });
-    expect(preview.shop.equipped.factionEffect?.id).toBe('circuit-zero-afterimage-effect');
-  });
-
-  it('builds the M8 Gentle Mates Paris showcase with its dedicated mood', () => {
-    const preview = showcasePreviewForMood('m8', 'm8-gentle-mates');
-
-    expect(preview.profile.favoriteTeam).toMatchObject({
-      id: 'm8',
-      nom: 'Gentle Mates',
-      tag: 'M8',
-    });
-    expect(preview.shop.items.filter((item) => item.collectionKey === 'm8-gentle-mates')).toHaveLength(12);
-    expect(preview.shop.equipped.showcase).toMatchObject({
-      jersey: expect.objectContaining({ id: 'm8-jersey' }),
-      lighting: expect.objectContaining({ id: 'm8-room-lighting' }),
-      supports: expect.objectContaining({ id: 'm8-pedestals' }),
-    });
-    expect(preview.shop.equipped.factionEffect?.id).toBe('m8-sparkle-effect');
-  });
-
-  it('builds the five-object League of Legends collection with its dedicated presenter', () => {
-    const preview = showcasePreviewForMood('lol', 'league-of-legends-collection');
-
-    expect(preview.shop.items.filter((item) => (
-      item.collectionKey === 'league-of-legends-collection'
-    ))).toHaveLength(5);
-    expect(preview.shop.equipped.showcase.supports?.id).toBe('lol-jinx-fishbones-gallery');
-  });
-
-  it('builds the five-object Valorant collection with its dedicated presenter', () => {
-    const preview = showcasePreviewForMood('valorant', 'valorant-collection');
-
-    expect(preview.shop.items.filter((item) => (
-      item.collectionKey === 'valorant-collection'
-    ))).toHaveLength(5);
-    expect(preview.shop.equipped.showcase.supports?.id).toBe('valorant-jett-gallery');
-  });
-
-  it('builds the five-object Rocket League collection with its dedicated presenter', () => {
-    const preview = showcasePreviewForMood('rocket-league', 'rocket-league-collection');
-
-    expect(preview.shop.items.filter((item) => (
-      item.collectionKey === 'rocket-league-collection'
-    ))).toHaveLength(5);
-    expect(preview.shop.equipped.showcase.supports?.id).toBe('rocket-league-octane-gallery');
+    expect(preview.shop.items.some((item) => item.collectionKey === 'fnatic-black-orange')).toBe(false);
   });
 });

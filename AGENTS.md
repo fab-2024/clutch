@@ -11,8 +11,8 @@
   components and hooks must not query Supabase directly.
 - Keep Social split by domain: `missions`, `leagues`, `faction`, `friends` and
   `duels`. Do not recreate a monolithic Social service.
-- `web/` is the legacy application and a reference only. Do not add mobile
-  logic there or copy web code without checking the native implementation.
+- The retired web prototype has been removed. Product code belongs in
+  `mobile/`; public release pages belong in `api/`, `public/` and `server/`.
 - The Clutch Room is paused. Preserve its placeholder unless the user asks to
   resume that product area.
 - The current mobile UI direction is approved. Structural work must preserve

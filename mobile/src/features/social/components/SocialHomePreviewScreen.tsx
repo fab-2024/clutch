@@ -12,7 +12,7 @@ import type { CommunityData, CommunityFaction, CommunityMutationPresentation } f
 import { communityFormForLevel, factionProgress } from '@/src/features/social/faction/utils';
 import { colors, typography } from '@/src/theme';
 
-import { SocialHomeExperience, type FactionHeroVariant } from './SocialHomeScreen';
+import { SocialHomeExperience } from './SocialHomeScreen';
 import SocialSectionNav from './SocialSectionNav';
 
 const PREVIEW_COMMUNITY: CommunityData = {
@@ -51,10 +51,8 @@ const PREVIEW_COMMUNITY: CommunityData = {
 const TESTABLE_FORMS = COMMUNITY_FORMS.filter((form) => form.level >= 1 && form.level <= 5);
 
 export default function SocialHomePreviewScreen({
-  factionHeroVariant = 'current',
   lab = false,
 }: {
-  factionHeroVariant?: FactionHeroVariant;
   lab?: boolean;
 }) {
   const {
@@ -294,7 +292,6 @@ export default function SocialHomePreviewScreen({
         <SocialHomeExperience
           data={data}
           error={null}
-          factionHeroVariant={factionHeroVariant}
           favoriteTeamId="kc"
           instabilityPreviewOverride={instabilityOverride}
           loading={false}

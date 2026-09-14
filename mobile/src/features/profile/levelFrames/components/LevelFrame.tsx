@@ -130,7 +130,6 @@ function FrameArtwork({
   if (variant === 'signalAscendant') return <SignalAscendantBack accent={accent} ids={ids} stage={stage} />;
   if (variant === 'voltRift') return <VoltRiftBack accent={accent} ids={ids} />;
   if (variant === 'azurOrbit') return <AzurOrbitBack accent={accent} ids={ids} />;
-  if (variant === 'founderForge') return <FounderForgeBack accent={accent} ids={ids} />;
   if (variant === 'violetSovereign') return <VioletSovereignBack accent={accent} ids={ids} />;
   if (variant === 'obsidianFracture') return <ObsidianFractureBack accent={accent} ids={ids} />;
   return <NovaPrismBack accent={accent} ids={ids} />;
@@ -150,7 +149,6 @@ function FrameFrontArtwork({
   if (variant === 'signalAscendant') return <SignalAscendantFront accent={accent} ids={ids} stage={stage} />;
   if (variant === 'voltRift') return <VoltRiftFront accent={accent} ids={ids} />;
   if (variant === 'azurOrbit') return <AzurOrbitFront accent={accent} ids={ids} />;
-  if (variant === 'founderForge') return <FounderForgeFront accent={accent} ids={ids} />;
   if (variant === 'violetSovereign') return <VioletSovereignFront ids={ids} />;
   if (variant === 'obsidianFracture') return <ObsidianFractureFront accent={accent} ids={ids} />;
   return <NovaPrismFront accent={accent} ids={ids} />;
@@ -221,27 +219,6 @@ function AzurOrbitFront({ accent, ids }: { accent: string; ids: FrameIds }) {
       <Gem ids={ids} points="20,24 25,31 20,38 15,31" />
       <Gem ids={ids} points="100,82 105,89 100,96 95,89" />
       <Path d="M37 24 Q60 14 83 25" fill="none" opacity=".8" stroke={accent} strokeWidth="2" />
-    </G>
-  );
-}
-
-function FounderForgeBack({ accent, ids }: { accent: string; ids: FrameIds }) {
-  return (
-    <G>
-      <Path d="M29 12 H91 L108 29 V91 L91 108 H29 L12 91 V29 Z" fill="#080706" stroke={`url(#${ids.accent})`} strokeWidth="5" />
-      <Path d="M34 18 H86 L102 34 V86 L86 102 H34 L18 86 V34 Z" fill="none" stroke="#5C3A20" strokeWidth="4" />
-      {[25, 95].map((x) => <Line key={x} opacity=".74" stroke={accent} strokeWidth="5" x1={x} x2={x} y1="47" y2="73" />)}
-      <Path d="M19 30 H33 L39 23 M101 90 H87 L81 97" fill="none" stroke="#F4C27B" strokeWidth="1.4" />
-    </G>
-  );
-}
-
-function FounderForgeFront({ accent, ids }: { accent: string; ids: FrameIds }) {
-  return (
-    <G>
-      <Gem ids={ids} points="60,94 69,103 60,114 51,103" />
-      <Path d="M38 27 H82" opacity=".76" stroke={accent} strokeWidth="2" />
-      <Circle cx="20" cy="20" fill="#C88948" r="2" /><Circle cx="100" cy="20" fill="#C88948" r="2" />
     </G>
   );
 }
@@ -349,7 +326,6 @@ function Gem({ ids, points }: { ids: FrameIds; points: string }) {
 
 function secondaryAccent(variant: LevelFrameVariant) {
   if (variant === 'voltRift') return '#5A780D';
-  if (variant === 'founderForge') return '#6F3C1C';
   if (variant === 'violetSovereign') return '#5D24A5';
   if (variant === 'novaPrism') return '#A982FF';
   if (variant === 'obsidianFracture') return '#B7783B';

@@ -1,7 +1,7 @@
 /// <reference types="jest" />
 
 import { render } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View as mockView } from 'react-native';
 
 import { COMMUNITY_FORMS } from '@/src/features/social/faction/constants';
 import type { FactionProgress } from '@/src/features/social/faction/types';
@@ -10,12 +10,9 @@ import { accessibility } from '@/src/theme';
 import FactionEvolutionRail from '../FactionEvolutionRail';
 
 jest.mock('react-native-reanimated', () => ({ useSharedValue: (value: number) => ({ value }) }));
-jest.mock('../../reactor/FocusedModule', () => ({ RestingMachine: require('react-native').View }));
+jest.mock('../../reactor/FocusedModule', () => ({ RestingMachine: mockView }));
 
-jest.mock('@/src/features/onboarding/components/TeamLogo', () => {
-  const { View } = require('react-native');
-  return View;
-});
+jest.mock('@/src/features/onboarding/components/TeamLogo', () => mockView);
 
 describe('FactionEvolutionRail accessibility', () => {
   it('keeps every form readable without shrinking labels to fit', async () => {

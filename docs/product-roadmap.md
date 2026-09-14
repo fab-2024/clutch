@@ -120,7 +120,7 @@ entièrement explicable après résolution.
 ### Fermeture de release
 
 - [ ] Autoriser le traitement de l'UUID Supabase par RevenueCat.
-- [ ] Déployer les trois fonctions Edge compte et Founder Pack.
+- [ ] Déployer les fonctions Edge du compte et des packs cosmétiques.
 - [ ] Effectuer la recette sandbox achat, restauration et suppression.
 - [ ] Activer la protection Auth contre les mots de passe compromis.
 - [ ] Signer la matrice native iOS/Android, notifications et liens.
@@ -171,7 +171,7 @@ avant d'avoir mesuré une rétention J7 et un retour au verdict suffisants.
 - [x] Aucun avantage compétitif, loot box ou récompense réelle.
 - [ ] Réduire l'offre visible à une collection de lancement éditorialisée.
 - [ ] Mesurer acquisition, équipement, dépense et frustration sur une cohorte.
-- [ ] Tester le Pack Fondateur seulement après stabilité de la boucle gratuite.
+- [ ] Tester les packs cosmétiques seulement après stabilité de la boucle gratuite.
 
 ## Instrumentation de bêta
 

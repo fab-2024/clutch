@@ -1,9 +1,7 @@
 # Six packs cosmétiques — achat unique à 2,99 €
 
 Le périmètre est limité aux six packs originaux ci-dessous. La collection
-« Clutch Originals » n’est pas un septième produit payant. Le Founder Pack
-est retiré des écrans de vente ; ses anciennes routes renvoient à la boutique.
-Les droits historiques sont conservés.
+« Clutch Originals » n’est pas un septième produit payant.
 
 | Pack | Identifiant Apple / Google | Entitlement RevenueCat |
 | --- | --- | --- |
@@ -47,7 +45,7 @@ figurent dans `cosmetic-pack-store-products.json`.
    authentifient elles-mêmes leur appelant (JWT utilisateur / secret webhook).
 8. Relier RevenueCat au webhook
    `https://ipmswubihditoulfgivw.supabase.co/functions/v1/clutch-pack-webhook` avec
-   le header Authorization correspondant au secret. Ne pas créer le Founder Pack.
+   le header Authorization correspondant au secret.
 
 Le prix affiché sur le bouton actif vient du store. Sans produit disponible ou sans migration serveur prête,
 la fiche affiche le prix cible et « Bientôt disponible » ; aucun paiement factice.
@@ -63,10 +61,10 @@ remboursement selon leurs conditions ; l’application ne peut pas l’interdire
 
 - Attribution uniquement après lecture de RevenueCat par la fonction serveur.
 - Une transaction ne peut pas accorder deux comptes en même temps.
-- Aucun débit de Volts pour les six produits. L’ancienne RPC en Volts refuse ces packs.
+- Aucun débit de Volts pour les six produits. La RPC en Volts refuse ces packs.
 - Remboursement : retrait des droits et des objets créés par cet achat, ainsi que
-  de leur équipement. Les objets détenus auparavant et les achats historiques
-  en Volts sont conservés. Les objets sont réattribués lors d’une restauration valide.
+  de leur équipement. Les objets acquis séparément sont conservés. Les objets
+  du pack sont réattribués lors d’une restauration valide.
 - Les notifications périmées sont ignorées. Un transfert traite d’abord l’ancien
   compte, puis le nouveau. Les alias seuls ne dupliquent pas les droits.
 
@@ -82,13 +80,13 @@ vérifie aussi la présence des secrets serveur avant d’autoriser un paiement.
 ## Validation
 
 - Tests mobiles : annulation, paiement en attente, attente de confirmation serveur,
-  affichage du prix à zéro Volt, parcours d’équipement et anciens packs.
+  affichage du prix à zéro Volt et parcours d’équipement des packs actuels.
 - `node --experimental-strip-types --test scripts/test-cosmetic-pack-proofs.ts`
   vérifie les preuves, les remboursements et les identités RevenueCat.
 - `supabase/tests/cosmetic_packs_store.sql` : contrat transactionnel avec rollback,
   exécuté avec succès après déploiement. Il couvre l’attribution, les répétitions,
   le refus d’un achat en Volts, les collisions de compte, la révocation,
-  le transfert, les droits historiques et les privilèges.
+  le transfert et les privilèges.
 - Recette native à réaliser une fois les produits créés : achat sandbox, annulation,
   paiement différé, réinstallation/restauration, remboursement, changement de compte
   et interruption réseau après paiement. Aucun vrai paiement n’a encore été testé.

@@ -17,11 +17,10 @@ type Props = {
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
 export function MatchesCalendarModal({ matches, onClose, onSelectDay, selectedDayKey, visible }: Props) {
-  const selectedDate = dateFromKey(selectedDayKey);
-  const [month, setMonth] = useState(() => startOfMonth(selectedDate));
+  const [month, setMonth] = useState(() => startOfMonth(dateFromKey(selectedDayKey)));
 
   useEffect(() => {
-    if (visible) setMonth(startOfMonth(selectedDate));
+    if (visible) setMonth(startOfMonth(dateFromKey(selectedDayKey)));
   }, [selectedDayKey, visible]);
 
   const matchDays = useMemo(
@@ -94,7 +93,7 @@ export function MatchesCalendarModal({ matches, onClose, onSelectDay, selectedDa
 function monthCells(month: Date) {
   const leading = (month.getDay() + 6) % 7;
   const numberOfDays = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
-  const cells: Array<Date | null> = Array.from({ length: leading }, () => null);
+  const cells: (Date | null)[] = Array.from({ length: leading }, () => null);
   for (let day = 1; day <= numberOfDays; day += 1) {
     cells.push(new Date(month.getFullYear(), month.getMonth(), day, 12));
   }

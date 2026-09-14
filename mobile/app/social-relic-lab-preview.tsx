@@ -4,7 +4,7 @@ import SocialHomePreviewScreen from '@/src/features/social/components/SocialHome
 export default function SocialRelicLabPreviewRoute() {
   return (
     <PreviewRoute>
-      <SocialHomePreviewScreen factionHeroVariant="v2" lab />
+      <SocialHomePreviewScreen lab />
     </PreviewRoute>
   );
 }

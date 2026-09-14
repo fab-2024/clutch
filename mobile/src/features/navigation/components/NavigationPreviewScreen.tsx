@@ -12,7 +12,7 @@ import SocialHomePreviewScreen from '@/src/features/social/components/SocialHome
 const PreviewTabs = createBottomTabNavigator();
 
 function SocialPreview() {
-  return <SocialHomePreviewScreen factionHeroVariant="v2" />;
+  return <SocialHomePreviewScreen />;
 }
 
 const previewScreens = {

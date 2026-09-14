@@ -10,8 +10,6 @@ export const SHOWCASE_ATMOSPHERE_FPS_FLOOR = 56;
 export const SHOWCASE_ATMOSPHERE_DROPPED_FRAME_LIMIT = 0.1;
 export const SHOWCASE_ATMOSPHERE_SAMPLE_WARMUP_MS = 600;
 export const SHOWCASE_ATMOSPHERE_SAMPLE_DURATION_MS = 2_200;
-export const M8_SPARKLE_FILIGREE_MS = 400;
-export const M8_SPARKLE_ARRIVAL_MS = 1_100;
 
 export type ShowcaseAtmosphereQuality = 'auto' | 'animated' | 'static';
 export type ShowcaseAtmospherePerformanceStatus = 'untested' | 'passed' | 'failed';
@@ -31,7 +29,7 @@ export type ShowcaseAtmosphere = {
   cosmeticColor: string;
   driftDurationMs: number;
   dustCount: number;
-  effect: 'ambient' | 'blue-wall' | 'circuit-afterimage' | 'embers' | 'forge-resonance' | 'm8-sparkle' | 'neon-pulse';
+  effect: 'ambient' | 'circuit-afterimage' | 'forge-resonance' | 'neon-pulse';
   intensity: number;
   lightingColor: string;
   rankColor: string;
@@ -61,22 +59,13 @@ export function resolveShowcaseAtmosphere({
   const safeRankOrder = clamp(Math.floor(Number(rankOrder) || 0), 0, 5);
   const signatureCosmetic = strongestEquippedCosmetic(cosmetics);
   const rarityWeight = rarityScore(signatureCosmetic);
-  const embers = cosmetics?.factionEffect?.id === 'fnatic-embers'
-    || cosmetics?.factionEffect?.styleKey === 'fnatic-embers';
-  const blueWall = cosmetics?.factionEffect?.id === 'kc-blue-wall-effect'
-    || cosmetics?.factionEffect?.styleKey === 'kc-blue-wall-effect';
-  const m8Sparkle = cosmetics?.factionEffect?.id === 'm8-sparkle-effect'
-    || cosmetics?.factionEffect?.styleKey === 'm8-sparkle-effect';
   const neonPulse = cosmetics?.factionEffect?.id === 'neon-protocol-impulse-effect'
     || cosmetics?.factionEffect?.styleKey === 'neon-protocol-impulse-effect';
   const forgeResonance = cosmetics?.factionEffect?.id === 'mythes-forge-resonance-effect'
     || cosmetics?.factionEffect?.styleKey === 'mythes-forge-resonance-effect';
   const circuitAfterimage = cosmetics?.factionEffect?.id === 'circuit-zero-afterimage-effect'
     || cosmetics?.factionEffect?.styleKey === 'circuit-zero-afterimage-effect';
-  const brandedEffect = embers
-    || blueWall
-    || m8Sparkle
-    || neonPulse
+  const brandedEffect = neonPulse
     || forgeResonance
     || circuitAfterimage;
   const intensity = brandedEffect
@@ -85,47 +74,29 @@ export function resolveShowcaseAtmosphere({
 
   return {
     cosmeticColor: brandedEffect
-      ? (blueWall
-        ? '#168DFF'
-        : m8Sparkle
-          ? '#B9DCFF'
-          : neonPulse
+      ? (neonPulse
             ? '#58DFFF'
             : forgeResonance
               ? '#F06A3A'
-              : circuitAfterimage
-                ? '#C7F000'
-              : '#FF5900')
+              : '#C7F000')
       : normalizeHex(signatureCosmetic?.accent, normalizeHex(cosmetics?.core?.accent, rankAccent)),
     driftDurationMs: brandedEffect
-      ? (blueWall
-        ? 14_000
-        : m8Sparkle
-          ? 10_000
-          : neonPulse
+      ? (neonPulse
             ? 9_000
             : forgeResonance
               ? 10_500
-              : circuitAfterimage
-                ? 8_500
-              : 12_000)
+              : 8_500)
       : clamp(17_000 - safeRankOrder * 480 - rarityWeight * 420, 12_200, 17_000),
     dustCount: brandedEffect
-      ? (blueWall ? 9 : m8Sparkle ? 8 : circuitAfterimage ? 9 : neonPulse || forgeResonance ? 10 : 11)
+      ? (circuitAfterimage ? 9 : 10)
       : clamp(6 + Math.floor(safeRankOrder / 2) + rarityWeight, 6, 11),
-    effect: embers
-      ? 'embers'
-      : blueWall
-        ? 'blue-wall'
-        : m8Sparkle
-          ? 'm8-sparkle'
-          : neonPulse
+    effect: neonPulse
             ? 'neon-pulse'
             : forgeResonance
               ? 'forge-resonance'
               : circuitAfterimage
                 ? 'circuit-afterimage'
-              : 'ambient',
+                : 'ambient',
     intensity,
     lightingColor: normalizeHex(lightingAccent, '#31D7E2'),
     rankColor: normalizeHex(rankAccent, '#E8FF3D'),

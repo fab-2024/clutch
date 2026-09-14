@@ -7,28 +7,15 @@ import TeamPackPreviewScreen from '../TeamPackPreviewScreen';
 const mockTeamPackScreen = jest.fn();
 let mockParams: { packId?: string; state?: string } = {};
 
-jest.mock('expo-router', () => ({
-  Redirect: 'Redirect',
-  useLocalSearchParams: () => mockParams,
-}));
+jest.mock('expo-router', () => ({ Redirect: 'Redirect', useLocalSearchParams: () => mockParams }));
 jest.mock('@/src/components/dev/PreviewRoute', () => ({ usePreviewRoutesEnabled: () => true }));
 jest.mock('../ShopPreviewScreen', () => ({
   PREVIEW_SHOP: {
     balance: 1280,
     contract: {},
     equipped: {
-      core: null,
-      factionEffect: null,
-      frame: null,
-      profileCard: null,
-      showcase: {
-        jersey: null,
-        lighting: null,
-        material: null,
-        rankDisplay: null,
-        supports: null,
-      },
-      title: null,
+      core: null, factionEffect: null, frame: null, profileCard: null, title: null,
+      showcase: { jersey: null, lighting: null, material: null, rankDisplay: null, supports: null },
     },
     items: [],
   },
@@ -43,115 +30,33 @@ jest.mock('../TeamPackScreen', () => {
 });
 
 describe('TeamPackPreviewScreen', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockParams = {};
-  });
+  beforeEach(() => { jest.clearAllMocks(); mockParams = {}; });
 
-  it('selects the requested pack instead of hardcoding Fnatic', async () => {
-    mockParams = { packId: 'kc-blue-wall' };
+  it.each([
+    ['sang-des-titans', 'sang-des-titans-three-voices-totem'],
+    ['chute-libre', 'chute-libre-falcon-jetpack'],
+    ['serment-du-givre', 'serment-du-givre-veyr-dragon'],
+  ])('selects the requested current pack %s', async (packId, itemId) => {
+    mockParams = { packId };
     await render(<TeamPackPreviewScreen />);
-
-    expect(mockTeamPackScreen).toHaveBeenCalled();
-    const props = mockTeamPackScreen.mock.calls[0][0] as {
-      packId: string;
-      previewData: { items: { id: string }[] };
-    };
-    expect(props).toEqual(expect.objectContaining({
-      packId: 'kc-blue-wall',
+    expect(mockTeamPackScreen).toHaveBeenCalledWith(expect.objectContaining({
+      packId,
       previewData: expect.objectContaining({
-        items: expect.arrayContaining([expect.objectContaining({ id: 'kc-blue-wall-effect' })]),
+        items: expect.arrayContaining([expect.objectContaining({ id: itemId })]),
       }),
     }));
-    expect(props.previewData.items).toHaveLength(12);
-  });
-
-  it('selects the requested M8 pack with its sparkle effect', async () => {
-    mockParams = { packId: 'm8-gentle-mates' };
-    await render(<TeamPackPreviewScreen />);
-
-    const props = mockTeamPackScreen.mock.calls[0][0] as {
-      packId: string;
-      previewData: { items: { id: string }[] };
-    };
-    expect(props).toEqual(expect.objectContaining({
-      packId: 'm8-gentle-mates',
-      previewData: expect.objectContaining({
-        items: expect.arrayContaining([expect.objectContaining({ id: 'm8-sparkle-effect' })]),
-      }),
-    }));
-    expect(props.previewData.items).toHaveLength(12);
   });
 
   it('selects the Clutch Originals pack with its six fictional team emblems', async () => {
     mockParams = { packId: 'clutch-originals-teams' };
     await render(<TeamPackPreviewScreen />);
-
-    const props = mockTeamPackScreen.mock.calls[0][0] as {
-      packId: string;
-      previewData: { items: { id: string }[] };
-    };
-    expect(props).toEqual(expect.objectContaining({
-      packId: 'clutch-originals-teams',
-      previewData: expect.objectContaining({
-        items: expect.arrayContaining([
-          expect.objectContaining({ id: 'clutch-originals-ghost-circuit-badge' }),
-        ]),
-      }),
-    }));
+    const props = mockTeamPackScreen.mock.calls[0][0] as { previewData: { items: unknown[] } };
     expect(props.previewData.items).toHaveLength(6);
   });
 
-  it('selects the requested League of Legends collection with five objects', async () => {
-    mockParams = { packId: 'league-of-legends-collection' };
+  it('falls back to the current default for a removed identifier', async () => {
+    mockParams = { packId: 'fnatic-black-orange' };
     await render(<TeamPackPreviewScreen />);
-
-    const props = mockTeamPackScreen.mock.calls[0][0] as {
-      packId: string;
-      previewData: { items: { id: string }[] };
-    };
-    expect(props).toEqual(expect.objectContaining({
-      packId: 'league-of-legends-collection',
-      previewData: expect.objectContaining({
-        items: expect.arrayContaining([expect.objectContaining({ id: 'lol-baron-nashor' })]),
-      }),
-    }));
-    expect(props.previewData.items).toHaveLength(5);
-  });
-
-  it('selects the requested Valorant collection with five objects', async () => {
-    mockParams = { packId: 'valorant-collection' };
-    await render(<TeamPackPreviewScreen />);
-
-    const props = mockTeamPackScreen.mock.calls[0][0] as {
-      packId: string;
-      previewData: { items: { id: string }[] };
-    };
-    expect(props).toEqual(expect.objectContaining({
-      packId: 'valorant-collection',
-      previewData: expect.objectContaining({
-        items: expect.arrayContaining([expect.objectContaining({ id: 'valorant-omen' })]),
-      }),
-    }));
-    expect(props.previewData.items).toHaveLength(5);
-  });
-
-  it('selects the requested Rocket League collection with five objects', async () => {
-    mockParams = { packId: 'rocket-league-collection' };
-    await render(<TeamPackPreviewScreen />);
-
-    const props = mockTeamPackScreen.mock.calls[0][0] as {
-      packId: string;
-      previewData: { items: { id: string }[] };
-    };
-    expect(props).toEqual(expect.objectContaining({
-      packId: 'rocket-league-collection',
-      previewData: expect.objectContaining({
-        items: expect.arrayContaining([
-          expect.objectContaining({ id: 'rocket-league-arena-ball' }),
-        ]),
-      }),
-    }));
-    expect(props.previewData.items).toHaveLength(5);
+    expect(mockTeamPackScreen).toHaveBeenCalledWith(expect.objectContaining({ packId: 'sang-des-titans' }));
   });
 });

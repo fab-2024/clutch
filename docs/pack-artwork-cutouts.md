@@ -5,7 +5,7 @@
 Les PNG d’objets sous `mobile/assets/shop/packs/*/items/` sont les sources
 partagées par la boutique, le sélecteur d’objets et la vitrine. Ils sont remplacés
 sur place, sans changer les identifiants du catalogue ni les objets possédés.
-Les héros de packs, arrière-plans de salle et collections archivées sont exclus.
+Les héros de packs et arrière-plans de salle sont exclus.
 
 L’inventaire des deux catalogues comporte 93 images dans 10 packs : 87 sources
 avaient un fond opaque. Parmi les 6 images ayant déjà un canal alpha, le cadre

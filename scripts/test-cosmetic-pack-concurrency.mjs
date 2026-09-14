@@ -11,10 +11,10 @@ import {
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const containerName = await resolveLocalDatabaseContainer(repositoryRoot);
 const [
-  packId = 'fnatic-black-orange',
+  packId = 'sang-des-titans',
   expectedPriceArgument = '1200',
-  expectedMembersArgument = '12',
-  expectedDefaultsArgument = '8',
+  expectedMembersArgument = '8',
+  expectedDefaultsArgument = '5',
 ] = process.argv.slice(2);
 
 if (!/^[a-z0-9][a-z0-9-]{1,63}$/.test(packId)) {

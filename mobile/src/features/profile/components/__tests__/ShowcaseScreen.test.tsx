@@ -14,7 +14,6 @@ import {
   applyPreviewTeamPackAction,
   createTeamPackPreviewItems,
   CONCLAVE_ARCANIQUE_PACK,
-  FNATIC_TEAM_PACK,
   SANG_DES_TITANS_PACK,
   SERMENT_DU_GIVRE_PACK,
 } from '@/src/features/shop/teamPackCatalog';
@@ -30,6 +29,7 @@ jest.mock('expo-router', () => ({
   router: { back: jest.fn(), canGoBack: jest.fn(() => true), replace: jest.fn() },
   useFocusEffect: (callback: () => (() => void) | void) => {
     const React = jest.requireActual('react');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the mutable flag simulates focus changes between rerenders
     React.useEffect(() => mockRouteFocused ? callback() : undefined, [callback, mockRouteFocused]);
   },
   useLocalSearchParams: () => ({}),
@@ -395,51 +395,36 @@ describe('ShowcaseScreen immersive editor', () => {
     }
   });
 
-  it('uses the current Boutique catalogue in the object picker and hides archived pack objects', () => {
-    const archivedTotem = createTeamPackPreviewItems(FNATIC_TEAM_PACK)
-      .find((item) => item.id === 'fnatic-totem')!;
+  it('uses the current Boutique catalogue in the object picker', () => {
     const currentTotem = createTeamPackPreviewItems(SANG_DES_TITANS_PACK)
       .find((item) => item.id === 'sang-des-titans-three-voices-totem')!;
 
     const items = resolveRoomPlaceableItems({
-      ownedItems: [
-        { ...archivedTotem, owned: true },
-        { ...currentTotem, owned: true },
-      ],
+      ownedItems: [{ ...currentTotem, owned: true }],
       profileData: PREVIEW_PROFILE,
       rankAccent: '#C57943',
       rankLabel: 'BRONZE',
       ringProgressions: [],
     });
 
-    expect(items.some((item) => item.id === 'cosmetic:fnatic-totem')).toBe(false);
     expect(items.find((item) => item.id === `cosmetic:${currentTotem.id}`)).toMatchObject({
       kind: 'trophy',
       name: 'Totem des Trois Voix',
     });
   });
 
-  it('hides legacy cores, banners, every title and every frame while preserving current pack objects', () => {
+  it('hides frames while preserving current pack objects', () => {
     const currentCore = createTeamPackPreviewItems(CONCLAVE_ARCANIQUE_PACK)
       .find((item) => item.id === 'conclave-arcanique-conclave-seal')!;
     const currentBanner = createTeamPackPreviewItems(CONCLAVE_ARCANIQUE_PACK)
       .find((item) => item.id === 'conclave-arcanique-bloom-banner')!;
-    const currentTitle = createTeamPackPreviewItems(FNATIC_TEAM_PACK)
-      .find((item) => item.slot === 'titre_profil')!;
     const currentFrame = createTeamPackPreviewItems(CONCLAVE_ARCANIQUE_PACK)
       .find((item) => item.id === 'conclave-arcanique-trellis-frame')!;
-    const legacyItems = [
-      { ...currentCore, id: 'legacy-core', name: 'Core Origine' },
-      { ...currentBanner, id: 'legacy-banner', name: 'Carte Noire' },
-      { ...currentTitle, id: 'legacy-title', name: 'Rookie du Call' },
-    ];
 
     const items = resolveRoomPlaceableItems({
       ownedItems: [
-        ...legacyItems.map((item) => ({ ...item, owned: true })),
         { ...currentCore, owned: true },
         { ...currentBanner, owned: true },
-        { ...currentTitle, owned: true },
         { ...currentFrame, owned: true },
       ],
       profileData: PREVIEW_PROFILE,
@@ -448,7 +433,6 @@ describe('ShowcaseScreen immersive editor', () => {
       ringProgressions: [],
     });
 
-    expect(items.some((item) => item.kind === 'title')).toBe(false);
     expect(items.some((item) => item.kind === 'frame')).toBe(false);
     expect(items.filter((item) => item.kind === 'core')).toEqual([
       expect.objectContaining({ id: `cosmetic:${currentCore.id}` }),

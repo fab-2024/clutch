@@ -15,8 +15,7 @@ les impressions et calculer la rétention :
 - collection affichée et objet consulté ;
 - objet obtenu, équipé ou retiré ;
 - campagne rejointe, mission commencée ou terminée, tâche terminée et récompense réclamée ;
-- achat cosmétique commencé ou terminé et notification ouverte ;
-- Founder Pack affiché, achat démarré ou annulé et restauration demandée.
+- achat cosmétique commencé ou terminé, restauration demandée et notification ouverte.
 
 Le schéma interdit les identifiants publicitaires, identifiants d’appareil,
 adresses IP applicatives et métadonnées libres. Les événements bruts restent
@@ -57,7 +56,7 @@ un échec reste donc rejouable et ne doit jamais être présenté comme un succ�
 
 ## Données d’achat
 
-Le Founder Pack est traité par Apple ou Google et validé par RevenueCat.
+Les packs cosmétiques sont traités par Apple ou Google et validés par RevenueCat.
 RevenueCat reçoit l’UUID interne du compte comme App User ID ainsi que les
 informations nécessaires au traitement de l’achat. Clutch ne conserve dans
 Supabase qu’un registre normalisé et privé : identifiant de produit,
@@ -94,7 +93,7 @@ Déclaration recommandée pour cette version :
 La déclaration doit préciser que la collecte facultative n'a lieu qu'après le
 choix présenté dans l'application.
 
-Pour une version contenant le Founder Pack, ajouter également **Purchases →
+Pour une version contenant les achats de packs, ajouter également **Purchases →
 Purchase History**, liée à l’identifiant de compte et utilisée pour App
 Functionality. Vérifier la privacy manifest du SDK RevenueCat réellement
 embarqué avant chaque soumission.
@@ -113,7 +112,7 @@ Déclaration recommandée pour cette version :
 
 La collecte d'interactions produit est facultative et désactivée par défaut.
 
-Pour une version contenant le Founder Pack, déclarer aussi l’historique
+Pour une version contenant les achats de packs, déclarer aussi l’historique
 d’achat comme donnée collectée pour le fonctionnement de l’app. RevenueCat
 doit être traité conformément à son rôle contractuel de prestataire ; la
 réponse exacte au champ « partagé » doit être validée contre le contrat et le

@@ -1,8 +1,7 @@
 # GRIFF Mobile
 
 Application principale de GRIFF, construite avec Expo, React Native et Expo
-Router. L'ancienne application web reste disponible dans `../web` uniquement
-comme référence pendant la migration.
+Router.
 
 La branche mobile de travail est `codex/mobile-architecture-feature`.
 `mobile-foundation` correspond à une ancienne version de l'application.
@@ -75,7 +74,7 @@ src/
     onboarding/
     hub/
     matches/
-    purchases/                Founder Pack et achats natifs
+    purchases/                packs cosmétiques et achats natifs
     profile/
     social/
       missions/
@@ -113,10 +112,10 @@ npm run mobile:release-check
 ```
 
 Les routes de prévisualisation sont disponibles uniquement en développement ;
-elles redirigent vers l’application dans une build de production. Le paiement
-du Founder Pack doit toujours être testé dans une nouvelle build native. La
-configuration complète des stores, de RevenueCat et de Supabase est décrite
-dans [`docs/founder-pack-testing.md`](docs/founder-pack-testing.md).
+elles redirigent vers l’application dans une build de production. Les achats
+des packs cosmétiques doivent toujours être testés dans une nouvelle build
+native. La configuration des stores, de RevenueCat et de Supabase est décrite
+dans [`docs/cosmetic-pack-purchases.md`](docs/cosmetic-pack-purchases.md).
 
 Le domaine HTTPS, la suppression de compte, les liens universels, les E2E et la
 matrice de soumission sont suivis dans
@@ -131,4 +130,3 @@ matrice de soumission sont suivis dans
 - Le mobile ne duplique pas les autorisations sensibles. Les soldes,
   pronostics, récompenses et données privées restent protégés par PostgreSQL,
   les RPC, les privilèges Data API et la RLS.
-- Aucune nouvelle logique mobile ne doit être ajoutée dans `../web`.

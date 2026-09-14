@@ -4,9 +4,6 @@ import { createAtelierPreviewItems } from '../../atelierCatalog';
 import {
   applyPreviewTeamPackAction,
   createTeamPackPreviewItems,
-  FNATIC_TEAM_PACK,
-  KC_TEAM_PACK,
-  M8_TEAM_PACK,
   SERMENT_DU_GIVRE_PACK,
 } from '../../teamPackCatalog';
 import {
@@ -103,63 +100,6 @@ describe('showcase Atelier state', () => {
     expect(resolveAtelierSceneConfig(data.equipped, { lighting: 'lighting_white' }).lighting).toBe('competition');
     expect(resolveAtelierSceneConfig(data.equipped, { lighting: 'lighting_emerald' }).lighting).toBe('emerald');
     expect(resolveAtelierSceneConfig(data.equipped, { lighting: 'lighting_acid' }).lighting).toBe('acid');
-  });
-
-  it('activates the pack-only Fnatic room and orange lighting', () => {
-    const items = createTeamPackPreviewItems(FNATIC_TEAM_PACK);
-    const fnaticLighting = items.find((item) => item.id === 'fnatic-room-lighting');
-    const fnaticPedestals = items.find((item) => item.id === 'fnatic-pedestals');
-    if (!fnaticLighting || !fnaticPedestals) throw new Error('Missing Fnatic preview fixtures');
-
-    expect(resolveAtelierSceneConfig({
-      ...EMPTY_EQUIPPED_COSMETICS,
-      showcase: {
-        ...EMPTY_EQUIPPED_COSMETICS.showcase,
-        lighting: asEquipped(fnaticLighting),
-        supports: asEquipped(fnaticPedestals),
-      },
-    })).toMatchObject({
-      lighting: 'orange',
-      presenterId: 'fnatic-pedestals',
-    });
-  });
-
-  it('activates the pack-only KC room and Blue Wall lighting', () => {
-    const items = createTeamPackPreviewItems(KC_TEAM_PACK);
-    const lighting = items.find((item) => item.id === 'kc-room-lighting');
-    const pedestals = items.find((item) => item.id === 'kc-pedestals');
-    if (!lighting || !pedestals) throw new Error('Missing KC preview fixtures');
-
-    expect(resolveAtelierSceneConfig({
-      ...EMPTY_EQUIPPED_COSMETICS,
-      showcase: {
-        ...EMPTY_EQUIPPED_COSMETICS.showcase,
-        lighting: asEquipped(lighting),
-        supports: asEquipped(pedestals),
-      },
-    })).toMatchObject({
-      lighting: 'blue',
-      presenterId: 'kc-pedestals',
-    });
-  });
-
-  it('activates the pack-only M8 room and silver lighting', () => {
-    const items = createTeamPackPreviewItems(M8_TEAM_PACK);
-    const lighting = items.find((item) => item.id === 'm8-room-lighting');
-    const pedestals = items.find((item) => item.id === 'm8-pedestals');
-    if (!lighting || !pedestals) throw new Error('Missing M8 preview fixtures');
-
-    expect(resolveAtelierSceneConfig({
-      ...EMPTY_EQUIPPED_COSMETICS,
-      showcase: {
-        ...EMPTY_EQUIPPED_COSMETICS.showcase,
-        lighting: asEquipped(lighting),
-        supports: asEquipped(pedestals),
-      },
-    })).toMatchObject({
-      lighting: 'silver',
-      presenterId: 'm8-pedestals',
-    });
   });
 
   it('keeps a collection room usable without purchasing a pedestal', () => {

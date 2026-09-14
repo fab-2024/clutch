@@ -1,6 +1,6 @@
 # Direction artistique — septembre 2026
 
-Statut : cadrage issu des onze références fournies le 12 septembre 2026 et de l’inspection du code. Les cinq formes sont intégrées au laboratoire `reactor-lab-preview`, avec quatre transitions successives. La relique de faction en service et les autres chantiers ne sont pas encore remplacés. Les suggestions présentes dans les captures de conversation sont des pistes de conception, pas des décisions de produit supplémentaires.
+Statut : cadrage issu des onze références fournies le 12 septembre 2026 et de l’inspection du code. Les cinq formes sont intégrées au produit et au laboratoire `reactor-lab-preview`, avec quatre transitions successives. Les suggestions présentes dans les captures de conversation sont des pistes de conception, pas des décisions de produit supplémentaires.
 
 ## Direction demandée
 
@@ -26,7 +26,7 @@ Storyboard proposé à partir des références :
 
 Le bleu et les pièces mécaniques remplacent les prescriptions anciennes de violet, cœur organique et racines. Les exigences d’alignement, de remplissage continu, d’occlusion, d’absence de graduations et de validation visuelle restent pertinentes.
 
-Intégration : `social/faction/relicArtwork.ts`, `constants.ts`, `components/CollectiveRelicRenderer.tsx`, `StaticRelicVial.tsx` et `InteractiveRelicVial.tsx`. Recalibrer les masques sur les nouveaux assets ; ne pas appliquer les anciens chemins au nouveau réservoir.
+Intégration : `social/faction/components/CollectiveRelic.tsx`, `reactor/ReactorScene.tsx`, `ReactorMachine.tsx`, `VesselElixir.tsx` et `reactor/artwork.ts`. Recalibrer les masques sur les assets du réacteur ; ne pas appliquer les chemins de l’ancien récipient au réservoir actuel.
 
 Compatibilité à résoudre : le code possède cinq récipients, un état dormant et un état terminal à 10 000 supporters. Il faut conserver les événements et récompenses déjà acquis. Proposition : associer les cinq nouvelles silhouettes aux cinq niveaux existants, et représenter l’état terminal par un Nexus accompli. Ne pas modifier les seuils ou récompenses depuis les seuls chiffres illustratifs des captures.
 

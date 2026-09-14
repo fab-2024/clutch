@@ -157,8 +157,8 @@ export default function LockerScreen({ previewData, previewProfile, previewState
     previewData ? 'rank' : null,
   );
   const ownedLevelFrames = useMemo(
-    () => resolveOwnedLevelFrames({ founder: profileData?.founder, preview: Boolean(previewData) }),
-    [previewData, profileData?.founder],
+    () => resolveOwnedLevelFrames({ preview: Boolean(previewData) }),
+    [previewData],
   );
   const levelFrameEquipment = useLevelFrameEquipment(
     previewData ? `preview-${pseudo}` : pseudo,
@@ -825,9 +825,9 @@ function uniqueCollections(items: CosmeticItem[]) { return Array.from(new Set(it
 function itemAction(item: CosmeticItem, pending: boolean, confirming: boolean, missing: number) { if (pending) return 'SYNCHRONISATION…'; if (item.equipped) return item.included ? 'ÉQUIPÉ' : 'RETIRER'; if (item.owned) return 'ÉQUIPER'; if (!item.acquirable) return acquisitionAction(item); if (missing) return `MANQUE ${formatNumber(missing)} V`; return confirming ? `CONFIRMER · ${formatNumber(item.price)} V` : `DÉBLOQUER · ${formatNumber(item.price)} V`; }
 function rarityColor(rarity: CosmeticRarity, accent: string) { return rarity === 'commun' ? '#87929E' : accent; }
 function rarityLabel(rarity: CosmeticRarity) { if (rarity === 'legendaire') return 'LÉGENDAIRE'; if (rarity === 'epique') return 'ÉPIQUE'; if (rarity === 'rare') return 'RARE'; return 'COMMUN'; }
-function sourceLabel(source: CosmeticItem['source']) { if (source === 'mission') return 'MISSION'; if (source === 'partenaire') return 'PARTENAIRE'; if (source === 'founder_pack') return 'PACK FONDATEUR'; if (source === 'gratuit') return 'OFFERT'; return 'VOLTS'; }
+function sourceLabel(source: CosmeticItem['source']) { if (source === 'mission') return 'MISSION'; if (source === 'partenaire') return 'PARTENAIRE'; if (source === 'gratuit') return 'OFFERT'; return 'VOLTS'; }
 function acquisitionAction(item: CosmeticItem) { return item.available ? sourceLabel(item.source) : 'INDISPONIBLE'; }
-function acquisitionMessage(item: CosmeticItem) { if (!item.available) return `${item.name} n’est plus disponible à l’acquisition, mais reste permanent pour ses propriétaires.`; if (item.source === 'mission') return `${item.name} se débloque en accomplissant sa mission.`; if (item.source === 'partenaire') return `${item.name} se débloque via son activation partenaire.`; if (item.source === 'founder_pack') return `${item.name} est réservé au pack Fondateur.`; return `${item.name} ne peut pas être débloqué depuis la collection.`; }
+function acquisitionMessage(item: CosmeticItem) { if (!item.available) return `${item.name} n’est plus disponible à l’acquisition.`; if (item.source === 'mission') return `${item.name} se débloque en accomplissant sa mission.`; if (item.source === 'partenaire') return `${item.name} se débloque via son activation partenaire.`; return `${item.name} ne peut pas être débloqué depuis la collection.`; }
 function provenanceLabel(item: CosmeticItem) { const identity = item.team?.tag || item.brandKey || humanize(item.collectionKey); return `${identity.toUpperCase()} · ${sourceLabel(item.source)}`; }
 function sourceDetail(item: CosmeticItem) { return [sourceLabel(item.source), item.campaignKey ? humanize(item.campaignKey) : null, item.brandKey ? humanize(item.brandKey) : null].filter(Boolean).join(' · '); }
 function availabilityLabel(item: CosmeticItem) { if (!item.available && item.owned) return 'Retiré · conservé dans ta collection'; if (!item.available) return 'Indisponible'; if (item.availableUntil) return `Disponible jusqu’au ${new Date(item.availableUntil).toLocaleDateString('fr-FR')}`; return 'Disponible sans expiration'; }

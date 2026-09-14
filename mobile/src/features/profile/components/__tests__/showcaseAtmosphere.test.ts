@@ -5,8 +5,6 @@ import type { ProfileTeam } from '@/src/features/profile/types';
 
 import {
   evaluateShowcaseAtmospherePerformance,
-  M8_SPARKLE_ARRIVAL_MS,
-  M8_SPARKLE_FILIGREE_MS,
   resolveShowcaseAtmosphere,
   resolveShowcaseAtmosphereMode,
   SHOWCASE_ATMOSPHERE_DROPPED_FRAME_LIMIT,
@@ -66,106 +64,6 @@ describe('showcase adaptive atmosphere', () => {
     expect(atmosphere.intensity).toBeLessThanOrEqual(0.39);
     expect(atmosphere.dustCount).toBeLessThanOrEqual(11);
     expect(atmosphere.effect).toBe('ambient');
-  });
-
-  it('uses the Fnatic ember impulse profile before settling into idle', () => {
-    const atmosphere = resolveShowcaseAtmosphere({
-      cosmetics: {
-        ...EMPTY_EQUIPPED_COSMETICS,
-        factionEffect: {
-          accent: '#FF5900',
-          description: '',
-          id: 'fnatic-embers',
-          level: 1,
-          name: 'Effet Braises',
-          rarity: 'legendaire',
-          slot: 'effet_faction',
-          styleKey: 'fnatic-embers',
-        },
-      },
-      favoriteTeam: null,
-      lightingAccent: '#FF5900',
-      rankAccent: '#B87845',
-      rankOrder: 0,
-    });
-
-    expect(atmosphere).toMatchObject({
-      cosmeticColor: '#FF5900',
-      driftDurationMs: 12_000,
-      dustCount: 11,
-      effect: 'embers',
-      intensity: 0.39,
-    });
-  });
-
-  it('uses the KC Blue Wall propagation profile with a reduced-motion fallback', () => {
-    const atmosphere = resolveShowcaseAtmosphere({
-      cosmetics: {
-        ...EMPTY_EQUIPPED_COSMETICS,
-        factionEffect: {
-          accent: '#168DFF',
-          description: '',
-          id: 'kc-blue-wall-effect',
-          level: 1,
-          name: 'Effet Blue Wall',
-          rarity: 'legendaire',
-          slot: 'effet_faction',
-          styleKey: 'kc-blue-wall-effect',
-        },
-      },
-      favoriteTeam: null,
-      lightingAccent: '#168DFF',
-      rankAccent: '#B87845',
-      rankOrder: 0,
-    });
-
-    expect(atmosphere).toMatchObject({
-      cosmeticColor: '#168DFF',
-      driftDurationMs: 14_000,
-      dustCount: 9,
-      effect: 'blue-wall',
-      intensity: 0.39,
-    });
-    expect(resolveShowcaseAtmosphereMode({
-      active: true,
-      fullScreen: true,
-      performanceStatus: 'passed',
-      platform: 'ios',
-      quality: 'auto',
-      reduceMotion: true,
-    })).toEqual({ kind: 'static', reason: 'reduced-motion' });
-  });
-
-  it('uses the M8 filigree and sparkle arrival profile', () => {
-    const atmosphere = resolveShowcaseAtmosphere({
-      cosmetics: {
-        ...EMPTY_EQUIPPED_COSMETICS,
-        factionEffect: {
-          accent: '#B9DCFF',
-          description: '',
-          id: 'm8-sparkle-effect',
-          level: 1,
-          name: 'Effet Éclat M8',
-          rarity: 'legendaire',
-          slot: 'effet_faction',
-          styleKey: 'm8-sparkle-effect',
-        },
-      },
-      favoriteTeam: null,
-      lightingAccent: '#B9DCFF',
-      rankAccent: '#B87845',
-      rankOrder: 0,
-    });
-
-    expect(atmosphere).toMatchObject({
-      cosmeticColor: '#B9DCFF',
-      driftDurationMs: 10_000,
-      dustCount: 8,
-      effect: 'm8-sparkle',
-      intensity: 0.39,
-    });
-    expect(M8_SPARKLE_FILIGREE_MS).toBe(400);
-    expect(M8_SPARKLE_ARRIVAL_MS).toBe(1_100);
   });
 
   it('uses the Protocole Néon cyan and magenta impulse profile', () => {

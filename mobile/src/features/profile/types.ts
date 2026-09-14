@@ -67,7 +67,6 @@ export type ProfileData = {
   pseudo: string;
   createdAt: string;
   profileTitle: string | null;
-  founder: boolean;
   publicProfile: boolean;
   ranking: ProfileRanking;
   recap: Record<string, unknown>;
@@ -87,7 +86,6 @@ export type RawProfile = {
   pseudo?: string;
   cree_le?: string;
   titre_profil?: string | null;
-  est_fondateur?: boolean;
   profil_public?: boolean;
   badge_vedette?: string | null;
   badges_exposes?: string[] | null;

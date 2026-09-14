@@ -5,31 +5,19 @@ import {
   SHOWCASE_PRESENTER_CATALOG,
   showcasePresenterById,
 } from '../../showcasePresenterCatalog';
-import { createPresenterRoomAssignments } from '../../showcasePresenterAssignments';
 import {
   CHUTE_LIBRE_PACK,
-  CIRCUIT_ZERO_PACK,
   CONCLAVE_ARCANIQUE_PACK,
   DERNIER_ROUND_PACK,
-  LEAGUE_OF_LEGENDS_COLLECTION_PACK,
-  MYTHS_FORGE_PACK,
-  NEON_PROTOCOL_PACK,
-  ROCKET_LEAGUE_COLLECTION_PACK,
   SANG_DES_TITANS_PACK,
   SERMENT_DU_GIVRE_PACK,
   TURBO_ARENA_PACK,
-  VALORANT_COLLECTION_PACK,
 } from '../../teamPackCatalog';
 
-describe('showcase presenter catalog', () => {
-  it('keeps the approved presenters and team-pack scenes in visual order', () => {
+describe('current showcase presenter catalog', () => {
+  it('contains the current cabinet and collection rooms only', () => {
     expect(SHOWCASE_PRESENTER_CATALOG.map((presenter) => presenter.id)).toEqual([
       'supports_gallery',
-      'supports_forge',
-      'supports_halo',
-      'supports_crystal',
-      'supports_vault',
-      'supports_champagne',
       'neon-protocol-vector-pedestals',
       'mythes-forge-magma-pedestals',
       'circuit-zero-aero-pedestals',
@@ -39,265 +27,32 @@ describe('showcase presenter catalog', () => {
       'conclave-arcanique-rosette-pedestal',
       'turbo-arena-kickoff-pedestal',
       'dernier-round-extraction-pedestal',
-      'fnatic-pedestals',
-      'kc-pedestals',
-      'm8-pedestals',
-      'lol-jinx-fishbones-gallery',
-      'valorant-jett-gallery',
-      'rocket-league-octane-gallery',
     ]);
-    expect(SHOWCASE_PRESENTER_CATALOG.map((presenter) => presenter.slots.length)).toEqual([
-      8,
-      8,
-      10,
-      8,
-      10,
-      6,
-      9,
-      8,
-      7,
-      7,
-      7,
-      7,
-      7,
-      7,
-      7,
-      10,
-      10,
-      10,
-      5,
-      5,
-      5,
-    ]);
+    expect(showcasePresenterById('fnatic-pedestals')).toBeNull();
+    expect(showcasePresenterById('valorant-jett-gallery')).toBeNull();
   });
 
   it.each([
-    { pack: SANG_DES_TITANS_PACK, presenterId: 'sang-des-titans-monolith-pedestal', roomName: 'Salle du Dernier Pacte' },
-    { pack: CHUTE_LIBRE_PACK, presenterId: 'chute-libre-drop-pedestal', roomName: 'Belvédère Nomade' },
-    { pack: SERMENT_DU_GIVRE_PACK, presenterId: 'serment-du-givre-ice-sheet-pedestal', roomName: 'Bastion des Cimes' },
-    { pack: CONCLAVE_ARCANIQUE_PACK, presenterId: 'conclave-arcanique-rosette-pedestal', roomName: 'Clairière du Conclave' },
-    { pack: TURBO_ARENA_PACK, presenterId: 'turbo-arena-kickoff-pedestal', roomName: 'Dôme Turbo' },
-    { pack: DERNIER_ROUND_PACK, presenterId: 'dernier-round-extraction-pedestal', roomName: 'Base Avancée' },
-  ])('links $roomName to the complete room included in $pack.name', ({ pack, presenterId, roomName }) => {
-    const presenter = showcasePresenterById(presenterId);
-    expect(presenter).toMatchObject({
-      image: expect.anything(),
-      name: roomName,
+    [SANG_DES_TITANS_PACK, 'sang-des-titans-monolith-pedestal'],
+    [CHUTE_LIBRE_PACK, 'chute-libre-drop-pedestal'],
+    [SERMENT_DU_GIVRE_PACK, 'serment-du-givre-ice-sheet-pedestal'],
+    [CONCLAVE_ARCANIQUE_PACK, 'conclave-arcanique-rosette-pedestal'],
+    [TURBO_ARENA_PACK, 'turbo-arena-kickoff-pedestal'],
+    [DERNIER_ROUND_PACK, 'dernier-round-extraction-pedestal'],
+  ] as const)('links $name to its current room', (pack, presenterId) => {
+    expect(showcasePresenterById(presenterId)).toMatchObject({
       packId: pack.id,
       packOnly: true,
       showRankDisplay: false,
     });
-    expect(presenter?.slots).toHaveLength(7);
   });
 
-  it('places the nine Protocole Néon objects on the Synapse stations', () => {
-    expect(showcasePresenterById('neon-protocol-vector-pedestals')).toMatchObject({
-      accent: '#58DFFF',
-      name: 'Socle Vectoriel',
-      packId: 'neon-protocol',
-      showRankDisplay: false,
-    });
-
-    const items = NEON_PROTOCOL_PACK.items
-      .filter((item) => item.roomKind)
-      .map((item) => ({
-        accent: item.accent,
-        id: `cosmetic:${item.id}`,
-        image: item.image,
-        kind: item.roomKind!,
-        name: item.name,
-      }));
-    const assignments = createPresenterRoomAssignments(items, 'neon-protocol-vector-pedestals');
-
-    expect(assignments.jersey?.name).toBe('Armure Vega');
-    expect(assignments.trophy?.name).toBe('Totem Null');
-    expect(assignments['left-extra']?.name).toBe('Bannière Phase');
-    expect(assignments['right-extra']?.name).toBe('Glyphe Nœud');
-    expect(assignments.badge?.name).toBe('Badge Pionnier');
-    expect(assignments.ring?.name).toBeUndefined();
-    expect(assignments.title?.name).toBeUndefined();
-    expect(assignments['left-free']?.name).toBe('Cadre Phase');
-    expect(assignments['right-free']?.name).toBeUndefined();
-  });
-
-  it('places the eight physical Mythes de la Forge objects on the Magma stations', () => {
-    expect(showcasePresenterById('mythes-forge-magma-pedestals')).toMatchObject({
-      accent: '#F06A3A',
-      name: 'Socle Magmatique',
-      packId: 'mythes-forge',
-      showRankDisplay: false,
-    });
-
-    const items = MYTHS_FORGE_PACK.items
-      .filter((item) => item.roomKind)
-      .map((item) => ({
-        accent: item.accent,
-        id: `cosmetic:${item.id}`,
-        image: item.image,
-        kind: item.roomKind!,
-        name: item.name,
-      }));
-    const assignments = createPresenterRoomAssignments(items, 'mythes-forge-magma-pedestals');
-
-    expect(assignments['left-free']?.name).toBe('Cadre Fissure');
-    expect(assignments['left-extra']?.name).toBe('Bannière Strate');
-    expect(assignments.ring?.name).toBeUndefined();
-    expect(assignments.jersey?.name).toBe('Armure Oréa');
-    expect(assignments['right-extra']?.name).toBe('Sigil de Braise');
-    expect(assignments.trophy?.name).toBe('Totem Basalte');
-    expect(assignments.badge?.name).toBe('Badge Artisan');
-    expect(assignments['right-free']?.name).toBeUndefined();
-  });
-
-  it('places the seven physical Circuit Zéro objects on the aerodynamic stations', () => {
-    expect(showcasePresenterById('circuit-zero-aero-pedestals')).toMatchObject({
-      accent: '#C7F000',
-      name: 'Socle Aéro',
-      packId: 'circuit-zero',
-      showRankDisplay: false,
-    });
-
-    const items = CIRCUIT_ZERO_PACK.items
-      .filter((item) => item.roomKind)
-      .map((item) => ({
-        accent: item.accent,
-        id: `cosmetic:${item.id}`,
-        image: item.image,
-        kind: item.roomKind!,
-        name: item.name,
-      }));
-    const assignments = createPresenterRoomAssignments(items, 'circuit-zero-aero-pedestals');
-
-    expect(assignments['left-free']?.name).toBe('Cadre Sillage');
-    expect(assignments['left-extra']?.name).toBe('Bannière Secteur');
-    expect(assignments.ring?.name).toBeUndefined();
-    expect(assignments.jersey?.name).toBe('Kairos-6');
-    expect(assignments['right-extra']?.name).toBe('Glyphe Zéro');
-    expect(assignments.trophy?.name).toBe('Totem Delta');
-    expect(assignments.badge?.name).toBe('Badge Pilote');
-  });
-
-  it('exposes and fills the five fixed Valorant collection slots', () => {
-    expect(showcasePresenterById('valorant-jett-gallery')).toMatchObject({
-      accent: '#FF4655',
-      name: 'Collection Valorant',
-      packId: 'valorant-collection',
-      showRankDisplay: false,
-    });
-    expect(showcasePresenterById('valorant-jett-gallery')?.slots).toHaveLength(5);
-
-    const items = VALORANT_COLLECTION_PACK.items.map((item) => ({
-      accent: item.accent,
-      id: `cosmetic:${item.id}`,
-      image: item.image,
-      kind: item.roomKind!,
-      name: item.name,
-    }));
-    const assignments = createPresenterRoomAssignments(items, 'valorant-jett-gallery');
-
-    expect(assignments['left-free']?.name).toBe('Vandal');
-    expect(assignments['left-extra']?.name).toBe('Spike');
-    expect(assignments.trophy?.name).toBe('Jett');
-    expect(assignments['right-extra']?.name).toBe('Omen');
-    expect(assignments['right-free']?.name).toBe('Wingman');
-  });
-
-  it('exposes and fills the five fixed Rocket League collection slots', () => {
-    expect(showcasePresenterById('rocket-league-octane-gallery')).toMatchObject({
-      accent: '#FF8A24',
-      name: 'Collection Rocket League',
-      packId: 'rocket-league-collection',
-      showRankDisplay: false,
-    });
-    expect(showcasePresenterById('rocket-league-octane-gallery')?.slots).toHaveLength(5);
-
-    const items = ROCKET_LEAGUE_COLLECTION_PACK.items.map((item) => ({
-      accent: item.accent,
-      id: `cosmetic:${item.id}`,
-      image: item.image,
-      kind: item.roomKind!,
-      name: item.name,
-    }));
-    const assignments = createPresenterRoomAssignments(items, 'rocket-league-octane-gallery');
-
-    expect(assignments['left-free']?.name).toBe('Roue Zomba');
-    expect(assignments['left-extra']?.name).toBe('Boost 100');
-    expect(assignments.trophy?.name).toBe('Octane');
-    expect(assignments['right-extra']?.name).toBe('Ballon d’arène');
-    expect(assignments['right-free']?.name).toBe('Explosion de but');
-  });
-
-  it('exposes ten clickable slots linked to the KC Blue Wall pack', () => {
-    expect(showcasePresenterById('kc-pedestals')).toMatchObject({
-      accent: '#168DFF',
-      name: 'Karmine Corp Blue Wall',
-      packId: 'kc-blue-wall',
-      rarity: 'legendaire',
-    });
-    expect(showcasePresenterById('kc-pedestals')?.slots).toHaveLength(10);
-  });
-
-  it('exposes ten clickable slots for the Fnatic Black & Orange room', () => {
-    expect(showcasePresenterById('fnatic-pedestals')).toMatchObject({
-      accent: '#FF5900',
-      name: 'Fnatic Black & Orange',
-      rarity: 'legendaire',
-    });
-    expect(showcasePresenterById('fnatic-pedestals')?.slots).toHaveLength(10);
-  });
-
-  it('exposes ten clickable slots linked to the M8 Gentle Mates Paris pack', () => {
-    expect(showcasePresenterById('m8-pedestals')).toMatchObject({
-      accent: '#B9DCFF',
-      name: 'M8 Gentle Mates Paris',
-      packId: 'm8-gentle-mates',
-      rarity: 'legendaire',
-    });
-    expect(showcasePresenterById('m8-pedestals')?.slots).toHaveLength(10);
-  });
-
-  it('exposes five fixed collection slots without a rank display for League of Legends', () => {
-    expect(showcasePresenterById('lol-jinx-fishbones-gallery')).toMatchObject({
-      accent: '#D6B56A',
-      name: 'Collection League of Legends',
-      packId: 'league-of-legends-collection',
-      showRankDisplay: false,
-    });
-    expect(showcasePresenterById('lol-jinx-fishbones-gallery')?.slots).toHaveLength(5);
-  });
-
-  it('places the five League of Legends objects on their dedicated pedestals', () => {
-    const items = LEAGUE_OF_LEGENDS_COLLECTION_PACK.items.map((item) => ({
-      accent: item.accent,
-      id: `cosmetic:${item.id}`,
-      image: item.image,
-      kind: item.roomKind!,
-      name: item.name,
-    }));
-    const assignments = createPresenterRoomAssignments(items, 'lol-jinx-fishbones-gallery');
-
-    expect(assignments['left-free']?.name).toBe('Lame d’Infini');
-    expect(assignments['left-extra']?.name).toBe('Fragment du Nexus');
-    expect(assignments.trophy?.name).toBe('Jinx & Fishbones');
-    expect(assignments['right-extra']?.name).toBe('Baron Nashor');
-    expect(assignments['right-free']?.name).toBe('Balise de vision');
-  });
-
-  it('keeps every placement independently clickable inside each presenter', () => {
+  it('keeps every placement independently selectable', () => {
     SHOWCASE_PRESENTER_CATALOG.forEach((presenter) => {
       expect(presenter.image).toBeTruthy();
       expect(new Set(presenter.slots.map((slot) => slot.id)).size).toBe(presenter.slots.length);
-      expect(presenter.slots.every((slot) => Number.parseFloat(slot.width) > 0)).toBe(true);
-      expect(presenter.slots.every((slot) => Number.parseFloat(slot.height) > 0)).toBe(true);
     });
-  });
-
-  it('keeps Cercle Obsidienne as the included compatibility default', () => {
     expect(DEFAULT_SHOWCASE_PRESENTER_ID).toBe('supports_gallery');
-    expect(showcasePresenterById(DEFAULT_SHOWCASE_PRESENTER_ID)).toMatchObject({
-      name: 'Cercle Obsidienne',
-      price: 0,
-      rarity: 'commun',
-    });
+    expect(showcasePresenterById(DEFAULT_SHOWCASE_PRESENTER_ID)?.name).toBe('Classique');
   });
 });

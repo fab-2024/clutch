@@ -36,8 +36,6 @@ import {
   SHOWCASE_ATMOSPHERE_FPS_FLOOR,
   SHOWCASE_ATMOSPHERE_SAMPLE_DURATION_MS,
   SHOWCASE_ATMOSPHERE_SAMPLE_WARMUP_MS,
-  M8_SPARKLE_ARRIVAL_MS,
-  M8_SPARKLE_FILIGREE_MS,
   type ShowcaseAtmosphere,
   type ShowcaseAtmospherePerformanceReport,
   type ShowcaseAtmospherePerformanceStatus,
@@ -164,26 +162,7 @@ function ShowcaseAtmosphereCanvas({
   useEffect(() => {
     cancelAnimation(impulse);
     impulse.value = 0;
-    if (atmosphere.effect === 'embers') {
-      impulse.value = withSequence(
-        withTiming(1, { duration: 350, easing: Easing.out(Easing.quad) }),
-        withTiming(0, { duration: 850, easing: Easing.inOut(Easing.quad) }),
-      );
-    } else if (atmosphere.effect === 'blue-wall') {
-      impulse.value = withSequence(
-        withTiming(1, { duration: 450, easing: Easing.out(Easing.quad) }),
-        withTiming(0, { duration: 750, easing: Easing.inOut(Easing.quad) }),
-      );
-    } else if (atmosphere.effect === 'm8-sparkle') {
-      impulse.value = withSequence(
-        withTiming(0.42, { duration: M8_SPARKLE_FILIGREE_MS, easing: Easing.out(Easing.quad) }),
-        withTiming(1, {
-          duration: M8_SPARKLE_ARRIVAL_MS - M8_SPARKLE_FILIGREE_MS,
-          easing: Easing.out(Easing.cubic),
-        }),
-        withTiming(0, { duration: 350, easing: Easing.inOut(Easing.quad) }),
-      );
-    } else if (atmosphere.effect === 'neon-pulse') {
+    if (atmosphere.effect === 'neon-pulse') {
       impulse.value = withSequence(
         withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) }),
         withTiming(0.18, { duration: 760, easing: Easing.inOut(Easing.quad) }),
@@ -215,18 +194,6 @@ function ShowcaseAtmosphereCanvas({
   ));
   const sweepStart = useDerivedValue(() => vec(sweepX.value, 0));
   const sweepEnd = useDerivedValue(() => vec(sweepX.value + 190, 0));
-  const blueWallOpacity = useDerivedValue(() => 0.12 + impulse.value * 0.72);
-  const blueWallWidth = useDerivedValue(() => 320 + impulse.value * 500);
-  const blueWallX = useDerivedValue(() => 500 - blueWallWidth.value / 2);
-  const m8IdleSparkle = useDerivedValue(() => (
-    Math.pow(Math.max(0, Math.sin(phase.value * Math.PI * 2)), 18) * 0.34
-  ));
-  const m8FiligreeOpacity = useDerivedValue(() => (
-    Math.min(1, impulse.value / 0.42) * 0.42 + m8IdleSparkle.value * 0.24
-  ));
-  const m8StarOpacity = useDerivedValue(() => (
-    Math.max(0, (impulse.value - 0.3) / 0.7) * 0.92 + m8IdleSparkle.value
-  ));
   const neonPulseOpacity = useDerivedValue(() => (
     0.12 + impulse.value * 0.78 + breath.value * 0.08
   ));
@@ -300,69 +267,6 @@ function ShowcaseAtmosphereCanvas({
             </Rect>
           </Group>
 
-          {atmosphere.effect === 'blue-wall' ? (
-            <Group blendMode="screen" opacity={blueWallOpacity}>
-              <Rect height={5} width={blueWallWidth} x={blueWallX} y={286}>
-                <LinearGradient
-                  colors={['rgba(0,0,0,0)', '#168DFF', '#B9E3FF', '#168DFF', 'rgba(0,0,0,0)']}
-                  end={vec(910, 286)}
-                  positions={[0, 0.22, 0.5, 0.78, 1]}
-                  start={vec(90, 286)}
-                />
-              </Rect>
-              {[-196, -140, -84, -28, 28, 84, 140, 196].map((offset) => (
-                <Rect
-                  color={offset % 84 === 0 ? '#B9E3FF' : '#168DFF'}
-                  height={190 - Math.abs(offset) * 0.3}
-                  key={`blue-wall-column-${offset}`}
-                  opacity={0.5}
-                  width={2}
-                  x={500 + offset}
-                  y={96 + Math.abs(offset) * 0.14}
-                />
-              ))}
-            </Group>
-          ) : null}
-
-          {atmosphere.effect === 'm8-sparkle' ? (
-            <Group blendMode="screen">
-              <Group opacity={m8FiligreeOpacity}>
-                <Circle
-                  color="#B9DCFF"
-                  cx={500}
-                  cy={335}
-                  r={205}
-                  style="stroke"
-                  strokeWidth={2}
-                />
-                <Circle
-                  color="#EAF5FF"
-                  cx={500}
-                  cy={335}
-                  r={142}
-                  style="stroke"
-                  strokeWidth={1}
-                />
-                <Rect color="#B9DCFF" height={1} opacity={0.72} width={520} x={240} y={334} />
-              </Group>
-              <Group opacity={m8StarOpacity}>
-                <Circle cx={500} cy={103} r={64}>
-                  <RadialGradient
-                    c={vec(500, 103)}
-                    colors={['rgba(234,245,255,.72)', 'rgba(185,220,255,.18)', 'rgba(0,0,0,0)']}
-                    positions={[0, 0.38, 1]}
-                    r={64}
-                  />
-                </Circle>
-                <Rect color="#F7FBFF" height={116} width={3} x={498.5} y={45} />
-                <Rect color="#F7FBFF" height={3} width={116} x={442} y={101.5} />
-                <Circle color="#FFFFFF" cx={500} cy={103} r={5} />
-                <Circle color="#DDEEFF" cx={277} cy={133} r={2.2} />
-                <Circle color="#DDEEFF" cx={742} cy={151} r={2.4} />
-              </Group>
-            </Group>
-          ) : null}
-
           {atmosphere.effect === 'neon-pulse' ? (
             <Group blendMode="screen" opacity={neonPulseOpacity}>
               <Circle
@@ -420,7 +324,6 @@ function ShowcaseAtmosphereCanvas({
               key={`showcase-atmosphere-dust-${index}`}
               particle={particle}
               phase={phase}
-              impulse={impulse}
             />
           ))}
         </FitBox>
@@ -473,13 +376,11 @@ function AtmosphereDust({
   index,
   particle,
   phase,
-  impulse,
 }: {
   atmosphere: ShowcaseAtmosphere;
   index: number;
   particle: (typeof DUST)[number];
   phase: SharedValue<number>;
-  impulse: SharedValue<number>;
 }) {
   const [baseX, baseY, offset, radius] = particle;
   const local = useDerivedValue(() => (phase.value + offset) % 1);
@@ -487,8 +388,7 @@ function AtmosphereDust({
   const cy = useDerivedValue(() => baseY - local.value * (52 + index % 4 * 8));
   const opacity = useDerivedValue(() => {
     const fade = Math.sin(local.value * Math.PI);
-    const emberBoost = atmosphere.effect === 'embers' ? 1 + impulse.value * 1.4 : 1;
-    return Math.max(0, fade) * atmosphere.intensity * (index % 3 === 0 ? 0.7 : 0.43) * emberBoost;
+    return Math.max(0, fade) * atmosphere.intensity * (index % 3 === 0 ? 0.7 : 0.43);
   });
 
   return (

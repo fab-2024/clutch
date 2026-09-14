@@ -60,8 +60,8 @@ export default function ProfileScreen({ initialPrivateTab = 'profile', previewDa
   const pseudo = profilePseudo?.trim() || ownPseudo;
   const handlePublicBlocked = useCallback(() => setPublicBlocked(true), []);
   const ownedLevelFrames = useMemo(
-    () => resolveOwnedLevelFrames({ founder: data?.founder, preview: Boolean(previewData) }),
-    [data?.founder, previewData],
+    () => resolveOwnedLevelFrames({ preview: Boolean(previewData) }),
+    [previewData],
   );
   const levelFrameEquipment = useLevelFrameEquipment(
     previewData ? `preview-${pseudo}` : pseudo,

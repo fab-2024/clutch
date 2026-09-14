@@ -2,7 +2,6 @@ export const LEVEL_FRAME_VARIANTS = [
   'signalAscendant',
   'voltRift',
   'azurOrbit',
-  'founderForge',
   'violetSovereign',
   'obsidianFracture',
   'novaPrism',
@@ -12,7 +11,7 @@ export type LevelFrameVariant = typeof LEVEL_FRAME_VARIANTS[number];
 
 export type LevelFrameRarity = 'included' | 'rare' | 'epic' | 'legendary';
 
-export type LevelFrameSource = 'included' | 'volts' | 'founder_pack';
+export type LevelFrameSource = 'included' | 'volts';
 
 export type LevelFrameDefinition = {
   accent: string;

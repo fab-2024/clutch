@@ -27,7 +27,6 @@ export async function loadProfileData(pseudo: string): Promise<ProfileData> {
   const raw = profileResult.data as RawProfile;
   const progression = progressionResult.data as Partial<ProfileRanking>;
   const recap = raw.recap ?? {};
-  const founder = Boolean(raw.est_fondateur);
   const ranking = normalizeRanking({ ...raw.classement, ...progression });
   const badges = evaluateBadges({
     now: new Date().toISOString(),
@@ -47,7 +46,6 @@ export async function loadProfileData(pseudo: string): Promise<ProfileData> {
     pseudo: raw.pseudo || pseudo,
     createdAt: raw.cree_le || new Date().toISOString(),
     profileTitle: raw.titre_profil ?? null,
-    founder,
     publicProfile: raw.profil_public !== false,
     ranking,
     recap,

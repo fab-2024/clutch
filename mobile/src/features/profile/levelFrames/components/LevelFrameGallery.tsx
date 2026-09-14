@@ -167,14 +167,12 @@ function rarityColor(entry: LevelFrameCollectionEntry) {
 }
 
 function sourceLabel(entry: LevelFrameCollectionEntry) {
-  if (entry.source === 'founder_pack') return 'PACK FONDATEUR';
   if (entry.source === 'included') return 'INCLUS';
   return 'VOLTS';
 }
 
 function priceLabel(entry: LevelFrameCollectionEntry) {
   if (entry.source === 'included') return 'INCLUS · ÉVOLUTIF';
-  if (entry.source === 'founder_pack') return 'PACK FONDATEUR';
   return entry.price ? `${formatNumber(entry.price)} VOLTS` : 'INDISPONIBLE';
 }
 

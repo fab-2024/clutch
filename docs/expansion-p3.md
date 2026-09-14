@@ -4,16 +4,10 @@ P3 ajoute une première langue complète, deux consommables strictement visuels
 et des conseils de notifications fondés sur une activité agrégée. La Clutch
 Room et tous les calculs compétitifs restent inchangés.
 
-## Langues
+## Langue
 
-- `fr-FR` reste la langue de secours.
-- `en-US` est disponible dans Profil > Paramètres > Langue.
-- Le mode « système » choisit le français ou l’anglais à partir de la locale de
-  l’appareil et retombe sur le français pour toute autre langue.
-- Le choix est conservé localement et recopié dans les préférences de
-  notifications afin que les messages soient traduits au moment de leur
-  livraison, y compris s’ils avaient déjà été mis en file.
-- Dates, nombres et pluriels utilisent la locale active.
+L’application est entièrement en français. Dates, nombres et pluriels utilisent
+`fr-FR`. Les anciennes ressources anglaises ne font plus partie du client.
 
 ## Conseils de notifications
 

@@ -85,7 +85,7 @@ describe('showcase room perspective doctrine', () => {
     { width: 390, height: 844 },
   ])('anchors the bronze tip to the baked-in central seat at $width × $height', (canvas) => {
     const scenes = [
-      SHOWCASE_ROOM_CATALOG.find((room) => room.id === 'obsidian-gallery')!,
+      SHOWCASE_ROOM_CATALOG.find((room) => room.id === 'classique')!,
       SHOWCASE_PRESENTER_CATALOG.find((room) => room.id === 'supports_gallery')!,
     ];
     for (const room of scenes) {
@@ -138,10 +138,10 @@ describe('showcase room perspective doctrine', () => {
       'conclave-arcanique-rosette-pedestal',
       LEFT_SLOT,
     );
-    const orbital = resolveShowcaseSlotPerspective('orbital-station', LEFT_SLOT);
+    const circuit = resolveShowcaseSlotPerspective('circuit-zero-aero-pedestals', LEFT_SLOT);
 
-    expect(arcane.pedestalInclination).not.toBe(orbital.pedestalInclination);
-    expect(arcane.groundOffset).not.toBe(orbital.groundOffset);
+    expect(arcane.pedestalInclination).not.toBe(circuit.pedestalInclination);
+    expect(arcane.groundOffset).not.toBe(circuit.groundOffset);
   });
 
   it('normalizes the transparent margins and seat line of each pedestal artwork', () => {
@@ -159,7 +159,7 @@ describe('showcase room perspective doctrine', () => {
     expect(vector.heightScale).toBeLessThan(1);
   });
 
-  it('preserves legacy pedestal geometry after removing pedestals from the packs', () => {
+  it('preserves calibrated pedestal geometry after separating it from pack inventory', () => {
     const pedestalIds = ORIGINAL_PACK_CATALOG.flatMap((pack) => pack.items)
       .filter((item) => item.slot === 'vitrine_supports')
       .map((item) => item.id);
@@ -169,7 +169,7 @@ describe('showcase room perspective doctrine', () => {
   });
 
   it('allows a calibrated room slot to override only its floor contact point', () => {
-    const calibrated = resolveShowcaseSlotPerspective('orbital-station', {
+    const calibrated = resolveShowcaseSlotPerspective('circuit-zero-aero-pedestals', {
       ...LEFT_SLOT,
       pedestalGroundOffset: 8.25,
     });
@@ -270,7 +270,7 @@ describe('showcase room perspective doctrine', () => {
       artworkLean: 0,
       artworkYaw: 0,
       groundOffset: 0,
-      horizontalOffset: 0,
+      horizontalOffset: -1,
       pedestalBottomInset: 0,
       pedestalFootprintWidth: 0,
       pedestalHeight: 0,

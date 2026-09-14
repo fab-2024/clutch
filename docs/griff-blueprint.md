@@ -9,7 +9,6 @@
 
 Ce document est la source de vérité synthétique de la direction produit. Les
 règles détaillées sont dans [les contrats produit](./product-contracts.md),
-l'avancement vérifiable dans [la checklist](./griff-blueprint-checklist.md) et
 l'ordre de livraison dans [la roadmap exécutable](./product-roadmap.md).
 
 ---
@@ -93,7 +92,7 @@ Le Loadout conserve cinq emplacements :
 | Onglet | Rôle |
 | --- | --- |
 | Hub | Résumé personnel, action immédiate et actualité du moment |
-| Matchs | Calendrier, directs, calls, résultats et Mes calls |
+| Matchs | Calendrier, filtres de jeu, directs, calls et résultats |
 | Social | Faction, Cercle, défis, missions et duels |
 | Rank | Saison, classements et récompenses |
 | Moi | Identité, statistiques, Loadout, Collection et paramètres |
@@ -123,7 +122,8 @@ devenir un agrégateur de toutes les fonctionnalités.
 
 ### Matchs et Match Center
 
-Trois entrées sont conservées : À venir, Résultats et Mes calls. Une fiche doit
+Un écran principal réunit le calendrier, les filtres Tous / LoL / VALO / RL,
+les directs, les matchs à pronostiquer et les résultats du jour. Une fiche doit
 toujours rendre lisibles le jeu, la compétition, les équipes, le BO, l'heure,
 l'état du call, les impacts possibles et le résultat officiel.
 
@@ -196,21 +196,19 @@ Ordre de validation commercial :
 
 1. stabiliser et mesurer la boucle gratuite ;
 2. éditorialiser la collection de lancement ;
-3. déployer et tester le Pack Fondateur dans les stores sandbox ;
+3. déployer et tester les packs cosmétiques dans les stores sandbox ;
 4. mesurer le premier achat ;
 5. préparer une collection partenaire réelle ;
 6. considérer seulement ensuite packs de Volts et abonnement.
 
-Le Pack Fondateur reste un produit cosmétique non consommable. Ses fonctions
-RevenueCat sont présentes dans le dépôt mais **non déployées** : l'échange de
-l'UUID Supabase comme identifiant RevenueCat attend une autorisation explicite
-et une recette de suppression/restauration.
+Les six packs cosmétiques actuels sont des produits non consommables. Leur
+configuration RevenueCat exige une recette de suppression et de restauration.
 
 ### Niveaux business
 
 | Niveau | Décision actuelle |
 | --- | --- |
-| Pack Fondateur | Premier achat à tester après stabilité et recette sandbox |
+| Packs cosmétiques | Achats à tester après stabilité et recette sandbox |
 | Packs de Volts | Différés jusqu'à validation du premier achat |
 | Collections officielles | Seulement avec autorisation des ayants droit |
 | Activations sponsorisées | Prototype Nova Week disponible comme démonstrateur |
@@ -344,7 +342,7 @@ gravées. Le logo intégré est un `G` fragmenté accompagné du mot-symbole
 - [ ] Lancer une bêta fermée.
 - [ ] Mesurer activation, J1/J7, calls, retour au verdict et usage de Rank.
 - [ ] Réduire le catalogue à une collection de lancement forte.
-- [ ] Tester le Pack Fondateur après stabilité.
+- [ ] Tester les packs cosmétiques après stabilité.
 - [ ] Préparer une activation partenaire réelle à partir de Nova Week.
 - [ ] Reconsidérer la Vitrine uniquement après preuve d'usage et financement.
 

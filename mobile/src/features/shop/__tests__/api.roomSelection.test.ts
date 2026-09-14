@@ -13,11 +13,11 @@ it.each([equipCosmetic, purchaseCosmetic])('clears the conflicting collection ro
   supabase.rpc.mockResolvedValueOnce({ data: collection, error: null })
     .mockResolvedValueOnce(success('vitrine_eclairage'))
     .mockResolvedValueOnce(success('vitrine_supports'));
-  await mutate('supports_halo');
+  await mutate('supports_gallery');
   expect(supabase.rpc.mock.calls).toEqual([
     ['clutch_mes_cosmetiques_v1'],
     ['clutch_equiper_cosmetique_v1', { p_objet_id: 'lighting_cyan' }],
-    [mutate === equipCosmetic ? 'clutch_equiper_cosmetique_v1' : 'clutch_acheter_cosmetique_v1', { p_objet_id: 'supports_halo' }],
+    [mutate === equipCosmetic ? 'clutch_equiper_cosmetique_v1' : 'clutch_acheter_cosmetique_v1', { p_objet_id: 'supports_gallery' }],
   ]);
 });
 
@@ -27,7 +27,7 @@ it('restores the collection room if equipping the replacement fails', async () =
     .mockResolvedValueOnce(success('vitrine_eclairage'))
     .mockResolvedValueOnce({ data: null, error })
     .mockResolvedValueOnce(success('vitrine_eclairage'));
-  await expect(equipCosmetic('supports_halo')).rejects.toBe(error);
+  await expect(equipCosmetic('supports_gallery')).rejects.toBe(error);
   expect(supabase.rpc).toHaveBeenLastCalledWith('clutch_equiper_cosmetique_v1', { p_objet_id: 'circuit-zero-room' });
 });
 
@@ -35,7 +35,7 @@ it('preserves ordinary lighting when changing standard rooms', async () => {
   supabase.rpc.mockResolvedValueOnce({ data: { vitrine_eclairage: {
     id: 'lighting_amber', style_key: 'amber', emplacement: 'vitrine_eclairage',
   } }, error: null }).mockResolvedValueOnce(success('vitrine_supports'));
-  await equipCosmetic('supports_halo');
+  await equipCosmetic('supports_gallery');
   expect(supabase.rpc).toHaveBeenCalledTimes(2);
-  expect(supabase.rpc).toHaveBeenLastCalledWith('clutch_equiper_cosmetique_v1', { p_objet_id: 'supports_halo' });
+  expect(supabase.rpc).toHaveBeenLastCalledWith('clutch_equiper_cosmetique_v1', { p_objet_id: 'supports_gallery' });
 });

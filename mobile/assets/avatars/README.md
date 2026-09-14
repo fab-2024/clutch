@@ -1,8 +1,7 @@
 # Avatars joueur
 
-- `griff-avatars-original-v2.png` est la planche active de 15 avatars, reconstruite depuis la référence validée fournie le 1er septembre 2026.
-- `_rights-review/` contient localement les anciennes planches. Ce dossier est volontairement ignoré par Git afin qu'elles restent disponibles pour une éventuelle revue sans être intégrées ni publiées avec l'application.
-- Les anciens identifiants persistés sont redirigés vers la nouvelle collection dans `catalog.ts` pour éviter un avatar vide sur les profils existants.
+- `clutch-avatars-free-15.png` est la planche active de 15 avatars de l’application actuelle.
+- La planche contient uniquement les portraits utilisés par le catalogue courant.
 
 ## Prompt de production
 

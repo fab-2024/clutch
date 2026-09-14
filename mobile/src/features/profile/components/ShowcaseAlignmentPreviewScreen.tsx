@@ -36,7 +36,7 @@ const forgeItems: [ShowcaseRoomSlotId, string][] = [
 export default function ShowcaseAlignmentPreviewScreen() {
   const { pack, scene } = useLocalSearchParams<{ pack?: string; scene?: string }>();
   const presenter = showcasePresenterById(scene);
-  const room = presenter ?? SHOWCASE_ROOM_CATALOG.find((item) => item.id === 'obsidian-gallery')!;
+  const room = presenter ?? SHOWCASE_ROOM_CATALOG.find((item) => item.id === 'classique')!;
   const collection = [...COSMETIC_PACK_CATALOG, ...INDIVIDUAL_COLLECTION_CATALOG]
     .find((item) => item.id === pack);
   const selected: [ShowcaseRoomSlotId, string][] = collection

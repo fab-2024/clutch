@@ -1,7 +1,3 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../web/js/config.js';
-
-const BASE = String(process.env.SUPABASE_URL || SUPABASE_URL || '').replace(/\/+$/, '');
-const ANON = process.env.SUPABASE_ANON_KEY || SUPABASE_ANON_KEY;
 const TIMEOUT_MS = 5000;
 
 function safeRef(value) {
@@ -12,16 +8,16 @@ function safeRef(value) {
 }
 
 async function supabaseFetch(path, init = {}) {
-  if (!BASE || !ANON) throw new Error('public_data_unconfigured');
+  const { base, key } = publicCredentials();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const res = await fetch(`${BASE}${path}`, {
+    const res = await fetch(`${base}${path}`, {
       ...init,
       signal: controller.signal,
       headers: {
-        apikey: ANON,
-        Authorization: `Bearer ${ANON}`,
+        apikey: key,
+        Authorization: `Bearer ${key}`,
         Accept: 'application/json',
         ...(init.headers || {}),
       },
@@ -33,6 +29,16 @@ async function supabaseFetch(path, init = {}) {
     if (!res.ok) throw new Error(`public_data_${res.status}`);
     return body;
   } finally { clearTimeout(timer); }
+}
+
+function publicCredentials() {
+  const base = String(process.env.SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY
+    || process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+    || process.env.SUPABASE_ANON_KEY
+    || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+  if (!base || !key) throw new Error('public_data_unconfigured');
+  return { base, key };
 }
 
 export async function loadPublicObject(kind, rawRef) {

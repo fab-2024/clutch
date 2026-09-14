@@ -1,4 +1,3 @@
-jest.mock('@/src/features/profile/api', () => ({ loadProfileData: jest.fn().mockRejectedValue(new Error('Profil indisponible')) }));
 /// <reference types="jest" />
 
 import { fireEvent, render, within } from '@testing-library/react-native';
@@ -7,6 +6,7 @@ import { router } from 'expo-router';
 import { normalizeGradeState } from '../../grades';
 import type { RankDashboard } from '../../types';
 import RankScreen from '../RankScreen';
+jest.mock('@/src/features/profile/api', () => ({ loadProfileData: jest.fn().mockRejectedValue(new Error('Profil indisponible')) }));
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('lucide-react-native', () => ({ ChevronDown: () => null, ChevronUp: () => null, ChevronRight: () => null }));

@@ -19,7 +19,7 @@ describe('showcase rank display placement', () => {
   });
 
   it('lets portrait objects fill the display height without moving its ground anchor', () => {
-    const input = { displayId: 'rank_clutch_revelation', roomId: 'obsidian-gallery',
+    const input = { displayId: 'rank_clutch_revelation', roomId: 'classique',
       imageLayout: { left: 0, top: 0, width: 1000, height: 500 } };
     const square = showcaseRankDisplayLayout(input)!;
     const dragon = showcaseRankDisplayLayout({ ...input, artworkAspectRatio: 656 / 768 })!;
@@ -31,14 +31,14 @@ describe('showcase rank display placement', () => {
     expect(dragon.image).toEqual(square.image);
   });
 
-  it('anchors the visible crystal base to the removed pedestal instead of the old object box', () => {
+  it('anchors the crystal display to the current cabinet rank slot', () => {
     const layout = showcaseRankDisplayLayout({
-      displayId: 'rank_crystal_capsule', roomId: 'obsidian-gallery',
+      displayId: 'rank_crystal_capsule', roomId: 'classique',
       imageLayout: { left: 0, top: 0, width: 1000, height: 500 },
     })!;
-    expect(layout.image.top + layout.image.height * 653 / 709).toBeCloseTo(345);
-    expect(layout.image.left + layout.image.width * 509.5 / 1024).toBeCloseTo(500);
-    expect(layout.image.width * 435 / 1024).toBeCloseTo(169.2);
+    expect(layout.image.top + layout.image.height * 653 / 709).toBeCloseTo(210);
+    expect(layout.image.left + layout.image.width * 509.5 / 1024).toBeCloseTo(845);
+    expect(layout.image.width * 435 / 1024).toBeCloseTo(122.2);
     expect(layout.image.width / layout.image.height).toBeCloseTo(1024 / 709);
     expect(layout.seatY).toBeLessThan(layout.groundY);
     expect(layout.maxArtworkSize).toBeGreaterThan(0);

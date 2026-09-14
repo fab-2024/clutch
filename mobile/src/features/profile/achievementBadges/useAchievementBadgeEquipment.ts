@@ -11,14 +11,15 @@ import {
 } from './equipment';
 import type { BadgeId, PublicAchievementBadge } from './types';
 
+const DEFAULT_BADGE_SLOTS = emptyAchievementBadgeSlots();
+
 export function useAchievementBadgeEquipment(
   ownerKey: string,
-  fallback: readonly (BadgeId | null)[] = emptyAchievementBadgeSlots(),
+  fallback: readonly (BadgeId | null)[] = DEFAULT_BADGE_SLOTS,
 ) {
-  const fallbackKey = fallback.join('|');
   const normalizedFallback = useMemo(
     () => normalizeAchievementBadgeSlots(fallback),
-    [fallbackKey],
+    [fallback],
   );
   const [slots, setSlots] = useState<AchievementBadgeSlots>(() => normalizedFallback);
   const [loading, setLoading] = useState(true);

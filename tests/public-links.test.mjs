@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { publicPresentation } from '../server/public-data.mjs';
+import { profilePresentation } from '../server/public-profile-data.mjs';
 
 test('public match presentation stays action-oriented', () => {
   const card = publicPresentation('match', {
@@ -70,4 +71,20 @@ test('settled match presentation switches to result copy', () => {
   assert.equal(card.eyebrow, 'RÉSULTAT');
   assert.equal(card.cta, 'Voir le résultat');
   assert.match(card.description, /AAA 2 — 1 BBB/);
+});
+
+test('public profile presentation is self-contained after the prototype removal', () => {
+  const card = profilePresentation({
+    pseudo: 'FabTheTap',
+    classement: { frags: 620, rang: 3 },
+    recap: { gagnes: 18, paris: 22, precision_pct: 82 },
+    serie_actuelle: 7,
+    equipe_favorite: { nom: 'Fnatic', tag: 'FNC' },
+  });
+
+  assert.equal(card?.kind, 'profile');
+  assert.equal(card?.style, 'Oracle');
+  assert.equal(card?.title, 'FabTheTap · Oracle | GRIFF');
+  assert.equal(card?.spaPath, '/#/u/FabTheTap');
+  assert.match(card?.description ?? '', /620 Frags/);
 });

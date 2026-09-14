@@ -1,174 +1,22 @@
-import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Image,
-  Platform,
-  Pressable,
-  Share,
   StyleSheet,
   Text,
-  type ImageSourcePropType,
   useWindowDimensions,
   View,
 } from 'react-native';
 
 import { FEATURE_STATE_COPY, FeatureStateView } from '@/src/components/ui/FeatureStateView';
 import { Skeleton, SkeletonGroup } from '@/src/components/ui/Skeleton';
-import { publicAppUrl } from '@/src/config/release';
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
 import PlayerAvatar from '@/src/features/profile/avatars/PlayerAvatar';
-import CollectiveRelic from '@/src/features/social/faction/components/CollectiveRelic';
-import FactionEvolutionRail from '@/src/features/social/faction/components/FactionEvolutionRail';
-import {
-  resolveRelicInstability,
-  type RelicDiagnostics,
-  type SupporterContributionPresentation,
-} from '@/src/features/social/faction/relicState';
 import type {
   CommunityFaction,
   CommunityMe,
-  CommunityMutationPresentation,
-  FactionProgress,
 } from '@/src/features/social/faction/types';
-import { factionProgress, gameLabel } from '@/src/features/social/faction/utils';
 import { colors } from '@/src/theme';
 
 import { styles } from './SocialHomeScreen.styles';
-
-const FACTION_RANKING_ARTWORK: Record<string, ImageSourcePropType> = {
-  M8: require('../../../../assets/shop/team-packs/m8/items/m8-crest-3d.png'),
-  GM8: require('../../../../assets/shop/team-packs/m8/items/m8-crest-3d.png'),
-};
-
-export function FactionRelicHero({
-  faction,
-  me,
-  mutationOverride,
-  relicProgressOverride,
-  instabilityPreviewOverride,
-  onRelicDiagnosticsChange,
-  onMutationPresented,
-  onSupporterContributionPresented,
-  supporterContribution,
-}: {
-  faction: CommunityFaction | null;
-  me: CommunityMe | null;
-  mutationOverride?: CommunityMutationPresentation | null;
-  relicProgressOverride?: FactionProgress;
-  instabilityPreviewOverride?: { charge: number; objective: number };
-  onRelicDiagnosticsChange?: (diagnostics: RelicDiagnostics) => void;
-  onMutationPresented?: (eventId: string) => Promise<void> | void;
-  onSupporterContributionPresented?: (contributionId: string) => Promise<void> | void;
-  supporterContribution?: SupporterContributionPresentation | null;
-}) {
-  const progress = relicProgressOverride ?? factionProgress(faction?.membres ?? 0, faction?.niveau_atteint);
-  const instability = resolveRelicInstability(
-    instabilityPreviewOverride?.charge ?? progress.charge,
-    instabilityPreviewOverride?.objective ?? progress.objective,
-  );
-  const pct = Math.round(progress.progress * 100);
-  const title = faction ? 'PORTE TES COULEURS.' : 'CHOISIS TES COULEURS.';
-  const actionTitle = progress.max
-    ? 'INVITER DES SUPPORTERS'
-    : instability.tier === 'mutationReady'
-      ? 'MUTATION PRÊTE'
-    : `RALLIER ${formatNumber(progress.remaining)} SUPPORTER${progress.remaining > 1 ? 'S' : ''}`;
-  const mutation = mutationOverride === undefined ? me?.mutation_a_presenter : mutationOverride;
-
-  async function rallySupporters() {
-    if (!faction) return;
-    if (Platform.OS !== 'web') {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
-    }
-    const url = publicAppUrl('/') ?? '';
-    const message = `Rejoins la faction ${faction.nom} sur GRIFF et aide notre relique à atteindre la forme ${progress.next?.name ?? 'ultime'}.`;
-    const shareText = url ? `${message} ${url}` : message;
-    try {
-      if (Platform.OS === 'web' && globalThis.navigator?.clipboard) {
-        await globalThis.navigator.clipboard.writeText(shareText);
-      } else {
-        await Share.share({ message: shareText, ...(url ? { url } : {}) });
-      }
-    } catch {
-      // The system share sheet can be dismissed without changing the faction state.
-    }
-  }
-
-  return (
-    <View style={styles.factionHero}>
-      <LinearGradient colors={['#07131D', '#061018', '#04090E', '#050A0D']} end={{ x: .8, y: 1 }} start={{ x: .1, y: 0 }} style={StyleSheet.absoluteFill} />
-
-      <View style={styles.heroTop}>
-        <View style={styles.heroHeading}>
-          <Text style={styles.heroEyebrow}>QG SOCIAL // FACTION</Text>
-          <Text style={styles.heroTitle}>{title}</Text>
-        </View>
-        <View style={styles.levelPill}>
-          <View style={styles.levelDot} />
-          <Text style={styles.levelText}>{progress.awakened ? 'CŒUR ÉVEILLÉ' : instability.tier === 'mutationReady' ? 'MUTATION PRÊTE' : progress.level > 0 ? `FORME ${progress.current.code}` : 'DORMANT'}</Text>
-        </View>
-      </View>
-
-      <CollectiveRelic
-        faction={faction}
-        instabilityPreviewOverride={instabilityPreviewOverride}
-        mutation={mutation}
-          replayMutation={me?.derniere_mutation_presentee}
-        onDiagnosticsChange={onRelicDiagnosticsChange}
-        onMutationPresented={onMutationPresented}
-        onSupporterContributionPresented={onSupporterContributionPresented}
-        progress={progress}
-        supporterContribution={supporterContribution}
-      />
-
-      <View style={styles.factionIdentity}>
-        <View style={styles.factionSeal}>
-          {faction ? (
-            <TeamLogo accent={colors.volt} name={faction.nom} size={34} tag={faction.tag} uri={faction.logo} />
-          ) : (
-            <Text style={styles.relicQuestion}>?</Text>
-          )}
-        </View>
-        <View style={styles.factionIdentityCopy}>
-          <Text style={styles.factionName}>{faction?.nom.toUpperCase() ?? 'AUCUNE FACTION'}</Text>
-          <Text style={styles.factionMeta}>{faction ? `${gameLabel(faction.jeu)} · ${formatNumber(progress.charge)} MEMBRE${progress.charge > 1 ? 'S' : ''}` : 'UNE RELIQUE ATTEND TES COULEURS'}</Text>
-        </View>
-        {faction ? (
-          <View style={styles.factionGrowthBlock}>
-            <Text style={styles.factionGrowthLabel}>SUPPORTERS ·</Text>
-            <Text style={styles.factionGrowth}>{signed(faction.croissance_7j)}</Text>
-          </View>
-        ) : null}
-      </View>
-
-      {faction ? (
-        <View style={styles.progressBlock}>
-          <View style={styles.progressHeadline}>
-            <Text style={styles.relicForm}>{progress.max ? 'ÉVEIL TOTAL' : progress.current.name.toUpperCase()}</Text>
-            <Text style={styles.progressValue}>{progress.max ? '10 000+' : `${formatNumber(progress.charge)} / ${formatNumber(progress.objective)}`}</Text>
-          </View>
-          <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${progress.max ? 100 : pct}%` }]} /></View>
-          <View style={styles.progressFoot}>
-            <Text style={styles.progressNext}>{progress.max ? 'CŒUR ÉVEILLÉ' : `PROCHAINE MUTATION · ${progress.next?.name.toUpperCase()}`}</Text>
-          </View>
-          <FactionEvolutionRail progress={progress} />
-          <Pressable
-            accessibilityHint={`Partage une invitation à rejoindre ${faction.nom}`}
-            accessibilityLabel={actionTitle}
-            accessibilityRole="button"
-            onPress={() => void rallySupporters()}
-            style={({ pressed }) => [styles.rallyButton, pressed && styles.pressed]}
-          >
-            <View style={styles.rallySurface}>
-              <View style={styles.rallyIcon}><SupporterGroupIcon /></View>
-              <Text numberOfLines={2} style={styles.rallyText}>{actionTitle}</Text>
-            </View>
-          </Pressable>
-        </View>
-      ) : null}
-    </View>
-  );
-}
 
 export function FactionWar({ factions, mine }: { factions: CommunityFaction[]; mine: CommunityFaction | null }) {
   const compact = useWindowDimensions().width <= 340;
@@ -308,18 +156,8 @@ function FactionPodiumRow({
 }
 
 function FactionRankingLogo({ compact, faction, hero = false }: { compact: boolean; faction: CommunityFaction; hero?: boolean }) {
-  const tag = faction.tag.trim().toUpperCase();
-  const artwork = FACTION_RANKING_ARTWORK[tag];
   const size = hero ? (compact ? 124 : 148) : (compact ? 58 : 72);
   const accent = factionAccent(faction, 0);
-
-  if (artwork) {
-    return (
-      <View style={[styles.factionRankingArtworkBlend, { height: size, width: size }]}>
-        <Image accessibilityIgnoresInvertColors resizeMode="contain" source={artwork} style={styles.factionRankingArtwork} />
-      </View>
-    );
-  }
 
   return (
     <TeamLogo
@@ -456,19 +294,6 @@ function MemberStat({ featured = false, label, value }: { featured?: boolean; la
     <View style={styles.memberStat}>
       <Text style={[styles.memberStatValue, featured && styles.memberStatValueFeatured]}>{value}</Text>
       <Text style={styles.memberStatLabel}>{label}</Text>
-    </View>
-  );
-}
-
-function SupporterGroupIcon() {
-  return (
-    <View pointerEvents="none" style={styles.supporterGlyph}>
-      <View style={[styles.supporterHead, styles.supporterHeadLeft]} />
-      <View style={[styles.supporterHead, styles.supporterHeadCenter]} />
-      <View style={[styles.supporterHead, styles.supporterHeadRight]} />
-      <View style={[styles.supporterShoulder, styles.supporterShoulderLeft]} />
-      <View style={[styles.supporterShoulder, styles.supporterShoulderCenter]} />
-      <View style={[styles.supporterShoulder, styles.supporterShoulderRight]} />
     </View>
   );
 }

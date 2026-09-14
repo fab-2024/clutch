@@ -49,7 +49,7 @@ for (const path of walk(mobileRoot)) {
     violations.push(`Supabase package imported by a route: ${repositoryPath}`);
   }
   if (/from\s+['\"].*web\//.test(source)) {
-    violations.push(`mobile imports legacy web code: ${repositoryPath}`);
+    violations.push(`mobile imports removed web prototype code: ${repositoryPath}`);
   }
 
   const isRoute = repositoryPath.startsWith('mobile/app/') && repositoryPath.endsWith('.tsx');

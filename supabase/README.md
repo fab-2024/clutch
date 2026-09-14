@@ -1,9 +1,9 @@
 # Base de données Clutch
 
-Ce dossier utilise désormais le workflow officiel de migrations Supabase. La
-source de vérité exécutable se trouve dans `migrations/`; les anciens fichiers
-numérotés à la racine de `supabase/` sont conservés uniquement comme archives
-lisibles de l'évolution du produit.
+Ce dossier utilise le workflow officiel de migrations Supabase. La source de
+vérité exécutable se trouve dans `migrations/`. Les anciennes copies SQL qui se
+trouvaient à la racine ont été supprimées après leur consolidation dans la
+baseline et l'historique versionné.
 
 ## Structure
 
@@ -13,7 +13,6 @@ lisibles de l'évolution du produit.
 - `migrations/20260820080332_restore_mobile_schema_contracts.sql` rétablit les colonnes, droits Data API et RPC nécessaires au mobile.
 - Les migrations suivantes durcissent les privilèges existants sans élargir la surface Data API.
 - `seed.sql` contient uniquement les données de démonstration locales issues de l'ancien `04_donnees.sql`.
-- `11_verification.sql` reste un diagnostic manuel et n'est pas une migration.
 
 La baseline n'assigne volontairement aucun fondateur : `est_fondateur` vaut
 `false` par défaut. Les attributions réelles relèvent des données de production

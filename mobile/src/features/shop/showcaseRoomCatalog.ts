@@ -43,13 +43,9 @@ export const SHOWCASE_ROOM_CATALOG: readonly ShowcaseRoomDefinition[] = [
   { id: 'galerie', name: 'Galerie', description: 'Ivoire · Pierre claire · Blanc chaud.', accent: '#E9D6AD', image: require('../../../assets/shop/rooms/cabinet-galerie.png'), lighting: 'amber', pedestal: 'steel', price: 0, storePriceCents: 399, productId: 'cabinet_galerie', rarity: 'epique', sceneFrame: FULL_ROOM_FRAME, slots: cabinetSlots, theme: 'steel' },
   { id: 'midnight', name: 'Midnight', description: 'Tissu anthracite · Argent brossé · Bleu doux.', accent: '#86BCEF', image: require('../../../assets/shop/rooms/cabinet-midnight.png'), lighting: 'cyan', pedestal: 'steel', price: 0, storePriceCents: 399, productId: 'cabinet_midnight', rarity: 'epique', sceneFrame: FULL_ROOM_FRAME, slots: cabinetSlots, theme: 'carbon' },
 ];
-const legacyIds = ['obsidian-gallery', 'azure-horizon', 'bronze-sanctum', 'orbital-station', 'neon-hangar', 'volcanic-forge'];
-const legacyProducts = ['supports_halo', 'supports_forge', 'supports_crystal', 'supports_vault', 'supports_champagne'];
 export function showcaseRoomById(id: string | null | undefined) {
-  return SHOWCASE_ROOM_CATALOG.find(room => room.id === id)
-    ?? (id && legacyIds.includes(id) ? SHOWCASE_ROOM_CATALOG[0] : null);
+  return SHOWCASE_ROOM_CATALOG.find(room => room.id === id) ?? null;
 }
 export function showcaseRoomByProductId(id: string | null | undefined) {
-  return SHOWCASE_ROOM_CATALOG.find(room => room.productId === id)
-    ?? (id && legacyProducts.includes(id) ? SHOWCASE_ROOM_CATALOG[0] : null);
+  return SHOWCASE_ROOM_CATALOG.find(room => room.productId === id) ?? null;
 }

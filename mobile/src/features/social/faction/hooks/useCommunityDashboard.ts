@@ -42,14 +42,18 @@ export function useCommunityDashboard() {
         setRefreshing(false);
       }
     }
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     dataRef.current = EMPTY_COMMUNITY;
     setData(EMPTY_COMMUNITY);
+    if (!userId) {
+      setLoading(false);
+      return () => { requestRef.current += 1; };
+    }
     void load();
     return () => { requestRef.current += 1; };
-  }, [load]);
+  }, [load, userId]);
 
   useFocusEffect(useCallback(() => {
     void load(false, true);

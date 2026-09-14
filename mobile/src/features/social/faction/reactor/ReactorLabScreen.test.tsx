@@ -1,18 +1,21 @@
 import { fireEvent, render } from '@testing-library/react-native';
+import mockReact from 'react';
+import { View as mockView } from 'react-native';
 import ReactorLabScreen from './ReactorLabScreen';
 
 const mockMount = jest.fn();
 let mockParams: Record<string, string> = {};
 beforeEach(() => { mockParams = {}; });
 jest.mock('expo-router', () => ({ useLocalSearchParams: () => mockParams }));
-jest.mock('@/src/components/layout/Screen', () => ({ Screen: require('react-native').View }));
+jest.mock('@/src/components/layout/Screen', () => ({ Screen: mockView }));
 jest.mock('./ReactorScene', () => {
-  const React = require('react');
-  const { View } = require('react-native');
-  return { ReactorScene: React.forwardRef(function Scene(props: { onEvolutionComplete: () => void }, ref: unknown) {
-    React.useEffect(() => { mockMount(); }, []);
-    React.useImperativeHandle(ref, () => ({ react: () => undefined, evolve: props.onEvolutionComplete }));
-    return React.createElement(View, { testID: 'persistent-scene' });
+  return { ReactorScene: mockReact.forwardRef<
+    { react: () => void; evolve: () => void },
+    { onEvolutionComplete: () => void }
+  >(function Scene(props, ref) {
+    mockReact.useEffect(() => { mockMount(); }, []);
+    mockReact.useImperativeHandle(ref, () => ({ react: () => undefined, evolve: props.onEvolutionComplete }));
+    return mockReact.createElement(mockView, { testID: 'persistent-scene' });
   }) };
 });
 

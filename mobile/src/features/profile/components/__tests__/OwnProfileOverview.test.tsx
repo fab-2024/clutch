@@ -37,7 +37,6 @@ const PROFILE: ProfileData = {
   pseudo: 'TesteurGRIFF',
   createdAt: '2026-08-24T12:00:00.000Z',
   profileTitle: 'Stratège du virage',
-  founder: false,
   publicProfile: true,
   ranking: {
     saison_id: 'season-test',

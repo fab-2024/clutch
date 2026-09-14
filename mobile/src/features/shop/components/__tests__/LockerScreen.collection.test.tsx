@@ -33,14 +33,6 @@ jest.mock('@/src/components/ui/Skeleton', () => {
 });
 jest.mock('@/src/features/analytics/api', () => ({ trackAnalyticsEvent: jest.fn() }));
 jest.mock('@/src/features/profile/api', () => ({ loadProfileData: jest.fn() }));
-jest.mock('@/src/features/profile/achievementBadges/components/AchievementBadgeCollection', () => {
-  const ReactNative = jest.requireActual('react-native');
-  return {
-    __esModule: true,
-    badgeFilterFromParam: () => 'all',
-    default: () => <ReactNative.Text>BADGE COLLECTION</ReactNative.Text>,
-  };
-});
 jest.mock('@/src/features/profile/achievementBadges/components/ShowcaseTrophyCollection', () => {
   const ReactNative = jest.requireActual('react-native');
   return {
@@ -140,7 +132,6 @@ const previewData: CosmeticShopData = {
 
 const previewProfile = {
   badges: [],
-  founder: false,
   level: { level: 1 },
   pinnedBadges: [],
   pseudo: 'Testeur',

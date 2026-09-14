@@ -15,8 +15,7 @@ Ce document fixe le sens des mécaniques du produit avant leur extension. Les
 écrans peuvent évoluer, mais ils ne doivent pas contredire ces règles sans une
 nouvelle décision produit explicite et versionnée.
 
-Il détaille le [blueprint produit et business](./griff-blueprint.md), qui reste
-la source synthétique de la direction actuelle.
+Il complète la [description de l’architecture actuelle](./architecture.md).
 
 ## 0. Décisions du bloc A
 
@@ -40,9 +39,8 @@ initial :
   historique n'est renommé pour la bascule visible. La migration de marque
   reste additive et compatible avec les données existantes.
 
-La recherche de nom et la stratégie de migration sont suivies dans
-[le dossier de validation GRIFF](./griff-name-clearance.md) et
-[la matrice Clutch vers GRIFF](./clutch-to-griff-migration-matrix.md).
+La recherche de nom reste suivie dans
+[le dossier de validation GRIFF](./griff-name-clearance.md).
 
 ### État du bloc B
 

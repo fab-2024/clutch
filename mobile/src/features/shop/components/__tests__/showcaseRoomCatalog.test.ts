@@ -30,7 +30,8 @@ describe('showcase room catalogue', () => {
   });
 
   it('resolves known rooms without inventing a fallback', () => {
-    expect(showcaseRoomById('volcanic-forge')?.name).toBe('Classique');
+    expect(showcaseRoomById('classique')?.name).toBe('Classique');
+    expect(showcaseRoomById('volcanic-forge')).toBeNull();
     expect(showcaseRoomById('missing-room')).toBeNull();
   });
 });

@@ -85,7 +85,7 @@ avec achat restaurable :
 supabase functions deploy clutch-account-delete
 ```
 
-Ce déploiement et ceux du Founder Pack transmettent l'UUID Supabase à
+Ce déploiement et ceux des packs cosmétiques transmettent l'UUID Supabase à
 RevenueCat comme identifiant de client. Ils exigent une validation explicite de
 ce traitement et la présence des secrets serveur avant la recette.
 

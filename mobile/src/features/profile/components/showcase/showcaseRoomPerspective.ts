@@ -2,7 +2,7 @@ import type { ShowcaseRoomSlotDefinition, ShowcaseRoomSlotId } from '@/src/featu
 
 // Contact points on the tops of the baked-in pedestals, in full scene percentages.
 // Keep these independent of the selection boxes and collectible dimensions.
-const OBSIDIAN_SEAT_CONTACTS: Partial<Record<ShowcaseRoomSlotId, { x: number; y: number }>> = {
+const CABINET_SEAT_CONTACTS: Partial<Record<ShowcaseRoomSlotId, { x: number; y: number }>> = {
   'left-free': { x: 6.5, y: 62.5 },
   jersey: { x: 18.7, y: 61.2 },
   trophy: { x: 31.5, y: 59.5 },
@@ -16,8 +16,8 @@ const OBSIDIAN_SEAT_CONTACTS: Partial<Record<ShowcaseRoomSlotId, { x: number; y:
 export function showcaseIntegratedSeatContact(roomId: string, slotId: ShowcaseRoomSlotId) {
   if (roomId === 'conclave-arcanique-rosette-pedestal') return ARCANE_SEAT_CONTACTS[slotId];
   if (roomId === 'dernier-round-extraction-pedestal') return LAST_ROUND_SEAT_CONTACTS[slotId];
-  return roomId === 'obsidian-gallery' || roomId === 'supports_gallery'
-    ? OBSIDIAN_SEAT_CONTACTS[slotId]
+  return ['classique', 'galerie', 'midnight', 'supports_gallery'].includes(roomId)
+    ? CABINET_SEAT_CONTACTS[slotId]
     : undefined;
 }
 
@@ -107,7 +107,7 @@ function roomPerspective(
   return { ...DEFAULT_ROOM_PERSPECTIVE, ...overrides };
 }
 
-const OBSIDIAN_GALLERY_PERSPECTIVE = roomPerspective({
+const CABINET_PERSPECTIVE = roomPerspective({
   centerGroundOffset: 7.2,
   centerPedestalInclination: 0.66,
   centerPedestalWidth: 15.5,
@@ -118,84 +118,6 @@ const OBSIDIAN_GALLERY_PERSPECTIVE = roomPerspective({
   pedestalYaw: 3,
   sideGroundOffset: 3,
   sidePedestalWidth: 7.2,
-});
-
-const BRONZE_SANCTUM_PERSPECTIVE = roomPerspective({
-  centerGroundOffset: 7.6,
-  centerPedestalInclination: 0.67,
-  centerPedestalWidth: 15.5,
-  edgeGroundDrop: 2.8,
-  edgePedestalGrowth: 0.42,
-  pedestalInclination: 0.54,
-  pedestalYaw: 3.2,
-  sideGroundOffset: 3.2,
-  sidePedestalWidth: 7,
-});
-
-const AZURE_HORIZON_PERSPECTIVE = roomPerspective({
-  artworkYaw: 2.8,
-  centerGroundOffset: 7.4,
-  centerPedestalInclination: 0.65,
-  centerPedestalWidth: 15.5,
-  edgeGroundDrop: 3.4,
-  edgePedestalGrowth: 0.54,
-  horizontalCompression: 1.02,
-  pedestalInclination: 0.56,
-  pedestalYaw: 4.5,
-  sideGroundOffset: 3.1,
-  sidePedestalWidth: 6.9,
-});
-
-const ORBITAL_STATION_PERSPECTIVE = roomPerspective({
-  artworkLean: 0.45,
-  centerGroundOffset: 7.2,
-  centerPedestalInclination: 0.64,
-  centerPedestalWidth: 15.5,
-  edgeGroundDrop: 2.7,
-  edgePedestalGrowth: 0.42,
-  pedestalInclination: 0.51,
-  pedestalYaw: 3.4,
-  sideGroundOffset: 3,
-  sidePedestalWidth: 7.15,
-});
-
-const NEON_HANGAR_PERSPECTIVE = roomPerspective({
-  artworkYaw: 2.6,
-  centerGroundOffset: 7.4,
-  centerPedestalInclination: 0.65,
-  centerPedestalWidth: 15.5,
-  edgeGroundDrop: 3.1,
-  edgePedestalGrowth: 0.5,
-  pedestalInclination: 0.54,
-  pedestalYaw: 4.2,
-  sideGroundOffset: 3.2,
-  sidePedestalWidth: 7.1,
-});
-
-const VOLCANIC_FORGE_PERSPECTIVE = roomPerspective({
-  artworkLean: 0.55,
-  centerGroundOffset: 7.1,
-  centerPedestalInclination: 0.67,
-  centerPedestalWidth: 15.5,
-  edgeGroundDrop: 2.5,
-  edgePedestalGrowth: 0.42,
-  horizontalCompression: 0.99,
-  pedestalInclination: 0.57,
-  pedestalYaw: 3.2,
-  sideGroundOffset: 3.3,
-  sidePedestalWidth: 7.2,
-});
-
-// Compatibility presenters reuse the room artwork but keep their denser legacy slot grids.
-const BRONZE_SUPPORTS_PERSPECTIVE = roomPerspective({
-  ...BRONZE_SANCTUM_PERSPECTIVE,
-  sidePedestalWidth: 6.2,
-});
-
-const AZURE_SUPPORTS_PERSPECTIVE = roomPerspective({
-  ...AZURE_HORIZON_PERSPECTIVE,
-  centerPedestalWidth: 13,
-  sidePedestalWidth: 4.75,
 });
 
 const NEON_PROTOCOL_PERSPECTIVE = roomPerspective({
@@ -325,100 +247,11 @@ const LAST_ROUND_PERSPECTIVE = roomPerspective({
   sidePedestalWidth: 7.05,
 });
 
-const FNATIC_PERSPECTIVE = roomPerspective({
-  artworkYaw: 2.8,
-  centerGroundOffset: 7.8,
-  centerPedestalInclination: 0.64,
-  centerPedestalWidth: 18,
-  edgeGroundDrop: 3.7,
-  edgePedestalGrowth: 0.8,
-  pedestalInclination: 0.52,
-  pedestalYaw: 4.5,
-  sideGroundOffset: 3.3,
-  sidePedestalWidth: 6.8,
-});
-
-const KC_PERSPECTIVE = roomPerspective({
-  artworkYaw: 3,
-  centerGroundOffset: 7.6,
-  centerPedestalInclination: 0.63,
-  centerPedestalWidth: 18,
-  edgeGroundDrop: 3.8,
-  edgePedestalGrowth: 0.8,
-  pedestalInclination: 0.51,
-  pedestalYaw: 4.8,
-  sideGroundOffset: 3.2,
-  sidePedestalWidth: 6.7,
-});
-
-const M8_PERSPECTIVE = roomPerspective({
-  artworkLean: 0.5,
-  artworkYaw: 2.7,
-  centerGroundOffset: 7.7,
-  centerPedestalInclination: 0.65,
-  centerPedestalWidth: 18,
-  edgeGroundDrop: 3.6,
-  edgePedestalGrowth: 0.7,
-  pedestalInclination: 0.53,
-  pedestalYaw: 4.3,
-  sideGroundOffset: 3.3,
-  sidePedestalWidth: 6.8,
-});
-
-const LEAGUE_COLLECTION_PERSPECTIVE = roomPerspective({
-  artworkYaw: 2.5,
-  centerGroundOffset: 8.4,
-  centerPedestalInclination: 0.63,
-  centerPedestalWidth: 21,
-  edgeGroundDrop: 4.1,
-  edgePedestalGrowth: 0.8,
-  pedestalInclination: 0.55,
-  pedestalYaw: 4,
-  sideGroundOffset: 3.5,
-  sidePedestalWidth: 7,
-});
-
-const VALORANT_COLLECTION_PERSPECTIVE = roomPerspective({
-  artworkLean: 0.55,
-  artworkYaw: 2.7,
-  centerGroundOffset: 8.2,
-  centerPedestalInclination: 0.62,
-  centerPedestalWidth: 21,
-  edgeGroundDrop: 4,
-  edgePedestalGrowth: 0.8,
-  pedestalInclination: 0.54,
-  pedestalYaw: 4.2,
-  sideGroundOffset: 3.4,
-  sidePedestalWidth: 7,
-});
-
-const ROCKET_COLLECTION_PERSPECTIVE = roomPerspective({
-  artworkLean: 0.5,
-  artworkYaw: 2.6,
-  centerGroundOffset: 8.5,
-  centerPedestalInclination: 0.65,
-  centerPedestalWidth: 21.5,
-  edgeGroundDrop: 4.2,
-  edgePedestalGrowth: 0.9,
-  pedestalInclination: 0.57,
-  pedestalYaw: 4.2,
-  sideGroundOffset: 3.6,
-  sidePedestalWidth: 7.1,
-});
-
 export const SHOWCASE_ROOM_PERSPECTIVES: Readonly<Record<string, ShowcaseRoomPerspective>> = {
-  'obsidian-gallery': OBSIDIAN_GALLERY_PERSPECTIVE,
-  supports_gallery: OBSIDIAN_GALLERY_PERSPECTIVE,
-  'bronze-sanctum': BRONZE_SANCTUM_PERSPECTIVE,
-  supports_forge: BRONZE_SUPPORTS_PERSPECTIVE,
-  'azure-horizon': AZURE_HORIZON_PERSPECTIVE,
-  supports_halo: AZURE_SUPPORTS_PERSPECTIVE,
-  'orbital-station': ORBITAL_STATION_PERSPECTIVE,
-  supports_crystal: ORBITAL_STATION_PERSPECTIVE,
-  'neon-hangar': NEON_HANGAR_PERSPECTIVE,
-  supports_vault: NEON_HANGAR_PERSPECTIVE,
-  'volcanic-forge': VOLCANIC_FORGE_PERSPECTIVE,
-  supports_champagne: VOLCANIC_FORGE_PERSPECTIVE,
+  classique: CABINET_PERSPECTIVE,
+  galerie: CABINET_PERSPECTIVE,
+  midnight: CABINET_PERSPECTIVE,
+  supports_gallery: CABINET_PERSPECTIVE,
   'neon-protocol-vector-pedestals': NEON_PROTOCOL_PERSPECTIVE,
   'mythes-forge-magma-pedestals': MYTHS_FORGE_PERSPECTIVE,
   'circuit-zero-aero-pedestals': CIRCUIT_ZERO_PERSPECTIVE,
@@ -428,12 +261,6 @@ export const SHOWCASE_ROOM_PERSPECTIVES: Readonly<Record<string, ShowcaseRoomPer
   'conclave-arcanique-rosette-pedestal': ARCANE_PERSPECTIVE,
   'turbo-arena-kickoff-pedestal': TURBO_PERSPECTIVE,
   'dernier-round-extraction-pedestal': LAST_ROUND_PERSPECTIVE,
-  'fnatic-pedestals': FNATIC_PERSPECTIVE,
-  'kc-pedestals': KC_PERSPECTIVE,
-  'm8-pedestals': M8_PERSPECTIVE,
-  'lol-jinx-fishbones-gallery': LEAGUE_COLLECTION_PERSPECTIVE,
-  'valorant-jett-gallery': VALORANT_COLLECTION_PERSPECTIVE,
-  'rocket-league-octane-gallery': ROCKET_COLLECTION_PERSPECTIVE,
 };
 
 const DEFAULT_PEDESTAL_GEOMETRY: ShowcasePedestalAssetGeometry = {

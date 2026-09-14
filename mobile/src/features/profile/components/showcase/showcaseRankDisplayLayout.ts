@@ -16,19 +16,11 @@ const DISPLAY_GEOMETRY: Readonly<Record<string, {
 // Visible base width as a percentage of the room image. The removal mask includes
 // stairs and shadows, so its width must not dictate the size of a replacement.
 const ROOM_DISPLAY_BASE_WIDTH: Readonly<Record<string, number>> = {
-  'volcanic-forge': 19,
-  supports_champagne: 19,
   'sang-des-titans-monolith-pedestal': 20,
   'dernier-round-extraction-pedestal': 21,
   'turbo-arena-kickoff-pedestal': 21,
   'circuit-zero-aero-pedestals': 22,
   'mythes-forge-magma-pedestals': 22,
-  'fnatic-pedestals': 21,
-  'kc-pedestals': 21,
-  'm8-pedestals': 21,
-  'lol-jinx-fishbones-gallery': 22,
-  'valorant-jett-gallery': 21,
-  'rocket-league-octane-gallery': 21,
 };
 
 export function showcaseRankDisplayLayout({ displayId, roomId, imageLayout, viewportHeight, artworkAspectRatio = 1 }: {

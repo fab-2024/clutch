@@ -4,22 +4,6 @@ Tool: built-in `image_gen.imagegen`
 
 Mode: new image generation (no referenced input image)
 
-## `showcase-room-empty-v1.png`
-
-```text
-Use case: stylized-concept
-Asset type: production background asset for a React Native esports profile showroom, landscape mobile screen
-Primary request: create an EMPTY premium esports showroom interior viewed perfectly from the front, inspired by a dark museum display room. The room must feel physical, immersive, cinematic, and architecturally believable.
-Scene/backdrop: symmetrical graphite-and-cold-steel room; tall recessed illuminated glass display cabinet on the left with four horizontal shelves and many empty mounting points; central deep architectural alcove with an empty wide circular stepped plinth and an empty pedestal intended to receive a rank crystal later; tall recessed illuminated display cabinet on the right with an empty jersey bay, empty trophy shelves, and subtle empty contact bases; dark reflective floor and deep wall panels.
-Style/medium: polished cinematic 3D environment render, industrial realism, premium esports museum, restrained and credible rather than fantasy concept art
-Composition/framing: ultra-wide panoramic 2.16:1, straight-on eye-level camera, perfectly centered and nearly symmetrical, strong central axis, all cabinets fully visible, usable clear area across the top for a navigation overlay and across the bottom for customization controls; no perspective tilt, no cropped furniture
-Lighting/mood: localized warm museum spotlights inside the cabinets, subtle cool blue/cyan uplight in the central alcove, controlled bronze edge reflections, deep black levels, realistic contact shadows, no broad green glow
-Color palette: graphite black, midnight blue, cold steel, subtle cyan-blue light, tiny aged bronze accents; no acid green
-Materials/textures: brushed steel, blackened metal, smoked glass, dark stone, restrained bronze trims, slightly reflective dark floor
-Constraints: ENVIRONMENT ONLY; no rank crystal, no emblem, no trophy, no medal, no badge, no relic, no bottle, no jersey or clothing, no team logo, no text, no numbers, no icons, no buttons, no interface, no watermark. Shelves and mounts must stay empty so dynamic transparent assets can be layered later. Clean production-quality edges, natural lighting, no black rectangle artifacts around future object areas.
-Avoid: floating objects, dashboard cards, abstract data grid, steampunk excess, ornate fantasy portal, AI-looking random geometry, neon-green surfaces, vignette that hides the cabinets.
-```
-
 ## `showcase-jersey-base-v1.png`
 
 ```text

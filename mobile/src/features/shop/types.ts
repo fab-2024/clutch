@@ -44,7 +44,6 @@ export const COSMETIC_SOURCES = [
   'mission',
   'partenaire',
   'achat',
-  'founder_pack',
   'team_pack',
 ] as const;
 

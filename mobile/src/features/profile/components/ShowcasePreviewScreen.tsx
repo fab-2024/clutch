@@ -10,14 +10,7 @@ import {
   CIRCUIT_ZERO_PACK,
   cosmeticPackById,
   createTeamPackPreviewItems,
-  FNATIC_TEAM_PACK,
-  KC_TEAM_PACK,
-  LEAGUE_OF_LEGENDS_COLLECTION_PACK,
-  M8_TEAM_PACK,
   MYTHS_FORGE_PACK,
-  ROCKET_LEAGUE_COLLECTION_PACK,
-  VALORANT_COLLECTION_PACK,
-  type TeamPackDefinition,
 } from '@/src/features/shop/teamPackCatalog';
 import { EMPTY_EQUIPPED_COSMETICS, type CosmeticShopData } from '@/src/features/shop/types';
 import { colors, typography } from '@/src/theme';
@@ -106,36 +99,18 @@ export default function ShowcasePreviewScreen() {
 
 type ShowcasePreviewMood =
   | 'circuit'
-  | 'fnatic'
   | 'forge'
-  | 'kc'
-  | 'lol'
-  | 'm8'
   | 'minimal'
   | 'mythic'
-  | 'rocket-league'
-  | 'standard'
-  | 'valorant';
+  | 'standard';
 
 export function showcasePreviewForMood(mood: ShowcasePreviewMood, packId?: string) {
   const pack = cosmeticPackById(packId)
     ?? (mood === 'circuit'
       ? CIRCUIT_ZERO_PACK
-      : mood === 'fnatic'
-      ? FNATIC_TEAM_PACK
       : mood === 'forge'
         ? MYTHS_FORGE_PACK
-        : mood === 'kc'
-          ? KC_TEAM_PACK
-          : mood === 'm8'
-            ? M8_TEAM_PACK
-            : mood === 'lol'
-              ? LEAGUE_OF_LEGENDS_COLLECTION_PACK
-              : mood === 'valorant'
-                ? VALORANT_COLLECTION_PACK
-                : mood === 'rocket-league'
-                  ? ROCKET_LEAGUE_COLLECTION_PACK
-                  : null);
+        : null);
   if (pack) {
     const individual = isIndividualCollection(pack.id);
     const collectionItems = createTeamPackPreviewItems(pack).map((item) => ({ ...item, owned: individual }));
@@ -151,7 +126,7 @@ export function showcasePreviewForMood(mood: ShowcasePreviewMood, packId?: strin
       )
       : applyPreviewTeamPackAction(initial, pack);
     return {
-      profile: previewProfileForPack(pack),
+      profile: PREVIEW_PROFILE,
       shop: packShop,
     };
   }
@@ -248,39 +223,11 @@ export function showcasePreviewForMood(mood: ShowcasePreviewMood, packId?: strin
 function previewMood(value?: string): ShowcasePreviewMood {
   if (
     value === 'circuit'
-    || value === 'fnatic'
     || value === 'forge'
-    || value === 'kc'
-    || value === 'lol'
-    || value === 'm8'
     || value === 'minimal'
     || value === 'mythic'
-    || value === 'rocket-league'
-    || value === 'valorant'
   ) return value;
   return 'standard';
-}
-
-function previewProfileForPack(pack: TeamPackDefinition) {
-  if (pack.id === KC_TEAM_PACK.id) {
-    return withPreviewTeam({ id: 'kc', name: 'Karmine Corp', tag: 'KC' });
-  }
-  if (pack.id === M8_TEAM_PACK.id) {
-    return withPreviewTeam({ id: 'm8', name: 'Gentle Mates', tag: 'M8' });
-  }
-  return PREVIEW_PROFILE;
-}
-
-function withPreviewTeam(team: { id: string; name: string; tag: string }) {
-  return {
-    ...PREVIEW_PROFILE,
-    favoriteTeam: {
-      ...PREVIEW_PROFILE.favoriteTeam!,
-      id: team.id,
-      nom: team.name,
-      tag: team.tag,
-    },
-  };
 }
 
 function previewQuality(value?: string): ShowcaseAtmosphereQuality {

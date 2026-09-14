@@ -12,16 +12,14 @@ describe('level frame catalog', () => {
       'signalAscendant',
       'voltRift',
       'azurOrbit',
-      'founderForge',
       'violetSovereign',
       'obsidianFracture',
       'novaPrism',
     ]);
   });
 
-  it('always owns Signal Ascendant and unlocks Founder Forge for founders', () => {
+  it('always owns Signal Ascendant', () => {
     expect(resolveOwnedLevelFrames()).toEqual(['signalAscendant']);
-    expect(resolveOwnedLevelFrames({ founder: true })).toEqual(['signalAscendant', 'founderForge']);
   });
 
   it('resolves ownership and equipment without touching a user level', () => {

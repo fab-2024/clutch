@@ -39,7 +39,6 @@ jest.mock('../AtelierShopScreen', () => {
     <View testID={embedded ? 'embedded-shop' : 'standalone-shop'}>{headerContent}</View>
   ) };
 });
-jest.mock('@/src/features/profile/hooks/useProfileLevel', () => ({ useProfileLevel: () => null }));
 jest.mock('@/src/components/layout/GriffHeader', () => ({
   GriffHeader: ({ accessory, leading }: { accessory?: ReactNode; leading?: ReactNode }) => <>{leading}{accessory}</>,
 }));

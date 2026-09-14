@@ -11,7 +11,7 @@ describe('P3 localization', () => {
     try {
       Reflect.deleteProperty(Intl, 'PluralRules');
       jest.isolateModules(() => {
-        const nativeI18n = require('..') as typeof import('..');
+        const nativeI18n = jest.requireActual('..') as typeof import('..');
         expect(nativeI18n.t('economy.dailyBonus.awarded', { amount: 10 })).toBe('Bonus quotidien : +10 Volts');
         expect(nativeI18n.t('economy.displayed', { count: 0 })).toBe('0 AFFICHÉ');
         expect(nativeI18n.t('economy.displayed', { count: 2 })).toBe('2 AFFICHÉS');

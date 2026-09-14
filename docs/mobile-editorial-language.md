@@ -6,8 +6,7 @@ GRIFF ; ils ne servent pas de décoration.
 
 ## Vocabulaire produit à conserver
 
-- `Hub`, `Social`, `Rank`, `Locker` et `Founder Pack` sont des noms de sections
-  ou d’offres.
+- `Hub`, `Social` et `Rank` sont des noms de sections du produit.
 - `Call`, `Frags`, `Volts` et `Core` sont des mécaniques ou objets nommés.
 - `Arena` appartient à l’univers de marque.
 - `LIVE` est réservé au statut sportif d’un match en direct. Dans une phrase,

@@ -18,14 +18,10 @@ Router pour iOS, Android et web mobile. Les parcours actifs sont :
 - Social : Faction, Cercle et Défis ;
 - Moi, paramètres et compte ;
 - onboarding, authentification et récupération de mot de passe ;
-- boutique cosmétique et Founder Pack.
+- boutique cosmétique et vitrine personnalisable.
 
 La Room est volontairement masquée et reste en pause. Les routes `*-preview`
 servent au développement visuel et redirigent hors des builds de développement.
-
-[`web/`](web/) est l’ancien prototype, conservé uniquement comme référence
-historique. Il ne reçoit plus de logique mobile ni de nouveau développement
-produit.
 
 ## Lancer l’application
 
@@ -65,15 +61,15 @@ supabase/
 api/                   Pages publiques et fichiers d’association du domaine
 public/                Landing mobile légère déployée sur Vercel
 docs/                  Contrats et roadmap produit
-web/                   Prototype historique en lecture seule
 ```
 
 Seuls les modules `api.ts` des features mobiles importent le client Supabase.
 Les écritures sensibles sont autoritaires côté serveur ; les migrations gardent
 RLS, droits Data API et privilèges RPC explicites.
 
-La branche de référence mobile reste `mobile-foundation` jusqu’à validation de
-la migration. `main` n’est pas la base implicite du travail mobile.
+La branche de référence mobile est `codex/mobile-architecture-feature`.
+`mobile-foundation` est historique et `main` n’est pas la base implicite du
+travail mobile.
 
 ## Qualité
 

@@ -28,6 +28,23 @@ import {
   type MonetizationRule,
 } from './types';
 
+const RETIRED_COSMETIC_COLLECTIONS = new Set([
+  'fnatic-black-orange',
+  'kc-blue-wall',
+  'm8-gentle-mates',
+  'league-of-legends-collection',
+  'valorant-collection',
+  'rocket-league-collection',
+]);
+const RETIRED_COSMETIC_PREFIXES = ['founder-', 'fnatic-', 'kc-', 'm8-', 'lol-', 'valorant-', 'rocket-league-'];
+const RETIRED_SHOWCASE_PRODUCTS = new Set([
+  'supports_forge',
+  'supports_halo',
+  'supports_crystal',
+  'supports_vault',
+  'supports_champagne',
+]);
+
 export async function loadCosmeticShop(): Promise<CosmeticShopData> {
   const { data, error } = await supabase.rpc('clutch_boutique_cosmetique_v1');
   if (error) throw error;
@@ -130,10 +147,13 @@ export function normalizeEquipped(value: unknown): EquippedCosmetics {
 
 function normalizeItem(value: unknown): CosmeticItem | null {
   const item = asRecord(value);
+  if (item.source === 'founder_pack') return null;
   const slot = normalizeSlot(item.emplacement);
   const id = stringValue(item.id);
   const styleKey = stringValue(item.style_key);
   if (!slot || !id || !styleKey) return null;
+  const collectionKey = stringValue(item.collection_key) || 'origine';
+  if (isRetiredCosmetic(id, collectionKey)) return null;
 
   const level = Math.max(1, toNonNegativeInteger(item.niveau));
   const price = toNonNegativeInteger(item.prix);
@@ -153,7 +173,7 @@ function normalizeItem(value: unknown): CosmeticItem | null {
     styleKey,
     accent: normalizeAccent(item.accent),
     price,
-    collectionKey: stringValue(item.collection_key) || 'origine',
+    collectionKey,
     source,
     team: normalizeTeam(item.equipe_associee),
     brandKey: nullableString(item.marque_key),
@@ -177,6 +197,7 @@ function normalizeEquippedItem(value: unknown, expectedSlot: CosmeticSlot): Equi
   const styleKey = stringValue(item.style_key);
   const slot = normalizeSlot(item.emplacement);
   if (!id || !styleKey || slot !== expectedSlot) return null;
+  if (isRetiredCosmetic(id)) return null;
 
   return {
     id,
@@ -188,6 +209,12 @@ function normalizeEquippedItem(value: unknown, expectedSlot: CosmeticSlot): Equi
     styleKey,
     accent: normalizeAccent(item.accent),
   };
+}
+
+function isRetiredCosmetic(id: string, collectionKey?: string) {
+  return (collectionKey ? RETIRED_COSMETIC_COLLECTIONS.has(collectionKey) : false)
+    || RETIRED_SHOWCASE_PRODUCTS.has(id)
+    || RETIRED_COSMETIC_PREFIXES.some((prefix) => id.startsWith(prefix));
 }
 
 function normalizeMutation(value: unknown, fallbackId: string): CosmeticMutation {

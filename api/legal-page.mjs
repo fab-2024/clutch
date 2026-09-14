@@ -17,7 +17,7 @@ const PAGES = {
     sections: [
       ['Compte', 'Tu dois protéger ton mot de passe, utiliser des informations exactes et respecter les autres joueurs. Les abus, fraudes, contenus illicites ou atteintes aux droits d’autrui sont interdits.'],
       ['Compétition', 'Les verdicts sont réglés à partir des sources indiquées dans le Match Center. Une erreur manifeste ou un match annulé peut entraîner une correction traçable.'],
-      ['Achats', 'Les achats sont facturés et remboursés selon les règles d’Apple ou Google. Le Founder Pack est un achat unique de contenus visuels sans avantage compétitif.'],
+      ['Achats', 'Les achats sont facturés et remboursés selon les règles d’Apple ou Google. Les packs sont des achats uniques de contenus visuels sans avantage compétitif.'],
       ['Disponibilité', 'Le service peut évoluer ou être interrompu pour maintenance, sécurité ou conformité.'],
     ],
   },
