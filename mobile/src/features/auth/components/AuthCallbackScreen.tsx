@@ -37,7 +37,7 @@ export default function AuthCallbackScreen() {
 
   useEffect(() => {
     if (!confirmed || !session || !profile || status !== 'ready') return;
-    const needsOnboarding = !profile.jeux_suivis.length || !profile.equipe_favorite_id;
+    const needsOnboarding = !profile.onboarding_termine;
     router.replace(needsOnboarding ? '/onboarding' : '/(tabs)');
   }, [confirmed, profile, session, status]);
 

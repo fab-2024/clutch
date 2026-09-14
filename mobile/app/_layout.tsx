@@ -42,10 +42,19 @@ function RootNavigator() {
     session
       && profile
       && !profile.est_developpeur
-      && (!profile.jeux_suivis.length || !profile.equipe_favorite_id),
+      && !profile.onboarding_termine,
   );
   const inOnboarding = segments[0] === 'onboarding';
   const inAuthFlow = segments[0] === 'auth';
+  const inPreview = typeof segments[0] === 'string' && segments[0].endsWith('-preview');
+  const engagementGatesEnabled = Boolean(
+    session
+      && !needsOnboarding
+      && !inOnboarding
+      && !inAuthFlow
+      && !inPreview
+      && pathname !== '/',
+  );
   useEffect(() => {
     if (loading || !userId || !profileId) return;
     let active = true;
@@ -88,10 +97,10 @@ function RootNavigator() {
   return (
     <>
       <AnalyticsBridge userId={userId} />
-      <DailyBonusBridge />
+      {engagementGatesEnabled ? <DailyBonusBridge /> : null}
       <NotificationBridge userId={userId} />
-      <ResultRevealGate />
-      <PrivacyConsentGate userId={userId} />
+      {engagementGatesEnabled ? <ResultRevealGate /> : null}
+      {engagementGatesEnabled ? <PrivacyConsentGate userId={userId} /> : null}
       <Stack
         screenOptions={{
           headerShown: false,
@@ -99,6 +108,7 @@ function RootNavigator() {
           orientation: 'portrait',
         }}
       >
+        <Stack.Screen name="index" />
         <Stack.Protected guard={Boolean(session)}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="match/[id]" options={{ animation: reduceMotion ? 'none' : 'fade' }} />
@@ -120,7 +130,6 @@ function RootNavigator() {
           <Stack.Screen name="campaign/[key]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="admin/matches" />
           <Stack.Screen name="admin/campaigns/[key]" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="onboarding" />
         </Stack.Protected>
         <Stack.Protected guard={!session}>
           <Stack.Screen name="login" />
@@ -128,6 +137,7 @@ function RootNavigator() {
         <Stack.Screen name="auth/forgot-password" />
         <Stack.Screen name="auth/callback" />
         <Stack.Screen name="auth/update-password" />
+        <Stack.Screen name="onboarding" />
         <Stack.Screen name="player/[pseudo]" />
         <Stack.Screen name="c/[token]" />
         <Stack.Screen name="u/[pseudo]" />

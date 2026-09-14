@@ -16,3 +16,12 @@ export type TeamOrganization = {
   games: GameId[];
   teams: TeamRow[];
 };
+
+export type OnboardingDraft = {
+  step: number;
+  favoriteGame: GameId | null;
+  favoriteTeamKey: string | null;
+  favoriteTeamId: string | null;
+  missingGame: string;
+  missingTeam: string;
+};

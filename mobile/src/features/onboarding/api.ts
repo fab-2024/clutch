@@ -1,6 +1,6 @@
 import { supabase } from '@/src/lib/supabase';
 
-import type { GameId, TeamOrganization, TeamRow } from './types';
+import type { GameId, OnboardingDraft, TeamOrganization, TeamRow } from './types';
 
 const DISPLAY_NAMES: Record<string, string> = {
   'natus vincere': 'NAVI',
@@ -59,11 +59,28 @@ export async function loadTeamOrganizations(games: GameId[]): Promise<TeamOrgani
     .slice(0, 18);
 }
 
-export async function saveOnboarding(games: GameId[], teamId: string) {
-  const { data, error } = await supabase.rpc('clutch_terminer_onboarding_v1', {
-    p_jeux: games,
-    p_equipe_id: teamId,
+export async function saveOnboarding(draft: OnboardingDraft) {
+  const { data, error } = await supabase.rpc('clutch_terminer_onboarding_v2', {
+    p_jeu: draft.favoriteGame,
+    p_equipe_id: draft.favoriteTeamId,
+    p_jeu_demande: draft.missingGame.trim() || null,
+    p_equipe_demandee: draft.missingTeam.trim() || null,
   });
+  if (error && isMissingV2Function(error) && draft.favoriteGame && draft.favoriteTeamId && !draft.missingGame.trim() && !draft.missingTeam.trim()) {
+    const fallback = await supabase.rpc('clutch_terminer_onboarding_v1', {
+      p_jeux: [draft.favoriteGame],
+      p_equipe_id: draft.favoriteTeamId,
+    });
+    if (fallback.error) throw fallback.error;
+    return fallback.data;
+  }
   if (error) throw error;
   return data;
+}
+
+function isMissingV2Function(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { code?: string; message?: string };
+  return candidate.code === 'PGRST202'
+    || candidate.message?.includes('clutch_terminer_onboarding_v2') === true;
 }

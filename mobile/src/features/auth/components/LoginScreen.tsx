@@ -17,9 +17,10 @@ import AuthShell from './AuthShell';
 type Mode = 'signin' | 'signup';
 
 export default function LoginScreen() {
-  const params = useLocalSearchParams<{ next?: string | string[] }>();
+  const params = useLocalSearchParams<{ mode?: string | string[]; next?: string | string[] }>();
   const requestedRoute = safePendingRoute(Array.isArray(params.next) ? params.next[0] : params.next);
-  const [mode, setMode] = useState<Mode>('signin');
+  const requestedMode = Array.isArray(params.mode) ? params.mode[0] : params.mode;
+  const [mode, setMode] = useState<Mode>(requestedMode === 'signup' ? 'signup' : 'signin');
   const [pseudo, setPseudo] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

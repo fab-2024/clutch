@@ -55,7 +55,7 @@ export default function UpdatePasswordScreen() {
   }
 
   function enterGriff() {
-    const needsOnboarding = Boolean(profile && (!profile.jeux_suivis.length || !profile.equipe_favorite_id));
+    const needsOnboarding = Boolean(profile && !profile.onboarding_termine);
     router.replace(needsOnboarding ? '/onboarding' : '/(tabs)');
   }
 

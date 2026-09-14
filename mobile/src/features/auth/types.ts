@@ -12,6 +12,7 @@ export type ClutchProfile = {
   contenu_debloque: boolean;
   equipe_favorite_id: string | null;
   jeux_suivis: string[];
+  onboarding_termine: boolean;
   profil_public: boolean;
 };
 

@@ -70,6 +70,7 @@ const previewState: ProfileSettingsPreviewState = {
     contenu_debloque: false,
     equipe_favorite_id: 'fnc-lol',
     jeux_suivis: ['lol', 'valorant'],
+    onboarding_termine: true,
     profil_public: true,
   },
   organizations: [

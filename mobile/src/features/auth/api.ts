@@ -4,6 +4,8 @@ import { supabase } from '@/src/lib/supabase';
 
 import type { ClutchProfile } from './types';
 
+export type OAuthProvider = 'apple' | 'google' | 'discord';
+
 const authCodeExchanges = new Map<string, Promise<Session>>();
 
 export class ClutchProfileMissingError extends Error {
@@ -57,13 +59,14 @@ export async function loadClutchProfile(userId: string): Promise<ClutchProfile> 
 }
 
 async function fetchClutchProfile(userId: string): Promise<ClutchProfile | null> {
-  const [profileResult, developerResult] = await Promise.all([
+  const [profileResult, developerResult, onboardingResult] = await Promise.all([
     supabase
       .from('profils')
       .select('id,avatar_id,pseudo,email,est_admin,equipe_favorite_id,jeux_suivis,profil_public')
       .eq('id', userId)
       .maybeSingle(),
     supabase.rpc('clutch_mon_acces_developpeur_v1'),
+    supabase.rpc('clutch_mon_statut_onboarding_v1'),
   ]);
 
   if (profileResult.error) throw profileResult.error;
@@ -73,6 +76,7 @@ async function fetchClutchProfile(userId: string): Promise<ClutchProfile | null>
   const developerAccess = developerAccessRow(
     developerResult.error ? null : developerResult.data,
   );
+  const followedGames = Array.isArray(data.jeux_suivis) ? data.jeux_suivis : [];
   return {
     ...(data as Omit<ClutchProfile, 'jeux_suivis'> & { jeux_suivis?: string[] | null }),
     est_admin: Boolean(data.est_admin),
@@ -80,7 +84,10 @@ async function fetchClutchProfile(userId: string): Promise<ClutchProfile | null>
     est_createur: developerAccess.est_createur,
     volts_illimites: developerAccess.volts_illimites,
     contenu_debloque: developerAccess.contenu_debloque,
-    jeux_suivis: Array.isArray(data.jeux_suivis) ? data.jeux_suivis : [],
+    jeux_suivis: followedGames,
+    onboarding_termine: onboardingResult.error
+      ? Boolean(followedGames.length && data.equipe_favorite_id)
+      : onboardingResult.data === true,
     profil_public: data.profil_public !== false,
   };
 }
@@ -103,6 +110,19 @@ export async function signInWithPassword(email: string, password: string) {
     password,
   });
   if (error) throw error;
+}
+
+export async function createOAuthSignInUrl(provider: OAuthProvider, redirectTo: string) {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo,
+      skipBrowserRedirect: true,
+    },
+  });
+  if (error) throw error;
+  if (!data.url) throw new Error('Le fournisseur de connexion n’a pas renvoyé de lien valide.');
+  return data.url;
 }
 
 export async function signUpWithPassword({
