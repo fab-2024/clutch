@@ -20,34 +20,68 @@ import type { ShopCategory } from './ShopCategoryMenu';
 type FigurineUniverse = typeof FIGURINE_UNIVERSES[number];
 type Detail = { kind: 'pack'; pack: IdentityPack } | { kind: 'universe'; universe: FigurineUniverse };
 
-function PackCampaign({ pack, onPress }: { pack: IdentityPack; onPress: () => void }) {
+function compactIdentityAccessLabel(pack: IdentityPack) {
+  switch (pack.access.kind) {
+    case 'included': return 'INCLUS';
+    case 'volts': return pack.access.tier === 'quick' ? 'VOLTS · RAPIDE' : pack.access.tier === 'medium' ? 'VOLTS · INTERMÉDIAIRE' : 'VOLTS · LONG COURS';
+    case 'store': return `${(pack.access.proposedCents / 100).toFixed(2).replace('.', ',')} €`;
+    case 'season': return 'À GAGNER';
+  }
+}
+
+function PackFeature({ pack, onPress }: { pack: IdentityPack; onPress: () => void }) {
   return (
     <Pressable
       accessibilityLabel={`Découvrir le pack ${pack.name}`}
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [styles.campaign, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.packFeature, pressed && styles.pressed]}
       testID={`identity-shop-${pack.id}`}
     >
       <Image resizeMode="cover" source={IDENTITY_PACK_HERO[pack.id]} style={StyleSheet.absoluteFill} />
-      <LinearGradient colors={['transparent', 'rgba(3,8,13,.2)', 'rgba(3,8,13,.98)']} locations={[0, .42, 1]} style={StyleSheet.absoluteFill} />
-      <View style={styles.campaignTopline}>
-        <View style={[styles.collectionPill, { borderColor: `${pack.accent}88` }]}>
-          <Text style={[styles.collectionPillText, { color: pack.accent }]}>PACK PROFIL</Text>
+      <LinearGradient colors={['rgba(3,8,13,.08)', 'rgba(3,8,13,.2)', 'rgba(3,8,13,.98)']} locations={[0, .38, 1]} style={StyleSheet.absoluteFill} />
+      <View style={styles.featureTopline}>
+        <View style={[styles.featurePill, { borderColor: `${pack.accent}99` }]}>
+          <Text style={[styles.featurePillText, { color: pack.accent }]}>OFFERT AU DÉPART</Text>
         </View>
-        <Text style={styles.campaignCount}>3 OBJETS</Text>
+        <Text style={styles.itemCount}>3 OBJETS</Text>
       </View>
-      <View style={styles.campaignCopy}>
-        <Text style={styles.campaignTitle}>{pack.name}</Text>
-        <Text style={styles.campaignMaterial}>{pack.material}</Text>
-        <Text numberOfLines={2} style={styles.campaignDescription}>{pack.description}</Text>
-        <View style={styles.campaignAction}>
-          <Text style={[styles.campaignPrice, { color: pack.accent }]}>{identityAccessLabel(pack.access).replace(' · Prix envisagé', '')}</Text>
-          <View style={[styles.openButton, { backgroundColor: pack.accent }]}>
-            <Text style={styles.openButtonText}>OUVRIR</Text>
-            <ChevronRight color="#060A0E" size={16} strokeWidth={2.3} />
-          </View>
+      <View style={styles.featureCopy}>
+        <Text style={styles.featureKicker}>PACK PROFIL</Text>
+        <Text style={styles.featureTitle}>{pack.name}</Text>
+        <Text style={styles.featureMaterial}>{pack.material}</Text>
+        <View style={[styles.featureButton, { backgroundColor: pack.accent }]}>
+          <Text style={styles.featureButtonText}>DÉCOUVRIR</Text>
+          <ChevronRight color="#060A0E" size={17} strokeWidth={2.5} />
         </View>
+      </View>
+    </Pressable>
+  );
+}
+
+function PackCard({ pack, onPress }: { pack: IdentityPack; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityLabel={`Découvrir le pack ${pack.name}`}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.packCard, { borderColor: `${pack.accent}55` }, pressed && styles.pressed]}
+      testID={`identity-shop-${pack.id}`}
+    >
+      <View style={styles.packCardArt}>
+        <Image resizeMode="cover" source={IDENTITY_PACK_HERO[pack.id]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={['rgba(5,10,15,.02)', 'rgba(5,10,15,.9)']} style={StyleSheet.absoluteFill} />
+        <View style={[styles.packTypePill, { borderColor: `${pack.accent}88` }]}>
+          <Text style={[styles.packTypeText, { color: pack.accent }]}>3 OBJETS</Text>
+        </View>
+      </View>
+      <View style={styles.packCardCopy}>
+        <Text numberOfLines={1} style={styles.packCardTitle}>{pack.name}</Text>
+        <Text numberOfLines={1} style={styles.packCardMaterial}>{pack.material}</Text>
+      </View>
+      <View style={[styles.packPriceButton, { backgroundColor: pack.accent }]}>
+        <Text numberOfLines={1} style={styles.packPriceText}>{compactIdentityAccessLabel(pack)}</Text>
+        <ChevronRight color="#060A0E" size={15} strokeWidth={2.5} />
       </View>
     </Pressable>
   );
@@ -60,21 +94,24 @@ function UniverseCampaign({ universe, onPress }: { universe: FigurineUniverse; o
       accessibilityLabel={`Découvrir ${universe.name}`}
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [styles.universeCampaign, { borderColor: `${universe.accent}58` }, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.universeCard, { borderColor: `${universe.accent}58` }, pressed && styles.pressed]}
       testID={`figurine-universe-${universe.id}`}
     >
       <LinearGradient colors={[`${universe.accent}30`, '#111923', '#080D13']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       <View style={styles.universeArtWrap}>
         <Image resizeMode="contain" source={featured.image} style={styles.universeArt} />
       </View>
-      <LinearGradient colors={['rgba(4,8,12,.04)', 'rgba(4,8,12,.96)']} start={{ x: .35, y: 0 }} end={{ x: .78, y: 0 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['transparent', 'rgba(4,8,12,.96)']} locations={[.22, .72]} style={StyleSheet.absoluteFill} />
+      <View style={styles.universeTopline}>
+        <Text style={[styles.universeEyebrow, { color: universe.accent }]}>UNIVERS</Text>
+        <Text style={styles.itemCount}>{universe.items.length} FIGURINES</Text>
+      </View>
       <View style={styles.universeCopy}>
-        <Text style={[styles.universeEyebrow, { color: universe.accent }]}>UNIVERS · {universe.items.length} FIGURINES</Text>
-        <Text style={styles.universeTitle}>{universe.name}</Text>
-        <Text style={styles.universeDescription}>Collectionne chaque forme et débloque ses évolutions en jouant.</Text>
-        <View style={[styles.universeButton, { borderColor: `${universe.accent}BB` }]}>
-          <Text style={[styles.universeButtonText, { color: universe.accent }]}>VOIR LA COLLECTION</Text>
-          <ChevronRight color={universe.accent} size={17} />
+        <Text numberOfLines={2} style={styles.universeTitle}>{universe.name}</Text>
+        <Text numberOfLines={2} style={styles.universeDescription}>Une figurine offerte, ses évolutions à gagner en jouant.</Text>
+        <View style={[styles.universeButton, { backgroundColor: universe.accent }]}>
+          <Text style={styles.universeButtonText}>OUVRIR</Text>
+          <ChevronRight color="#060A0E" size={16} strokeWidth={2.5} />
         </View>
       </View>
     </Pressable>
@@ -121,21 +158,30 @@ export default function CurrentCollectionShop({ category }: { category: ShopCate
   const [detail, setDetail] = useState<Detail | null>(null);
   const showPacks = category === 'all' || category === 'packs';
   const showFigurines = category === 'all' || category === 'objects';
+  const featuredPack = IDENTITY_PACKS[0];
+  const shelfPacks = IDENTITY_PACKS.slice(1);
 
   return (
     <View style={styles.root} testID="current-collection-shop">
       {showPacks ? <View style={styles.section}>
         <View style={styles.headingRow}>
           <View>
-            <Text style={styles.eyebrow}>PERSONNALISATION DU PROFIL</Text>
-            <Text style={styles.heading}>Collections complètes</Text>
+            <Text style={styles.eyebrow}>PACKS DE PROFIL</Text>
+            <Text style={styles.heading}>Affiche tes couleurs</Text>
           </View>
-          <Text style={styles.headingCount}>12</Text>
+          <Text style={styles.headingCount}>{IDENTITY_PACKS.length}</Text>
         </View>
-        <Text style={styles.sectionDescription}>Cadre, fond et signature dans une même direction artistique. Ton avatar reste indépendant.</Text>
-        <View style={styles.campaignList}>
-          {IDENTITY_PACKS.map((pack) => <PackCampaign key={pack.id} onPress={() => setDetail({ kind: 'pack', pack })} pack={pack} />)}
-        </View>
+        <Text style={styles.sectionDescription}>Un cadre, un fond et une signature réunis dans une seule identité.</Text>
+        <PackFeature onPress={() => setDetail({ kind: 'pack', pack: featuredPack })} pack={featuredPack} />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalShelf}
+          snapToInterval={176}
+          decelerationRate="fast"
+        >
+          {shelfPacks.map((pack) => <PackCard key={pack.id} onPress={() => setDetail({ kind: 'pack', pack })} pack={pack} />)}
+        </ScrollView>
       </View> : null}
 
       {showFigurines ? <View style={styles.section}>
@@ -144,12 +190,18 @@ export default function CurrentCollectionShop({ category }: { category: ShopCate
             <Text style={styles.eyebrow}>FIGURINES</Text>
             <Text style={styles.heading}>Choisis ton univers</Text>
           </View>
-          <Text style={styles.headingCount}>24</Text>
+          <Text style={styles.headingCount}>{FIGURINE_UNIVERSES.length}</Text>
         </View>
-        <Text style={styles.sectionDescription}>Brumousse, Écho ou Grelot est offert au départ. Toutes les évolutions se gagnent ensuite en jouant.</Text>
-        <View style={styles.campaignList}>
+        <Text style={styles.sectionDescription}>Commence avec une figurine offerte. Les formes suivantes se débloquent par le jeu.</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalShelf}
+          snapToInterval={220}
+          decelerationRate="fast"
+        >
           {FIGURINE_UNIVERSES.map((universe) => <UniverseCampaign key={universe.id} onPress={() => setDetail({ kind: 'universe', universe })} universe={universe} />)}
-        </View>
+        </ScrollView>
       </View> : null}
 
       <Modal animationType="slide" onRequestClose={() => setDetail(null)} presentationStyle="pageSheet" visible={detail !== null}>
@@ -207,18 +259,22 @@ export default function CurrentCollectionShop({ category }: { category: ShopCate
 }
 
 const styles = StyleSheet.create({
-  root: { gap: 30 }, section: { gap: 12 }, headingRow: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between' },
+  root: { gap: 34 }, section: { gap: 12 }, headingRow: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between' },
   eyebrow: { ...typography.eyebrow, color: colors.volt, fontSize: 10 }, heading: { color: colors.text, fontFamily: fonts.display, fontSize: 27, lineHeight: 31, marginTop: 2 },
-  headingCount: { color: colors.textMuted, fontFamily: fonts.display, fontSize: 22 }, sectionDescription: { ...typography.caption, color: colors.textSecondary, maxWidth: 440 }, campaignList: { gap: 14 },
-  campaign: { backgroundColor: '#080D13', borderColor: colors.borderStrong, borderRadius: radius.lg, borderWidth: 1, height: 256, justifyContent: 'space-between', overflow: 'hidden' },
-  campaignTopline: { flexDirection: 'row', justifyContent: 'space-between', padding: 14 }, collectionPill: { backgroundColor: 'rgba(5,9,13,.76)', borderRadius: radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
-  collectionPillText: { ...typography.eyebrow, fontSize: 9 }, campaignCount: { ...typography.eyebrow, color: colors.textSecondary, fontSize: 9 }, campaignCopy: { gap: 5, padding: 16 },
-  campaignTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 30, lineHeight: 32 }, campaignMaterial: { ...typography.control, color: colors.text, fontSize: 12 }, campaignDescription: { ...typography.caption, color: colors.textSecondary, maxWidth: '85%' },
-  campaignAction: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: 5 }, campaignPrice: { ...typography.control, fontSize: 12, flexShrink: 1 },
-  openButton: { alignItems: 'center', borderRadius: radius.pill, flexDirection: 'row', gap: 2, paddingHorizontal: 13, paddingVertical: 8 }, openButtonText: { color: '#060A0E', fontFamily: fonts.bold, fontSize: 10 },
-  universeCampaign: { backgroundColor: '#080D13', borderRadius: radius.lg, borderWidth: 1, height: 222, justifyContent: 'center', overflow: 'hidden' }, universeArtWrap: { bottom: -30, height: 250, position: 'absolute', right: -42, width: 250 }, universeArt: { height: '100%', width: '100%' },
-  universeCopy: { gap: 8, padding: 18, width: '66%', zIndex: 2 }, universeEyebrow: { ...typography.eyebrow, fontSize: 9 }, universeTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 26, lineHeight: 29 }, universeDescription: { ...typography.caption, color: colors.textSecondary },
-  universeButton: { alignItems: 'center', alignSelf: 'flex-start', borderRadius: radius.pill, borderWidth: 1, flexDirection: 'row', gap: 4, marginTop: 4, paddingHorizontal: 11, paddingVertical: 7 }, universeButtonText: { ...typography.eyebrow, fontSize: 9 },
+  headingCount: { color: colors.textMuted, fontFamily: fonts.display, fontSize: 22 }, sectionDescription: { ...typography.caption, color: colors.textSecondary, maxWidth: 440 },
+  horizontalShelf: { gap: 10, paddingRight: spacing.md },
+  packFeature: { backgroundColor: '#080D13', borderColor: colors.borderStrong, borderRadius: radius.lg, borderWidth: 1, height: 238, justifyContent: 'space-between', overflow: 'hidden' },
+  featureTopline: { flexDirection: 'row', justifyContent: 'space-between', padding: 14 }, featurePill: { backgroundColor: 'rgba(5,9,13,.78)', borderRadius: radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
+  featurePillText: { ...typography.eyebrow, fontSize: 9 }, itemCount: { ...typography.eyebrow, color: colors.textSecondary, fontSize: 9 }, featureCopy: { gap: 3, padding: 16 },
+  featureKicker: { ...typography.eyebrow, color: colors.volt, fontSize: 9 }, featureTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 31, lineHeight: 34 }, featureMaterial: { ...typography.control, color: colors.textSecondary, fontSize: 11 },
+  featureButton: { alignItems: 'center', alignSelf: 'flex-start', borderRadius: radius.pill, flexDirection: 'row', gap: 3, marginTop: 8, paddingHorizontal: 15, paddingVertical: 9 }, featureButtonText: { color: '#060A0E', fontFamily: fonts.bold, fontSize: 10 },
+  packCard: { backgroundColor: '#080D13', borderRadius: radius.lg, borderWidth: 1, overflow: 'hidden', width: 166 },
+  packCardArt: { height: 122, overflow: 'hidden' }, packTypePill: { position: 'absolute', left: 9, top: 9, borderRadius: radius.pill, borderWidth: 1, backgroundColor: 'rgba(5,9,13,.78)', paddingHorizontal: 7, paddingVertical: 4 }, packTypeText: { ...typography.eyebrow, fontSize: 8 },
+  packCardCopy: { gap: 2, minHeight: 58, paddingHorizontal: 10, paddingVertical: 8 }, packCardTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 19, lineHeight: 22 }, packCardMaterial: { ...typography.caption, color: colors.textSecondary, fontSize: 9, lineHeight: 13 },
+  packPriceButton: { alignItems: 'center', flexDirection: 'row', gap: 2, justifyContent: 'center', minHeight: 40, paddingHorizontal: 7 }, packPriceText: { color: '#060A0E', flexShrink: 1, fontFamily: fonts.bold, fontSize: 10, textAlign: 'center' },
+  universeCard: { backgroundColor: '#080D13', borderRadius: radius.lg, borderWidth: 1, height: 254, justifyContent: 'space-between', overflow: 'hidden', width: 210 }, universeArtWrap: { height: 180, left: 15, position: 'absolute', right: 15, top: 18 }, universeArt: { height: '100%', width: '100%' },
+  universeTopline: { flexDirection: 'row', justifyContent: 'space-between', padding: 11, zIndex: 2 }, universeCopy: { gap: 4, padding: 12, zIndex: 2 }, universeEyebrow: { ...typography.eyebrow, fontSize: 9 }, universeTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 23, lineHeight: 25 }, universeDescription: { ...typography.caption, color: colors.textSecondary, fontSize: 9, lineHeight: 13 },
+  universeButton: { alignItems: 'center', borderRadius: 9, flexDirection: 'row', gap: 3, justifyContent: 'center', marginTop: 4, minHeight: 36, paddingHorizontal: 11 }, universeButtonText: { color: '#060A0E', fontFamily: fonts.bold, fontSize: 10 },
   modal: { backgroundColor: colors.background, flex: 1, paddingTop: 8 }, closeButton: { alignItems: 'center', alignSelf: 'flex-end', height: 44, justifyContent: 'center', marginRight: 10, width: 44, zIndex: 3 }, detailContent: { gap: 18, paddingBottom: 50, paddingHorizontal: spacing.md },
   detailHero: { borderColor: colors.borderStrong, borderRadius: radius.lg, borderWidth: 1, height: 300, justifyContent: 'flex-end', overflow: 'hidden' }, universeDetailHero: { borderRadius: radius.lg, borderWidth: 1, height: 330, justifyContent: 'flex-end', overflow: 'hidden' }, universeDetailArt: { bottom: -28, height: 310, position: 'absolute', right: -45, width: 310 },
   detailHeroCopy: { gap: 5, padding: 18 }, detailEyebrow: { ...typography.eyebrow, fontSize: 10 }, detailTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 34, lineHeight: 38 }, detailSubtitle: { ...typography.control, color: colors.textSecondary }, detailDescription: { ...typography.body, color: colors.textSecondary },

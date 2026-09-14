@@ -65,10 +65,13 @@ export default function AtelierShopScreen({
           </View> : null}
 
           {previewState?.loading ? <CatalogSkeleton /> : <View style={styles.catalog} testID="atelier-catalog">
-            {category !== 'consumables' ? <View style={styles.intro}>
-              <Text style={styles.introEyebrow}>COLLECTIONS CLUTCH</Text>
-              <Text style={styles.introTitle}>FAIS GRANDIR TA COLLECTION.</Text>
-              <Text style={styles.introText}>Packs de profil complets et figurines issues de cinq univers.</Text>
+            {category === 'all' ? <View style={styles.intro}>
+              <View style={styles.introTopline}>
+                <Text style={styles.introEyebrow}>BOUTIQUE CLUTCH</Text>
+                <Text style={styles.introSeason}>SAISON 1</Text>
+              </View>
+              <Text style={styles.introTitle}>CONSTRUIS TON IDENTITÉ.</Text>
+              <Text style={styles.introText}>Packs de profil, figurines et protections réunis dans des rayons plus rapides à parcourir.</Text>
             </View> : null}
 
             <CurrentCollectionShop category={category} />
@@ -115,7 +118,13 @@ const styles = StyleSheet.create({
   header: { alignItems: 'center', flexDirection: 'row', height: 68, justifyContent: 'space-between', paddingHorizontal: spacing.md },
   back: { alignItems: 'center', height: 44, justifyContent: 'center', width: 44 }, backText: { color: colors.text, fontSize: 38, lineHeight: 40 },
   headerTitle: { ...typography.sectionTitle, color: colors.text, fontSize: 22 }, balance: { alignItems: 'center', backgroundColor: colors.surfaceRaised, borderColor: colors.borderStrong, borderRadius: radius.pill, borderWidth: 1, flexDirection: 'row', gap: 7, minHeight: 40, paddingHorizontal: 12 }, balanceValue: { ...typography.metricSmall, color: colors.text },
-  catalog: { gap: 28, paddingHorizontal: spacing.md }, intro: { gap: 4, paddingTop: 4 }, introEyebrow: { ...typography.eyebrow, color: colors.volt, fontSize: 9 }, introTitle: { ...typography.sectionTitle, color: colors.text, fontSize: 25, lineHeight: 30 }, introText: { ...typography.body, color: colors.textSecondary, fontSize: 14 },
+  catalog: { gap: 32, paddingHorizontal: spacing.md },
+  intro: { backgroundColor: 'rgba(16,43,58,.58)', borderColor: colors.borderStrong, borderRadius: radius.lg, borderWidth: 1, gap: 5, overflow: 'hidden', padding: 16 },
+  introTopline: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  introEyebrow: { ...typography.eyebrow, color: colors.volt, fontSize: 9 },
+  introSeason: { ...typography.eyebrow, color: colors.textSecondary, fontSize: 8 },
+  introTitle: { ...typography.sectionTitle, color: colors.text, fontSize: 25, lineHeight: 30 },
+  introText: { ...typography.body, color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
   errorBanner: { backgroundColor: colors.surfaceRaised, borderColor: colors.danger, borderRadius: radius.md, borderWidth: 1, gap: 4, marginHorizontal: spacing.md, padding: 14 }, errorTitle: { ...typography.eyebrow, color: colors.danger }, errorText: { ...typography.caption, color: colors.textSecondary },
   skeleton: { gap: 16, paddingHorizontal: spacing.md, paddingTop: spacing.md },
 });

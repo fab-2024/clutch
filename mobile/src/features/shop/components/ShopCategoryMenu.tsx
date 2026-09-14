@@ -65,12 +65,12 @@ export function ShopCategoryMenu({ selected, onSelect }: {
 }
 
 const styles = StyleSheet.create({
-  menu: { paddingHorizontal: spacing.md, paddingBottom: 8 },
-  row: { flexDirection: 'row' },
-  item: { width: 94, alignItems: 'center', gap: 5, paddingVertical: 3 },
-  icon: { width: 42, height: 42, borderRadius: 21, borderWidth: 1, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center' },
-  iconActive: { borderColor: colors.volt, backgroundColor: 'rgba(228,255,40,.05)' },
-  label: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 10, lineHeight: 15 },
-  labelActive: { color: colors.volt },
+  menu: { borderBottomColor: colors.borderSubtle, borderBottomWidth: 1, paddingBottom: 10, paddingHorizontal: spacing.md, paddingTop: 8 },
+  row: { flexDirection: 'row', gap: 2 },
+  item: { width: 92, alignItems: 'center', gap: 4, paddingVertical: 2 },
+  icon: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center' },
+  iconActive: { borderColor: colors.volt, backgroundColor: 'rgba(228,255,40,.08)' },
+  label: { color: colors.textMuted, fontFamily: fonts.medium, fontSize: 9, lineHeight: 14, letterSpacing: .2 },
+  labelActive: { color: colors.volt, fontFamily: fonts.bold },
   pressed: { opacity: 0.7 },
 });

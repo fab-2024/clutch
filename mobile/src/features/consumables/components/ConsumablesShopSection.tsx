@@ -31,14 +31,16 @@ export default function ConsumablesShopSection({ preview = false }: { preview?: 
       </View>)}
     </View>
     </> : null}
-    <View style={[styles.heading, SHOP_EFFECTS_ENABLED && styles.protectionHeading]}><Text accessibilityRole="header" style={styles.title}>PROTECTIONS DE SÉRIE</Text>
-      <Text style={styles.subtitle}>Garde ta série malgré une journée manquée.</Text></View>
+    <View style={[styles.heading, SHOP_EFFECTS_ENABLED && styles.protectionHeading]}>
+      <View style={styles.headingTopline}><Text style={styles.eyebrow}>CONSOMMABLES</Text><Text style={styles.count}>1</Text></View>
+      <Text accessibilityRole="header" style={styles.title}>Garde ta série</Text>
+      <Text style={styles.subtitle}>Une protection utile, sans avantage compétitif.</Text>
+    </View>
     <View style={styles.protector} testID="shop-streak-protector">
       <Image source={require('../../../../assets/consumables/protector.png')} contentFit="contain" style={styles.shield} accessibilityLabel="Bouclier protecteur de série" />
-      <View style={styles.protectorCopy}><Text style={styles.tag}>1 JOURNÉE</Text>
+      <View style={styles.protectorCopy}><Text style={styles.tag}>PROTECTION · 1 JOURNÉE</Text>
         <Text style={styles.name}>Protecteur de série</Text>
-        <Text style={styles.description}>Protège une journée manquée.</Text>
-        <Text style={styles.note}>Sans avantage compétitif.</Text>
+        <Text style={styles.description}>Absorbe une journée manquée et préserve ta progression.</Text>
         <Pressable accessibilityRole="button" accessibilityLabel="Acheter un protecteur de série pour 90 Volts" onPress={() => router.push(preview ? '/streak-preview' : '/streak')} style={({ pressed }) => [styles.buyButton, pressed && styles.pressed]}>
           <View style={styles.priceRow}><CurrencyIcon kind="volts" size={18} color="#080A0C" /><Text style={styles.price}>90 Volts</Text></View>
         </Pressable>
@@ -62,6 +64,9 @@ export default function ConsumablesShopSection({ preview = false }: { preview?: 
 const styles = StyleSheet.create({
   section: { gap: 8 },
   heading: { gap: 2, paddingHorizontal: 3 },
+  headingTopline: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  eyebrow: { color: colors.volt, fontFamily: fonts.bold, fontSize: 9, letterSpacing: 1, lineHeight: 14 },
+  count: { color: colors.textMuted, fontFamily: fonts.display, fontSize: 22, lineHeight: 24 },
   title: { fontFamily: fonts.display, fontSize: 26, lineHeight: 29, color: colors.text },
   subtitle: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, color: colors.textSecondary },
   grid: { flexDirection: 'row', alignItems: 'stretch', gap: 8 },
@@ -74,11 +79,10 @@ const styles = StyleSheet.create({
   previewButton: { marginTop: 'auto', minHeight: 44, borderWidth: 1, borderColor: '#7B8993', borderRadius: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 4, paddingVertical: 8 },
   buttonText: { fontFamily: fonts.semibold, fontSize: 12, color: colors.text },
   protectionHeading: { marginTop: 12, paddingTop: 13, borderTopWidth: 1, borderColor: colors.borderStrong },
-  protector: { flexDirection: 'row', overflow: 'hidden', borderRadius: 15, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: '#091218' },
-  shield: { width: '48%', alignSelf: 'stretch', minHeight: 190 },
-  protectorCopy: { flex: 1, padding: 10, paddingLeft: 2, justifyContent: 'center', gap: 6 },
-  note: { fontFamily: fonts.body, fontSize: 10, lineHeight: 15, color: colors.textMuted },
-  buyButton: { marginTop: 7, minHeight: 44, borderRadius: 9, backgroundColor: '#DFE982', alignItems: 'center', justifyContent: 'center', padding: 8 },
+  protector: { flexDirection: 'row', minHeight: 164, overflow: 'hidden', borderRadius: 15, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: '#091218' },
+  shield: { width: '43%', alignSelf: 'stretch', minHeight: 164 },
+  protectorCopy: { flex: 1, padding: 11, paddingLeft: 2, justifyContent: 'center', gap: 5 },
+  buyButton: { marginTop: 5, minHeight: 42, borderRadius: 9, backgroundColor: colors.volt, alignItems: 'center', justifyContent: 'center', padding: 8 },
   priceRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   price: { color: '#071014', fontFamily: fonts.bold, fontSize: 15, textAlign: 'center' },
   pressed: { opacity: 0.7 },
