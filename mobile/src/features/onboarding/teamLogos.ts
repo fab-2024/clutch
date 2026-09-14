@@ -5,6 +5,7 @@ export const TEAM_LOGOS: Record<string, string> = {
   'FaZe Clan': 'https://commons.wikimedia.org/wiki/Special:FilePath/FaZe_Clan_2025_svg.svg',
   Fnatic: 'https://cdn.sanity.io/images/5gii1snx/production/22ded60518ddaf71975d334849039189cb106e87-1000x1000.png',
   'G2 Esports': 'https://static.cdnlogo.com/logos/g/28/g2.svg',
+  'Gentle Mates': 'https://commons.wikimedia.org/wiki/Special:FilePath/Paris_Gentle_Mates_logo.svg',
   GiantX: 'https://giantx.gg/cdn/shop/files/logo_0620238f-1e58-435d-bcd2-aa131bba7992_600x.png?v=1772036626',
   Heroic: 'https://commons.wikimedia.org/wiki/Special:FilePath/Heroic_2023_logo.png',
   'Karmine Corp': 'https://commons.wikimedia.org/wiki/Special:FilePath/Karmine_Corp_logo.svg',
