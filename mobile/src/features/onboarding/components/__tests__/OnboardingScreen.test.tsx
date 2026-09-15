@@ -77,10 +77,12 @@ describe('OnboardingScreen', () => {
     await act(async () => { fireEvent.press(screen.getByText('Continuer')); });
     await waitFor(() => expect(screen.getByText('CHAQUE BON CALL COMPTE.')).toBeTruthy());
     await act(async () => { fireEvent.press(screen.getByText('Continuer')); });
-    await waitFor(() => expect(screen.getByText('FAIS GRANDIR TA RELIQUE.')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('PROGRESSEZ ENSEMBLE.')).toBeTruthy());
+    await act(async () => { fireEvent.press(screen.getByLabelText('Retour à l’étape précédente')); });
+    await waitFor(() => expect(screen.getByText('CHAQUE BON CALL COMPTE.')).toBeTruthy());
     await waitFor(async () => {
       const stored = await AsyncStorage.getItem('@griff/onboarding-draft/v2');
-      expect(JSON.parse(stored ?? '{}').step).toBe(3);
+      expect(JSON.parse(stored ?? '{}').step).toBe(2);
     });
   });
 
