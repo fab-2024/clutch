@@ -257,6 +257,8 @@ PODS:
   - EXUpdatesInterface (57.0.1):
     - ExpoModulesCore
   - FBLazyVector (0.86.2)
+  - GriffNativeUI (0.1.0):
+    - ExpoModulesCore
   - hermes-engine (250829098.0.16):
     - hermes-engine/Pre-built (= 250829098.0.16)
   - hermes-engine/Pre-built (250829098.0.16)
@@ -2544,6 +2546,7 @@ DEPENDENCIES:
   - "ExpoUI (from `../node_modules/@expo/ui/ios`)"
   - EXUpdatesInterface (from `../node_modules/expo-updates-interface/ios`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
+  - GriffNativeUI (from `../modules/griff-native-ui`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
   - RCTRequired (from `../node_modules/react-native/Libraries/Required`)
@@ -2702,6 +2705,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-updates-interface/ios"
   FBLazyVector:
     :path: "../node_modules/react-native/Libraries/FBLazyVector"
+  GriffNativeUI:
+    :path: "../modules/griff-native-ui"
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-v250829098.0.16
@@ -2906,6 +2911,7 @@ SPEC CHECKSUMS:
   ExpoUI: 27fa8fbaf7b4a84d643b2bdd6e436ee061a100af
   EXUpdatesInterface: 92d2aa5194b6fb93ca8ab749db75665cb28b2e60
   FBLazyVector: 3c3be9a019176b5699455f7f66c5444b78a411c6
+  GriffNativeUI: 3233f0bd6e34c2aff7ccb435ec6008ded24d6b51
   hermes-engine: 3b58a0c4408163b03381749d134c9f992c814cf6
   PurchasesHybridCommon: c3e8f89551e2c8b66691b9f3460ff0ba2e387ea8
   RCTDeprecation: bccb6545c26db881ecddfd83a3f9ea82aba1605f

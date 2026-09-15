@@ -63,6 +63,11 @@ jest.mock('@/src/providers/EconomyProvider', () => ({ useEconomy: () => ({ refre
 jest.mock('../../api', () => ({ loadTeamOrganizations: jest.fn(async () => []), saveOnboarding: jest.fn() }));
 
 describe('OnboardingScreen', () => {
+  const pressPrimaryButton = (screen: Awaited<ReturnType<typeof render>>) => {
+    const buttons = screen.getAllByTestId('onboarding-primary-button-native');
+    fireEvent(buttons[buttons.length - 1], 'buttonPress');
+  };
+
   beforeEach(async () => {
     await AsyncStorage.clear();
   });
@@ -74,9 +79,9 @@ describe('OnboardingScreen', () => {
     await waitFor(() => expect(screen.getByText('CHOISIS TON CAMP.')).toBeTruthy());
     expect(screen.getByLabelText('Match Karmine Corp contre Gentle Mates')).toBeTruthy();
     await act(async () => { fireEvent.press(screen.getByLabelText('Choisir Gentle Mates')); });
-    await act(async () => { fireEvent.press(screen.getByText('Continuer')); });
+    await act(async () => { pressPrimaryButton(screen); });
     await waitFor(() => expect(screen.getByText('CHAQUE BON CALL COMPTE.')).toBeTruthy());
-    await act(async () => { fireEvent.press(screen.getByText('Continuer')); });
+    await act(async () => { pressPrimaryButton(screen); });
     await waitFor(() => expect(screen.getByText('PROGRESSEZ ENSEMBLE.')).toBeTruthy());
     await act(async () => { fireEvent.press(screen.getByLabelText('Retour à l’étape précédente')); });
     await waitFor(() => expect(screen.getByText('CHAQUE BON CALL COMPTE.')).toBeTruthy());
@@ -90,7 +95,7 @@ describe('OnboardingScreen', () => {
     const screen = await render(<OnboardingScreen preview previewStep={1} />);
 
     await waitFor(() => expect(screen.getByText('CHOISIS TON CAMP.')).toBeTruthy());
-    await act(async () => { fireEvent.press(screen.getByText('Continuer')); });
+    await act(async () => { pressPrimaryButton(screen); });
     await screen.rerender(<OnboardingScreen preview previewStep={1} />);
 
     await waitFor(() => expect(screen.getByText('CHAQUE BON CALL COMPTE.')).toBeTruthy());
@@ -119,7 +124,7 @@ describe('OnboardingScreen', () => {
     await act(async () => { fireEvent.press(screen.getByLabelText('Je ne vois pas mon jeu')); });
     expect(screen.getByText('Trouve ton jeu')).toBeTruthy();
     await act(async () => { fireEvent.press(screen.getByText('Counter-Strike 2')); });
-    await act(async () => { fireEvent.press(screen.getByText('Valider')); });
+    await act(async () => { pressPrimaryButton(screen); });
 
     await waitFor(async () => {
       const stored = await AsyncStorage.getItem('@griff/onboarding-draft/v2');

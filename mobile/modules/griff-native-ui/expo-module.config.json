@@ -1,0 +1,8 @@
+{
+  "platforms": ["apple"],
+  "coreFeatures": ["swiftui"],
+  "apple": {
+    "modules": ["GriffNativeUIModule"],
+    "podspecPath": "GriffNativeUI.podspec"
+  }
+}

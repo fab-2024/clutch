@@ -35,6 +35,7 @@ import { GAMES } from '../constants';
 import { GAME_BACKGROUNDS } from '../gameBackgrounds';
 import type { GameId, OnboardingDraft, TeamOrganization } from '../types';
 import GameLogo from './GameLogo';
+import PrimaryButton from './OnboardingPrimaryButton';
 import TeamLogo from './TeamLogo';
 
 type OAuthProvider = 'apple' | 'google' | 'discord';
@@ -85,20 +86,6 @@ const DISCOVERY_GAMES = [
   { id: 'fortnite', name: 'Fortnite', code: 'FN', accent: '#35B8FF' },
   { id: 'other', name: 'Autre', code: '…', accent: '#8795A1' },
 ] as const;
-
-const BUTTON_GRADIENTS = {
-  blue: ['#14D4F4', '#087CFF', '#245CFF'],
-  coral: ['#FF934D', '#FF6045', '#FF7A4E'],
-  lime: ['#F4FF75', '#DCFF28', '#B8D91A'],
-  purple: ['#774AFF', '#C954FF', '#A93DFF'],
-} as const;
-
-const BUTTON_GLOWS = {
-  blue: '0 10px 28px rgba(20,124,255,.46)',
-  coral: '0 10px 28px rgba(255,96,69,.42)',
-  lime: '0 10px 28px rgba(220,255,40,.32)',
-  purple: '0 10px 30px rgba(183,72,255,.54)',
-} as const;
 
 const GAME_CARD_TONES: Record<GameId, readonly [string, string, string]> = {
   lol: ['rgba(122,36,0,.56)', 'rgba(255,117,0,.28)', 'rgba(26,7,0,.20)'],
@@ -417,18 +404,6 @@ function Progress({ step }: { step: number }) {
   return <View style={styles.progress}>{[1, 2, 3, 4, 5, 6].map((index) => <View key={index} style={[styles.progressSegment, index === step && styles.progressSegmentActive]} />)}</View>;
 }
 
-function PrimaryButton({ disabled = false, label, onPress, tone }: { disabled?: boolean; label: string; onPress: () => void; tone: keyof typeof BUTTON_GRADIENTS }) {
-  return (
-    <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.primaryButton, { boxShadow: BUTTON_GLOWS[tone] }, disabled && styles.disabled, pressed && styles.pressed]} testID="onboarding-primary-button">
-      <LinearGradient colors={BUTTON_GRADIENTS[tone]} end={{ x: 1, y: .7 }} pointerEvents="none" start={{ x: 0, y: .3 }} style={StyleSheet.absoluteFill} />
-      <View pointerEvents="none" style={styles.primaryGloss} />
-      <View pointerEvents="none" style={styles.primaryInnerStroke} />
-      <Text style={styles.primaryButtonText}>{label}</Text>
-      <View style={styles.primaryArrow}><ArrowRight color="#050A0D" size={21} strokeWidth={2.9} /></View>
-    </Pressable>
-  );
-}
-
 function ProviderButton({ icon, label, onPress }: { icon: ReactNode; label: string; onPress: () => void }) {
   return <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.providerButton, pressed && styles.pressed]}>{icon}<Text style={styles.providerButtonText}>{label}</Text></Pressable>;
 }
@@ -513,11 +488,6 @@ const styles = StyleSheet.create({
   googleGlyph: { color: '#4285F4', fontFamily: fonts.bold, fontSize: 26 },
   securityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 'auto' },
   securityText: { color: '#909CA6', fontFamily: fonts.medium, fontSize: 10 },
-  primaryButton: { height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, borderRadius: 22, overflow: 'hidden' },
-  primaryGloss: { position: 'absolute', left: 12, right: 12, top: 1, height: 18, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.16)' },
-  primaryInnerStroke: { position: 'absolute', inset: 1, borderRadius: 21, borderWidth: 1, borderColor: 'rgba(255,255,255,.24)' },
-  primaryButtonText: { color: '#050A0D', fontFamily: fonts.displayBold, fontSize: 21, lineHeight: 24 },
-  primaryArrow: { width: 29, height: 29, alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: 'rgba(4,10,13,.08)' },
   progress: { height: 29, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
   progressSegment: { width: 30, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.26)' },
   progressSegmentActive: { backgroundColor: '#FFFFFF' },
