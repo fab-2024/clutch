@@ -1,17 +1,13 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useId } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import Svg, {
-  Defs,
-  G,
-  LinearGradient as SvgLinearGradient,
-  Path,
-  Rect,
-  Stop,
-} from 'react-native-svg';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import CircleX from 'lucide-react-native/icons/circle-x';
+import Clock3 from 'lucide-react-native/icons/clock-3';
+import Radio from 'lucide-react-native/icons/radio';
+import Trophy from 'lucide-react-native/icons/trophy';
+import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import TeamLogo from '@/src/features/onboarding/components/TeamLogo';
-import { fonts, layout, spacing, typography } from '@/src/theme';
+import { fonts, layout, spacing } from '@/src/theme';
 
 import {
   formatMatchHeaderSchedule,
@@ -20,9 +16,9 @@ import {
   type MatchConfrontationState,
 } from '../matchPresentation';
 import type { HubMatch } from '../types';
-import { buildMatchTerritoryPalette } from './matchConfrontationPalette';
 
 type MatchConfrontationCardProps = {
+  actionLabel: string;
   accessibilityHint?: string;
   match: HubMatch;
   onPress: () => void;
@@ -30,9 +26,11 @@ type MatchConfrontationCardProps = {
   state: MatchConfrontationState;
 };
 
-const CARD_ASPECT_RATIO = 1.55;
+const CARD_ASPECT_RATIO = 1.25;
+const ARENA_BACKGROUND = require('../../../../assets/hub/match-arena-entry-v1.jpg');
 
 export function MatchConfrontationCard({
+  actionLabel,
   accessibilityHint = 'Ouvre le centre du match',
   match,
   onPress,
@@ -43,70 +41,33 @@ export function MatchConfrontationCard({
   const cardWidth = Math.min(width, layout.contentMaxWidth) - spacing.md * 2;
   const cardHeight = Math.round(cardWidth / CARD_ASPECT_RATIO);
   const sceneScale = cardWidth / 400;
+  const actionBottom = 10 * sceneScale;
+  const actionHeight = 42 * sceneScale;
+  const statusBottom = actionBottom + actionHeight + 3 * sceneScale;
   const event = String(match.evenement || '').trim() || 'COMPÉTITION';
   const formatValue = Number(match.format);
   const format = Number.isInteger(formatValue) && formatValue > 0
     ? 'BO' + formatValue
     : 'FORMAT À CONFIRMER';
-  const scoreCopy = state.scoreLabel
-    ? ', score ' + state.scoreLabel
-    : '';
+  const scoreCopy = state.scoreLabel ? ', score ' + state.scoreLabel : '';
 
   return (
     <View style={[styles.ticketShell, { height: cardHeight, width: cardWidth }]}>
-      <Pressable
-        accessibilityHint={accessibilityHint}
-        accessibilityLabel={state.teamA.name + ' contre ' + state.teamB.name + ', ' + state.status + scoreCopy}
-        accessibilityRole="button"
-        onPress={onPress}
-        onPressIn={onPressIn}
-        style={({ pressed }) => [styles.ticketSurface, pressed && styles.pressed]}
-        testID="match-confrontation-card"
-      >
+      <View pointerEvents="none" style={styles.ticketSurface}>
         <ArenaBackdrop
           height={cardHeight}
-          leftAccent={state.teamA.accent}
-          rightAccent={state.teamB.accent}
+          leftTeam={state.teamA}
+          rightTeam={state.teamB}
           width={cardWidth}
         />
-
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          pointerEvents="none"
-          style={styles.watermarkLayer}
-        >
-          <View style={[styles.watermark, { left: -24 * sceneScale, top: 42 * sceneScale }]}>
-            <TeamLogo
-              accent={state.teamA.accent}
-              contentScale={.96}
-              frameless
-              name={state.teamA.name}
-              size={188 * sceneScale}
-              tag={state.teamA.tag}
-              uri={state.teamA.logo}
-            />
-          </View>
-          <View style={[styles.watermark, { right: -24 * sceneScale, top: 42 * sceneScale }]}>
-            <TeamLogo
-              accent={state.teamB.accent}
-              contentScale={1.08}
-              frameless
-              name={state.teamB.name}
-              size={188 * sceneScale}
-              tag={state.teamB.tag}
-              uri={state.teamB.logo}
-            />
-          </View>
-        </View>
 
         <MatchMetadata
           event={event}
           format={format}
           sceneScale={sceneScale}
           schedule={formatMatchHeaderSchedule(match.debut)}
-          state={state}
         />
+        <CompetitionMark event={event} sceneScale={sceneScale} />
 
         <View
           accessibilityElementsHidden
@@ -120,14 +81,167 @@ export function MatchConfrontationCard({
             team={state.teamA}
             winner={state.winner === 'a'}
           />
+          <View style={[styles.versus, { left: 176 * sceneScale, top: 201 * sceneScale, width: 48 * sceneScale }]}>
+            <Text
+              adjustsFontSizeToFit
+              minimumFontScale={.65}
+              numberOfLines={1}
+              style={[styles.versusText, { fontSize: (state.scoreLabel ? 19 : 25) * sceneScale }]}
+            >
+              {state.scoreLabel ?? 'VS'}
+            </Text>
+          </View>
           <TeamFace
             muted={state.winner === 'a'}
             sceneScale={sceneScale}
             team={state.teamB}
             winner={state.winner === 'b'}
           />
+          <MatchStatusBadge bottom={statusBottom} sceneScale={sceneScale} state={state} />
         </View>
-      </Pressable>
+      </View>
+
+      <Pressable
+        accessibilityHint={accessibilityHint}
+        accessibilityLabel={state.teamA.name + ' contre ' + state.teamB.name + ', ' + state.status + scoreCopy}
+        accessibilityRole="button"
+        onPress={onPress}
+        onPressIn={onPressIn}
+        style={({ pressed }) => [
+          styles.scenePressable,
+          { bottom: statusBottom },
+          pressed && styles.scenePressed,
+        ]}
+        testID="match-confrontation-card"
+      />
+
+      <MatchCallAction
+        bottom={actionBottom}
+        height={actionHeight}
+        label={actionLabel}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        sceneScale={sceneScale}
+      />
+    </View>
+  );
+}
+
+function ArenaBackdrop({
+  height,
+  leftTeam,
+  rightTeam,
+  width,
+}: {
+  height: number;
+  leftTeam: ConfrontationTeam;
+  rightTeam: ConfrontationTeam;
+  width: number;
+}) {
+  const scale = width / 400;
+  return (
+    <View pointerEvents="none" style={styles.backdrop}>
+      <Image resizeMode="cover" source={ARENA_BACKGROUND} style={[styles.arenaImage, { height, width }]} />
+
+      <LinearGradient
+        colors={[withAlpha(leftTeam.accent, .64), withAlpha(leftTeam.accent, .1), 'transparent']}
+        end={{ x: 1, y: .55 }}
+        start={{ x: 0, y: .4 }}
+        style={styles.leftColorWash}
+      />
+      <LinearGradient
+        colors={['transparent', withAlpha(rightTeam.accent, .1), withAlpha(rightTeam.accent, .64)]}
+        end={{ x: 1, y: .4 }}
+        start={{ x: 0, y: .55 }}
+        style={styles.rightColorWash}
+      />
+
+      <ArenaBanner sceneScale={scale} team={leftTeam} />
+      <ArenaBanner sceneScale={scale} team={rightTeam} />
+
+      <LinearGradient
+        colors={['rgba(1,5,10,.84)', 'rgba(1,5,10,.08)', 'rgba(1,5,10,.08)', 'rgba(1,5,10,.92)']}
+        locations={[0, .23, .58, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      <LinearGradient
+        colors={['rgba(0,0,0,.28)', 'transparent', 'rgba(0,0,0,.36)']}
+        end={{ x: .5, y: 1 }}
+        start={{ x: .5, y: 0 }}
+        style={StyleSheet.absoluteFill}
+      />
+    </View>
+  );
+}
+
+function ArenaBanner({ sceneScale, team }: { sceneScale: number; team: ConfrontationTeam }) {
+  const left = team.side === 'a';
+  return (
+    <View
+      style={[
+        styles.arenaBanner,
+        {
+          height: 148 * sceneScale,
+          left: (left ? 4 : 296) * sceneScale,
+          top: 27 * sceneScale,
+          transform: [{ skewY: left ? '-6deg' : '6deg' }, { scaleX: .94 }],
+          width: 100 * sceneScale,
+        },
+      ]}
+      testID={`match-banner-${team.side}`}
+    >
+      <LinearGradient
+        colors={[
+          withAlpha(team.accent, .03),
+          withAlpha(team.accent, .18),
+          withAlpha(team.accent, .05),
+        ]}
+        end={{ x: left ? 1 : 0, y: 1 }}
+        locations={[0, .46, 1]}
+        start={{ x: left ? 0 : 1, y: 0 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View
+        style={[
+          styles.bannerLightRail,
+          {
+            backgroundColor: withAlpha(team.accent, .78),
+            left: left ? 5 * sceneScale : undefined,
+            right: left ? undefined : 5 * sceneScale,
+            width: Math.max(1, 1.2 * sceneScale),
+          },
+        ]}
+      />
+      <View style={[styles.bannerMark, { opacity: .72 }]}>
+        <TeamLogo
+          accent={team.accent}
+          contentScale={teamBannerLogoContentScale(team.name)}
+          frameless
+          name={team.name}
+          size={84 * sceneScale}
+          tag={team.tag}
+          uri={team.logo}
+        />
+      </View>
+      <LinearGradient
+        colors={['transparent', 'rgba(255,255,255,.09)', 'transparent']}
+        end={{ x: .85, y: 1 }}
+        start={{ x: .15, y: 0 }}
+        style={styles.bannerSheen}
+      />
+      <LinearGradient
+        colors={[
+          withAlpha(team.accent, .1),
+          'rgba(255,255,255,.025)',
+          'rgba(0,0,0,.12)',
+          'rgba(255,255,255,.02)',
+          withAlpha(team.accent, .08),
+        ]}
+        end={{ x: 1, y: .5 }}
+        locations={[0, .22, .48, .72, 1]}
+        start={{ x: 0, y: .5 }}
+        style={styles.bannerSurface}
+      />
     </View>
   );
 }
@@ -137,167 +251,78 @@ function MatchMetadata({
   format,
   sceneScale,
   schedule,
-  state,
 }: {
   event: string;
   format: string;
   sceneScale: number;
   schedule: string;
-  state: MatchConfrontationState;
 }) {
-  const lead = state.phase === 'live'
-    ? 'EN DIRECT'
-    : state.phase === 'finished'
-      ? 'TERMINÉ'
-      : state.phase === 'cancelled'
-        ? 'ANNULÉ'
-        : state.phase === 'pending'
-          ? 'STATUT À CONFIRMER'
-        : schedule;
+  return (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      pointerEvents="none"
+      style={[styles.matchTop, { paddingHorizontal: 12 * sceneScale, paddingTop: 10 * sceneScale }]}
+    >
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={.65}
+        numberOfLines={1}
+        style={[styles.eventName, { fontSize: 15 * sceneScale, lineHeight: 18 * sceneScale }]}
+      >
+        {event.toUpperCase()}
+      </Text>
+      <View style={[styles.formatPill, {
+        borderRadius: 10 * sceneScale,
+        paddingHorizontal: 8 * sceneScale,
+        paddingVertical: 3 * sceneScale,
+        right: 48 * sceneScale,
+        top: 9 * sceneScale,
+      }]}>
+        <Text style={[styles.matchFormat, { fontSize: 13 * sceneScale, lineHeight: 16 * sceneScale }]}>{format}</Text>
+      </View>
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={.72}
+        numberOfLines={1}
+        style={[styles.schedule, { fontSize: 19 * sceneScale, lineHeight: 23 * sceneScale, marginTop: 8 * sceneScale }]}
+      >
+        {schedule}
+      </Text>
+    </View>
+  );
+}
 
+function CompetitionMark({ event, sceneScale }: { event: string; sceneScale: number }) {
+  const label = competitionLabel(event);
   return (
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       pointerEvents="none"
       style={[
-        styles.matchTop,
+        styles.competitionMark,
         {
-          height: 32 * sceneScale,
-          paddingHorizontal: 13 * sceneScale,
+          top: 84 * sceneScale,
         },
       ]}
     >
-      <View style={styles.matchMetaLead}>
-        {state.phase === 'live' ? <View style={styles.liveDot} /> : null}
-        <Text
-          numberOfLines={1}
-          style={[
-            styles.matchMetaLeadText,
-            state.phase === 'live' && styles.matchMetaLiveText,
-            { fontSize: 11 * sceneScale, lineHeight: 14 * sceneScale },
-          ]}
-        >
-          {lead}
-        </Text>
-      </View>
-      <Text style={[styles.matchMetaSeparator, { fontSize: 11 * sceneScale }]}>·</Text>
+      <View style={[styles.competitionRule, { width: 36 * sceneScale }]} />
       <Text
         adjustsFontSizeToFit
-        minimumFontScale={.58}
+        minimumFontScale={.68}
         numberOfLines={1}
         style={[
-          styles.eventName,
+          styles.competitionLabel,
           {
-            fontSize: 11 * sceneScale,
-            lineHeight: 14 * sceneScale,
+            fontSize: 23 * sceneScale,
+            lineHeight: 27 * sceneScale,
+            width: 124 * sceneScale,
           },
         ]}
       >
-        {event.toUpperCase()}
+        {label}
       </Text>
-      <Text style={[styles.matchMetaSeparator, { fontSize: 11 * sceneScale }]}>·</Text>
-      <Text
-        numberOfLines={1}
-        style={[
-          styles.matchFormat,
-          {
-            fontSize: 11 * sceneScale,
-            lineHeight: 14 * sceneScale,
-          },
-        ]}
-      >
-        {format}
-      </Text>
-    </View>
-  );
-}
-
-function ArenaBackdrop({
-  height,
-  leftAccent,
-  rightAccent,
-  width,
-}: {
-  height: number;
-  leftAccent: string;
-  rightAccent: string;
-  width: number;
-}) {
-  const uniqueId = useId().replace(/:/g, '');
-  const leftPalette = buildMatchTerritoryPalette(leftAccent);
-  const rightPalette = buildMatchTerritoryPalette(rightAccent);
-  const leftGradient = 'hub-left-' + uniqueId;
-  const rightGradient = 'hub-right-' + uniqueId;
-  const shadeGradient = 'hub-shade-' + uniqueId;
-
-  return (
-    <View pointerEvents="none" style={styles.backdrop}>
-      <Svg height={height} preserveAspectRatio="none" viewBox="0 0 400 280" width={width}>
-        <Defs>
-          <SvgLinearGradient id={leftGradient} x1="0" x2="1" y1=".4" y2=".55">
-            <Stop offset="0" stopColor={leftPalette.outer} />
-            <Stop offset=".68" stopColor={leftPalette.middle} />
-            <Stop offset="1" stopColor={leftPalette.nearFracture} />
-          </SvgLinearGradient>
-          <SvgLinearGradient id={rightGradient} x1="0" x2="1" y1=".55" y2=".4">
-            <Stop offset="0" stopColor={rightPalette.nearFracture} />
-            <Stop offset=".36" stopColor={rightPalette.middle} />
-            <Stop offset="1" stopColor={rightPalette.outer} />
-          </SvgLinearGradient>
-          <SvgLinearGradient id={shadeGradient} x1="0" x2="0" y1="0" y2="1">
-            <Stop offset="0" stopColor="#000000" stopOpacity=".16" />
-            <Stop offset=".62" stopColor="#000000" stopOpacity=".02" />
-            <Stop offset="1" stopColor="#000000" stopOpacity=".46" />
-          </SvgLinearGradient>
-        </Defs>
-
-        <Path d="M0 0 H244 L168 280 H0 Z" fill={'url(#' + leftGradient + ')'} />
-        <Path d="M244 0 H400 V280 H168 Z" fill={'url(#' + rightGradient + ')'} />
-
-        <G fill={withAlpha(leftPalette.local, .1)}>
-          <Path d="M0 62 L72 0 H98 L0 126 Z" />
-          <Path d="M0 136 L138 0 H158 L0 202 Z" />
-          <Path d="M0 280 L113 164 L75 280 Z" />
-          <Path d="M88 280 L190 112 L151 280 Z" />
-        </G>
-        <G fill={withAlpha(rightPalette.local, .1)}>
-          <Path d="M400 50 L346 0 H320 L400 112 Z" />
-          <Path d="M400 128 L278 0 H258 L400 194 Z" />
-          <Path d="M400 280 L312 166 L344 280 Z" />
-          <Path d="M320 280 L224 116 L263 280 Z" />
-        </G>
-
-        <G fill="none" stroke={withAlpha(leftPalette.edge, .42)} strokeWidth="1">
-          <Path d="M0 70 L82 12" />
-          <Path d="M0 116 L128 18" />
-          <Path d="M0 218 L172 78" />
-          <Path d="M20 280 L184 126" />
-        </G>
-        <G fill="none" stroke={withAlpha(rightPalette.edge, .42)} strokeWidth="1">
-          <Path d="M400 70 L328 10" />
-          <Path d="M400 116 L282 18" />
-          <Path d="M400 218 L232 78" />
-          <Path d="M380 280 L220 126" />
-        </G>
-
-        <Path d="M231 -14 L261 -14 L181 294 L148 294 Z" fill="rgba(0,0,0,.7)" />
-        <Path d="M238 -10 L162 290" fill="none" stroke={withAlpha(leftPalette.edge, .9)} strokeWidth="2.2" />
-        <Path d="M246 -10 L170 290" fill="none" stroke="#F7FAFC" strokeOpacity=".94" strokeWidth="2.4" />
-        <Path d="M254 -10 L178 290" fill="none" stroke={withAlpha(rightPalette.edge, .94)} strokeWidth="3" />
-        <Path d="M261 -10 L185 290" fill="none" stroke="#020406" strokeOpacity=".92" strokeWidth="7" />
-
-        <Rect fill={'url(#' + shadeGradient + ')'} height="280" width="400" x="0" y="0" />
-        <Rect fill="rgba(1,4,7,.82)" height="32" width="400" x="0" y="0" />
-        <Path d="M0 32 H400" fill="none" stroke="#53616A" strokeOpacity=".74" strokeWidth=".8" />
-      </Svg>
-
-      <LinearGradient
-        colors={['rgba(0,0,0,.18)', 'rgba(0,0,0,0)', 'rgba(0,0,0,.22)']}
-        end={{ x: .5, y: 1 }}
-        start={{ x: .5, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
     </View>
   );
 }
@@ -314,67 +339,167 @@ function TeamFace({
   winner: boolean;
 }) {
   const left = team.side === 'a';
-  const logoSize = 104 * sceneScale;
-
   return (
     <View
       accessibilityLabel={team.name + (winner ? ', vainqueur' : '')}
       style={[
         styles.ticketTeam,
         {
-          left: (left ? 22 : 222) * sceneScale,
-          top: 62 * sceneScale,
-          width: 156 * sceneScale,
+          left: (left ? 20 : 228) * sceneScale,
+          top: 196 * sceneScale,
+          width: 152 * sceneScale,
         },
         muted && styles.ticketTeamMuted,
       ]}
       testID={`match-team-${team.side}`}
     >
-      <View
-        style={[styles.logoStage, { height: 108 * sceneScale }]}
-        testID={`match-team-logo-${team.side}`}
-      >
-        <TeamLogo
-          accent={team.accent}
-          contentScale={teamLogoContentScale(team.name)}
-          frameless
-          name={team.name}
-          size={logoSize}
-          tag={team.tag}
-          uri={team.logo}
-        />
-      </View>
       <Text
         adjustsFontSizeToFit
-        minimumFontScale={.58}
+        minimumFontScale={.6}
         numberOfLines={1}
         style={[
           styles.teamTag,
-          {
-            fontSize: 31 * sceneScale,
-            lineHeight: 34 * sceneScale,
-          },
+          { fontSize: 50 * sceneScale, lineHeight: 54 * sceneScale },
           winner && { color: team.accent },
         ]}
       >
         {team.tag}
       </Text>
+    </View>
+  );
+}
+
+function MatchStatusBadge({
+  bottom,
+  sceneScale,
+  state,
+}: {
+  bottom: number;
+  sceneScale: number;
+  state: MatchConfrontationState;
+}) {
+  const accent = state.phase === 'live'
+    ? '#FF4954'
+    : state.phase === 'finished'
+      ? '#31E6BD'
+      : state.phase === 'cancelled' || state.phase === 'pending'
+        ? '#9AA6AF'
+        : '#FF7448';
+  const label = state.phase === 'upcoming' && !state.predictionTag ? 'À FAIRE' : state.status;
+  const StatusIcon = state.phase === 'live'
+    ? Radio
+    : state.phase === 'finished'
+      ? Trophy
+      : state.phase === 'cancelled'
+        ? CircleX
+        : Clock3;
+  return (
+    <View style={[styles.statusWrap, { bottom }]}>
+      <View
+        style={[
+          styles.statusBadge,
+          {
+            borderColor: accent,
+            borderRadius: 12 * sceneScale,
+            paddingHorizontal: 13 * sceneScale,
+            paddingVertical: 3 * sceneScale,
+          },
+        ]}
+        testID="match-status-badge"
+      >
+        <StatusIcon color={accent} size={13 * sceneScale} strokeWidth={2.6} />
+        <Text style={[styles.statusText, {
+          color: accent,
+          fontSize: 13 * sceneScale,
+          lineHeight: 15 * sceneScale,
+        }]}>
+          {label}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function MatchCallAction({
+  bottom,
+  height,
+  label,
+  onPress,
+  onPressIn,
+  sceneScale,
+}: {
+  bottom: number;
+  height: number;
+  label: string;
+  onPress: () => void;
+  onPressIn?: () => void;
+  sceneScale: number;
+}) {
+  const horizontalInset = 18 * sceneScale;
+  const arrowSize = 37 * sceneScale;
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      onPress={onPress}
+      onPressIn={onPressIn}
+      style={({ pressed }) => [
+        styles.callAction,
+        {
+          bottom,
+          height,
+          left: horizontalInset,
+          right: horizontalInset,
+          borderRadius: height / 2,
+        },
+        pressed && styles.actionPressed,
+      ]}
+      testID="hub-primary-action"
+    >
+      <LinearGradient
+        colors={['#FFF978', '#F6FF42', '#E8FF22']}
+        end={{ x: 1, y: .5 }}
+        start={{ x: 0, y: .5 }}
+        style={StyleSheet.absoluteFill}
+      />
       <Text
         adjustsFontSizeToFit
         minimumFontScale={.7}
         numberOfLines={1}
         style={[
-          styles.teamName,
+          styles.callActionText,
           {
-            fontSize: 13 * sceneScale,
-            lineHeight: 17 * sceneScale,
+            fontSize: 21 * sceneScale,
+            left: 48 * sceneScale,
+            lineHeight: 24 * sceneScale,
+            right: 48 * sceneScale,
           },
         ]}
       >
-        {team.name}
+        {label}
       </Text>
-    </View>
+      <View
+        style={[
+          styles.callActionArrow,
+          {
+            borderRadius: arrowSize / 2,
+            height: arrowSize,
+            right: 6 * sceneScale,
+            width: arrowSize,
+          },
+        ]}
+        testID="hub-primary-action-arrow"
+      >
+        <ChevronRight color="#FFFFFF" size={22 * sceneScale} strokeWidth={3.2} />
+      </View>
+    </Pressable>
   );
+}
+
+function competitionLabel(event: string) {
+  const main = event.split(/[·•|/]/)[0]?.trim().toUpperCase() || 'COMPÉTITION';
+  if (main.length <= 10) return main;
+  return main.split(/\s+/)[0] || 'COMPÉTITION';
 }
 
 function teamLogoContentScale(name: string) {
@@ -385,141 +510,191 @@ function teamLogoContentScale(name: string) {
   return .96;
 }
 
+function teamBannerLogoContentScale(name: string) {
+  if (name === 'Natus Vincere') return .82;
+  if (name === 'Movistar KOI') return 1.08;
+  return teamLogoContentScale(name) * .94;
+}
+
 const styles = StyleSheet.create({
   ticketShell: {
     position: 'relative',
     alignSelf: 'center',
-    boxShadow: '0 18px 42px rgba(0,0,0,.48)',
+    overflow: 'hidden',
+    borderRadius: 24,
+    boxShadow: '0 22px 48px rgba(0,0,0,.58)',
   },
   ticketSurface: {
     position: 'absolute',
     inset: 0,
     overflow: 'hidden',
-    borderRadius: 18,
+    borderRadius: 24,
     backgroundColor: '#02060A',
     borderWidth: 1,
-    borderColor: '#40515B',
+    borderColor: 'rgba(64,183,224,.52)',
   },
-  backdrop: {
+  scenePressable: {
     position: 'absolute',
-    inset: 0,
-    zIndex: 0,
-  },
-  watermarkLayer: {
-    position: 'absolute',
-    inset: 0,
-    zIndex: 1,
-    overflow: 'hidden',
-  },
-  watermark: {
-    position: 'absolute',
-    opacity: .045,
-  },
-  matchTop: {
-    position: 'absolute',
-    zIndex: 6,
+    zIndex: 8,
     top: 0,
     right: 0,
     left: 0,
-    flexDirection: 'row',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  scenePressed: { backgroundColor: 'rgba(255,255,255,.055)' },
+  backdrop: { position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' },
+  arenaImage: { position: 'absolute', inset: 0 },
+  leftColorWash: { position: 'absolute', top: 0, bottom: 0, left: 0, width: '62%' },
+  rightColorWash: { position: 'absolute', top: 0, right: 0, bottom: 0, width: '62%' },
+  arenaBanner: {
+    position: 'absolute',
+    zIndex: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
+    overflow: 'hidden',
+    opacity: .96,
   },
-  matchMetaLead: {
-    flexShrink: 0,
-    flexDirection: 'row',
+  bannerMark: {
+    zIndex: 2,
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
   },
-  liveDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: '#FF3945',
-    boxShadow: '0 0 7px rgba(255,57,69,.42)',
+  bannerLightRail: {
+    position: 'absolute',
+    zIndex: 1,
+    top: '8%',
+    bottom: '8%',
+    borderRadius: 999,
+    boxShadow: '0 0 10px rgba(120,205,255,.22)',
   },
-  matchMetaLeadText: {
-    flexShrink: 0,
-    color: '#F5F6F7',
-    fontFamily: fonts.bold,
-    letterSpacing: .28,
-    textShadowColor: 'rgba(0,0,0,.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+  bannerSheen: {
+    position: 'absolute',
+    zIndex: 3,
+    top: '-18%',
+    left: '18%',
+    width: '22%',
+    height: '136%',
+    transform: [{ rotate: '10deg' }],
   },
-  matchMetaLiveText: {
-    color: '#FF4A55',
-  },
-  matchMetaSeparator: {
-    flexShrink: 0,
-    color: '#F0F2F3',
-    fontFamily: fonts.bold,
-    lineHeight: 14,
-    textShadowColor: 'rgba(0,0,0,.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  eventName: {
-    flexShrink: 1,
-    minWidth: 0,
-    color: '#F0F2F3',
-    fontFamily: fonts.bold,
-    letterSpacing: .28,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  matchFormat: {
-    flexShrink: 0,
-    color: '#F0F2F3',
-    fontFamily: fonts.bold,
-    letterSpacing: .28,
-    textShadowColor: 'rgba(0,0,0,.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  teamLayer: {
+  bannerSurface: {
     position: 'absolute',
     zIndex: 4,
     inset: 0,
   },
-  ticketTeam: {
+  matchTop: { position: 'absolute', zIndex: 5, top: 0, right: 0, left: 0, alignItems: 'center' },
+  eventName: {
+    maxWidth: '74%',
+    color: '#DDE7FF',
+    fontFamily: fonts.bold,
+    letterSpacing: 2.1,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,.95)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
+  formatPill: {
     position: 'absolute',
-    minWidth: 0,
+    borderWidth: 1,
+    borderColor: '#BFD0EA',
+    backgroundColor: 'rgba(4,12,22,.62)',
+  },
+  matchFormat: { color: '#EAF0FF', fontFamily: fonts.display, letterSpacing: .5 },
+  schedule: {
+    color: '#BFD0EC',
+    fontFamily: fonts.bold,
+    letterSpacing: 1.2,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,.95)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 7,
+  },
+  competitionMark: {
+    position: 'absolute',
+    zIndex: 3,
+    right: 0,
+    left: 0,
     alignItems: 'center',
   },
-  ticketTeamMuted: {
-    opacity: .62,
+  competitionRule: {
+    height: 2,
+    marginBottom: 3,
+    borderRadius: 999,
+    backgroundColor: 'rgba(215,230,255,.74)',
+    boxShadow: '0 0 9px rgba(110,180,255,.36)',
   },
-  logoStage: {
+  competitionLabel: {
     width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
+    color: 'rgba(229,237,251,.82)',
+    fontFamily: fonts.display,
+    letterSpacing: 2.2,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,.96)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 7,
   },
+  teamLayer: { position: 'absolute', zIndex: 4, inset: 0 },
+  ticketTeam: { position: 'absolute', minWidth: 0, alignItems: 'center' },
+  ticketTeamMuted: { opacity: .58 },
   teamTag: {
     width: '100%',
-    color: '#F7F8F9',
+    color: '#F8F9FA',
     fontFamily: fonts.display,
     letterSpacing: -.65,
     textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,.96)',
+    textShadowColor: 'rgba(0,0,0,.98)',
     textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 8,
+    textShadowRadius: 9,
   },
-  teamName: {
-    ...typography.bodyStrong,
-    width: '100%',
-    paddingHorizontal: 4,
-    color: '#F0F2F3',
-    fontStyle: 'italic',
+  versus: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  versusText: {
+    color: '#B9C8DC',
+    fontFamily: fonts.display,
     textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,.94)',
+    textShadowColor: 'rgba(0,0,0,.98)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 5,
+    textShadowRadius: 6,
   },
-  pressed: {
-    opacity: .84,
+  statusWrap: {
+    position: 'absolute',
+    right: 0,
+    left: 0,
+    alignItems: 'center',
   },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    borderWidth: 1.2,
+    backgroundColor: 'rgba(13,8,8,.78)',
+  },
+  statusText: { fontFamily: fonts.display, letterSpacing: .45 },
+  callAction: {
+    position: 'absolute',
+    zIndex: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(248,255,86,.96)',
+    backgroundColor: '#F4FF3F',
+    boxShadow: '0 8px 24px rgba(223,246,36,.28)',
+  },
+  callActionText: {
+    position: 'absolute',
+    color: '#050708',
+    fontFamily: fonts.display,
+    letterSpacing: .15,
+    textAlign: 'center',
+  },
+  callActionArrow: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#050708',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,.18)',
+    boxShadow: '0 3px 8px rgba(0,0,0,.42)',
+  },
+  actionPressed: { opacity: .86, transform: [{ scale: .992 }] },
 });

@@ -112,10 +112,11 @@ export function formatMatchHeaderSchedule(value: string) {
   if (!Number.isFinite(date.getTime())) return 'HORAIRE À CONFIRMER';
   const weekday = date
     .toLocaleDateString('fr-FR', { weekday: 'short' })
-    .replace('.', '')
     .toUpperCase();
+  const day = date.toLocaleDateString('fr-FR', { day: 'numeric' });
+  const month = date.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase();
   const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  return `${weekday} ${time}`;
+  return `${weekday} ${day} ${month} · ${time}`;
 }
 
 function buildTeam(match: HubMatch, side: HubTeamSide, accent: string): ConfrontationTeam {

@@ -24,8 +24,10 @@ const BASE_MATCH: HubMatch = {
 };
 
 describe('hub match confrontation presentation', () => {
-  it('formats the confrontation header as weekday and time', () => {
-    expect(formatMatchHeaderSchedule(BASE_MATCH.debut)).toMatch(/^\p{L}{3} \d{2}:\d{2}$/u);
+  it('formats the confrontation header as a complete French date and time', () => {
+    expect(formatMatchHeaderSchedule(BASE_MATCH.debut)).toMatch(
+      /^\p{L}{3}\.? \d{1,2} \p{L}{3,5}\.? · \d{2}:\d{2}$/u,
+    );
     expect(formatMatchHeaderSchedule('invalid')).toBe('HORAIRE À CONFIRMER');
   });
 

@@ -8,6 +8,11 @@ import { getMatchConfrontationState } from '../matchPresentation';
 import type { HubMatch } from '../types';
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
+jest.mock('lucide-react-native/icons/chevron-right', () => ({ __esModule: true, default: 'ChevronRight' }));
+jest.mock('lucide-react-native/icons/circle-x', () => ({ __esModule: true, default: 'CircleX' }));
+jest.mock('lucide-react-native/icons/clock-3', () => ({ __esModule: true, default: 'Clock3' }));
+jest.mock('lucide-react-native/icons/radio', () => ({ __esModule: true, default: 'Radio' }));
+jest.mock('lucide-react-native/icons/trophy', () => ({ __esModule: true, default: 'Trophy' }));
 jest.mock('react-native-svg', () => ({
   __esModule: true,
   default: 'Svg',
@@ -39,11 +44,12 @@ const MATCH: HubMatch = {
   score_b: 0,
 };
 
-describe('MatchConfrontationCard typography', () => {
-  it('keeps separated team blocks without the redundant matchup heading or score overlay', async () => {
+describe('MatchConfrontationCard arena presentation', () => {
+  it('renders the live score and a branded arena banner for each team', async () => {
     const state = getMatchConfrontationState(MATCH, null, NOW);
     const screen = await render(
       <MatchConfrontationCard
+        actionLabel={state.action}
         match={MATCH}
         onPress={jest.fn()}
         state={state}
@@ -53,24 +59,30 @@ describe('MatchConfrontationCard typography', () => {
     expect(screen.getByText('EN DIRECT', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.getByText('LPL · PLAYOFFS', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.getByText('BO5', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByText('LPL', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByText('SUIVRE EN DIRECT', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.queryByText('BLG — WE', { includeHiddenElements: true })).toBeNull();
-    expect(screen.queryByText('1 – 0', { includeHiddenElements: true })).toBeNull();
+    expect(screen.getByText('1 – 0', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.queryByText('EN COURS', { includeHiddenElements: true })).toBeNull();
-    expect(screen.getByText('Bilibili Gaming', { includeHiddenElements: true })).toBeTruthy();
-    expect(screen.getByText('Team WE', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByTestId('match-banner-a', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByTestId('match-banner-b', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.queryByTestId('match-supporter-team-mark', { includeHiddenElements: true })).toBeNull();
 
     const leftTeamStyle = StyleSheet.flatten(screen.getByTestId('match-team-a', { includeHiddenElements: true }).props.style);
     const rightTeamStyle = StyleSheet.flatten(screen.getByTestId('match-team-b', { includeHiddenElements: true }).props.style);
 
     expect(rightTeamStyle.top).toBe(leftTeamStyle.top);
+    expect(leftTeamStyle.left).toBeLessThan(rightTeamStyle.left);
+    expect(leftTeamStyle.width).toBe(rightTeamStyle.width);
     expect(leftTeamStyle.left + leftTeamStyle.width).toBeLessThan(rightTeamStyle.left);
   });
 
-  it('omits the redundant matchup heading before kickoff without inventing a score', async () => {
+  it('shows the versus marker and the call state before kickoff without inventing a score', async () => {
     const upcoming = { ...MATCH, debut: '2026-09-05T18:00:00.000Z', statut: 'a_venir', score_a: null, score_b: null };
     const state = getMatchConfrontationState(upcoming, null, NOW);
     const screen = await render(
       <MatchConfrontationCard
+        actionLabel={state.action}
         match={upcoming}
         onPress={jest.fn()}
         state={state}
@@ -78,7 +90,9 @@ describe('MatchConfrontationCard typography', () => {
     );
 
     expect(screen.queryByText('BLG — WE', { includeHiddenElements: true })).toBeNull();
-    expect(screen.queryByText('VS', { includeHiddenElements: true })).toBeNull();
+    expect(screen.getByText('VS', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByText('À FAIRE', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByText('FAIRE MON CALL', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.queryByText('PRONOSTIC OUVERT', { includeHiddenElements: true })).toBeNull();
     expect(screen.queryByText('0 – 0', { includeHiddenElements: true })).toBeNull();
   });

@@ -1,9 +1,6 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -242,60 +239,14 @@ function MatchHero({
   return (
     <View style={styles.matchFeature}>
       <MatchConfrontationCard
+        actionLabel={confrontation.action}
         accessibilityHint={opensInline ? 'Déplie le pronostic dans le Hub' : 'Ouvre le centre du match'}
         match={match}
         onPress={open}
         onPressIn={prepare}
         state={confrontation}
       />
-      <MatchCallAction
-        label={confrontation.action}
-        onPress={open}
-        onPressIn={prepare}
-      />
     </View>
-  );
-}
-
-function MatchCallAction({
-  label,
-  onPress,
-  onPressIn,
-}: {
-  label: string;
-  onPress: () => void;
-  onPressIn: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      onPress={onPress}
-      onPressIn={onPressIn}
-      style={({ pressed }) => [
-        styles.callAction,
-        pressed && styles.pressed,
-      ]}
-      testID="hub-primary-action"
-    >
-      <LinearGradient
-        colors={['#F0D51A', '#DDF10E', '#C5FA1D']}
-        end={{ x: 1, y: .5 }}
-        start={{ x: 0, y: .5 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <Text
-        adjustsFontSizeToFit
-        minimumFontScale={.72}
-        numberOfLines={1}
-        style={styles.callActionText}
-      >
-        {label}
-      </Text>
-      <View style={styles.callActionArrow} testID="hub-primary-action-arrow">
-        <ChevronRight color="#FFFFFF" size={17} strokeWidth={3.2} />
-      </View>
-    </Pressable>
   );
 }
 
@@ -332,9 +283,9 @@ function HeroSkeleton() {
             <Skeleton height={35} radius="sm" width={84} />
           </View>
         </View>
-      </View>
-      <View style={styles.skeletonAction}>
-        <Skeleton height={23} radius="pill" tone="highlight" width="46%" />
+        <View style={styles.skeletonAction}>
+          <Skeleton height={19} radius="pill" tone="highlight" width="46%" />
+        </View>
       </View>
     </SkeletonGroup>
   );
@@ -384,52 +335,13 @@ const styles = StyleSheet.create({
   },
   matchFeature: {
     width: '100%',
-    gap: 10,
+    gap: 0,
   },
   inlinePredictionPrimary: {
     marginHorizontal: 4,
   },
   contextSlot: {
     marginHorizontal: spacing.md,
-  },
-  callAction: {
-    width: 192,
-    minHeight: 42,
-    alignSelf: 'center',
-    paddingLeft: 28,
-    paddingRight: 10,
-    gap: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderRadius: 22,
-    borderColor: '#E8F22B',
-    backgroundColor: '#DDF10E',
-    boxShadow: '0 8px 22px rgba(215,240,20,.2)',
-  },
-  callActionText: {
-    maxWidth: 110,
-    flexShrink: 1,
-    color: '#050708',
-    fontFamily: fonts.display,
-    fontSize: 18,
-    lineHeight: 21,
-    letterSpacing: .25,
-    textAlign: 'center',
-  },
-  callActionArrow: {
-    width: 24,
-    height: 24,
-    flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    backgroundColor: '#050708',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,.12)',
-    boxShadow: '0 2px 5px rgba(0,0,0,.32)',
   },
   seasonSection: { marginHorizontal: spacing.md, gap: 8 },
   seasonHeaderTitle: { color: colors.text, fontFamily: fonts.bold, fontSize: 18, lineHeight: 23, marginBottom: 2 },
@@ -438,10 +350,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   skeletonCard: {
-    aspectRatio: 1.405,
-    padding: 16,
+    aspectRatio: 1.25,
+    padding: 14,
     justifyContent: 'space-between',
-    borderRadius: 18,
+    borderRadius: 24,
     backgroundColor: '#0B1218',
     borderWidth: 1,
     borderColor: '#30414E',
@@ -464,15 +376,11 @@ const styles = StyleSheet.create({
     gap: 9,
   },
   skeletonAction: {
-    minHeight: 58,
+    minHeight: 40,
     marginHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 17,
+    borderRadius: 20,
     backgroundColor: '#22290F',
-  },
-  pressed: {
-    opacity: .82,
-    transform: [{ scale: .995 }],
   },
 });

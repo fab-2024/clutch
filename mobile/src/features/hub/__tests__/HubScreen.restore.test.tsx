@@ -59,12 +59,26 @@ jest.mock('../components/HubContextSlot', () => {
 });
 jest.mock('../components/MatchConfrontationCard', () => {
   const React = jest.requireActual('react');
-  const { Pressable, Text } = jest.requireActual('react-native');
+  const { Pressable, Text, View } = jest.requireActual('react-native');
   return {
-    MatchConfrontationCard: ({ onPress }: { onPress: () => void }) => React.createElement(
-      Pressable,
-      { onPress, testID: 'primary-match-poster' },
-      React.createElement(Text, null, 'PRIMARY MATCH POSTER'),
+    MatchConfrontationCard: ({ actionLabel, onPress }: { actionLabel: string; onPress: () => void }) => React.createElement(
+      View,
+      null,
+      React.createElement(
+        Pressable,
+        { onPress, testID: 'primary-match-poster' },
+        React.createElement(Text, null, 'PRIMARY MATCH POSTER'),
+      ),
+      React.createElement(
+        Pressable,
+        {
+          onPress,
+          style: { position: 'absolute', right: 18, bottom: 10, left: 18 },
+          testID: 'hub-primary-action',
+        },
+        React.createElement(Text, null, actionLabel),
+        React.createElement(View, { testID: 'hub-primary-action-arrow' }),
+      ),
     ),
   };
 });
@@ -131,8 +145,10 @@ describe('HubExperience restoration', () => {
     expect(screen.queryByText('TON PROCHAIN CALL.')).toBeNull();
     expect(screen.queryByText('À TOI DE JOUER')).toBeNull();
     const actionStyle = StyleSheet.flatten(screen.getByTestId('hub-primary-action').props.style);
-    expect(actionStyle.width).toBe(192);
-    expect(actionStyle.borderRadius).toBe(22);
+    expect(actionStyle.position).toBe('absolute');
+    expect(actionStyle.left).toBe(18);
+    expect(actionStyle.right).toBe(18);
+    expect(screen.getByText('FAIRE MON CALL')).toBeTruthy();
     expect(screen.getByTestId('hub-primary-action-arrow')).toBeTruthy();
     expect(screen.getByText('PRIMARY MATCH POSTER')).toBeTruthy();
     expect(screen.getByTestId('hub-season-ranking')).toBeTruthy();
@@ -234,7 +250,8 @@ describe('HubExperience restoration', () => {
     );
 
     expect(screen.queryByText('TON PROCHAIN CALL.')).toBeNull();
-    expect(StyleSheet.flatten(screen.getByTestId('hub-primary-action').props.style).width).toBe(192);
+    expect(StyleSheet.flatten(screen.getByTestId('hub-primary-action').props.style).position).toBe('absolute');
+    expect(screen.getByText('SUIVRE EN DIRECT')).toBeTruthy();
     expect(screen.getByTestId('hub-primary-action-arrow')).toBeTruthy();
     expect(screen.queryByText('LE MATCH EST LANCÉ')).toBeNull();
     expect(screen.queryByText('SUIS LE MATCH EN DIRECT.')).toBeNull();
